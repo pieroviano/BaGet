@@ -8,7 +8,7 @@
 
     <PackageIcon>packageIcon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">0.1.0-prerelease</PackageVersion>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0-at20230507055234</PackageVersion>
     <PackageProjectUrl>https://loic-sharma.github.io/BaGet/</PackageProjectUrl>
   </PropertyGroup>
 

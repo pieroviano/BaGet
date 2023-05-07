@@ -12,6 +12,7 @@
     <Version>0.1.0-prerelease</Version>
     <Authors>Loic Sharma</Authors>
     <OutputPath>bin\</OutputPath>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0-at20230507055234</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BaGet" Version="0.1.0-prerelease" />
+    <PackageReference Include="Net4x.BaGet" Version="1.0.0.*-*" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />

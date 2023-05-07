@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>Net4x.$(MSBuildProjectName)</PackageId>
     <TargetFrameworks>net6.0;net7.0;netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols Condition="'$(Configuration)'=='Debug'">true</IncludeSymbols>
