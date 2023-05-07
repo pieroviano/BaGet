@@ -6,11 +6,12 @@
     <IncludeSymbols Condition="'$(Configuration)'=='Debug'">true</IncludeSymbols>
     <SymbolPackageFormat Condition="'$(Configuration)'=='Debug'">snupkg</SymbolPackageFormat>
     <IncludeSymbols Condition="'$(Configuration)'!='Debug'">false</IncludeSymbols>
+    <PackageId>Net4x.$(MSBuildProjectName)</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="$(MicrosoftAspNetCorePackageVersion)"  />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="$(MicrosoftAspNetCorePackageVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
   </ItemGroup>
 
