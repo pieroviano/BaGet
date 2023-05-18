@@ -1,5 +1,12 @@
 <Project>
 
+  <Import Project="Directory.NuGet.props" />
+  <PropertyGroup>
+    <VersionPrefix>$(BaGetVersion)</VersionPrefix>
+    <VersionSuffix Condition="'$(Configuration)' != 'Release'">0-at20230511053312</VersionSuffix>
+    <VersionSuffix Condition="'$(Configuration)' == 'Release'">0</VersionSuffix>
+  </PropertyGroup>
+
   <!-- Package properties -->
   <PropertyGroup>
     <Authors>Loic Sharma</Authors>
@@ -8,14 +15,13 @@
 
     <PackageIcon>packageIcon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0-at20230507055234</PackageVersion>
     <PackageProjectUrl>https://loic-sharma.github.io/BaGet/</PackageProjectUrl>
   </PropertyGroup>
 
   <!-- Compiler properties -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>latest</LangVersion>
 
     <!-- Don't warn if there are missing XMl comment for publicly visible type or member-->
     <NoWarn>$(NoWarn);1591</NoWarn>
@@ -80,9 +86,5 @@
     <PackageOutputPath>$(SolutionDir)Packages\</PackageOutputPath>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
-
-  <Target Name="DeleteOldPackage" AfterTargets="Pack" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
-    <Exec Command="if exist %userprofile%\.nuget\Packages\$(MSBuildProjectName) rmdir /s /q %userprofile%\.nuget\Packages\$(MSBuildProjectName)" />
-  </Target>
 
 </Project>

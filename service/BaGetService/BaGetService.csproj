@@ -12,15 +12,14 @@
     <Version>0.1.0-prerelease</Version>
     <Authors>Loic Sharma</Authors>
     <OutputPath>bin\</OutputPath>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0-at20230507055234</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <StaticWebAsset Remove="C:\Users\Piero\.nuget\packages\baget.web\0.1.0-prerelease\staticwebassets\favicon.ico" />
+    <StaticWebAsset Remove="C:\Users\Piero\.nuget\packages\Net4x.BaGet.web\$(BaGetVersion)\staticwebassets\favicon.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="$(USERPROFILE)\.nuget\packages\baget.web\0.1.0-prerelease\staticwebassets\**\*.*" Link="wwwroot/_content/BaGet.Web/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest">
+    <Content Include="$(USERPROFILE)\.nuget\packages\Net4x.BaGet.web\$(BaGetVersion)\staticwebassets\**\*.*" Link="wwwroot/_content/Net4x.BaGet.Web/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest">
     </Content>
   </ItemGroup>
 
