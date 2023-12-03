@@ -5,8 +5,7 @@
     <VersionBuildSuffix Condition="'$(Configuration)'!='Release'">*-*</VersionBuildSuffix>
     <VersionBuildSuffix Condition="'$(Configuration)'=='Release'">*</VersionBuildSuffix>
     <DirectoryNuGet>true</DirectoryNuGet>
-    <NuGetUtilityVersion Condition="'$(NuGetUtilityVersion)' == ''">2.0.10</NuGetUtilityVersion>
-    <BaGetVersion>1.0.0</BaGetVersion>
+    <BaGetVersion>1.0.1</BaGetVersion>
     <ImmatricolazioniWsLibrariesVersion>1.1.0</ImmatricolazioniWsLibrariesVersion>
     <FatturaElettronicaVersion>3.2.0</FatturaElettronicaVersion>
     <DocumentoUnicoLibrariesVersion>2.1.0</DocumentoUnicoLibrariesVersion>

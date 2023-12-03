@@ -714,8 +714,8 @@
             <Component Id="cmpB31B172146FC50F33B3B3209B1048DE4" Directory="INSTALLDIR" Guid="*">
                 <File Id="fil450D785DE1624CAB6B06EF8A3505897B" KeyPath="yes" Source="$(var.HarvestDirectory)\mscordaccore.dll" />
             </Component>
-            <Component Id="cmp519344E2B75AFB1FAEDF8F9F8578B8C7" Directory="INSTALLDIR" Guid="*">
-                <File Id="fil294E43F384B4FD3AED2B7FFDE0650E7C" KeyPath="yes" Source="$(var.HarvestDirectory)\mscordaccore_amd64_amd64_7.0.523.17405.dll" />
+            <Component Id="cmp80B09D5A591FE1DB9E52E673D89AA290" Directory="INSTALLDIR" Guid="*">
+                <File Id="fil6A062FEDDF285C6E2A2053F995EED57D" KeyPath="yes" Source="$(var.HarvestDirectory)\mscordaccore_amd64_amd64_7.0.1423.51910.dll" />
             </Component>
             <Component Id="cmp6C3659C9FBF08DD88A7078BB34913F31" Directory="INSTALLDIR" Guid="*">
                 <File Id="fil896C76962BFA7D9A098EDD9730B5471C" KeyPath="yes" Source="$(var.HarvestDirectory)\mscordbi.dll" />
