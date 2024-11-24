@@ -5,7 +5,7 @@
     <VersionBuildSuffix Condition="'$(Configuration)'!='Release'">*-*</VersionBuildSuffix>
     <VersionBuildSuffix Condition="'$(Configuration)'=='Release'">*</VersionBuildSuffix>
     <DirectoryNuGet>true</DirectoryNuGet>
-    <BaGetVersion>1.0.1</BaGetVersion>
+    <BaGetVersion>1.1.0</BaGetVersion>
     <ImmatricolazioniWsLibrariesVersion>1.1.0</ImmatricolazioniWsLibrariesVersion>
     <FatturaElettronicaVersion>3.2.0</FatturaElettronicaVersion>
     <DocumentoUnicoLibrariesVersion>2.1.0</DocumentoUnicoLibrariesVersion>
@@ -82,7 +82,7 @@
     <DotNetZipVersion>1.16.0</DotNetZipVersion>
     <ObfuscarVersion>2.2.37</ObfuscarVersion>
     <iTextSharpPdfaVersion>6.0.0</iTextSharpPdfaVersion>
-    <EntityFrameworkVersion>6.4.4</EntityFrameworkVersion>
+    <EntityFramework6Version>6.4.4</EntityFramework6Version>
     <NewtonsoftJsonVersion>13.0.3</NewtonsoftJsonVersion>
     <NuGetUtilityPocVersion>1.0.0</NuGetUtilityPocVersion>
     <PackAsToolVersion>1.0.0</PackAsToolVersion>
