@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using BaGet.Core;
 using BaGet.Web;
@@ -87,17 +87,20 @@ namespace BaGet
                 app.UseStatusCodePages();
             }
 
+            // The configured path base may be absent, "." meaning the root, or a path that
+            // is missing its leading slash. Normalise it once so that startup cannot fail on
+            // an unusable value and so both uses below agree on it.
+            var pathBase = NormalizePathBase(options.PathBase);
+
             app.UseForwardedHeaders();
-            app.UsePathBase(options.PathBase=="."?"/": options.PathBase);
+            app.UsePathBase(pathBase);
 
             // UsePathBase only sets the request's path base if the incoming path starts
             // with it. A reverse proxy may instead strip the path base before forwarding,
             // leaving nothing for UsePathBase to match, and BaGet would then advertise
             // URLs that bypass the proxy. Apply the configured path base in that case.
-            if (!string.IsNullOrEmpty(options.PathBase))
+            if (pathBase.HasValue)
             {
-                var pathBase = new PathString(options.PathBase);
-
                 app.Use((context, next) =>
                 {
                     if (!context.Request.PathBase.HasValue)
@@ -122,5 +125,27 @@ namespace BaGet
                 baget.MapEndpoints(endpoints);
             });
         }
+
+        /// <summary>
+        /// Turn a configured path base into one the request pipeline can use. An absent
+        /// value, "." and "/" all mean "no path base"; anything else is given the leading
+        /// slash that <see cref="PathString"/> requires.
+        /// </summary>
+        internal static PathString NormalizePathBase(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return PathString.Empty;
+            }
+
+            var trimmed = value.Trim().TrimEnd('/');
+            if (trimmed.Length == 0 || trimmed == ".")
+            {
+                return PathString.Empty;
+            }
+
+            return new PathString(trimmed.StartsWith("/") ? trimmed : "/" + trimmed);
+        }
+
     }
 }

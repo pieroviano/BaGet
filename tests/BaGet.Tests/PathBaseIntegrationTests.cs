@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -15,11 +15,13 @@ namespace BaGet.Tests
     /// </summary>
     public class PathBaseIntegrationTests : IDisposable
     {
+        private readonly ITestOutputHelper _output;
         private readonly BaGetApplication _app;
         private readonly HttpClient _client;
 
         public PathBaseIntegrationTests(ITestOutputHelper output)
         {
+            _output = output;
             _app = new BaGetApplication(
                 output,
                 configOverrides: new Dictionary<string, string>
@@ -60,6 +62,61 @@ namespace BaGet.Tests
                 var id = resource["@id"].Value<string>();
                 Assert.StartsWith("http://localhost/nuget/", id);
             }
+        }
+
+
+        [Fact]
+        public async Task ADotPathBaseMeansTheRoot()
+        {
+            // appsettings.json ships "PathBase": ".", which is not a usable PathString.
+            using var app = new BaGetApplication(
+                _output,
+                configOverrides: new Dictionary<string, string> { { "PathBase", "." } });
+            using var client = app.CreateDefaultClient();
+
+            using var response = await client.GetAsync("v3/index.json");
+
+            response.EnsureSuccessStatusCode();
+            var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+            foreach (var resource in content["resources"])
+            {
+                Assert.StartsWith("http://localhost/", resource["@id"].Value<string>());
+            }
+        }
+
+        [Fact]
+        public async Task APathBaseMissingItsLeadingSlashStillApplies()
+        {
+            using var app = new BaGetApplication(
+                _output,
+                configOverrides: new Dictionary<string, string> { { "PathBase", "nuget" } });
+            using var client = app.CreateDefaultClient();
+
+            using var response = await client.GetAsync("v3/index.json");
+
+            response.EnsureSuccessStatusCode();
+            var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+            foreach (var resource in content["resources"])
+            {
+                Assert.StartsWith("http://localhost/nuget/", resource["@id"].Value<string>());
+            }
+        }
+
+        [Theory]
+        [InlineData(null, "")]
+        [InlineData("", "")]
+        [InlineData("   ", "")]
+        [InlineData(".", "")]
+        [InlineData("/", "")]
+        [InlineData("/nuget", "/nuget")]
+        [InlineData("nuget", "/nuget")]
+        [InlineData("/nuget/", "/nuget")]
+        [InlineData("/nuget/feed", "/nuget/feed")]
+        public void NormalizePathBaseMapsConfiguredValues(string configured, string expected)
+        {
+            Assert.Equal(expected, BaGet.Startup.NormalizePathBase(configured).Value ?? "");
         }
 
         public void Dispose()

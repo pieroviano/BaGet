@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,7 +14,9 @@ namespace BaGet.Core
     // Based off: https://github.com/NuGet/NuGet.Jobs/blob/master/src/Validation.Symbols/SymbolsValidatorService.cs#L44
     public class SymbolIndexingService : ISymbolIndexingService
     {
-        private static readonly HashSet<string> ValidSymbolPackageContentExtensions = new HashSet<string>
+        // Entry paths inside a package are matched case-insensitively, so an extension
+        // must be too: a symbol package carrying "Library.PDB" is valid.
+        private static readonly HashSet<string> ValidSymbolPackageContentExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             ".pdb",
             ".nuspec",
@@ -108,7 +110,7 @@ namespace BaGet.Core
                     return null;
                 }
 
-                return files.Where(p => Path.GetExtension(p) == ".pdb").ToList();
+                return files.Where(IsPdbPath).ToList();
             }
             catch (Exception)
             {
@@ -118,7 +120,12 @@ namespace BaGet.Core
             }
         }
 
-        private bool AreSymbolFilesValid(IReadOnlyList<string> entries)
+        internal static bool IsPdbPath(string path)
+        {
+            return string.Equals(Path.GetExtension(path), ".pdb", StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static bool AreSymbolFilesValid(IReadOnlyList<string> entries)
         {
             // TODO: Validate that all PDBs are portable. See: https://github.com/NuGet/NuGetGallery/blob/master/src/NuGetGallery/Services/SymbolPackageService.cs#L174
             bool IsValidSymbolFileInfo(FileInfo file)
