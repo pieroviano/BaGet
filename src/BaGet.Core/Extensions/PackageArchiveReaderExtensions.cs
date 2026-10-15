@@ -104,7 +104,13 @@ namespace BaGet.Core
         {
             if (string.IsNullOrEmpty(uriString)) return null;
 
-            return new Uri(uriString);
+            // These URLs are optional display metadata and are not validated when a package
+            // is built, so a package can carry a relative or malformed one. Ignore a URL that
+            // cannot be served rather than failing the whole package, which is how the
+            // repository URL below is already treated.
+            if (!Uri.TryCreate(uriString, UriKind.Absolute, out var uri)) return null;
+
+            return uri;
         }
 
         private static string[] ParseAuthors(string authors)
