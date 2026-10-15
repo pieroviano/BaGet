@@ -5,7 +5,6 @@
     <Authors>Loic Sharma</Authors>
     <Copyright>Copyright (c) Loic Sharma 2021</Copyright>
     <Product>BaGet</Product>
-
     <PackageIcon>packageIcon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageVersion Condition="'$(PackageVersion)' == ''">0.1.0.$([System.DateTime]::Now.ToString("yy"))$([System.DateTime]::Now.DayOfYear.ToString("000"))</PackageVersion>
@@ -15,7 +14,7 @@
   <!-- Compiler properties -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>latest</LangVersion>
 
     <!-- Don't warn if there are missing XMl comment for publicly visible type or member-->
     <NoWarn>$(NoWarn);1591</NoWarn>
@@ -56,12 +55,11 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageId>$(MSBuildProjectName)</PackageId>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageId>Extension.$(MSBuildProjectName)</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols Condition="'$(Configuration)'=='Debug'">true</IncludeSymbols>
-    <SymbolPackageFormat Condition="'$(Configuration)'=='Debug'">snupkg</SymbolPackageFormat>
-    <IncludeSymbols Condition="'$(Configuration)'!='Debug'">false</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IsPublishable>False</IsPublishable>
     <PackageOutputPath>$(SolutionDir)Packages\</PackageOutputPath>
     <IsPackable>true</IsPackable>
