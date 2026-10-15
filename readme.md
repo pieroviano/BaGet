@@ -45,49 +45,4 @@ Stay tuned, more features are planned!
 [Google Cloud]: https://loic-sharma.github.io/BaGet/installation/gcp/
 [Alibaba Cloud]: https://loic-sharma.github.io/BaGet/installation/aliyun/
 
-1. Install the [.NET 10 SDK](https://www.microsoft.com/net/download)
-
-2. Run `git clone https://github.com/loic-sharma/BaGet.git`
-
-3. Navigate to the BaGet directory
-
-4. Run the build script:
-   ```powershell
-   .\build.ps1
-   ```
-   
-   Or manually clean, restore, and build:
-   ```bash
-   dotnet clean BaGet.sln
-   dotnet restore BaGet.sln
-   dotnet build BaGet.sln
-   ```
-
-5. Navigate to `.\src\BaGet` and start the service:
-   ```bash
-   dotnet run
-   ```
-
-6. Open the URL `http://localhost:5000/v3/index.json` in your browser
-
-[Build status]: https://img.shields.io/github/actions/workflow/status/loic-sharma/BaGet/.github/workflows/main.yml
-[Discord image]: https://img.shields.io/discord/889377258068930591
-[Discord link]: https://discord.gg/MWbhpf66mk
-[Twitter image]: https://img.shields.io/twitter/follow/bagetapp?label=Follow
-[Twitter link]: https://twitter.com/bagetapp
-
-[NuGet]: https://learn.microsoft.com/nuget/what-is-nuget
-[symbol]: https://docs.microsoft.com/en-us/windows/desktop/debug/symbol-servers-and-symbol-stores
-[.NET SDK]: https://www.microsoft.com/net/download
-[Node.js]: https://nodejs.org/
-
-[BaGet's latest release]: https://github.com/loic-sharma/BaGet/releases
-
-[Documentation]: https://loic-sharma.github.io/BaGet/
-[Docker]: https://loic-sharma.github.io/BaGet/installation/docker/
-[Azure]: https://loic-sharma.github.io/BaGet/installation/azure/
-[AWS]: https://loic-sharma.github.io/BaGet/installation/aws/
-[Google Cloud]: https://loic-sharma.github.io/BaGet/installation/gcp/
-[Alibaba Cloud]: https://loic-sharma.github.io/BaGet/installation/aliyun/
-
 [Mirror a NuGet server]: https://loic-sharma.github.io/BaGet/configuration/#enable-read-through-caching
