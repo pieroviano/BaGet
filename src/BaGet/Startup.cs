@@ -90,6 +90,25 @@ namespace BaGet
             app.UseForwardedHeaders();
             app.UsePathBase(options.PathBase=="."?"/": options.PathBase);
 
+            // UsePathBase only sets the request's path base if the incoming path starts
+            // with it. A reverse proxy may instead strip the path base before forwarding,
+            // leaving nothing for UsePathBase to match, and BaGet would then advertise
+            // URLs that bypass the proxy. Apply the configured path base in that case.
+            if (!string.IsNullOrEmpty(options.PathBase))
+            {
+                var pathBase = new PathString(options.PathBase);
+
+                app.Use((context, next) =>
+                {
+                    if (!context.Request.PathBase.HasValue)
+                    {
+                        context.Request.PathBase = pathBase;
+                    }
+
+                    return next();
+                });
+            }
+
             app.UseStaticFiles();
             app.UseRouting();
 
