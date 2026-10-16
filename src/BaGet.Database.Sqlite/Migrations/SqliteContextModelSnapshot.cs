@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+#nullable disable
+
 namespace BaGet.Database.Sqlite.Migrations
 {
     [DbContext(typeof(SqliteContext))]
@@ -13,8 +15,7 @@ namespace BaGet.Database.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.18");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.21");
 
             modelBuilder.Entity("BaGet.Core.Package", b =>
                 {
@@ -23,12 +24,12 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Authors")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("Downloads")
                         .HasColumnType("INTEGER");
@@ -40,61 +41,61 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IconUrl")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Id")
                         .IsRequired()
-                        .HasColumnType("TEXT COLLATE NOCASE")
-                        .HasMaxLength(128);
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT COLLATE NOCASE");
 
                     b.Property<bool>("IsPrerelease")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Language")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(20);
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("LicenseUrl")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("Listed")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("MinClientVersion")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(44);
+                        .HasMaxLength(44)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("NormalizedVersionString")
                         .IsRequired()
-                        .HasColumnName("Version")
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT COLLATE NOCASE")
-                        .HasMaxLength(64);
+                        .HasColumnName("Version");
 
                     b.Property<string>("OriginalVersionString")
-                        .HasColumnName("OriginalVersion")
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT")
-                        .HasMaxLength(64);
+                        .HasColumnName("OriginalVersion");
 
                     b.Property<string>("ProjectUrl")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Published")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ReleaseNotes")
-                        .HasColumnName("ReleaseNotes")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasColumnName("ReleaseNotes");
 
                     b.Property<string>("RepositoryType")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(100);
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("RepositoryUrl")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("RequireLicenseAcceptance")
                         .HasColumnType("INTEGER");
@@ -108,16 +109,16 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Summary")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Tags")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(256);
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Key");
 
@@ -136,19 +137,19 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT COLLATE NOCASE")
-                        .HasMaxLength(128);
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT COLLATE NOCASE");
 
                     b.Property<int?>("PackageKey")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TargetFramework")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(256);
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("VersionRange")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(256);
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Key");
 
@@ -159,6 +160,39 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("PackageDependencies");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageDeprecation", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AlternatePackageId")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AlternateVersionRange")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PackageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reasons")
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageKey")
+                        .IsUnique();
+
+                    b.ToTable("PackageDeprecations");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
                 {
                     b.Property<int>("Key")
@@ -166,15 +200,15 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT COLLATE NOCASE")
-                        .HasMaxLength(512);
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT COLLATE NOCASE");
 
                     b.Property<int>("PackageKey")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Version")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(64);
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Key");
 
@@ -185,6 +219,33 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("PackageTypes");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageVulnerability", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdvisoryUrl")
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PackageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("VersionRange")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageKey");
+
+                    b.ToTable("PackageVulnerabilities");
+                });
+
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
                 {
                     b.Property<int>("Key")
@@ -192,8 +253,8 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Moniker")
-                        .HasColumnType("TEXT COLLATE NOCASE")
-                        .HasMaxLength(256);
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT COLLATE NOCASE");
 
                     b.Property<int>("PackageKey")
                         .HasColumnType("INTEGER");
@@ -212,6 +273,17 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.HasOne("BaGet.Core.Package", "Package")
                         .WithMany("Dependencies")
                         .HasForeignKey("PackageKey");
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PackageDeprecation", b =>
+                {
+                    b.HasOne("BaGet.Core.Package", "Package")
+                        .WithOne("Deprecation")
+                        .HasForeignKey("BaGet.Core.PackageDeprecation", "PackageKey");
+
+                    b.Navigation("Package");
                 });
 
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
@@ -221,6 +293,17 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasForeignKey("PackageKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PackageVulnerability", b =>
+                {
+                    b.HasOne("BaGet.Core.Package", "Package")
+                        .WithMany("Vulnerabilities")
+                        .HasForeignKey("PackageKey");
+
+                    b.Navigation("Package");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
@@ -230,6 +313,21 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasForeignKey("PackageKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Package", b =>
+                {
+                    b.Navigation("Dependencies");
+
+                    b.Navigation("Deprecation");
+
+                    b.Navigation("PackageTypes");
+
+                    b.Navigation("TargetFrameworks");
+
+                    b.Navigation("Vulnerabilities");
                 });
 #pragma warning restore 612, 618
         }

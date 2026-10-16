@@ -167,7 +167,7 @@ documented, not silently absent.
 **Verify**: integration tests driving the real `nuget.exe`/`dotnet nuget` V2 code path against the
 test host; assert `FindPackagesById` returns every version and that `$metadata` parses.
 
-### Phase 3 — Deprecation and vulnerability metadata (schema: 2 tables)
+### Phase 3 — Deprecation and vulnerability metadata (schema: 2 tables) — BLOCKED PART WAY
 
 New tables, both with a **nullable** FK to `Packages` (B1):
 
@@ -189,6 +189,37 @@ Admin endpoints: `PUT/DELETE /v3/package/{id}/{version}/deprecation`, authorised
 
 **Risk**: `SearchResult` and `PackageMetadata` are in the published `BaGet.Protocol` package — see
 B4.
+
+#### Status and the blocker found while generating the migrations
+
+Done: the `PackageDeprecation` and `PackageVulnerability` entities, their model
+configuration in `AbstractContext`, the sets on `IContext`/`NullContext`, the navigation
+properties on `Package`, and **additive migrations for SQLite and SQL Server only** - each
+is exactly two `CreateTable` plus two `CreateIndex`, with `Down` dropping them.
+
+Not done: the migrations for PostgreSQL and MySQL, and the wiring into
+`RegistrationBuilder` and `SearchResponseBuilder`. The feature is deliberately not read by
+any code yet, so the two tables existing on only two providers breaks nothing.
+
+**Why PostgreSQL and MySQL are blocked.** `dotnet ef migrations add` for those two scaffolds
+"an operation that may result in the loss of data", because the pre-existing model drift
+recorded above leaks into the feature migration:
+
+| Provider | Unrelated operation scaffolded | Consequence |
+|---|---|---|
+| PostgreSQL | `AlterColumn Published`, `timestamp without time zone` -> `timestamp with time zone` | PostgreSQL reinterprets existing values as local time and converts them, shifting every publish date on any server not on UTC |
+| MySQL | `AlterColumn` on `Tags`, `Summary`, `RepositoryUrl`, `ProjectUrl` and others, `longtext` -> `varchar(4000)`, plus `Key` changes | truncates any stored value longer than 4000 characters |
+
+Neither may ship inside a feature migration. The options, which need a decision:
+
+| Option | Cost |
+|---|---|
+| Resolve the drift first, as its own reviewed change | The honest fix. The PostgreSQL one is a data conversion, so it needs a migration plan of its own, not a silent `AlterColumn`. |
+| Configure the model to match what the databases actually have | Provider-specific column type configuration. Keeps data untouched, but freezes the old shapes and conflicts with the UTC semantics `Package.Published` now has. |
+| Trim the alterations out of the generated migration, keep the regenerated snapshot | Makes the migration additive and stops the drift re-appearing in later migrations, but leaves the model claiming types the database does not have - Npgsql would then read `Published` as if it were `timestamptz`. Rejected as a silent runtime hazard. |
+
+Until this is settled, Phase 3 cannot be completed, and the plan's "all four database
+providers" constraint does not hold for it.
 
 ### Phase 4 — Catalog resource (schema: 1 table; storage)
 

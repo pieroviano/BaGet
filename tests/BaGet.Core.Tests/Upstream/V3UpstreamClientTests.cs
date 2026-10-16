@@ -12,6 +12,11 @@ using Xunit;
 
 namespace BaGet.Core.Tests
 {
+    // The entity BaGet.Core.PackageDeprecation is reached through the enclosing namespace,
+    // which takes precedence over a file scoped using directive, so the alias has to live
+    // inside the namespace to name the protocol model instead.
+    using PackageDeprecation = BaGet.Protocol.Models.PackageDeprecation;
+
     public class V3UpstreamClientTests
     {
         public class ListPackageVersionsAsync : FactsBase

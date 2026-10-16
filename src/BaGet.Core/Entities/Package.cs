@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using NuGet.Versioning;
 
@@ -80,6 +80,16 @@ namespace BaGet.Core
         public List<PackageDependency> Dependencies { get; set; }
         public List<PackageType> PackageTypes { get; set; }
         public List<TargetFramework> TargetFrameworks { get; set; }
+
+        /// <summary>
+        /// The deprecation of this version, or null if it is not deprecated.
+        /// </summary>
+        public PackageDeprecation Deprecation { get; set; }
+
+        /// <summary>
+        /// The known vulnerabilities affecting this version.
+        /// </summary>
+        public List<PackageVulnerability> Vulnerabilities { get; set; }
 
         public string NormalizedVersionString { get; set; }
         public string OriginalVersionString { get; set; }

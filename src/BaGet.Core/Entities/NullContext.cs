@@ -14,6 +14,10 @@ namespace BaGet.Core
 
         public DbSet<PackageDependency> PackageDependencies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        public DbSet<PackageDeprecation> PackageDeprecations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public DbSet<PackageVulnerability> PackageVulnerabilities { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public bool SupportsLimitInSubqueries => throw new NotImplementedException();
 
         public bool IsUniqueConstraintViolationException(DbUpdateException exception)

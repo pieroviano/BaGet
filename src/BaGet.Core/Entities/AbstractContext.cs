@@ -29,6 +29,8 @@ namespace BaGet.Core
         public DbSet<PackageDependency> PackageDependencies { get; set; }
         public DbSet<PackageType> PackageTypes { get; set; }
         public DbSet<TargetFramework> TargetFrameworks { get; set; }
+        public DbSet<PackageDeprecation> PackageDeprecations { get; set; }
+        public DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
 
         public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -45,6 +47,8 @@ namespace BaGet.Core
             builder.Entity<PackageDependency>(BuildPackageDependencyEntity);
             builder.Entity<PackageType>(BuildPackageTypeEntity);
             builder.Entity<TargetFramework>(BuildTargetFrameworkEntity);
+            builder.Entity<PackageDeprecation>(BuildPackageDeprecationEntity);
+            builder.Entity<PackageVulnerability>(BuildPackageVulnerabilityEntity);
         }
 
         private void BuildPackageEntity(EntityTypeBuilder<Package> package)
@@ -125,6 +129,46 @@ namespace BaGet.Core
                 .IsRequired();
 
             package.Property(p => p.RowVersion).IsRowVersion();
+        }
+
+        private void BuildPackageDeprecationEntity(EntityTypeBuilder<PackageDeprecation> deprecation)
+        {
+            deprecation.HasKey(d => d.Key);
+
+            deprecation
+                .Property(d => d.Reasons)
+                .HasMaxLength(DefaultMaxStringLength)
+                .HasConversion(StringArrayToJsonConverter.Instance)
+                .Metadata.SetValueComparer(StringArrayComparer.Instance);
+
+            deprecation.Property(d => d.Message).HasMaxLength(DefaultMaxStringLength);
+            deprecation.Property(d => d.AlternatePackageId).HasMaxLength(MaxPackageIdLength);
+            deprecation.Property(d => d.AlternateVersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
+
+            // A version has at most one deprecation. The relationship is optional in the
+            // database for the same reason as the dependency one: a required relationship
+            // would need a foreign key change, which SQLite cannot make in place.
+            // The foreign key is declared explicitly: for a one to one relationship EF
+            // cannot otherwise tell which side is the dependent.
+            deprecation
+                .HasOne(d => d.Package)
+                .WithOne(p => p.Deprecation)
+                .HasForeignKey<PackageDeprecation>(d => d.PackageKey)
+                .IsRequired(false);
+        }
+
+        private void BuildPackageVulnerabilityEntity(EntityTypeBuilder<PackageVulnerability> vulnerability)
+        {
+            vulnerability.HasKey(v => v.Key);
+
+            vulnerability.Property(v => v.AdvisoryUrl).HasMaxLength(DefaultMaxStringLength);
+            vulnerability.Property(v => v.VersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
+
+            vulnerability
+                .HasOne(v => v.Package)
+                .WithMany(p => p.Vulnerabilities)
+                .HasForeignKey(v => v.PackageKey)
+                .IsRequired(false);
         }
 
         private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)

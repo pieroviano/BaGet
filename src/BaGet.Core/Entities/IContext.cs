@@ -19,6 +19,16 @@ namespace BaGet.Core
         DbSet<PackageDependency> PackageDependencies { get; set; }
 
         /// <summary>
+        /// The deprecations of package versions.
+        /// </summary>
+        DbSet<PackageDeprecation> PackageDeprecations { get; set; }
+
+        /// <summary>
+        /// The known vulnerabilities affecting package versions.
+        /// </summary>
+        DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
+
+        /// <summary>
         /// Check whether a <see cref="DbUpdateException"/> is due to a SQL unique constraint violation.
         /// </summary>
         /// <param name="exception">The exception to inspect.</param>
