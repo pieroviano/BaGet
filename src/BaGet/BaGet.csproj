@@ -12,7 +12,13 @@
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="$(MicrosoftAspNetCorePackageVersion)" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+    <!--
+      Design time only. Without PrivateAssets it flows to anything referencing this project,
+      and from Entity Framework 9 onwards it carries Microsoft.Build.Locator, MSBuild and
+      Roslyn with it - which then pin Roslyn to exactly 4.8.0 inside the application and the
+      integration tests.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

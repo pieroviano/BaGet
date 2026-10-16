@@ -36,9 +36,23 @@
 
   <!-- NuGet dependencies shared across projects -->
   <PropertyGroup>
-    <MicrosoftAspNetCorePackageVersion>8.0.0</MicrosoftAspNetCorePackageVersion>
-    <MicrosoftEntityFrameworkCorePackageVersion>8.0.0</MicrosoftEntityFrameworkCorePackageVersion>
-    <MicrosoftExtensionsPackageVersion>8.0.0</MicrosoftExtensionsPackageVersion>
+    <MicrosoftAspNetCorePackageVersion>10.0.13</MicrosoftAspNetCorePackageVersion>
+
+    <!--
+      Entity Framework is held at 9.x because Pomelo.EntityFrameworkCore.MySql has no release
+      that supports Entity Framework 10: its latest, 9.0.0, constrains
+      Microsoft.EntityFrameworkCore.Relational to [9.0.0, 9.0.999]. Every provider must move
+      together, so each one reads its version from here rather than pinning its own.
+    -->
+    <MicrosoftEntityFrameworkCorePackageVersion>9.0.21</MicrosoftEntityFrameworkCorePackageVersion>
+    <NpgsqlEntityFrameworkCorePackageVersion>9.0.4</NpgsqlEntityFrameworkCorePackageVersion>
+    <PomeloEntityFrameworkCorePackageVersion>9.0.0</PomeloEntityFrameworkCorePackageVersion>
+
+    <!--
+      Entity Framework 9.0.21 depends on Microsoft.Extensions.* 9.0.21, so holding these at
+      8.0.0 is a package downgrade (NU1605) and will not restore.
+    -->
+    <MicrosoftExtensionsPackageVersion>9.0.21</MicrosoftExtensionsPackageVersion>
     <NuGetPackageVersion>6.10.0</NuGetPackageVersion>
   </PropertyGroup>
 

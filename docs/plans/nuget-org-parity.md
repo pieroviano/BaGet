@@ -44,31 +44,48 @@ Phase 1 onwards not started. Target branch policy: one reviewable PR per phase a
 | EF tools 9.0.0 could not load the EF 10.0.13 runtime. | Updated the global `dotnet-ef` tool to 10.0.13. |
 | Design-time discovery built the whole application's DI, so one unusable provider broke migrations for all of them. | `IDesignTimeDbContextFactory` added to the Sqlite, SqlServer and PostgreSql projects. `dotnet ef` no longer needs `--startup-project`, and each provider is independent. Verified: 7, 6 and 6 migrations listed respectively. |
 
-### MySQL is blocked, and the "all four database providers" constraint cannot hold
+### MySQL was blocked; resolved by pinning back to EF Core 9
 
-**Pomelo.EntityFrameworkCore.MySql has no release that supports EF Core 10.** The latest is
-9.0.0, whose dependency on `Microsoft.EntityFrameworkCore.Relational` is constrained to
-`>= 9.0.0 && <= 9.0.999`. The solution only builds because that constraint is violated through
-transitive resolution, which NuGet reports as the `NU1608` warning already visible on
-`src/BaGet/BaGet.csproj`. Consequences, all verified:
+**Pomelo.EntityFrameworkCore.MySql has no release that supports EF Core 10.** Its latest, 9.0.0,
+constrains `Microsoft.EntityFrameworkCore.Relational` to `[9.0.0, 9.0.999]`. While the solution
+sat on EF 10 that constraint was violated through transitive resolution - the `NU1608` warning -
+and the consequences were verified: a direct EF 10 reference in `src/BaGet.Database.MySql`
+escalated to a hard `NU1107`, and resolving `MySqlContext` threw `MethodNotFound` for
+`AbstractionsStrings.ArgumentIsEmpty`. MySQL hosting was broken.
 
-- Adding any direct EF 10 reference to `src/BaGet.Database.MySql` turns that warning into a hard
-  `NU1107` version conflict, so the project cannot take a design-time factory.
-- Resolving `MySqlContext` at runtime throws `MethodNotFound` for
-  `AbstractionsStrings.ArgumentIsEmpty`, because Pomelo 9 was compiled against EF 9. **MySQL
-  hosting is broken on this branch**, independently of this plan.
+**Resolved**: the solution is pinned to EF Core 9.0.21, keeping `net10.0`. Each provider now
+reads its version from one property in `src/Directory.Build.props`, and `dotnet-ef` is pinned to
+9.0.21 by `.config/dotnet-tools.json`. The legal version window is narrow - Pomelo caps
+Relational at 9.0.999, Npgsql 9.0.4 floors it at 9.0.1, and the Design package floors it at
+9.0.21 - so **9.0.21 sits at the bottom of the only range that satisfies all three**. There is no
+room to go lower without also lowering the Design package.
 
-Options, none of which this plan can decide unilaterally:
+Verified for all four providers, offline, in the host's unified dependency graph:
 
-| Option | Cost |
-|---|---|
-| Wait for a Pomelo release targeting EF 10 | Blocks phases 3-6 for MySQL indefinitely |
-| Drop MySQL support | Breaks existing MySQL deployments - violates "no breaking changes" |
-| Pin the solution back to EF Core 9 | Reverses the .NET 10 upgrade in PR #808 |
-| Ship MySQL migrations unverified | Violates "all four database providers" in spirit |
+| Check | Sqlite | SqlServer | PostgreSql | MySql |
+|---|---|---|---|---|
+| `dbcontext info` - loads and builds the model | yes | yes | yes | **yes** |
+| `migrations script` - provider SQL generator runs | yes | yes | yes | **yes** |
+| `migrations list` | 7 | 6 | 6 | **6** |
+| `has-pending-model-changes` | clean | clean | pending | pending |
 
-Until this is decided, phases 3-6 can be implemented and verified for **SQLite, SQL Server and
-PostgreSQL only**, and this must be stated in each of those PRs.
+MySQL building its model and generating SQL against EF 9 is the direct refutation of the
+`MethodNotFound` above, and needs no MySQL server.
+
+**"All four database providers" is restored as a constraint that holds.** Phases 3-6 may ship
+migrations for every provider.
+
+Two caveats carried forward:
+
+- **PostgreSQL and MySQL report pending model changes.** For PostgreSQL this is **pre-existing**:
+  the same check reports it at Npgsql 10.0.3 / EF 10, so the downgrade did not cause it. For MySQL
+  it could never be checked before, because the context could not be constructed. Both snapshots
+  are stamped `ProductVersion 3.1.18` and encode EF 3.1-era provider shapes. Phase 3 must
+  regenerate a baseline migration for these two providers before adding tables to them, and must
+  not assume a clean diff.
+- **The test suite only exercises SQLite.** `PackageDatabaseTests`, `DatabaseSearchServiceTests`
+  and `HostIntegrationTests` all use SQLite, so a green suite says nothing about the other three
+  providers. The `dotnet ef` checks in the table above are the gate for those, not the tests.
 
 ## Current state
 
