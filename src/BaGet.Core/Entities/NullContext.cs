@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +11,8 @@ namespace BaGet.Core
         public DatabaseFacade Database => throw new NotImplementedException();
 
         public DbSet<Package> Packages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public DbSet<PackageDependency> PackageDependencies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public bool SupportsLimitInSubqueries => throw new NotImplementedException();
 

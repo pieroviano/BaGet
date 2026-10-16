@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -199,21 +199,12 @@ namespace BaGet.Core
         {
             var options = provider.GetRequiredService<IOptionsSnapshot<MirrorOptions>>();
 
-            // TODO: Convert to switch expression.
-            if (!options.Value.Enabled)
+            return options.Value switch
             {
-                return provider.GetRequiredService<DisabledUpstreamClient>();
-            }
-
-            else if (options.Value.Legacy)
-            {
-                return provider.GetRequiredService<V2UpstreamClient>();
-            }
-
-            else
-            {
-                return provider.GetRequiredService<V3UpstreamClient>();
-            }
+                { Enabled: false } => provider.GetRequiredService<DisabledUpstreamClient>(),
+                { Legacy: true } => provider.GetRequiredService<V2UpstreamClient>(),
+                _ => provider.GetRequiredService<V3UpstreamClient>(),
+            };
         }
     }
 }

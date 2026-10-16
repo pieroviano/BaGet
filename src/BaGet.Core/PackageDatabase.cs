@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -119,6 +119,9 @@ namespace BaGet.Core
                 return false;
             }
 
+            // The package to dependency relationship is optional in the database, so EF would
+            // null the foreign key and leave these rows behind rather than delete them.
+            _context.PackageDependencies.RemoveRange(package.Dependencies);
             _context.Packages.Remove(package);
             await _context.SaveChangesAsync(cancellationToken);
 

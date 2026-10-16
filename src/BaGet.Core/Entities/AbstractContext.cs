@@ -1,4 +1,4 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -109,14 +109,12 @@ namespace BaGet.Core
             package.Ignore(p => p.ProjectUrlString);
             package.Ignore(p => p.RepositoryUrlString);
 
-            // A dependency row has no meaning without the package that declares it, so it is
-            // deleted with its package. The relationship is deliberately left optional: making
-            // it required would drop and recreate a foreign key, which SQLite does not support,
-            // so consumers would have to recreate their database and reindex every package.
+            // The dependency to package relationship is deliberately left optional. Making it
+            // required, or giving it a cascade delete, changes the foreign key and so needs a
+            // migration; SQLite cannot alter a foreign key, so consumers would have to
+            // recreate their database and reindex every package. PackageDatabase therefore
+            // deletes a package's dependency rows itself, so that none are left orphaned.
             // See: https://github.com/loic-sharma/BaGet/pull/174
-            package.HasMany(p => p.Dependencies)
-                .WithOne(d => d.Package)
-                .OnDelete(DeleteBehavior.Cascade);
 
             package.HasMany(p => p.PackageTypes)
                 .WithOne(d => d.Package)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -219,20 +219,18 @@ namespace BaGet.Web
             public IReadOnlyList<DependencyModel> Dependencies { get; set; }
         }
 
-        // TODO: Convert this to records.
-        public class DependencyModel
+        public record DependencyModel
         {
-            public string PackageId { get; set; }
-            public string VersionSpec { get; set; }
+            public string PackageId { get; init; }
+            public string VersionSpec { get; init; }
         }
 
-        // TODO: Convert this to records.
-        public class VersionModel
+        public record VersionModel
         {
-            public NuGetVersion Version { get; set; }
-            public long Downloads { get; set; }
-            public bool Selected { get; set; }
-            public DateTime LastUpdated { get; set; }
+            public NuGetVersion Version { get; init; }
+            public long Downloads { get; init; }
+            public bool Selected { get; init; }
+            public DateTime LastUpdated { get; init; }
         }
     }
 }

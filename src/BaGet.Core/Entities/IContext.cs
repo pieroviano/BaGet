@@ -1,4 +1,4 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -10,6 +10,13 @@ namespace BaGet.Core
         DatabaseFacade Database { get; }
 
         DbSet<Package> Packages { get; set; }
+
+        /// <summary>
+        /// The dependencies declared by packages. A dependency belongs to the package that
+        /// declares it, but the relationship is optional in the database, so deleting a
+        /// package does not delete them.
+        /// </summary>
+        DbSet<PackageDependency> PackageDependencies { get; set; }
 
         /// <summary>
         /// Check whether a <see cref="DbUpdateException"/> is due to a SQL unique constraint violation.

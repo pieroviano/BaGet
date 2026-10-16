@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -104,14 +104,8 @@ namespace BaGet.Core.Tests.Metadata
         [MemberData(nameof(ExtendedModelsData))]
         public void ValidateExtendedModels(ExtendedModelData data)
         {
-            IReadOnlyDictionary<string, PropertyInfo> originalProperties = data
-                .OriginalType
-                .GetProperties()
-                .ToDictionary(p => p.Name, p => p);
-            IReadOnlyDictionary<string, PropertyInfo> derivedProperties = data
-                .DerivedType
-                .GetProperties()
-                .ToDictionary(p => p.Name, p => p);
+            IReadOnlyDictionary<string, PropertyInfo> originalProperties = PropertiesOf(data.OriginalType);
+            IReadOnlyDictionary<string, PropertyInfo> derivedProperties = PropertiesOf(data.DerivedType);
 
             // Check that all properties on the original model are present on the derived model.
             var missingProperties = originalProperties.Keys.Where(name => !derivedProperties.ContainsKey(name));
@@ -233,5 +227,35 @@ namespace BaGet.Core.Tests.Metadata
             public Dictionary<string, (Type From, Type To)> ModifiedProperties { get; set; }
                 = new Dictionary<string, (Type From, Type To)>();
         }
+
+        /// <summary>
+        /// The public properties of a type, keyed by name. A derived model may shadow a base
+        /// property with the "new" modifier to change its type, in which case reflection
+        /// reports one declaration per declaring type; keep the most derived one, which is
+        /// the declaration that is serialized.
+        /// </summary>
+        private static IReadOnlyDictionary<string, PropertyInfo> PropertiesOf(Type type)
+        {
+            static int InheritanceDepth(Type declaringType)
+            {
+                var depth = 0;
+                for (var current = declaringType; current != null; current = current.BaseType)
+                {
+                    depth++;
+                }
+
+                return depth;
+            }
+
+            return type
+                .GetProperties()
+                .GroupBy(p => p.Name)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .OrderByDescending(p => InheritanceDepth(p.DeclaringType))
+                        .First());
+        }
+
     }
 }
