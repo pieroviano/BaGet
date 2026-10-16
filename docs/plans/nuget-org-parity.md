@@ -1,6 +1,6 @@
 # Plan: extend BaGet to nuget.org functionality
 
-Status: in progress. Phases 1 and 2 done. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
+Status: in progress. Phases 1, 2 and 8 done. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
 Phase 1 onwards not started. Target branch policy: one reviewable PR per phase against
 `loic-sharma/BaGet` `main`.
 
@@ -290,11 +290,24 @@ way to protect existing deployments.
   `AutocompleteResponse.TotalHits` is documented as the total disregarding skip/take. Needs a count
   query and changes a public response.
 
-### Phase 8 — Search failover and client SDK
+### Phase 8 — Search failover and client SDK — DONE
 
-`src/BaGet.Protocol/Search/SearchClient.cs:27`, `AutocompleteClient.cs:27,40`, and
-`NuGetClient.cs:165` — the service index may advertise several search endpoints; try them in order.
-`NuGetClientFactory.cs:196` — refresh the cached service index periodically.
+| Change | Where |
+|---|---|
+| All endpoints of a resource, in try order, de-duplicated | `ServiceIndexModelExtensions.GetResourceUrls` / `GetRequiredResourceUrls`, plus `GetSearchQueryResourceUrls` / `GetSearchAutocompleteResourceUrls`. Singular methods kept, now `.FirstOrDefault()` over the list. |
+| One client per endpoint, tried in order | `NuGetClientFactory.BuildClientsAsync`; `NuGetClients.SearchClients` / `AutocompleteClients`; `SearchClient`, `AutocompleteClient` call `EndpointFailover.ExecuteAsync`. |
+| Failover rule | `src/BaGet.Protocol/EndpointFailover.cs`: fail over on a transport failure (no status code), 408, 429, 5xx, a client timeout, or unparseable JSON. **Never** on any other status — a 404 is the server's answer. A caller's cancellation propagates untouched. |
+| Every endpoint failed | One endpoint rethrows its own exception (unchanged behaviour); several throw `AggregateException` with each failure in order. |
+| Service index refresh | `NuGetClientFactory.DefaultServiceIndexCacheDuration` = 40 min (matches NuGet.Protocol's `ServiceIndexResourceV3Provider.MaxCacheDuration`). Expiry lives on the immutable `NuGetClients` snapshot, so it is read without locking. A failed refresh is reported, not served stale. |
+
+`NuGetClient.cs:165` (use Autocomplete's enumerate-versions endpoint "if this is not Sleet") was
+**left as is**, with the reason recorded in code: that endpoint is optional, no advertised
+capability says whether a server supports it, and guessing returns a silently empty version list.
+Registration metadata is always present.
+
+**Verified**: `tests/BaGet.Protocol.Tests/SearchFailoverTests.cs` (15) and
+`ServiceIndexRefreshTests.cs` (6), driven by `Support/FakeHttpMessageHandler.cs` and
+`Support/FakeServiceIndex.cs`. Suite 509 -> 530.
 
 ### Phase 9 — Statistics and web UI
 
@@ -319,7 +332,7 @@ Phases 1, 2, 7 and 8 can land in any order and need no schema change beyond Phas
 | Step | Command |
 |---|---|
 | Build | `dotnet build BaGet.sln -c Release` — 0 errors |
-| Unit + integration | `dotnet test BaGet.sln` — currently 463/463; no phase may reduce it |
+| Unit + integration | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` — currently 530/530; no phase may reduce it |
 | Migrations | `dotnet ef migrations add <name>` in each of the 4 `BaGet.Database.*` projects, then `dotnet test tests/BaGet.Tests` (it applies migrations) |
 | Upgrade-in-place | Restore a database built from the previous tag, run the new build, assert packages are still listed and downloadable |
 | Protocol conformance | Point real `dotnet restore`, `nuget list` and `dotnet nuget push` at the test host |

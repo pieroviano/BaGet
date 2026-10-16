@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Protocol.Internal;
 using BaGet.Protocol.Models;
 
 namespace BaGet.Protocol
@@ -24,11 +25,14 @@ namespace BaGet.Protocol
                 bool includeSemVer2 = true,
                 CancellationToken cancellationToken = default)
             {
-                // TODO: Support search failover.
+                // The service index may advertise several search endpoints. Try them in order.
                 // See: https://github.com/loic-sharma/BaGet/issues/314
-                var client = await _clientfactory.GetSearchClientAsync(cancellationToken);
+                var clients = await _clientfactory.GetSearchClientsAsync(cancellationToken);
 
-                return await client.SearchAsync(query, skip, take, includePrerelease, includeSemVer2);
+                return await EndpointFailover.ExecuteAsync(
+                    clients,
+                    (client, token) => client.SearchAsync(query, skip, take, includePrerelease, includeSemVer2, token),
+                    cancellationToken);
             }
         }
     }

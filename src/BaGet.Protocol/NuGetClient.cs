@@ -162,7 +162,12 @@ namespace BaGet.Protocol
             string packageId,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Use the Autocomplete's enumerate versions endpoint if this is not Sleet.
+            // The registration metadata is read instead of the Autocomplete resource's enumerate
+            // versions endpoint, even though the latter is cheaper: that endpoint is optional, and
+            // a server may advertise the Autocomplete resource without supporting it - Sleet, whose
+            // feed is static files, is the known case. There is no advertised capability that says
+            // which, so choosing it would mean fingerprinting the server and silently returning an
+            // empty version list when the guess is wrong. Registration metadata is always present.
             var packages = await GetPackageMetadataAsync(packageId, cancellationToken);
 
             return packages
