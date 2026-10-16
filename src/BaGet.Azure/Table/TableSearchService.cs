@@ -36,7 +36,7 @@ namespace BaGet.Azure
                 request.IncludeSemVer2,
                 cancellationToken);
 
-            return _responseBuilder.BuildSearch(results);
+            return _responseBuilder.BuildSearch(results.Page, results.TotalHits);
         }
 
         public async Task<AutocompleteResponse> AutocompleteAsync(
@@ -51,9 +51,9 @@ namespace BaGet.Azure
                 request.IncludeSemVer2,
                 cancellationToken);
 
-            var packageIds = results.Select(p => p.PackageId).ToList();
+            var packageIds = results.Page.Select(p => p.PackageId).ToList();
 
-            return _responseBuilder.BuildAutocomplete(packageIds);
+            return _responseBuilder.BuildAutocomplete(packageIds, results.TotalHits);
         }
 
         public Task<AutocompleteResponse> ListPackageVersionsAsync(
@@ -62,7 +62,7 @@ namespace BaGet.Azure
         {
             // TODO: Support versions autocomplete.
             // See: https://github.com/loic-sharma/BaGet/issues/291
-            var response = _responseBuilder.BuildAutocomplete(new List<string>());
+            var response = _responseBuilder.BuildAutocomplete(new List<string>(), totalHits: 0);
 
             return Task.FromResult(response);
         }
@@ -74,7 +74,24 @@ namespace BaGet.Azure
             return Task.FromResult(response);
         }
 
-        private async Task<List<PackageRegistration>> SearchAsync(
+        /// <summary>
+        /// A page of package registrations and the number of registrations that matched,
+        /// disregarding skip and take.
+        /// </summary>
+        private readonly struct SearchPage
+        {
+            public SearchPage(List<PackageRegistration> page, long totalHits)
+            {
+                Page = page;
+                TotalHits = totalHits;
+            }
+
+            public List<PackageRegistration> Page { get; }
+
+            public long TotalHits { get; }
+        }
+
+        private async Task<SearchPage> SearchAsync(
             string searchText,
             int skip,
             int take,
@@ -88,12 +105,25 @@ namespace BaGet.Azure
 
             var results = await LoadPackagesAsync(query, maxPartitions: skip + take, cancellationToken);
 
-            return results
+            var registrations = results
                 .GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
                 .Select(group => new PackageRegistration(group.Key, group.ToList()))
+                .ToList();
+
+            // The matches are counted before paging, so this is a true total whenever the
+            // whole match set was loaded. Table storage cannot count matches it has not read,
+            // and the scan above stops after "skip + take" partitions, so for larger result
+            // sets this under-reports and saturates at "skip + take".
+            // TODO: Count the matching partitions exactly.
+            // See: https://github.com/loic-sharma/BaGet/issues/291
+            var totalHits = registrations.Count;
+
+            var page = registrations
                 .Skip(skip)
                 .Take(take)
                 .ToList();
+
+            return new SearchPage(page, totalHits);
         }
 
         private async Task<IReadOnlyList<Package>> LoadPackagesAsync(

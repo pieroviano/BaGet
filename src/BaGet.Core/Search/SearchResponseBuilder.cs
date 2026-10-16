@@ -14,7 +14,7 @@ namespace BaGet.Core
             _url = url ?? throw new ArgumentNullException(nameof(url));
         }
 
-        public SearchResponse BuildSearch(IReadOnlyList<PackageRegistration> packageRegistrations)
+        public SearchResponse BuildSearch(IReadOnlyList<PackageRegistration> packageRegistrations, long totalHits)
         {
             var result = new List<SearchResult>();
 
@@ -53,17 +53,17 @@ namespace BaGet.Core
 
             return new SearchResponse
             {
-                TotalHits = result.Count,
+                TotalHits = totalHits,
                 Data = result,
                 Context = SearchContext.Default(_url.GetPackageMetadataResourceUrl()),
             };
         }
 
-        public AutocompleteResponse BuildAutocomplete(IReadOnlyList<string> data)
+        public AutocompleteResponse BuildAutocomplete(IReadOnlyList<string> data, long totalHits)
         {
             return new AutocompleteResponse
             {
-                TotalHits = data.Count,
+                TotalHits = totalHits,
                 Data = data,
                 Context = AutocompleteContext.Default
             };

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -37,6 +37,11 @@ namespace BaGet.Core
                 request.PackageType,
                 frameworks);
 
+            // "TotalHits" is the number of matches disregarding skip and take. A page of results is
+            // drawn from the distinct package ids that match the filters, so the total must count
+            // those distinct ids - not the matching rows, of which there is one per package version.
+            var totalHits = await CountDistinctPackageIdsAsync(search, cancellationToken);
+
             var packageIds = search
                 .Select(p => p.Id)
                 .Distinct()
@@ -74,7 +79,7 @@ namespace BaGet.Core
                 .Select(group => new PackageRegistration(group.Key, group.ToList()))
                 .ToList();
 
-            return _searchBuilder.BuildSearch(groupedResults);
+            return _searchBuilder.BuildSearch(groupedResults, totalHits);
         }
 
         public async Task<AutocompleteResponse> AutocompleteAsync(
@@ -91,6 +96,10 @@ namespace BaGet.Core
                 request.PackageType,
                 frameworks: null);
 
+            // See the comment in "SearchAsync": the total disregards skip and take and counts
+            // distinct package ids, which is what the page below is drawn from.
+            var totalHits = await CountDistinctPackageIdsAsync(search, cancellationToken);
+
             // Group by package ID so that the column the results are ordered by is part of
             // the query's projection. Ordering before a "Distinct" over a narrower projection
             // is silently dropped, and SQL Server rejects the resulting query outright:
@@ -103,7 +112,7 @@ namespace BaGet.Core
                 .Take(request.Take)
                 .ToListAsync(cancellationToken);
 
-            return _searchBuilder.BuildAutocomplete(packageIds);
+            return _searchBuilder.BuildAutocomplete(packageIds, totalHits);
         }
 
         public async Task<AutocompleteResponse> ListPackageVersionsAsync(
@@ -126,7 +135,8 @@ namespace BaGet.Core
                 .Select(p => p.NormalizedVersionString)
                 .ToListAsync(cancellationToken);
 
-            return _searchBuilder.BuildAutocomplete(packageVersions);
+            // Version enumeration is not paged, so every match is on the single page returned.
+            return _searchBuilder.BuildAutocomplete(packageVersions, packageVersions.Count);
         }
 
         public async Task<DependentsResponse> FindDependentsAsync(string packageId, CancellationToken cancellationToken)
@@ -147,6 +157,22 @@ namespace BaGet.Core
                 .ToListAsync(cancellationToken);
 
             return _searchBuilder.BuildDependents(dependents);
+        }
+
+        /// <summary>
+        /// Count the packages matched by a filtered query, disregarding skip and take.
+        /// A single package is stored as one row per version, so the matching rows must be
+        /// reduced to their distinct package ids first. This mirrors the projection that the
+        /// paged queries use, so the total is always consistent with the page.
+        /// </summary>
+        private static Task<int> CountDistinctPackageIdsAsync(
+            IQueryable<Package> search,
+            CancellationToken cancellationToken)
+        {
+            return search
+                .Select(p => p.Id)
+                .Distinct()
+                .CountAsync(cancellationToken);
         }
 
         private IQueryable<Package> ApplySearchQuery(IQueryable<Package> query, string search)

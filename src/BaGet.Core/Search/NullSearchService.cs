@@ -12,6 +12,9 @@ namespace BaGet.Core
     {
         private static readonly IReadOnlyList<string> EmptyStringList = new List<string>();
 
+        // This service never matches anything, so zero is the total number of matches
+        // disregarding skip and take, not merely the size of the page returned.
+
         private static readonly Task<AutocompleteResponse> EmptyAutocompleteResponseTask =
             Task.FromResult(new AutocompleteResponse
             {
