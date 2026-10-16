@@ -1,4 +1,4 @@
-namespace BaGet.Web
+﻿namespace BaGet.Web
 {
     public class Routes
     {
@@ -19,5 +19,12 @@ namespace BaGet.Web
         public const string PackageDownloadIconRouteName = "package-download-icon";
         public const string SymbolDownloadRouteName = "symbol-download";
         public const string PrefixedSymbolDownloadRouteName = "prefixed-symbol-download";
+
+        public const string V2RootRouteName = "v2-root";
+        public const string V2MetadataRouteName = "v2-metadata";
+        public const string V2FindPackagesByIdRouteName = "v2-find-packages-by-id";
+        public const string V2PackagesRouteName = "v2-packages";
+        public const string V2PackagesByKeyRouteName = "v2-packages-by-key";
+        public const string V2SearchRouteName = "v2-search";
     }
 }

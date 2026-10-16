@@ -1,0 +1,294 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Options;
+using NuGet.Versioning;
+
+namespace BaGet.Web.V2
+{
+    /// <summary>
+    /// The NuGet V2 (OData) feed, for clients that cannot speak V3: "nuget list",
+    /// older Install-Package, and PowerShellGet.
+    /// </summary>
+    /// <remarks>
+    /// This is a deliberately partial OData implementation. The endpoints NuGet's own V2
+    /// client calls are served fully, but the OData query options are not interpreted:
+    /// "$filter", "$orderby", "$select" and "$expand" are ignored rather than applied.
+    /// "$skip" and "$top" are honoured, because that is how a client pages.
+    /// </remarks>
+    public class V2FeedController : Controller
+    {
+        private const int DefaultPageSize = 100;
+        private const int MaxPageSize = 1000;
+
+        private readonly IPackageDatabase _packages;
+        private readonly ISearchService _search;
+        private readonly IUrlGenerator _url;
+        private readonly IOptionsSnapshot<FeedsOptions> _feeds;
+
+        public V2FeedController(
+            IPackageDatabase packages,
+            ISearchService search,
+            IUrlGenerator url,
+            IOptionsSnapshot<FeedsOptions> feeds)
+        {
+            _packages = packages ?? throw new ArgumentNullException(nameof(packages));
+            _search = search ?? throw new ArgumentNullException(nameof(search));
+            _url = url ?? throw new ArgumentNullException(nameof(url));
+            _feeds = feeds ?? throw new ArgumentNullException(nameof(feeds));
+        }
+
+        /// <summary>
+        /// When the V2 feed is switched off the whole surface answers as though it does not
+        /// exist, rather than each action checking for itself.
+        /// </summary>
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            if (!_feeds.Value.EnableV2)
+            {
+                context.Result = NotFound();
+                return;
+            }
+
+            base.OnActionExecuting(context);
+        }
+
+        /// <summary>
+        /// The service document. A V2 client reads this to discover the "Packages" set.
+        /// </summary>
+        public IActionResult Root()
+        {
+            var document =
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                "<service xml:base=\"" + FeedBaseUrl() + "\" " +
+                "xmlns=\"http://www.w3.org/2007/app\" " +
+                "xmlns:atom=\"http://www.w3.org/2005/Atom\">" +
+                "<workspace><atom:title>Default</atom:title>" +
+                "<collection href=\"Packages\"><atom:title>Packages</atom:title></collection>" +
+                "</workspace></service>";
+
+            return Content(document, "application/xml; charset=utf-8");
+        }
+
+        public IActionResult Metadata()
+        {
+            return Content(V2FeedWriter.WriteMetadata(), "application/xml; charset=utf-8");
+        }
+
+        /// <summary>
+        /// Every version of one package. This is the endpoint NuGet's V2
+        /// FindPackageByIdResource uses to resolve a dependency.
+        /// </summary>
+        public async Task<IActionResult> FindPackagesById(
+            [FromQuery] string id,
+            CancellationToken cancellationToken)
+        {
+            // The id arrives as an OData string literal: id='Newtonsoft.Json'.
+            id = TrimLiteral(id);
+
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return Feed(new List<V2FeedPackage>(), "FindPackagesById");
+            }
+
+            var packages = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+
+            return Feed(Project(packages), "FindPackagesById");
+        }
+
+        /// <summary>
+        /// The package collection. Without a search term this lists what the feed holds.
+        /// </summary>
+        public async Task<IActionResult> Packages(
+            [FromQuery] string id,
+            [FromQuery(Name = "$skip")] int? skip,
+            [FromQuery(Name = "$top")] int? top,
+            [FromQuery] string semVerLevel,
+            CancellationToken cancellationToken)
+        {
+            id = TrimLiteral(id);
+
+            // Packages(Id='X',Version='Y') is routed here with both key values.
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                var packages = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+
+                return Feed(Project(packages), "Packages");
+            }
+
+            return await SearchFeed(
+                query: null,
+                skip: skip,
+                top: top,
+                includePrerelease: true,
+                semVerLevel: semVerLevel,
+                title: "Packages",
+                cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// A single package by its key. "nuget install" resolves an exact version here.
+        /// </summary>
+        public async Task<IActionResult> PackagesByKey(
+            string id,
+            string version,
+            CancellationToken cancellationToken)
+        {
+            id = TrimLiteral(id);
+            version = TrimLiteral(version);
+
+            if (!NuGetVersion.TryParse(version, out var parsed))
+            {
+                return NotFound();
+            }
+
+            var package = await _packages.FindOrNullAsync(id, parsed, includeUnlisted: true, cancellationToken);
+            if (package == null)
+            {
+                return NotFound();
+            }
+
+            // The latest-version flags are relative to the other versions, so the whole
+            // set has to be projected even when only one entry is returned.
+            var siblings = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+            var projected = Project(siblings)
+                .FirstOrDefault(p => p.NormalizedVersion == parsed.ToNormalizedString());
+
+            if (projected == null)
+            {
+                return NotFound();
+            }
+
+            return Content(
+                V2FeedWriter.WriteEntry(projected, FeedBaseUrl()),
+                "application/atom+xml; type=entry; charset=utf-8");
+        }
+
+        /// <summary>
+        /// The search endpoint "nuget list" calls.
+        /// </summary>
+        public async Task<IActionResult> Search(
+            [FromQuery] string searchTerm,
+            [FromQuery(Name = "$skip")] int? skip,
+            [FromQuery(Name = "$top")] int? top,
+            [FromQuery] bool includePrerelease,
+            [FromQuery] string semVerLevel,
+            CancellationToken cancellationToken)
+        {
+            return await SearchFeed(
+                query: TrimLiteral(searchTerm),
+                skip: skip,
+                top: top,
+                includePrerelease: includePrerelease,
+                semVerLevel: semVerLevel,
+                title: "Search",
+                cancellationToken: cancellationToken);
+        }
+
+        private async Task<IActionResult> SearchFeed(
+            string query,
+            int? skip,
+            int? top,
+            bool includePrerelease,
+            string semVerLevel,
+            string title,
+            CancellationToken cancellationToken)
+        {
+            var take = Math.Clamp(top ?? DefaultPageSize, 1, MaxPageSize);
+            var offset = Math.Max(skip ?? 0, 0);
+
+            var response = await _search.SearchAsync(
+                new SearchRequest
+                {
+                    Skip = offset,
+                    Take = take,
+                    IncludePrerelease = includePrerelease,
+                    IncludeSemVer2 = IsSemVer2(semVerLevel),
+                    Query = query,
+                },
+                cancellationToken);
+
+            // Search returns one result per package id, each carrying its versions. V2
+            // lists one entry per version, so the ids are re-read to get full metadata.
+            var result = new List<V2FeedPackage>();
+
+            foreach (var match in response.Data)
+            {
+                var packages = await _packages.FindAsync(match.PackageId, includeUnlisted: false, cancellationToken);
+
+                result.AddRange(Project(packages));
+            }
+
+            return Feed(result, title);
+        }
+
+        private List<V2FeedPackage> Project(IEnumerable<Package> packages)
+        {
+            return V2FeedPackage.FromPackages(
+                packages,
+                p => _url.GetPackageDownloadUrl(p.Id, p.Version));
+        }
+
+        private IActionResult Feed(IReadOnlyList<V2FeedPackage> packages, string title)
+        {
+            var baseUrl = FeedBaseUrl();
+            var selfUrl = baseUrl.TrimEnd('/') + "/" + title;
+
+            // The feed's own timestamp is the newest package it contains, so the document
+            // is stable for the same content rather than changing on every request.
+            var updated = packages.Count == 0
+                ? DateTime.UnixEpoch
+                : packages.Max(p => p.LastUpdated);
+
+            var document = V2FeedWriter.WriteFeed(
+                packages,
+                feedId: selfUrl,
+                feedTitle: title,
+                selfUrl: selfUrl,
+                baseUrl: baseUrl,
+                updated: updated);
+
+            return Content(document, "application/atom+xml; type=feed; charset=utf-8");
+        }
+
+        private string FeedBaseUrl()
+        {
+            var request = HttpContext.Request;
+
+            return request.Scheme
+                + "://"
+                + request.Host.ToUriComponent()
+                + request.PathBase.ToUriComponent()
+                + "/api/v2";
+        }
+
+        /// <summary>
+        /// Strip the single quotes around an OData string literal. A client may send
+        /// id='X' or a bare X, and both have to work.
+        /// </summary>
+        internal static string TrimLiteral(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+
+            var trimmed = value.Trim();
+
+            if (trimmed.Length >= 2 && trimmed[0] == '\'' && trimmed[trimmed.Length - 1] == '\'')
+            {
+                // An OData literal escapes an embedded quote by doubling it.
+                return trimmed.Substring(1, trimmed.Length - 2).Replace("''", "'");
+            }
+
+            return trimmed;
+        }
+
+        private static bool IsSemVer2(string semVerLevel)
+        {
+            return NuGetVersion.TryParse(semVerLevel, out var version) && version.Major >= 2;
+        }
+    }
+}

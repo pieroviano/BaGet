@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -18,6 +18,53 @@ namespace BaGet
             MapSearchRoutes(endpoints);
             MapPackageMetadataRoutes(endpoints);
             MapPackageContentRoutes(endpoints);
+            MapV2FeedRoutes(endpoints);
+        }
+
+        /// <summary>
+        /// The V2 (OData) feed. The routes are always mapped; the controller itself
+        /// answers 404 for every action when "Feeds:EnableV2" is off, so turning the feed
+        /// off does not change which routes exist.
+        /// </summary>
+        public void MapV2FeedRoutes(IEndpointRouteBuilder endpoints)
+        {
+            endpoints.MapControllerRoute(
+                name: Routes.V2RootRouteName,
+                pattern: "api/v2",
+                defaults: new { controller = "V2Feed", action = "Root" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.V2MetadataRouteName,
+                pattern: "api/v2/$metadata",
+                defaults: new { controller = "V2Feed", action = "Metadata" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.V2FindPackagesByIdRouteName,
+                pattern: "api/v2/FindPackagesById()",
+                defaults: new { controller = "V2Feed", action = "FindPackagesById" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.V2SearchRouteName,
+                pattern: "api/v2/Search()",
+                defaults: new { controller = "V2Feed", action = "Search" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            // The keyed form carries its values inside the segment, so it is matched by a
+            // literal pattern per argument order rather than by route values.
+            endpoints.MapControllerRoute(
+                name: Routes.V2PackagesByKeyRouteName,
+                pattern: "api/v2/Packages(Id={id},Version={version})",
+                defaults: new { controller = "V2Feed", action = "PackagesByKey" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.V2PackagesRouteName,
+                pattern: "api/v2/Packages()",
+                defaults: new { controller = "V2Feed", action = "Packages" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
         }
 
         public void MapServiceIndexRoutes(IEndpointRouteBuilder endpoints)

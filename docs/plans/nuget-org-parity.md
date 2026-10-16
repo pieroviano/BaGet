@@ -1,6 +1,6 @@
 # Plan: extend BaGet to nuget.org functionality
 
-Status: in progress. Phase 1 done. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
+Status: in progress. Phases 1 and 2 done. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
 Phase 1 onwards not started. Target branch policy: one reviewable PR per phase against
 `loic-sharma/BaGet` `main`.
 
@@ -104,7 +104,7 @@ Advertised service-index resources — `src/BaGet.Core/ServiceIndex/BaGetService
 | `PackageDetailsUriTemplate/5.1.0` | yes | yes |
 | `VulnerabilityInfo/6.7.0` | **no** | yes |
 | `RepositorySignatures/5.0.0` | **no** | yes |
-| `OData V2 feed` | **no** | yes |
+| `OData V2 feed` | yes | yes |
 
 Other gaps:
 
@@ -144,7 +144,7 @@ new Razor page under `src/BaGet.Web/Pages/`.
 **Verify**: new tests in `tests/BaGet.Core.Tests/` asserting both resources and their `@type`;
 existing `ApiIntegrationTests` service-index assertions updated (they compare whole documents).
 
-### Phase 2 — V2 OData feed (no schema)
+### Phase 2 — V2 OData feed (no schema) — DONE
 
 New project `src/BaGet.Web.V2`. Closes issues #778 and #455 (`nuget list`, `Install-Package` on
 old clients).

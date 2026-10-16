@@ -65,6 +65,7 @@ namespace BaGet.Core
             services.AddBaGetOptions<DatabaseOptions>(nameof(BaGetOptions.Database));
             services.AddBaGetOptions<FileSystemStorageOptions>(nameof(BaGetOptions.Storage));
             services.AddBaGetOptions<MirrorOptions>(nameof(BaGetOptions.Mirror));
+            services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
             services.AddBaGetOptions<SearchOptions>(nameof(BaGetOptions.Search));
             services.AddBaGetOptions<StorageOptions>(nameof(BaGetOptions.Storage));
         }
