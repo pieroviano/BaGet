@@ -109,15 +109,14 @@ namespace BaGet.Core
             package.Ignore(p => p.ProjectUrlString);
             package.Ignore(p => p.RepositoryUrlString);
 
-            // TODO: This is needed to make the dependency to package relationship required.
-            // Unfortunately, this would generate a migration that drops a foreign key, which
-            // isn't supported by SQLite. The migrations will be need to be recreated for this.
-            // Consumers will need to recreate their database and reindex all their packages.
-            // To make this transition easier, I'd like to finish this change:
-            // https://github.com/loic-sharma/BaGet/pull/174
-            //package.HasMany(p => p.Dependencies)
-            //    .WithOne(d => d.Package)
-            //    .IsRequired();
+            // A dependency row has no meaning without the package that declares it, so it is
+            // deleted with its package. The relationship is deliberately left optional: making
+            // it required would drop and recreate a foreign key, which SQLite does not support,
+            // so consumers would have to recreate their database and reindex every package.
+            // See: https://github.com/loic-sharma/BaGet/pull/174
+            package.HasMany(p => p.Dependencies)
+                .WithOne(d => d.Package)
+                .OnDelete(DeleteBehavior.Cascade);
 
             package.HasMany(p => p.PackageTypes)
                 .WithOne(d => d.Package)
