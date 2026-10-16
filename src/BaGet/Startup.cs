@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using BaGet.Core;
 using BaGet.Web;
