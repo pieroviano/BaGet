@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using BaGet.Core;
 using BaGet.Database.MySql;
 using Microsoft.EntityFrameworkCore;
@@ -16,9 +16,14 @@ namespace BaGet
             {
                 var databaseOptions = provider.GetRequiredService<IOptionsSnapshot<DatabaseOptions>>();
 
-                options.UseMySql(
-                    databaseOptions.Value.ConnectionString,
-                    ServerVersion.AutoDetect(databaseOptions.Value.ConnectionString));
+                // Detecting the version connects to the server, and these options are built
+                // whenever the contexts are enumerated - including by the design-time tools.
+                // Prefer the configured version so that building options stays offline.
+                var serverVersion = string.IsNullOrWhiteSpace(databaseOptions.Value.MySqlServerVersion)
+                    ? ServerVersion.AutoDetect(databaseOptions.Value.ConnectionString)
+                    : ServerVersion.Parse(databaseOptions.Value.MySqlServerVersion);
+
+                options.UseMySql(databaseOptions.Value.ConnectionString, serverVersion);
             });
 
             return app;

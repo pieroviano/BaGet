@@ -1,6 +1,7 @@
 # Plan: extend BaGet to nuget.org functionality
 
-Status: proposed. Not started. Target branch policy: one reviewable PR per phase against
+Status: in progress. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
+Phase 1 onwards not started. Target branch policy: one reviewable PR per phase against
 `loic-sharma/BaGet` `main`.
 
 ## Decisions taken (and their consequences)
@@ -25,6 +26,50 @@ Status: proposed. Not started. Target branch policy: one reviewable PR per phase
 | B4 | Decide whether `BaGet.Protocol` (shipped as a NuGet package) may take new public members in a minor version | Phases 3 and 8 add models to it. A breaking change to a published SDK needs a major version. | Check the package's current version and its SemVer policy. |
 | B5 | Does the existing single API key remain honoured once Identity is added? | "No breaking changes" requires it. | Write the test first: existing `ApiKeyAuthenticationServiceTests` must keep passing with Identity registered. |
 
+## Blocking verification results (2026-10-16)
+
+| # | Verdict | Finding |
+|---|---|---|
+| B1 | **Pass, after fixing the toolchain** | A new table with a nullable FK to `Packages` generates a plain `CreateTable` on SQLite - no table rebuild, no FK alteration, no data loss - and applies cleanly (`BaGet.Tests` 82/82). The additive-only strategy is sound. Getting there needed three fixes, below. |
+| B2 | **Pass** | `Package.Key` is `int` / `ValueGeneratedOnAdd` in all four migration snapshots. Safe FK target. |
+| B3 | **Pass, with corrections** | All the resources are documented and live on nuget.org. Corrections to this plan: `ReportAbuseUriTemplate` is published as `3.0.0-beta` **and** `3.0.0-rc`, not `3.0.0`. nuget.org also advertises `OwnerDetailsUriTemplate/6.11.0`, `ReadmeUriTemplate/6.13.0`, `PackageDisplayMetadataUriTemplate/3.0.0-rc`, `PackageVersionDisplayMetadataUriTemplate/3.0.0-rc`, `SearchGalleryQueryService/3.0.0-rc` and `LegacyGallery`, none of which this plan listed. Template placeholders are `{id}`, `{version}`, `{id-lower}`, `{version-lower}`, `{owner}`, `{lower_id}`. |
+| B4 | **Pass** | `BaGet.Protocol` versions as `0.1.0.<yyddd>` (pre-1.0, date-stamped) via `src/Directory.Build.props:10`. Additive public members are acceptable. |
+| B5 | Deferred | Nothing to check until Identity exists. Stays a test-first requirement of Phase 5. |
+
+### Blockers found while running B1
+
+| Blocker | Resolution |
+|---|---|
+| `dotnet ef` could not find any context: `ServerVersion.AutoDetect` in `MySqlApplicationExtensions` opens a live MySQL connection while options are built, and the design-time tools build options for every registered provider. | `DatabaseOptions.MySqlServerVersion` added; when set, the version is parsed instead of detected, so building options stays offline. |
+| EF tools 9.0.0 could not load the EF 10.0.13 runtime. | Updated the global `dotnet-ef` tool to 10.0.13. |
+| Design-time discovery built the whole application's DI, so one unusable provider broke migrations for all of them. | `IDesignTimeDbContextFactory` added to the Sqlite, SqlServer and PostgreSql projects. `dotnet ef` no longer needs `--startup-project`, and each provider is independent. Verified: 7, 6 and 6 migrations listed respectively. |
+
+### MySQL is blocked, and the "all four database providers" constraint cannot hold
+
+**Pomelo.EntityFrameworkCore.MySql has no release that supports EF Core 10.** The latest is
+9.0.0, whose dependency on `Microsoft.EntityFrameworkCore.Relational` is constrained to
+`>= 9.0.0 && <= 9.0.999`. The solution only builds because that constraint is violated through
+transitive resolution, which NuGet reports as the `NU1608` warning already visible on
+`src/BaGet/BaGet.csproj`. Consequences, all verified:
+
+- Adding any direct EF 10 reference to `src/BaGet.Database.MySql` turns that warning into a hard
+  `NU1107` version conflict, so the project cannot take a design-time factory.
+- Resolving `MySqlContext` at runtime throws `MethodNotFound` for
+  `AbstractionsStrings.ArgumentIsEmpty`, because Pomelo 9 was compiled against EF 9. **MySQL
+  hosting is broken on this branch**, independently of this plan.
+
+Options, none of which this plan can decide unilaterally:
+
+| Option | Cost |
+|---|---|
+| Wait for a Pomelo release targeting EF 10 | Blocks phases 3-6 for MySQL indefinitely |
+| Drop MySQL support | Breaks existing MySQL deployments - violates "no breaking changes" |
+| Pin the solution back to EF Core 9 | Reverses the .NET 10 upgrade in PR #808 |
+| Ship MySQL migrations unverified | Violates "all four database providers" in spirit |
+
+Until this is decided, phases 3-6 can be implemented and verified for **SQLite, SQL Server and
+PostgreSQL only**, and this must be stated in each of those PRs.
+
 ## Current state
 
 Advertised service-index resources — `src/BaGet.Core/ServiceIndex/BaGetServiceIndex.cs:35-41`:
@@ -38,7 +83,7 @@ Advertised service-index resources — `src/BaGet.Core/ServiceIndex/BaGetService
 | `PackageBaseAddress/3.0.0` | yes | yes |
 | `SearchAutocompleteService` | yes | yes |
 | `Catalog/3.0.0` | **no** | yes |
-| `ReportAbuseUriTemplate/3.0.0` | **no** | yes |
+| `ReportAbuseUriTemplate/3.0.0-beta`, `/3.0.0-rc` | **no** | yes |
 | `PackageDetailsUriTemplate/5.1.0` | **no** | yes |
 | `VulnerabilityInfo/6.7.0` | **no** | yes |
 | `RepositorySignatures/5.0.0` | **no** | yes |
@@ -72,7 +117,7 @@ they bypass `LinkGenerator` and use `AbsoluteUrl` (line 152).
 `BaGetServiceIndex.GetAsync` gains:
 
 ```csharp
-resources.AddRange(BuildResource("ReportAbuseUriTemplate", _url.GetReportAbuseUriTemplate(), "3.0.0"));
+resources.AddRange(BuildResource("ReportAbuseUriTemplate", _url.GetReportAbuseUriTemplate(), "3.0.0-beta", "3.0.0-rc"));
 resources.AddRange(BuildResource("PackageDetailsUriTemplate", _url.GetPackageDetailsUriTemplate(), "5.1.0"));
 ```
 
