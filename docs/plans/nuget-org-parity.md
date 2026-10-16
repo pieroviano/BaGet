@@ -1,6 +1,6 @@
 # Plan: extend BaGet to nuget.org functionality
 
-Status: in progress. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
+Status: in progress. Phase 1 done. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
 Phase 1 onwards not started. Target branch policy: one reviewable PR per phase against
 `loic-sharma/BaGet` `main`.
 
@@ -100,8 +100,8 @@ Advertised service-index resources — `src/BaGet.Core/ServiceIndex/BaGetService
 | `PackageBaseAddress/3.0.0` | yes | yes |
 | `SearchAutocompleteService` | yes | yes |
 | `Catalog/3.0.0` | **no** | yes |
-| `ReportAbuseUriTemplate/3.0.0-beta`, `/3.0.0-rc` | **no** | yes |
-| `PackageDetailsUriTemplate/5.1.0` | **no** | yes |
+| `ReportAbuseUriTemplate/3.0.0-beta`, `/3.0.0-rc` | yes | yes |
+| `PackageDetailsUriTemplate/5.1.0` | yes | yes |
 | `VulnerabilityInfo/6.7.0` | **no** | yes |
 | `RepositorySignatures/5.0.0` | **no** | yes |
 | `OData V2 feed` | **no** | yes |
@@ -118,7 +118,7 @@ Other gaps:
 
 Each phase is one PR. Schema column counts are new tables unless stated.
 
-### Phase 1 — Service index URI templates (no schema)
+### Phase 1 — Service index URI templates (no schema) — DONE
 
 Add to `IUrlGenerator` (`src/BaGet.Core/IUrlGenerator.cs`, after line 50):
 

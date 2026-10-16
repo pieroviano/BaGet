@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -42,13 +42,15 @@ namespace BaGet.Tests
             var index = await client.GetAsync();
 
             Assert.Equal("3.0.0", index.Version);
-            Assert.Equal(12, index.Resources.Count);
+            Assert.Equal(15, index.Resources.Count);
 
             Assert.NotEmpty(index.GetResourceUrl(new[] { "PackageBaseAddress/3.0.0" }));
             Assert.NotEmpty(index.GetResourceUrl(new[] { "PackagePublish/2.0.0" }));
             Assert.NotEmpty(index.GetResourceUrl(new[] { "RegistrationsBaseUrl" }));
             Assert.NotEmpty(index.GetResourceUrl(new[] { "SearchAutocompleteService" }));
             Assert.NotEmpty(index.GetResourceUrl(new[] { "SearchQueryService" }));
+            Assert.NotEmpty(index.GetResourceUrl(new[] { "PackageDetailsUriTemplate/5.1.0" }));
+            Assert.NotEmpty(index.GetResourceUrl(new[] { "ReportAbuseUriTemplate/3.0.0-rc" }));
             Assert.NotEmpty(index.GetResourceUrl(new[] { "SymbolPackagePublish/4.9.0" }));
         }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -147,6 +147,19 @@ namespace BaGet.Web
                     Id = id,
                     Version = versionString
                 });
+        }
+
+        // These two are templates for the client to expand, not URLs for a specific
+        // package, so the placeholders are returned verbatim. Routing them through
+        // LinkGenerator would percent-encode the braces.
+        public string GetPackageDetailsUriTemplate()
+        {
+            return AbsoluteUrl("packages/{id}/{version}");
+        }
+
+        public string GetReportAbuseUriTemplate()
+        {
+            return AbsoluteUrl("packages/{id}/{version}/report-abuse");
         }
 
         private string AbsoluteUrl(string relativePath)

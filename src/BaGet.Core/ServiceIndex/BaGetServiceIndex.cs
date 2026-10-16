@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,6 +39,8 @@ namespace BaGet.Core
             resources.AddRange(BuildResource("RegistrationsBaseUrl", _url.GetPackageMetadataResourceUrl(), "", "3.0.0-rc", "3.0.0-beta"));
             resources.AddRange(BuildResource("PackageBaseAddress", _url.GetPackageContentResourceUrl(), "3.0.0"));
             resources.AddRange(BuildResource("SearchAutocompleteService", _url.GetAutocompleteResourceUrl(), "", "3.0.0-rc", "3.0.0-beta"));
+            resources.AddRange(BuildResource("PackageDetailsUriTemplate", _url.GetPackageDetailsUriTemplate(), "5.1.0"));
+            resources.AddRange(BuildResource("ReportAbuseUriTemplate", _url.GetReportAbuseUriTemplate(), "3.0.0-beta", "3.0.0-rc"));
 
             var result = new ServiceIndexResponse
             {

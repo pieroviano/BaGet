@@ -1,4 +1,4 @@
-using NuGet.Versioning;
+﻿using NuGet.Versioning;
 
 namespace BaGet.Core
 {
@@ -48,6 +48,20 @@ namespace BaGet.Core
         /// See: https://docs.microsoft.com/en-us/nuget/api/search-query-service-resource
         /// </summary>
         string GetAutocompleteResourceUrl();
+
+        /// <summary>
+        /// Get the URI template a client expands to reach a package's details page.
+        /// The literal "{id}" and "{version}" placeholders are part of the value.
+        /// See: https://learn.microsoft.com/en-us/nuget/api/service-index#resources
+        /// </summary>
+        string GetPackageDetailsUriTemplate();
+
+        /// <summary>
+        /// Get the URI template a client expands to report a package as abusive.
+        /// The literal "{id}" and "{version}" placeholders are part of the value.
+        /// See: https://learn.microsoft.com/en-us/nuget/api/service-index#resources
+        /// </summary>
+        string GetReportAbuseUriTemplate();
 
         /// <summary>
         /// Get the URL for the entry point of a package's metadata.

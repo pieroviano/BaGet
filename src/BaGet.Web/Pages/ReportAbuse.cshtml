@@ -1,0 +1,29 @@
+@page "/packages/{id}/{version}/report-abuse"
+
+@{
+    var id = (string)RouteData.Values["id"];
+    var version = (string)RouteData.Values["version"];
+
+    ViewData["Title"] = "Report abuse";
+}
+
+<div class="col-sm-12">
+    <h1>Report abuse</h1>
+    <hr class="breadcrumb-divider" />
+
+    <p>
+        You are reporting
+        <a asp-page="/Package" asp-route-id="@id" asp-route-version="@version">@id @version</a>.
+    </p>
+
+    <p>
+        This feed has no abuse reporting workflow of its own. Contact whoever
+        administers it, quoting the package ID and version above, and they can unlist
+        or delete the package.
+    </p>
+
+    <p>
+        If the package was mirrored from an upstream feed, report it there as well:
+        removing it here does not remove it upstream.
+    </p>
+</div>

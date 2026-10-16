@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -52,7 +52,7 @@ namespace BaGet.Tests
         {
             var index = await _repository.GetResourceAsync<ServiceIndexResourceV3>();
 
-            Assert.Equal(12, index.Entries.Count);
+            Assert.Equal(15, index.Entries.Count);
 
             Assert.NotEmpty(index.GetServiceEntries("PackageBaseAddress/3.0.0"));
             Assert.NotEmpty(index.GetServiceEntries("PackagePublish/2.0.0"));
@@ -60,6 +60,8 @@ namespace BaGet.Tests
             Assert.NotEmpty(index.GetServiceEntries("SearchAutocompleteService"));
             Assert.NotEmpty(index.GetServiceEntries("SearchQueryService"));
             Assert.NotEmpty(index.GetServiceEntries("SymbolPackagePublish/4.9.0"));
+            Assert.NotEmpty(index.GetServiceEntries("PackageDetailsUriTemplate/5.1.0"));
+            Assert.NotEmpty(index.GetServiceEntries("ReportAbuseUriTemplate/3.0.0-rc"));
         }
 
         [Fact]
