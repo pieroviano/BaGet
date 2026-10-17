@@ -88,7 +88,7 @@ namespace BaGet.Core
             return results;
         }
 
-        private async Task<Stream> GetDownloadsStreamAsync()
+        internal async Task<Stream> GetDownloadsStreamAsync()
         {
             _logger.LogInformation("Downloading downloads.v1.json...");
 

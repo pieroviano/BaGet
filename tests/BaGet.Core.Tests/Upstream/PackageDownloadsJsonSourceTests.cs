@@ -139,15 +139,20 @@ namespace BaGet.Core.Tests.Upstream
         public async Task DoesNotLeaveItsTemporaryFileBehind()
         {
             // The document is spooled to disk rather than held in memory, so the file has to
-            // go when the stream is disposed.
-            var before = Directory.GetFiles(Path.GetTempPath()).Length;
+            // go when the stream is disposed. The spool file itself is checked: counting the
+            // temporary directory's files races with every other test that creates one.
+            var target = new PackageDownloadsJsonSource(
+                new HttpClient(new StubHandler(@"[[""Package.Id"",[""1.0.0"",1]]]")),
+                NullLogger<PackageDownloadsJsonSource>.Instance);
 
-            await ParseAsync(@"[[""Package.Id"",[""1.0.0"",1]]]");
+            string path;
+            using (var stream = await target.GetDownloadsStreamAsync())
+            {
+                path = Assert.IsType<FileStream>(stream).Name;
+                Assert.True(File.Exists(path));
+            }
 
-            var after = Directory.GetFiles(Path.GetTempPath()).Length;
-            Assert.True(
-                after <= before,
-                $"the temporary directory grew from {before} to {after} files");
+            Assert.False(File.Exists(path), $"{path} was left behind");
         }
     }
 }
