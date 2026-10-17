@@ -279,18 +279,24 @@ exactly as today and no package enters `Validating`.
 `PackageContentController` serves. With validation off this code path is unreachable — keep it that
 way to protect existing deployments.
 
-### Phase 7 — Search parity
+### Phase 7 — Search parity — PARTLY DONE
 
 - Prefix search on package id (`src/BaGet.Azure/Search/AzureSearchService.cs:111`).
 - Prerelease/semver2/packageType filters (`:112`).
 - Versions autocomplete (`:143`, and `src/BaGet.Azure/Table/TableSearchService.cs:63`).
 - **Escape `packageId`** before interpolating it into a search query (`:152`) — a query-injection
   bug, worth doing on its own merits.
-- Correct `TotalHits`: `SearchResponseBuilder.BuildSearch` currently reports the page size, while
-  `AutocompleteResponse.TotalHits` is documented as the total disregarding skip/take. Needs a count
-  query and changes a public response.
+- Correct `TotalHits`: **done**. `ISearchResponseBuilder.BuildSearch`/`BuildAutocomplete` now take
+  the total, `DatabaseSearchService` counts distinct package ids, and the builder reports it. This
+  changed a public interface and a response a client sees.
 
-### Phase 8 — Search failover and client SDK — DONE
+Done: the query escaping (all four caller supplied values across `FindDependentsAsync` and
+`BuildSearchQuery`) and `TotalHits`. Still outstanding: prefix search on the id field,
+prerelease/semver2/package type filters, and versions autocomplete - all of which live only in
+`src/BaGet.Azure` and cannot be executed here, since the default search type is `Database` and
+there is no Azure Search instance.
+
+### Phase 8 — Search failover and client SDK — DONE — DONE
 
 | Change | Where |
 |---|---|
