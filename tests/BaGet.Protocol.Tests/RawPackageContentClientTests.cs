@@ -1,6 +1,9 @@
 using System;
+using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Protocol.Internal;
+using NuGet.Versioning;
 using Xunit;
 
 namespace BaGet.Protocol.Tests
@@ -33,7 +36,94 @@ namespace BaGet.Protocol.Tests
             Assert.Null(result);
         }
 
-        // TODO: Test package download
-        // TODO: Test package manifest download
+        [Fact]
+        public async Task DownloadsPackage()
+        {
+            using (var stream = await _target.DownloadPackageOrNullAsync(
+                "Test.Package",
+                NuGetVersion.Parse("1.0.0")))
+            {
+                Assert.NotNull(stream);
+
+                using (var reader = new StreamReader(stream))
+                {
+                    Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
+                }
+            }
+        }
+
+        [Fact]
+        public async Task DownloadsPackageUsingNormalizedLowercasedUrl()
+        {
+            var handler = new RecordingHttpMessageHandler();
+            var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
+
+            using (await target.DownloadPackageOrNullAsync(
+                "Test.Package",
+                NuGetVersion.Parse("1.0.0.0+Build")))
+            {
+            }
+
+            var url = Assert.Single(handler.Requests);
+
+            Assert.Equal(
+                "/v3/content/test.package/1.0.0/test.package.1.0.0.nupkg",
+                url.AbsolutePath);
+        }
+
+        [Fact]
+        public async Task ReturnsNullIfPackageToDownloadDoesNotExist()
+        {
+            var stream = await _target.DownloadPackageOrNullAsync(
+                Guid.NewGuid().ToString(),
+                NuGetVersion.Parse("1.0.0"));
+
+            Assert.Null(stream);
+        }
+
+        [Fact]
+        public async Task DownloadsPackageManifest()
+        {
+            using (var stream = await _target.DownloadPackageManifestOrNullAsync(
+                "Test.Package",
+                NuGetVersion.Parse("1.0.0")))
+            {
+                Assert.NotNull(stream);
+
+                using (var reader = new StreamReader(stream))
+                {
+                    Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
+                }
+            }
+        }
+
+        [Fact]
+        public async Task DownloadsPackageManifestUsingNormalizedLowercasedUrl()
+        {
+            var handler = new RecordingHttpMessageHandler();
+            var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
+
+            using (await target.DownloadPackageManifestOrNullAsync(
+                "Test.Package",
+                NuGetVersion.Parse("1.0.0.0+Build")))
+            {
+            }
+
+            var url = Assert.Single(handler.Requests);
+
+            Assert.Equal(
+                "/v3/content/test.package/1.0.0/test.package.nuspec",
+                url.AbsolutePath);
+        }
+
+        [Fact]
+        public async Task ReturnsNullIfPackageManifestDoesNotExist()
+        {
+            var stream = await _target.DownloadPackageManifestOrNullAsync(
+                Guid.NewGuid().ToString(),
+                NuGetVersion.Parse("1.0.0"));
+
+            Assert.Null(stream);
+        }
     }
 }

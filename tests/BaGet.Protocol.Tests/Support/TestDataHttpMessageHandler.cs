@@ -25,11 +25,17 @@ namespace BaGet.Protocol.Tests
             { TestData.RegistrationLeafUnlistedUrl, () => TestData.RegistrationLeafUnlisted },
             { TestData.RegistrationLeafListedUrl, () => TestData.RegistrationLeafListed },
             { TestData.RegistrationPageUrl, () => TestData.RegistrationPage },
+            { TestData.RegistrationPageFirstUrl, () => TestData.RegistrationPageFirst },
+            { TestData.RegistrationPageDeprecatedUrl, () => TestData.RegistrationPageDeprecated },
 
             { TestData.PackageContentVersionListUrl, () => TestData.PackageContentVersionList },
+            { TestData.PagedPackageContentVersionListUrl, () => TestData.PagedPackageContentVersionList },
+            { TestData.PackageContentNupkgUrl, () => TestData.PackageContentNupkg },
+            { TestData.PackageContentNuspecUrl, () => TestData.PackageContentNuspec },
 
             { TestData.DefaultSearchUrl, () => TestData.DefaultSearch },
             { TestData.DefaultAutocompleteUrl, () => TestData.DefaultAutocomplete },
+            { TestData.AutocompleteVersionsUrl, () => TestData.AutocompleteVersions },
         };
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -58,8 +64,25 @@ namespace BaGet.Protocol.Tests
                 Content = new StringContent(
                     getContent(),
                     encoding: null,
-                    mediaType: "application/json"),
+                    mediaType: MediaTypeFor(request.RequestUri)),
             };
+        }
+
+        private static string MediaTypeFor(Uri requestUri)
+        {
+            var path = requestUri.AbsolutePath;
+
+            if (path.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
+            {
+                return "application/octet-stream";
+            }
+
+            if (path.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase))
+            {
+                return "application/xml";
+            }
+
+            return "application/json";
         }
     }
 }
