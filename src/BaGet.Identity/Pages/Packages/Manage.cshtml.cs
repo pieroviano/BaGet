@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Pages.Account;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,14 @@ namespace BaGet.Identity.Pages.Packages
     /// </summary>
     public class ManageModel : AccountPageModel
     {
+        /// <summary>
+        /// What every write handler here answers on a read-only server. The API refuses each
+        /// of these operations with a 401, so the page must refuse all of them too rather
+        /// than only the one it was last asked about.
+        /// </summary>
+        internal const string ReadOnlyMessage =
+            "This server is in read-only mode, so nothing can be changed.";
+
         protected override bool RequiresSignIn => true;
 
         [BindProperty(SupportsGet = true)]
@@ -76,6 +85,20 @@ namespace BaGet.Identity.Pages.Packages
                 return;
             }
 
+            // Every handler on this page but the GET writes to the database, and most of
+            // them notify the catalog as well. Refused here, once, rather than in each
+            // handler: unlisting, relisting, deprecating and changing owners are the same
+            // operations the push and metadata endpoints short-circuit in read-only mode,
+            // and a page that refused only one of them would contradict itself.
+            if (IsReadOnlyMode && HttpMethods.IsPost(HttpContext.Request.Method))
+            {
+                Message = ReadOnlyMessage;
+                await LoadAsync(HttpContext.RequestAborted);
+
+                context.Result = Page();
+                return;
+            }
+
             await next();
         }
 
@@ -115,13 +138,9 @@ namespace BaGet.Identity.Pages.Packages
         /// </summary>
         public async Task<IActionResult> OnPostDeleteAsync(string version, CancellationToken cancellationToken)
         {
-            // The same short-circuit the push endpoint's DELETE has: a read-only server
-            // refuses before anything is touched.
-            if (IsReadOnlyMode)
-            {
-                return await DoneAsync("This server is in read-only mode, so nothing can be deleted.", cancellationToken);
-            }
-
+            // Read-only mode is refused for every handler at once, in
+            // OnPageHandlerExecutionAsync, as the push endpoint's DELETE refuses before
+            // anything is touched.
             if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
 
             // False means the database held no such version - not that nothing happened:

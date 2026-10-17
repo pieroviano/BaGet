@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Aws
 {
-    public class S3StorageService : IStorageService
+    public class S3StorageService : IStorageService, IListableStorageService
     {
         private const string Separator = "/";
 
@@ -127,6 +128,44 @@ namespace BaGet.Aws
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Every key under a prefix, paged until S3 says there is no more. The sweep of
+        /// abandoned staged uploads is the only caller, and without this a bucket would keep
+        /// them forever.
+        /// </summary>
+        public async Task<IReadOnlyList<string>> ListAsync(string pathPrefix, CancellationToken cancellationToken = default)
+        {
+            // A prefix is a path segment, not a string prefix: "staging" must not also match
+            // "staging-archive/...".
+            var prefix = PrepareKey(pathPrefix.TrimEnd('/') + Separator);
+            var paths = new List<string>();
+            string continuation = null;
+
+            do
+            {
+                var response = await _client.ListObjectsV2Async(
+                    new ListObjectsV2Request
+                    {
+                        BucketName = _bucket,
+                        Prefix = prefix,
+                        ContinuationToken = continuation,
+                    },
+                    cancellationToken);
+
+                foreach (var item in response.S3Objects)
+                {
+                    // Reported as the paths IStorageService takes, so the configured bucket
+                    // prefix is removed again.
+                    paths.Add(string.IsNullOrEmpty(_prefix) ? item.Key : item.Key.Substring(_prefix.Length));
+                }
+
+                continuation = response.IsTruncated == true ? response.NextContinuationToken : null;
+            }
+            while (continuation != null);
+
+            return paths;
         }
 
         public async Task DeleteAsync(string path, CancellationToken cancellationToken = default)

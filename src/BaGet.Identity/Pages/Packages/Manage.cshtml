@@ -1,4 +1,4 @@
-@page "/packages/{id}/manage"
+﻿@page "/packages/{id}/manage"
 @model BaGet.Identity.Pages.Packages.ManageModel
 @{
     ViewData["Title"] = $"Manage {Model.Id}";
@@ -13,6 +13,16 @@
         <div class="alert alert-info" role="alert" id="manage-message">@Model.Message</div>
     }
 
+    @if (Model.IsReadOnlyMode)
+    {
+        @* The buttons stay on the page but do nothing: every handler here is refused while
+           the server is read-only, exactly as the push and metadata endpoints are. *@
+        <div class="alert alert-warning" role="alert" id="manage-read-only">
+            This server is in read-only mode. Nothing on this page can be changed - owners,
+            listing, deprecation and deletion are all refused - until that is turned off.
+        </div>
+    }
+
     <h2>Owners</h2>
     <table class="table">
         <tbody>
@@ -23,7 +33,7 @@
                     <td>
                         <form method="post" asp-page-handler="RemoveOwner">
                             <input type="hidden" name="ownerName" value="@owner.OwnerName" />
-                            <button type="submit" class="btn btn-default btn-xs">Remove</button>
+                            <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
                         </form>
                     </td>
                 </tr>
@@ -32,7 +42,7 @@
     </table>
     <form method="post" asp-page-handler="AddOwner" class="form-inline">
         <input type="text" name="ownerName" class="form-control" placeholder="User or organization" />
-        <button type="submit" class="btn btn-primary">Add owner</button>
+        <button type="submit" class="btn btn-primary" disabled="@Model.IsReadOnlyMode">Add owner</button>
     </form>
 
     <h2>Versions</h2>
@@ -59,7 +69,7 @@
                         @(package.Listed ? "Yes" : "No")
                         <form method="post" asp-page-handler="@(package.Listed ? "Unlist" : "Relist")" style="display:inline">
                             <input type="hidden" name="version" value="@version" />
-                            <button type="submit" class="btn btn-default btn-xs">@(package.Listed ? "Unlist" : "Relist")</button>
+                            <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">@(package.Listed ? "Unlist" : "Relist")</button>
                         </form>
                     </td>
                     <td>
@@ -68,7 +78,7 @@
                             @string.Join(", ", package.Deprecation.Reasons ?? Array.Empty<string>())
                             <form method="post" asp-page-handler="Undeprecate" style="display:inline">
                                 <input type="hidden" name="version" value="@version" />
-                                <button type="submit" class="btn btn-default btn-xs">Remove</button>
+                                <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
                             </form>
                         }
                     </td>
@@ -81,7 +91,7 @@
                             }
                             <input type="text" name="message" class="form-control input-sm" placeholder="Message" />
                             <input type="text" name="alternatePackageId" class="form-control input-sm" placeholder="Alternate package" />
-                            <button type="submit" class="btn btn-warning btn-xs">Deprecate</button>
+                            <button type="submit" class="btn btn-warning btn-xs" disabled="@Model.IsReadOnlyMode">Deprecate</button>
                         </form>
                     </td>
                     <td>
@@ -91,7 +101,8 @@
                             <input type="hidden" name="version" value="@version" />
                             <button type="submit"
                                     class="@(Model.DeletionIsPermanent ? "btn btn-danger btn-xs" : "btn btn-default btn-xs")"
-                                    onclick="return confirm('@Model.DeleteLabel @version? @Model.DeleteCaption')">
+                                    onclick="return confirm('@Model.DeleteLabel @version? @Model.DeleteCaption')"
+                                    disabled="@Model.IsReadOnlyMode">
                                 @Model.DeleteLabel
                             </button>
                         </form>
@@ -121,7 +132,7 @@
                         <td>
                             <form method="post" asp-page-handler="ResolveReport">
                                 <input type="hidden" name="key" value="@report.Key" />
-                                <button type="submit" class="btn btn-default btn-xs">Resolve</button>
+                                <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Resolve</button>
                             </form>
                         </td>
                     </tr>

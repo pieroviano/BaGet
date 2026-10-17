@@ -10,8 +10,11 @@ namespace BaGet.Core
         /// global <see cref="BaGetOptions.ApiKey"/> authenticates.
         /// </summary>
         /// <remarks>
-        /// Per-user keys only restrict anything when <see cref="BaGetOptions.ApiKey"/> is set.
-        /// Without it the server is open, and every caller remains the superuser.
+        /// While this is on, a caller must prove who they are: the global
+        /// <see cref="BaGetOptions.ApiKey"/> if one is configured, otherwise a user's own key.
+        /// An unset <see cref="BaGetOptions.ApiKey"/> means there is no global key, not that
+        /// the server is open - otherwise ownership, which is the point of accounts, could be
+        /// bypassed by sending no key at all.
         /// </remarks>
         public bool Enabled { get; set; }
 

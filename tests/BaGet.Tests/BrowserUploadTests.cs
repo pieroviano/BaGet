@@ -62,11 +62,17 @@ namespace BaGet.Tests
             return browser.PostAsync("upload", fields, "upload?handler=Submit", tokenPage);
         }
 
-        public static Task<HttpResponseMessage> CancelAsync(this Browser browser, string token)
-            => browser.PostAsync(
-                "upload",
-                new Dictionary<string, string> { { "token", token } },
-                "upload?handler=Cancel");
+        public static Task<HttpResponseMessage> CancelAsync(
+            this Browser browser,
+            string token,
+            string apiKey = null,
+            string tokenPage = null)
+        {
+            var fields = new Dictionary<string, string> { { "token", token } };
+            if (apiKey != null) fields["apiKey"] = apiKey;
+
+            return browser.PostAsync("upload", fields, "upload?handler=Cancel", tokenPage);
+        }
 
         /// <summary>
         /// The staging token the preview is carrying, which is the only handle on a staged
@@ -312,6 +318,71 @@ namespace BaGet.Tests
         }
 
         [Fact]
+        public async Task AnotherUsersTokenCannotDiscardTheirUpload()
+        {
+            using var alice = await SignInAsync("alice");
+            using var bob = await SignInAsync("bob");
+
+            var token = BrowserUpload.StagedToken(
+                await StageAsync(alice, "Alice.1.0.0.nupkg", TestPackages.Build("Alice.Discard", "1.0.0")));
+
+            using (var stolen = await bob.CancelAsync(token))
+            {
+                // Indistinguishable from a token that never existed, as submitting is.
+                Assert.Equal(HttpStatusCode.NotFound, stolen.StatusCode);
+                Assert.Contains(UploadModel.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync());
+            }
+
+            // Alice's upload is untouched, so Bob could not make her upload the file again.
+            using var mine = await alice.SubmitAsync(token);
+
+            Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
+            Assert.True(await ExistsAsync("Alice.Discard", "1.0.0"));
+        }
+
+        [Fact]
+        public async Task AnAnonymousVisitorCannotDiscardAStagedUpload()
+        {
+            using var alice = await SignInAsync("alice");
+            using var anonymous = new Browser(_app);
+
+            var token = BrowserUpload.StagedToken(
+                await StageAsync(alice, "Alice.1.0.0.nupkg", TestPackages.Build("Alice.Anonymous", "1.0.0")));
+
+            using (var attempt = await anonymous.PostAsync(
+                "upload",
+                new Dictionary<string, string> { { "token", token } },
+                "upload?handler=Cancel",
+                BrowserUpload.TokenPage))
+            {
+                Assert.Equal(HttpStatusCode.Unauthorized, attempt.StatusCode);
+            }
+
+            using var mine = await alice.SubmitAsync(token);
+
+            Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
+            Assert.True(await ExistsAsync("Alice.Anonymous", "1.0.0"));
+        }
+
+        [Fact]
+        public async Task AFileNamedSnupkgThatIsNotASymbolPackageIsRefused()
+        {
+            using var alice = await SignInAsync("alice");
+
+            // The content decides the pipeline, so a symbols file name over package content
+            // must not be published as a package under that ID - the symbol endpoint would
+            // read the very same bytes as symbols.
+            using var response = await alice.StageAsync(
+                "NotSymbols.1.0.0.snupkg",
+                TestPackages.Build("NotSymbols", "1.0.0"));
+            var html = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("SymbolsPackage", html);
+            Assert.False(await ExistsAsync("NotSymbols", "1.0.0"));
+        }
+
+        [Fact]
         public async Task AnAnonymousVisitorIsAskedToSignIn()
         {
             using var anonymous = new Browser(_app);
@@ -451,9 +522,15 @@ namespace BaGet.Tests
                 "TestData.1.2.3.nupkg",
                 TestResources.GetResourceStream(TestResources.Package),
                 GlobalKey);
+            var html = await staged.Content.ReadAsStringAsync();
+
+            // Asserted first: a refusal's body carries no API key either, so without this the
+            // test would stay green against an upload page that never previewed anything.
+            Assert.Equal(HttpStatusCode.OK, staged.StatusCode);
+            BrowserUpload.StagedToken(html);
 
             // The preview asks for the key again rather than carrying it in a hidden field.
-            Assert.DoesNotContain(GlobalKey, await staged.Content.ReadAsStringAsync());
+            Assert.DoesNotContain(GlobalKey, html);
         }
 
         public void Dispose() => _app.Dispose();
@@ -501,6 +578,20 @@ namespace BaGet.Tests
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.Contains(UploadModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync());
+        }
+
+        [Fact]
+        public async Task ThePushInstructionsAreNotOfferedWhilePushingIsRefused()
+        {
+            using var app = Application(accounts: false);
+            using var browser = new Browser(app);
+
+            var html = await browser.GetPageAsync("upload");
+
+            // The page must not refuse an upload and then hand out commands that answer 401.
+            Assert.Contains("upload-read-only", html);
+            Assert.DoesNotContain("You can push packages using the service index", html);
+            Assert.DoesNotContain("nuget push -Source", html);
         }
 
         private BaGetApplication Application(bool accounts)

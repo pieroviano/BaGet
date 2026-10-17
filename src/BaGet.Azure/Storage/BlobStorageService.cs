@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Azure
 {
     // See: https://github.com/NuGet/NuGetGallery/blob/master/src/NuGetGallery.Core/Services/CloudBlobCoreFileStorageService.cs
-    public class BlobStorageService : IStorageService
+    public class BlobStorageService : IStorageService, IListableStorageService
     {
         private readonly CloudBlobContainer _container;
         private readonly TimeSpan _downloadUriExpiry;
@@ -84,6 +85,45 @@ namespace BaGet.Azure
                         : StoragePutResult.Conflict;
                 }
             }
+        }
+
+        /// <summary>
+        /// Every blob under a prefix, paged until the container says there is no more. The
+        /// sweep of abandoned staged uploads is the only caller, and without this a container
+        /// would keep them forever.
+        /// </summary>
+        public async Task<IReadOnlyList<string>> ListAsync(string pathPrefix, CancellationToken cancellationToken = default)
+        {
+            // A prefix is a path segment, not a string prefix: "staging" must not also match
+            // a "staging-archive" container entry.
+            var prefix = pathPrefix.TrimEnd('/') + "/";
+            var paths = new List<string>();
+            BlobContinuationToken continuation = null;
+
+            do
+            {
+                var segment = await _container.ListBlobsSegmentedAsync(
+                    prefix,
+                    useFlatBlobListing: true,
+                    blobListingDetails: BlobListingDetails.None,
+                    maxResults: null,
+                    currentToken: continuation,
+                    options: null,
+                    operationContext: null,
+                    cancellationToken: cancellationToken);
+
+                foreach (var item in segment.Results)
+                {
+                    // The blob's name is already the path IStorageService takes, relative to
+                    // the container.
+                    if (item is CloudBlob blob) paths.Add(blob.Name);
+                }
+
+                continuation = segment.ContinuationToken;
+            }
+            while (continuation != null);
+
+            return paths;
         }
 
         public async Task DeleteAsync(string path, CancellationToken cancellationToken)

@@ -50,6 +50,22 @@ namespace BaGet.Core.Tests.Services
                 await Assert.ThrowsAsync<ArgumentNullException>(
                     () => _target.StageAsync(null, "alice", CancellationToken.None));
             }
+
+            [Fact]
+            public async Task NeverLogsTheTokenAboveDebug()
+            {
+                // The token is the whole capability over a staged upload. A log at
+                // Information is on by default and usually shipped to a store read by more
+                // people than the uploader, so the token must not travel there.
+                var logger = new RecordingLogger<StoragePackageStagingService>();
+                var target = new StoragePackageStagingService(_storage, _time.Object, logger);
+
+                var token = await target.StageAsync(StringStream("a package"), "alice", CancellationToken.None);
+                await target.OpenAsync(token, "bob", CancellationToken.None);
+                await target.SweepAsync(_now.AddDays(1), CancellationToken.None);
+
+                Assert.Empty(logger.Entries.Where(e => e.Level > LogLevel.Debug && e.Message.Contains(token)));
+            }
         }
 
         public class OpenAsync : FactsBase
@@ -120,17 +136,30 @@ namespace BaGet.Core.Tests.Services
             {
                 var token = await _target.StageAsync(StringStream("a package"), "alice", CancellationToken.None);
 
-                await _target.RemoveAsync(token, CancellationToken.None);
+                Assert.True(await _target.RemoveAsync(token, "alice", CancellationToken.None));
 
                 Assert.Null(await _target.OpenAsync(token, "alice", CancellationToken.None));
                 Assert.Empty(await _storage.ListAsync("staging", CancellationToken.None));
             }
 
             [Fact]
+            public async Task AnotherUserCannotForgetAStagedUpload()
+            {
+                // The token is the only handle on a staged upload, so anyone who learned one
+                // could otherwise make its owner upload the whole file again.
+                var token = await _target.StageAsync(StringStream("a staged package"), "alice", CancellationToken.None);
+
+                Assert.False(await _target.RemoveAsync(token, "bob", CancellationToken.None));
+
+                using var kept = await _target.OpenAsync(token, "alice", CancellationToken.None);
+                Assert.Equal("a staged package", await ToStringAsync(kept));
+            }
+
+            [Fact]
             public async Task AnUnknownTokenIsNotAnError()
             {
-                await _target.RemoveAsync("0123456789abcdef0123456789abcdef", CancellationToken.None);
-                await _target.RemoveAsync("../packages/secret", CancellationToken.None);
+                Assert.False(await _target.RemoveAsync("0123456789abcdef0123456789abcdef", "alice", CancellationToken.None));
+                Assert.False(await _target.RemoveAsync("../packages/secret", "alice", CancellationToken.None));
             }
         }
 
@@ -180,6 +209,49 @@ namespace BaGet.Core.Tests.Services
                 Assert.Equal(
                     "packages/keep.nupkg",
                     Assert.Single(await _storage.ListAsync("packages", CancellationToken.None)));
+            }
+
+            [Fact]
+            public async Task KeepsAnUploadWhoseMetadataCannotBeReadRightNow()
+            {
+                // A metadata read can fail for reasons that have nothing to do with the
+                // upload being abandoned - a backup or a scanner holding the file, a store
+                // that is briefly unreachable. Collecting it then would discard an upload
+                // staged a minute ago, whose preview is still open.
+                var token = await _target.StageAsync(StringStream("staged a moment ago"), "alice", CancellationToken.None);
+                var metadataPath = Path.Combine(_storePath, "staging", token + ".json");
+
+                using (File.Open(metadataPath, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    Assert.Equal(0, await _target.SweepAsync(_now.AddHours(-1), CancellationToken.None));
+                }
+
+                using var kept = await _target.OpenAsync(token, "alice", CancellationToken.None);
+                Assert.Equal("staged a moment ago", await ToStringAsync(kept));
+            }
+
+            [Fact]
+            public async Task CollectsAnUploadWhoseMetadataIsGone()
+            {
+                // Nobody can open an upload whose metadata is absent, so there is nothing to
+                // keep: the owner it belonged to is unknowable.
+                var token = await _target.StageAsync(StringStream("half staged"), "alice", CancellationToken.None);
+                File.Delete(Path.Combine(_storePath, "staging", token + ".json"));
+
+                Assert.Equal(1, await _target.SweepAsync(_now.AddHours(-1), CancellationToken.None));
+                Assert.Empty(await _storage.ListAsync("staging", CancellationToken.None));
+            }
+
+            [Fact]
+            public async Task CollectsAnUploadWhoseMetadataCanNeverBeRead()
+            {
+                // Unreadable content, unlike an unreadable file, does not become readable on
+                // the next pass.
+                var token = await _target.StageAsync(StringStream("corrupt"), "alice", CancellationToken.None);
+                File.WriteAllText(Path.Combine(_storePath, "staging", token + ".json"), "not json");
+
+                Assert.Equal(1, await _target.SweepAsync(_now.AddHours(-1), CancellationToken.None));
+                Assert.Empty(await _storage.ListAsync("staging", CancellationToken.None));
             }
 
             [Fact]

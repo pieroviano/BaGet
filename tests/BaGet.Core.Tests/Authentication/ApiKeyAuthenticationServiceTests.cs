@@ -51,6 +51,26 @@ namespace BaGet.Core.Tests.Authentication
         }
 
         [Theory]
+        // Same length, differing at the first character and at the last: the comparison is
+        // fixed time, so neither can be told from the other by how long the answer took.
+        [InlineData("Xecret")]
+        [InlineData("secreX")]
+        [InlineData("XXXXXX")]
+        public async Task RejectsAKeyOfTheRightLengthThatIsWrong(string providedApiKey)
+        {
+            Assert.False(await Authenticate("secret", providedApiKey));
+        }
+
+        [Fact]
+        public async Task AcceptsAKeyWhoseCharactersAreNotAscii()
+        {
+            // The comparison is over the UTF-8 bytes, so a multi-byte key still matches
+            // itself and nothing else.
+            Assert.True(await Authenticate("sécret-🔑", "sécret-🔑"));
+            Assert.False(await Authenticate("sécret-🔑", "sécret-🔒"));
+        }
+
+        [Theory]
         [InlineData(null)]
         [InlineData("")]
         public async Task AcceptsAnythingWhenNoApiKeyIsConfigured(string configuredApiKey)

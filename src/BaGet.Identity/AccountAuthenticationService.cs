@@ -34,9 +34,14 @@ namespace BaGet.Identity
 
         public async Task<BaGetPrincipal> AuthenticatePrincipalAsync(string apiKey, CancellationToken cancellationToken)
         {
-            // An open server, and the global key, stay exactly as they were: the superuser.
-            if (string.IsNullOrEmpty(_options.Value.ApiKey)
-                || await _globalKey.AuthenticateAsync(apiKey, cancellationToken))
+            // The global key is the superuser, as it always was - but only when one is
+            // configured. An empty ApiKey means "there is no global key", never "every
+            // caller is the superuser": enabling accounts is asking for ownership to decide
+            // who may push what, and a superuser principal skips ownership entirely, so
+            // treating the open-server default as a free pass would make the ownership gate
+            // bypassable by simply sending no key at all.
+            if (!string.IsNullOrEmpty(_options.Value.ApiKey)
+                && await _globalKey.AuthenticateAsync(apiKey, cancellationToken))
             {
                 return BaGetPrincipal.Superuser;
             }

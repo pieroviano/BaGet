@@ -85,12 +85,12 @@ interface above:
 
 | Point | As built |
 |---|---|
-| Token | 128 bits from `RandomNumberGenerator`, hex encoded (`StoragePackageStagingService.CreateToken`) — a token reaches storage, so `OpenAsync`/`RemoveAsync` refuse anything that is not 32 lowercase hex characters before it becomes a path |
-| Owner | Recorded in `staging/{token}.json`; `OpenAsync` compares it ordinally and answers null otherwise, so one user cannot confirm another's upload. With accounts off every upload shares the empty owner, as the API-key path has no user either |
+| Token | 128 bits from `RandomNumberGenerator`, hex encoded (`StoragePackageStagingService.CreateToken`) — a token reaches storage, so `OpenAsync`/`RemoveAsync` refuse anything that is not 32 lowercase hex characters before it becomes a path. It is logged only at `Debug`; above that a short SHA-256 correlation id stands in, so a log reader cannot act on what they read |
+| Owner | Recorded in `staging/{token}.json`; `OpenAsync` **and** `RemoveAsync` compare it ordinally and refuse otherwise, so one user can neither confirm nor discard another's upload. With accounts off every upload shares the empty owner, as the API-key path has no user either |
 | Paths | `staging/{token}.json` (metadata, written first so the sweep can always find the upload) and `staging/{token}.nupkg` |
 | Null store | `Storage:Type=Null` reads back nothing, so a staged upload reports itself as an unknown token instead of yielding a null stream |
-| Sweep | `SweepAsync` removes every upload staged before a cutoff; `StagingSweepWorker` (`src/BaGet.Web/`) runs it hourly with a 24-hour cutoff |
-| Listing | The sweep needs to enumerate a prefix, which `IStorageService` cannot. New optional capability `IListableStorageService`, implemented by `FileStorageService` and `NullStorageService`. A store that does not implement it logs a warning and is **not** swept — the cloud providers (Azure, S3, GCS, Aliyun) still need it |
+| Sweep | `SweepAsync` removes every upload staged before a cutoff; `StagingSweepWorker` (`src/BaGet.Web/`) runs it hourly with a 24-hour cutoff. An upload whose metadata is **absent** or will never parse is collected whatever its age — nobody can open it. One whose metadata is merely unreadable *this time* (a store briefly unreachable, a file a backup holds open) is kept: "unreadable now" must not discard an upload staged a minute ago. The two are told apart from the sweep's own listing |
+| Listing | The sweep needs to enumerate a prefix, which `IStorageService` cannot. New optional capability `IListableStorageService`, implemented by **every** store BaGet ships: `FileStorageService`, `NullStorageService`, `BlobStorageService`, `S3StorageService`, `GoogleCloudStorageService`, `AliyunStorageService`. A store that does not implement it logs a warning and is not swept; `StorageCanBeSweptTests` pins that none of the shipped ones is in that state |
 
 ### C3 — Upload page (`src/BaGet.Web/Pages/Upload.cshtml`)
 
@@ -99,9 +99,15 @@ Built. The CLI tabs stay, below the form. `UploadModel` is a plain `PageModel`, 
 
 | Handler | As built |
 |---|---|
-| `OnPostStageAsync(IFormFile package, string apiKey)` | Refuse read-only (401) → authenticate (401) → reject anything but `.nupkg`/`.snupkg` (400) → read the archive (400 if unreadable) → `AuthorizeAsync(Push, id)` **before** storing (403) → `StageAsync` → render the preview |
-| `OnPostSubmitAsync(string token, string apiKey, bool acceptTerms)` | Refuse read-only (401) → authenticate (401) → `OpenAsync(token, userId)`, null ⇒ 404 "no longer staged" → re-read the archive → require the checkbox (400, upload kept) → `AuthorizeAsync` again (403) → `SubmitAsync`, `OnPushedAsync`, `RemoveAsync` |
-| `OnPostCancelAsync(string token)` | `RemoveAsync`, back to step one. No authorization: the token is unguessable and removal only discards |
+| `OnPostStageAsync(IFormFile package, string apiKey)` | Refuse read-only (401) → refuse a server nothing can authenticate against (401) → authenticate (401) → reject anything but `.nupkg`/`.snupkg` (400) → read the archive (400 if unreadable) → reject a `.snupkg` whose nuspec does not declare `SymbolsPackage` (400) → `AuthorizeAsync(Push, id)` **before** storing (403) → `StageAsync`, a storage failure reported as a sentence (500) → render the preview |
+| `OnPostSubmitAsync(string token, string apiKey, bool acceptTerms)` | Refuse read-only (401) → refuse a server nothing can authenticate against (401) → authenticate (401) → `OpenAsync(token, userId)`, null ⇒ 404 "no longer staged" → re-read the archive → require the checkbox (400, upload kept) → `AuthorizeAsync` again (403) → `SubmitAsync`, `OnPushedAsync`, `RemoveAsync` |
+| `OnPostCancelAsync(string token, string apiKey)` | Refuse read-only (401) → refuse a server nothing can authenticate against (401) → authenticate (401) → `RemoveAsync(token, userId)`, false ⇒ 404 "no longer staged". Owner-checked like the other two: the token is the only handle on an upload, so anyone who learned one could otherwise make its owner upload the whole file again, and the deletion is a store write read-only mode is meant to freeze. The button posts from the confirm form, so the one API key field serves both |
+
+**A server nothing can authenticate against** is accounts off with no `ApiKey`, which is how
+BaGet ships. Nothing there tells one visitor from another, so the page explains that instead
+of rendering a file picker and an API key box that would accept anything, including nothing.
+`PUT /api/v2/package` is untouched — the page is a convenience, not the authorization model —
+and `Program.WarnIfNothingAuthenticates` says so once at startup.
 
 | Point | As built |
 |---|---|
@@ -133,7 +139,7 @@ Built. `PackagesModel : AccountPageModel`, `RequiresSignIn => true`, linked from
 | Point | As built |
 |---|---|
 | Source | `Ownership.GetOwnedPackageIdsAsync(userId, userName)`, so organization-owned IDs are listed too. Ownership decides, not the package table: an ID whose every version was hard-deleted keeps its owners and stays listed, with "None" as its latest version |
-| Per ID | `IPackageDatabase.FindAsync(id, includeUnlisted: true)` — latest version (highest, listed or not, marked "(unlisted)"), version count, summed downloads. `IPackageDatabase`, not `IContext`, so it holds for a non-EF database |
+| Per ID | One `IContext.Packages` projection over every owned ID, giving latest version (highest, listed or not, marked "(unlisted)"), version count and summed downloads. `IContext`, not `IPackageDatabase`: the ownership query the page starts from already needs `IContext`, so a per-ID `FindAsync` loop bought nothing and cost six round trips per ID (it eagerly loads dependencies, package types, target frameworks, deprecation and vulnerabilities to compute three numbers). Highest version is still chosen in memory — SemVer ordering is not SQL's |
 | Links | `Manage` for the ID, and "Upload new version" (`/Upload?id=…`) per row |
 
 ### C6 — Delete and upload-a-version on `Manage`
@@ -155,7 +161,7 @@ never been committed. A negation was added and the page is now tracked.
 
 | # | Step | Expected |
 |---|---|---|
-| 1 | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` | 892 green (880 before C5/C6, plus 12) |
+| 1 | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` | 928 green (880 before C5/C6, plus 12, plus 36 for the review fixes below) |
 | 2 | Stage, preview, submit while signed in | 200 and a published message (a page, not the API's 201), the package served, the token unknown afterwards |
 | 3 | Stage as user A, submit with user B's cookie | Rejected; A's file untouched |
 | 4 | Submit an ID owned by another user | 403, nothing indexed |
@@ -185,6 +191,30 @@ since a test host configuration is fixed when it is built).
 | Two-step doubles wall time for large packages | Low | Staging writes once; `SubmitAsync` reads from storage, not the network |
 | D2 misread as granting superuser | Low | `isSuperuser: false` is explicit and verification 4 pins it |
 | API key posted in a form body when accounts are off | Low | Same exposure as the `X-NuGet-ApiKey` header over the same channel; must not be logged |
+
+## Deviations and follow-ups
+
+Found by review after C1-C6 and resolved in the same branch.
+
+| # | Change | Why it matters |
+|---|---|---|
+| R1 | `AccountAuthenticationService` no longer treats an empty `ApiKey` as "every caller is the superuser" while accounts are on | **Behavioural break.** An accounts-enabled server with no global key now refuses a keyless push (401) instead of accepting it as the superuser. Without it the ownership gate the new pages rely on was bypassable by sending no key at all: `dotnet nuget push` with no key could overwrite an ID someone else owned. Accounts off is unchanged — `ApiKeyAuthenticationService` still leaves an unset key open |
+| R2 | Browser upload closed when accounts are off and no `ApiKey` is set | The shipped default. The page was a one-click publish button for any visitor, with a password box that was ignored. `PUT /api/v2/package` is deliberately left as it was, and startup now warns that the server accepts packages from anyone |
+| R3 | `IPackageStagingService.RemoveAsync` takes an `ownerId` and returns whether it removed anything | **Interface break** (`BaGet.Core` is packed). `OpenAsync` checked the owner and `RemoveAsync` did not, so a leaked token discarded someone else's pending upload |
+| R4 | The staging token is logged at `Debug`; a correlation id is logged above it | The token was the only secret over a staged upload and was written at `Information` on every upload |
+| R5 | Every write handler on `Manage` is refused in read-only mode, in one page filter | Only `Delete` checked. `Unlist` — which the page's own caption calls the same operation — still wrote, as did relist, deprecate, undeprecate, add/remove owner and resolve report. The API refuses all of them with 401 |
+| R6 | The upload page's push instructions are suppressed in read-only mode | It said nothing can be pushed and then offered copy-paste commands that answer 401 |
+| R7 | `IListableStorageService` on all four cloud stores | `SweepAsync` was a no-op on Azure, S3, GCS and Aliyun, so staged uploads accumulated there forever |
+| R8 | A `.snupkg` whose nuspec does not declare `SymbolsPackage` is refused (400) | It was published as a package, storing a symbols archive as that ID and version's `.nupkg`, while the symbol endpoint read the identical bytes as symbols |
+| R9 | A storage failure while staging is a sentence and a 500 | It was an unhandled exception: a bare 500 in production, a stack trace under the developer exception page |
+| R10 | `CryptographicOperations.FixedTimeEquals` for the global API key | Hardening, not a usable attack in this shape; the browser form is a new caller of that comparison |
+
+Known and not changed:
+
+| Point | Why |
+|---|---|
+| Public surface | `PackageModel.DependencyGroupModel` and `PackageModel.DependencyModel` were nested public types and are now top-level `BaGet.Web.DependencyGroupModel` / `DependencyModel`, shared with the upload preview (C3). `BaGet.Web` is packed, so this breaks a consumer that compiled against the previous package. Accepted: the preview and the package page must describe a package the same way, and a nested display model cannot be shared. Recorded here because it was not called out when it was made |
+| No staging quota | An authorized caller can park unbounded bytes under `staging/` until the 24-hour sweep reclaims them, and nothing counts them against the package store. `IStorageService` has no quota, and a per-owner cap would need either a per-owner prefix in the staging layout or one metadata read per staged upload on every stage. Comparable to pushing many distinct IDs, which is equally unbounded. R7 at least makes retention effective on every store; R2 removes the anonymous half of it |
 
 ## Out of scope
 

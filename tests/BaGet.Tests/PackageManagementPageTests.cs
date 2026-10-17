@@ -221,6 +221,40 @@ namespace BaGet.Tests
         }
 
         [Fact]
+        public async Task MyPackagesListsIdsOwnedThroughAnOrganization()
+        {
+            await Alice.RegisterAsync("alice");
+
+            var aliceId = await WithScopeAsync(async s =>
+                (await s.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync("alice")).Id);
+
+            await WithScopeAsync(async s =>
+            {
+                var ownership = s.GetRequiredService<PackageOwnershipService>();
+
+                Assert.True(await ownership.CreateOrganizationAsync("acme", aliceId, CancellationToken.None));
+
+                return true;
+            });
+
+            using (var package = TestPackages.Build("Acme.Package", "1.0.0"))
+            {
+                await App.AddPackageAsync(package);
+            }
+
+            Assert.Equal(
+                OwnerChangeResult.Success,
+                await WithScopeAsync(s => s.GetRequiredService<PackageOwnershipService>()
+                    .AddOwnerAsync("Acme.Package", "acme", CancellationToken.None)));
+
+            var html = await Alice.GetPageAsync("account/packages");
+
+            // The organization owns the ID, not Alice: the list unions her own name with
+            // every organization she belongs to, which is the non-obvious half of the query.
+            Assert.Contains("Acme.Package", html);
+        }
+
+        [Fact]
         public async Task UploadingANewVersionArrivesWithTheIdAsAHint()
         {
             await Alice.RegisterAsync("alice");
@@ -320,5 +354,98 @@ namespace BaGet.Tests
             Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
             Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
         }
+
+        [Fact]
+        public async Task AReadOnlyServerRefusesToUnlist()
+        {
+            await Alice.RegisterAsync("alice");
+            await SeedOwnedPackageAsync("alice", "Alice.Package");
+
+            using var response = await PostAsync("Unlist", new Dictionary<string, string>
+            {
+                { "version", "1.0.0" },
+            });
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+
+            // Unlisting is the very operation the Delete button is said to perform, so a
+            // server that refuses one must refuse the other.
+            Assert.True((await FindAsync("Alice.Package", "1.0.0")).Listed);
+        }
+
+        [Fact]
+        public async Task AReadOnlyServerRefusesToRelist()
+        {
+            await Alice.RegisterAsync("alice");
+            await SeedOwnedPackageAsync("alice", "Alice.Package");
+
+            await WithScopeAsync(s => s.GetRequiredService<IPackageDatabase>()
+                .UnlistPackageAsync("Alice.Package", NuGetVersion.Parse("1.0.0"), CancellationToken.None));
+
+            using var response = await PostAsync("Relist", new Dictionary<string, string>
+            {
+                { "version", "1.0.0" },
+            });
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+            Assert.False((await FindAsync("Alice.Package", "1.0.0")).Listed);
+        }
+
+        [Fact]
+        public async Task AReadOnlyServerRefusesToDeprecate()
+        {
+            await Alice.RegisterAsync("alice");
+            await SeedOwnedPackageAsync("alice", "Alice.Package");
+
+            using var response = await PostAsync("Deprecate", new Dictionary<string, string>
+            {
+                { "version", "1.0.0" },
+                { "reasons", PackageDeprecation.KnownReasons[0] },
+            });
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+            Assert.Null((await FindAsync("Alice.Package", "1.0.0")).Deprecation);
+        }
+
+        [Fact]
+        public async Task AReadOnlyServerRefusesToChangeTheOwners()
+        {
+            await Alice.RegisterAsync("alice");
+            await Bob.RegisterAsync("bob");
+            await SeedOwnedPackageAsync("alice", "Alice.Package");
+
+            using var response = await PostAsync("AddOwner", new Dictionary<string, string>
+            {
+                { "ownerName", "bob" },
+            });
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+
+            var owners = await WithScopeAsync(s => s.GetRequiredService<PackageOwnershipService>()
+                .GetOwnersAsync("Alice.Package", CancellationToken.None));
+
+            Assert.Equal("alice", Assert.Single(owners).OwnerName);
+        }
+
+        [Fact]
+        public async Task AReadOnlyManagePageSaysSo()
+        {
+            await Alice.RegisterAsync("alice");
+            await SeedOwnedPackageAsync("alice", "Alice.Package");
+
+            var html = await Alice.GetPageAsync("packages/Alice.Package/manage");
+
+            Assert.Contains("manage-read-only", html);
+        }
+
+        private Task<HttpResponseMessage> PostAsync(string handler, Dictionary<string, string> fields)
+            => Alice.PostAsync(
+                "packages/Alice.Package/manage",
+                fields,
+                action: $"packages/Alice.Package/manage?handler={handler}");
     }
 }

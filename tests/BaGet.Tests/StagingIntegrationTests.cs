@@ -39,7 +39,7 @@ namespace BaGet.Tests
                 Assert.NotNull(staged);
             }
 
-            await staging.RemoveAsync(token, CancellationToken.None);
+            Assert.True(await staging.RemoveAsync(token, ownerId: null, CancellationToken.None));
 
             Assert.Null(await staging.OpenAsync(token, ownerId: null, CancellationToken.None));
         }

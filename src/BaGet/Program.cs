@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace BaGet
@@ -204,6 +205,8 @@ namespace BaGet
             // cheaper than depending on the builder's choices.
             app.UseHostFiltering();
 
+            WarnIfNothingAuthenticates(app, options);
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -246,6 +249,27 @@ namespace BaGet
             // WebApplication is itself an endpoint route builder, so the endpoints are mapped
             // onto it directly rather than inside a UseEndpoints callback.
             new BaGetEndpointBuilder().MapEndpoints(app);
+        }
+
+        /// <summary>
+        /// Say once, at startup, that this server accepts packages from anyone. With no
+        /// global API key and no accounts there is nothing to tell one caller from another,
+        /// so every push, overwrite and delete is open to whoever can reach the server. That
+        /// is a legitimate configuration on a private network and the shipped default, which
+        /// is exactly why it must not be silent.
+        /// </summary>
+        private static void WarnIfNothingAuthenticates(WebApplication app, BaGetOptions options)
+        {
+            if (options.IsReadOnlyMode) return;
+            if (!string.IsNullOrEmpty(options.ApiKey)) return;
+
+            var accounts = app.Configuration.GetSection(nameof(BaGetOptions.Accounts)).Get<AccountsOptions>();
+            if (accounts?.Enabled == true) return;
+
+            app.Logger.LogWarning(
+                "No API key is configured and accounts are disabled, so anyone who can reach this "
+                + "server may publish packages, claim package IDs and delete versions. Set \"ApiKey\", "
+                + "or turn on \"Accounts:Enabled\", to require authentication.");
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Aliyun
 {
-    public class AliyunStorageService : IStorageService
+    public class AliyunStorageService : IStorageService, IListableStorageService
     {
         private const string Separator = "/";
 
@@ -116,6 +117,45 @@ namespace BaGet.Aliyun
 
                 return StoragePutResult.Success;
             }
+        }
+
+        /// <summary>
+        /// Every object under a prefix, paged until OSS says there is no more. The sweep of
+        /// abandoned staged uploads is the only caller, and without this a bucket would keep
+        /// them forever.
+        /// </summary>
+        public Task<IReadOnlyList<string>> ListAsync(string pathPrefix, CancellationToken cancellationToken = default)
+        {
+            // A prefix is a path segment, not a string prefix: "staging" must not also match
+            // "staging-archive/...".
+            var prefix = PrepareKey(pathPrefix.TrimEnd('/') + Separator);
+            var paths = new List<string>();
+            string marker = null;
+
+            do
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Listed synchronously, as DoesObjectExist above is: this SDK's asynchronous
+                // surface is the Begin/End pairs, which it does not offer for listing.
+                var listing = _client.ListObjects(new ListObjectsRequest(_bucket)
+                {
+                    Prefix = prefix,
+                    Marker = marker,
+                });
+
+                foreach (var item in listing.ObjectSummaries)
+                {
+                    // Reported as the paths IStorageService takes, so the configured bucket
+                    // prefix is removed again.
+                    paths.Add(string.IsNullOrEmpty(_prefix) ? item.Key : item.Key.Substring(_prefix.Length));
+                }
+
+                marker = listing.IsTruncated ? listing.NextMarker : null;
+            }
+            while (!string.IsNullOrEmpty(marker));
+
+            return Task.FromResult<IReadOnlyList<string>>(paths);
         }
 
         public Task DeleteAsync(string path, CancellationToken cancellationToken = default)

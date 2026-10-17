@@ -42,6 +42,11 @@ namespace BaGet.Web
         internal const string ApiKeyRejectedMessage =
             "That API key was not accepted.";
 
+        internal const string NoApiKeyMessage =
+            "This server has no API key configured and no accounts, so there is nothing to "
+            + "tell one visitor from another and nothing to authenticate an upload with. "
+            + "Set \"ApiKey\", or enable \"Accounts:Enabled\", to upload through the browser.";
+
         internal const string UnknownTokenMessage =
             "This upload is no longer staged. It was cancelled, already published, or staged "
             + "by someone else - upload the file again.";
@@ -56,6 +61,14 @@ namespace BaGet.Web
         internal const string InvalidSymbolPackageMessage =
             "This symbol package is not valid (its entries, a PDB that is not portable, or "
             + "PDBs that do not match the package).";
+
+        internal const string NotASymbolPackageMessage =
+            "A .snupkg must declare the SymbolsPackage package type in its own nuspec. This "
+            + "file does not, so it is not a symbol package - and a symbols archive is not a "
+            + "package either. Repack it as a symbol package, or upload the .nupkg instead.";
+
+        internal const string CouldNotStageMessage =
+            "The server could not store this upload. Try again.";
 
         private readonly IOptionsSnapshot<BaGetOptions> _options;
         private readonly IOptions<AccountsOptions> _accounts;
@@ -110,10 +123,27 @@ namespace BaGet.Web
         public bool NeedsApiKey => !AccountsEnabled;
 
         /// <summary>
-        /// Whether to render the form at all. Read-only mode and an anonymous visitor get an
-        /// explanation instead of a file picker that could only fail.
+        /// Nothing on this server can tell one caller from another: accounts are off and no
+        /// global API key is configured, which is how BaGet ships. The browser upload is
+        /// closed there rather than offered as a publish button to whoever finds the page,
+        /// and the API key box - which would accept anything, including nothing - is not
+        /// rendered to claim otherwise. <c>dotnet nuget push</c> is unaffected: this page is
+        /// a convenience, not the authorization model.
         /// </summary>
-        public bool CanUpload => !IsReadOnlyMode && (!AccountsEnabled || SignedIn);
+        public bool NothingCanAuthenticate => !AccountsEnabled && string.IsNullOrEmpty(_options.Value.ApiKey);
+
+        /// <summary>
+        /// What the page says in that state, so the explanation and the refusal are one
+        /// sentence rather than two that could drift apart.
+        /// </summary>
+        public string NoApiKeyExplanation => NoApiKeyMessage;
+
+        /// <summary>
+        /// Whether to render the form at all. Read-only mode, a server nothing can
+        /// authenticate against, and an anonymous visitor each get an explanation instead of
+        /// a file picker that could only fail.
+        /// </summary>
+        public bool CanUpload => !IsReadOnlyMode && !NothingCanAuthenticate && (!AccountsEnabled || SignedIn);
 
         /// <summary>
         /// The staged upload awaiting confirmation, or null while on step one.
@@ -139,6 +169,7 @@ namespace BaGet.Web
             CancellationToken cancellationToken)
         {
             if (IsReadOnlyMode) return Refuse(401, ReadOnlyMessage);
+            if (NothingCanAuthenticate) return Refuse(401, NoApiKeyMessage);
 
             var principal = await AuthenticateAsync(apiKey, cancellationToken);
             if (principal == null) return Refuse(401, NotAuthenticatedMessage);
@@ -165,6 +196,16 @@ namespace BaGet.Web
             var staged = await ReadOrNullAsync(content, cancellationToken);
             if (staged == null) return Refuse(400, UnreadableMessage);
 
+            // The content decides the pipeline, never the file's name. A .snupkg whose
+            // nuspec does not declare the symbols package type is therefore not a symbol
+            // package - and publishing it as a package would store a symbols archive as the
+            // .nupkg of that ID and version, while the symbol endpoint reads the identical
+            // bytes as symbols. Refused rather than published as something it is not.
+            if (extension.Equals(".snupkg", StringComparison.OrdinalIgnoreCase) && !staged.IsSymbolPackage)
+            {
+                return Refuse(400, NotASymbolPackageMessage);
+            }
+
             // Authorized before the upload is stored: there is no point keeping a file its
             // uploader may not publish.
             if (!await _authorization.AuthorizeAsync(principal, PackageAction.Push, staged.Id, cancellationToken))
@@ -175,7 +216,20 @@ namespace BaGet.Web
             await DescribeSymbolTargetAsync(staged, cancellationToken);
 
             content.Position = 0;
-            staged.Token = await _staging.StageAsync(content, principal.UserId, cancellationToken);
+
+            try
+            {
+                staged.Token = await _staging.StageAsync(content, principal.UserId, cancellationToken);
+            }
+            catch (Exception e) when (!(e is OperationCanceledException))
+            {
+                // A failure the server owns, reported the way the equivalent failure on the
+                // confirm step is: a sentence with a status code, never a bare 500 or a
+                // stack trace.
+                _logger.LogError(e, "Could not stage an upload of {PackageId} {PackageVersion}", staged.Id, staged.Version);
+
+                return Refuse(500, CouldNotStageMessage);
+            }
 
             Staged = staged;
 
@@ -189,6 +243,7 @@ namespace BaGet.Web
             CancellationToken cancellationToken)
         {
             if (IsReadOnlyMode) return Refuse(401, ReadOnlyMessage);
+            if (NothingCanAuthenticate) return Refuse(401, NoApiKeyMessage);
 
             var principal = await AuthenticateAsync(apiKey, cancellationToken);
             if (principal == null) return Refuse(401, NotAuthenticatedMessage);
@@ -203,7 +258,7 @@ namespace BaGet.Web
             var staged = await ReadOrNullAsync(content, cancellationToken);
             if (staged == null)
             {
-                await _staging.RemoveAsync(token, cancellationToken);
+                await _staging.RemoveAsync(token, principal.UserId, cancellationToken);
                 return Refuse(400, UnreadableMessage);
             }
 
@@ -222,22 +277,41 @@ namespace BaGet.Web
             // screen, and the first check guarded the store, not the publish.
             if (!await _authorization.AuthorizeAsync(principal, PackageAction.Push, staged.Id, cancellationToken))
             {
-                await _staging.RemoveAsync(token, cancellationToken);
+                await _staging.RemoveAsync(token, principal.UserId, cancellationToken);
                 return Refuse(403, Denied(staged.Id));
             }
 
             content.Position = 0;
 
             return staged.IsSymbolPackage
-                ? await PublishSymbolsAsync(staged, content, cancellationToken)
+                ? await PublishSymbolsAsync(staged, content, principal, cancellationToken)
                 : await PublishPackageAsync(staged, content, principal, cancellationToken);
         }
 
-        public async Task<IActionResult> OnPostCancelAsync(string token, CancellationToken cancellationToken)
+        /// <summary>
+        /// Discard a staged upload. Authenticated, owner-checked and refused in read-only
+        /// mode, exactly as the other two handlers are: the token is the only handle on an
+        /// upload, so anyone who learned one - from a log, a screenshot, a shared screen -
+        /// could otherwise make its owner upload the whole file again, and the deletion is a
+        /// write to the store that read-only mode is meant to freeze.
+        /// </summary>
+        public async Task<IActionResult> OnPostCancelAsync(
+            string token,
+            string apiKey,
+            CancellationToken cancellationToken)
         {
-            // Cancelling needs no authorization: the token is unguessable, and removing an
-            // upload only discards it.
-            await _staging.RemoveAsync(token, cancellationToken);
+            if (IsReadOnlyMode) return Refuse(401, ReadOnlyMessage);
+            if (NothingCanAuthenticate) return Refuse(401, NoApiKeyMessage);
+
+            var principal = await AuthenticateAsync(apiKey, cancellationToken);
+            if (principal == null) return Refuse(401, NotAuthenticatedMessage);
+
+            // Another user's token is indistinguishable from one that never existed, as it
+            // is when submitting.
+            if (!await _staging.RemoveAsync(token, principal.UserId, cancellationToken))
+            {
+                return Refuse(404, UnknownTokenMessage);
+            }
 
             Message = "The upload was discarded.";
 
@@ -272,7 +346,7 @@ namespace BaGet.Web
                 await _authorization.OnPushedAsync(principal, staged.Id, cancellationToken);
             }
 
-            await _staging.RemoveAsync(staged.Token, cancellationToken);
+            await _staging.RemoveAsync(staged.Token, principal.UserId, cancellationToken);
 
             switch (result)
             {
@@ -299,6 +373,7 @@ namespace BaGet.Web
         private async Task<IActionResult> PublishSymbolsAsync(
             StagedUpload staged,
             Stream content,
+            BaGetPrincipal principal,
             CancellationToken cancellationToken)
         {
             // Branched on the indexing result, not on a status code: a malformed symbol
@@ -306,7 +381,7 @@ namespace BaGet.Web
             // endpoint reports the first as 400 and every exception as 400 as well.
             var result = await _symbols.IndexAsync(content, cancellationToken);
 
-            await _staging.RemoveAsync(staged.Token, cancellationToken);
+            await _staging.RemoveAsync(staged.Token, principal.UserId, cancellationToken);
 
             switch (result)
             {

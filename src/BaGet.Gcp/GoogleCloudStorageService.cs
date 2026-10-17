@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Gcp
 {
-    public class GoogleCloudStorageService : IStorageService
+    public class GoogleCloudStorageService : IStorageService, IListableStorageService
     {
         private readonly string _bucketName;
 
@@ -88,6 +89,29 @@ namespace BaGet.Gcp
                 {
                 }
             }
+        }
+
+        /// <summary>
+        /// Every object under a prefix. The sweep of abandoned staged uploads is the only
+        /// caller, and without this a bucket would keep them forever.
+        /// </summary>
+        public async Task<IReadOnlyList<string>> ListAsync(string pathPrefix, CancellationToken cancellationToken = default)
+        {
+            // A prefix is a path segment, not a string prefix: "staging" must not also match
+            // "staging-archive/...".
+            var prefix = CoercePath(pathPrefix).TrimEnd('/') + "/";
+            var paths = new List<string>();
+
+            using (var storage = await StorageClient.CreateAsync())
+            {
+                // The object's name is already the path IStorageService takes.
+                await foreach (var item in storage.ListObjectsAsync(_bucketName, prefix).WithCancellation(cancellationToken))
+                {
+                    paths.Add(item.Name);
+                }
+            }
+
+            return paths;
         }
 
         private static string CoercePath(string path)

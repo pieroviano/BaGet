@@ -25,10 +25,16 @@ namespace BaGet.Core
         Task<Stream> OpenAsync(string token, string ownerId, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Forget a staged upload, whether it was confirmed or cancelled. An unknown token is
-        /// not an error.
+        /// Forget a staged upload, whether it was confirmed or cancelled. The owner is
+        /// checked exactly as <see cref="OpenAsync"/> checks it: the token is the only handle
+        /// on an upload, so without this anyone who learned one could discard someone else's
+        /// pending upload. An unknown token is not an error.
         /// </summary>
-        Task RemoveAsync(string token, CancellationToken cancellationToken = default);
+        /// <returns>
+        /// Whether an upload was removed. False when the token is unknown or belongs to a
+        /// different user, which are deliberately indistinguishable.
+        /// </returns>
+        Task<bool> RemoveAsync(string token, string ownerId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Remove every upload staged before <paramref name="stagedBefore"/>. An upload that

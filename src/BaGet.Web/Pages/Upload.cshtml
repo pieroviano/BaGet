@@ -44,6 +44,15 @@
             with <code>dotnet nuget push</code>, until that is turned off.
         </p>
     }
+    else if (Model.NothingCanAuthenticate)
+    {
+        @* Nothing here could tell one visitor from another, so a file picker would be a
+           publish button for anyone who found the page, and an API key box would accept
+           whatever was typed into it - including nothing. *@
+        <p id="upload-no-api-key">
+            @Model.NoApiKeyExplanation
+        </p>
+    }
     else if (Model.AccountsEnabled && !Model.SignedIn)
     {
         <p id="upload-sign-in">
@@ -177,11 +186,13 @@
             <button type="submit" class="btn btn-primary" x-bind:disabled="!accepted">
                 @(staged.IsSymbolPackage ? "Publish symbols" : "Publish")
             </button>
-        </form>
 
-        <form method="post" asp-page-handler="Cancel">
-            <input type="hidden" name="token" value="@staged.Token" />
-            <button type="submit" class="btn btn-default">Discard this upload</button>
+            @* In this same form, so that discarding is authenticated by the one API key
+               field above rather than a second copy of it: cancelling is owner-checked, as
+               publishing is. *@
+            <button type="submit" class="btn btn-default" formaction="@Url.Page("/Upload", "Cancel")">
+                Discard this upload
+            </button>
         </form>
     }
     else
@@ -226,6 +237,11 @@
         </form>
     }
 
+@* The push instructions are only shown where pushing is possible. In read-only mode the
+   push endpoint answers 401 just as the browser upload is refused, so copy-paste commands
+   there would be an invitation to a failure the page has already explained. *@
+@if (!Model.IsReadOnlyMode)
+{
     <hr class="breadcrumb-divider" />
 
     <div>You can push packages using the service index <code>@serviceIndexUrl</code>.</div>
@@ -267,8 +283,11 @@
             </a>.
         </div>
     </div>
+}
 </div>
 
+@if (!Model.IsReadOnlyMode)
+{
 <script type="text/javascript">
     let tabs = [
         {
@@ -310,3 +329,4 @@
         </text>
     }
 </script>
+}

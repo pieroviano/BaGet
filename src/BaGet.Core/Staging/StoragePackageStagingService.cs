@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -80,11 +81,16 @@ namespace BaGet.Core
             {
                 // Half a staged upload can never be confirmed, so it is removed now rather
                 // than left for the sweep.
-                await RemoveAsync(token, CancellationToken.None);
+                await ForgetAsync(token, CancellationToken.None);
                 throw;
             }
 
-            _logger.LogInformation("Staged an upload as {Token}", token);
+            // The token itself only ever reaches Debug. It is the whole capability over a
+            // staged upload, and a log at Information is on by default and usually shipped
+            // to a store read by far more people than the uploader; the correlation id is
+            // enough to follow one upload through the log without handing it over.
+            _logger.LogDebug("Staged an upload as {Token}", token);
+            _logger.LogInformation("Staged an upload, correlation {Correlation}", Correlation(token));
 
             return token;
         }
@@ -93,26 +99,39 @@ namespace BaGet.Core
         {
             if (!IsToken(token)) return null;
 
-            var metadata = await ReadMetadataOrNullAsync(token, cancellationToken);
-            if (metadata == null) return null;
+            var read = await ReadMetadataAsync(token, cancellationToken);
+            if (read.Metadata == null) return null;
 
             // The real authorization: the prefix being unreachable over HTTP is a property of
             // the route table, not an access check, and two users share one store.
-            if (!string.Equals(metadata.OwnerId, Owner(ownerId), StringComparison.Ordinal))
+            if (!IsOwner(read.Metadata, ownerId))
             {
-                _logger.LogWarning("Refusing staged upload {Token}: it was staged by a different user", token);
+                _logger.LogWarning(
+                    "Refusing staged upload {Correlation}: it was staged by a different user",
+                    Correlation(token));
+
                 return null;
             }
 
             return await OpenOrNullAsync(StagedPath(token), cancellationToken);
         }
 
-        public async Task RemoveAsync(string token, CancellationToken cancellationToken = default)
+        public async Task<bool> RemoveAsync(string token, string ownerId, CancellationToken cancellationToken = default)
         {
-            if (!IsToken(token)) return;
+            if (!IsToken(token)) return false;
 
-            await DeleteAsync(StagedPath(token), cancellationToken);
-            await DeleteAsync(MetadataPath(token), cancellationToken);
+            // The same owner check <see cref="OpenAsync"/> makes. Removal is not a read, but
+            // it destroys an upload its owner may be about to confirm, so a token someone
+            // else learned must not be enough to discard it.
+            var read = await ReadMetadataAsync(token, cancellationToken);
+            if (read.Metadata == null || !IsOwner(read.Metadata, ownerId))
+            {
+                return false;
+            }
+
+            await ForgetAsync(token, cancellationToken);
+
+            return true;
         }
 
         public async Task<int> SweepAsync(DateTime stagedBefore, CancellationToken cancellationToken = default)
@@ -128,8 +147,11 @@ namespace BaGet.Core
                 return 0;
             }
 
+            var paths = await listable.ListAsync(StagingPathPrefix, cancellationToken);
+            var stored = new HashSet<string>(paths, StringComparer.Ordinal);
+
             var tokens = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var path in await listable.ListAsync(StagingPathPrefix, cancellationToken))
+            foreach (var path in paths)
             {
                 var token = TokenOrNull(path);
                 if (token != null) tokens.Add(token);
@@ -138,13 +160,9 @@ namespace BaGet.Core
             var swept = 0;
             foreach (var token in tokens)
             {
-                var metadata = await ReadMetadataOrNullAsync(token, cancellationToken);
+                if (!await IsCollectableAsync(token, stagedBefore, stored, cancellationToken)) continue;
 
-                // An upload without readable metadata cannot be opened by anyone, so it is
-                // collected whatever its age.
-                if (metadata != null && metadata.StagedAtUtc >= stagedBefore) continue;
-
-                await RemoveAsync(token, cancellationToken);
+                await ForgetAsync(token, cancellationToken);
                 swept++;
             }
 
@@ -156,29 +174,82 @@ namespace BaGet.Core
             return swept;
         }
 
+        /// <summary>
+        /// Whether the sweep may discard an upload. An upload is collected when it is older
+        /// than the cutoff, when its metadata is gone - nobody can open it then, since the
+        /// owner it belonged to is unknowable - or when its metadata will never parse. It is
+        /// kept when the metadata is there but could not be read this time: a store that is
+        /// briefly unreachable, or a file a backup or a scanner is holding, says nothing
+        /// about whether the upload was abandoned, and collecting it then would discard an
+        /// upload staged a minute ago whose preview is still open.
+        /// </summary>
+        private async Task<bool> IsCollectableAsync(
+            string token,
+            DateTime stagedBefore,
+            HashSet<string> stored,
+            CancellationToken cancellationToken)
+        {
+            var read = await ReadMetadataAsync(token, cancellationToken);
+
+            switch (read.Status)
+            {
+                case StagedMetadataStatus.Readable:
+                    return read.Metadata.StagedAtUtc < stagedBefore;
+
+                case StagedMetadataStatus.Unreadable:
+                    return true;
+
+                default:
+                    if (!stored.Contains(MetadataPath(token))) return true;
+
+                    _logger.LogWarning(
+                        "Keeping staged upload {Correlation}: its metadata could not be read this time",
+                        Correlation(token));
+
+                    return false;
+            }
+        }
+
         private async Task StoreAsync(string path, Stream content, string contentType, CancellationToken cancellationToken)
         {
             var result = await _storage.PutAsync(path, content, contentType, cancellationToken);
 
             if (result == StoragePutResult.Conflict)
             {
-                throw new InvalidOperationException($"Could not stage an upload: '{path}' is already in use");
+                throw new InvalidOperationException($"Could not stage an upload at '{path}'; the path is already in use");
             }
         }
 
-        private async Task<StagedUpload> ReadMetadataOrNullAsync(string token, CancellationToken cancellationToken)
+        /// <summary>
+        /// Remove both of an upload's blobs, whoever owns it. Every caller that reaches here
+        /// has already decided it may.
+        /// </summary>
+        private async Task ForgetAsync(string token, CancellationToken cancellationToken)
+        {
+            await DeleteAsync(StagedPath(token), cancellationToken);
+            await DeleteAsync(MetadataPath(token), cancellationToken);
+        }
+
+        private async Task<StagedMetadataRead> ReadMetadataAsync(string token, CancellationToken cancellationToken)
         {
             using var stream = await OpenOrNullAsync(MetadataPath(token), cancellationToken);
-            if (stream == null) return null;
+            if (stream == null) return new StagedMetadataRead(StagedMetadataStatus.Unavailable, null);
 
             try
             {
-                return await JsonSerializer.DeserializeAsync<StagedUpload>(stream, cancellationToken: cancellationToken);
+                var metadata = await JsonSerializer.DeserializeAsync<StagedUpload>(stream, cancellationToken: cancellationToken);
+
+                return metadata == null
+                    ? new StagedMetadataRead(StagedMetadataStatus.Unreadable, null)
+                    : new StagedMetadataRead(StagedMetadataStatus.Readable, metadata);
             }
             catch (JsonException e)
             {
-                _logger.LogWarning(e, "Staged upload {Token} has unreadable metadata", token);
-                return null;
+                // Content that does not parse will not parse on the next pass either, unlike
+                // a file that could not be opened this time.
+                _logger.LogWarning(e, "Staged upload {Correlation} has unreadable metadata", Correlation(token));
+
+                return new StagedMetadataRead(StagedMetadataStatus.Unreadable, null);
             }
         }
 
@@ -208,12 +279,22 @@ namespace BaGet.Core
             catch (Exception e) when (!(e is OperationCanceledException))
             {
                 // Left for the next sweep rather than failing a confirmed upload.
-                _logger.LogWarning(e, "Could not remove staged content at {Path}", path);
+                _logger.LogWarning(e, "Could not remove staged content under {Prefix}", StagingPathPrefix);
             }
         }
 
         private static string CreateToken()
             => Convert.ToHexString(RandomNumberGenerator.GetBytes(TokenBytes)).ToLowerInvariant();
+
+        /// <summary>
+        /// A short, non-reversible name for an upload, so a log can follow one upload without
+        /// carrying the token that would let its reader act on it.
+        /// </summary>
+        private static string Correlation(string token)
+            => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)), 0, 4).ToLowerInvariant();
+
+        private static bool IsOwner(StagedUpload metadata, string ownerId)
+            => string.Equals(metadata.OwnerId, Owner(ownerId), StringComparison.Ordinal);
 
         /// <summary>
         /// A token becomes a storage path, so anything that is not one is refused before it
@@ -253,6 +334,39 @@ namespace BaGet.Core
         /// the one empty owner - the same identity the API key path has there.
         /// </summary>
         private static string Owner(string ownerId) => ownerId ?? string.Empty;
+
+        /// <summary>
+        /// Why a metadata read did not produce metadata. "Not there" and "not readable right
+        /// now" are different facts, and the sweep must not treat the second as the first.
+        /// </summary>
+        private enum StagedMetadataStatus
+        {
+            Readable,
+
+            /// <summary>
+            /// The metadata could not be opened. It may be absent, or the store may be
+            /// unreachable or the file held open by something else.
+            /// </summary>
+            Unavailable,
+
+            /// <summary>
+            /// The metadata was read and is not metadata, so it will never become readable.
+            /// </summary>
+            Unreadable,
+        }
+
+        private readonly struct StagedMetadataRead
+        {
+            public StagedMetadataRead(StagedMetadataStatus status, StagedUpload metadata)
+            {
+                Status = status;
+                Metadata = metadata;
+            }
+
+            public StagedMetadataStatus Status { get; }
+
+            public StagedUpload Metadata { get; }
+        }
 
         internal class StagedUpload
         {
