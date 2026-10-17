@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -32,7 +32,7 @@ namespace BaGet.Core.Tests.Support
   </metadata>
 </package>";
 
-            return Build(nuspec, files);
+            return Build(nuspec, files, binaryFiles);
         }
 
         /// <summary>
@@ -51,7 +51,10 @@ namespace BaGet.Core.Tests.Support
             return new MemoryStream(Encoding.UTF8.GetBytes("This is not a package, it is a text file."));
         }
 
-        private static MemoryStream Build(string nuspec, IDictionary<string, string> files)
+        private static MemoryStream Build(
+            string nuspec,
+            IDictionary<string, string> files,
+            IDictionary<string, byte[]> binaryFiles = null)
         {
             var result = new MemoryStream();
 

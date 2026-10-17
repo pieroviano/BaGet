@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -71,7 +71,7 @@ namespace BaGet.Core.Tests.Services
                         _savedReadme = ReadAllBytes(readmeStream);
                         _savedIcon = ReadAllBytes(iconStream);
                     })
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(PackageSaveResult.Success);
 
             var options = new Mock<IOptionsSnapshot<BaGetOptions>>();
             options.Setup(o => o.Value).Returns(_options);
@@ -310,7 +310,7 @@ namespace BaGet.Core.Tests.Services
                             actual = buffer.ToArray();
                         }
                     })
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(PackageSaveResult.Success);
 
             using (var stream = TestPackage.CreateMinimal())
             {
