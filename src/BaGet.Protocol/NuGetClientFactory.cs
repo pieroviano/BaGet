@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,11 +15,23 @@ namespace BaGet.Protocol
     /// </summary>
     public partial class NuGetClientFactory
     {
+        /// <summary>
+        /// How long a service index response is reused before it is fetched again. A long-lived
+        /// factory therefore picks up resources the server adds, moves or removes, without
+        /// re-fetching the index on every request. NuGet's own client caches the service index
+        /// for the same reason and for the same duration; see NuGet.Protocol's
+        /// ServiceIndexResourceV3Provider.MaxCacheDuration.
+        /// </summary>
+        internal static readonly TimeSpan DefaultServiceIndexCacheDuration = TimeSpan.FromMinutes(40);
+
         private readonly HttpClient _httpClient;
         private readonly string _serviceIndexUrl;
 
+        private readonly TimeSpan _serviceIndexCacheDuration = DefaultServiceIndexCacheDuration;
+        private readonly Func<DateTimeOffset> _clock = () => DateTimeOffset.UtcNow;
+
         private readonly SemaphoreSlim _mutex;
-        private NuGetClients _clients;
+        private volatile NuGetClients _clients;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NuGetClientFactory"/> class
@@ -43,6 +57,26 @@ namespace BaGet.Protocol
 
             _mutex = new SemaphoreSlim(1, 1);
             _clients = null;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NuGetClientFactory"/> class with a
+        /// service index cache duration and a clock of its own, so that the expiry can be tested.
+        /// </summary>
+        internal NuGetClientFactory(
+            HttpClient httpClient,
+            string serviceIndexUrl,
+            TimeSpan serviceIndexCacheDuration,
+            Func<DateTimeOffset> clock)
+            : this(httpClient, serviceIndexUrl)
+        {
+            if (serviceIndexCacheDuration < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(serviceIndexCacheDuration));
+            }
+
+            _serviceIndexCacheDuration = serviceIndexCacheDuration;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>
@@ -127,14 +161,14 @@ namespace BaGet.Protocol
             return GetAsync(c => c.PackageMetadataClient, cancellationToken);
         }
 
-        private Task<ISearchClient> GetSearchClientAsync(CancellationToken cancellationToken = default)
+        private Task<IReadOnlyList<ISearchClient>> GetSearchClientsAsync(CancellationToken cancellationToken = default)
         {
-            return GetAsync(c => c.SearchClient, cancellationToken);
+            return GetAsync(c => c.SearchClients, cancellationToken);
         }
 
-        private Task<IAutocompleteClient> GetAutocompleteClientAsync(CancellationToken cancellationToken = default)
+        private Task<IReadOnlyList<IAutocompleteClient>> GetAutocompleteClientsAsync(CancellationToken cancellationToken = default)
         {
-            return GetAsync(c => c.AutocompleteClient, cancellationToken);
+            return GetAsync(c => c.AutocompleteClients, cancellationToken);
         }
 
         private Task<ICatalogClient> GetCatalogClientAsync(CancellationToken cancellationToken = default)
@@ -144,48 +178,21 @@ namespace BaGet.Protocol
 
         private async Task<T> GetAsync<T>(Func<NuGetClients, T> clientFactory, CancellationToken cancellationToken)
         {
-            if (_clients == null)
+            var clients = _clients;
+
+            if (clients == null || _clock() >= clients.ExpiresAt)
             {
                 await _mutex.WaitAsync(cancellationToken);
 
                 try
                 {
-                    if (_clients == null)
+                    // Another caller may have refreshed the service index while this one waited.
+                    if (_clients == null || _clock() >= _clients.ExpiresAt)
                     {
-                        var serviceIndexClient = new RawServiceIndexClient(_httpClient, _serviceIndexUrl);
-
-                        var serviceIndex = await serviceIndexClient.GetAsync(cancellationToken);
-
-                        var contentResourceUrl = serviceIndex.GetPackageContentResourceUrl();
-                        var metadataResourceUrl = serviceIndex.GetPackageMetadataResourceUrl();
-                        var catalogResourceUrl = serviceIndex.GetCatalogResourceUrl();
-                        var searchResourceUrl = serviceIndex.GetSearchQueryResourceUrl();
-                        var autocompleteResourceUrl = serviceIndex.GetSearchAutocompleteResourceUrl();
-
-                        // Create clients for required resources.
-                        var contentClient = new RawPackageContentClient(_httpClient, contentResourceUrl);
-                        var metadataClient = new RawPackageMetadataClient(_httpClient, metadataResourceUrl);
-                        var searchClient = new RawSearchClient(_httpClient, searchResourceUrl);
-
-                        // Create clients for optional resources.
-                        var catalogClient = catalogResourceUrl == null
-                            ? new NullCatalogClient() as ICatalogClient
-                            : new RawCatalogClient(_httpClient, catalogResourceUrl);
-                        var autocompleteClient = autocompleteResourceUrl == null
-                            ? new NullAutocompleteClient() as IAutocompleteClient
-                            : new RawAutocompleteClient(_httpClient, autocompleteResourceUrl);
-
-                        _clients = new NuGetClients
-                        {
-                            ServiceIndex = serviceIndex,
-
-                            PackageContentClient = contentClient,
-                            PackageMetadataClient = metadataClient,
-                            SearchClient = searchClient,
-                            AutocompleteClient = autocompleteClient,
-                            CatalogClient = catalogClient,
-                        };
+                        _clients = await BuildClientsAsync(cancellationToken);
                     }
+
+                    clients = _clients;
                 }
                 finally
                 {
@@ -193,18 +200,68 @@ namespace BaGet.Protocol
                 }
             }
 
-            // TODO: This should periodically refresh the service index response.
-            return clientFactory(_clients);
+            return clientFactory(clients);
+        }
+
+        private async Task<NuGetClients> BuildClientsAsync(CancellationToken cancellationToken)
+        {
+            var serviceIndexClient = new RawServiceIndexClient(_httpClient, _serviceIndexUrl);
+
+            var serviceIndex = await serviceIndexClient.GetAsync(cancellationToken);
+
+            var contentResourceUrl = serviceIndex.GetPackageContentResourceUrl();
+            var metadataResourceUrl = serviceIndex.GetPackageMetadataResourceUrl();
+            var catalogResourceUrl = serviceIndex.GetCatalogResourceUrl();
+
+            // The service index may advertise several endpoints for the search and autocomplete
+            // resources. Keep one client per endpoint, in the order they should be tried.
+            var searchResourceUrls = serviceIndex.GetSearchQueryResourceUrls();
+            var autocompleteResourceUrls = serviceIndex.GetSearchAutocompleteResourceUrls();
+
+            // Create clients for required resources.
+            var contentClient = new RawPackageContentClient(_httpClient, contentResourceUrl);
+            var metadataClient = new RawPackageMetadataClient(_httpClient, metadataResourceUrl);
+            var searchClients = searchResourceUrls
+                .Select(url => (ISearchClient)new RawSearchClient(_httpClient, url))
+                .ToList();
+
+            // Create clients for optional resources.
+            var catalogClient = catalogResourceUrl == null
+                ? new NullCatalogClient() as ICatalogClient
+                : new RawCatalogClient(_httpClient, catalogResourceUrl);
+            var autocompleteClients = autocompleteResourceUrls.Count == 0
+                ? new List<IAutocompleteClient> { new NullAutocompleteClient() }
+                : autocompleteResourceUrls
+                    .Select(url => (IAutocompleteClient)new RawAutocompleteClient(_httpClient, url))
+                    .ToList();
+
+            return new NuGetClients
+            {
+                ServiceIndex = serviceIndex,
+                ExpiresAt = _clock() + _serviceIndexCacheDuration,
+
+                PackageContentClient = contentClient,
+                PackageMetadataClient = metadataClient,
+                SearchClients = searchClients,
+                AutocompleteClients = autocompleteClients,
+                CatalogClient = catalogClient,
+            };
         }
 
         private class NuGetClients
         {
             public ServiceIndexResponse ServiceIndex { get; set; }
 
+            /// <summary>
+            /// When these clients stop being used, and the service index is fetched again.
+            /// It lives on the snapshot so that reading it needs no synchronization.
+            /// </summary>
+            public DateTimeOffset ExpiresAt { get; set; }
+
             public IPackageContentClient PackageContentClient { get; set; }
             public IPackageMetadataClient PackageMetadataClient { get; set; }
-            public ISearchClient SearchClient { get; set; }
-            public IAutocompleteClient AutocompleteClient { get; set; }
+            public IReadOnlyList<ISearchClient> SearchClients { get; set; }
+            public IReadOnlyList<IAutocompleteClient> AutocompleteClients { get; set; }
             public ICatalogClient CatalogClient { get; set; }
         }
     }

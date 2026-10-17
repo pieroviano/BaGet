@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BaGet.Protocol.Models;
 
@@ -47,6 +48,24 @@ namespace BaGet.Protocol
             return serviceIndex.GetRequiredResourceUrl(SearchQueryService, nameof(SearchQueryService));
         }
 
+        /// <summary>
+        /// All the Search resource's endpoints, in the order a client should try them.
+        /// A service index may advertise several endpoints for this resource.
+        /// </summary>
+        public static IReadOnlyList<string> GetSearchQueryResourceUrls(this ServiceIndexResponse serviceIndex)
+        {
+            return serviceIndex.GetRequiredResourceUrls(SearchQueryService, nameof(SearchQueryService));
+        }
+
+        /// <summary>
+        /// All the Autocomplete resource's endpoints, in the order a client should try them.
+        /// The list is empty if the service index does not advertise this optional resource.
+        /// </summary>
+        public static IReadOnlyList<string> GetSearchAutocompleteResourceUrls(this ServiceIndexResponse serviceIndex)
+        {
+            return serviceIndex.GetResourceUrls(SearchAutocompleteService);
+        }
+
         public static string GetCatalogResourceUrl(this ServiceIndexResponse serviceIndex)
         {
             return serviceIndex.GetResourceUrl(Catalog);
@@ -59,23 +78,65 @@ namespace BaGet.Protocol
 
         public static string GetResourceUrl(this ServiceIndexResponse serviceIndex, string[] types)
         {
-            var resource = types.SelectMany(t => serviceIndex.Resources.Where(r => r.Type == t)).FirstOrDefault();
+            return serviceIndex.GetResourceUrls(types).FirstOrDefault();
+        }
 
-            return resource?.ResourceUrl.Trim('/');
+        /// <summary>
+        /// All the endpoints that the service index advertises for a resource, in the order a
+        /// client should try them: the most preferred resource type first and, within a type,
+        /// the order the service index itself used.
+        ///
+        /// A URL advertised under several of the resource's type versions is returned once, so
+        /// that a failover does not retry an endpoint that has already failed.
+        /// </summary>
+        /// <param name="serviceIndex">The service index to read.</param>
+        /// <param name="types">The resource's type identifiers, most preferred first.</param>
+        /// <returns>The resource's endpoints. Empty if the resource is not advertised.</returns>
+        public static IReadOnlyList<string> GetResourceUrls(this ServiceIndexResponse serviceIndex, string[] types)
+        {
+            if (serviceIndex == null) throw new ArgumentNullException(nameof(serviceIndex));
+            if (types == null) throw new ArgumentNullException(nameof(types));
+
+            if (serviceIndex.Resources == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            return types
+                .SelectMany(type => serviceIndex.Resources.Where(resource => resource.Type == type))
+                .Select(resource => resource.ResourceUrl?.Trim('/'))
+                .Where(resourceUrl => !string.IsNullOrEmpty(resourceUrl))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
         }
 
         public static string GetRequiredResourceUrl(this ServiceIndexResponse serviceIndex, string[] types, string resourceName)
         {
+            return serviceIndex.GetRequiredResourceUrls(types, resourceName)[0];
+        }
+
+        /// <summary>
+        /// All the endpoints that the service index advertises for a required resource.
+        /// </summary>
+        /// <param name="serviceIndex">The service index to read.</param>
+        /// <param name="types">The resource's type identifiers, most preferred first.</param>
+        /// <param name="resourceName">The resource's name, used in the error message.</param>
+        /// <returns>The resource's endpoints, in the order a client should try them.</returns>
+        public static IReadOnlyList<string> GetRequiredResourceUrls(
+            this ServiceIndexResponse serviceIndex,
+            string[] types,
+            string resourceName)
+        {
             // For more information on required resources,
             // see: https://docs.microsoft.com/en-us/nuget/api/overview#resources-and-schema
-            var resourceUrl = serviceIndex.GetResourceUrl(types);
-            if (string.IsNullOrEmpty(resourceUrl))
+            var resourceUrls = serviceIndex.GetResourceUrls(types);
+            if (resourceUrls.Count == 0)
             {
                 throw new InvalidOperationException(
                     $"The service index does not have a resource named '{resourceName}'");
             }
 
-            return resourceUrl;
+            return resourceUrls;
         }
     }
 }

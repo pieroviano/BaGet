@@ -17,4 +17,8 @@
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BaGet.Protocol.Tests" />
+  </ItemGroup>
+
 </Project>
