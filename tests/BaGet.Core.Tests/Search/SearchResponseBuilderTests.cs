@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Moq;
@@ -57,7 +57,7 @@ namespace BaGet.Core.Tests.Search
                     Package("Test", "1.0.0"),
                     Package("Test", "3.1.0"),
                     Package("Test", "2.0.0")),
-            });
+            }, totalHits: 1);
 
             Assert.Equal("3.1.0", Assert.Single(response.Data).Version);
         }
@@ -70,7 +70,7 @@ namespace BaGet.Core.Tests.Search
                 Registration("Test",
                     Package("Test", "2.0.0-beta"),
                     Package("Test", "2.0.0")),
-            });
+            }, totalHits: 1);
 
             Assert.Equal("2.0.0", Assert.Single(response.Data).Version);
         }
@@ -83,7 +83,7 @@ namespace BaGet.Core.Tests.Search
                 Registration("Test",
                     Package("Test", "9.0.0"),
                     Package("Test", "10.0.0")),
-            });
+            }, totalHits: 1);
 
             Assert.Equal("10.0.0", Assert.Single(response.Data).Version);
         }
@@ -97,7 +97,7 @@ namespace BaGet.Core.Tests.Search
                     Package("Test", "1.0.0"),
                     Package("Test", "3.0.0"),
                     Package("Test", "2.0.0")),
-            });
+            }, totalHits: 1);
 
             Assert.Equal(
                 new[] { "3.0.0", "2.0.0", "1.0.0" },
@@ -112,7 +112,7 @@ namespace BaGet.Core.Tests.Search
                 Registration("Test",
                     Package("Test", "1.0.0", downloads: 10),
                     Package("Test", "2.0.0", downloads: 32)),
-            });
+            }, totalHits: 1);
 
             Assert.Equal(42, Assert.Single(response.Data).TotalDownloads);
         }
@@ -125,7 +125,7 @@ namespace BaGet.Core.Tests.Search
                 Registration("Test",
                     Package("Test", "1.0.0", downloads: 10),
                     Package("Test", "2.0.0", downloads: 32)),
-            });
+            }, totalHits: 1);
 
             var versions = Assert.Single(response.Data).Versions;
 
@@ -138,7 +138,7 @@ namespace BaGet.Core.Tests.Search
         {
             var package = Package("Test", "1.0.0", embeddedIcon: true);
 
-            var response = _target.BuildSearch(new[] { Registration("Test", package) });
+            var response = _target.BuildSearch(new[] { Registration("Test", package) }, totalHits: 1);
 
             Assert.Equal("https://test/v3/package/Test/1.0.0/icon", Assert.Single(response.Data).IconUrl);
         }
@@ -149,7 +149,7 @@ namespace BaGet.Core.Tests.Search
             var package = Package("Test", "1.0.0");
             package.IconUrl = new Uri("https://elsewhere.test/icon.png");
 
-            var response = _target.BuildSearch(new[] { Registration("Test", package) });
+            var response = _target.BuildSearch(new[] { Registration("Test", package) }, totalHits: 1);
 
             Assert.Equal("https://elsewhere.test/icon.png", Assert.Single(response.Data).IconUrl);
         }
@@ -161,7 +161,7 @@ namespace BaGet.Core.Tests.Search
             {
                 Registration("A", Package("A", "1.0.0")),
                 Registration("B", Package("B", "1.0.0")),
-            });
+            }, totalHits: 2);
 
             Assert.Equal(new[] { "A", "B" }, response.Data.Select(d => d.PackageId));
         }
@@ -169,7 +169,7 @@ namespace BaGet.Core.Tests.Search
         [Fact]
         public void ReturnsAnEmptyResponseForNoRegistrations()
         {
-            var response = _target.BuildSearch(new PackageRegistration[0]);
+            var response = _target.BuildSearch(new PackageRegistration[0], totalHits: 0);
 
             Assert.Empty(response.Data);
             Assert.Equal(0, response.TotalHits);
@@ -178,7 +178,7 @@ namespace BaGet.Core.Tests.Search
         [Fact]
         public void BuildAutocompleteReturnsTheIdsItWasGiven()
         {
-            var response = _target.BuildAutocomplete(new[] { "First", "Second" });
+            var response = _target.BuildAutocomplete(new[] { "First", "Second" }, totalHits: 2);
 
             Assert.Equal(new[] { "First", "Second" }, response.Data);
         }
@@ -186,10 +186,32 @@ namespace BaGet.Core.Tests.Search
         [Fact]
         public void BuildAutocompleteHandlesAnEmptyList()
         {
-            var response = _target.BuildAutocomplete(new string[0]);
+            var response = _target.BuildAutocomplete(new string[0], totalHits: 0);
 
             Assert.Empty(response.Data);
             Assert.Equal(0, response.TotalHits);
+        }
+
+        [Fact]
+        public void TotalHitsIsTheTotalGivenRatherThanThePageSize()
+        {
+            // The protocol documents TotalHits as the number of matches disregarding skip
+            // and take, so a page of one out of fifty reports fifty.
+            var response = _target.BuildSearch(
+                new[] { Registration("Test", Package("Test", "1.0.0")) },
+                totalHits: 50);
+
+            Assert.Single(response.Data);
+            Assert.Equal(50, response.TotalHits);
+        }
+
+        [Fact]
+        public void AutocompleteTotalHitsIsTheTotalGivenRatherThanThePageSize()
+        {
+            var response = _target.BuildAutocomplete(new[] { "Only.One" }, totalHits: 25);
+
+            Assert.Single(response.Data);
+            Assert.Equal(25, response.TotalHits);
         }
 
         [Fact]
