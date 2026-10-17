@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -228,6 +228,39 @@ namespace BaGet.Azure
         /// quotation marks and no backslash ever reaches the parser for a real id.
         /// See https://learn.microsoft.com/azure/search/query-lucene-syntax.
         /// </remarks>
+        /// <summary>
+        /// Escapes the characters that are syntax in the full Lucene query the search runs
+        /// with, leaving the value usable as a term. Unlike <see cref="EscapeQueryPhrase"/>
+        /// this does not quote, so a caller may still append a trailing "*" to make the term
+        /// a prefix query.
+        /// </summary>
+        /// <remarks>
+        /// See the escaping rules for the full Lucene syntax:
+        /// https://learn.microsoft.com/en-us/azure/search/query-lucene-syntax
+        /// </remarks>
+        internal static string EscapeQueryTerm(string value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            const string special = @"+-&|!(){}[]^""~*?:\/";
+            var builder = new StringBuilder(value.Length);
+
+            foreach (var character in value)
+            {
+                if (special.IndexOf(character) >= 0)
+                {
+                    builder.Append('\\');
+                }
+
+                builder.Append(character);
+            }
+
+            return builder.ToString();
+        }
+
         internal static string EscapeQueryPhrase(string value)
         {
             if (value == null)
@@ -256,26 +289,45 @@ namespace BaGet.Azure
 
         private string BuildSeachQuery(string query, string packageType, string framework)
         {
+            var frameworks = string.IsNullOrEmpty(framework)
+                ? null
+                : _frameworks.FindAllCompatibleFrameworks(framework);
+
+            return BuildSearchQuery(query, packageType, frameworks);
+        }
+
+        /// <summary>
+        /// Builds the full Lucene query. Every caller supplied value is escaped: the search
+        /// runs with <see cref="QueryType.Full"/>, so an unescaped value would change the
+        /// meaning of the query rather than being matched against.
+        /// </summary>
+        internal static string BuildSearchQuery(
+            string query,
+            string packageType,
+            IReadOnlyList<string> frameworks)
+        {
             var queryBuilder = new StringBuilder();
 
             if (!string.IsNullOrEmpty(query))
             {
-                queryBuilder.Append(query.TrimEnd().TrimEnd('*'));
+                // Escaped as a term, not quoted as a phrase, so the "*" below still makes
+                // this a prefix query.
+                queryBuilder.Append(EscapeQueryTerm(query.TrimEnd().TrimEnd('*')));
                 queryBuilder.Append('*');
             }
 
             if (!string.IsNullOrEmpty(packageType))
             {
                 queryBuilder.Append(" +packageTypes:");
-                queryBuilder.Append(packageType);
+                queryBuilder.Append(EscapeQueryPhrase(packageType));
             }
 
-            if (!string.IsNullOrEmpty(framework))
+            if (frameworks != null && frameworks.Count > 0)
             {
-                var frameworks = _frameworks.FindAllCompatibleFrameworks(framework);
-
+                // An unrecognised moniker is returned as given by FindAllCompatibleFrameworks,
+                // so these values are caller controlled too.
                 queryBuilder.Append(" +frameworks:(");
-                queryBuilder.Append(string.Join(" ", frameworks));
+                queryBuilder.Append(string.Join(" ", frameworks.Select(EscapeQueryPhrase)));
                 queryBuilder.Append(')');
             }
 
