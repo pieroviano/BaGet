@@ -28,6 +28,8 @@ namespace BaGet.Core
         /// </summary>
         DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
 
+        DbSet<CatalogEntry> CatalogLeafs { get; set; }
+
         /// <summary>
         /// Check whether a <see cref="DbUpdateException"/> is due to a SQL unique constraint violation.
         /// </summary>

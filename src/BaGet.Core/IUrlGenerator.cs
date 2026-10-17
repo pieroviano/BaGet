@@ -76,6 +76,24 @@ namespace BaGet.Core
         string GetVulnerabilityPageUrl(string pageName);
 
         /// <summary>
+        /// Get the URL of the catalog index.
+        /// See: https://learn.microsoft.com/en-us/nuget/api/catalog-resource
+        /// </summary>
+        string GetCatalogIndexUrl();
+
+        /// <summary>
+        /// Get the URL of one catalog page.
+        /// </summary>
+        /// <param name="pageIndex">The page's zero based index.</param>
+        string GetCatalogPageUrl(int pageIndex);
+
+        /// <summary>
+        /// Get the URL of one catalog leaf.
+        /// </summary>
+        /// <param name="commitId">The ID of the commit that wrote the leaf.</param>
+        string GetCatalogLeafUrl(string commitId);
+
+        /// <summary>
         /// Get the URL for the entry point of a package's metadata.
         /// See: https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#registration-index
         /// </summary>

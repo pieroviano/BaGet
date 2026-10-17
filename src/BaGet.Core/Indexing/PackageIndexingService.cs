@@ -16,6 +16,7 @@ namespace BaGet.Core
         private readonly SystemTime _time;
         private readonly IOptionsSnapshot<BaGetOptions> _options;
         private readonly ILogger<PackageIndexingService> _logger;
+        private readonly PackageChangeNotifier _notifier;
 
         public PackageIndexingService(
             IPackageDatabase packages,
@@ -24,7 +25,20 @@ namespace BaGet.Core
             SystemTime time,
             IOptionsSnapshot<BaGetOptions> options,
             ILogger<PackageIndexingService> logger)
+            : this(packages, storage, search, time, options, logger, PackageChangeNotifier.None)
         {
+        }
+
+        public PackageIndexingService(
+            IPackageDatabase packages,
+            IPackageStorageService storage,
+            ISearchIndexer search,
+            SystemTime time,
+            IOptionsSnapshot<BaGetOptions> options,
+            ILogger<PackageIndexingService> logger,
+            PackageChangeNotifier notifier)
+        {
+            _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _packages = packages ?? throw new ArgumentNullException(nameof(packages));
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _search = search ?? throw new ArgumentNullException(nameof(search));
@@ -158,6 +172,8 @@ namespace BaGet.Core
                 "Successfully indexed package {Id} {Version} in search",
                 package.Id,
                 package.NormalizedVersionString);
+
+            await _notifier.PackageChangedAsync(package.Id, package.Version, cancellationToken);
 
             return PackageIndexingResult.Success;
         }

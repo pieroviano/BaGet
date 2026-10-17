@@ -21,6 +21,7 @@ namespace BaGet
             MapV2FeedRoutes(endpoints);
             MapPackageMetadataAdminRoutes(endpoints);
             MapVulnerabilityRoutes(endpoints);
+            MapCatalogRoutes(endpoints);
         }
 
         /// <summary>
@@ -46,6 +47,27 @@ namespace BaGet
                 pattern: "v3/package/{id}/{version}/vulnerabilities",
                 defaults: new { controller = "PackageMetadataAdmin", action = "SetVulnerabilities" },
                 constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
+        }
+
+        public void MapCatalogRoutes(IEndpointRouteBuilder endpoints)
+        {
+            endpoints.MapControllerRoute(
+                name: Routes.CatalogIndexRouteName,
+                pattern: "v3/catalog/index.json",
+                defaults: new { controller = "Catalog", action = "Index" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.CatalogPageRouteName,
+                pattern: "v3/catalog/page{pageIndex:int}.json",
+                defaults: new { controller = "Catalog", action = "Page" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.CatalogLeafRouteName,
+                pattern: "v3/catalog/data/{commitId}.json",
+                defaults: new { controller = "Catalog", action = "Leaf" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
         }
 
         public void MapVulnerabilityRoutes(IEndpointRouteBuilder endpoints)

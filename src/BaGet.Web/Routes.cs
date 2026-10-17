@@ -32,5 +32,8 @@
         public const string SetVulnerabilitiesRouteName = "set-vulnerabilities";
         public const string VulnerabilityIndexRouteName = "vulnerability-index";
         public const string VulnerabilityPageRouteName = "vulnerability-page";
+        public const string CatalogIndexRouteName = "catalog-index";
+        public const string CatalogPageRouteName = "catalog-page";
+        public const string CatalogLeafRouteName = "catalog-leaf";
     }
 }

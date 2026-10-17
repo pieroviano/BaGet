@@ -17,6 +17,7 @@ namespace BaGet.Web
         private readonly IPackageDeletionService _deleteService;
         private readonly IOptionsSnapshot<BaGetOptions> _options;
         private readonly ILogger<PackagePublishController> _logger;
+        private readonly PackageChangeNotifier _notifier;
 
         public PackagePublishController(
             IAuthenticationService authentication,
@@ -24,8 +25,10 @@ namespace BaGet.Web
             IPackageDatabase packages,
             IPackageDeletionService deletionService,
             IOptionsSnapshot<BaGetOptions> options,
-            ILogger<PackagePublishController> logger)
+            ILogger<PackagePublishController> logger,
+            PackageChangeNotifier notifier)
         {
+            _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
             _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
             _packages = packages ?? throw new ArgumentNullException(nameof(packages));
@@ -128,6 +131,8 @@ namespace BaGet.Web
 
             if (await _packages.RelistPackageAsync(id, nugetVersion, cancellationToken))
             {
+                await _notifier.PackageChangedAsync(id, nugetVersion, cancellationToken);
+
                 return Ok();
             }
             else

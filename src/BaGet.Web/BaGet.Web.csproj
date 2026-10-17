@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BaGet.Core\BaGet.Core.csproj" />
     <ProjectReference Include="..\BaGet.Web.V2\BaGet.Web.V2.csproj" />
+    <ProjectReference Include="..\BaGet.Catalog\BaGet.Catalog.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,13 +13,25 @@ namespace BaGet.Core
         private readonly IPackageStorageService _storage;
         private readonly BaGetOptions _options;
         private readonly ILogger<PackageDeletionService> _logger;
+        private readonly PackageChangeNotifier _notifier;
 
         public PackageDeletionService(
             IPackageDatabase packages,
             IPackageStorageService storage,
             IOptionsSnapshot<BaGetOptions> options,
             ILogger<PackageDeletionService> logger)
+            : this(packages, storage, options, logger, PackageChangeNotifier.None)
         {
+        }
+
+        public PackageDeletionService(
+            IPackageDatabase packages,
+            IPackageStorageService storage,
+            IOptionsSnapshot<BaGetOptions> options,
+            ILogger<PackageDeletionService> logger,
+            PackageChangeNotifier notifier)
+        {
+            _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _packages = packages ?? throw new ArgumentNullException(nameof(packages));
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -54,6 +66,8 @@ namespace BaGet.Core
 
             _logger.LogInformation("Unlisted package {PackageId} {PackageVersion}", id, version);
 
+            await _notifier.PackageChangedAsync(id, version, cancellationToken);
+
             return true;
         }
 
@@ -85,6 +99,11 @@ namespace BaGet.Core
                 "Hard deleted package {PackageId} {PackageVersion} from storage",
                 id,
                 version);
+
+            if (found)
+            {
+                await _notifier.PackageDeletedAsync(id, version, cancellationToken);
+            }
 
             return found;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -165,6 +166,21 @@ namespace BaGet.Web
         public string GetVulnerabilityPageUrl(string pageName)
         {
             return AbsoluteUrl($"v3/vulnerabilities/{Uri.EscapeDataString(pageName)}.json");
+        }
+
+        public string GetCatalogIndexUrl()
+        {
+            return AbsoluteUrl("v3/catalog/index.json");
+        }
+
+        public string GetCatalogPageUrl(int pageIndex)
+        {
+            return AbsoluteUrl($"v3/catalog/page{pageIndex.ToString(CultureInfo.InvariantCulture)}.json");
+        }
+
+        public string GetCatalogLeafUrl(string commitId)
+        {
+            return AbsoluteUrl($"v3/catalog/data/{Uri.EscapeDataString(commitId)}.json");
         }
 
         public string GetReportAbuseUriTemplate()

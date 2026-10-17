@@ -28,12 +28,15 @@ namespace BaGet.Web
         private readonly IAuthenticationService _authentication;
         private readonly IPackageDatabase _packages;
         private readonly IOptionsSnapshot<BaGetOptions> _options;
+        private readonly PackageChangeNotifier _notifier;
 
         public PackageMetadataAdminController(
             IAuthenticationService authentication,
             IPackageDatabase packages,
-            IOptionsSnapshot<BaGetOptions> options)
+            IOptionsSnapshot<BaGetOptions> options,
+            PackageChangeNotifier notifier)
         {
+            _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
             _packages = packages ?? throw new ArgumentNullException(nameof(packages));
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -67,7 +70,7 @@ namespace BaGet.Web
                 AlternateVersionRange = request.AlternatePackageId == null ? null : request.AlternateVersionRange,
             };
 
-            return await RunAsync(() => _packages.SetDeprecationAsync(id, nugetVersion, deprecation, cancellationToken));
+            return await RunAsync(id, nugetVersion, () => _packages.SetDeprecationAsync(id, nugetVersion, deprecation, cancellationToken), cancellationToken);
         }
 
         public async Task<IActionResult> RemoveDeprecation(
@@ -83,7 +86,7 @@ namespace BaGet.Web
                 return NotFound();
             }
 
-            return await RunAsync(() => _packages.RemoveDeprecationAsync(id, nugetVersion, cancellationToken));
+            return await RunAsync(id, nugetVersion, () => _packages.RemoveDeprecationAsync(id, nugetVersion, cancellationToken), cancellationToken);
         }
 
         public async Task<IActionResult> SetVulnerabilities(
@@ -115,7 +118,7 @@ namespace BaGet.Web
                 })
                 .ToList();
 
-            return await RunAsync(() => _packages.SetVulnerabilitiesAsync(id, nugetVersion, vulnerabilities, cancellationToken));
+            return await RunAsync(id, nugetVersion, () => _packages.SetVulnerabilitiesAsync(id, nugetVersion, vulnerabilities, cancellationToken), cancellationToken);
         }
 
         internal static string Validate(DeprecationRequest request)
@@ -202,11 +205,22 @@ namespace BaGet.Web
             return null;
         }
 
-        private async Task<IActionResult> RunAsync(Func<Task<bool>> operation)
+        private async Task<IActionResult> RunAsync(
+            string id,
+            NuGetVersion version,
+            Func<Task<bool>> operation,
+            CancellationToken cancellationToken)
         {
             try
             {
-                return await operation() ? NoContent() : NotFound();
+                if (!await operation())
+                {
+                    return NotFound();
+                }
+
+                await _notifier.PackageChangedAsync(id, version, cancellationToken);
+
+                return NoContent();
             }
             catch (NotSupportedException e)
             {

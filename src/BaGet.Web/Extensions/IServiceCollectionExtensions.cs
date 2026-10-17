@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using BaGet.Catalog;
 using BaGet.Core;
 using BaGet.Web;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,7 @@ namespace BaGet
             services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();
 
             services.AddBaGetApplication(configureAction);
+            services.AddBaGetCatalog();
 
             return services;
         }

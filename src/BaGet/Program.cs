@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using BaGet.Catalog;
 using BaGet.Core;
 using BaGet.Web;
 using McMaster.Extensions.CommandLineUtils;
@@ -39,6 +40,23 @@ namespace BaGet
                             var importer = scope.ServiceProvider.GetRequiredService<DownloadsImporter>();
 
                             await importer.ImportAsync(cancellationToken);
+                        }
+                    });
+                });
+            });
+
+            app.Command("catalog", catalog =>
+            {
+                catalog.Command("rebuild", rebuild =>
+                {
+                    rebuild.Description = "Append the catalog entries missing for the packages in the database.";
+                    rebuild.OnExecuteAsync(async cancellationToken =>
+                    {
+                        using (var scope = host.Services.CreateScope())
+                        {
+                            var rebuilder = scope.ServiceProvider.GetRequiredService<CatalogRebuilder>();
+
+                            await rebuilder.RebuildAsync(cancellationToken);
                         }
                     });
                 });

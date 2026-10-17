@@ -21,6 +21,9 @@ namespace BaGet.Core
 
         public const int MaxPackageDependencyVersionRangeLength = 256;
 
+        public const int MaxCatalogCommitIdLength = 36;
+        public const int MaxCatalogTypeLength = 32;
+
         public AbstractContext(DbContextOptions<TContext> options)
             : base(options)
         { }
@@ -31,6 +34,7 @@ namespace BaGet.Core
         public DbSet<TargetFramework> TargetFrameworks { get; set; }
         public DbSet<PackageDeprecation> PackageDeprecations { get; set; }
         public DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
+        public DbSet<CatalogEntry> CatalogLeafs { get; set; }
 
         public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -49,6 +53,7 @@ namespace BaGet.Core
             builder.Entity<TargetFramework>(BuildTargetFrameworkEntity);
             builder.Entity<PackageDeprecation>(BuildPackageDeprecationEntity);
             builder.Entity<PackageVulnerability>(BuildPackageVulnerabilityEntity);
+            builder.Entity<CatalogEntry>(BuildCatalogEntryEntity);
         }
 
         private void BuildPackageEntity(EntityTypeBuilder<Package> package)
@@ -169,6 +174,17 @@ namespace BaGet.Core
                 .WithMany(p => p.Vulnerabilities)
                 .HasForeignKey(v => v.PackageKey)
                 .IsRequired(false);
+        }
+
+        private void BuildCatalogEntryEntity(EntityTypeBuilder<CatalogEntry> entry)
+        {
+            entry.HasKey(e => e.Key);
+            entry.HasIndex(e => e.CommitId).IsUnique();
+
+            entry.Property(e => e.CommitId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
+            entry.Property(e => e.Type).HasMaxLength(MaxCatalogTypeLength).IsRequired();
+            entry.Property(e => e.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+            entry.Property(e => e.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
         }
 
         private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)

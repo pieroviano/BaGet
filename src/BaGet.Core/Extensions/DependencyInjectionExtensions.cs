@@ -92,6 +92,7 @@ namespace BaGet.Core
             services.TryAddTransient<IPackageContentService, DefaultPackageContentService>();
             services.TryAddTransient<IPackageDeletionService, PackageDeletionService>();
             services.TryAddTransient<IPackageIndexingService, PackageIndexingService>();
+            services.TryAddTransient<PackageChangeNotifier>();
             services.TryAddTransient<IPackageMetadataService, DefaultPackageMetadataService>();
             services.TryAddTransient<IPackageService, PackageService>();
             services.TryAddTransient<IPackageStorageService, PackageStorageService>();

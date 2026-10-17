@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Protocol.Models;
@@ -9,10 +10,17 @@ namespace BaGet.Core
     public class BaGetServiceIndex : IServiceIndexService
     {
         private readonly IUrlGenerator _url;
+        private readonly IReadOnlyList<IServiceIndexResourceProvider> _providers;
 
         public BaGetServiceIndex(IUrlGenerator url)
+            : this(url, Array.Empty<IServiceIndexResourceProvider>())
+        {
+        }
+
+        public BaGetServiceIndex(IUrlGenerator url, IEnumerable<IServiceIndexResourceProvider> providers)
         {
             _url = url ?? throw new ArgumentNullException(nameof(url));
+            _providers = providers?.ToList() ?? throw new ArgumentNullException(nameof(providers));
         }
 
         private IEnumerable<ServiceIndexItem> BuildResource(string name, string url, params string[] versions)
@@ -42,6 +50,11 @@ namespace BaGet.Core
             resources.AddRange(BuildResource("PackageDetailsUriTemplate", _url.GetPackageDetailsUriTemplate(), "5.1.0"));
             resources.AddRange(BuildResource("ReportAbuseUriTemplate", _url.GetReportAbuseUriTemplate(), "3.0.0-beta", "3.0.0-rc"));
             resources.AddRange(BuildResource("VulnerabilityInfo", _url.GetVulnerabilityIndexUrl(), "6.7.0"));
+
+            foreach (var provider in _providers)
+            {
+                resources.AddRange(provider.GetResources());
+            }
 
             var result = new ServiceIndexResponse
             {
