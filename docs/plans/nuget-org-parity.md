@@ -1,8 +1,20 @@
 # Plan: extend BaGet to nuget.org functionality
 
-Status: in progress. Phases 1, 2 and 8 done. Blocking checks B1-B4 done (see **Blocking verification results**); B5 deferred to Phase 5.
-Phase 1 onwards not started. Target branch policy: one reviewable PR per phase against
-`loic-sharma/BaGet` `main`.
+Status: **all nine phases implemented** on `fixissues` (2026-10-17). Blocking checks B1-B5 pass.
+Suite 718/718, stable over three runs; `has-pending-model-changes` clean for all four providers.
+Deviations from the plan are recorded per phase under **Implemented**. Target branch policy: one
+reviewable PR per phase against `loic-sharma/BaGet` `main`.
+
+### Operator summary
+
+| Feature | Default | Switch |
+|---|---|---|
+| Catalog, VulnerabilityInfo, deprecation/vulnerability admin endpoints, statistics, abuse reports | on | none (Catalog off automatically on Azure Table) |
+| Accounts, owners, scoped keys, owner pages | **off** | `Accounts:Enabled`, `Accounts:AllowRegistration`, `Accounts:OpenIdConnect:{Authority,ClientId,ClientSecret,DisplayName}` |
+| Validation pipeline | **off** | `Validation:Enabled`, `Validation:RequireSignedPackages` |
+| Repository signing + `RepositorySignatures/5.0.0` | off | `Validation:RepositorySigningCertificatePath`/`Password`/`ServiceIndexUrl` (https) |
+| Azure Search autocomplete/versions | on | index needs the new `normalizedId` field; older documents use a fallback until re-pushed |
+| CLI | - | `baget catalog rebuild` backfills missing catalog entries |
 
 ## Decisions taken (and their consequences)
 
@@ -34,7 +46,7 @@ Phase 1 onwards not started. Target branch policy: one reviewable PR per phase a
 | B2 | **Pass** | `Package.Key` is `int` / `ValueGeneratedOnAdd` in all four migration snapshots. Safe FK target. |
 | B3 | **Pass, with corrections** | All the resources are documented and live on nuget.org. Corrections to this plan: `ReportAbuseUriTemplate` is published as `3.0.0-beta` **and** `3.0.0-rc`, not `3.0.0`. nuget.org also advertises `OwnerDetailsUriTemplate/6.11.0`, `ReadmeUriTemplate/6.13.0`, `PackageDisplayMetadataUriTemplate/3.0.0-rc`, `PackageVersionDisplayMetadataUriTemplate/3.0.0-rc`, `SearchGalleryQueryService/3.0.0-rc` and `LegacyGallery`, none of which this plan listed. Template placeholders are `{id}`, `{version}`, `{id-lower}`, `{version-lower}`, `{owner}`, `{lower_id}`. |
 | B4 | **Pass** | `BaGet.Protocol` versions as `0.1.0.<yyddd>` (pre-1.0, date-stamped) via `src/Directory.Build.props:10`. Additive public members are acceptable. |
-| B5 | Deferred | Nothing to check until Identity exists. Stays a test-first requirement of Phase 5. |
+| B5 | **Pass** (Phase 5) | Every pre-existing test, `ApiKeyAuthenticationServiceTests` included, passes with accounts registered; `AccountsIntegrationTests.TheGlobalKeyStillPushes` proves the global key stays the superuser with accounts on. |
 
 ### Blockers found while running B1
 
@@ -77,7 +89,7 @@ migrations for every provider.
 
 Two caveats carried forward:
 
-- **PostgreSQL and MySQL report pending model changes.** For PostgreSQL this is **pre-existing**:
+- **Resolved in Phase 3** (see its drift table): PostgreSQL and MySQL reported pending model changes. For PostgreSQL this was **pre-existing**:
   the same check reports it at Npgsql 10.0.3 / EF 10, so the downgrade did not cause it. For MySQL
   it could never be checked before, because the context could not be constructed. Both snapshots
   are stamped `ProductVersion 3.1.18` and encode EF 3.1-era provider shapes. Phase 3 must
@@ -88,6 +100,10 @@ Two caveats carried forward:
   providers. The `dotnet ef` checks in the table above are the gate for those, not the tests.
 
 ## Current state
+
+The tables below are the state **before** this plan, kept for reference. Every "no" is now "yes"
+(`RepositorySignatures` only while a signing certificate is configured), and every listed gap is
+closed by the phase noted under **Implemented**.
 
 Advertised service-index resources — `src/BaGet.Core/ServiceIndex/BaGetServiceIndex.cs:35-41`:
 
@@ -167,7 +183,7 @@ documented, not silently absent.
 **Verify**: integration tests driving the real `nuget.exe`/`dotnet nuget` V2 code path against the
 test host; assert `FindPackagesById` returns every version and that `$metadata` parses.
 
-### Phase 3 — Deprecation and vulnerability metadata (schema: 2 tables) — SCHEMA DONE
+### Phase 3 — Deprecation and vulnerability metadata (schema: 2 tables) — DONE
 
 New tables, both with a **nullable** FK to `Packages` (B1):
 
@@ -197,8 +213,17 @@ sets on `IContext`/`NullContext`, the navigation on `Package`, and migrations fo
 providers**. `has-pending-model-changes` now reports clean for every one, which it did not
 before this phase.
 
-Not done: wiring the two tables into `RegistrationBuilder` and `SearchResponseBuilder`, and
-the admin endpoints. Nothing reads the tables yet.
+Wiring (commits `99c519e`, `3ecaf35`):
+
+| Change | Where |
+|---|---|
+| Registration `deprecation` + `vulnerabilities` | `RegistrationBuilder.ToDeprecation` / `ToVulnerabilities` |
+| Search results carry the latest version's both | `SearchResponseBuilder`, `SearchResult.Deprecation` / `Vulnerabilities` |
+| `PUT/DELETE v3/package/{id}/{version}/deprecation`, `PUT .../vulnerabilities` | `PackageMetadataAdminController`; 204 / 400 / 401 / 403 / 404, 501 on Azure Table |
+| `VulnerabilityInfo/6.7.0`: `v3/vulnerabilities/index.json` + one `base` page | `VulnerabilityController` |
+
+Decision: one vulnerability page, `@updated` = now (no change timestamp is stored; always correct,
+never cached). Route value is `pageName`: `page` is reserved by Razor Pages and broke routing.
 
 #### How the PostgreSQL and MySQL drift was resolved
 
@@ -215,7 +240,7 @@ pre-existing drift leaked in. Resolved per provider rather than by trimming blin
 preserves every instant exactly and the `Down` reverses it, but it rewrites the column, so it
 is worth calling out in release notes.
 
-### Phase 4 — Catalog resource (schema: 1 table; storage)
+### Phase 4 — Catalog resource (schema: 1 table; storage) — DONE
 
 New project `src/BaGet.Catalog`. The catalog is an append-only log of package events, consumed by
 mirrors.
@@ -233,7 +258,23 @@ storage round trip; reads stay cheap and cacheable.
 must not fail the push — log and reconcile, with a `catalog rebuild` CLI command
 (`src/BaGet/Program.cs` already hosts commands such as `import`).
 
-### Phase 5 — Identity, owners, scoped API keys (schema: Identity's 7 tables + 3)
+#### Implemented — DONE (`1c6f5ac`)
+
+| Item | Where / note |
+|---|---|
+| Change hook | `IPackageChangeHandler` + `PackageChangeNotifier` (Core): push, unlist, relist, hard delete, metadata edits. A handler's failure is logged, never fails the change. Reused by Phases 5, 6, 9. |
+| Table | `CatalogLeafs` (`CatalogEntry`), no FK: the log outlives packages |
+| Leaves | snapshot JSON at `catalog/{commitId}.json` via `IStorageService`; `@id` added on read |
+| Timestamps | strictly increasing, ms-truncated (`CatalogWriter.NextTimestamp`); in-process lock. Multiple instances on one DB are **not** coordinated. |
+| Rebuild | `baget catalog rebuild`: appends missing details/delete entries. Cannot detect a lost unlist. |
+| Azure Table | `NullCatalogDatabase`: not written, not advertised, endpoints 404 |
+
+**Deviation**: index and pages are built **on read** from the table, not regenerated on write.
+Reason: the CLI rebuild has no request to derive absolute URLs from, and stored URLs would break
+on a host or `PathBase` change. Reads are two small indexed queries. Verified with BaGet.Protocol's
+own `CatalogProcessor` (`CatalogIntegrationTests`).
+
+### Phase 5 — Identity, owners, scoped API keys (schema: Identity's 7 tables + 3) — DONE
 
 New project `src/BaGet.Identity`.
 
@@ -257,7 +298,25 @@ New project `src/BaGet.Identity`.
 **Risk**: largest phase by far. Splitting it is tempting but ownership without identity is
 meaningless. If it must be split, the seam is: 5a Identity + sign-in, 5b owners + scoped keys.
 
-### Phase 6 — Validation pipeline (schema: 1 table; storage)
+#### Implemented — DONE (`28498bb`, `7ab800b`)
+
+| Item | Where / note |
+|---|---|
+| Schema | `AbstractContext : IdentityDbContext<BaGetUser>` (7 Identity tables) + `Organizations`, `OrganizationMembers`, `PackageOwners`, `ApiKeys`. Identity EF stores pinned with EF (9.0.21). |
+| Stores | `UserStore<..., DbContext>` over whichever provider context was resolved |
+| Auth contract | `IAuthenticationService.AuthenticatePrincipalAsync` (default interface method, non-breaking) → `BaGetPrincipal`; `IPackageAuthorizationService` (`AllowAuthenticated` default, `OwnershipAuthorizationService` with accounts) |
+| Rules | superuser = global key, or any caller on an open server; new ID → first pusher owns it (needs `package:push`); existing ID without owners → superuser only; manage → owner + `package:unlist`; key glob + expiry enforced |
+| Keys | `bgt_` + 256 random bits, SHA-256 stored; shown once |
+| UI | `/account/login` (local + OIDC), `/register`, `/logout`, `/apikeys`; 404 while disabled |
+| Search | `owners` + `verified` per result; omitted for IDs without owners |
+
+Deviations: config section is `Accounts:*` (incl. `Accounts:OpenIdConnect:*`), not
+`Authentication:OpenIdConnect:*`. `PackageOwners` keys on `OwnerName` (user or organization,
+one namespace) with no `PackageKey`: ownership is per ID, not per version. Organizations need a
+members table, so 4 tables, not 3. OIDC sign-in auto-provisions an account regardless of
+`AllowRegistration` (the IdP is the gate). Per-user keys restrict nothing while `ApiKey` is unset.
+
+### Phase 6 — Validation pipeline (schema: 1 table; storage) — DONE
 
 New project `src/BaGet.Validation`.
 
@@ -279,7 +338,26 @@ exactly as today and no package enters `Validating`.
 `PackageContentController` serves. With validation off this code path is unreachable — keep it that
 way to protect existing deployments.
 
-### Phase 7 — Search parity — PARTLY DONE
+#### Implemented — DONE (`4e99d71`)
+
+| Item | Where / note |
+|---|---|
+| Seam | `IPackageSubmissionService` (push only; mirroring still indexes directly). `PackageIndexingResult.Accepted` → 202. |
+| Staging | nupkg at `validation/{submissionId}.nupkg`; package **not in the DB** until valid |
+| Table | `PackageValidations`: one row per validator + an `Index` row, sharing `SubmissionId`; adds `PackageId`, `PackageVersion`, `Created` to the planned columns |
+| Validators | `PackageEntriesValidator` (the `ValidatePackageEntriesAsync` TODO), `PackageSignatureValidator` (integrity + validity; untrusted roots allowed), any registered `IPackageValidator` |
+| Worker | `ValidationWorker` + `IValidationQueue` (in-memory channel); pending submissions re-queued on start |
+| Signing | `RepositorySigner`; `RepositorySignatures/5.0.0` + `.crt` download; `allRepositorySigned: false` |
+| Status | `GET v3/package/{id}/{version}/validation` (owner or superuser): Validating / Available / Quarantined + reasons |
+
+Deviations: no `Validating` package state; staging outside the database means no read path
+changes, which removes the risk above entirely. Validation **survives a restart** (rows + staged
+file are durable). Symbol checks (portable PDB, PDB↔DLL) run synchronously in
+`SymbolIndexingService` (merged `todo/symbol-validation`, `a6fb916`). Signing needs
+`Validation:RepositorySigningServiceIndexUrl`, https only: NuGet rejects any other scheme and the
+worker has no request to read the URL from.
+
+### Phase 7 — Search parity — DONE
 
 - Prefix search on package id (`src/BaGet.Azure/Search/AzureSearchService.cs:111`).
 - Prerelease/semver2/packageType filters (`:112`).
@@ -296,7 +374,15 @@ prerelease/semver2/package type filters, and versions autocomplete - all of whic
 `src/BaGet.Azure` and cannot be executed here, since the default search type is `Database` and
 there is no Azure Search instance.
 
-### Phase 8 — Search failover and client SDK — DONE — DONE
+Remainder (`58e8306`): `PackageDocument.NormalizedId` (lowercased ID, keyword analyzer).
+Autocomplete = `+(normalizedId:<term>* OR <term>)` plus `+packageTypes:"…"`; versions = exact
+`normalizedId eq` filter, phrase-query fallback. The `OR`/fallback keep documents indexed before
+the field existed working, so no reindex is required. **Operator step**: add the field to the
+index. Unit-tested query builders only; not run against a live Azure Search. Also fixed: Table
+storage search compared a mixed-case prefix to lowercase partition keys; Table storage gains
+versions autocomplete.
+
+### Phase 8 — Search failover and client SDK — DONE
 
 | Change | Where |
 |---|---|
@@ -315,10 +401,20 @@ Registration metadata is always present.
 `ServiceIndexRefreshTests.cs` (6), driven by `Support/FakeHttpMessageHandler.cs` and
 `Support/FakeServiceIndex.cs`. Suite 509 -> 530.
 
-### Phase 9 — Statistics and web UI
+### Phase 9 — Statistics and web UI — DONE
 
 Download statistics, owner-facing manage-package pages, report-abuse handling, profile pages.
 Depends on Phase 5.
+
+#### Implemented — DONE (`5df9f70`)
+
+| Page | Note |
+|---|---|
+| `/stats` | totals, top 10 IDs, 10 latest versions. **No per-day history**: only cumulative per-version counts exist. |
+| `/packages/{id}/{version}/report-abuse` | form → new `AbuseReports` table (4 migrations) |
+| `/packages/{id}/manage` | owners only: owners add/remove (last owner kept), unlist/relist, deprecate, open reports + resolve; changes reach the catalog |
+| `/profiles/{name}`, `/account/profile` | user or organization; owned IDs with downloads |
+| `/account/organizations` | create; admins add/remove members; last admin kept |
 
 ## Dependency order
 
@@ -338,10 +434,10 @@ Phases 1, 2, 7 and 8 can land in any order and need no schema change beyond Phas
 | Step | Command |
 |---|---|
 | Build | `dotnet build BaGet.sln -c Release` — 0 errors |
-| Unit + integration | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` — currently 530/530; no phase may reduce it |
+| Unit + integration | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` — currently 718/718; no phase may reduce it |
 | Migrations | `dotnet ef migrations add <name>` in each of the 4 `BaGet.Database.*` projects, then `dotnet test tests/BaGet.Tests` (it applies migrations) |
-| Upgrade-in-place | Restore a database built from the previous tag, run the new build, assert packages are still listed and downloadable |
-| Protocol conformance | Point real `dotnet restore`, `nuget list` and `dotnet nuget push` at the test host |
+| Upgrade-in-place | Restore a database built from the previous tag, run the new build, assert packages are still listed and downloadable — **not yet run** |
+| Protocol conformance | Point real `dotnet restore`, `nuget list` and `dotnet nuget push` at the test host — covered in-process by NuGet.Protocol (`NuGetClientIntegrationTests`, `NuGetV2ClientIntegrationTests`) and BaGet.Protocol (`CatalogIntegrationTests`); the real CLIs **not yet run** |
 | Determinism | Full suite three times (shared static state exists, e.g. `FrameworkCompatibilityService`'s static cache) |
 
 ## Risks
