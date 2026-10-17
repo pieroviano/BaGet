@@ -72,6 +72,12 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>Extension.$(MSBuildProjectName)</PackageId>
+    <!--
+      A Razor class library serves its wwwroot under "_content/<PackageId>" by default, so the
+      package name would leak into every asset URL the pages reference. Pin the path to the
+      project name, so it stays the same however the projects are packaged.
+    -->
+    <StaticWebAssetBasePath>_content/$(MSBuildProjectName)</StaticWebAssetBasePath>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

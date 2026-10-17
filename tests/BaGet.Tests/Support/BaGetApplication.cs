@@ -24,14 +24,21 @@ namespace BaGet.Tests
         private readonly HttpClient _upstreamClient;
         private readonly Dictionary<string, string> _configOverrides;
         private readonly Action<IServiceCollection> _configureServices;
+        private readonly string _environment;
 
+        /// <param name="environment">
+        /// "Production" by default. "Development" serves the Razor class libraries' static web
+        /// assets from the build output, as running from Visual Studio does.
+        /// </param>
         public BaGetApplication(
             ITestOutputHelper output,
             HttpClient upstreamClient = null,
             Dictionary<string, string> configOverrides = null,
-            Action<IServiceCollection> configureServices = null)
+            Action<IServiceCollection> configureServices = null,
+            string environment = "Production")
         {
             _configureServices = configureServices;
+            _environment = environment;
             _output = output ?? throw new ArgumentNullException(nameof(output));
             _upstreamClient = upstreamClient;
             _configOverrides = configOverrides;
@@ -77,7 +84,7 @@ namespace BaGet.Tests
             }
 
             builder
-                .UseEnvironment("Production")
+                .UseEnvironment(_environment)
                 .ConfigureLogging(logging =>
                 {
                     // BaGet uses console logging by default. This logger throws operation
