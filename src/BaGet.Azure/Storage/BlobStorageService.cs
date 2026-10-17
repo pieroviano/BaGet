@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Extensions.Options;
 
 namespace BaGet.Azure
 {
@@ -12,10 +13,21 @@ namespace BaGet.Azure
     public class BlobStorageService : IStorageService
     {
         private readonly CloudBlobContainer _container;
+        private readonly TimeSpan _downloadUriExpiry;
 
-        public BlobStorageService(CloudBlobContainer container)
+        public BlobStorageService(IOptionsSnapshot<AzureBlobStorageOptions> options, CloudBlobContainer container)
         {
+            if (options == null) throw new ArgumentNullException(nameof(options));
+
             _container = container ?? throw new ArgumentNullException(nameof(container));
+            _downloadUriExpiry = options.Value.DownloadUriExpiry;
+
+            if (_downloadUriExpiry <= TimeSpan.Zero)
+            {
+                throw new ArgumentException(
+                    $"The {nameof(AzureBlobStorageOptions.DownloadUriExpiry)} option must be greater than zero",
+                    nameof(options));
+            }
         }
 
         public async Task<Stream> GetAsync(string path, CancellationToken cancellationToken)
@@ -27,11 +39,10 @@ namespace BaGet.Azure
 
         public Task<Uri> GetDownloadUriAsync(string path, CancellationToken cancellationToken)
         {
-            // TODO: Make expiry time configurable.
             var blob = _container.GetBlockBlobReference(path);
             var accessPolicy = new SharedAccessBlobPolicy
             {
-                SharedAccessExpiryTime = DateTimeOffset.Now.Add(TimeSpan.FromMinutes(10)),
+                SharedAccessExpiryTime = DateTimeOffset.UtcNow.Add(_downloadUriExpiry),
                 Permissions = SharedAccessBlobPermissions.Read
             };
 

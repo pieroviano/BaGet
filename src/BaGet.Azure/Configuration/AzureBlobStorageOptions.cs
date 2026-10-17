@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -30,9 +31,28 @@ namespace BaGet.Azure
         /// </summary>
         public string Container { get; set; }
 
+        /// <summary>
+        /// How long the shared access signatures handed out by
+        /// <see cref="BlobStorageService.GetDownloadUriAsync"/> stay valid.
+        /// Must be greater than zero.
+        /// </summary>
+        public TimeSpan DownloadUriExpiry { get; set; } = DefaultDownloadUriExpiry;
+
+        /// <summary>
+        /// The <see cref="DownloadUriExpiry"/> used when the configuration does not set one.
+        /// </summary>
+        public static readonly TimeSpan DefaultDownloadUriExpiry = TimeSpan.FromMinutes(10);
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             const string helpUrl = "https://loic-sharma.github.io/BaGet/quickstart/azure/#azure-blob-storage";
+
+            if (DownloadUriExpiry <= TimeSpan.Zero)
+            {
+                yield return new ValidationResult(
+                    $"The {nameof(DownloadUriExpiry)} configuration must be greater than zero. See {helpUrl}",
+                    new[] { nameof(DownloadUriExpiry) });
+            }
 
             if (string.IsNullOrEmpty(ConnectionString))
             {
