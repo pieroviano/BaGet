@@ -28,7 +28,7 @@ namespace BaGet.Core
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task SavePackageContentAsync(
+        public async Task<PackageSaveResult> SavePackageContentAsync(
             Package package,
             Stream packageStream,
             Stream nuspecStream,
@@ -58,14 +58,13 @@ namespace BaGet.Core
             var result = await _storage.PutAsync(packagePath, packageStream, PackageContentType, cancellationToken);
             if (result == StoragePutResult.Conflict)
             {
-                // TODO: This should be returned gracefully with an enum.
                 _logger.LogInformation(
                     "Could not store package {PackageId} {PackageVersion} at {Path} due to conflict",
                     lowercasedId,
                     lowercasedNormalizedVersion,
                     packagePath);
 
-                throw new InvalidOperationException($"Failed to store package {lowercasedId} {lowercasedNormalizedVersion} due to conflict");
+                return PackageSaveResult.Conflict;
             }
 
             // Store the package's nuspec.
@@ -78,14 +77,13 @@ namespace BaGet.Core
             result = await _storage.PutAsync(nuspecPath, nuspecStream, NuspecContentType, cancellationToken);
             if (result == StoragePutResult.Conflict)
             {
-                // TODO: This should be returned gracefully with an enum.
                 _logger.LogInformation(
                     "Could not store package {PackageId} {PackageVersion} nuspec at {Path} due to conflict",
                     lowercasedId,
                     lowercasedNormalizedVersion,
                     nuspecPath);
 
-                throw new InvalidOperationException($"Failed to store package {lowercasedId} {lowercasedNormalizedVersion} nuspec due to conflict");
+                return PackageSaveResult.Conflict;
             }
 
             // Store the package's readme, if one exists.
@@ -100,14 +98,13 @@ namespace BaGet.Core
                 result = await _storage.PutAsync(readmePath, readmeStream, ReadmeContentType, cancellationToken);
                 if (result == StoragePutResult.Conflict)
                 {
-                    // TODO: This should be returned gracefully with an enum.
                     _logger.LogInformation(
                         "Could not store package {PackageId} {PackageVersion} readme at {Path} due to conflict",
                         lowercasedId,
                         lowercasedNormalizedVersion,
                         readmePath);
 
-                    throw new InvalidOperationException($"Failed to store package {lowercasedId} {lowercasedNormalizedVersion} readme due to conflict");
+                    return PackageSaveResult.Conflict;
                 }
             }
 
@@ -123,14 +120,13 @@ namespace BaGet.Core
                 result = await _storage.PutAsync(iconPath, iconStream, IconContentType, cancellationToken);
                 if (result == StoragePutResult.Conflict)
                 {
-                    // TODO: This should be returned gracefully with an enum.
                     _logger.LogInformation(
                         "Could not store package {PackageId} {PackageVersion} icon at {Path} due to conflict",
                         lowercasedId,
                         lowercasedNormalizedVersion,
                         iconPath);
 
-                    throw new InvalidOperationException($"Failed to store package {lowercasedId} {lowercasedNormalizedVersion} icon");
+                    return PackageSaveResult.Conflict;
                 }
             }
 
@@ -138,6 +134,8 @@ namespace BaGet.Core
                 "Finished storing package {PackageId} {PackageVersion}",
                 lowercasedId,
                 lowercasedNormalizedVersion);
+
+            return PackageSaveResult.Success;
         }
 
         public async Task<Stream> GetPackageStreamAsync(string id, NuGetVersion version, CancellationToken cancellationToken)

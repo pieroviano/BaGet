@@ -112,11 +112,13 @@ namespace BaGet.Core
                 package.Id,
                 package.NormalizedVersionString);
 
+            PackageSaveResult storageResult;
+
             try
             {
                 packageStream.Position = 0;
 
-                await _storage.SavePackageContentAsync(
+                storageResult = await _storage.SavePackageContentAsync(
                     package,
                     packageStream,
                     nuspecStream,
@@ -126,9 +128,6 @@ namespace BaGet.Core
             }
             catch (Exception e)
             {
-                // This may happen due to concurrent pushes.
-                // TODO: Make IPackageStorageService.SavePackageContentAsync return a result enum so this
-                // can be properly handled.
                 _logger.LogError(
                     e,
                     "Failed to persist package {PackageId} {PackageVersion} content to storage",
@@ -136,6 +135,25 @@ namespace BaGet.Core
                     package.NormalizedVersionString);
 
                 throw;
+            }
+
+            if (storageResult == PackageSaveResult.Conflict)
+            {
+                // Content for this id/version is already stored and differs from what was pushed.
+                // This may happen due to concurrent pushes.
+                _logger.LogWarning(
+                    "Package {PackageId} {PackageVersion} content conflicts with the content already in storage",
+                    package.Id,
+                    package.NormalizedVersionString);
+
+                return PackageIndexingResult.PackageAlreadyExists;
+            }
+
+            if (storageResult != PackageSaveResult.Success)
+            {
+                _logger.LogError($"Unknown {nameof(PackageSaveResult)} value: {{PackageSaveResult}}", storageResult);
+
+                throw new InvalidOperationException($"Unknown {nameof(PackageSaveResult)} value: {storageResult}");
             }
 
             _logger.LogInformation(

@@ -12,8 +12,8 @@ namespace BaGet.Core
     public interface IPackageStorageService
     {
         /// <summary>
-        /// Persist a package's content to storage. This operation MUST fail if a package
-        /// with the same id/version but different content has already been stored.
+        /// Persist a package's content to storage. This operation MUST NOT store the content if a
+        /// package with the same id/version but different content has already been stored.
         /// </summary>
         /// <param name="package">The package's metadata.</param>
         /// <param name="packageStream">The package's nupkg stream.</param>
@@ -21,8 +21,8 @@ namespace BaGet.Core
         /// <param name="readmeStream">The package's readme stream, or null if none.</param>
         /// <param name="iconStream">The package's icon stream, or null if none.</param>
         /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task SavePackageContentAsync(
+        /// <returns>The result of the attempted save operation.</returns>
+        Task<PackageSaveResult> SavePackageContentAsync(
             Package package,
             Stream packageStream,
             Stream nuspecStream,
@@ -68,5 +68,22 @@ namespace BaGet.Core
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task DeleteAsync(string id, NuGetVersion version, CancellationToken cancellationToken);
+    }
+
+    /// <summary>
+    /// The result of a <see cref="IPackageStorageService.SavePackageContentAsync(Package, Stream, Stream, Stream, Stream, CancellationToken)"/> operation.
+    /// </summary>
+    public enum PackageSaveResult
+    {
+        /// <summary>
+        /// Content for this package's id/version has already been stored and does not
+        /// match the content that was submitted. Nothing further was stored.
+        /// </summary>
+        Conflict,
+
+        /// <summary>
+        /// The package's content was stored, or the exact same content had already been stored.
+        /// </summary>
+        Success,
     }
 }
