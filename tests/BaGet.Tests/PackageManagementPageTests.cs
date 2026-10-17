@@ -144,7 +144,11 @@ namespace BaGet.Tests
 
             var html = await Alice.GetPageAsync("account/packages");
 
+            // The highest version, not the first pushed, with both versions counted.
             Assert.Contains("2.1.0", html);
+            Assert.Contains("<td>2</td>", html);
+            // Nothing has been downloaded yet, and the count is the sum over the versions.
+            Assert.Contains("<td>0</td>", html);
             // The management page for the ID, and a way to add another version to it.
             Assert.Contains("/packages/Alice.Package/manage", html);
             Assert.Contains("Upload new version", html);
