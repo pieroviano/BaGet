@@ -30,6 +30,14 @@ namespace BaGet.Core
 
         DbSet<CatalogEntry> CatalogLeafs { get; set; }
 
+        DbSet<Organization> Organizations { get; set; }
+
+        DbSet<OrganizationMember> OrganizationMembers { get; set; }
+
+        DbSet<PackageOwner> PackageOwners { get; set; }
+
+        DbSet<ApiKey> ApiKeys { get; set; }
+
         /// <summary>
         /// Check whether a <see cref="DbUpdateException"/> is due to a SQL unique constraint violation.
         /// </summary>

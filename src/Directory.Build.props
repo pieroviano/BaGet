@@ -45,6 +45,8 @@
       together, so each one reads its version from here rather than pinning its own.
     -->
     <MicrosoftEntityFrameworkCorePackageVersion>9.0.21</MicrosoftEntityFrameworkCorePackageVersion>
+    <!-- Identity's EF stores depend on EF Core, so this tracks the EF version, not ASP.NET Core's. -->
+    <MicrosoftAspNetCoreIdentityEntityFrameworkCorePackageVersion>9.0.21</MicrosoftAspNetCoreIdentityEntityFrameworkCorePackageVersion>
     <NpgsqlEntityFrameworkCorePackageVersion>9.0.4</NpgsqlEntityFrameworkCorePackageVersion>
     <PomeloEntityFrameworkCorePackageVersion>9.0.0</PomeloEntityFrameworkCorePackageVersion>
 

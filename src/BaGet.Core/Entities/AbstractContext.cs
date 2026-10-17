@@ -1,11 +1,16 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BaGet.Core
 {
-    public abstract class AbstractContext<TContext> : DbContext, IContext where TContext : DbContext
+    /// <remarks>
+    /// Identity's tables live in the same database as the packages, so a deployment keeps
+    /// one database. They are created by a migration whether or not accounts are enabled.
+    /// </remarks>
+    public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, IContext where TContext : DbContext
     {
         public const int DefaultMaxStringLength = 4000;
 
@@ -24,6 +29,11 @@ namespace BaGet.Core
         public const int MaxCatalogCommitIdLength = 36;
         public const int MaxCatalogTypeLength = 32;
 
+        public const int MaxAccountNameLength = 256;
+        public const int MaxUserIdLength = 450;
+        public const int MaxApiKeyDescriptionLength = 256;
+        public const int MaxApiKeyHashLength = 64;
+
         public AbstractContext(DbContextOptions<TContext> options)
             : base(options)
         { }
@@ -35,6 +45,10 @@ namespace BaGet.Core
         public DbSet<PackageDeprecation> PackageDeprecations { get; set; }
         public DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
         public DbSet<CatalogEntry> CatalogLeafs { get; set; }
+        public DbSet<Organization> Organizations { get; set; }
+        public DbSet<OrganizationMember> OrganizationMembers { get; set; }
+        public DbSet<PackageOwner> PackageOwners { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
 
         public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -47,6 +61,8 @@ namespace BaGet.Core
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            base.OnModelCreating(builder);
+
             builder.Entity<Package>(BuildPackageEntity);
             builder.Entity<PackageDependency>(BuildPackageDependencyEntity);
             builder.Entity<PackageType>(BuildPackageTypeEntity);
@@ -54,6 +70,10 @@ namespace BaGet.Core
             builder.Entity<PackageDeprecation>(BuildPackageDeprecationEntity);
             builder.Entity<PackageVulnerability>(BuildPackageVulnerabilityEntity);
             builder.Entity<CatalogEntry>(BuildCatalogEntryEntity);
+            builder.Entity<Organization>(BuildOrganizationEntity);
+            builder.Entity<OrganizationMember>(BuildOrganizationMemberEntity);
+            builder.Entity<PackageOwner>(BuildPackageOwnerEntity);
+            builder.Entity<ApiKey>(BuildApiKeyEntity);
         }
 
         private void BuildPackageEntity(EntityTypeBuilder<Package> package)
@@ -185,6 +205,56 @@ namespace BaGet.Core
             entry.Property(e => e.Type).HasMaxLength(MaxCatalogTypeLength).IsRequired();
             entry.Property(e => e.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
             entry.Property(e => e.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+        }
+
+        private void BuildOrganizationEntity(EntityTypeBuilder<Organization> organization)
+        {
+            organization.HasKey(o => o.Key);
+            organization.HasIndex(o => o.Name).IsUnique();
+
+            organization.Property(o => o.Name).HasMaxLength(MaxAccountNameLength).IsRequired();
+        }
+
+        private void BuildOrganizationMemberEntity(EntityTypeBuilder<OrganizationMember> member)
+        {
+            member.HasKey(m => m.Key);
+            member.HasIndex(m => m.UserId);
+
+            member.Property(m => m.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
+
+            member
+                .HasOne(m => m.Organization)
+                .WithMany()
+                .HasForeignKey(m => m.OrganizationKey)
+                .IsRequired(false);
+        }
+
+        private void BuildPackageOwnerEntity(EntityTypeBuilder<PackageOwner> owner)
+        {
+            owner.HasKey(o => o.Key);
+            owner.HasIndex(o => o.PackageId);
+            owner.HasIndex(o => o.OwnerName);
+
+            owner.Property(o => o.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+            owner.Property(o => o.OwnerName).HasMaxLength(MaxAccountNameLength).IsRequired();
+        }
+
+        private void BuildApiKeyEntity(EntityTypeBuilder<ApiKey> apiKey)
+        {
+            apiKey.HasKey(k => k.Key);
+            apiKey.HasIndex(k => k.HashedKey).IsUnique();
+            apiKey.HasIndex(k => k.UserId);
+
+            apiKey.Property(k => k.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
+            apiKey.Property(k => k.Description).HasMaxLength(MaxApiKeyDescriptionLength);
+            apiKey.Property(k => k.HashedKey).HasMaxLength(MaxApiKeyHashLength).IsRequired();
+            apiKey.Property(k => k.PackageGlobPattern).HasMaxLength(MaxPackageIdLength);
+
+            apiKey
+                .Property(k => k.Scopes)
+                .HasMaxLength(DefaultMaxStringLength)
+                .HasConversion(StringArrayToJsonConverter.Instance)
+                .Metadata.SetValueComparer(StringArrayComparer.Instance);
         }
 
         private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)

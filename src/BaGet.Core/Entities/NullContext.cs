@@ -20,6 +20,14 @@ namespace BaGet.Core
 
         public DbSet<CatalogEntry> CatalogLeafs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        public DbSet<Organization> Organizations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public DbSet<OrganizationMember> OrganizationMembers { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public DbSet<PackageOwner> PackageOwners { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public DbSet<ApiKey> ApiKeys { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public bool SupportsLimitInSubqueries => throw new NotImplementedException();
 
         public bool IsUniqueConstraintViolationException(DbUpdateException exception)
