@@ -30,6 +30,8 @@ namespace BaGet.Core
 
         public DbSet<PackageValidation> PackageValidations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        public DbSet<AbuseReport> AbuseReports { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public DbSet<BaGetUser> Users { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public bool SupportsLimitInSubqueries => throw new NotImplementedException();

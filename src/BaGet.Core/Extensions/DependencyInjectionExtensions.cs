@@ -89,6 +89,7 @@ namespace BaGet.Core
             services.TryAddSingleton(NuGetClientFactoryFactory);
 
             services.TryAddScoped<DownloadsImporter>();
+            services.TryAddScoped<StatisticsService>();
 
             services.TryAddTransient<IAuthenticationService, ApiKeyAuthenticationService>();
             services.TryAddTransient<IPackageContentService, DefaultPackageContentService>();

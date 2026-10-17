@@ -1,4 +1,6 @@
-﻿namespace BaGet.Core
+﻿using System.Collections.Generic;
+
+namespace BaGet.Core
 {
     /// <summary>
     /// A package version marked as deprecated.
@@ -6,6 +8,12 @@
     /// </summary>
     public class PackageDeprecation
     {
+        /// <summary>
+        /// The deprecation reasons the protocol defines.
+        /// See: https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource#package-deprecation
+        /// </summary>
+        public static readonly IReadOnlyList<string> KnownReasons = new[] { "Legacy", "CriticalBugs", "Other" };
+
         public int Key { get; set; }
 
         /// <summary>

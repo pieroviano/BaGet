@@ -19,12 +19,6 @@ namespace BaGet.Web
     /// </summary>
     public class PackageMetadataAdminController : Controller
     {
-        /// <summary>
-        /// The deprecation reasons the protocol defines.
-        /// See: https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource#package-deprecation
-        /// </summary>
-        internal static readonly IReadOnlyList<string> KnownReasons = new[] { "Legacy", "CriticalBugs", "Other" };
-
         private readonly IAuthenticationService _authentication;
         private readonly IPackageAuthorizationService _authorization;
         private readonly IPackageDatabase _packages;
@@ -131,10 +125,10 @@ namespace BaGet.Web
                 return "At least one deprecation reason is required.";
             }
 
-            var unknown = request.Reasons.FirstOrDefault(r => !KnownReasons.Contains(r, StringComparer.Ordinal));
+            var unknown = request.Reasons.FirstOrDefault(r => !PackageDeprecation.KnownReasons.Contains(r, StringComparer.Ordinal));
             if (unknown != null)
             {
-                return $"Unknown deprecation reason '{unknown}'. Use one of: {string.Join(", ", KnownReasons)}.";
+                return $"Unknown deprecation reason '{unknown}'. Use one of: {string.Join(", ", PackageDeprecation.KnownReasons)}.";
             }
 
             if (request.Message?.Length > AbstractContext<DbContext>.DefaultMaxStringLength)

@@ -258,6 +258,24 @@ else
                 </ul>
             </div>
 
+            <div>
+                <h2>Owners</h2>
+
+                <ul class="list-unstyled ms-Icon-ul">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li>
+                            <i class="ms-Icon ms-Icon--Settings"></i>
+                            <a href="~/packages/@Model.Package.Id/manage">Manage package</a>
+                        </li>
+                    }
+                    <li>
+                        <i class="ms-Icon ms-Icon--Flag"></i>
+                        <a asp-page="/ReportAbuse" asp-route-id="@Model.Package.Id" asp-route-version="@Model.Package.NormalizedVersionString">Report abuse</a>
+                    </li>
+                </ul>
+            </div>
+
             @if (Model.Package.Authors.Any())
             {
                 <div>

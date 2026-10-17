@@ -36,6 +36,9 @@ namespace BaGet.Core
 
         public const int MaxValidationTypeLength = 64;
 
+        public const int MaxAbuseReasonLength = 128;
+        public const int MaxEmailLength = 256;
+
         public AbstractContext(DbContextOptions<TContext> options)
             : base(options)
         { }
@@ -52,6 +55,7 @@ namespace BaGet.Core
         public DbSet<PackageOwner> PackageOwners { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
         public DbSet<PackageValidation> PackageValidations { get; set; }
+        public DbSet<AbuseReport> AbuseReports { get; set; }
 
         public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -78,6 +82,7 @@ namespace BaGet.Core
             builder.Entity<PackageOwner>(BuildPackageOwnerEntity);
             builder.Entity<ApiKey>(BuildApiKeyEntity);
             builder.Entity<PackageValidation>(BuildPackageValidationEntity);
+            builder.Entity<AbuseReport>(BuildAbuseReportEntity);
         }
 
         private void BuildPackageEntity(EntityTypeBuilder<Package> package)
@@ -278,6 +283,18 @@ namespace BaGet.Core
                 .WithMany()
                 .HasForeignKey(v => v.PackageKey)
                 .IsRequired(false);
+        }
+
+        private void BuildAbuseReportEntity(EntityTypeBuilder<AbuseReport> report)
+        {
+            report.HasKey(r => r.Key);
+            report.HasIndex(r => r.PackageId);
+
+            report.Property(r => r.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+            report.Property(r => r.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+            report.Property(r => r.Reason).HasMaxLength(MaxAbuseReasonLength).IsRequired();
+            report.Property(r => r.Details).HasMaxLength(DefaultMaxStringLength).IsRequired();
+            report.Property(r => r.ReporterEmail).HasMaxLength(MaxEmailLength);
         }
 
         private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)

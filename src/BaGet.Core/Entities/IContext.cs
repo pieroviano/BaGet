@@ -40,6 +40,8 @@ namespace BaGet.Core
 
         DbSet<PackageValidation> PackageValidations { get; set; }
 
+        DbSet<AbuseReport> AbuseReports { get; set; }
+
         /// <summary>
         /// Identity's users. Declared here so that account services can query them through
         /// the same context as everything else.
