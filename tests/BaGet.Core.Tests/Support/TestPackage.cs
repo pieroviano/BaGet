@@ -15,7 +15,10 @@ namespace BaGet.Core.Tests.Support
         /// Create a package whose nuspec holds <paramref name="metadata"/> as the inner XML
         /// of its &lt;metadata&gt; element.
         /// </summary>
-        public static MemoryStream Create(string metadata, IDictionary<string, string> files = null)
+        public static MemoryStream Create(
+            string metadata,
+            IDictionary<string, string> files = null,
+            IDictionary<string, byte[]> binaryFiles = null)
         {
             var nuspec = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <package xmlns=""http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd"">
@@ -34,6 +37,11 @@ namespace BaGet.Core.Tests.Support
                 {
                     Write(archive, file.Key, file.Value);
                 }
+
+                foreach (var file in binaryFiles ?? new Dictionary<string, byte[]>())
+                {
+                    Write(archive, file.Key, file.Value);
+                }
             }
 
             result.Position = 0;
@@ -49,7 +57,8 @@ namespace BaGet.Core.Tests.Support
             string id = "Test.Package",
             string version = "1.0.0",
             string authors = "Test Author",
-            IDictionary<string, string> files = null)
+            IDictionary<string, string> files = null,
+            IDictionary<string, byte[]> binaryFiles = null)
         {
             return Create(
                 $@"    <id>{id}</id>
@@ -57,7 +66,28 @@ namespace BaGet.Core.Tests.Support
     <authors>{authors}</authors>
     <description>A test package.</description>
 {extraMetadata}",
-                files);
+                files,
+                binaryFiles);
+        }
+
+        /// <summary>
+        /// Create a real symbol package (.snupkg) in memory: a package whose nuspec declares
+        /// the SymbolsPackage package type, as "dotnet pack --include-symbols" produces.
+        /// </summary>
+        public static MemoryStream CreateSymbols(
+            string id = "Test.Package",
+            string version = "1.0.0",
+            IDictionary<string, string> files = null,
+            IDictionary<string, byte[]> binaryFiles = null)
+        {
+            return CreateMinimal(
+                extraMetadata: @"    <packageTypes>
+      <packageType name=""SymbolsPackage"" />
+    </packageTypes>",
+                id: id,
+                version: version,
+                files: files,
+                binaryFiles: binaryFiles);
         }
 
         private static void Write(ZipArchive archive, string path, string content)
@@ -68,6 +98,15 @@ namespace BaGet.Core.Tests.Support
             using var writer = new StreamWriter(stream, new UTF8Encoding(false));
 
             writer.Write(content);
+        }
+
+        private static void Write(ZipArchive archive, string path, byte[] content)
+        {
+            var entry = archive.CreateEntry(path);
+
+            using var stream = entry.Open();
+
+            stream.Write(content, 0, content.Length);
         }
     }
 }
