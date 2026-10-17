@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BaGet.Core;
 using Microsoft.Azure.Cosmos.Table;
-using Newtonsoft.Json;
 using NuGet.Versioning;
 
 namespace BaGet.Azure
@@ -25,7 +24,7 @@ namespace BaGet.Azure
                 Id = package.Id,
                 NormalizedVersion = normalizedVersion,
                 OriginalVersion = version.ToFullString(),
-                Authors = JsonConvert.SerializeObject(package.Authors),
+                Authors = TableJson.Serialize(package.Authors),
                 Description = package.Description,
                 Downloads = package.Downloads,
                 HasReadme = package.HasReadme,
@@ -45,7 +44,7 @@ namespace BaGet.Azure
                 ProjectUrl = package.ProjectUrlString,
                 RepositoryUrl = package.RepositoryUrlString,
                 RepositoryType = package.RepositoryType,
-                Tags = JsonConvert.SerializeObject(package.Tags),
+                Tags = TableJson.Serialize(package.Tags),
                 Dependencies = SerializeList(package.Dependencies, AsDependencyModel),
                 PackageTypes = SerializeList(package.PackageTypes, AsPackageTypeModel),
                 TargetFrameworks = SerializeList(package.TargetFrameworks, f => f.Moniker)
@@ -105,7 +104,7 @@ namespace BaGet.Azure
         {
             var data = objects.Select(map).ToList();
 
-            return JsonConvert.SerializeObject(data);
+            return TableJson.Serialize(data);
         }
 
         public static DependencyModel AsDependencyModel(PackageDependency dependency)

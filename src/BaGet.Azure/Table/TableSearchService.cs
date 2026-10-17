@@ -105,8 +105,10 @@ namespace BaGet.Azure
             bool includeSemVer2,
             CancellationToken cancellationToken)
         {
+            var filter = GenerateSearchFilter(searchText, includePrerelease, includeSemVer2);
+
             var query = new TableQuery<PackageEntity>();
-            query = query.Where(GenerateSearchFilter(searchText, includePrerelease, includeSemVer2));
+            query = query.Where(filter);
             query.TakeCount = 500;
 
             var results = await LoadPackagesAsync(query, maxPartitions: skip + take, cancellationToken);
@@ -116,13 +118,12 @@ namespace BaGet.Azure
                 .Select(group => new PackageRegistration(group.Key, group.ToList()))
                 .ToList();
 
-            // The matches are counted before paging, so this is a true total whenever the
-            // whole match set was loaded. Table storage cannot count matches it has not read,
-            // and the scan above stops after "skip + take" partitions, so for larger result
-            // sets this under-reports and saturates at "skip + take".
-            // TODO: Count the matching partitions exactly.
-            // See: https://github.com/loic-sharma/BaGet/issues/291
-            var totalHits = registrations.Count;
+            // Table storage cannot count. The scan above stops after "skip + take" partitions,
+            // so when it reached that limit there may be more: count them with a scan that
+            // reads only the partition keys of the matching rows.
+            var totalHits = registrations.Count < skip + take
+                ? registrations.Count
+                : await CountPartitionsAsync(filter, cancellationToken);
 
             var page = registrations
                 .Skip(skip)
@@ -130,6 +131,48 @@ namespace BaGet.Azure
                 .ToList();
 
             return new SearchPage(page, totalHits);
+        }
+
+        private async Task<long> CountPartitionsAsync(string filter, CancellationToken cancellationToken)
+        {
+            var query = new TableQuery<DynamicTableEntity>()
+                .Where(filter)
+                .Select(new[] { "PartitionKey" });
+            query.TakeCount = 1000;
+
+            var partitionKeys = new List<string>();
+            TableContinuationToken token = null;
+            do
+            {
+                var segment = await _table.ExecuteQuerySegmentedAsync(query, token, cancellationToken);
+
+                token = segment.ContinuationToken;
+                partitionKeys.AddRange(segment.Results.Select(r => r.PartitionKey));
+            }
+            while (token != null);
+
+            return CountPartitions(partitionKeys);
+        }
+
+        /// <summary>
+        /// The number of package IDs among rows in partition key order: each ID is one
+        /// partition, and a partition's rows are contiguous.
+        /// </summary>
+        internal static long CountPartitions(IEnumerable<string> partitionKeys)
+        {
+            long count = 0;
+            string last = null;
+
+            foreach (var key in partitionKeys)
+            {
+                if (!string.Equals(key, last, StringComparison.Ordinal))
+                {
+                    count++;
+                    last = key;
+                }
+            }
+
+            return count;
         }
 
         private async Task<IReadOnlyList<Package>> LoadPackagesAsync(
@@ -155,9 +198,10 @@ namespace BaGet.Azure
                         lastPartitionKey = result.PartitionKey;
                         partitions++;
 
+                        // Enough partitions: stop rather than fetch segments only to skip them.
                         if (partitions > maxPartitions)
                         {
-                            break;
+                            return results;
                         }
                     }
 

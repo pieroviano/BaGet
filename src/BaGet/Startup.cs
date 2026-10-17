@@ -28,7 +28,7 @@ namespace BaGet
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // TODO: Ideally we'd use:
+            // Ideally we'd use:
             //
             //       services.ConfigureOptions<ConfigureBaGetOptions>();
             //

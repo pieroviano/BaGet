@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -54,7 +54,7 @@ namespace BaGet.Tests
         public async Task PowerShellGetRegistersTheV2Feed()
         {
             // PowerShellGet reads the V2 protocol. Registering the V3 service index with it
-            // fails, which is what the TODO on this page recorded.
+            // fails.
             var content = await GetPageAsync();
 
             Assert.Contains("Register-PSRepository", content);
