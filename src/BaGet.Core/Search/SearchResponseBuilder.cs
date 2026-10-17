@@ -48,6 +48,8 @@ namespace BaGet.Core
                             Downloads = p.Downloads,
                         })
                         .ToList(),
+                    Deprecation = RegistrationBuilder.ToDeprecation(latest.Deprecation),
+                    Vulnerabilities = RegistrationBuilder.ToVulnerabilities(latest.Vulnerabilities),
                 });
             }
 

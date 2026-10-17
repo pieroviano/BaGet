@@ -96,5 +96,17 @@ namespace BaGet.Protocol.Models
         /// </summary>
         [JsonPropertyName("versions")]
         public IReadOnlyList<SearchResultVersion> Versions { get; set; }
+
+        /// <summary>
+        /// The latest version's deprecation, or null if it is not deprecated.
+        /// </summary>
+        [JsonPropertyName("deprecation")]
+        public PackageDeprecation Deprecation { get; set; }
+
+        /// <summary>
+        /// The latest version's known vulnerabilities, or null if it has none.
+        /// </summary>
+        [JsonPropertyName("vulnerabilities")]
+        public IReadOnlyList<PackageVulnerabilityMetadata> Vulnerabilities { get; set; }
     }
 }

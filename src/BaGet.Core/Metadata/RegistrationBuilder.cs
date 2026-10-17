@@ -97,7 +97,7 @@ namespace BaGet.Core
 
         // Inside BaGet.Core the entity BaGet.Core.PackageDeprecation is found before the
         // protocol model of the same name, so the protocol model is named in full.
-        private static Protocol.Models.PackageDeprecation ToDeprecation(PackageDeprecation deprecation)
+        internal static Protocol.Models.PackageDeprecation ToDeprecation(PackageDeprecation deprecation)
         {
             if (deprecation == null)
             {
@@ -122,7 +122,7 @@ namespace BaGet.Core
             };
         }
 
-        private static IReadOnlyList<PackageVulnerabilityMetadata> ToVulnerabilities(
+        internal static IReadOnlyList<PackageVulnerabilityMetadata> ToVulnerabilities(
             IReadOnlyCollection<PackageVulnerability> vulnerabilities)
         {
             // Null rather than empty, so a version with no known vulnerabilities serialises

@@ -149,6 +149,22 @@ namespace BaGet.Tests
         }
 
         [Fact]
+        public async Task SearchCarriesTheLatestVersionsMetadata()
+        {
+            await _app.AddPackageAsync(_packageStream);
+
+            (await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/deprecation", @"{""reasons"":[""CriticalBugs""]}")).Dispose();
+            (await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/vulnerabilities",
+                @"[{""advisoryUrl"":""https://example.test/a"",""severity"":3}]")).Dispose();
+
+            using var search = await GetJsonAsync("v3/search");
+            var result = search.RootElement.GetProperty("data")[0];
+
+            Assert.Equal("CriticalBugs", result.GetProperty("deprecation").GetProperty("reasons")[0].GetString());
+            Assert.Equal("3", result.GetProperty("vulnerabilities")[0].GetProperty("severity").GetString());
+        }
+
+        [Fact]
         public async Task AnUnknownVulnerabilityPageIsNotFound()
         {
             using var response = await _client.GetAsync("v3/vulnerabilities/other.json");
