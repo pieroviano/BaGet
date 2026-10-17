@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,6 +31,21 @@
                                 </a>
                             </li>
                         </ul>
+                        @if (Accounts.Value.Enabled)
+                        {
+                            <ul class="nav navbar-nav navbar-right" role="tablist">
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <li role="presentation"><a href="~/account/profile" role="tab"><span>@User.Identity.Name</span></a></li>
+                                    <li role="presentation"><a href="~/account/apikeys" role="tab"><span>API keys</span></a></li>
+                                    <li role="presentation"><a href="~/account/logout" role="tab"><span>Sign out</span></a></li>
+                                }
+                                else
+                                {
+                                    <li role="presentation"><a href="~/account/login" role="tab"><span>Sign in</span></a></li>
+                                }
+                            </ul>
+                        }
                     </div>
                 </div>
             </div>

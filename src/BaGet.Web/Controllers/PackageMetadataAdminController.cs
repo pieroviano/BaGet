@@ -26,6 +26,7 @@ namespace BaGet.Web
         internal static readonly IReadOnlyList<string> KnownReasons = new[] { "Legacy", "CriticalBugs", "Other" };
 
         private readonly IAuthenticationService _authentication;
+        private readonly IPackageAuthorizationService _authorization;
         private readonly IPackageDatabase _packages;
         private readonly IOptionsSnapshot<BaGetOptions> _options;
         private readonly PackageChangeNotifier _notifier;
@@ -34,8 +35,10 @@ namespace BaGet.Web
             IAuthenticationService authentication,
             IPackageDatabase packages,
             IOptionsSnapshot<BaGetOptions> options,
-            PackageChangeNotifier notifier)
+            PackageChangeNotifier notifier,
+            IPackageAuthorizationService authorization)
         {
+            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
             _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
             _packages = packages ?? throw new ArgumentNullException(nameof(packages));
@@ -48,7 +51,7 @@ namespace BaGet.Web
             [FromBody] DeprecationRequest request,
             CancellationToken cancellationToken)
         {
-            var denied = await AuthorizeAsync(cancellationToken);
+            var denied = await AuthorizeAsync(id, cancellationToken);
             if (denied != null) return denied;
 
             if (!NuGetVersion.TryParse(version, out var nugetVersion))
@@ -78,7 +81,7 @@ namespace BaGet.Web
             string version,
             CancellationToken cancellationToken)
         {
-            var denied = await AuthorizeAsync(cancellationToken);
+            var denied = await AuthorizeAsync(id, cancellationToken);
             if (denied != null) return denied;
 
             if (!NuGetVersion.TryParse(version, out var nugetVersion))
@@ -95,7 +98,7 @@ namespace BaGet.Web
             [FromBody] List<VulnerabilityRequest> request,
             CancellationToken cancellationToken)
         {
-            var denied = await AuthorizeAsync(cancellationToken);
+            var denied = await AuthorizeAsync(id, cancellationToken);
             if (denied != null) return denied;
 
             if (!NuGetVersion.TryParse(version, out var nugetVersion))
@@ -189,7 +192,7 @@ namespace BaGet.Web
             return null;
         }
 
-        private async Task<IActionResult> AuthorizeAsync(CancellationToken cancellationToken)
+        private async Task<IActionResult> AuthorizeAsync(string id, CancellationToken cancellationToken)
         {
             // The same rules as deleting or relisting a package.
             if (_options.Value.IsReadOnlyMode)
@@ -197,9 +200,15 @@ namespace BaGet.Web
                 return Unauthorized();
             }
 
-            if (!await _authentication.AuthenticateAsync(Request.GetApiKey(), cancellationToken))
+            var principal = await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
+            if (principal == null)
             {
                 return Unauthorized();
+            }
+
+            if (!await _authorization.AuthorizeAsync(principal, PackageAction.Manage, id, cancellationToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return null;

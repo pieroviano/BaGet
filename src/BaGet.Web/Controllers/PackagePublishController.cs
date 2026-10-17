@@ -12,6 +12,7 @@ namespace BaGet.Web
     public class PackagePublishController : Controller
     {
         private readonly IAuthenticationService _authentication;
+        private readonly IPackageAuthorizationService _authorization;
         private readonly IPackageIndexingService _indexer;
         private readonly IPackageDatabase _packages;
         private readonly IPackageDeletionService _deleteService;
@@ -26,8 +27,10 @@ namespace BaGet.Web
             IPackageDeletionService deletionService,
             IOptionsSnapshot<BaGetOptions> options,
             ILogger<PackagePublishController> logger,
-            PackageChangeNotifier notifier)
+            PackageChangeNotifier notifier,
+            IPackageAuthorizationService authorization)
         {
+            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
             _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
             _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
@@ -40,8 +43,10 @@ namespace BaGet.Web
         // See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#push-a-package
         public async Task Upload(CancellationToken cancellationToken)
         {
-            if (_options.Value.IsReadOnlyMode ||
-                !await _authentication.AuthenticateAsync(Request.GetApiKey(), cancellationToken))
+            var principal = _options.Value.IsReadOnlyMode
+                ? null
+                : await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
+            if (principal == null)
             {
                 HttpContext.Response.StatusCode = 401;
                 return;
@@ -57,7 +62,21 @@ namespace BaGet.Web
                         return;
                     }
 
+                    // Whether the caller may push depends on the package ID, which is inside the
+                    // package. An unreadable package is left for the indexer to reject.
+                    var packageId = uploadStream.ReadPackageIdOrNull();
+                    if (packageId != null &&
+                        !await _authorization.AuthorizeAsync(principal, PackageAction.Push, packageId, cancellationToken))
+                    {
+                        HttpContext.Response.StatusCode = 403;
+                        return;
+                    }
+
                     var result = await _indexer.IndexAsync(uploadStream, cancellationToken);
+                    if (result == PackageIndexingResult.Success)
+                    {
+                        await _authorization.OnPushedAsync(principal, packageId, cancellationToken);
+                    }
 
                     switch (result)
                     {
@@ -83,6 +102,22 @@ namespace BaGet.Web
             }
         }
 
+        private async Task<IActionResult> AuthorizeManageAsync(string id, CancellationToken cancellationToken)
+        {
+            var principal = await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
+            if (principal == null)
+            {
+                return Unauthorized();
+            }
+
+            if (!await _authorization.AuthorizeAsync(principal, PackageAction.Manage, id, cancellationToken))
+            {
+                return StatusCode(403);
+            }
+
+            return null;
+        }
+
         [HttpDelete]
         public async Task<IActionResult> Delete(string id, string version, CancellationToken cancellationToken)
         {
@@ -96,9 +131,10 @@ namespace BaGet.Web
                 return NotFound();
             }
 
-            if (!await _authentication.AuthenticateAsync(Request.GetApiKey(), cancellationToken))
+            var denied = await AuthorizeManageAsync(id, cancellationToken);
+            if (denied != null)
             {
-                return Unauthorized();
+                return denied;
             }
 
             if (await _deleteService.TryDeletePackageAsync(id, nugetVersion, cancellationToken))
@@ -124,9 +160,10 @@ namespace BaGet.Web
                 return NotFound();
             }
 
-            if (!await _authentication.AuthenticateAsync(Request.GetApiKey(), cancellationToken))
+            var denied = await AuthorizeManageAsync(id, cancellationToken);
+            if (denied != null)
             {
-                return Unauthorized();
+                return denied;
             }
 
             if (await _packages.RelistPackageAsync(id, nugetVersion, cancellationToken))

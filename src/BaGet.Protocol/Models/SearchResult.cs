@@ -108,5 +108,17 @@ namespace BaGet.Protocol.Models
         /// </summary>
         [JsonPropertyName("vulnerabilities")]
         public IReadOnlyList<PackageVulnerabilityMetadata> Vulnerabilities { get; set; }
+
+        /// <summary>
+        /// The package's owners, or null if it has none.
+        /// </summary>
+        [JsonPropertyName("owners")]
+        public IReadOnlyList<string> Owners { get; set; }
+
+        /// <summary>
+        /// Whether the package ID is reserved for its owners. Null if it has no owners.
+        /// </summary>
+        [JsonPropertyName("verified")]
+        public bool? Verified { get; set; }
     }
 }

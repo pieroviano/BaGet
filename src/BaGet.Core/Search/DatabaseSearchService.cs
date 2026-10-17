@@ -82,7 +82,36 @@ namespace BaGet.Core
                 .Select(group => new PackageRegistration(group.Key, group.ToList()))
                 .ToList();
 
-            return _searchBuilder.BuildSearch(groupedResults, totalHits);
+            var response = _searchBuilder.BuildSearch(groupedResults, totalHits);
+
+            await AddOwnersAsync(response, cancellationToken);
+
+            return response;
+        }
+
+        /// <summary>
+        /// Report each result's owners. A package pushed before accounts existed has none,
+        /// and then neither field is reported.
+        /// </summary>
+        private async Task AddOwnersAsync(SearchResponse response, CancellationToken cancellationToken)
+        {
+            if (response.Data.Count == 0) return;
+
+            var ids = response.Data.Select(r => r.PackageId.ToLower()).ToList();
+            var owners = await _context.PackageOwners
+                .AsNoTracking()
+                .Where(o => ids.Contains(o.PackageId.ToLower()))
+                .ToListAsync(cancellationToken);
+
+            var byId = owners.ToLookup(o => o.PackageId, StringComparer.OrdinalIgnoreCase);
+            foreach (var result in response.Data)
+            {
+                var resultOwners = byId[result.PackageId].ToList();
+                if (resultOwners.Count == 0) continue;
+
+                result.Owners = resultOwners.Select(o => o.OwnerName).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
+                result.Verified = resultOwners.Any(o => o.IsVerified);
+            }
         }
 
         public async Task<AutocompleteResponse> AutocompleteAsync(

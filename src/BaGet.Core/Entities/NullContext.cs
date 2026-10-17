@@ -28,6 +28,8 @@ namespace BaGet.Core
 
         public DbSet<ApiKey> ApiKeys { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        public DbSet<BaGetUser> Users { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public bool SupportsLimitInSubqueries => throw new NotImplementedException();
 
         public bool IsUniqueConstraintViolationException(DbUpdateException exception)

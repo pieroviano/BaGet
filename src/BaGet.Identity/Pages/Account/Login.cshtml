@@ -1,0 +1,48 @@
+@page
+@model BaGet.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<div class="col-sm-6">
+    <h1>Sign in</h1>
+    <hr class="breadcrumb-divider" />
+
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+
+    <form method="post">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div class="form-group">
+            <label asp-for="UserName"></label>
+            <input asp-for="UserName" class="form-control" autocomplete="username" />
+            <span asp-validation-for="UserName" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+        <div class="checkbox">
+            <label><input asp-for="RememberMe" /> Remember me</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+
+    @if (Model.HasExternalProvider)
+    {
+        <hr />
+        <form method="post" asp-page-handler="External">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <button type="submit" class="btn btn-default">Sign in with @Model.ExternalProviderName</button>
+        </form>
+    }
+
+    @if (Model.AllowRegistration)
+    {
+        <hr />
+        <p>No account? <a asp-page="/Account/Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a>.</p>
+    }
+</div>

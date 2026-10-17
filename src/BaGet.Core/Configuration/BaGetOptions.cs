@@ -52,5 +52,7 @@ namespace BaGet.Core
         public MirrorOptions Mirror { get; set; }
 
         public FeedsOptions Feeds { get; set; }
+
+        public AccountsOptions Accounts { get; set; }
     }
 }

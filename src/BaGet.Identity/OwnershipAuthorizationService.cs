@@ -1,0 +1,87 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using Microsoft.Extensions.Logging;
+
+namespace BaGet.Identity
+{
+    /// <summary>
+    /// Package ownership rules, as nuget.org applies them:
+    /// <list type="bullet">
+    /// <item>The superuser may do anything.</item>
+    /// <item>A key acts only within its scopes and its package glob.</item>
+    /// <item>Pushing a new package ID needs <see cref="ApiKeyScopes.Push"/>, and makes the
+    /// pusher its owner.</item>
+    /// <item>Anything else needs the user to own the ID, directly or through an
+    /// organization.</item>
+    /// <item>An ID that already exists but has no owners predates accounts, and only the
+    /// superuser may change it, so nothing becomes inaccessible on upgrade.</item>
+    /// </list>
+    /// </summary>
+    public class OwnershipAuthorizationService : IPackageAuthorizationService
+    {
+        private readonly PackageOwnershipService _ownership;
+        private readonly IPackageDatabase _packages;
+        private readonly ILogger<OwnershipAuthorizationService> _logger;
+
+        public OwnershipAuthorizationService(
+            PackageOwnershipService ownership,
+            IPackageDatabase packages,
+            ILogger<OwnershipAuthorizationService> logger)
+        {
+            _ownership = ownership ?? throw new ArgumentNullException(nameof(ownership));
+            _packages = packages ?? throw new ArgumentNullException(nameof(packages));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<bool> AuthorizeAsync(
+            BaGetPrincipal principal,
+            PackageAction action,
+            string packageId,
+            CancellationToken cancellationToken)
+        {
+            if (principal == null) return false;
+            if (principal.IsSuperuser) return true;
+            if (!principal.MatchesPackage(packageId)) return false;
+
+            var isOwner = await _ownership.IsOwnerAsync(principal.UserId, principal.UserName, packageId, cancellationToken);
+
+            switch (action)
+            {
+                case PackageAction.Push:
+                    if (isOwner)
+                    {
+                        return principal.HasScope(ApiKeyScopes.Push) || principal.HasScope(ApiKeyScopes.PushVersion);
+                    }
+
+                    // A new ID may be claimed; an existing one without owners may not.
+                    return principal.HasScope(ApiKeyScopes.Push)
+                        && !await _ownership.HasOwnersAsync(packageId, cancellationToken)
+                        && !await _packages.ExistsAsync(packageId, cancellationToken);
+
+                case PackageAction.Manage:
+                    return isOwner && principal.HasScope(ApiKeyScopes.Unlist);
+
+                default:
+                    return false;
+            }
+        }
+
+        public async Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken)
+        {
+            if (principal == null || principal.IsSuperuser || packageId == null) return;
+            if (await _ownership.HasOwnersAsync(packageId, cancellationToken)) return;
+
+            // Two users pushing the same new ID at once may both become owners. That is
+            // safe, if surprising: each could only have done so with the push scope.
+            var result = await _ownership.AddOwnerAsync(packageId, principal.UserName, cancellationToken);
+
+            _logger.LogInformation(
+                "{UserName} pushed new package {PackageId} and became its owner: {Result}",
+                principal.UserName,
+                packageId,
+                result);
+        }
+    }
+}

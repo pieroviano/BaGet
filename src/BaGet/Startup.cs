@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using BaGet.Core;
+using BaGet.Identity;
 using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -41,6 +42,7 @@ namespace BaGet
 
             services.AddBaGetOptions<IISServerOptions>(nameof(IISServerOptions));
             services.AddBaGetWebApplication(ConfigureBaGetApplication);
+            services.AddBaGetAccounts(Configuration);
 
             // You can swap between implementations of subsystems like storage and search using BaGet's configuration.
             // Each subsystem's implementation has a provider that reads the configuration to determine if it should be
@@ -116,6 +118,8 @@ namespace BaGet
             app.UseRouting();
 
             app.UseCors(ConfigureBaGetOptions.CorsPolicy);
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseOperationCancelledMiddleware();
 
             app.UseEndpoints(endpoints =>

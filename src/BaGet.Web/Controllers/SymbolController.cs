@@ -11,6 +11,7 @@ namespace BaGet.Web
     public class SymbolController : Controller
     {
         private readonly IAuthenticationService _authentication;
+        private readonly IPackageAuthorizationService _authorization;
         private readonly ISymbolIndexingService _indexer;
         private readonly ISymbolStorageService _storage;
         private readonly IOptionsSnapshot<BaGetOptions> _options;
@@ -21,8 +22,10 @@ namespace BaGet.Web
             ISymbolIndexingService indexer,
             ISymbolStorageService storage,
             IOptionsSnapshot<BaGetOptions> options,
-            ILogger<SymbolController> logger)
+            ILogger<SymbolController> logger,
+            IPackageAuthorizationService authorization)
         {
+            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
             _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
             _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -33,7 +36,10 @@ namespace BaGet.Web
         // See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#push-a-package
         public async Task Upload(CancellationToken cancellationToken)
         {
-            if (_options.Value.IsReadOnlyMode || !await _authentication.AuthenticateAsync(Request.GetApiKey(), cancellationToken))
+            var principal = _options.Value.IsReadOnlyMode
+                ? null
+                : await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
+            if (principal == null)
             {
                 HttpContext.Response.StatusCode = 401;
                 return;
@@ -46,6 +52,14 @@ namespace BaGet.Web
                     if (uploadStream == null)
                     {
                         HttpContext.Response.StatusCode = 400;
+                        return;
+                    }
+
+                    var packageId = uploadStream.ReadPackageIdOrNull();
+                    if (packageId != null &&
+                        !await _authorization.AuthorizeAsync(principal, PackageAction.Push, packageId, cancellationToken))
+                    {
+                        HttpContext.Response.StatusCode = 403;
                         return;
                     }
 

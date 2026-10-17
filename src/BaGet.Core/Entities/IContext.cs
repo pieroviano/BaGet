@@ -39,6 +39,12 @@ namespace BaGet.Core
         DbSet<ApiKey> ApiKeys { get; set; }
 
         /// <summary>
+        /// Identity's users. Declared here so that account services can query them through
+        /// the same context as everything else.
+        /// </summary>
+        DbSet<BaGetUser> Users { get; set; }
+
+        /// <summary>
         /// Check whether a <see cref="DbUpdateException"/> is due to a SQL unique constraint violation.
         /// </summary>
         /// <param name="exception">The exception to inspect.</param>

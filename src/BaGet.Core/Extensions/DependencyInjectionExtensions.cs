@@ -66,6 +66,7 @@ namespace BaGet.Core
             services.AddBaGetOptions<FileSystemStorageOptions>(nameof(BaGetOptions.Storage));
             services.AddBaGetOptions<MirrorOptions>(nameof(BaGetOptions.Mirror));
             services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
+            services.AddBaGetOptions<AccountsOptions>(nameof(BaGetOptions.Accounts));
             services.AddBaGetOptions<SearchOptions>(nameof(BaGetOptions.Search));
             services.AddBaGetOptions<StorageOptions>(nameof(BaGetOptions.Storage));
         }
@@ -93,6 +94,7 @@ namespace BaGet.Core
             services.TryAddTransient<IPackageDeletionService, PackageDeletionService>();
             services.TryAddTransient<IPackageIndexingService, PackageIndexingService>();
             services.TryAddTransient<PackageChangeNotifier>();
+            services.TryAddTransient<IPackageAuthorizationService, AllowAuthenticatedAuthorizationService>();
             services.TryAddTransient<IPackageMetadataService, DefaultPackageMetadataService>();
             services.TryAddTransient<IPackageService, PackageService>();
             services.TryAddTransient<IPackageStorageService, PackageStorageService>();

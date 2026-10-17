@@ -1,8 +1,10 @@
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
+using NuGet.Packaging;
 
 namespace BaGet.Web
 {
@@ -33,6 +35,29 @@ namespace BaGet.Web
             finally
             {
                 rawUploadStream?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Read the package ID from an uploaded package, or null if it cannot be read. The
+        /// stream is left open and rewound.
+        /// </summary>
+        public static string ReadPackageIdOrNull(this Stream package)
+        {
+            try
+            {
+                using (var reader = new PackageArchiveReader(package, leaveStreamOpen: true))
+                {
+                    return reader.NuspecReader.GetId();
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                package.Position = 0;
             }
         }
 
