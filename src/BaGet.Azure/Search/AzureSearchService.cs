@@ -108,16 +108,10 @@ namespace BaGet.Azure
             AutocompleteRequest request,
             CancellationToken cancellationToken)
         {
-            // TODO: Do a prefix search on the package id field. This needs an index field that
-            // preserves the id as a whole, as wildcard terms bypass lexical analysis and the "id"
-            // field uses the default analyzer, which breaks ids apart on "." and "-".
-            // TODO: Support the package type filter. "packageTypes" is searchable but not
-            // filterable, so it can only be expressed as a query clause, which would also mean
-            // reinterpreting the caller's query as full Lucene syntax.
-            // See: https://github.com/loic-sharma/BaGet/issues/291
             var parameters = new SearchParameters
             {
                 IncludeTotalResultCount = true,
+                QueryType = QueryType.Full,
                 Skip = request.Skip,
                 Top = request.Take,
 
@@ -127,7 +121,7 @@ namespace BaGet.Azure
             };
 
             var response = await _searchClient.Documents.SearchAsync<PackageDocument>(
-                request.Query,
+                BuildAutocompleteQuery(request.Query, request.PackageType),
                 parameters,
                 cancellationToken: cancellationToken);
 
@@ -144,17 +138,85 @@ namespace BaGet.Azure
             };
         }
 
-        public Task<AutocompleteResponse> ListPackageVersionsAsync(
+        public async Task<AutocompleteResponse> ListPackageVersionsAsync(
             VersionsRequest request,
             CancellationToken cancellationToken)
         {
-            // TODO: Support versions autocomplete. This needs an exact lookup of a single package
-            // id, which the index cannot do today: "id" is stored with the author's casing and is
-            // analyzed by the default analyzer (which splits ids on "." and "-"), so neither a
-            // case-sensitive OData "id eq" filter nor a term query is reliable. It needs an index
-            // field holding the lowercased id, which is a schema change plus a reindex.
-            // See: https://github.com/loic-sharma/BaGet/issues/291
-            throw new NotImplementedException();
+            var filters = BuildSearchFilter(request.IncludePrerelease, request.IncludeSemVer2);
+
+            // The exact lookup, for documents that have "normalizedId".
+            var response = await _searchClient.Documents.SearchAsync<PackageDocument>(
+                "*",
+                new SearchParameters { Top = 1, Filter = BuildVersionsFilter(request.PackageId, filters) },
+                cancellationToken: cancellationToken);
+
+            var document = response.Results.Select(r => r.Document).FirstOrDefault();
+
+            // A document indexed before "normalizedId" existed: a phrase query on "id" finds
+            // it among the IDs containing the same words, and the exact match is picked here.
+            if (document == null)
+            {
+                response = await _searchClient.Documents.SearchAsync<PackageDocument>(
+                    $"id:{EscapeQueryPhrase(request.PackageId)}",
+                    new SearchParameters { QueryType = QueryType.Full, Top = 50, Filter = filters },
+                    cancellationToken: cancellationToken);
+
+                document = response.Results
+                    .Select(r => r.Document)
+                    .FirstOrDefault(d => string.Equals(d.Id, request.PackageId, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var versions = document?.Versions ?? Array.Empty<string>();
+
+            return new AutocompleteResponse
+            {
+                TotalHits = versions.Length,
+                Data = versions,
+                Context = AutocompleteContext.Default,
+            };
+        }
+
+        /// <summary>
+        /// The OData filter for one package ID's document under these search filters.
+        /// </summary>
+        internal static string BuildVersionsFilter(string packageId, string searchFilter)
+        {
+            if (packageId == null) throw new ArgumentNullException(nameof(packageId));
+
+            // An OData string literal escapes a quote by doubling it.
+            var literal = packageId.ToLowerInvariant().Replace("'", "''");
+
+            return $"normalizedId eq '{literal}' and {searchFilter}";
+        }
+
+        /// <summary>
+        /// The full Lucene query for autocomplete: a prefix match on the whole ID, or, for a
+        /// document indexed before "normalizedId" existed, the analyzed match autocomplete
+        /// always made; plus the package type, if one was asked for.
+        /// </summary>
+        internal static string BuildAutocompleteQuery(string query, string packageType)
+        {
+            var builder = new StringBuilder();
+
+            var term = EscapeQueryTerm((query ?? string.Empty).Trim().TrimEnd('*').ToLowerInvariant());
+            if (term.Length > 0)
+            {
+                builder.Append("+(normalizedId:");
+                builder.Append(term);
+                builder.Append("* OR ");
+                builder.Append(term);
+                builder.Append(')');
+            }
+
+            if (!string.IsNullOrEmpty(packageType))
+            {
+                builder.Append(" +packageTypes:");
+                builder.Append(EscapeQueryPhrase(packageType));
+            }
+
+            var result = builder.ToString().Trim();
+
+            return result.Length == 0 ? "*" : result;
         }
 
         public async Task<DependentsResponse> FindDependentsAsync(

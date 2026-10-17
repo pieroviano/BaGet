@@ -56,15 +56,21 @@ namespace BaGet.Azure
             return _responseBuilder.BuildAutocomplete(packageIds, results.TotalHits);
         }
 
-        public Task<AutocompleteResponse> ListPackageVersionsAsync(
+        public async Task<AutocompleteResponse> ListPackageVersionsAsync(
             VersionsRequest request,
             CancellationToken cancellationToken)
         {
-            // TODO: Support versions autocomplete.
-            // See: https://github.com/loic-sharma/BaGet/issues/291
-            var response = _responseBuilder.BuildAutocomplete(new List<string>(), totalHits: 0);
+            // A package ID is one partition, so its versions are a single partition query.
+            var query = new TableQuery<PackageEntity>();
+            query = query.Where(GenerateVersionsFilter(request.PackageId, request.IncludePrerelease, request.IncludeSemVer2));
 
-            return Task.FromResult(response);
+            var packages = await LoadPackagesAsync(query, maxPartitions: 1, cancellationToken);
+            var versions = packages
+                .OrderBy(p => p.Version)
+                .Select(p => p.Version.ToNormalizedString())
+                .ToList();
+
+            return _responseBuilder.BuildAutocomplete(versions, versions.Count);
         }
 
         public Task<DependentsResponse> FindDependentsAsync(string packageId, CancellationToken cancellationToken)
@@ -163,14 +169,31 @@ namespace BaGet.Azure
             return results;
         }
 
-        private string GenerateSearchFilter(string searchText, bool includePrerelease, bool includeSemVer2)
+        /// <summary>
+        /// The rows of one package ID that these filters allow.
+        /// </summary>
+        internal static string GenerateVersionsFilter(string packageId, bool includePrerelease, bool includeSemVer2)
+        {
+            if (packageId == null) throw new ArgumentNullException(nameof(packageId));
+
+            var partition = TableQuery.GenerateFilterCondition(
+                "PartitionKey",
+                QueryComparisons.Equal,
+                packageId.ToLowerInvariant());
+
+            return GenerateFilters(partition, includePrerelease, includeSemVer2);
+        }
+
+        internal static string GenerateSearchFilter(string searchText, bool includePrerelease, bool includeSemVer2)
         {
             var result = "";
 
             if (!string.IsNullOrWhiteSpace(searchText))
             {
                 // Filter to rows where the "searchText" prefix matches on the partition key.
-                var prefix = searchText.TrimEnd().Split(separator: null).Last();
+                // Partition keys are lowercased IDs, and the comparison is ordinal, so the
+                // prefix must be lowercased too or a capitalised query matches nothing.
+                var prefix = searchText.TrimEnd().Split(separator: null).Last().ToLowerInvariant();
 
                 var prefixLower = prefix;
                 var prefixUpper = prefix + "~";
@@ -185,9 +208,14 @@ namespace BaGet.Azure
                     QueryComparisons.LessThanOrEqual,
                     prefixUpper);
 
-                result = GenerateAnd(partitionLowerFilter, partitionUpperFilter);
+                result = TableQuery.CombineFilters(partitionLowerFilter, TableOperators.And, partitionUpperFilter);
             }
 
+            return GenerateFilters(result, includePrerelease, includeSemVer2);
+        }
+
+        private static string GenerateFilters(string result, bool includePrerelease, bool includeSemVer2)
+        {
             // Filter to rows that are listed.
             result = GenerateAnd(
                 result,

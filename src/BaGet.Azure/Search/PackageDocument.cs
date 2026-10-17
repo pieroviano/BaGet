@@ -15,6 +15,16 @@ namespace BaGet.Azure
         public string Id { get; set; }
 
         /// <summary>
+        /// The lowercased ID as a single token, for exact lookups and prefix matches; "id"
+        /// is split on "." and "-" by the default analyzer. An index created before this
+        /// field existed needs it added, and a document only has it once its package is
+        /// pushed again, so every query that uses it falls back for documents without it.
+        /// </summary>
+        [IsSearchable, IsFilterable]
+        [Analyzer(ExactMatchCustomAnalyzer.Name)]
+        public string NormalizedId { get; set; }
+
+        /// <summary>
         /// The package's full versions after normalization, including any SemVer 2.0.0 build metadata.
         /// </summary>
         [IsSearchable, IsFilterable, IsSortable]
