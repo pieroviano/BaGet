@@ -468,6 +468,61 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("PackageTypes");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageValidation", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime?>("Completed")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int?>("PackageKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubmissionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("PackageKey");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("PackageValidations");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageVulnerability", b =>
                 {
                     b.Property<int>("Key")
@@ -688,6 +743,15 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasForeignKey("PackageKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PackageValidation", b =>
+                {
+                    b.HasOne("BaGet.Core.Package", "Package")
+                        .WithMany()
+                        .HasForeignKey("PackageKey");
 
                     b.Navigation("Package");
                 });

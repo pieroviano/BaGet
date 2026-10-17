@@ -34,6 +34,8 @@ namespace BaGet.Core
         public const int MaxApiKeyDescriptionLength = 256;
         public const int MaxApiKeyHashLength = 64;
 
+        public const int MaxValidationTypeLength = 64;
+
         public AbstractContext(DbContextOptions<TContext> options)
             : base(options)
         { }
@@ -49,6 +51,7 @@ namespace BaGet.Core
         public DbSet<OrganizationMember> OrganizationMembers { get; set; }
         public DbSet<PackageOwner> PackageOwners { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
+        public DbSet<PackageValidation> PackageValidations { get; set; }
 
         public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -74,6 +77,7 @@ namespace BaGet.Core
             builder.Entity<OrganizationMember>(BuildOrganizationMemberEntity);
             builder.Entity<PackageOwner>(BuildPackageOwnerEntity);
             builder.Entity<ApiKey>(BuildApiKeyEntity);
+            builder.Entity<PackageValidation>(BuildPackageValidationEntity);
         }
 
         private void BuildPackageEntity(EntityTypeBuilder<Package> package)
@@ -255,6 +259,25 @@ namespace BaGet.Core
                 .HasMaxLength(DefaultMaxStringLength)
                 .HasConversion(StringArrayToJsonConverter.Instance)
                 .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        }
+
+        private void BuildPackageValidationEntity(EntityTypeBuilder<PackageValidation> validation)
+        {
+            validation.HasKey(v => v.Key);
+            validation.HasIndex(v => v.SubmissionId);
+            validation.HasIndex(v => v.PackageId);
+
+            validation.Property(v => v.SubmissionId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
+            validation.Property(v => v.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+            validation.Property(v => v.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+            validation.Property(v => v.Type).HasMaxLength(MaxValidationTypeLength).IsRequired();
+            validation.Property(v => v.Message).HasMaxLength(DefaultMaxStringLength);
+
+            validation
+                .HasOne(v => v.Package)
+                .WithMany()
+                .HasForeignKey(v => v.PackageKey)
+                .IsRequired(false);
         }
 
         private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)

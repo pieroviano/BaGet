@@ -467,6 +467,61 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.ToTable("PackageTypes");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageValidation", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime?>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int?>("PackageKey")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SubmissionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("PackageKey");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("PackageValidations");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageVulnerability", b =>
                 {
                     b.Property<int>("Key")
@@ -686,6 +741,15 @@ namespace BaGet.Database.PostgreSql.Migrations
                         .HasForeignKey("PackageKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PackageValidation", b =>
+                {
+                    b.HasOne("BaGet.Core.Package", "Package")
+                        .WithMany()
+                        .HasForeignKey("PackageKey");
 
                     b.Navigation("Package");
                 });

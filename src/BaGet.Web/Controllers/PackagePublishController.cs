@@ -13,7 +13,7 @@ namespace BaGet.Web
     {
         private readonly IAuthenticationService _authentication;
         private readonly IPackageAuthorizationService _authorization;
-        private readonly IPackageIndexingService _indexer;
+        private readonly IPackageSubmissionService _submissions;
         private readonly IPackageDatabase _packages;
         private readonly IPackageDeletionService _deleteService;
         private readonly IOptionsSnapshot<BaGetOptions> _options;
@@ -22,7 +22,7 @@ namespace BaGet.Web
 
         public PackagePublishController(
             IAuthenticationService authentication,
-            IPackageIndexingService indexer,
+            IPackageSubmissionService submissions,
             IPackageDatabase packages,
             IPackageDeletionService deletionService,
             IOptionsSnapshot<BaGetOptions> options,
@@ -33,7 +33,7 @@ namespace BaGet.Web
             _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
             _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
             _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
-            _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
+            _submissions = submissions ?? throw new ArgumentNullException(nameof(submissions));
             _packages = packages ?? throw new ArgumentNullException(nameof(packages));
             _deleteService = deletionService ?? throw new ArgumentNullException(nameof(deletionService));
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -72,8 +72,11 @@ namespace BaGet.Web
                         return;
                     }
 
-                    var result = await _indexer.IndexAsync(uploadStream, cancellationToken);
-                    if (result == PackageIndexingResult.Success)
+                    var result = await _submissions.SubmitAsync(uploadStream, cancellationToken);
+
+                    // An accepted package claims its ID now, as it would on nuget.org: it is
+                    // the pusher's even while it is validated.
+                    if (result == PackageIndexingResult.Success || result == PackageIndexingResult.Accepted)
                     {
                         await _authorization.OnPushedAsync(principal, packageId, cancellationToken);
                     }
@@ -90,6 +93,10 @@ namespace BaGet.Web
 
                         case PackageIndexingResult.Success:
                             HttpContext.Response.StatusCode = 201;
+                            break;
+
+                        case PackageIndexingResult.Accepted:
+                            HttpContext.Response.StatusCode = 202;
                             break;
                     }
                 }

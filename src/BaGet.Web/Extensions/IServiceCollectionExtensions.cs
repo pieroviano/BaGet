@@ -2,6 +2,7 @@ using System;
 using System.Text.Json.Serialization;
 using BaGet.Catalog;
 using BaGet.Core;
+using BaGet.Validation;
 using BaGet.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -35,6 +36,7 @@ namespace BaGet
 
             services.AddBaGetApplication(configureAction);
             services.AddBaGetCatalog();
+            services.AddBaGetValidation();
 
             return services;
         }

@@ -24,6 +24,11 @@ namespace BaGet.Core
         /// The package has been indexed successfully.
         /// </summary>
         Success,
+
+        /// <summary>
+        /// The package was queued for validation and is not available yet.
+        /// </summary>
+        Accepted,
     }
 
     /// <summary>

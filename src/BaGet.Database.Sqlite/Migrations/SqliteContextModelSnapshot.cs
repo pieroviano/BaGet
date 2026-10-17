@@ -443,6 +443,59 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("PackageTypes");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageValidation", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("Completed")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PackageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("State")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SubmissionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("PackageKey");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("PackageValidations");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageVulnerability", b =>
                 {
                     b.Property<int>("Key")
@@ -654,6 +707,15 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasForeignKey("PackageKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PackageValidation", b =>
+                {
+                    b.HasOne("BaGet.Core.Package", "Package")
+                        .WithMany()
+                        .HasForeignKey("PackageKey");
 
                     b.Navigation("Package");
                 });

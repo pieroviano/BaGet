@@ -38,6 +38,8 @@ namespace BaGet.Core
 
         DbSet<ApiKey> ApiKeys { get; set; }
 
+        DbSet<PackageValidation> PackageValidations { get; set; }
+
         /// <summary>
         /// Identity's users. Declared here so that account services can query them through
         /// the same context as everything else.

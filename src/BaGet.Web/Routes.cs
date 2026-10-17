@@ -35,5 +35,8 @@
         public const string CatalogIndexRouteName = "catalog-index";
         public const string CatalogPageRouteName = "catalog-page";
         public const string CatalogLeafRouteName = "catalog-leaf";
+        public const string RepositorySignaturesRouteName = "repository-signatures";
+        public const string RepositorySigningCertificateRouteName = "repository-signing-certificate";
+        public const string ValidationStatusRouteName = "validation-status";
     }
 }

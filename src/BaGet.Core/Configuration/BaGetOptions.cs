@@ -54,5 +54,7 @@ namespace BaGet.Core
         public FeedsOptions Feeds { get; set; }
 
         public AccountsOptions Accounts { get; set; }
+
+        public ValidationOptions Validation { get; set; }
     }
 }

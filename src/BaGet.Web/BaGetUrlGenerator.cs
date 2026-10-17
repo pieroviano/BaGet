@@ -183,6 +183,16 @@ namespace BaGet.Web
             return AbsoluteUrl($"v3/catalog/data/{Uri.EscapeDataString(commitId)}.json");
         }
 
+        public string GetRepositorySignaturesUrl()
+        {
+            return AbsoluteUrl("v3/repository-signatures/index.json");
+        }
+
+        public string GetRepositorySigningCertificateUrl(string fingerprint)
+        {
+            return AbsoluteUrl($"v3/repository-signatures/{Uri.EscapeDataString(fingerprint)}.crt");
+        }
+
         public string GetReportAbuseUriTemplate()
         {
             return AbsoluteUrl("packages/{id}/{version}/report-abuse");

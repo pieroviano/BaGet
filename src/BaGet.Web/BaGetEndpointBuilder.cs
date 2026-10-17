@@ -22,6 +22,7 @@ namespace BaGet
             MapPackageMetadataAdminRoutes(endpoints);
             MapVulnerabilityRoutes(endpoints);
             MapCatalogRoutes(endpoints);
+            MapValidationRoutes(endpoints);
         }
 
         /// <summary>
@@ -47,6 +48,27 @@ namespace BaGet
                 pattern: "v3/package/{id}/{version}/vulnerabilities",
                 defaults: new { controller = "PackageMetadataAdmin", action = "SetVulnerabilities" },
                 constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
+        }
+
+        public void MapValidationRoutes(IEndpointRouteBuilder endpoints)
+        {
+            endpoints.MapControllerRoute(
+                name: Routes.RepositorySignaturesRouteName,
+                pattern: "v3/repository-signatures/index.json",
+                defaults: new { controller = "RepositorySignatures", action = "Index" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.RepositorySigningCertificateRouteName,
+                pattern: "v3/repository-signatures/{fingerprint}.crt",
+                defaults: new { controller = "RepositorySignatures", action = "Certificate" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.ValidationStatusRouteName,
+                pattern: "v3/package/{id}/{version}/validation",
+                defaults: new { controller = "ValidationStatus", action = "Get" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
         }
 
         public void MapCatalogRoutes(IEndpointRouteBuilder endpoints)

@@ -23,12 +23,15 @@ namespace BaGet.Tests
         private readonly ITestOutputHelper _output;
         private readonly HttpClient _upstreamClient;
         private readonly Dictionary<string, string> _configOverrides;
+        private readonly Action<IServiceCollection> _configureServices;
 
         public BaGetApplication(
             ITestOutputHelper output,
             HttpClient upstreamClient = null,
-            Dictionary<string, string> configOverrides = null)
+            Dictionary<string, string> configOverrides = null,
+            Action<IServiceCollection> configureServices = null)
         {
+            _configureServices = configureServices;
             _output = output ?? throw new ArgumentNullException(nameof(output));
             _upstreamClient = upstreamClient;
             _configOverrides = configOverrides;
@@ -92,6 +95,7 @@ namespace BaGet.Tests
                         .Returns(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 
                     services.AddSingleton(time.Object);
+                    _configureServices?.Invoke(services);
                     if (_upstreamClient != null)
                     {
                         services.AddSingleton(_upstreamClient);

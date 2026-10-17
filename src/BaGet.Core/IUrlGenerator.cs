@@ -94,6 +94,18 @@ namespace BaGet.Core
         string GetCatalogLeafUrl(string commitId);
 
         /// <summary>
+        /// Get the URL of the repository signatures resource.
+        /// See: https://learn.microsoft.com/en-us/nuget/api/repository-signatures-resource
+        /// </summary>
+        string GetRepositorySignaturesUrl();
+
+        /// <summary>
+        /// Get the URL to download a repository signing certificate.
+        /// </summary>
+        /// <param name="fingerprint">The certificate's SHA-256 fingerprint, as lowercase hex.</param>
+        string GetRepositorySigningCertificateUrl(string fingerprint);
+
+        /// <summary>
         /// Get the URL for the entry point of a package's metadata.
         /// See: https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#registration-index
         /// </summary>
