@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using NuGet.Versioning;
 using Xunit;
@@ -149,7 +150,7 @@ namespace BaGet.Core.Tests.Services
                 using (var readmeStream = StringStream("My readme"))
                 using (var iconStream = StringStream("My icon"))
                 {
-                    await _target.SavePackageContentAsync(
+                    var result = await _target.SavePackageContentAsync(
                         _package,
                         packageStream: packageStream,
                         nuspecStream: nuspecStream,
@@ -157,6 +158,8 @@ namespace BaGet.Core.Tests.Services
                         iconStream: iconStream);
 
                     // Assert
+                    Assert.Equal(PackageSaveResult.Success, result);
+
                     Assert.True(_puts.ContainsKey(PackagePath));
                     Assert.Equal("My package", await ToStringAsync(_puts[PackagePath].Content));
                     Assert.Equal("binary/octet-stream", _puts[PackagePath].ContentType);
@@ -176,7 +179,7 @@ namespace BaGet.Core.Tests.Services
             }
 
             [Fact]
-            public async Task ThrowsIfContentAlreadyExistsButContentsDoNotMatch()
+            public async Task ReturnsConflictIfContentAlreadyExistsButContentsDoNotMatch()
             {
                 // Arrange
                 SetupPutResult(StoragePutResult.Conflict);
@@ -187,13 +190,15 @@ namespace BaGet.Core.Tests.Services
                 using (var iconStream = StringStream("My icon"))
                 {
                     // Act
-                    await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                        _target.SavePackageContentAsync(
-                            _package,
-                            packageStream: packageStream,
-                            nuspecStream: nuspecStream,
-                            readmeStream: readmeStream,
-                            iconStream: iconStream));
+                    var result = await _target.SavePackageContentAsync(
+                        _package,
+                        packageStream: packageStream,
+                        nuspecStream: nuspecStream,
+                        readmeStream: readmeStream,
+                        iconStream: iconStream);
+
+                    // Assert
+                    Assert.Equal(PackageSaveResult.Conflict, result);
                 }
             }
         }
@@ -324,6 +329,197 @@ namespace BaGet.Core.Tests.Services
                 _storage.Verify(s => s.DeleteAsync(PackagePath, cancellationToken), Times.Once);
                 _storage.Verify(s => s.DeleteAsync(NuspecPath, cancellationToken), Times.Once);
                 _storage.Verify(s => s.DeleteAsync(ReadmePath, cancellationToken), Times.Once);
+            }
+        }
+
+        /// <summary>
+        /// These facts run <see cref="PackageStorageService"/> on top of the real file system,
+        /// through <see cref="FileStorageService"/>, the way <see cref="FileStorageServiceTests"/> does.
+        /// </summary>
+        public class SavePackageContentAsyncOnFileSystem : FileSystemFactsBase
+        {
+            [Fact]
+            public async Task WhenContentIsNew_Succeeds()
+            {
+                // Act
+                var result = await SaveAsync(
+                    package: "My package",
+                    nuspec: "My nuspec",
+                    readme: "My readme",
+                    icon: "My icon");
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Success, result);
+                Assert.Equal("My package", await ReadAsync(PackagePath));
+                Assert.Equal("My nuspec", await ReadAsync(NuspecPath));
+                Assert.Equal("My readme", await ReadAsync(ReadmePath));
+                Assert.Equal("My icon", await ReadAsync(IconPath));
+            }
+
+            [Fact]
+            public async Task WhenIdenticalContentIsAlreadyStored_Succeeds()
+            {
+                // Arrange
+                await SaveAsync("My package", "My nuspec", "My readme", "My icon");
+
+                // Act
+                var result = await SaveAsync("My package", "My nuspec", "My readme", "My icon");
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Success, result);
+                Assert.Equal("My package", await ReadAsync(PackagePath));
+            }
+
+            [Fact]
+            public async Task WhenStoredPackageContentDiffers_ReturnsConflict()
+            {
+                // Arrange
+                await WriteAsync(PackagePath, "Other package");
+
+                // Act
+                var result = await SaveAsync("My package", "My nuspec", "My readme", "My icon");
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Conflict, result);
+                Assert.Equal("Other package", await ReadAsync(PackagePath));
+                Assert.False(File.Exists(FullPath(NuspecPath)));
+            }
+
+            [Fact]
+            public async Task WhenStoredNuspecContentDiffers_ReturnsConflict()
+            {
+                // Arrange
+                await WriteAsync(NuspecPath, "Other nuspec");
+
+                // Act
+                var result = await SaveAsync("My package", "My nuspec", "My readme", "My icon");
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Conflict, result);
+                Assert.Equal("Other nuspec", await ReadAsync(NuspecPath));
+                Assert.False(File.Exists(FullPath(ReadmePath)));
+            }
+
+            [Fact]
+            public async Task WhenStoredReadmeContentDiffers_ReturnsConflict()
+            {
+                // Arrange
+                await WriteAsync(ReadmePath, "Other readme");
+
+                // Act
+                var result = await SaveAsync("My package", "My nuspec", "My readme", "My icon");
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Conflict, result);
+                Assert.Equal("Other readme", await ReadAsync(ReadmePath));
+                Assert.False(File.Exists(FullPath(IconPath)));
+            }
+
+            [Fact]
+            public async Task WhenStoredIconContentDiffers_ReturnsConflict()
+            {
+                // Arrange
+                await WriteAsync(IconPath, "Other icon");
+
+                // Act
+                var result = await SaveAsync("My package", "My nuspec", "My readme", "My icon");
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Conflict, result);
+                Assert.Equal("Other icon", await ReadAsync(IconPath));
+            }
+
+            [Fact]
+            public async Task WhenPackageHasNoReadmeOrIcon_Succeeds()
+            {
+                // Act
+                var result = await SaveAsync("My package", "My nuspec", readme: null, icon: null);
+
+                // Assert
+                Assert.Equal(PackageSaveResult.Success, result);
+                Assert.False(File.Exists(FullPath(ReadmePath)));
+                Assert.False(File.Exists(FullPath(IconPath)));
+            }
+        }
+
+        public class FileSystemFactsBase : IDisposable
+        {
+            protected readonly Package _package = new Package
+            {
+                Id = "My.Package",
+                Version = new NuGetVersion("1.2.3")
+            };
+
+            private readonly string _storePath;
+            private readonly PackageStorageService _target;
+
+            public FileSystemFactsBase()
+            {
+                _storePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+                var options = new Mock<IOptionsSnapshot<FileSystemStorageOptions>>();
+                options
+                    .Setup(o => o.Value)
+                    .Returns(() => new FileSystemStorageOptions { Path = _storePath });
+
+                _target = new PackageStorageService(
+                    new FileStorageService(options.Object),
+                    Mock.Of<ILogger<PackageStorageService>>());
+            }
+
+            public void Dispose()
+            {
+                try
+                {
+                    Directory.Delete(_storePath, recursive: true);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                }
+            }
+
+            protected string PackagePath => Path.Combine("packages", "my.package", "1.2.3", "my.package.1.2.3.nupkg");
+            protected string NuspecPath => Path.Combine("packages", "my.package", "1.2.3", "my.package.nuspec");
+            protected string ReadmePath => Path.Combine("packages", "my.package", "1.2.3", "readme");
+            protected string IconPath => Path.Combine("packages", "my.package", "1.2.3", "icon");
+
+            protected string FullPath(string path) => Path.Combine(_storePath, path);
+
+            protected async Task<PackageSaveResult> SaveAsync(string package, string nuspec, string readme, string icon)
+            {
+                using (var packageStream = StringStream(package))
+                using (var nuspecStream = StringStream(nuspec))
+                using (var readmeStream = StringStream(readme))
+                using (var iconStream = StringStream(icon))
+                {
+                    return await _target.SavePackageContentAsync(
+                        _package,
+                        packageStream,
+                        nuspecStream,
+                        readmeStream,
+                        iconStream,
+                        CancellationToken.None);
+                }
+            }
+
+            protected async Task WriteAsync(string path, string content)
+            {
+                var fullPath = FullPath(path);
+
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+                await File.WriteAllTextAsync(fullPath, content);
+            }
+
+            protected Task<string> ReadAsync(string path)
+            {
+                return File.ReadAllTextAsync(FullPath(path));
+            }
+
+            private Stream StringStream(string input)
+            {
+                if (input == null) return null;
+
+                return new MemoryStream(Encoding.ASCII.GetBytes(input));
             }
         }
 
