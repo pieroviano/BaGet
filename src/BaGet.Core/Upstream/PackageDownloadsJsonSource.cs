@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -45,7 +45,10 @@ namespace BaGet.Core
                     {
                         if (jsonReader.TokenType == JsonToken.StartArray)
                         {
-                            // TODO: This line reads the entire document into memory...
+                            // Reads this one record, not the document: the outer array's
+                            // start token was consumed above, so the reader sits inside it.
+                            // What dominates memory is the dictionary returned below, which
+                            // holds every package and version by design.
                             var record = JToken.ReadFrom(jsonReader);
                             var id = string.Intern(record[0].ToString().ToLowerInvariant());
 
@@ -66,7 +69,7 @@ namespace BaGet.Core
                                 if (token != null && token.Count() == 2)
                                 {
                                     var version = string.Intern(NuGetVersion.Parse(token[0].ToString()).ToNormalizedString().ToLowerInvariant());
-                                    var downloads = token[1].ToObject<int>();
+                                    var downloads = token[1].ToObject<long>();
 
                                     results[id][version] = downloads;
                                 }
@@ -89,21 +92,21 @@ namespace BaGet.Core
         {
             _logger.LogInformation("Downloading downloads.v1.json...");
 
-            var fileStream = File.Open(Path.GetTempFileName(), FileMode.Create);
             var response = await _httpClient.GetAsync(PackageDownloadsV1Url, HttpCompletionOption.ResponseHeadersRead);
 
             response.EnsureSuccessStatusCode();
 
             using (var networkStream = await response.Content.ReadAsStreamAsync())
             {
-                await networkStream.CopyToAsync(fileStream);
+                // Spooled to a temporary file rather than held in memory. This one deletes
+                // itself when the stream is disposed; the hand-rolled file this replaced was
+                // left behind in the temporary directory on every import.
+                var fileStream = await networkStream.AsTemporaryFileStreamAsync();
+
+                _logger.LogInformation("Downloaded downloads.v1.json");
+
+                return fileStream;
             }
-
-            fileStream.Seek(0, SeekOrigin.Begin);
-
-            _logger.LogInformation("Downloaded downloads.v1.json");
-
-            return fileStream;
         }
     }
 }
