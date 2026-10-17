@@ -16,6 +16,22 @@ namespace BaGet.Core
         public string PathBase { get; set; }
 
         /// <summary>
+        /// The host names BaGet will serve, separated by semicolons. A request whose
+        /// "Host" header matches none of them is rejected with a 400 response, before it
+        /// reaches a handler. An entry may be a wildcard subdomain ("*.example.com") and
+        /// may carry a port, in which case the port must match too; an entry without a
+        /// port matches any port.
+        ///
+        /// If empty, or if any entry is "*", every host is allowed. That is the default:
+        /// BaGet is commonly run behind a reverse proxy on a host name it cannot know.
+        ///
+        /// This is ASP.NET Core's own "AllowedHosts" configuration key, so an existing
+        /// value keeps working unchanged.
+        /// See: https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/host-filtering
+        /// </summary>
+        public string AllowedHosts { get; set; }
+
+        /// <summary>
         /// If enabled, the database will be updated at app startup by running
         /// Entity Framework migrations. This is not recommended in production.
         /// </summary>

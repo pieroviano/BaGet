@@ -6,7 +6,16 @@ using NuGet.Versioning;
 
 namespace BaGet.Web
 {
-    // TODO: This should validate the "Host" header against known valid values
+    // The URLs below are built from the incoming request's "Host" header, which the client
+    // controls. The header is validated against the configured allow-list by ASP.NET Core's
+    // host filtering middleware instead of here: see BaGetOptions.AllowedHosts, which BaGet's
+    // Startup binds to HostFilteringOptions and enforces with UseHostFiltering.
+    //
+    // Validating in this generator would be both too late and too narrow. Too late, because
+    // by the time a URL is generated the request has already been handled on a host BaGet
+    // does not serve, and there is no correct URL left to return. Too narrow, because the
+    // same header is read by routing, by LinkGenerator below and by anything else holding
+    // the HttpContext; only rejecting the request protects all of them at once.
     public class BaGetUrlGenerator : IUrlGenerator
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

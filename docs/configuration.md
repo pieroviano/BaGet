@@ -20,6 +20,36 @@ Users will now have to provide the API key to push packages:
 dotnet nuget push -s http://localhost:5000/v3/index.json -k NUGET-SERVER-API-KEY package.1.0.0.nupkg
 ```
 
+## Restrict the host names BaGet serves
+
+The absolute URLs BaGet advertises in its service index, registrations and URI templates are
+built from the incoming request's `Host` header. By default BaGet serves any host, because it
+is commonly run behind a reverse proxy on a host name it cannot know. If the host names are
+known, list them in `AllowedHosts`, separated by semicolons; a request with any other host is
+then rejected with a `400` response:
+
+```json
+{
+    ...
+
+    "AllowedHosts": "nuget.example.com;nuget.example.com:8080",
+
+    ...
+}
+```
+
+| Entry | Matches |
+| --- | --- |
+| `*` | any host — host filtering is off (the default) |
+| `example.com` | that host on any port |
+| `example.com:8080` | that host on port 8080 only |
+| `*.example.com` | any subdomain of `example.com` |
+
+!!! info
+    This is [ASP.NET Core's host filtering](https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/host-filtering)
+    configuration key. If you embed BaGet in your own application, call `UseHostFiltering` in
+    its pipeline.
+
 ## Enable read-through caching
 
 Read-through caching lets you index packages from an upstream source. You can use read-through

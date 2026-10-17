@@ -5,6 +5,7 @@ using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
@@ -36,6 +37,7 @@ namespace BaGet
             services.AddTransient<IConfigureOptions<CorsOptions>, ConfigureBaGetOptions>();
             services.AddTransient<IConfigureOptions<FormOptions>, ConfigureBaGetOptions>();
             services.AddTransient<IConfigureOptions<ForwardedHeadersOptions>, ConfigureBaGetOptions>();
+            services.AddTransient<IConfigureOptions<HostFilteringOptions>, ConfigureBaGetOptions>();
             services.AddTransient<IConfigureOptions<IISServerOptions>, ConfigureBaGetOptions>();
             services.AddTransient<IValidateOptions<BaGetOptions>, ConfigureBaGetOptions>();
 
@@ -80,6 +82,16 @@ namespace BaGet
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             var options = Configuration.Get<BaGetOptions>();
+
+            // Reject a request whose "Host" header is not one BaGet serves, before anything
+            // reads it. Every absolute URL BaGet advertises is built from that header, so a
+            // forged host would otherwise decide where clients are sent.
+            //
+            // ConfigureWebHostDefaults happens to add this middleware as well, but BaGet
+            // cannot rely on that: a host built with a slim or empty builder does not, and
+            // the check is BaGet's to own. Running it twice is a repeated string comparison,
+            // which is cheaper than depending on the host builder's choices.
+            app.UseHostFiltering();
 
             if (env.IsDevelopment())
             {
