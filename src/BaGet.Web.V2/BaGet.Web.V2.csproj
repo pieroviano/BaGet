@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-
+    <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet's NuGet V2 (OData) feed, for clients that cannot use V3.</Description>
     <RootNamespace>BaGet.Web.V2</RootNamespace>

@@ -2,11 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-
+    <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet's NuGet server implementation</Description>
     <RootNamespace>BaGet.Web</RootNamespace>
-
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
   </PropertyGroup>
 
@@ -25,6 +24,10 @@
     <ProjectReference Include="..\BaGet.Catalog\BaGet.Catalog.csproj" />
     <ProjectReference Include="..\BaGet.Identity\BaGet.Identity.csproj" />
     <ProjectReference Include="..\BaGet.Validation\BaGet.Validation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BaGet.Tests" />
   </ItemGroup>
 
   <ItemGroup>
