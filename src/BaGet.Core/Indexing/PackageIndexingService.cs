@@ -45,6 +45,10 @@ namespace BaGet.Core
             {
                 using (var packageReader = new PackageArchiveReader(packageStream, leaveStreamOpen: true))
                 {
+                    // Reject packages whose entries cannot be extracted safely, such as an
+                    // entry whose path escapes the extraction directory.
+                    await packageReader.ValidatePackageEntriesAsync(cancellationToken);
+
                     package = packageReader.GetPackageMetadata();
                     package.Published = _time.UtcNow;
 
@@ -92,7 +96,6 @@ namespace BaGet.Core
             }
 
             // TODO: Add more package validations
-            // TODO: Call PackageArchiveReader.ValidatePackageEntriesAsync
             _logger.LogInformation(
                 "Validated package {PackageId} {PackageVersion}, persisting content to storage...",
                 package.Id,

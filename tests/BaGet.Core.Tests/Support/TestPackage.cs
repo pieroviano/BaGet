@@ -12,6 +12,11 @@ namespace BaGet.Core.Tests.Support
     public static class TestPackage
     {
         /// <summary>
+        /// The path of the nuspec within the archives this class builds.
+        /// </summary>
+        public const string NuspecPath = "Package.nuspec";
+
+        /// <summary>
         /// Create a package whose nuspec holds <paramref name="metadata"/> as the inner XML
         /// of its &lt;metadata&gt; element.
         /// </summary>
@@ -24,11 +29,35 @@ namespace BaGet.Core.Tests.Support
   </metadata>
 </package>";
 
+            return Build(nuspec, files);
+        }
+
+        /// <summary>
+        /// Create a zip archive shaped like a package, but with no nuspec in it.
+        /// </summary>
+        public static MemoryStream CreateWithoutNuspec(IDictionary<string, string> files = null)
+        {
+            return Build(nuspec: null, files: files);
+        }
+
+        /// <summary>
+        /// A stream whose content is not a zip archive at all.
+        /// </summary>
+        public static MemoryStream NotAZipArchive()
+        {
+            return new MemoryStream(Encoding.UTF8.GetBytes("This is not a package, it is a text file."));
+        }
+
+        private static MemoryStream Build(string nuspec, IDictionary<string, string> files)
+        {
             var result = new MemoryStream();
 
             using (var archive = new ZipArchive(result, ZipArchiveMode.Create, leaveOpen: true))
             {
-                Write(archive, "Package.nuspec", nuspec);
+                if (nuspec != null)
+                {
+                    Write(archive, NuspecPath, nuspec);
+                }
 
                 foreach (var file in files ?? new Dictionary<string, string>())
                 {
