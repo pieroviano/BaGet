@@ -1,6 +1,8 @@
+using System;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Protocol.Internal;
-using NuGet.Versioning;
 using Xunit;
 
 namespace BaGet.Protocol.Tests
@@ -75,8 +77,52 @@ namespace BaGet.Protocol.Tests
         [Fact]
         public async Task GetRegistrationPageDeprecated()
         {
-            // TODO
-            await Task.Yield();
+            var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageDeprecatedUrl);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.ItemsOrNull);
+
+            var metadata = Assert.Single(result.ItemsOrNull).PackageMetadata;
+
+            Assert.Equal("Deprecated.Package", metadata.PackageId);
+            Assert.Equal("1.0.0", metadata.Version);
+
+            var deprecation = metadata.Deprecation;
+
+            Assert.NotNull(deprecation);
+            Assert.Equal(new[] { "Legacy", "CriticalBugs" }, deprecation.Reasons.ToArray());
+            Assert.Equal(
+                "This package is deprecated, use the alternate package instead.",
+                deprecation.Message);
+
+            Assert.NotNull(deprecation.AlternatePackage);
+            Assert.Equal("Test.Package", deprecation.AlternatePackage.Id);
+            Assert.Equal("[2.0.0, )", deprecation.AlternatePackage.Range);
+        }
+
+        [Fact]
+        public async Task GetRegistrationPageWithoutDeprecation()
+        {
+            var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
+
+            Assert.NotNull(result);
+            Assert.All(result.ItemsOrNull, item => Assert.Null(item.PackageMetadata.Deprecation));
+        }
+
+        [Fact]
+        public async Task ReturnsNullIfRegistrationIndexDoesNotExist()
+        {
+            var result = await _target.GetRegistrationIndexOrNullAsync(Guid.NewGuid().ToString());
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task ThrowsIfRegistrationPageDoesNotExist()
+        {
+            await Assert.ThrowsAsync<HttpRequestException>(
+                () => _target.GetRegistrationPageAsync(
+                    $"https://test.example/v3/metadata/{Guid.NewGuid()}/page/1.0.0/1.0.0.json"));
         }
 
         [Fact]
