@@ -5,59 +5,58 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Identity
+namespace BaGet.Identity;
+
+/// <summary>
+/// The global API key, as before, plus users' own keys.
+/// </summary>
+public class AccountAuthenticationService : Core.IAuthenticationService
 {
-    /// <summary>
-    /// The global API key, as before, plus users' own keys.
-    /// </summary>
-    public class AccountAuthenticationService : Core.IAuthenticationService
+    private readonly ApiKeyAuthenticationService _globalKey;
+    private readonly ApiKeyService _apiKeys;
+    private readonly UserManager<BaGetUser> _users;
+    private readonly IOptionsSnapshot<BaGetOptions> _options;
+
+    public AccountAuthenticationService(
+        ApiKeyAuthenticationService globalKey,
+        ApiKeyService apiKeys,
+        UserManager<BaGetUser> users,
+        IOptionsSnapshot<BaGetOptions> options)
     {
-        private readonly ApiKeyAuthenticationService _globalKey;
-        private readonly ApiKeyService _apiKeys;
-        private readonly UserManager<BaGetUser> _users;
-        private readonly IOptionsSnapshot<BaGetOptions> _options;
+        _globalKey = globalKey ?? throw new ArgumentNullException(nameof(globalKey));
+        _apiKeys = apiKeys ?? throw new ArgumentNullException(nameof(apiKeys));
+        _users = users ?? throw new ArgumentNullException(nameof(users));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+    }
 
-        public AccountAuthenticationService(
-            ApiKeyAuthenticationService globalKey,
-            ApiKeyService apiKeys,
-            UserManager<BaGetUser> users,
-            IOptionsSnapshot<BaGetOptions> options)
+    public async Task<bool> AuthenticateAsync(string apiKey, CancellationToken cancellationToken)
+        => await AuthenticatePrincipalAsync(apiKey, cancellationToken) != null;
+
+    public async Task<BaGetPrincipal> AuthenticatePrincipalAsync(string apiKey, CancellationToken cancellationToken)
+    {
+        // The global key is the superuser, as it always was - but only when one is
+        // configured. An empty ApiKey means "there is no global key", never "every
+        // caller is the superuser": enabling accounts is asking for ownership to decide
+        // who may push what, and a superuser principal skips ownership entirely, so
+        // treating the open-server default as a free pass would make the ownership gate
+        // bypassable by simply sending no key at all.
+        if (!string.IsNullOrEmpty(_options.Value.ApiKey)
+            && await _globalKey.AuthenticateAsync(apiKey, cancellationToken))
         {
-            _globalKey = globalKey ?? throw new ArgumentNullException(nameof(globalKey));
-            _apiKeys = apiKeys ?? throw new ArgumentNullException(nameof(apiKeys));
-            _users = users ?? throw new ArgumentNullException(nameof(users));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            return BaGetPrincipal.Superuser;
         }
 
-        public async Task<bool> AuthenticateAsync(string apiKey, CancellationToken cancellationToken)
-            => await AuthenticatePrincipalAsync(apiKey, cancellationToken) != null;
+        var key = await _apiKeys.FindValidOrNullAsync(apiKey, cancellationToken);
+        if (key == null) return null;
 
-        public async Task<BaGetPrincipal> AuthenticatePrincipalAsync(string apiKey, CancellationToken cancellationToken)
-        {
-            // The global key is the superuser, as it always was - but only when one is
-            // configured. An empty ApiKey means "there is no global key", never "every
-            // caller is the superuser": enabling accounts is asking for ownership to decide
-            // who may push what, and a superuser principal skips ownership entirely, so
-            // treating the open-server default as a free pass would make the ownership gate
-            // bypassable by simply sending no key at all.
-            if (!string.IsNullOrEmpty(_options.Value.ApiKey)
-                && await _globalKey.AuthenticateAsync(apiKey, cancellationToken))
-            {
-                return BaGetPrincipal.Superuser;
-            }
+        var user = await _users.FindByIdAsync(key.UserId);
+        if (user == null) return null;
 
-            var key = await _apiKeys.FindValidOrNullAsync(apiKey, cancellationToken);
-            if (key == null) return null;
-
-            var user = await _users.FindByIdAsync(key.UserId);
-            if (user == null) return null;
-
-            return new BaGetPrincipal(
-                user.Id,
-                user.UserName,
-                isSuperuser: false,
-                key.Scopes,
-                key.PackageGlobPattern);
-        }
+        return new BaGetPrincipal(
+            user.Id,
+            user.UserName,
+            isSuperuser: false,
+            key.Scopes,
+            key.PackageGlobPattern);
     }
 }

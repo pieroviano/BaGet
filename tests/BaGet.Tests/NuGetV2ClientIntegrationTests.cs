@@ -12,126 +12,125 @@ using NuGet.Versioning;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BaGet.Tests
+namespace BaGet.Tests;
+
+/// <summary>
+/// Drives NuGet's own client against the BaGet test host with a V2 source address.
+/// The core provider list contains both the V2 and V3 resource providers and picks by
+/// the shape of the source, so pointing it at "api/v2" exercises the V2 providers -
+/// the same code path "nuget list" and older Install-Package use. This is the evidence
+/// that the hand-written OData feed is shaped the way a real client expects, rather
+/// than merely being well-formed XML.
+/// </summary>
+public class NuGetV2ClientIntegrationTests : IDisposable
 {
-    /// <summary>
-    /// Drives NuGet's own client against the BaGet test host with a V2 source address.
-    /// The core provider list contains both the V2 and V3 resource providers and picks by
-    /// the shape of the source, so pointing it at "api/v2" exercises the V2 providers -
-    /// the same code path "nuget list" and older Install-Package use. This is the evidence
-    /// that the hand-written OData feed is shaped the way a real client expects, rather
-    /// than merely being well-formed XML.
-    /// </summary>
-    public class NuGetV2ClientIntegrationTests : IDisposable
+    private readonly BaGetApplication _app;
+    private readonly HttpClient _client;
+    private readonly Stream _packageStream;
+
+    private readonly SourceRepository _repository;
+    private readonly SourceCacheContext _cache;
+    private readonly NuGet.Common.ILogger _logger;
+    private readonly CancellationToken _cancellationToken;
+
+    public NuGetV2ClientIntegrationTests(ITestOutputHelper output)
     {
-        private readonly BaGetApplication _app;
-        private readonly HttpClient _client;
-        private readonly Stream _packageStream;
+        _app = new BaGetApplication(output);
+        _client = _app.CreateDefaultClient();
+        _packageStream = TestResources.GetResourceStream(TestResources.Package);
 
-        private readonly SourceRepository _repository;
-        private readonly SourceCacheContext _cache;
-        private readonly NuGet.Common.ILogger _logger;
-        private readonly CancellationToken _cancellationToken;
+        // A V2 source is the feed root, not a service index.
+        var sourceUri = new Uri(_app.Server.BaseAddress, "api/v2");
+        var packageSource = new PackageSource(sourceUri.AbsoluteUri);
 
-        public NuGetV2ClientIntegrationTests(ITestOutputHelper output)
+        var providers = new List<Lazy<INuGetResourceProvider>>
         {
-            _app = new BaGetApplication(output);
-            _client = _app.CreateDefaultClient();
-            _packageStream = TestResources.GetResourceStream(TestResources.Package);
+            new Lazy<INuGetResourceProvider>(() => new HttpSourceResourceProviderTestHost(_client)),
+        };
+        providers.AddRange(Repository.Provider.GetCoreV3());
 
-            // A V2 source is the feed root, not a service index.
-            var sourceUri = new Uri(_app.Server.BaseAddress, "api/v2");
-            var packageSource = new PackageSource(sourceUri.AbsoluteUri);
+        _repository = new SourceRepository(packageSource, providers);
+        _cache = new SourceCacheContext { NoCache = true, MaxAge = new DateTimeOffset(), DirectDownload = true };
+        _logger = NuGet.Common.NullLogger.Instance;
+        _cancellationToken = CancellationToken.None;
+    }
 
-            var providers = new List<Lazy<INuGetResourceProvider>>
-            {
-                new Lazy<INuGetResourceProvider>(() => new HttpSourceResourceProviderTestHost(_client)),
-            };
-            providers.AddRange(Repository.Provider.GetCoreV3());
+    [Fact]
+    public async Task TheClientListsEveryVersionOfAPackage()
+    {
+        await _app.AddPackageAsync(_packageStream);
 
-            _repository = new SourceRepository(packageSource, providers);
-            _cache = new SourceCacheContext { NoCache = true, MaxAge = new DateTimeOffset(), DirectDownload = true };
-            _logger = NuGet.Common.NullLogger.Instance;
-            _cancellationToken = CancellationToken.None;
-        }
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        var versions = await resource.GetAllVersionsAsync(
+            "TestData", _cache, _logger, _cancellationToken);
 
-        [Fact]
-        public async Task TheClientListsEveryVersionOfAPackage()
-        {
-            await _app.AddPackageAsync(_packageStream);
+        Assert.Equal(new[] { "1.2.3" }, versions.Select(v => v.ToNormalizedString()));
+    }
 
-            var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
-            var versions = await resource.GetAllVersionsAsync(
-                "TestData", _cache, _logger, _cancellationToken);
+    [Fact]
+    public async Task TheClientFindsNoVersionsForAnUnknownPackage()
+    {
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        var versions = await resource.GetAllVersionsAsync(
+            "No.Such.Package", _cache, _logger, _cancellationToken);
 
-            Assert.Equal(new[] { "1.2.3" }, versions.Select(v => v.ToNormalizedString()));
-        }
+        Assert.Empty(versions);
+    }
 
-        [Fact]
-        public async Task TheClientFindsNoVersionsForAnUnknownPackage()
-        {
-            var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
-            var versions = await resource.GetAllVersionsAsync(
-                "No.Such.Package", _cache, _logger, _cancellationToken);
+    [Fact]
+    public async Task TheClientReadsADependencyGroup()
+    {
+        await _app.AddPackageAsync(_packageStream);
 
-            Assert.Empty(versions);
-        }
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        var info = await resource.GetDependencyInfoAsync(
+            "TestData", NuGetVersion.Parse("1.2.3"), _cache, _logger, _cancellationToken);
 
-        [Fact]
-        public async Task TheClientReadsADependencyGroup()
-        {
-            await _app.AddPackageAsync(_packageStream);
+        Assert.NotNull(info);
+        Assert.Equal("TestData", info.PackageIdentity.Id);
+    }
 
-            var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
-            var info = await resource.GetDependencyInfoAsync(
-                "TestData", NuGetVersion.Parse("1.2.3"), _cache, _logger, _cancellationToken);
+    [Fact]
+    public async Task TheClientDownloadsThePackage()
+    {
+        await _app.AddPackageAsync(_packageStream);
 
-            Assert.NotNull(info);
-            Assert.Equal("TestData", info.PackageIdentity.Id);
-        }
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
 
-        [Fact]
-        public async Task TheClientDownloadsThePackage()
-        {
-            await _app.AddPackageAsync(_packageStream);
+        using var downloaded = new MemoryStream();
+        var copied = await resource.CopyNupkgToStreamAsync(
+            "TestData",
+            NuGetVersion.Parse("1.2.3"),
+            downloaded,
+            _cache,
+            _logger,
+            _cancellationToken);
 
-            var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        Assert.True(copied);
+        Assert.NotEqual(0, downloaded.Length);
+    }
 
-            using var downloaded = new MemoryStream();
-            var copied = await resource.CopyNupkgToStreamAsync(
-                "TestData",
-                NuGetVersion.Parse("1.2.3"),
-                downloaded,
-                _cache,
-                _logger,
-                _cancellationToken);
+    [Fact]
+    public async Task TheClientSearches()
+    {
+        await _app.AddPackageAsync(_packageStream);
 
-            Assert.True(copied);
-            Assert.NotEqual(0, downloaded.Length);
-        }
+        var resource = await _repository.GetResourceAsync<PackageSearchResource>(_cancellationToken);
+        var results = await resource.SearchAsync(
+            "TestData",
+            new SearchFilter(includePrerelease: false),
+            skip: 0,
+            take: 20,
+            log: _logger,
+            cancellationToken: _cancellationToken);
 
-        [Fact]
-        public async Task TheClientSearches()
-        {
-            await _app.AddPackageAsync(_packageStream);
+        Assert.Contains("TestData", results.Select(r => r.Identity.Id));
+    }
 
-            var resource = await _repository.GetResourceAsync<PackageSearchResource>(_cancellationToken);
-            var results = await resource.SearchAsync(
-                "TestData",
-                new SearchFilter(includePrerelease: false),
-                skip: 0,
-                take: 20,
-                log: _logger,
-                cancellationToken: _cancellationToken);
-
-            Assert.Contains("TestData", results.Select(r => r.Identity.Id));
-        }
-
-        public void Dispose()
-        {
-            _packageStream?.Dispose();
-            _client?.Dispose();
-            _app?.Dispose();
-        }
+    public void Dispose()
+    {
+        _packageStream?.Dispose();
+        _client?.Dispose();
+        _app?.Dispose();
     }
 }

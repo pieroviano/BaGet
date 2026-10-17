@@ -8,41 +8,40 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet
-{
-    public static class IServiceCollectionExtensions
-    {
-        public static IServiceCollection AddBaGetWebApplication(
-            this IServiceCollection services,
-            Action<BaGetApplication> configureAction)
-        {
-            services
-                .AddRouting(options => options.LowercaseUrls = true)
-                .AddControllers()
-                .AddApplicationPart(typeof(PackageContentController).Assembly)
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                });
+namespace BaGet;
 
-            services.AddRazorPages(options =>
+public static class IServiceCollectionExtensions
+{
+    public static IServiceCollection AddBaGetWebApplication(
+        this IServiceCollection services,
+        Action<BaGetApplication> configureAction)
+    {
+        services
+            .AddRouting(options => options.LowercaseUrls = true)
+            .AddControllers()
+            .AddApplicationPart(typeof(PackageContentController).Assembly)
+            .AddJsonOptions(options =>
             {
-                // Add /packages route to the Index page
-                options.Conventions.AddPageRoute("/Index", "/packages");
+                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
 
-            services.AddHttpContextAccessor();
-            services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();
+        services.AddRazorPages(options =>
+        {
+            // Add /packages route to the Index page
+            options.Conventions.AddPageRoute("/Index", "/packages");
+        });
 
-            services.AddBaGetApplication(configureAction);
-            services.AddBaGetCatalog();
-            services.AddBaGetValidation();
+        services.AddHttpContextAccessor();
+        services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();
 
-            // Browser uploads are staged between their two requests; whatever nobody comes
-            // back to confirm or cancel is collected here.
-            services.AddHostedService<StagingSweepWorker>();
+        services.AddBaGetApplication(configureAction);
+        services.AddBaGetCatalog();
+        services.AddBaGetValidation();
 
-            return services;
-        }
+        // Browser uploads are staged between their two requests; whatever nobody comes
+        // back to confirm or cancel is collected here.
+        services.AddHostedService<StagingSweepWorker>();
+
+        return services;
     }
 }

@@ -7,182 +7,181 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NuGet.Versioning;
 
-namespace BaGet.Web
-{
-    public class PackagePublishController : Controller
-    {
-        private readonly IAuthenticationService _authentication;
-        private readonly IPackageAuthorizationService _authorization;
-        private readonly IPackageSubmissionService _submissions;
-        private readonly IPackageDatabase _packages;
-        private readonly IPackageDeletionService _deleteService;
-        private readonly IOptionsSnapshot<BaGetOptions> _options;
-        private readonly ILogger<PackagePublishController> _logger;
-        private readonly PackageChangeNotifier _notifier;
+namespace BaGet.Web;
 
-        public PackagePublishController(
-            IAuthenticationService authentication,
-            IPackageSubmissionService submissions,
-            IPackageDatabase packages,
-            IPackageDeletionService deletionService,
-            IOptionsSnapshot<BaGetOptions> options,
-            ILogger<PackagePublishController> logger,
-            PackageChangeNotifier notifier,
-            IPackageAuthorizationService authorization)
+public class PackagePublishController : Controller
+{
+    private readonly IAuthenticationService _authentication;
+    private readonly IPackageAuthorizationService _authorization;
+    private readonly IPackageSubmissionService _submissions;
+    private readonly IPackageDatabase _packages;
+    private readonly IPackageDeletionService _deleteService;
+    private readonly IOptionsSnapshot<BaGetOptions> _options;
+    private readonly ILogger<PackagePublishController> _logger;
+    private readonly PackageChangeNotifier _notifier;
+
+    public PackagePublishController(
+        IAuthenticationService authentication,
+        IPackageSubmissionService submissions,
+        IPackageDatabase packages,
+        IPackageDeletionService deletionService,
+        IOptionsSnapshot<BaGetOptions> options,
+        ILogger<PackagePublishController> logger,
+        PackageChangeNotifier notifier,
+        IPackageAuthorizationService authorization)
+    {
+        _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
+        _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
+        _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
+        _submissions = submissions ?? throw new ArgumentNullException(nameof(submissions));
+        _packages = packages ?? throw new ArgumentNullException(nameof(packages));
+        _deleteService = deletionService ?? throw new ArgumentNullException(nameof(deletionService));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    // See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#push-a-package
+    public async Task Upload(CancellationToken cancellationToken)
+    {
+        var principal = _options.Value.IsReadOnlyMode
+            ? null
+            : await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
+        if (principal == null)
         {
-            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
-            _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
-            _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
-            _submissions = submissions ?? throw new ArgumentNullException(nameof(submissions));
-            _packages = packages ?? throw new ArgumentNullException(nameof(packages));
-            _deleteService = deletionService ?? throw new ArgumentNullException(nameof(deletionService));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            HttpContext.Response.StatusCode = 401;
+            return;
         }
 
-        // See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#push-a-package
-        public async Task Upload(CancellationToken cancellationToken)
+        try
         {
-            var principal = _options.Value.IsReadOnlyMode
-                ? null
-                : await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
-            if (principal == null)
+            using (var uploadStream = await Request.GetUploadStreamOrNullAsync(cancellationToken))
             {
-                HttpContext.Response.StatusCode = 401;
-                return;
-            }
-
-            try
-            {
-                using (var uploadStream = await Request.GetUploadStreamOrNullAsync(cancellationToken))
+                if (uploadStream == null)
                 {
-                    if (uploadStream == null)
-                    {
+                    HttpContext.Response.StatusCode = 400;
+                    return;
+                }
+
+                // Whether the caller may push depends on the package ID, which is inside the
+                // package. An unreadable package is left for the indexer to reject.
+                var packageId = uploadStream.ReadPackageIdOrNull();
+                if (packageId != null &&
+                    !await _authorization.AuthorizeAsync(principal, PackageAction.Push, packageId, cancellationToken))
+                {
+                    HttpContext.Response.StatusCode = 403;
+                    return;
+                }
+
+                var result = await _submissions.SubmitAsync(uploadStream, cancellationToken);
+
+                // An accepted package claims its ID now, as it would on nuget.org: it is
+                // the pusher's even while it is validated.
+                if (result == PackageIndexingResult.Success || result == PackageIndexingResult.Accepted)
+                {
+                    await _authorization.OnPushedAsync(principal, packageId, cancellationToken);
+                }
+
+                switch (result)
+                {
+                    case PackageIndexingResult.InvalidPackage:
                         HttpContext.Response.StatusCode = 400;
-                        return;
-                    }
+                        break;
 
-                    // Whether the caller may push depends on the package ID, which is inside the
-                    // package. An unreadable package is left for the indexer to reject.
-                    var packageId = uploadStream.ReadPackageIdOrNull();
-                    if (packageId != null &&
-                        !await _authorization.AuthorizeAsync(principal, PackageAction.Push, packageId, cancellationToken))
-                    {
-                        HttpContext.Response.StatusCode = 403;
-                        return;
-                    }
+                    case PackageIndexingResult.PackageAlreadyExists:
+                        HttpContext.Response.StatusCode = 409;
+                        break;
 
-                    var result = await _submissions.SubmitAsync(uploadStream, cancellationToken);
+                    case PackageIndexingResult.Success:
+                        HttpContext.Response.StatusCode = 201;
+                        break;
 
-                    // An accepted package claims its ID now, as it would on nuget.org: it is
-                    // the pusher's even while it is validated.
-                    if (result == PackageIndexingResult.Success || result == PackageIndexingResult.Accepted)
-                    {
-                        await _authorization.OnPushedAsync(principal, packageId, cancellationToken);
-                    }
-
-                    switch (result)
-                    {
-                        case PackageIndexingResult.InvalidPackage:
-                            HttpContext.Response.StatusCode = 400;
-                            break;
-
-                        case PackageIndexingResult.PackageAlreadyExists:
-                            HttpContext.Response.StatusCode = 409;
-                            break;
-
-                        case PackageIndexingResult.Success:
-                            HttpContext.Response.StatusCode = 201;
-                            break;
-
-                        case PackageIndexingResult.Accepted:
-                            HttpContext.Response.StatusCode = 202;
-                            break;
-                    }
+                    case PackageIndexingResult.Accepted:
+                        HttpContext.Response.StatusCode = 202;
+                        break;
                 }
             }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Exception thrown during package upload");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Exception thrown during package upload");
 
-                HttpContext.Response.StatusCode = 500;
-            }
+            HttpContext.Response.StatusCode = 500;
+        }
+    }
+
+    private async Task<IActionResult> AuthorizeManageAsync(string id, CancellationToken cancellationToken)
+    {
+        var principal = await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
+        if (principal == null)
+        {
+            return Unauthorized();
         }
 
-        private async Task<IActionResult> AuthorizeManageAsync(string id, CancellationToken cancellationToken)
+        if (!await _authorization.AuthorizeAsync(principal, PackageAction.Manage, id, cancellationToken))
         {
-            var principal = await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
-            if (principal == null)
-            {
-                return Unauthorized();
-            }
-
-            if (!await _authorization.AuthorizeAsync(principal, PackageAction.Manage, id, cancellationToken))
-            {
-                return StatusCode(403);
-            }
-
-            return null;
+            return StatusCode(403);
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> Delete(string id, string version, CancellationToken cancellationToken)
+        return null;
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> Delete(string id, string version, CancellationToken cancellationToken)
+    {
+        if (_options.Value.IsReadOnlyMode)
         {
-            if (_options.Value.IsReadOnlyMode)
-            {
-                return Unauthorized();
-            }
-
-            if (!NuGetVersion.TryParse(version, out var nugetVersion))
-            {
-                return NotFound();
-            }
-
-            var denied = await AuthorizeManageAsync(id, cancellationToken);
-            if (denied != null)
-            {
-                return denied;
-            }
-
-            if (await _deleteService.TryDeletePackageAsync(id, nugetVersion, cancellationToken))
-            {
-                return NoContent();
-            }
-            else
-            {
-                return NotFound();
-            }
+            return Unauthorized();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Relist(string id, string version, CancellationToken cancellationToken)
+        if (!NuGetVersion.TryParse(version, out var nugetVersion))
         {
-            if (_options.Value.IsReadOnlyMode)
-            {
-                return Unauthorized();
-            }
+            return NotFound();
+        }
 
-            if (!NuGetVersion.TryParse(version, out var nugetVersion))
-            {
-                return NotFound();
-            }
+        var denied = await AuthorizeManageAsync(id, cancellationToken);
+        if (denied != null)
+        {
+            return denied;
+        }
 
-            var denied = await AuthorizeManageAsync(id, cancellationToken);
-            if (denied != null)
-            {
-                return denied;
-            }
+        if (await _deleteService.TryDeletePackageAsync(id, nugetVersion, cancellationToken))
+        {
+            return NoContent();
+        }
+        else
+        {
+            return NotFound();
+        }
+    }
 
-            if (await _packages.RelistPackageAsync(id, nugetVersion, cancellationToken))
-            {
-                await _notifier.PackageChangedAsync(id, nugetVersion, cancellationToken);
+    [HttpPost]
+    public async Task<IActionResult> Relist(string id, string version, CancellationToken cancellationToken)
+    {
+        if (_options.Value.IsReadOnlyMode)
+        {
+            return Unauthorized();
+        }
 
-                return Ok();
-            }
-            else
-            {
-                return NotFound();
-            }
+        if (!NuGetVersion.TryParse(version, out var nugetVersion))
+        {
+            return NotFound();
+        }
+
+        var denied = await AuthorizeManageAsync(id, cancellationToken);
+        if (denied != null)
+        {
+            return denied;
+        }
+
+        if (await _packages.RelistPackageAsync(id, nugetVersion, cancellationToken))
+        {
+            await _notifier.PackageChangedAsync(id, nugetVersion, cancellationToken);
+
+            return Ok();
+        }
+        else
+        {
+            return NotFound();
         }
     }
 }

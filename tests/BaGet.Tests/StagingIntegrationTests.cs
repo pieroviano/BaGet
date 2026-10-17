@@ -10,68 +10,67 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BaGet.Tests
+namespace BaGet.Tests;
+
+/// <summary>
+/// Staging on the real host, with accounts off: the mode that authenticates with a
+/// pasted API key stages files too, so the service must resolve there as well.
+/// </summary>
+public class StagingIntegrationTests : IDisposable
 {
-    /// <summary>
-    /// Staging on the real host, with accounts off: the mode that authenticates with a
-    /// pasted API key stages files too, so the service must resolve there as well.
-    /// </summary>
-    public class StagingIntegrationTests : IDisposable
+    private readonly BaGetApplication _app;
+    private readonly HttpClient _client;
+
+    public StagingIntegrationTests(ITestOutputHelper output)
     {
-        private readonly BaGetApplication _app;
-        private readonly HttpClient _client;
+        _app = new BaGetApplication(output);
+        _client = _app.CreateClient();
+    }
 
-        public StagingIntegrationTests(ITestOutputHelper output)
+    [Fact]
+    public async Task StagesAndForgetsAPackageWithoutAccounts()
+    {
+        var staging = Staging();
+
+        var token = await staging.StageAsync(Package(), ownerId: null, CancellationToken.None);
+
+        using (var staged = await staging.OpenAsync(token, ownerId: null, CancellationToken.None))
         {
-            _app = new BaGetApplication(output);
-            _client = _app.CreateClient();
+            Assert.NotNull(staged);
         }
 
-        [Fact]
-        public async Task StagesAndForgetsAPackageWithoutAccounts()
+        Assert.True(await staging.RemoveAsync(token, ownerId: null, CancellationToken.None));
+
+        Assert.Null(await staging.OpenAsync(token, ownerId: null, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task AStagedFileIsNotServedOverHttp()
+    {
+        var token = await Staging().StageAsync(Package(), ownerId: null, CancellationToken.None);
+
+        // No route accepts a storage path: every storage read is composed from a
+        // database-resolved ID and version, or from a validated symbol key.
+        foreach (var url in new[]
+                 {
+                     $"staging/{token}.nupkg",
+                     $"v3/package/staging/{token}/{token}.nupkg",
+                 })
         {
-            var staging = Staging();
+            using var response = await _client.GetAsync(url);
 
-            var token = await staging.StageAsync(Package(), ownerId: null, CancellationToken.None);
-
-            using (var staged = await staging.OpenAsync(token, ownerId: null, CancellationToken.None))
-            {
-                Assert.NotNull(staged);
-            }
-
-            Assert.True(await staging.RemoveAsync(token, ownerId: null, CancellationToken.None));
-
-            Assert.Null(await staging.OpenAsync(token, ownerId: null, CancellationToken.None));
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
+    }
 
-        [Fact]
-        public async Task AStagedFileIsNotServedOverHttp()
-        {
-            var token = await Staging().StageAsync(Package(), ownerId: null, CancellationToken.None);
+    private IPackageStagingService Staging()
+        => _app.Services.GetRequiredService<IPackageStagingService>();
 
-            // No route accepts a storage path: every storage read is composed from a
-            // database-resolved ID and version, or from a validated symbol key.
-            foreach (var url in new[]
-            {
-                $"staging/{token}.nupkg",
-                $"v3/package/staging/{token}/{token}.nupkg",
-            })
-            {
-                using var response = await _client.GetAsync(url);
+    private static Stream Package() => new MemoryStream(Encoding.UTF8.GetBytes("a package"));
 
-                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            }
-        }
-
-        private IPackageStagingService Staging()
-            => _app.Services.GetRequiredService<IPackageStagingService>();
-
-        private static Stream Package() => new MemoryStream(Encoding.UTF8.GetBytes("a package"));
-
-        public void Dispose()
-        {
-            _app.Dispose();
-            _client.Dispose();
-        }
+    public void Dispose()
+    {
+        _app.Dispose();
+        _client.Dispose();
     }
 }

@@ -6,124 +6,123 @@ using BaGet.Protocol.Internal;
 using NuGet.Versioning;
 using Xunit;
 
-namespace BaGet.Protocol.Tests
+namespace BaGet.Protocol.Tests;
+
+public class RawPackageContentTests : IClassFixture<ProtocolFixture>
 {
-    public class RawPackageContentTests : IClassFixture<ProtocolFixture>
+    private readonly RawPackageContentClient _target;
+
+    public RawPackageContentTests(ProtocolFixture fixture)
     {
-        private readonly RawPackageContentClient _target;
+        _target = fixture.ContentClient;
+    }
 
-        public RawPackageContentTests(ProtocolFixture fixture)
+    [Fact]
+    public async Task GetsPackageVersions()
+    {
+        var result = await _target.GetPackageVersionsOrNullAsync("Test.Package");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Versions.Count);
+        Assert.Equal("1.0.0", result.Versions[0]);
+        Assert.Equal("2.0.0", result.Versions[1]);
+    }
+
+    [Fact]
+    public async Task ReturnsNullIfPackageDoesNotExist()
+    {
+        var result = await _target.GetPackageVersionsOrNullAsync(Guid.NewGuid().ToString());
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DownloadsPackage()
+    {
+        using (var stream = await _target.DownloadPackageOrNullAsync(
+                   "Test.Package",
+                   NuGetVersion.Parse("1.0.0")))
         {
-            _target = fixture.ContentClient;
-        }
+            Assert.NotNull(stream);
 
-        [Fact]
-        public async Task GetsPackageVersions()
-        {
-            var result = await _target.GetPackageVersionsOrNullAsync("Test.Package");
-
-            Assert.NotNull(result);
-            Assert.Equal(2, result.Versions.Count);
-            Assert.Equal("1.0.0", result.Versions[0]);
-            Assert.Equal("2.0.0", result.Versions[1]);
-        }
-
-        [Fact]
-        public async Task ReturnsNullIfPackageDoesNotExist()
-        {
-            var result = await _target.GetPackageVersionsOrNullAsync(Guid.NewGuid().ToString());
-
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task DownloadsPackage()
-        {
-            using (var stream = await _target.DownloadPackageOrNullAsync(
-                "Test.Package",
-                NuGetVersion.Parse("1.0.0")))
+            using (var reader = new StreamReader(stream))
             {
-                Assert.NotNull(stream);
-
-                using (var reader = new StreamReader(stream))
-                {
-                    Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
-                }
+                Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
             }
         }
+    }
 
-        [Fact]
-        public async Task DownloadsPackageUsingNormalizedLowercasedUrl()
+    [Fact]
+    public async Task DownloadsPackageUsingNormalizedLowercasedUrl()
+    {
+        var handler = new RecordingHttpMessageHandler();
+        var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
+
+        using (await target.DownloadPackageOrNullAsync(
+                   "Test.Package",
+                   NuGetVersion.Parse("1.0.0.0+Build")))
         {
-            var handler = new RecordingHttpMessageHandler();
-            var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
+        }
 
-            using (await target.DownloadPackageOrNullAsync(
-                "Test.Package",
-                NuGetVersion.Parse("1.0.0.0+Build")))
+        var url = Assert.Single(handler.Requests);
+
+        Assert.Equal(
+            "/v3/content/test.package/1.0.0/test.package.1.0.0.nupkg",
+            url.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task ReturnsNullIfPackageToDownloadDoesNotExist()
+    {
+        var stream = await _target.DownloadPackageOrNullAsync(
+            Guid.NewGuid().ToString(),
+            NuGetVersion.Parse("1.0.0"));
+
+        Assert.Null(stream);
+    }
+
+    [Fact]
+    public async Task DownloadsPackageManifest()
+    {
+        using (var stream = await _target.DownloadPackageManifestOrNullAsync(
+                   "Test.Package",
+                   NuGetVersion.Parse("1.0.0")))
+        {
+            Assert.NotNull(stream);
+
+            using (var reader = new StreamReader(stream))
             {
-            }
-
-            var url = Assert.Single(handler.Requests);
-
-            Assert.Equal(
-                "/v3/content/test.package/1.0.0/test.package.1.0.0.nupkg",
-                url.AbsolutePath);
-        }
-
-        [Fact]
-        public async Task ReturnsNullIfPackageToDownloadDoesNotExist()
-        {
-            var stream = await _target.DownloadPackageOrNullAsync(
-                Guid.NewGuid().ToString(),
-                NuGetVersion.Parse("1.0.0"));
-
-            Assert.Null(stream);
-        }
-
-        [Fact]
-        public async Task DownloadsPackageManifest()
-        {
-            using (var stream = await _target.DownloadPackageManifestOrNullAsync(
-                "Test.Package",
-                NuGetVersion.Parse("1.0.0")))
-            {
-                Assert.NotNull(stream);
-
-                using (var reader = new StreamReader(stream))
-                {
-                    Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
-                }
+                Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
             }
         }
+    }
 
-        [Fact]
-        public async Task DownloadsPackageManifestUsingNormalizedLowercasedUrl()
+    [Fact]
+    public async Task DownloadsPackageManifestUsingNormalizedLowercasedUrl()
+    {
+        var handler = new RecordingHttpMessageHandler();
+        var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
+
+        using (await target.DownloadPackageManifestOrNullAsync(
+                   "Test.Package",
+                   NuGetVersion.Parse("1.0.0.0+Build")))
         {
-            var handler = new RecordingHttpMessageHandler();
-            var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
-
-            using (await target.DownloadPackageManifestOrNullAsync(
-                "Test.Package",
-                NuGetVersion.Parse("1.0.0.0+Build")))
-            {
-            }
-
-            var url = Assert.Single(handler.Requests);
-
-            Assert.Equal(
-                "/v3/content/test.package/1.0.0/test.package.nuspec",
-                url.AbsolutePath);
         }
 
-        [Fact]
-        public async Task ReturnsNullIfPackageManifestDoesNotExist()
-        {
-            var stream = await _target.DownloadPackageManifestOrNullAsync(
-                Guid.NewGuid().ToString(),
-                NuGetVersion.Parse("1.0.0"));
+        var url = Assert.Single(handler.Requests);
 
-            Assert.Null(stream);
-        }
+        Assert.Equal(
+            "/v3/content/test.package/1.0.0/test.package.nuspec",
+            url.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task ReturnsNullIfPackageManifestDoesNotExist()
+    {
+        var stream = await _target.DownloadPackageManifestOrNullAsync(
+            Guid.NewGuid().ToString(),
+            NuGetVersion.Parse("1.0.0"));
+
+        Assert.Null(stream);
     }
 }

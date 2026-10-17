@@ -5,52 +5,51 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BaGet.Protocol.Tests
+namespace BaGet.Protocol.Tests;
+
+/// <summary>
+/// A handler that records the requests it receives and always replies with
+/// the same payload. Use this to assert the URL a client asked for, instead
+/// of the response it got back.
+/// </summary>
+public class RecordingHttpMessageHandler : HttpMessageHandler
 {
-    /// <summary>
-    /// A handler that records the requests it receives and always replies with
-    /// the same payload. Use this to assert the URL a client asked for, instead
-    /// of the response it got back.
-    /// </summary>
-    public class RecordingHttpMessageHandler : HttpMessageHandler
+    private readonly string _content;
+    private readonly List<Uri> _requests = new List<Uri>();
+
+    public RecordingHttpMessageHandler(string content = "{}")
     {
-        private readonly string _content;
-        private readonly List<Uri> _requests = new List<Uri>();
+        _content = content ?? throw new ArgumentNullException(nameof(content));
+    }
 
-        public RecordingHttpMessageHandler(string content = "{}")
-        {
-            _content = content ?? throw new ArgumentNullException(nameof(content));
-        }
-
-        /// <summary>
-        /// The URLs that were requested, in order.
-        /// </summary>
-        public IReadOnlyList<Uri> Requests
-        {
-            get
-            {
-                lock (_requests)
-                {
-                    return _requests.ToArray();
-                }
-            }
-        }
-
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
+    /// <summary>
+    /// The URLs that were requested, in order.
+    /// </summary>
+    public IReadOnlyList<Uri> Requests
+    {
+        get
         {
             lock (_requests)
             {
-                _requests.Add(request.RequestUri);
+                return _requests.ToArray();
             }
-
-            return Task.FromResult(new HttpResponseMessage
-            {
-                RequestMessage = request,
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(_content, encoding: null, mediaType: "application/json"),
-            });
         }
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        lock (_requests)
+        {
+            _requests.Add(request.RequestUri);
+        }
+
+        return Task.FromResult(new HttpResponseMessage
+        {
+            RequestMessage = request,
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(_content, encoding: null, mediaType: "application/json"),
+        });
     }
 }

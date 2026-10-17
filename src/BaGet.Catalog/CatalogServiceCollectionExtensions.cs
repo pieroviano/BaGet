@@ -2,27 +2,26 @@ using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace BaGet.Catalog
+namespace BaGet.Catalog;
+
+public static class CatalogServiceCollectionExtensions
 {
-    public static class CatalogServiceCollectionExtensions
+    public static IServiceCollection AddBaGetCatalog(this IServiceCollection services)
     {
-        public static IServiceCollection AddBaGetCatalog(this IServiceCollection services)
-        {
-            // A database without the catalog table, such as Azure Table storage, is
-            // registered as the null context; the catalog is then switched off.
-            services.TryAddScoped<ICatalogDatabase>(provider =>
-                provider.GetRequiredService<IContext>() is NullContext
-                    ? (ICatalogDatabase)new NullCatalogDatabase()
-                    : new CatalogDatabase(provider.GetRequiredService<IContext>()));
+        // A database without the catalog table, such as Azure Table storage, is
+        // registered as the null context; the catalog is then switched off.
+        services.TryAddScoped<ICatalogDatabase>(provider =>
+            provider.GetRequiredService<IContext>() is NullContext
+                ? (ICatalogDatabase)new NullCatalogDatabase()
+                : new CatalogDatabase(provider.GetRequiredService<IContext>()));
 
-            services.TryAddTransient<CatalogWriter>();
-            services.TryAddTransient<CatalogReader>();
-            services.TryAddTransient<CatalogRebuilder>();
+        services.TryAddTransient<CatalogWriter>();
+        services.TryAddTransient<CatalogReader>();
+        services.TryAddTransient<CatalogRebuilder>();
 
-            services.TryAddEnumerable(ServiceDescriptor.Transient<IPackageChangeHandler, CatalogWriter>());
-            services.TryAddEnumerable(ServiceDescriptor.Transient<IServiceIndexResourceProvider, CatalogServiceIndexProvider>());
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IPackageChangeHandler, CatalogWriter>());
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IServiceIndexResourceProvider, CatalogServiceIndexProvider>());
 
-            return services;
-        }
+        return services;
     }
 }

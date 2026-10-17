@@ -13,258 +13,257 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NuGet.Versioning;
 
-namespace BaGet.Identity.Pages.Packages
+namespace BaGet.Identity.Pages.Packages;
+
+/// <summary>
+/// The owners' page for a package ID: its owners, its versions' listing and
+/// deprecation, and the abuse reports against it.
+/// </summary>
+public class ManageModel : AccountPageModel
 {
     /// <summary>
-    /// The owners' page for a package ID: its owners, its versions' listing and
-    /// deprecation, and the abuse reports against it.
+    /// What every write handler here answers on a read-only server. The API refuses each
+    /// of these operations with a 401, so the page must refuse all of them too rather
+    /// than only the one it was last asked about.
     /// </summary>
-    public class ManageModel : AccountPageModel
+    internal const string ReadOnlyMessage =
+        "This server is in read-only mode, so nothing can be changed.";
+
+    protected override bool RequiresSignIn => true;
+
+    [BindProperty(SupportsGet = true)]
+    public string Id { get; set; }
+
+    public IReadOnlyList<PackageOwner> Owners { get; private set; } = Array.Empty<PackageOwner>();
+
+    public IReadOnlyList<Package> Versions { get; private set; } = Array.Empty<Package>();
+
+    public IReadOnlyList<AbuseReport> Reports { get; private set; } = Array.Empty<AbuseReport>();
+
+    public string Message { get; private set; }
+
+    private IPackageDatabase Packages => HttpContext.RequestServices.GetRequiredService<IPackageDatabase>();
+
+    private PackageChangeNotifier Notifier => HttpContext.RequestServices.GetRequiredService<PackageChangeNotifier>();
+
+    private IContext Context => HttpContext.RequestServices.GetRequiredService<IContext>();
+
+    private IPackageDeletionService Deletions => HttpContext.RequestServices.GetRequiredService<IPackageDeletionService>();
+
+    private BaGetOptions Options => HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<BaGetOptions>>().Value;
+
+    /// <summary>
+    /// What a deletion does on this server. The two behaviours are different operations,
+    /// so the page says which one the button performs rather than calling both "delete".
+    /// </summary>
+    public PackageDeletionBehavior DeletionBehavior => Options.PackageDeletionBehavior;
+
+    public bool IsReadOnlyMode => Options.IsReadOnlyMode;
+
+    public bool DeletionIsPermanent => DeletionBehavior == PackageDeletionBehavior.HardDelete;
+
+    public string DeleteLabel => DeletionIsPermanent
+        ? "Delete this version permanently"
+        : "Unlist this version";
+
+    public string DeleteCaption => DeletionIsPermanent
+        ? "Removes the database rows and the .nupkg, .nuspec, readme and icon from storage. "
+          + "Consumers can no longer restore it. Indexed PDBs keep being served, and an "
+          + "external search index keeps the version until it is reindexed."
+        : "Hidden from search and from the version list; anyone who knows the exact version "
+          + "can still restore it.";
+
+    public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
     {
-        /// <summary>
-        /// What every write handler here answers on a read-only server. The API refuses each
-        /// of these operations with a 401, so the page must refuse all of them too rather
-        /// than only the one it was last asked about.
-        /// </summary>
-        internal const string ReadOnlyMessage =
-            "This server is in read-only mode, so nothing can be changed.";
+        OnPageHandlerExecuting(context);
+        if (context.Result != null) return;
 
-        protected override bool RequiresSignIn => true;
-
-        [BindProperty(SupportsGet = true)]
-        public string Id { get; set; }
-
-        public IReadOnlyList<PackageOwner> Owners { get; private set; } = Array.Empty<PackageOwner>();
-
-        public IReadOnlyList<Package> Versions { get; private set; } = Array.Empty<Package>();
-
-        public IReadOnlyList<AbuseReport> Reports { get; private set; } = Array.Empty<AbuseReport>();
-
-        public string Message { get; private set; }
-
-        private IPackageDatabase Packages => HttpContext.RequestServices.GetRequiredService<IPackageDatabase>();
-
-        private PackageChangeNotifier Notifier => HttpContext.RequestServices.GetRequiredService<PackageChangeNotifier>();
-
-        private IContext Context => HttpContext.RequestServices.GetRequiredService<IContext>();
-
-        private IPackageDeletionService Deletions => HttpContext.RequestServices.GetRequiredService<IPackageDeletionService>();
-
-        private BaGetOptions Options => HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<BaGetOptions>>().Value;
-
-        /// <summary>
-        /// What a deletion does on this server. The two behaviours are different operations,
-        /// so the page says which one the button performs rather than calling both "delete".
-        /// </summary>
-        public PackageDeletionBehavior DeletionBehavior => Options.PackageDeletionBehavior;
-
-        public bool IsReadOnlyMode => Options.IsReadOnlyMode;
-
-        public bool DeletionIsPermanent => DeletionBehavior == PackageDeletionBehavior.HardDelete;
-
-        public string DeleteLabel => DeletionIsPermanent
-            ? "Delete this version permanently"
-            : "Unlist this version";
-
-        public string DeleteCaption => DeletionIsPermanent
-            ? "Removes the database rows and the .nupkg, .nuspec, readme and icon from storage. "
-                + "Consumers can no longer restore it. Indexed PDBs keep being served, and an "
-                + "external search index keeps the version until it is reindexed."
-            : "Hidden from search and from the version list; anyone who knows the exact version "
-                + "can still restore it.";
-
-        public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+        // Only an owner, directly or through an organization, may manage the package.
+        if (!await Ownership.IsOwnerAsync(UserManager.GetUserId(User), User.Identity.Name, Id, HttpContext.RequestAborted))
         {
-            OnPageHandlerExecuting(context);
-            if (context.Result != null) return;
-
-            // Only an owner, directly or through an organization, may manage the package.
-            if (!await Ownership.IsOwnerAsync(UserManager.GetUserId(User), User.Identity.Name, Id, HttpContext.RequestAborted))
-            {
-                context.Result = StatusCode(403);
-                return;
-            }
-
-            // Every handler on this page but the GET writes to the database, and most of
-            // them notify the catalog as well. Refused here, once, rather than in each
-            // handler: unlisting, relisting, deprecating and changing owners are the same
-            // operations the push and metadata endpoints short-circuit in read-only mode,
-            // and a page that refused only one of them would contradict itself.
-            if (IsReadOnlyMode && HttpMethods.IsPost(HttpContext.Request.Method))
-            {
-                Message = ReadOnlyMessage;
-                await LoadAsync(HttpContext.RequestAborted);
-
-                context.Result = Page();
-                return;
-            }
-
-            await next();
+            context.Result = StatusCode(403);
+            return;
         }
 
-        public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
+        // Every handler on this page but the GET writes to the database, and most of
+        // them notify the catalog as well. Refused here, once, rather than in each
+        // handler: unlisting, relisting, deprecating and changing owners are the same
+        // operations the push and metadata endpoints short-circuit in read-only mode,
+        // and a page that refused only one of them would contradict itself.
+        if (IsReadOnlyMode && HttpMethods.IsPost(HttpContext.Request.Method))
         {
-            await LoadAsync(cancellationToken);
-            return Versions.Count == 0 && Owners.Count == 0 ? NotFound() : Page();
+            Message = ReadOnlyMessage;
+            await LoadAsync(HttpContext.RequestAborted);
+
+            context.Result = Page();
+            return;
         }
 
-        public async Task<IActionResult> OnPostAddOwnerAsync(string ownerName, CancellationToken cancellationToken)
+        await next();
+    }
+
+    public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
+    {
+        await LoadAsync(cancellationToken);
+        return Versions.Count == 0 && Owners.Count == 0 ? NotFound() : Page();
+    }
+
+    public async Task<IActionResult> OnPostAddOwnerAsync(string ownerName, CancellationToken cancellationToken)
+    {
+        var result = string.IsNullOrWhiteSpace(ownerName)
+            ? OwnerChangeResult.UnknownAccount
+            : await Ownership.AddOwnerAsync(Id, ownerName.Trim(), cancellationToken);
+
+        return await DoneAsync(result == OwnerChangeResult.Success ? $"{ownerName} is now an owner." : Describe(result), cancellationToken);
+    }
+
+    public async Task<IActionResult> OnPostRemoveOwnerAsync(string ownerName, CancellationToken cancellationToken)
+    {
+        var result = await Ownership.RemoveOwnerAsync(Id, ownerName, cancellationToken);
+
+        return await DoneAsync(result == OwnerChangeResult.Success ? $"{ownerName} is no longer an owner." : Describe(result), cancellationToken);
+    }
+
+    public async Task<IActionResult> OnPostUnlistAsync(string version, CancellationToken cancellationToken)
+        => await ChangeVersionAsync(version, v => Packages.UnlistPackageAsync(Id, v, cancellationToken), "unlisted", cancellationToken);
+
+    public async Task<IActionResult> OnPostRelistAsync(string version, CancellationToken cancellationToken)
+        => await ChangeVersionAsync(version, v => Packages.RelistPackageAsync(Id, v, cancellationToken), "relisted", cancellationToken);
+
+    /// <summary>
+    /// Deletion as the server is configured to perform it: <see cref="PackageDeletionBehavior.Unlist"/>
+    /// hides the version, <see cref="PackageDeletionBehavior.HardDelete"/> removes its rows
+    /// and its files. The page labels the button from the behaviour, so it never promises a
+    /// deletion that only unlists.
+    /// </summary>
+    public async Task<IActionResult> OnPostDeleteAsync(string version, CancellationToken cancellationToken)
+    {
+        // Read-only mode is refused for every handler at once, in
+        // OnPageHandlerExecutionAsync, as the push endpoint's DELETE refuses before
+        // anything is touched.
+        if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
+
+        // False means the database held no such version - not that nothing happened:
+        // a hard delete removes the files either way.
+        var found = await Deletions.TryDeletePackageAsync(Id, parsed, cancellationToken);
+        var normalized = parsed.ToNormalizedString();
+
+        // PackageDeletionService notifies the catalog itself, so nothing is notified here.
+        if (DeletionIsPermanent)
         {
-            var result = string.IsNullOrWhiteSpace(ownerName)
-                ? OwnerChangeResult.UnknownAccount
-                : await Ownership.AddOwnerAsync(Id, ownerName.Trim(), cancellationToken);
-
-            return await DoneAsync(result == OwnerChangeResult.Success ? $"{ownerName} is now an owner." : Describe(result), cancellationToken);
-        }
-
-        public async Task<IActionResult> OnPostRemoveOwnerAsync(string ownerName, CancellationToken cancellationToken)
-        {
-            var result = await Ownership.RemoveOwnerAsync(Id, ownerName, cancellationToken);
-
-            return await DoneAsync(result == OwnerChangeResult.Success ? $"{ownerName} is no longer an owner." : Describe(result), cancellationToken);
-        }
-
-        public async Task<IActionResult> OnPostUnlistAsync(string version, CancellationToken cancellationToken)
-            => await ChangeVersionAsync(version, v => Packages.UnlistPackageAsync(Id, v, cancellationToken), "unlisted", cancellationToken);
-
-        public async Task<IActionResult> OnPostRelistAsync(string version, CancellationToken cancellationToken)
-            => await ChangeVersionAsync(version, v => Packages.RelistPackageAsync(Id, v, cancellationToken), "relisted", cancellationToken);
-
-        /// <summary>
-        /// Deletion as the server is configured to perform it: <see cref="PackageDeletionBehavior.Unlist"/>
-        /// hides the version, <see cref="PackageDeletionBehavior.HardDelete"/> removes its rows
-        /// and its files. The page labels the button from the behaviour, so it never promises a
-        /// deletion that only unlists.
-        /// </summary>
-        public async Task<IActionResult> OnPostDeleteAsync(string version, CancellationToken cancellationToken)
-        {
-            // Read-only mode is refused for every handler at once, in
-            // OnPageHandlerExecutionAsync, as the push endpoint's DELETE refuses before
-            // anything is touched.
-            if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
-
-            // False means the database held no such version - not that nothing happened:
-            // a hard delete removes the files either way.
-            var found = await Deletions.TryDeletePackageAsync(Id, parsed, cancellationToken);
-            var normalized = parsed.ToNormalizedString();
-
-            // PackageDeletionService notifies the catalog itself, so nothing is notified here.
-            if (DeletionIsPermanent)
-            {
-                return await DoneAsync(
-                    found
-                        ? $"{Id} {normalized} is deleted. Its rows and its files are gone, and consumers "
-                            + "can no longer restore it. Any indexed PDBs are still served, and an external "
-                            + "search index keeps the version until it is reindexed."
-                        : $"{Id} {normalized} was not in the database. Any files left in storage for it were removed.",
-                    cancellationToken);
-            }
-
             return await DoneAsync(
                 found
-                    ? $"{Id} {normalized} is unlisted. Deleting is configured to unlist on this server, so "
-                        + "anyone who knows the exact version can still restore it."
-                    : $"There is no {Id} {normalized} to unlist.",
+                    ? $"{Id} {normalized} is deleted. Its rows and its files are gone, and consumers "
+                      + "can no longer restore it. Any indexed PDBs are still served, and an external "
+                      + "search index keeps the version until it is reindexed."
+                    : $"{Id} {normalized} was not in the database. Any files left in storage for it were removed.",
                 cancellationToken);
         }
 
-        public async Task<IActionResult> OnPostDeprecateAsync(
-            string version,
-            List<string> reasons,
-            string message,
-            string alternatePackageId,
-            CancellationToken cancellationToken)
+        return await DoneAsync(
+            found
+                ? $"{Id} {normalized} is unlisted. Deleting is configured to unlist on this server, so "
+                  + "anyone who knows the exact version can still restore it."
+                : $"There is no {Id} {normalized} to unlist.",
+            cancellationToken);
+    }
+
+    public async Task<IActionResult> OnPostDeprecateAsync(
+        string version,
+        List<string> reasons,
+        string message,
+        string alternatePackageId,
+        CancellationToken cancellationToken)
+    {
+        reasons = reasons?.Where(r => PackageDeprecation.KnownReasons.Contains(r, StringComparer.Ordinal)).Distinct().ToList();
+        if (reasons == null || reasons.Count == 0)
         {
-            reasons = reasons?.Where(r => PackageDeprecation.KnownReasons.Contains(r, StringComparer.Ordinal)).Distinct().ToList();
-            if (reasons == null || reasons.Count == 0)
-            {
-                return await DoneAsync("Choose at least one deprecation reason.", cancellationToken);
-            }
-
-            var deprecation = new PackageDeprecation
-            {
-                Reasons = reasons.ToArray(),
-                Message = string.IsNullOrWhiteSpace(message) ? null : message.Trim(),
-                AlternatePackageId = string.IsNullOrWhiteSpace(alternatePackageId) ? null : alternatePackageId.Trim(),
-            };
-
-            return await ChangeVersionAsync(version, v => Packages.SetDeprecationAsync(Id, v, deprecation, cancellationToken), "deprecated", cancellationToken);
+            return await DoneAsync("Choose at least one deprecation reason.", cancellationToken);
         }
 
-        public async Task<IActionResult> OnPostUndeprecateAsync(string version, CancellationToken cancellationToken)
-            => await ChangeVersionAsync(version, v => Packages.RemoveDeprecationAsync(Id, v, cancellationToken), "no longer deprecated", cancellationToken);
+        var deprecation = new PackageDeprecation
+        {
+            Reasons = reasons.ToArray(),
+            Message = string.IsNullOrWhiteSpace(message) ? null : message.Trim(),
+            AlternatePackageId = string.IsNullOrWhiteSpace(alternatePackageId) ? null : alternatePackageId.Trim(),
+        };
 
-        public async Task<IActionResult> OnPostResolveReportAsync(int key, CancellationToken cancellationToken)
+        return await ChangeVersionAsync(version, v => Packages.SetDeprecationAsync(Id, v, deprecation, cancellationToken), "deprecated", cancellationToken);
+    }
+
+    public async Task<IActionResult> OnPostUndeprecateAsync(string version, CancellationToken cancellationToken)
+        => await ChangeVersionAsync(version, v => Packages.RemoveDeprecationAsync(Id, v, cancellationToken), "no longer deprecated", cancellationToken);
+
+    public async Task<IActionResult> OnPostResolveReportAsync(int key, CancellationToken cancellationToken)
+    {
+        var lowerId = Id.ToLowerInvariant();
+        var report = await Context.AbuseReports.FirstOrDefaultAsync(r => r.Key == key && r.PackageId.ToLower() == lowerId, cancellationToken);
+        if (report != null && report.Resolved == null)
+        {
+            report.Resolved = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow;
+            await Context.SaveChangesAsync(cancellationToken);
+        }
+
+        return await DoneAsync("The report is resolved.", cancellationToken);
+    }
+
+    private async Task<IActionResult> ChangeVersionAsync(
+        string version,
+        Func<NuGetVersion, Task<bool>> change,
+        string done,
+        CancellationToken cancellationToken)
+    {
+        if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
+
+        bool changed;
+        try
+        {
+            changed = await change(parsed);
+        }
+        catch (NotSupportedException e)
+        {
+            return await DoneAsync(e.Message, cancellationToken);
+        }
+
+        if (!changed) return NotFound();
+
+        await Notifier.PackageChangedAsync(Id, parsed, cancellationToken);
+
+        return await DoneAsync($"{Id} {parsed.ToNormalizedString()} is {done}.", cancellationToken);
+    }
+
+    private async Task<IActionResult> DoneAsync(string message, CancellationToken cancellationToken)
+    {
+        Message = message;
+        await LoadAsync(cancellationToken);
+
+        return Page();
+    }
+
+    private async Task LoadAsync(CancellationToken cancellationToken)
+    {
+        Owners = await Ownership.GetOwnersAsync(Id, cancellationToken);
+        Versions = (await Packages.FindAsync(Id, includeUnlisted: true, cancellationToken))
+            .OrderByDescending(p => p.Version)
+            .ToList();
+
+        if (!(Context is NullContext))
         {
             var lowerId = Id.ToLowerInvariant();
-            var report = await Context.AbuseReports.FirstOrDefaultAsync(r => r.Key == key && r.PackageId.ToLower() == lowerId, cancellationToken);
-            if (report != null && report.Resolved == null)
-            {
-                report.Resolved = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow;
-                await Context.SaveChangesAsync(cancellationToken);
-            }
-
-            return await DoneAsync("The report is resolved.", cancellationToken);
+            Reports = await Context.AbuseReports
+                .AsNoTracking()
+                .Where(r => r.PackageId.ToLower() == lowerId && r.Resolved == null)
+                .OrderByDescending(r => r.Key)
+                .ToListAsync(cancellationToken);
         }
-
-        private async Task<IActionResult> ChangeVersionAsync(
-            string version,
-            Func<NuGetVersion, Task<bool>> change,
-            string done,
-            CancellationToken cancellationToken)
-        {
-            if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
-
-            bool changed;
-            try
-            {
-                changed = await change(parsed);
-            }
-            catch (NotSupportedException e)
-            {
-                return await DoneAsync(e.Message, cancellationToken);
-            }
-
-            if (!changed) return NotFound();
-
-            await Notifier.PackageChangedAsync(Id, parsed, cancellationToken);
-
-            return await DoneAsync($"{Id} {parsed.ToNormalizedString()} is {done}.", cancellationToken);
-        }
-
-        private async Task<IActionResult> DoneAsync(string message, CancellationToken cancellationToken)
-        {
-            Message = message;
-            await LoadAsync(cancellationToken);
-
-            return Page();
-        }
-
-        private async Task LoadAsync(CancellationToken cancellationToken)
-        {
-            Owners = await Ownership.GetOwnersAsync(Id, cancellationToken);
-            Versions = (await Packages.FindAsync(Id, includeUnlisted: true, cancellationToken))
-                .OrderByDescending(p => p.Version)
-                .ToList();
-
-            if (!(Context is NullContext))
-            {
-                var lowerId = Id.ToLowerInvariant();
-                Reports = await Context.AbuseReports
-                    .AsNoTracking()
-                    .Where(r => r.PackageId.ToLower() == lowerId && r.Resolved == null)
-                    .OrderByDescending(r => r.Key)
-                    .ToListAsync(cancellationToken);
-            }
-        }
-
-        private static string Describe(OwnerChangeResult result) => result switch
-        {
-            OwnerChangeResult.UnknownAccount => "There is no user or organization with that name.",
-            OwnerChangeResult.AlreadyOwner => "That account is already an owner.",
-            OwnerChangeResult.NotOwner => "That account is not an owner.",
-            OwnerChangeResult.LastOwner => "A package must keep at least one owner.",
-            _ => result.ToString(),
-        };
     }
+
+    private static string Describe(OwnerChangeResult result) => result switch
+    {
+        OwnerChangeResult.UnknownAccount => "There is no user or organization with that name.",
+        OwnerChangeResult.AlreadyOwner => "That account is already an owner.",
+        OwnerChangeResult.NotOwner => "That account is not an owner.",
+        OwnerChangeResult.LastOwner => "A package must keep at least one owner.",
+        _ => result.ToString(),
+    };
 }

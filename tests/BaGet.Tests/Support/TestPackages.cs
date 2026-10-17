@@ -5,67 +5,66 @@ using System.Text;
 using NuGet.Packaging;
 using NuGet.Versioning;
 
-namespace BaGet.Tests
+namespace BaGet.Tests;
+
+/// <summary>
+/// Builds minimal packages in memory, for tests that need more than the one checked in.
+/// </summary>
+internal static class TestPackages
 {
-    /// <summary>
-    /// Builds minimal packages in memory, for tests that need more than the one checked in.
-    /// </summary>
-    internal static class TestPackages
+    public static MemoryStream Build(string id, string version)
     {
-        public static MemoryStream Build(string id, string version)
+        var builder = new PackageBuilder
         {
-            var builder = new PackageBuilder
-            {
-                Id = id,
-                Version = NuGetVersion.Parse(version),
-                Description = "Test package",
-            };
-            builder.Authors.Add("Test author");
-            builder.Files.Add(new InMemoryFile("content/readme.txt", "test"));
+            Id = id,
+            Version = NuGetVersion.Parse(version),
+            Description = "Test package",
+        };
+        builder.Authors.Add("Test author");
+        builder.Files.Add(new InMemoryFile("content/readme.txt", "test"));
 
-            var stream = new MemoryStream();
-            builder.Save(stream);
-            stream.Position = 0;
+        var stream = new MemoryStream();
+        builder.Save(stream);
+        stream.Position = 0;
 
-            return stream;
+        return stream;
+    }
+
+    /// <summary>
+    /// A push request as "dotnet nuget push" sends it.
+    /// </summary>
+    public static HttpRequestMessage PushRequest(Stream package, string apiKey)
+    {
+        var content = new MultipartFormDataContent();
+        var file = new StreamContent(package);
+        file.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        content.Add(file, "package", "package.nupkg");
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "api/v2/package") { Content = content };
+        if (apiKey != null)
+        {
+            request.Headers.Add("X-NuGet-ApiKey", apiKey);
         }
 
-        /// <summary>
-        /// A push request as "dotnet nuget push" sends it.
-        /// </summary>
-        public static HttpRequestMessage PushRequest(Stream package, string apiKey)
+        return request;
+    }
+
+    private class InMemoryFile : IPackageFile
+    {
+        private readonly byte[] _content;
+
+        public InMemoryFile(string path, string content)
         {
-            var content = new MultipartFormDataContent();
-            var file = new StreamContent(package);
-            file.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            content.Add(file, "package", "package.nupkg");
-
-            var request = new HttpRequestMessage(HttpMethod.Put, "api/v2/package") { Content = content };
-            if (apiKey != null)
-            {
-                request.Headers.Add("X-NuGet-ApiKey", apiKey);
-            }
-
-            return request;
+            Path = path;
+            _content = Encoding.UTF8.GetBytes(content);
         }
 
-        private class InMemoryFile : IPackageFile
-        {
-            private readonly byte[] _content;
+        public string Path { get; }
+        public string EffectivePath => Path;
+        public NuGet.Frameworks.NuGetFramework NuGetFramework => null;
+        public System.Runtime.Versioning.FrameworkName TargetFramework => null;
+        public System.DateTimeOffset LastWriteTime => System.DateTimeOffset.UnixEpoch;
 
-            public InMemoryFile(string path, string content)
-            {
-                Path = path;
-                _content = Encoding.UTF8.GetBytes(content);
-            }
-
-            public string Path { get; }
-            public string EffectivePath => Path;
-            public NuGet.Frameworks.NuGetFramework NuGetFramework => null;
-            public System.Runtime.Versioning.FrameworkName TargetFramework => null;
-            public System.DateTimeOffset LastWriteTime => System.DateTimeOffset.UnixEpoch;
-
-            public Stream GetStream() => new MemoryStream(_content);
-        }
+        public Stream GetStream() => new MemoryStream(_content);
     }
 }

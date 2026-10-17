@@ -1,52 +1,51 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BaGet.Core
+namespace BaGet.Core;
+
+public enum PackageAction
 {
-    public enum PackageAction
-    {
-        /// <summary>
-        /// Push a package or a symbol package.
-        /// </summary>
-        Push,
-
-        /// <summary>
-        /// Unlist, relist or delete a version, or edit its deprecation or vulnerabilities.
-        /// </summary>
-        Manage,
-    }
+    /// <summary>
+    /// Push a package or a symbol package.
+    /// </summary>
+    Push,
 
     /// <summary>
-    /// Decides whether an authenticated principal may act on a package ID.
+    /// Unlist, relist or delete a version, or edit its deprecation or vulnerabilities.
     /// </summary>
-    public interface IPackageAuthorizationService
-    {
-        Task<bool> AuthorizeAsync(
-            BaGetPrincipal principal,
-            PackageAction action,
-            string packageId,
-            CancellationToken cancellationToken);
+    Manage,
+}
 
-        /// <summary>
-        /// Called after a successful push, so that a user pushing a new package ID becomes
-        /// its owner.
-        /// </summary>
-        Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken);
-    }
+/// <summary>
+/// Decides whether an authenticated principal may act on a package ID.
+/// </summary>
+public interface IPackageAuthorizationService
+{
+    Task<bool> AuthorizeAsync(
+        BaGetPrincipal principal,
+        PackageAction action,
+        string packageId,
+        CancellationToken cancellationToken);
 
     /// <summary>
-    /// Without accounts every authenticated caller is the superuser, as it always was.
+    /// Called after a successful push, so that a user pushing a new package ID becomes
+    /// its owner.
     /// </summary>
-    public class AllowAuthenticatedAuthorizationService : IPackageAuthorizationService
-    {
-        public Task<bool> AuthorizeAsync(
-            BaGetPrincipal principal,
-            PackageAction action,
-            string packageId,
-            CancellationToken cancellationToken)
-            => Task.FromResult(principal != null);
+    Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken);
+}
 
-        public Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-    }
+/// <summary>
+/// Without accounts every authenticated caller is the superuser, as it always was.
+/// </summary>
+public class AllowAuthenticatedAuthorizationService : IPackageAuthorizationService
+{
+    public Task<bool> AuthorizeAsync(
+        BaGetPrincipal principal,
+        PackageAction action,
+        string packageId,
+        CancellationToken cancellationToken)
+        => Task.FromResult(principal != null);
+
+    public Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken)
+        => Task.CompletedTask;
 }

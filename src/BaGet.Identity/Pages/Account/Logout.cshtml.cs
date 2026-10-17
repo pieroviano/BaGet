@@ -1,22 +1,21 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Identity.Pages.Account
+namespace BaGet.Identity.Pages.Account;
+
+/// <summary>
+/// Signing out is a POST, so a link elsewhere cannot sign the user out.
+/// </summary>
+public class LogoutModel : AccountPageModel
 {
-    /// <summary>
-    /// Signing out is a POST, so a link elsewhere cannot sign the user out.
-    /// </summary>
-    public class LogoutModel : AccountPageModel
+    public void OnGet()
     {
-        public void OnGet()
-        {
-        }
+    }
 
-        public async Task<IActionResult> OnPostAsync()
-        {
-            await SignInManager.SignOutAsync();
+    public async Task<IActionResult> OnPostAsync()
+    {
+        await SignInManager.SignOutAsync();
 
-            return RedirectToLocal(null);
-        }
+        return RedirectToLocal(null);
     }
 }

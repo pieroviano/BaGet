@@ -6,222 +6,221 @@ using System.Threading.Tasks;
 using NuGet.Versioning;
 using Xunit;
 
-namespace BaGet.Protocol.Tests
+namespace BaGet.Protocol.Tests;
+
+public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
 {
-    public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
+    private readonly NuGetClientFactory _target;
+
+    public NuGetClientFactoryTests(ProtocolFixture fixture)
     {
-        private readonly NuGetClientFactory _target;
+        _target = fixture.NuGetClientFactory;
+    }
 
-        public NuGetClientFactoryTests(ProtocolFixture fixture)
+    [Fact]
+    public async Task DownloadsPackage()
+    {
+        var client = _target.CreatePackageContentClient();
+
+        using (var stream = await client.DownloadPackageOrNullAsync(
+                   "Test.Package",
+                   NuGetVersion.Parse("1.0.0")))
         {
-            _target = fixture.NuGetClientFactory;
-        }
+            Assert.NotNull(stream);
 
-        [Fact]
-        public async Task DownloadsPackage()
-        {
-            var client = _target.CreatePackageContentClient();
-
-            using (var stream = await client.DownloadPackageOrNullAsync(
-                "Test.Package",
-                NuGetVersion.Parse("1.0.0")))
+            using (var reader = new StreamReader(stream))
             {
-                Assert.NotNull(stream);
-
-                using (var reader = new StreamReader(stream))
-                {
-                    Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
-                }
+                Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
             }
         }
+    }
 
-        [Fact]
-        public async Task DownloadsPackageManifest()
+    [Fact]
+    public async Task DownloadsPackageManifest()
+    {
+        var client = _target.CreatePackageContentClient();
+
+        using (var stream = await client.DownloadPackageManifestOrNullAsync(
+                   "Test.Package",
+                   NuGetVersion.Parse("1.0.0")))
         {
-            var client = _target.CreatePackageContentClient();
+            Assert.NotNull(stream);
 
-            using (var stream = await client.DownloadPackageManifestOrNullAsync(
-                "Test.Package",
-                NuGetVersion.Parse("1.0.0")))
+            using (var reader = new StreamReader(stream))
             {
-                Assert.NotNull(stream);
-
-                using (var reader = new StreamReader(stream))
-                {
-                    Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
-                }
+                Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
             }
         }
+    }
 
-        [Fact]
-        public async Task ListsPackageVersions()
-        {
-            var client = _target.CreatePackageContentClient();
+    [Fact]
+    public async Task ListsPackageVersions()
+    {
+        var client = _target.CreatePackageContentClient();
 
-            var response = await client.GetPackageVersionsOrNullAsync("Test.Package");
+        var response = await client.GetPackageVersionsOrNullAsync("Test.Package");
 
-            Assert.NotNull(response);
-            Assert.Equal(new[] { "1.0.0", "2.0.0" }, response.Versions.ToArray());
-        }
+        Assert.NotNull(response);
+        Assert.Equal(new[] { "1.0.0", "2.0.0" }, response.Versions.ToArray());
+    }
 
-        [Fact]
-        public async Task ListsPackageVersionsOfPagedPackage()
-        {
-            var client = _target.CreatePackageContentClient();
+    [Fact]
+    public async Task ListsPackageVersionsOfPagedPackage()
+    {
+        var client = _target.CreatePackageContentClient();
 
-            var response = await client.GetPackageVersionsOrNullAsync("Paged.Package");
+        var response = await client.GetPackageVersionsOrNullAsync("Paged.Package");
 
-            Assert.NotNull(response);
-            Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Versions.ToArray());
-        }
+        Assert.NotNull(response);
+        Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Versions.ToArray());
+    }
 
-        [Fact]
-        public async Task ListsAllPackageVersions()
-        {
-            var client = _target.CreateAutocompleteClient();
+    [Fact]
+    public async Task ListsAllPackageVersions()
+    {
+        var client = _target.CreateAutocompleteClient();
 
-            var response = await client.ListPackageVersionsAsync("Test.Package");
+        var response = await client.ListPackageVersionsAsync("Test.Package");
 
-            Assert.NotNull(response);
-            Assert.Equal(3, response.TotalHits);
-            Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Data.ToArray());
-        }
+        Assert.NotNull(response);
+        Assert.Equal(3, response.TotalHits);
+        Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Data.ToArray());
+    }
 
-        [Fact]
-        public async Task GetsPackageMetadataInlined()
-        {
-            var client = _target.CreatePackageMetadataClient();
+    [Fact]
+    public async Task GetsPackageMetadataInlined()
+    {
+        var client = _target.CreatePackageMetadataClient();
 
-            var response = await client.GetRegistrationIndexOrNullAsync("Test.Package");
+        var response = await client.GetRegistrationIndexOrNullAsync("Test.Package");
 
-            Assert.NotNull(response);
-            Assert.Equal(2, response.Pages.Count);
-            Assert.All(response.Pages, page => Assert.NotNull(page.ItemsOrNull));
-            Assert.Equal(
-                new[] { "1.0.0", "2.0.0+build", "3.0.0" },
-                response.Pages
-                    .SelectMany(p => p.ItemsOrNull)
-                    .Select(i => i.PackageMetadata.Version)
-                    .ToArray());
-        }
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Pages.Count);
+        Assert.All(response.Pages, page => Assert.NotNull(page.ItemsOrNull));
+        Assert.Equal(
+            new[] { "1.0.0", "2.0.0+build", "3.0.0" },
+            response.Pages
+                .SelectMany(p => p.ItemsOrNull)
+                .Select(i => i.PackageMetadata.Version)
+                .ToArray());
+    }
 
-        [Fact]
-        public async Task GetsPackageMetadataPaged()
-        {
-            var client = _target.CreatePackageMetadataClient();
+    [Fact]
+    public async Task GetsPackageMetadataPaged()
+    {
+        var client = _target.CreatePackageMetadataClient();
 
-            var response = await client.GetRegistrationIndexOrNullAsync("Paged.Package");
+        var response = await client.GetRegistrationIndexOrNullAsync("Paged.Package");
 
-            Assert.NotNull(response);
-            Assert.Equal(2, response.Pages.Count);
-            Assert.All(response.Pages, page => Assert.Null(page.ItemsOrNull));
-            Assert.Equal(
-                new[] { TestData.RegistrationPageFirstUrl, TestData.RegistrationPageUrl },
-                response.Pages.Select(p => p.RegistrationPageUrl).ToArray());
-        }
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Pages.Count);
+        Assert.All(response.Pages, page => Assert.Null(page.ItemsOrNull));
+        Assert.Equal(
+            new[] { TestData.RegistrationPageFirstUrl, TestData.RegistrationPageUrl },
+            response.Pages.Select(p => p.RegistrationPageUrl).ToArray());
+    }
 
-        [Fact]
-        public async Task GetsSinglePackageMetadataInlined()
-        {
-            var client = _target.CreatePackageMetadataClient();
+    [Fact]
+    public async Task GetsSinglePackageMetadataInlined()
+    {
+        var client = _target.CreatePackageMetadataClient();
 
-            var response = await client.GetRegistrationLeafAsync(TestData.RegistrationLeafListedUrl);
+        var response = await client.GetRegistrationLeafAsync(TestData.RegistrationLeafListedUrl);
 
-            Assert.NotNull(response);
-            Assert.True(response.Listed);
-            Assert.Equal(
-                "https://test.example/v3/content/test.package/1.0.0/test.package.1.0.0.nupkg",
-                response.PackageContentUrl);
-        }
+        Assert.NotNull(response);
+        Assert.True(response.Listed);
+        Assert.Equal(
+            "https://test.example/v3/content/test.package/1.0.0/test.package.1.0.0.nupkg",
+            response.PackageContentUrl);
+    }
 
-        [Fact]
-        public async Task GetsSinglePackageMetadataPaged()
-        {
-            var client = _target.CreatePackageMetadataClient();
+    [Fact]
+    public async Task GetsSinglePackageMetadataPaged()
+    {
+        var client = _target.CreatePackageMetadataClient();
 
-            var response = await client.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
+        var response = await client.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
 
-            Assert.NotNull(response);
-            Assert.NotNull(response.ItemsOrNull);
+        Assert.NotNull(response);
+        Assert.NotNull(response.ItemsOrNull);
 
-            var metadata = response.ItemsOrNull[1].PackageMetadata;
+        var metadata = response.ItemsOrNull[1].PackageMetadata;
 
-            Assert.Equal("Paged.Package", metadata.PackageId);
-            Assert.Equal("3.0.0", metadata.Version);
-        }
+        Assert.Equal("Paged.Package", metadata.PackageId);
+        Assert.Equal("3.0.0", metadata.Version);
+    }
 
-        [Fact]
-        public async Task Searches()
-        {
-            var client = _target.CreateSearchClient();
+    [Fact]
+    public async Task Searches()
+    {
+        var client = _target.CreateSearchClient();
 
-            var response = await client.SearchAsync();
+        var response = await client.SearchAsync();
 
-            Assert.NotNull(response);
-            Assert.Equal(1, response.TotalHits);
-            Assert.Equal("Test.Package", Assert.Single(response.Data).PackageId);
-        }
+        Assert.NotNull(response);
+        Assert.Equal(1, response.TotalHits);
+        Assert.Equal("Test.Package", Assert.Single(response.Data).PackageId);
+    }
 
-        [Fact]
-        public async Task Autocompletes()
-        {
-            var client = _target.CreateAutocompleteClient();
+    [Fact]
+    public async Task Autocompletes()
+    {
+        var client = _target.CreateAutocompleteClient();
 
-            var response = await client.AutocompleteAsync();
+        var response = await client.AutocompleteAsync();
 
-            Assert.NotNull(response);
-            Assert.Equal(1, response.TotalHits);
-            Assert.Equal("Test.Package", Assert.Single(response.Data));
-        }
+        Assert.NotNull(response);
+        Assert.Equal(1, response.TotalHits);
+        Assert.Equal("Test.Package", Assert.Single(response.Data));
+    }
 
-        [Fact]
-        public async Task ResolvesResourcesFromTheServiceIndex()
-        {
-            var client = _target.CreateServiceIndexClient();
+    [Fact]
+    public async Task ResolvesResourcesFromTheServiceIndex()
+    {
+        var client = _target.CreateServiceIndexClient();
 
-            var serviceIndex = await client.GetAsync();
+        var serviceIndex = await client.GetAsync();
 
-            Assert.Equal("https://test.example/v3/content", serviceIndex.GetPackageContentResourceUrl());
-            Assert.Equal("https://test.example/v3/metadata", serviceIndex.GetPackageMetadataResourceUrl());
-            Assert.Equal(TestData.SearchUrl, serviceIndex.GetSearchQueryResourceUrl());
-            Assert.Equal(TestData.AutocompleteUrl, serviceIndex.GetSearchAutocompleteResourceUrl());
-            Assert.Equal(TestData.CatalogIndexUrl, serviceIndex.GetCatalogResourceUrl());
-        }
+        Assert.Equal("https://test.example/v3/content", serviceIndex.GetPackageContentResourceUrl());
+        Assert.Equal("https://test.example/v3/metadata", serviceIndex.GetPackageMetadataResourceUrl());
+        Assert.Equal(TestData.SearchUrl, serviceIndex.GetSearchQueryResourceUrl());
+        Assert.Equal(TestData.AutocompleteUrl, serviceIndex.GetSearchAutocompleteResourceUrl());
+        Assert.Equal(TestData.CatalogIndexUrl, serviceIndex.GetCatalogResourceUrl());
+    }
 
-        [Fact]
-        public async Task FetchesTheServiceIndexOnce()
-        {
-            var handler = new CountingHttpMessageHandler(new TestDataHttpMessageHandler());
-            var target = new NuGetClientFactory(new HttpClient(handler), TestData.ServiceIndexUrl);
+    [Fact]
+    public async Task FetchesTheServiceIndexOnce()
+    {
+        var handler = new CountingHttpMessageHandler(new TestDataHttpMessageHandler());
+        var target = new NuGetClientFactory(new HttpClient(handler), TestData.ServiceIndexUrl);
 
-            await target.CreatePackageContentClient().GetPackageVersionsOrNullAsync("Test.Package");
-            await target.CreateSearchClient().SearchAsync();
-            await target.CreateAutocompleteClient().AutocompleteAsync();
+        await target.CreatePackageContentClient().GetPackageVersionsOrNullAsync("Test.Package");
+        await target.CreateSearchClient().SearchAsync();
+        await target.CreateAutocompleteClient().AutocompleteAsync();
 
-            Assert.Equal(1, handler.RequestCount(TestData.ServiceIndexUrl));
-            Assert.Equal(1, handler.RequestCount(TestData.PackageContentVersionListUrl));
-            Assert.Equal(1, handler.RequestCount(TestData.DefaultSearchUrl));
-            Assert.Equal(1, handler.RequestCount(TestData.DefaultAutocompleteUrl));
-        }
+        Assert.Equal(1, handler.RequestCount(TestData.ServiceIndexUrl));
+        Assert.Equal(1, handler.RequestCount(TestData.PackageContentVersionListUrl));
+        Assert.Equal(1, handler.RequestCount(TestData.DefaultSearchUrl));
+        Assert.Equal(1, handler.RequestCount(TestData.DefaultAutocompleteUrl));
+    }
 
-        [Fact]
-        public async Task ReturnsNullWhenPackageDoesNotExist()
-        {
-            var contentClient = _target.CreatePackageContentClient();
-            var metadataClient = _target.CreatePackageMetadataClient();
-            var packageId = Guid.NewGuid().ToString();
+    [Fact]
+    public async Task ReturnsNullWhenPackageDoesNotExist()
+    {
+        var contentClient = _target.CreatePackageContentClient();
+        var metadataClient = _target.CreatePackageMetadataClient();
+        var packageId = Guid.NewGuid().ToString();
 
-            Assert.Null(await contentClient.GetPackageVersionsOrNullAsync(packageId));
-            Assert.Null(await metadataClient.GetRegistrationIndexOrNullAsync(packageId));
-        }
+        Assert.Null(await contentClient.GetPackageVersionsOrNullAsync(packageId));
+        Assert.Null(await metadataClient.GetRegistrationIndexOrNullAsync(packageId));
+    }
 
-        [Fact]
-        public void ThrowsWhenConstructedWithoutHttpClient()
-        {
-            Assert.Throws<ArgumentNullException>(
-                () => new NuGetClientFactory(null, TestData.ServiceIndexUrl));
-            Assert.Throws<ArgumentNullException>(
-                () => new NuGetClientFactory(new HttpClient(), null));
-        }
+    [Fact]
+    public void ThrowsWhenConstructedWithoutHttpClient()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => new NuGetClientFactory(null, TestData.ServiceIndexUrl));
+        Assert.Throws<ArgumentNullException>(
+            () => new NuGetClientFactory(new HttpClient(), null));
     }
 }

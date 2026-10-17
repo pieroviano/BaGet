@@ -7,90 +7,89 @@ using Microsoft.Extensions.Options;
 using NuGet.Common;
 using NuGet.Packaging.Signing;
 
-namespace BaGet.Validation
+namespace BaGet.Validation;
+
+/// <summary>
+/// Every entry's path must be safe to extract: none may escape the package's folder.
+/// </summary>
+public class PackageEntriesValidator : IPackageValidator
 {
-    /// <summary>
-    /// Every entry's path must be safe to extract: none may escape the package's folder.
-    /// </summary>
-    public class PackageEntriesValidator : IPackageValidator
+    public string Name => "PackageEntries";
+
+    public async Task<PackageValidatorResult> ValidateAsync(PackageValidationContext context, CancellationToken cancellationToken)
     {
-        public string Name => "PackageEntries";
-
-        public async Task<PackageValidatorResult> ValidateAsync(PackageValidationContext context, CancellationToken cancellationToken)
+        try
         {
-            try
-            {
-                await context.Reader.ValidatePackageEntriesAsync(cancellationToken);
+            await context.Reader.ValidatePackageEntriesAsync(cancellationToken);
 
-                return PackageValidatorResult.Valid;
-            }
-            catch (NuGet.Packaging.Core.PackagingException e)
-            {
-                return PackageValidatorResult.Invalid(e.Message);
-            }
+            return PackageValidatorResult.Valid;
+        }
+        catch (NuGet.Packaging.Core.PackagingException e)
+        {
+            return PackageValidatorResult.Invalid(e.Message);
         }
     }
+}
 
-    /// <summary>
-    /// A signed package must have an intact, valid signature; an unsigned one is rejected
-    /// only when <see cref="ValidationOptions.RequireSignedPackages"/> is set. Whether the
-    /// signing certificate is trusted is not checked: that is the client's policy to apply.
-    /// </summary>
-    public class PackageSignatureValidator : IPackageValidator
+/// <summary>
+/// A signed package must have an intact, valid signature; an unsigned one is rejected
+/// only when <see cref="ValidationOptions.RequireSignedPackages"/> is set. Whether the
+/// signing certificate is trusted is not checked: that is the client's policy to apply.
+/// </summary>
+public class PackageSignatureValidator : IPackageValidator
+{
+    private readonly IOptionsSnapshot<ValidationOptions> _options;
+
+    public PackageSignatureValidator(IOptionsSnapshot<ValidationOptions> options)
     {
-        private readonly IOptionsSnapshot<ValidationOptions> _options;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+    }
 
-        public PackageSignatureValidator(IOptionsSnapshot<ValidationOptions> options)
+    public string Name => "PackageSignature";
+
+    public async Task<PackageValidatorResult> ValidateAsync(PackageValidationContext context, CancellationToken cancellationToken)
+    {
+        if (!await context.Reader.IsSignedAsync(cancellationToken))
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            return _options.Value.RequireSignedPackages
+                ? PackageValidatorResult.Invalid("The package must be signed.")
+                : PackageValidatorResult.Valid;
         }
 
-        public string Name => "PackageSignature";
-
-        public async Task<PackageValidatorResult> ValidateAsync(PackageValidationContext context, CancellationToken cancellationToken)
+        var verifier = new PackageSignatureVerifier(new ISignatureVerificationProvider[]
         {
-            if (!await context.Reader.IsSignedAsync(cancellationToken))
-            {
-                return _options.Value.RequireSignedPackages
-                    ? PackageValidatorResult.Invalid("The package must be signed.")
-                    : PackageValidatorResult.Valid;
-            }
+            new IntegrityVerificationProvider(),
+            new SignatureTrustAndValidityVerificationProvider(),
+        });
 
-            var verifier = new PackageSignatureVerifier(new ISignatureVerificationProvider[]
-            {
-                new IntegrityVerificationProvider(),
-                new SignatureTrustAndValidityVerificationProvider(),
-            });
+        // Untrusted roots are allowed: a private feed's packages are often signed with
+        // an internal certificate the server's machine does not trust.
+        var settings = new SignedPackageVerifierSettings(
+            allowUnsigned: false,
+            allowIllegal: false,
+            allowUntrusted: true,
+            allowIgnoreTimestamp: true,
+            allowMultipleTimestamps: true,
+            allowNoTimestamp: true,
+            allowUnknownRevocation: true,
+            reportUnknownRevocation: false,
+            verificationTarget: VerificationTarget.All,
+            signaturePlacement: SignaturePlacement.Any,
+            repositoryCountersignatureVerificationBehavior: SignatureVerificationBehavior.IfExistsAndIsNecessary,
+            revocationMode: RevocationMode.Offline);
 
-            // Untrusted roots are allowed: a private feed's packages are often signed with
-            // an internal certificate the server's machine does not trust.
-            var settings = new SignedPackageVerifierSettings(
-                allowUnsigned: false,
-                allowIllegal: false,
-                allowUntrusted: true,
-                allowIgnoreTimestamp: true,
-                allowMultipleTimestamps: true,
-                allowNoTimestamp: true,
-                allowUnknownRevocation: true,
-                reportUnknownRevocation: false,
-                verificationTarget: VerificationTarget.All,
-                signaturePlacement: SignaturePlacement.Any,
-                repositoryCountersignatureVerificationBehavior: SignatureVerificationBehavior.IfExistsAndIsNecessary,
-                revocationMode: RevocationMode.Offline);
-
-            var result = await verifier.VerifySignaturesAsync(context.Reader, settings, cancellationToken);
-            if (result.IsValid)
-            {
-                return PackageValidatorResult.Valid;
-            }
-
-            var errors = result.Results
-                .SelectMany(r => r.GetErrorIssues())
-                .Select(i => $"{i.Code}: {i.Message}")
-                .ToList();
-
-            return PackageValidatorResult.Invalid(
-                errors.Count == 0 ? "The package's signature is invalid." : string.Join(" ", errors));
+        var result = await verifier.VerifySignaturesAsync(context.Reader, settings, cancellationToken);
+        if (result.IsValid)
+        {
+            return PackageValidatorResult.Valid;
         }
+
+        var errors = result.Results
+            .SelectMany(r => r.GetErrorIssues())
+            .Select(i => $"{i.Code}: {i.Message}")
+            .ToList();
+
+        return PackageValidatorResult.Invalid(
+            errors.Count == 0 ? "The package's signature is invalid." : string.Join(" ", errors));
     }
 }

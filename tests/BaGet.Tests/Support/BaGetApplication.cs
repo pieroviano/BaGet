@@ -16,158 +16,157 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit.Abstractions;
 
-namespace BaGet.Tests
-{
-    public class BaGetApplication : WebApplicationFactory<Program>
-    {
-        private readonly ITestOutputHelper _output;
-        private readonly HttpClient _upstreamClient;
-        private readonly Dictionary<string, string> _configOverrides;
-        private readonly Action<IServiceCollection> _configureServices;
-        private readonly string _environment;
+namespace BaGet.Tests;
 
-        /// <param name="environment">
-        /// "Production" by default. "Development" serves the Razor class libraries' static web
-        /// assets from the build output, as running from Visual Studio does.
-        /// </param>
-        public BaGetApplication(
-            ITestOutputHelper output,
-            HttpClient upstreamClient = null,
-            Dictionary<string, string> configOverrides = null,
-            Action<IServiceCollection> configureServices = null,
-            string environment = "Production")
+public class BaGetApplication : WebApplicationFactory<Program>
+{
+    private readonly ITestOutputHelper _output;
+    private readonly HttpClient _upstreamClient;
+    private readonly Dictionary<string, string> _configOverrides;
+    private readonly Action<IServiceCollection> _configureServices;
+    private readonly string _environment;
+
+    /// <param name="environment">
+    /// "Production" by default. "Development" serves the Razor class libraries' static web
+    /// assets from the build output, as running from Visual Studio does.
+    /// </param>
+    public BaGetApplication(
+        ITestOutputHelper output,
+        HttpClient upstreamClient = null,
+        Dictionary<string, string> configOverrides = null,
+        Action<IServiceCollection> configureServices = null,
+        string environment = "Production")
+    {
+        _configureServices = configureServices;
+        _environment = environment;
+        _output = output ?? throw new ArgumentNullException(nameof(output));
+        _upstreamClient = upstreamClient;
+        _configOverrides = configOverrides;
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        // Create temporary storage paths.
+        var tempPath = Path.Combine(
+            Path.GetTempPath(),
+            "BaGetTests",
+            Guid.NewGuid().ToString("N"));
+        var sqlitePath = Path.Combine(tempPath, "BaGet.db");
+        var storagePath = Path.Combine(tempPath, "Packages");
+
+        Directory.CreateDirectory(tempPath);
+
+        // Setup the integration test configuration.
+        var settings = new Dictionary<string, string>
         {
-            _configureServices = configureServices;
-            _environment = environment;
-            _output = output ?? throw new ArgumentNullException(nameof(output));
-            _upstreamClient = upstreamClient;
-            _configOverrides = configOverrides;
+            { "Database:Type", "Sqlite" },
+            { "Database:ConnectionString", $"Data Source={sqlitePath}" },
+            { "Storage:Type", "FileSystem" },
+            { "Storage:Path", storagePath },
+            { "Search:Type", "Database" },
+            { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
+            { "Mirror:PackageSource", "http://localhost/v3/index.json" },
+        };
+
+        foreach (var pair in _configOverrides ?? new Dictionary<string, string>())
+        {
+            settings[pair.Key] = pair.Value;
         }
 
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        // These are applied with UseSetting rather than ConfigureAppConfiguration so
+        // that they are in place before the application registers its services. Under
+        // the minimal hosting model the entry point reads builder.Configuration while
+        // registering - AddBaGetAccounts decides from "Accounts:Enabled", for one - and
+        // a provider appended afterwards would arrive too late for those reads.
+        foreach (var pair in settings)
         {
-            // Create temporary storage paths.
-            var tempPath = Path.Combine(
-                Path.GetTempPath(),
-                "BaGetTests",
-                Guid.NewGuid().ToString("N"));
-            var sqlitePath = Path.Combine(tempPath, "BaGet.db");
-            var storagePath = Path.Combine(tempPath, "Packages");
+            builder.UseSetting(pair.Key, pair.Value);
+        }
 
-            Directory.CreateDirectory(tempPath);
-
-            // Setup the integration test configuration.
-            var settings = new Dictionary<string, string>
+        builder
+            .UseEnvironment(_environment)
+            .ConfigureLogging(logging =>
             {
-                { "Database:Type", "Sqlite" },
-                { "Database:ConnectionString", $"Data Source={sqlitePath}" },
-                { "Storage:Type", "FileSystem" },
-                { "Storage:Path", storagePath },
-                { "Search:Type", "Database" },
-                { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
-                { "Mirror:PackageSource", "http://localhost/v3/index.json" },
-            };
+                // BaGet uses console logging by default. This logger throws operation
+                // cancelled exceptions when the host shuts down, causing the the debugger
+                // to pause repeatedly if CLR exceptions are enabled.
+                logging.ClearProviders();
 
-            foreach (var pair in _configOverrides ?? new Dictionary<string, string>())
+                // Pipe logs to the xunit output.
+                logging.AddProvider(new XunitLoggerProvider(_output));
+            })
+            .ConfigureServices(services => { })
+            .ConfigureServices((context, services) =>
             {
-                settings[pair.Key] = pair.Value;
-            }
+                // Make time deterministic for testing purposes.
+                var time = new Mock<SystemTime>();
+                time
+                    .Setup(t => t.UtcNow)
+                    // DateTime.Parse converts a "Z" timestamp to local time, so the
+                    // mock would return a local DateTime from a property that is
+                    // documented, and implemented, as returning UTC.
+                    .Returns(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 
-            // These are applied with UseSetting rather than ConfigureAppConfiguration so
-            // that they are in place before the application registers its services. Under
-            // the minimal hosting model the entry point reads builder.Configuration while
-            // registering - AddBaGetAccounts decides from "Accounts:Enabled", for one - and
-            // a provider appended afterwards would arrive too late for those reads.
-            foreach (var pair in settings)
-            {
-                builder.UseSetting(pair.Key, pair.Value);
-            }
-
-            builder
-                .UseEnvironment(_environment)
-                .ConfigureLogging(logging =>
+                services.AddSingleton(time.Object);
+                _configureServices?.Invoke(services);
+                if (_upstreamClient != null)
                 {
-                    // BaGet uses console logging by default. This logger throws operation
-                    // cancelled exceptions when the host shuts down, causing the the debugger
-                    // to pause repeatedly if CLR exceptions are enabled.
-                    logging.ClearProviders();
+                    services.AddSingleton(_upstreamClient);
+                }
 
-                    // Pipe logs to the xunit output.
-                    logging.AddProvider(new XunitLoggerProvider(_output));
-                })
-                .ConfigureServices(services => { })
-                .ConfigureServices((context, services) =>
-                {
-                    // Make time deterministic for testing purposes.
-                    var time = new Mock<SystemTime>();
-                    time
-                        .Setup(t => t.UtcNow)
-                        // DateTime.Parse converts a "Z" timestamp to local time, so the
-                        // mock would return a local DateTime from a property that is
-                        // documented, and implemented, as returning UTC.
-                        .Returns(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+                // Setup the integration test database.
+                var provider = services.BuildServiceProvider();
+                var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-                    services.AddSingleton(time.Object);
-                    _configureServices?.Invoke(services);
-                    if (_upstreamClient != null)
-                    {
-                        services.AddSingleton(_upstreamClient);
-                    }
+                // Ensure the database is created before we run migrations. The migrations
+                // can create the database too, however, migrations check whether the database exists
+                // first. The SQLite provider implements this by attempting to open a connection,
+                // and if that fails, creating the database. This throws several exceptions that
+                // pauses the debugger repeatedly if CLR exceptions are enabled.
+                // See: https://github.com/dotnet/efcore/blob/644d3c8c3a604fd0121d90eaf34f14870e19bcff/src/EFCore.Sqlite.Core/Storage/Internal/SqliteDatabaseCreator.cs#L88-L98
+                using var scope = scopeFactory.CreateScope();
+                var ctx = scope.ServiceProvider.GetRequiredService<IContext>();
+                var dbCreator = ctx.Database.GetService<IRelationalDatabaseCreator>();
 
-                    // Setup the integration test database.
-                    var provider = services.BuildServiceProvider();
-                    var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+                dbCreator.Create();
+                ctx.Database.Migrate();
+            });
+    }
+}
 
-                    // Ensure the database is created before we run migrations. The migrations
-                    // can create the database too, however, migrations check whether the database exists
-                    // first. The SQLite provider implements this by attempting to open a connection,
-                    // and if that fails, creating the database. This throws several exceptions that
-                    // pauses the debugger repeatedly if CLR exceptions are enabled.
-                    // See: https://github.com/dotnet/efcore/blob/644d3c8c3a604fd0121d90eaf34f14870e19bcff/src/EFCore.Sqlite.Core/Storage/Internal/SqliteDatabaseCreator.cs#L88-L98
-                    using var scope = scopeFactory.CreateScope();
-                    var ctx = scope.ServiceProvider.GetRequiredService<IContext>();
-                    var dbCreator = ctx.Database.GetService<IRelationalDatabaseCreator>();
+internal static class BaGetWebApplicationFactoryExtensions
+{
+    public static async Task AddPackageAsync(
+        this WebApplicationFactory<Program> factory,
+        Stream package,
+        CancellationToken cancellationToken = default)
+    {
+        var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
 
-                    dbCreator.Create();
-                    ctx.Database.Migrate();
-                });
+        using var scope = scopeFactory.CreateScope();
+        var indexer = scope.ServiceProvider.GetRequiredService<IPackageIndexingService>();
+
+        var result = await indexer.IndexAsync(package, cancellationToken);
+        if (result != PackageIndexingResult.Success)
+        {
+            throw new InvalidOperationException($"Unexpected indexing result {result}");
         }
     }
 
-    internal static class BaGetWebApplicationFactoryExtensions
+    public static async Task AddSymbolPackageAsync(
+        this WebApplicationFactory<Program> factory,
+        Stream symbolPackage,
+        CancellationToken cancellationToken = default)
     {
-        public static async Task AddPackageAsync(
-            this WebApplicationFactory<Program> factory,
-            Stream package,
-            CancellationToken cancellationToken = default)
+        var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
+
+        using var scope = scopeFactory.CreateScope();
+        var indexer = scope.ServiceProvider.GetRequiredService<ISymbolIndexingService>();
+
+        var result = await indexer.IndexAsync(symbolPackage, cancellationToken);
+        if (result != SymbolIndexingResult.Success)
         {
-            var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
-
-            using var scope = scopeFactory.CreateScope();
-            var indexer = scope.ServiceProvider.GetRequiredService<IPackageIndexingService>();
-
-            var result = await indexer.IndexAsync(package, cancellationToken);
-            if (result != PackageIndexingResult.Success)
-            {
-                throw new InvalidOperationException($"Unexpected indexing result {result}");
-            }
-        }
-
-        public static async Task AddSymbolPackageAsync(
-            this WebApplicationFactory<Program> factory,
-            Stream symbolPackage,
-            CancellationToken cancellationToken = default)
-        {
-            var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
-
-            using var scope = scopeFactory.CreateScope();
-            var indexer = scope.ServiceProvider.GetRequiredService<ISymbolIndexingService>();
-
-            var result = await indexer.IndexAsync(symbolPackage, cancellationToken);
-            if (result != SymbolIndexingResult.Success)
-            {
-                throw new InvalidOperationException($"Unexpected indexing result {result}");
-            }
+            throw new InvalidOperationException($"Unexpected indexing result {result}");
         }
     }
 }

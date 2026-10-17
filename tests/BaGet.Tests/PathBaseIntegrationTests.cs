@@ -6,123 +6,122 @@ using Newtonsoft.Json.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BaGet.Tests
+namespace BaGet.Tests;
+
+/// <summary>
+/// A reverse proxy may either forward the path base to BaGet, or strip it before
+/// forwarding. The URLs BaGet advertises must include the configured path base
+/// either way, otherwise clients are sent to addresses that bypass the proxy.
+/// </summary>
+public class PathBaseIntegrationTests : IDisposable
 {
-    /// <summary>
-    /// A reverse proxy may either forward the path base to BaGet, or strip it before
-    /// forwarding. The URLs BaGet advertises must include the configured path base
-    /// either way, otherwise clients are sent to addresses that bypass the proxy.
-    /// </summary>
-    public class PathBaseIntegrationTests : IDisposable
+    private readonly ITestOutputHelper _output;
+    private readonly BaGetApplication _app;
+    private readonly HttpClient _client;
+
+    public PathBaseIntegrationTests(ITestOutputHelper output)
     {
-        private readonly ITestOutputHelper _output;
-        private readonly BaGetApplication _app;
-        private readonly HttpClient _client;
-
-        public PathBaseIntegrationTests(ITestOutputHelper output)
-        {
-            _output = output;
-            _app = new BaGetApplication(
-                output,
-                configOverrides: new Dictionary<string, string>
-                {
-                    { "PathBase", "/nuget" },
-                });
-
-            _client = _app.CreateDefaultClient();
-        }
-
-        [Fact]
-        public async Task ServiceIndexUsesPathBaseWhenTheProxyStripsIt()
-        {
-            // The proxy rewrote "/nuget/v3/index.json" to "/v3/index.json".
-            using var response = await _client.GetAsync("v3/index.json");
-
-            response.EnsureSuccessStatusCode();
-            var content = JObject.Parse(await response.Content.ReadAsStringAsync());
-
-            foreach (var resource in content["resources"])
+        _output = output;
+        _app = new BaGetApplication(
+            output,
+            configOverrides: new Dictionary<string, string>
             {
-                var id = resource["@id"].Value<string>();
-                Assert.StartsWith("http://localhost/nuget/", id);
-            }
-        }
+                { "PathBase", "/nuget" },
+            });
 
-        [Fact]
-        public async Task ServiceIndexUsesPathBaseWhenTheProxyForwardsIt()
+        _client = _app.CreateDefaultClient();
+    }
+
+    [Fact]
+    public async Task ServiceIndexUsesPathBaseWhenTheProxyStripsIt()
+    {
+        // The proxy rewrote "/nuget/v3/index.json" to "/v3/index.json".
+        using var response = await _client.GetAsync("v3/index.json");
+
+        response.EnsureSuccessStatusCode();
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+        foreach (var resource in content["resources"])
         {
-            // The proxy forwarded the path base untouched.
-            using var response = await _client.GetAsync("nuget/v3/index.json");
-
-            response.EnsureSuccessStatusCode();
-            var content = JObject.Parse(await response.Content.ReadAsStringAsync());
-
-            foreach (var resource in content["resources"])
-            {
-                var id = resource["@id"].Value<string>();
-                Assert.StartsWith("http://localhost/nuget/", id);
-            }
+            var id = resource["@id"].Value<string>();
+            Assert.StartsWith("http://localhost/nuget/", id);
         }
+    }
 
+    [Fact]
+    public async Task ServiceIndexUsesPathBaseWhenTheProxyForwardsIt()
+    {
+        // The proxy forwarded the path base untouched.
+        using var response = await _client.GetAsync("nuget/v3/index.json");
 
-        [Fact]
-        public async Task ADotPathBaseMeansTheRoot()
+        response.EnsureSuccessStatusCode();
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+        foreach (var resource in content["resources"])
         {
-            // appsettings.json ships "PathBase": ".", which is not a usable PathString.
-            using var app = new BaGetApplication(
-                _output,
-                configOverrides: new Dictionary<string, string> { { "PathBase", "." } });
-            using var client = app.CreateDefaultClient();
-
-            using var response = await client.GetAsync("v3/index.json");
-
-            response.EnsureSuccessStatusCode();
-            var content = JObject.Parse(await response.Content.ReadAsStringAsync());
-
-            foreach (var resource in content["resources"])
-            {
-                Assert.StartsWith("http://localhost/", resource["@id"].Value<string>());
-            }
+            var id = resource["@id"].Value<string>();
+            Assert.StartsWith("http://localhost/nuget/", id);
         }
+    }
 
-        [Fact]
-        public async Task APathBaseMissingItsLeadingSlashStillApplies()
+
+    [Fact]
+    public async Task ADotPathBaseMeansTheRoot()
+    {
+        // appsettings.json ships "PathBase": ".", which is not a usable PathString.
+        using var app = new BaGetApplication(
+            _output,
+            configOverrides: new Dictionary<string, string> { { "PathBase", "." } });
+        using var client = app.CreateDefaultClient();
+
+        using var response = await client.GetAsync("v3/index.json");
+
+        response.EnsureSuccessStatusCode();
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+        foreach (var resource in content["resources"])
         {
-            using var app = new BaGetApplication(
-                _output,
-                configOverrides: new Dictionary<string, string> { { "PathBase", "nuget" } });
-            using var client = app.CreateDefaultClient();
-
-            using var response = await client.GetAsync("v3/index.json");
-
-            response.EnsureSuccessStatusCode();
-            var content = JObject.Parse(await response.Content.ReadAsStringAsync());
-
-            foreach (var resource in content["resources"])
-            {
-                Assert.StartsWith("http://localhost/nuget/", resource["@id"].Value<string>());
-            }
+            Assert.StartsWith("http://localhost/", resource["@id"].Value<string>());
         }
+    }
 
-        [Theory]
-        [InlineData(null, "")]
-        [InlineData("", "")]
-        [InlineData("   ", "")]
-        [InlineData(".", "")]
-        [InlineData("/", "")]
-        [InlineData("/nuget", "/nuget")]
-        [InlineData("nuget", "/nuget")]
-        [InlineData("/nuget/", "/nuget")]
-        [InlineData("/nuget/feed", "/nuget/feed")]
-        public void NormalizePathBaseMapsConfiguredValues(string configured, string expected)
+    [Fact]
+    public async Task APathBaseMissingItsLeadingSlashStillApplies()
+    {
+        using var app = new BaGetApplication(
+            _output,
+            configOverrides: new Dictionary<string, string> { { "PathBase", "nuget" } });
+        using var client = app.CreateDefaultClient();
+
+        using var response = await client.GetAsync("v3/index.json");
+
+        response.EnsureSuccessStatusCode();
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+        foreach (var resource in content["resources"])
         {
-            Assert.Equal(expected, BaGet.Program.NormalizePathBase(configured).Value ?? "");
+            Assert.StartsWith("http://localhost/nuget/", resource["@id"].Value<string>());
         }
+    }
 
-        public void Dispose()
-        {
-            _client?.Dispose();
-            _app?.Dispose();
-        }
+    [Theory]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+    [InlineData("   ", "")]
+    [InlineData(".", "")]
+    [InlineData("/", "")]
+    [InlineData("/nuget", "/nuget")]
+    [InlineData("nuget", "/nuget")]
+    [InlineData("/nuget/", "/nuget")]
+    [InlineData("/nuget/feed", "/nuget/feed")]
+    public void NormalizePathBaseMapsConfiguredValues(string configured, string expected)
+    {
+        Assert.Equal(expected, BaGet.Program.NormalizePathBase(configured).Value ?? "");
+    }
+
+    public void Dispose()
+    {
+        _client?.Dispose();
+        _app?.Dispose();
     }
 }

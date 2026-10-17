@@ -5,46 +5,45 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BaGet.Tests
+namespace BaGet.Tests;
+
+/// <summary>
+/// Accounts are off by default, and an upgraded server must not grow account pages.
+/// </summary>
+public class AccountsDisabledTests : IDisposable
 {
-    /// <summary>
-    /// Accounts are off by default, and an upgraded server must not grow account pages.
-    /// </summary>
-    public class AccountsDisabledTests : IDisposable
+    private readonly BaGetApplication _app;
+    private readonly HttpClient _client;
+
+    public AccountsDisabledTests(ITestOutputHelper output)
     {
-        private readonly BaGetApplication _app;
-        private readonly HttpClient _client;
+        _app = new BaGetApplication(output);
+        _client = _app.CreateClient();
+    }
 
-        public AccountsDisabledTests(ITestOutputHelper output)
-        {
-            _app = new BaGetApplication(output);
-            _client = _app.CreateClient();
-        }
+    [Theory]
+    [InlineData("account/login")]
+    [InlineData("account/register")]
+    [InlineData("account/logout")]
+    [InlineData("account/apikeys")]
+    public async Task AccountPagesAreNotFound(string url)
+    {
+        using var response = await _client.GetAsync(url);
 
-        [Theory]
-        [InlineData("account/login")]
-        [InlineData("account/register")]
-        [InlineData("account/logout")]
-        [InlineData("account/apikeys")]
-        public async Task AccountPagesAreNotFound(string url)
-        {
-            using var response = await _client.GetAsync(url);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        }
+    [Fact]
+    public async Task TheLayoutHasNoSignInLink()
+    {
+        var html = await _client.GetStringAsync("upload");
 
-        [Fact]
-        public async Task TheLayoutHasNoSignInLink()
-        {
-            var html = await _client.GetStringAsync("upload");
+        Assert.DoesNotContain("account/login", html);
+    }
 
-            Assert.DoesNotContain("account/login", html);
-        }
-
-        public void Dispose()
-        {
-            _app.Dispose();
-            _client.Dispose();
-        }
+    public void Dispose()
+    {
+        _app.Dispose();
+        _client.Dispose();
     }
 }

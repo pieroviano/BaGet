@@ -1,13 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BaGet.Azure
-{
-    public class AzureSearchOptions
-    {
-        [Required]
-        public string AccountName { get; set; }
+namespace BaGet.Azure;
 
-        [Required]
-        public string ApiKey { get; set; }
-    }
+public class AzureSearchOptions
+{
+    [Required]
+    public string AccountName { get; set; }
+
+    [Required]
+    public string ApiKey { get; set; }
 }

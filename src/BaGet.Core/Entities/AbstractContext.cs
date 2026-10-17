@@ -4,324 +4,323 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BaGet.Core
+namespace BaGet.Core;
+
+/// <remarks>
+/// Identity's tables live in the same database as the packages, so a deployment keeps
+/// one database. They are created by a migration whether or not accounts are enabled.
+/// </remarks>
+public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, IContext where TContext : DbContext
 {
-    /// <remarks>
-    /// Identity's tables live in the same database as the packages, so a deployment keeps
-    /// one database. They are created by a migration whether or not accounts are enabled.
-    /// </remarks>
-    public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, IContext where TContext : DbContext
+    public const int DefaultMaxStringLength = 4000;
+
+    public const int MaxPackageIdLength = 128;
+    public const int MaxPackageVersionLength = 64;
+    public const int MaxPackageMinClientVersionLength = 44;
+    public const int MaxPackageLanguageLength = 20;
+    public const int MaxPackageTitleLength = 256;
+    public const int MaxPackageTypeNameLength = 512;
+    public const int MaxPackageTypeVersionLength = 64;
+    public const int MaxRepositoryTypeLength = 100;
+    public const int MaxTargetFrameworkLength = 256;
+
+    public const int MaxPackageDependencyVersionRangeLength = 256;
+
+    public const int MaxCatalogCommitIdLength = 36;
+    public const int MaxCatalogTypeLength = 32;
+
+    public const int MaxAccountNameLength = 256;
+    public const int MaxUserIdLength = 450;
+    public const int MaxApiKeyDescriptionLength = 256;
+    public const int MaxApiKeyHashLength = 64;
+
+    public const int MaxValidationTypeLength = 64;
+
+    public const int MaxAbuseReasonLength = 128;
+    public const int MaxEmailLength = 256;
+
+    public AbstractContext(DbContextOptions<TContext> options)
+        : base(options)
+    { }
+
+    public DbSet<Package> Packages { get; set; }
+    public DbSet<PackageDependency> PackageDependencies { get; set; }
+    public DbSet<PackageType> PackageTypes { get; set; }
+    public DbSet<TargetFramework> TargetFrameworks { get; set; }
+    public DbSet<PackageDeprecation> PackageDeprecations { get; set; }
+    public DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
+    public DbSet<CatalogEntry> CatalogLeafs { get; set; }
+    public DbSet<Organization> Organizations { get; set; }
+    public DbSet<OrganizationMember> OrganizationMembers { get; set; }
+    public DbSet<PackageOwner> PackageOwners { get; set; }
+    public DbSet<ApiKey> ApiKeys { get; set; }
+    public DbSet<PackageValidation> PackageValidations { get; set; }
+    public DbSet<AbuseReport> AbuseReports { get; set; }
+
+    public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
+
+    public virtual async Task RunMigrationsAsync(CancellationToken cancellationToken)
+        => await Database.MigrateAsync(cancellationToken);
+
+    public abstract bool IsUniqueConstraintViolationException(DbUpdateException exception);
+
+    public virtual bool SupportsLimitInSubqueries => true;
+
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        public const int DefaultMaxStringLength = 4000;
+        base.OnModelCreating(builder);
 
-        public const int MaxPackageIdLength = 128;
-        public const int MaxPackageVersionLength = 64;
-        public const int MaxPackageMinClientVersionLength = 44;
-        public const int MaxPackageLanguageLength = 20;
-        public const int MaxPackageTitleLength = 256;
-        public const int MaxPackageTypeNameLength = 512;
-        public const int MaxPackageTypeVersionLength = 64;
-        public const int MaxRepositoryTypeLength = 100;
-        public const int MaxTargetFrameworkLength = 256;
+        builder.Entity<Package>(BuildPackageEntity);
+        builder.Entity<PackageDependency>(BuildPackageDependencyEntity);
+        builder.Entity<PackageType>(BuildPackageTypeEntity);
+        builder.Entity<TargetFramework>(BuildTargetFrameworkEntity);
+        builder.Entity<PackageDeprecation>(BuildPackageDeprecationEntity);
+        builder.Entity<PackageVulnerability>(BuildPackageVulnerabilityEntity);
+        builder.Entity<CatalogEntry>(BuildCatalogEntryEntity);
+        builder.Entity<Organization>(BuildOrganizationEntity);
+        builder.Entity<OrganizationMember>(BuildOrganizationMemberEntity);
+        builder.Entity<PackageOwner>(BuildPackageOwnerEntity);
+        builder.Entity<ApiKey>(BuildApiKeyEntity);
+        builder.Entity<PackageValidation>(BuildPackageValidationEntity);
+        builder.Entity<AbuseReport>(BuildAbuseReportEntity);
+    }
 
-        public const int MaxPackageDependencyVersionRangeLength = 256;
+    private void BuildPackageEntity(EntityTypeBuilder<Package> package)
+    {
+        package.HasKey(p => p.Key);
+        package.HasIndex(p => p.Id);
+        package.HasIndex(p => new { p.Id, p.NormalizedVersionString })
+            .IsUnique();
 
-        public const int MaxCatalogCommitIdLength = 36;
-        public const int MaxCatalogTypeLength = 32;
+        package.Property(p => p.Id)
+            .HasMaxLength(MaxPackageIdLength)
+            .IsRequired();
 
-        public const int MaxAccountNameLength = 256;
-        public const int MaxUserIdLength = 450;
-        public const int MaxApiKeyDescriptionLength = 256;
-        public const int MaxApiKeyHashLength = 64;
+        package.Property(p => p.NormalizedVersionString)
+            .HasColumnName("Version")
+            .HasMaxLength(MaxPackageVersionLength)
+            .IsRequired();
 
-        public const int MaxValidationTypeLength = 64;
+        package.Property(p => p.OriginalVersionString)
+            .HasColumnName("OriginalVersion")
+            .HasMaxLength(MaxPackageVersionLength);
 
-        public const int MaxAbuseReasonLength = 128;
-        public const int MaxEmailLength = 256;
+        package.Property(p => p.ReleaseNotes)
+            .HasColumnName("ReleaseNotes");
 
-        public AbstractContext(DbContextOptions<TContext> options)
-            : base(options)
-        { }
+        package.Property(p => p.Authors)
+            .HasMaxLength(DefaultMaxStringLength)
+            .HasConversion(StringArrayToJsonConverter.Instance)
+            .Metadata.SetValueComparer(StringArrayComparer.Instance);
 
-        public DbSet<Package> Packages { get; set; }
-        public DbSet<PackageDependency> PackageDependencies { get; set; }
-        public DbSet<PackageType> PackageTypes { get; set; }
-        public DbSet<TargetFramework> TargetFrameworks { get; set; }
-        public DbSet<PackageDeprecation> PackageDeprecations { get; set; }
-        public DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
-        public DbSet<CatalogEntry> CatalogLeafs { get; set; }
-        public DbSet<Organization> Organizations { get; set; }
-        public DbSet<OrganizationMember> OrganizationMembers { get; set; }
-        public DbSet<PackageOwner> PackageOwners { get; set; }
-        public DbSet<ApiKey> ApiKeys { get; set; }
-        public DbSet<PackageValidation> PackageValidations { get; set; }
-        public DbSet<AbuseReport> AbuseReports { get; set; }
+        package.Property(p => p.IconUrl)
+            .HasConversion(UriToStringConverter.Instance)
+            .HasMaxLength(DefaultMaxStringLength);
 
-        public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
+        package.Property(p => p.LicenseUrl)
+            .HasConversion(UriToStringConverter.Instance)
+            .HasMaxLength(DefaultMaxStringLength);
 
-        public virtual async Task RunMigrationsAsync(CancellationToken cancellationToken)
-            => await Database.MigrateAsync(cancellationToken);
+        package.Property(p => p.ProjectUrl)
+            .HasConversion(UriToStringConverter.Instance)
+            .HasMaxLength(DefaultMaxStringLength);
 
-        public abstract bool IsUniqueConstraintViolationException(DbUpdateException exception);
+        package.Property(p => p.RepositoryUrl)
+            .HasConversion(UriToStringConverter.Instance)
+            .HasMaxLength(DefaultMaxStringLength);
 
-        public virtual bool SupportsLimitInSubqueries => true;
+        package.Property(p => p.Tags)
+            .HasMaxLength(DefaultMaxStringLength)
+            .HasConversion(StringArrayToJsonConverter.Instance)
+            .Metadata.SetValueComparer(StringArrayComparer.Instance);
 
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
+        package.Property(p => p.Description).HasMaxLength(DefaultMaxStringLength);
+        package.Property(p => p.Language).HasMaxLength(MaxPackageLanguageLength);
+        package.Property(p => p.MinClientVersion).HasMaxLength(MaxPackageMinClientVersionLength);
+        package.Property(p => p.Summary).HasMaxLength(DefaultMaxStringLength);
+        package.Property(p => p.Title).HasMaxLength(MaxPackageTitleLength);
+        package.Property(p => p.RepositoryType).HasMaxLength(MaxRepositoryTypeLength);
 
-            builder.Entity<Package>(BuildPackageEntity);
-            builder.Entity<PackageDependency>(BuildPackageDependencyEntity);
-            builder.Entity<PackageType>(BuildPackageTypeEntity);
-            builder.Entity<TargetFramework>(BuildTargetFrameworkEntity);
-            builder.Entity<PackageDeprecation>(BuildPackageDeprecationEntity);
-            builder.Entity<PackageVulnerability>(BuildPackageVulnerabilityEntity);
-            builder.Entity<CatalogEntry>(BuildCatalogEntryEntity);
-            builder.Entity<Organization>(BuildOrganizationEntity);
-            builder.Entity<OrganizationMember>(BuildOrganizationMemberEntity);
-            builder.Entity<PackageOwner>(BuildPackageOwnerEntity);
-            builder.Entity<ApiKey>(BuildApiKeyEntity);
-            builder.Entity<PackageValidation>(BuildPackageValidationEntity);
-            builder.Entity<AbuseReport>(BuildAbuseReportEntity);
-        }
+        package.Ignore(p => p.Version);
+        package.Ignore(p => p.IconUrlString);
+        package.Ignore(p => p.LicenseUrlString);
+        package.Ignore(p => p.ProjectUrlString);
+        package.Ignore(p => p.RepositoryUrlString);
 
-        private void BuildPackageEntity(EntityTypeBuilder<Package> package)
-        {
-            package.HasKey(p => p.Key);
-            package.HasIndex(p => p.Id);
-            package.HasIndex(p => new { p.Id, p.NormalizedVersionString })
-                .IsUnique();
+        // The dependency to package relationship is deliberately left optional. Making it
+        // required, or giving it a cascade delete, changes the foreign key and so needs a
+        // migration; SQLite cannot alter a foreign key, so consumers would have to
+        // recreate their database and reindex every package. PackageDatabase therefore
+        // deletes a package's dependency rows itself, so that none are left orphaned.
+        // See: https://github.com/loic-sharma/BaGet/pull/174
 
-            package.Property(p => p.Id)
-                .HasMaxLength(MaxPackageIdLength)
-                .IsRequired();
+        package.HasMany(p => p.PackageTypes)
+            .WithOne(d => d.Package)
+            .IsRequired();
 
-            package.Property(p => p.NormalizedVersionString)
-                .HasColumnName("Version")
-                .HasMaxLength(MaxPackageVersionLength)
-                .IsRequired();
+        package.HasMany(p => p.TargetFrameworks)
+            .WithOne(d => d.Package)
+            .IsRequired();
 
-            package.Property(p => p.OriginalVersionString)
-                .HasColumnName("OriginalVersion")
-                .HasMaxLength(MaxPackageVersionLength);
+        package.Property(p => p.RowVersion).IsRowVersion();
+    }
 
-            package.Property(p => p.ReleaseNotes)
-                .HasColumnName("ReleaseNotes");
+    private void BuildPackageDeprecationEntity(EntityTypeBuilder<PackageDeprecation> deprecation)
+    {
+        deprecation.HasKey(d => d.Key);
 
-            package.Property(p => p.Authors)
-                .HasMaxLength(DefaultMaxStringLength)
-                .HasConversion(StringArrayToJsonConverter.Instance)
-                .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        deprecation
+            .Property(d => d.Reasons)
+            .HasMaxLength(DefaultMaxStringLength)
+            .HasConversion(StringArrayToJsonConverter.Instance)
+            .Metadata.SetValueComparer(StringArrayComparer.Instance);
 
-            package.Property(p => p.IconUrl)
-                .HasConversion(UriToStringConverter.Instance)
-                .HasMaxLength(DefaultMaxStringLength);
+        deprecation.Property(d => d.Message).HasMaxLength(DefaultMaxStringLength);
+        deprecation.Property(d => d.AlternatePackageId).HasMaxLength(MaxPackageIdLength);
+        deprecation.Property(d => d.AlternateVersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
 
-            package.Property(p => p.LicenseUrl)
-                .HasConversion(UriToStringConverter.Instance)
-                .HasMaxLength(DefaultMaxStringLength);
+        // A version has at most one deprecation. The relationship is optional in the
+        // database for the same reason as the dependency one: a required relationship
+        // would need a foreign key change, which SQLite cannot make in place.
+        // The foreign key is declared explicitly: for a one to one relationship EF
+        // cannot otherwise tell which side is the dependent.
+        deprecation
+            .HasOne(d => d.Package)
+            .WithOne(p => p.Deprecation)
+            .HasForeignKey<PackageDeprecation>(d => d.PackageKey)
+            .IsRequired(false);
+    }
 
-            package.Property(p => p.ProjectUrl)
-                .HasConversion(UriToStringConverter.Instance)
-                .HasMaxLength(DefaultMaxStringLength);
+    private void BuildPackageVulnerabilityEntity(EntityTypeBuilder<PackageVulnerability> vulnerability)
+    {
+        vulnerability.HasKey(v => v.Key);
 
-            package.Property(p => p.RepositoryUrl)
-                .HasConversion(UriToStringConverter.Instance)
-                .HasMaxLength(DefaultMaxStringLength);
+        vulnerability.Property(v => v.AdvisoryUrl).HasMaxLength(DefaultMaxStringLength);
+        vulnerability.Property(v => v.VersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
 
-            package.Property(p => p.Tags)
-                .HasMaxLength(DefaultMaxStringLength)
-                .HasConversion(StringArrayToJsonConverter.Instance)
-                .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        vulnerability
+            .HasOne(v => v.Package)
+            .WithMany(p => p.Vulnerabilities)
+            .HasForeignKey(v => v.PackageKey)
+            .IsRequired(false);
+    }
 
-            package.Property(p => p.Description).HasMaxLength(DefaultMaxStringLength);
-            package.Property(p => p.Language).HasMaxLength(MaxPackageLanguageLength);
-            package.Property(p => p.MinClientVersion).HasMaxLength(MaxPackageMinClientVersionLength);
-            package.Property(p => p.Summary).HasMaxLength(DefaultMaxStringLength);
-            package.Property(p => p.Title).HasMaxLength(MaxPackageTitleLength);
-            package.Property(p => p.RepositoryType).HasMaxLength(MaxRepositoryTypeLength);
+    private void BuildCatalogEntryEntity(EntityTypeBuilder<CatalogEntry> entry)
+    {
+        entry.HasKey(e => e.Key);
+        entry.HasIndex(e => e.CommitId).IsUnique();
 
-            package.Ignore(p => p.Version);
-            package.Ignore(p => p.IconUrlString);
-            package.Ignore(p => p.LicenseUrlString);
-            package.Ignore(p => p.ProjectUrlString);
-            package.Ignore(p => p.RepositoryUrlString);
+        entry.Property(e => e.CommitId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
+        entry.Property(e => e.Type).HasMaxLength(MaxCatalogTypeLength).IsRequired();
+        entry.Property(e => e.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+        entry.Property(e => e.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+    }
 
-            // The dependency to package relationship is deliberately left optional. Making it
-            // required, or giving it a cascade delete, changes the foreign key and so needs a
-            // migration; SQLite cannot alter a foreign key, so consumers would have to
-            // recreate their database and reindex every package. PackageDatabase therefore
-            // deletes a package's dependency rows itself, so that none are left orphaned.
-            // See: https://github.com/loic-sharma/BaGet/pull/174
+    private void BuildOrganizationEntity(EntityTypeBuilder<Organization> organization)
+    {
+        organization.HasKey(o => o.Key);
+        organization.HasIndex(o => o.Name).IsUnique();
 
-            package.HasMany(p => p.PackageTypes)
-                .WithOne(d => d.Package)
-                .IsRequired();
+        organization.Property(o => o.Name).HasMaxLength(MaxAccountNameLength).IsRequired();
+    }
 
-            package.HasMany(p => p.TargetFrameworks)
-                .WithOne(d => d.Package)
-                .IsRequired();
+    private void BuildOrganizationMemberEntity(EntityTypeBuilder<OrganizationMember> member)
+    {
+        member.HasKey(m => m.Key);
+        member.HasIndex(m => m.UserId);
 
-            package.Property(p => p.RowVersion).IsRowVersion();
-        }
+        member.Property(m => m.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
 
-        private void BuildPackageDeprecationEntity(EntityTypeBuilder<PackageDeprecation> deprecation)
-        {
-            deprecation.HasKey(d => d.Key);
+        member
+            .HasOne(m => m.Organization)
+            .WithMany()
+            .HasForeignKey(m => m.OrganizationKey)
+            .IsRequired(false);
+    }
 
-            deprecation
-                .Property(d => d.Reasons)
-                .HasMaxLength(DefaultMaxStringLength)
-                .HasConversion(StringArrayToJsonConverter.Instance)
-                .Metadata.SetValueComparer(StringArrayComparer.Instance);
+    private void BuildPackageOwnerEntity(EntityTypeBuilder<PackageOwner> owner)
+    {
+        owner.HasKey(o => o.Key);
+        owner.HasIndex(o => o.PackageId);
+        owner.HasIndex(o => o.OwnerName);
 
-            deprecation.Property(d => d.Message).HasMaxLength(DefaultMaxStringLength);
-            deprecation.Property(d => d.AlternatePackageId).HasMaxLength(MaxPackageIdLength);
-            deprecation.Property(d => d.AlternateVersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
+        owner.Property(o => o.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+        owner.Property(o => o.OwnerName).HasMaxLength(MaxAccountNameLength).IsRequired();
+    }
 
-            // A version has at most one deprecation. The relationship is optional in the
-            // database for the same reason as the dependency one: a required relationship
-            // would need a foreign key change, which SQLite cannot make in place.
-            // The foreign key is declared explicitly: for a one to one relationship EF
-            // cannot otherwise tell which side is the dependent.
-            deprecation
-                .HasOne(d => d.Package)
-                .WithOne(p => p.Deprecation)
-                .HasForeignKey<PackageDeprecation>(d => d.PackageKey)
-                .IsRequired(false);
-        }
+    private void BuildApiKeyEntity(EntityTypeBuilder<ApiKey> apiKey)
+    {
+        apiKey.HasKey(k => k.Key);
+        apiKey.HasIndex(k => k.HashedKey).IsUnique();
+        apiKey.HasIndex(k => k.UserId);
 
-        private void BuildPackageVulnerabilityEntity(EntityTypeBuilder<PackageVulnerability> vulnerability)
-        {
-            vulnerability.HasKey(v => v.Key);
+        apiKey.Property(k => k.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
+        apiKey.Property(k => k.Description).HasMaxLength(MaxApiKeyDescriptionLength);
+        apiKey.Property(k => k.HashedKey).HasMaxLength(MaxApiKeyHashLength).IsRequired();
+        apiKey.Property(k => k.PackageGlobPattern).HasMaxLength(MaxPackageIdLength);
 
-            vulnerability.Property(v => v.AdvisoryUrl).HasMaxLength(DefaultMaxStringLength);
-            vulnerability.Property(v => v.VersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
+        apiKey
+            .Property(k => k.Scopes)
+            .HasMaxLength(DefaultMaxStringLength)
+            .HasConversion(StringArrayToJsonConverter.Instance)
+            .Metadata.SetValueComparer(StringArrayComparer.Instance);
+    }
 
-            vulnerability
-                .HasOne(v => v.Package)
-                .WithMany(p => p.Vulnerabilities)
-                .HasForeignKey(v => v.PackageKey)
-                .IsRequired(false);
-        }
+    private void BuildPackageValidationEntity(EntityTypeBuilder<PackageValidation> validation)
+    {
+        validation.HasKey(v => v.Key);
+        validation.HasIndex(v => v.SubmissionId);
+        validation.HasIndex(v => v.PackageId);
 
-        private void BuildCatalogEntryEntity(EntityTypeBuilder<CatalogEntry> entry)
-        {
-            entry.HasKey(e => e.Key);
-            entry.HasIndex(e => e.CommitId).IsUnique();
+        validation.Property(v => v.SubmissionId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
+        validation.Property(v => v.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+        validation.Property(v => v.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+        validation.Property(v => v.Type).HasMaxLength(MaxValidationTypeLength).IsRequired();
+        validation.Property(v => v.Message).HasMaxLength(DefaultMaxStringLength);
 
-            entry.Property(e => e.CommitId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
-            entry.Property(e => e.Type).HasMaxLength(MaxCatalogTypeLength).IsRequired();
-            entry.Property(e => e.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
-            entry.Property(e => e.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
-        }
+        validation
+            .HasOne(v => v.Package)
+            .WithMany()
+            .HasForeignKey(v => v.PackageKey)
+            .IsRequired(false);
+    }
 
-        private void BuildOrganizationEntity(EntityTypeBuilder<Organization> organization)
-        {
-            organization.HasKey(o => o.Key);
-            organization.HasIndex(o => o.Name).IsUnique();
+    private void BuildAbuseReportEntity(EntityTypeBuilder<AbuseReport> report)
+    {
+        report.HasKey(r => r.Key);
+        report.HasIndex(r => r.PackageId);
 
-            organization.Property(o => o.Name).HasMaxLength(MaxAccountNameLength).IsRequired();
-        }
+        report.Property(r => r.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+        report.Property(r => r.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+        report.Property(r => r.Reason).HasMaxLength(MaxAbuseReasonLength).IsRequired();
+        report.Property(r => r.Details).HasMaxLength(DefaultMaxStringLength).IsRequired();
+        report.Property(r => r.ReporterEmail).HasMaxLength(MaxEmailLength);
+    }
 
-        private void BuildOrganizationMemberEntity(EntityTypeBuilder<OrganizationMember> member)
-        {
-            member.HasKey(m => m.Key);
-            member.HasIndex(m => m.UserId);
+    private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)
+    {
+        dependency.HasKey(d => d.Key);
+        dependency.HasIndex(d => d.Id);
 
-            member.Property(m => m.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
+        dependency.Property(d => d.Id).HasMaxLength(MaxPackageIdLength);
+        dependency.Property(d => d.VersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
+        dependency.Property(d => d.TargetFramework).HasMaxLength(MaxTargetFrameworkLength);
+    }
 
-            member
-                .HasOne(m => m.Organization)
-                .WithMany()
-                .HasForeignKey(m => m.OrganizationKey)
-                .IsRequired(false);
-        }
+    private void BuildPackageTypeEntity(EntityTypeBuilder<PackageType> type)
+    {
+        type.HasKey(d => d.Key);
+        type.HasIndex(d => d.Name);
 
-        private void BuildPackageOwnerEntity(EntityTypeBuilder<PackageOwner> owner)
-        {
-            owner.HasKey(o => o.Key);
-            owner.HasIndex(o => o.PackageId);
-            owner.HasIndex(o => o.OwnerName);
+        type.Property(d => d.Name).HasMaxLength(MaxPackageTypeNameLength);
+        type.Property(d => d.Version).HasMaxLength(MaxPackageTypeVersionLength);
+    }
 
-            owner.Property(o => o.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
-            owner.Property(o => o.OwnerName).HasMaxLength(MaxAccountNameLength).IsRequired();
-        }
+    private void BuildTargetFrameworkEntity(EntityTypeBuilder<TargetFramework> targetFramework)
+    {
+        targetFramework.HasKey(f => f.Key);
+        targetFramework.HasIndex(f => f.Moniker);
 
-        private void BuildApiKeyEntity(EntityTypeBuilder<ApiKey> apiKey)
-        {
-            apiKey.HasKey(k => k.Key);
-            apiKey.HasIndex(k => k.HashedKey).IsUnique();
-            apiKey.HasIndex(k => k.UserId);
-
-            apiKey.Property(k => k.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
-            apiKey.Property(k => k.Description).HasMaxLength(MaxApiKeyDescriptionLength);
-            apiKey.Property(k => k.HashedKey).HasMaxLength(MaxApiKeyHashLength).IsRequired();
-            apiKey.Property(k => k.PackageGlobPattern).HasMaxLength(MaxPackageIdLength);
-
-            apiKey
-                .Property(k => k.Scopes)
-                .HasMaxLength(DefaultMaxStringLength)
-                .HasConversion(StringArrayToJsonConverter.Instance)
-                .Metadata.SetValueComparer(StringArrayComparer.Instance);
-        }
-
-        private void BuildPackageValidationEntity(EntityTypeBuilder<PackageValidation> validation)
-        {
-            validation.HasKey(v => v.Key);
-            validation.HasIndex(v => v.SubmissionId);
-            validation.HasIndex(v => v.PackageId);
-
-            validation.Property(v => v.SubmissionId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
-            validation.Property(v => v.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
-            validation.Property(v => v.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
-            validation.Property(v => v.Type).HasMaxLength(MaxValidationTypeLength).IsRequired();
-            validation.Property(v => v.Message).HasMaxLength(DefaultMaxStringLength);
-
-            validation
-                .HasOne(v => v.Package)
-                .WithMany()
-                .HasForeignKey(v => v.PackageKey)
-                .IsRequired(false);
-        }
-
-        private void BuildAbuseReportEntity(EntityTypeBuilder<AbuseReport> report)
-        {
-            report.HasKey(r => r.Key);
-            report.HasIndex(r => r.PackageId);
-
-            report.Property(r => r.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
-            report.Property(r => r.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
-            report.Property(r => r.Reason).HasMaxLength(MaxAbuseReasonLength).IsRequired();
-            report.Property(r => r.Details).HasMaxLength(DefaultMaxStringLength).IsRequired();
-            report.Property(r => r.ReporterEmail).HasMaxLength(MaxEmailLength);
-        }
-
-        private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)
-        {
-            dependency.HasKey(d => d.Key);
-            dependency.HasIndex(d => d.Id);
-
-            dependency.Property(d => d.Id).HasMaxLength(MaxPackageIdLength);
-            dependency.Property(d => d.VersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
-            dependency.Property(d => d.TargetFramework).HasMaxLength(MaxTargetFrameworkLength);
-        }
-
-        private void BuildPackageTypeEntity(EntityTypeBuilder<PackageType> type)
-        {
-            type.HasKey(d => d.Key);
-            type.HasIndex(d => d.Name);
-
-            type.Property(d => d.Name).HasMaxLength(MaxPackageTypeNameLength);
-            type.Property(d => d.Version).HasMaxLength(MaxPackageTypeVersionLength);
-        }
-
-        private void BuildTargetFrameworkEntity(EntityTypeBuilder<TargetFramework> targetFramework)
-        {
-            targetFramework.HasKey(f => f.Key);
-            targetFramework.HasIndex(f => f.Moniker);
-
-            targetFramework.Property(f => f.Moniker).HasMaxLength(MaxTargetFrameworkLength);
-        }
+        targetFramework.Property(f => f.Moniker).HasMaxLength(MaxTargetFrameworkLength);
     }
 }
