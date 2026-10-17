@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -184,6 +185,45 @@ namespace BaGet.Core.Tests.Services
                 {
                     await Assert.ThrowsAsync<ArgumentException>(async () =>
                         await _target.DeleteAsync(path));
+                }
+            }
+        }
+
+        public class ListAsync : FactsBase
+        {
+            [Fact]
+            public async Task ListsEveryPathUnderThePrefix()
+            {
+                await _target.PutAsync("staging/a.json", StringStream("a"), "application/json");
+                await _target.PutAsync("staging/nested/b.json", StringStream("b"), "application/json");
+                await _target.PutAsync("packages/elsewhere.nupkg", StringStream("c"), "application/octet-stream");
+
+                var result = await _target.ListAsync("staging");
+
+                // Store relative and "/" separated, so each path can go straight back to
+                // GetAsync or DeleteAsync on any platform.
+                Assert.Equal(
+                    new[] { "staging/a.json", "staging/nested/b.json" },
+                    result.OrderBy(p => p, StringComparer.Ordinal).ToArray());
+            }
+
+            [Fact]
+            public async Task IsEmptyWhenThePrefixHoldsNothing()
+            {
+                Assert.Empty(await _target.ListAsync("staging"));
+
+                await _target.PutAsync("packages/elsewhere.nupkg", StringStream("c"), "application/octet-stream");
+
+                Assert.Empty(await _target.ListAsync("staging"));
+            }
+
+            [Fact]
+            public async Task NoAccessOutsideStorePath()
+            {
+                foreach (var path in OutsideStorePathData)
+                {
+                    await Assert.ThrowsAsync<ArgumentException>(async () =>
+                        await _target.ListAsync(path));
                 }
             }
         }

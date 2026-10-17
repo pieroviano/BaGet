@@ -38,6 +38,10 @@ namespace BaGet
             services.AddBaGetCatalog();
             services.AddBaGetValidation();
 
+            // Browser uploads are staged between their two requests; whatever nobody comes
+            // back to confirm or cancel is collected here.
+            services.AddHostedService<StagingSweepWorker>();
+
             return services;
         }
     }

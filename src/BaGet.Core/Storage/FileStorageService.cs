@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -9,7 +11,7 @@ namespace BaGet.Core
     /// <summary>
     /// Stores content on disk.
     /// </summary>
-    public class FileStorageService : IStorageService
+    public class FileStorageService : IStorageService, IListableStorageService
     {
         // See: https://github.com/dotnet/corefx/blob/master/src/Common/src/CoreLib/System/IO/Stream.cs#L35
         private const int DefaultCopyBufferSize = 81920;
@@ -79,6 +81,29 @@ namespace BaGet.Core
                         : StoragePutResult.Conflict;
                 }
             }
+        }
+
+        public Task<IReadOnlyList<string>> ListAsync(string pathPrefix, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // GetFullPath keeps the prefix inside the store, exactly as for a read or write.
+            var fullPath = GetFullPath(pathPrefix);
+
+            if (!Directory.Exists(fullPath))
+            {
+                return Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+            }
+
+            var paths = Directory
+                .EnumerateFiles(fullPath, "*", SearchOption.AllDirectories)
+                .Select(path => path
+                    .Substring(_storePath.Length)
+                    .Replace(Path.DirectorySeparatorChar, '/')
+                    .Replace(Path.AltDirectorySeparatorChar, '/'))
+                .ToList();
+
+            return Task.FromResult<IReadOnlyList<string>>(paths);
         }
 
         public Task DeleteAsync(string path, CancellationToken cancellationToken = default)

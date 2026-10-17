@@ -39,8 +39,8 @@ need to be reachable from the new list.
 | B4 | Antiforgery with a large multipart body | Razor Pages validate the token before model binding; with a several-hundred-MB file the token must still be read first. | Prototype a 200 MB multipart POST against a stub page; confirm nothing beyond `FormOptions` is needed. |
 | B5 | `IStorageService` resolves when accounts are disabled | The API-key mode of D3 stages files too. | Provider-resolved in `Program.ConfigureServices`; assert with an integration test at `Accounts:Enabled=false`. |
 
-If B1 fails, stage to a local temp file instead and accept single-instance-only browser upload,
-recorded as a stated limitation rather than shipped silently.
+B1 and B5 passed, so the temp-file fallback is dropped: no route in BaGet turns a request into a
+storage path, and `IStorageService` is provider-resolved independently of `Accounts:Enabled`.
 
 ## Changes
 
@@ -80,11 +80,17 @@ public interface IPackageStagingService
 }
 ```
 
-- Token: `Guid.NewGuid().ToString("N")` — unguessable, and `OpenAsync` re-checks `ownerId`, so one
-  user cannot confirm another's staged file.
-- Stored under a `staging/` prefix (subject to B1), with the owner id recorded so that check is real.
-- Abandoned uploads: `RemoveAsync` on confirm and on cancel, plus a cutoff sweep. **Without the sweep
-  staging leaks files indefinitely**, so the sweep is part of this change, not a follow-up.
+Built (`src/BaGet.Core/Staging/`), with `Task<int> SweepAsync(DateTime stagedBefore, ...)` added to the
+interface above:
+
+| Point | As built |
+|---|---|
+| Token | 128 bits from `RandomNumberGenerator`, hex encoded (`StoragePackageStagingService.CreateToken`) — a token reaches storage, so `OpenAsync`/`RemoveAsync` refuse anything that is not 32 lowercase hex characters before it becomes a path |
+| Owner | Recorded in `staging/{token}.json`; `OpenAsync` compares it ordinally and answers null otherwise, so one user cannot confirm another's upload. With accounts off every upload shares the empty owner, as the API-key path has no user either |
+| Paths | `staging/{token}.json` (metadata, written first so the sweep can always find the upload) and `staging/{token}.nupkg` |
+| Null store | `Storage:Type=Null` reads back nothing, so a staged upload reports itself as an unknown token instead of yielding a null stream |
+| Sweep | `SweepAsync` removes every upload staged before a cutoff; `StagingSweepWorker` (`src/BaGet.Web/`) runs it hourly with a 24-hour cutoff |
+| Listing | The sweep needs to enumerate a prefix, which `IStorageService` cannot. New optional capability `IListableStorageService`, implemented by `FileStorageService` and `NullStorageService`. A store that does not implement it logs a warning and is **not** swept — the cloud providers (Azure, S3, GCS, Aliyun) still need it |
 
 ### C3 — Upload page (`src/BaGet.Web/Pages/Upload.cshtml`)
 

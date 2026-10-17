@@ -29,6 +29,7 @@ namespace BaGet.Identity
 
             services.TryAddScoped<ApiKeyService>();
             services.TryAddScoped<PackageOwnershipService>();
+            services.TryAddScoped<SessionPrincipalFactory>();
             services.TryAddTransient<ApiKeyAuthenticationService>();
             services.Replace(ServiceDescriptor.Transient<Core.IAuthenticationService, AccountAuthenticationService>());
             services.Replace(ServiceDescriptor.Transient<IPackageAuthorizationService, OwnershipAuthorizationService>());

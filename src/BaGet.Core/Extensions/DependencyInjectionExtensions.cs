@@ -100,6 +100,7 @@ namespace BaGet.Core
             services.TryAddTransient<IPackageAuthorizationService, AllowAuthenticatedAuthorizationService>();
             services.TryAddTransient<IPackageMetadataService, DefaultPackageMetadataService>();
             services.TryAddTransient<IPackageService, PackageService>();
+            services.TryAddTransient<IPackageStagingService, StoragePackageStagingService>();
             services.TryAddTransient<IPackageStorageService, PackageStorageService>();
             services.TryAddTransient<IServiceIndexService, BaGetServiceIndex>();
             services.TryAddTransient<ISymbolIndexingService, SymbolIndexingService>();
