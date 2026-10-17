@@ -1,5 +1,7 @@
 ﻿@page
+@using Microsoft.Extensions.Options
 @inject IUrlGenerator _url
+@inject IOptionsSnapshot<FeedsOptions> _feeds
 
 @{
     ViewData["Title"] = "Upload package";
@@ -7,6 +9,11 @@
     var baseUrl = Url.PageLink("/Index");
     var publishUrl = _url.GetPackagePublishResourceUrl();
     var serviceIndexUrl = _url.GetServiceIndexUrl();
+
+    // PowerShellGet speaks the V2 protocol, so its instructions are only shown when the
+    // V2 feed is being served.
+    var v2FeedUrl = _url.GetV2FeedUrl();
+    var showPowerShellGet = _feeds.Value.EnableV2;
 }
 
 <div class="col-sm-12">
@@ -34,7 +41,7 @@
             <div class="copy-button">
                 <button class="btn btn-default btn-warning"
                         type="button"
-                        data-tottle="popover"
+                        data-toggle="popover"
                         data-placement="bottom"
                         data-content="Copied"
                         @@click="window.baget.copyTextToClipboard(active.content.join('\n'), $el)">
@@ -74,15 +81,24 @@
             documentation: "https://fsprojects.github.io/Paket/paket-push.html",
         },
 
-        // TODO: This is broken...
-        {
-            name: "PowerShellGet",
-            content: [
-                "Register-PSRepository -Name \"BaGet\" -SourceLocation \"@serviceIndexUrl\" "
-                  + "-PublishLocation \"@publishUrl\" -InstallationPolicy \"Trusted\"",
-                "Publish-Module -Name PS-Module -Repository BaGet"
-            ],
-            documentation: "https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module",
-        },
     ];
+
+    @* PowerShellGet reads the V2 protocol, not V3: pointing Register-PSRepository at the
+       service index fails, which is what the TODO here used to record. BaGet now serves a
+       V2 feed, so the source location is that feed. The tab is omitted entirely when the
+       V2 feed is switched off, rather than advertising an address that would 404. *@
+    @if (showPowerShellGet)
+    {
+        <text>
+    tabs.push({
+        name: "PowerShellGet",
+        content: [
+            "Register-PSRepository -Name \"BaGet\" -SourceLocation \"@v2FeedUrl\" "
+              + "-PublishLocation \"@publishUrl\" -InstallationPolicy \"Trusted\"",
+            "Publish-Module -Name PS-Module -Repository BaGet"
+        ],
+        documentation: "https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module",
+    });
+        </text>
+    }
 </script>

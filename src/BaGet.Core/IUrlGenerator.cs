@@ -50,6 +50,11 @@ namespace BaGet.Core
         string GetAutocompleteResourceUrl();
 
         /// <summary>
+        /// Get the URL of the V2 (OData) feed, for clients that cannot use V3.
+        /// </summary>
+        string GetV2FeedUrl();
+
+        /// <summary>
         /// Get the URI template a client expands to reach a package's details page.
         /// The literal "{id}" and "{version}" placeholders are part of the value.
         /// See: https://learn.microsoft.com/en-us/nuget/api/service-index#resources

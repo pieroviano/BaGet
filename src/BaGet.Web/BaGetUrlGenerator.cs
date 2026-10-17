@@ -159,6 +159,14 @@ namespace BaGet.Web
                 });
         }
 
+        public string GetV2FeedUrl()
+        {
+            return _linkGenerator.GetUriByRouteValues(
+                _httpContextAccessor.HttpContext,
+                Routes.V2RootRouteName,
+                values: null);
+        }
+
         // These two are templates for the client to expand, not URLs for a specific
         // package, so the placeholders are returned verbatim. Routing them through
         // LinkGenerator would percent-encode the braces.
