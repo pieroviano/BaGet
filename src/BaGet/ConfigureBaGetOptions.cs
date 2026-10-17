@@ -5,7 +5,9 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace BaGet
@@ -18,10 +20,23 @@ namespace BaGet
         : IConfigureOptions<CorsOptions>
         , IConfigureOptions<FormOptions>
         , IConfigureOptions<ForwardedHeadersOptions>
+        , IConfigureOptions<HostFilteringOptions>
         , IConfigureOptions<IISServerOptions>
         , IValidateOptions<BaGetOptions>
     {
         public const string CorsPolicy = "AllowAll";
+
+        /// <summary>
+        /// The <see cref="BaGetOptions.AllowedHosts"/> entry that disables host filtering.
+        /// </summary>
+        public const string AllowAnyHost = "*";
+
+        private readonly IConfiguration _configuration;
+
+        public ConfigureBaGetOptions(IConfiguration configuration)
+        {
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        }
 
         private static readonly HashSet<string> ValidDatabaseTypes
             = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -74,6 +89,43 @@ namespace BaGet
             // Do not restrict to local network/proxy
             options.KnownNetworks.Clear();
             options.KnownProxies.Clear();
+        }
+
+        public void Configure(HostFilteringOptions options)
+        {
+            var allowedHosts = ParseAllowedHosts(_configuration[nameof(BaGetOptions.AllowedHosts)]);
+
+            options.AllowedHosts = allowedHosts;
+
+            // An absent or empty "Host" header cannot be on an allow-list, and the URLs
+            // BaGet advertises are built from that header. Only tolerate it while host
+            // filtering is disabled, which is how the middleware behaves out of the box.
+            options.AllowEmptyHosts = allowedHosts.Contains(AllowAnyHost);
+        }
+
+        /// <summary>
+        /// Turn a configured <see cref="BaGetOptions.AllowedHosts"/> value into the list the
+        /// host filtering middleware expects. An absent or blank value means "allow any
+        /// host", so that a deployment which never configured this keeps working.
+        /// </summary>
+        internal static List<string> ParseAllowedHosts(string value)
+        {
+            var hosts = (value ?? string.Empty)
+                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                // ASP.NET Core's own parsing of this key does not trim, which turns the
+                // usual "a.example.com; b.example.com" spacing into patterns that match
+                // nothing and locks out hosts the operator meant to allow.
+                .Select(host => host.Trim())
+                .Where(host => host.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (hosts.Count == 0)
+            {
+                return new List<string> { AllowAnyHost };
+            }
+
+            return hosts;
         }
 
         public void Configure(IISServerOptions options)
