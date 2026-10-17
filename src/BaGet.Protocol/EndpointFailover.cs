@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -97,6 +98,12 @@ namespace BaGet.Protocol.Internal
                     return !cancellationToken.IsCancellationRequested;
 
                 case TimeoutException _:
+                    return true;
+
+                // A connection dropped while the response body was being read surfaces as an
+                // IOException - HttpIOException derives from it - rather than an
+                // HttpRequestException, because the request itself had already succeeded.
+                case IOException _:
                     return true;
 
                 // The endpoint answered with something that is not the resource it advertised.

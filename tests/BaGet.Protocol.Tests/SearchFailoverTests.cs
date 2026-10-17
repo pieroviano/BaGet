@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -33,6 +34,34 @@ namespace BaGet.Protocol.Tests
         private NuGetClientFactory CreateFactory()
         {
             return new NuGetClientFactory(new HttpClient(_handler), TestData.ServiceIndexUrl);
+        }
+
+        [Fact]
+        public async Task SearchAsync_FirstEndpointDropsTheResponse_UsesTheNextEndpoint()
+        {
+            // A connection dropped while the response body is being read surfaces as an
+            // IOException, not an HttpRequestException. The endpoint still failed.
+            _handler.Throws(FirstSearchUrl, () => new IOException("The response ended prematurely."));
+            _handler.Json(SecondSearchUrl, TestData.DefaultSearch);
+
+            var response = await CreateFactory().CreateSearchClient().SearchAsync();
+
+            Assert.Equal(1, response.TotalHits);
+            Assert.Equal(1, _handler.RequestCount(FirstSearchUrl));
+            Assert.Equal(1, _handler.RequestCount(SecondSearchUrl));
+        }
+
+        [Fact]
+        public async Task AutocompleteAsync_FirstEndpointDropsTheResponse_UsesTheNextEndpoint()
+        {
+            _handler.Throws(FirstAutocompleteUrl, () => new IOException("The response ended prematurely."));
+            _handler.Json(SecondAutocompleteUrl, TestData.DefaultAutocomplete);
+
+            var response = await CreateFactory().CreateAutocompleteClient().AutocompleteAsync();
+
+            Assert.Equal(1, response.TotalHits);
+            Assert.Equal(1, _handler.RequestCount(FirstAutocompleteUrl));
+            Assert.Equal(1, _handler.RequestCount(SecondAutocompleteUrl));
         }
 
         [Fact]
