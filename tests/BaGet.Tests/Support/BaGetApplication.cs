@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -18,7 +18,7 @@ using Xunit.Abstractions;
 
 namespace BaGet.Tests
 {
-    public class BaGetApplication : WebApplicationFactory<Startup>
+    public class BaGetApplication : WebApplicationFactory<Program>
     {
         private readonly ITestOutputHelper _output;
         private readonly HttpClient _upstreamClient;
@@ -49,8 +49,34 @@ namespace BaGet.Tests
 
             Directory.CreateDirectory(tempPath);
 
+            // Setup the integration test configuration.
+            var settings = new Dictionary<string, string>
+            {
+                { "Database:Type", "Sqlite" },
+                { "Database:ConnectionString", $"Data Source={sqlitePath}" },
+                { "Storage:Type", "FileSystem" },
+                { "Storage:Path", storagePath },
+                { "Search:Type", "Database" },
+                { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
+                { "Mirror:PackageSource", "http://localhost/v3/index.json" },
+            };
+
+            foreach (var pair in _configOverrides ?? new Dictionary<string, string>())
+            {
+                settings[pair.Key] = pair.Value;
+            }
+
+            // These are applied with UseSetting rather than ConfigureAppConfiguration so
+            // that they are in place before the application registers its services. Under
+            // the minimal hosting model the entry point reads builder.Configuration while
+            // registering - AddBaGetAccounts decides from "Accounts:Enabled", for one - and
+            // a provider appended afterwards would arrive too late for those reads.
+            foreach (var pair in settings)
+            {
+                builder.UseSetting(pair.Key, pair.Value);
+            }
+
             builder
-                .UseStartup<Startup>()
                 .UseEnvironment("Production")
                 .ConfigureLogging(logging =>
                 {
@@ -62,27 +88,7 @@ namespace BaGet.Tests
                     // Pipe logs to the xunit output.
                     logging.AddProvider(new XunitLoggerProvider(_output));
                 })
-                .ConfigureAppConfiguration(config =>
-                {
-                    // Setup the integration test configuration.
-                    var settings = new Dictionary<string, string>
-                    {
-                        { "Database:Type", "Sqlite" },
-                        { "Database:ConnectionString", $"Data Source={sqlitePath}" },
-                        { "Storage:Type", "FileSystem" },
-                        { "Storage:Path", storagePath },
-                        { "Search:Type", "Database" },
-                        { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
-                        { "Mirror:PackageSource", "http://localhost/v3/index.json" },
-                    };
-
-                    foreach (var pair in _configOverrides ?? new Dictionary<string, string>())
-                    {
-                        settings[pair.Key] = pair.Value;
-                    }
-
-                    config.AddInMemoryCollection(settings);
-                })
+                .ConfigureServices(services => { })
                 .ConfigureServices((context, services) =>
                 {
                     // Make time deterministic for testing purposes.
@@ -124,7 +130,7 @@ namespace BaGet.Tests
     internal static class BaGetWebApplicationFactoryExtensions
     {
         public static async Task AddPackageAsync(
-            this WebApplicationFactory<Startup> factory,
+            this WebApplicationFactory<Program> factory,
             Stream package,
             CancellationToken cancellationToken = default)
         {
@@ -141,7 +147,7 @@ namespace BaGet.Tests
         }
 
         public static async Task AddSymbolPackageAsync(
-            this WebApplicationFactory<Startup> factory,
+            this WebApplicationFactory<Program> factory,
             Stream symbolPackage,
             CancellationToken cancellationToken = default)
         {

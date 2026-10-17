@@ -116,7 +116,7 @@ namespace BaGet.Tests
         [InlineData("/nuget/feed", "/nuget/feed")]
         public void NormalizePathBaseMapsConfiguredValues(string configured, string expected)
         {
-            Assert.Equal(expected, BaGet.Startup.NormalizePathBase(configured).Value ?? "");
+            Assert.Equal(expected, BaGet.Program.NormalizePathBase(configured).Value ?? "");
         }
 
         public void Dispose()

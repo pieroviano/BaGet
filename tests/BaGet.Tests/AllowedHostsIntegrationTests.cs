@@ -1,5 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.HostFiltering;
@@ -94,10 +97,11 @@ namespace BaGet.Tests
         [Fact]
         public async Task RejectsAForgedHostWithoutTheHostBuilderDefaults()
         {
-            // ConfigureWebHostDefaults happens to add the host filtering middleware, but
-            // BaGet must not depend on it: a consumer of AddBaGetWebApplication may build
-            // its host with a slim or empty builder, which does not add it.
-            using var app = new BaGetApplicationWithoutWebHostDefaults(
+            // The default builder happens to add the host filtering middleware, but BaGet
+            // must not depend on it: a consumer of AddBaGetWebApplication may build its host
+            // with a slim or empty builder, which does not add it. With the builder's own
+            // copy removed, a rejection here can only come from BaGet's pipeline.
+            using var app = WithoutTheBuildersHostFiltering(
                 _output,
                 new Dictionary<string, string> { { "AllowedHosts", "baget.example.com" } });
             using var client = app.CreateDefaultClient();
@@ -161,19 +165,39 @@ namespace BaGet.Tests
         }
 
         /// <summary>
-        /// The same application, hosted without <c>ConfigureWebHostDefaults</c> and so
-        /// without any of the middleware that it registers on BaGet's behalf.
+        /// The same application, with the host filtering that the default builder adds taken
+        /// away again, so that the only such middleware left is the one BaGet puts in its own
+        /// pipeline.
         /// </summary>
-        private sealed class BaGetApplicationWithoutWebHostDefaults : BaGetApplication
+        /// <remarks>
+        /// The builder contributes its host filtering through an <see cref="IStartupFilter"/>
+        /// whose type is internal to ASP.NET Core, so the registration is matched by name.
+        /// Hosting the application on a builder without the defaults, which is what this test
+        /// used to do, is not open to it under the minimal hosting model: the pipeline is
+        /// built by the entry point, and a bare host builder would not run it at all.
+        /// </remarks>
+        private static BaGetApplication WithoutTheBuildersHostFiltering(
+            ITestOutputHelper output,
+            Dictionary<string, string> configOverrides)
         {
-            public BaGetApplicationWithoutWebHostDefaults(
-                ITestOutputHelper output,
-                Dictionary<string, string> configOverrides)
-                : base(output, configOverrides: configOverrides)
-            {
-            }
+            return new BaGetApplication(
+                output,
+                configOverrides: configOverrides,
+                configureServices: services =>
+                {
+                    var hostFiltering = services
+                        .Where(service =>
+                            service.ServiceType == typeof(IStartupFilter) &&
+                            service.ImplementationType?.Name == "HostFilteringStartupFilter")
+                        .ToList();
 
-            protected override IHostBuilder CreateHostBuilder() => Host.CreateDefaultBuilder();
+                    Assert.NotEmpty(hostFiltering);
+
+                    foreach (var service in hostFiltering)
+                    {
+                        services.Remove(service);
+                    }
+                });
         }
     }
 }

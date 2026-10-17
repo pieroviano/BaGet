@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BaGet.Core;
 using BaGet.Database.Sqlite;
 using Microsoft.Extensions.Configuration;
@@ -66,13 +67,14 @@ namespace BaGet.Tests
 
         private IHost BuildHost(Dictionary<string, string> configs = null)
         {
-            return Program
-                .CreateHostBuilder(new string[0])
-                .ConfigureAppConfiguration((ctx, config) =>
-                {
-                    config.AddInMemoryCollection(configs ?? new Dictionary<string, string>());
-                })
-                .Build();
+            // WebApplication.CreateBuilder reads the command line as a configuration source,
+            // which is how these settings reach the host now that there is no host builder to
+            // append a provider to.
+            var args = (configs ?? new Dictionary<string, string>())
+                .Select(setting => $"--{setting.Key}={setting.Value}")
+                .ToArray();
+
+            return Program.BuildApplication(args);
         }
     }
 }
