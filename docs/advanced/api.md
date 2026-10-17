@@ -76,6 +76,6 @@ With the [validation pipeline](../configuration.md#validate-packages-before-serv
 | `/upload` | browser upload (two steps, with a metadata preview) and push instructions for each client |
 | `/stats` | totals, most downloaded packages, latest versions |
 | `/packages/{id}/{version}/report-abuse` | records a report for the package's owners |
-| `/account/login`, `/account/register`, `/account/apikeys`, `/account/organizations` | with accounts on |
+| `/account/login`, `/account/register`, `/account/apikeys`, `/account/organizations`, `/account/packages` | with accounts on |
 | `/profiles/{name}` | a user's or organization's packages, with accounts on |
-| `/packages/{id}/manage` | owners: owners, unlist/relist, deprecation, abuse reports |
+| `/packages/{id}/manage` | owners: owners, unlist/relist, delete (per `PackageDeletionBehavior`), deprecation, abuse reports |

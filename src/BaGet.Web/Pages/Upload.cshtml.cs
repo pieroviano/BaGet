@@ -89,6 +89,14 @@ namespace BaGet.Web
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        /// <summary>
+        /// The package ID a link arrived with, as "upload a new version of this" does. It is
+        /// a hint for the page only: the ID and version that are published are read from the
+        /// file, never from the request.
+        /// </summary>
+        [BindProperty(SupportsGet = true)]
+        public string Id { get; set; }
+
         public bool AccountsEnabled => _accounts.Value.Enabled;
 
         public bool IsReadOnlyMode => _options.Value.IsReadOnlyMode;

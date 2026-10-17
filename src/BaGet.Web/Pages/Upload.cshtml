@@ -187,6 +187,14 @@
     else
     {
         @* Step one: stage a file, so it can be looked at before anything is published. *@
+        @if (!string.IsNullOrWhiteSpace(Model.Id))
+        {
+            <p id="upload-for-id">
+                A new version of <a href="~/packages/@Model.Id">@Model.Id</a>. The ID and the
+                version come from the file you choose, not from this link.
+            </p>
+        }
+
         <form method="post" asp-page-handler="Stage" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="package">Package</label>

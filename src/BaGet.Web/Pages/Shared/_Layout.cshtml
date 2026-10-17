@@ -38,6 +38,7 @@
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
                                     <li role="presentation"><a href="~/account/profile" role="tab"><span>@User.Identity.Name</span></a></li>
+                                    <li role="presentation"><a href="~/account/packages" role="tab"><span>My packages</span></a></li>
                                     <li role="presentation"><a href="~/account/apikeys" role="tab"><span>API keys</span></a></li>
                                     <li role="presentation"><a href="~/account/logout" role="tab"><span>Sign out</span></a></li>
                                 }

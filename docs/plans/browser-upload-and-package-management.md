@@ -127,21 +127,35 @@ pipeline its content does not belong to.
 
 ### C5 — My packages (`src/BaGet.Identity/Pages/Account/Packages.cshtml`)
 
-An `AccountPageModel` with `RequiresSignIn => true`, listing `GetOwnedPackageIdsAsync` with each ID's
-latest version, version count and downloads, linking to `Manage`. Add `~/account/packages` to the
-signed-in nav at `_Layout.cshtml:40-42`.
+Built. `PackagesModel : AccountPageModel`, `RequiresSignIn => true`, linked from the signed-in nav
+(`_Layout.cshtml:41`, between the profile and the API keys).
+
+| Point | As built |
+|---|---|
+| Source | `Ownership.GetOwnedPackageIdsAsync(userId, userName)`, so organization-owned IDs are listed too. Ownership decides, not the package table: an ID whose every version was hard-deleted keeps its owners and stays listed, with "None" as its latest version |
+| Per ID | `IPackageDatabase.FindAsync(id, includeUnlisted: true)` — latest version (highest, listed or not, marked "(unlisted)"), version count, summed downloads. `IPackageDatabase`, not `IContext`, so it holds for a non-EF database |
+| Links | `Manage` for the ID, and "Upload new version" (`/Upload?id=…`) per row |
 
 ### C6 — Delete and upload-a-version on `Manage`
 
-- `OnPostDeleteAsync(string version)` calling `IPackageDeletionService.TryDeletePackageAsync`, the
-  button labelled from `PackageDeletionBehavior` (B3), behind a confirmation.
-- An "Upload new version" link to the upload page carrying the ID.
+Built. `Unlist`/`Relist` are untouched and reachable from the new list.
+
+| Point | As built |
+|---|---|
+| `OnPostDeleteAsync(string version)` | Read-only ⇒ a message and nothing touched, mirroring the DELETE endpoint → parse the version (404) → `IPackageDeletionService.TryDeletePackageAsync`. No notification here: `PackageDeletionService` notifies the catalog itself |
+| Label (B3) | `Unlist` ⇒ "Unlist this version", "Hidden from search and from the version list; anyone who knows the exact version can still restore it." `HardDelete` ⇒ "Delete this version permanently", plus the caveats B3 establishes: the rows and the `.nupkg`/`.nuspec`/readme/icon go, indexed PDBs keep being served, and an external search index keeps the version until reindexed. The button never claims to delete on a server that unlists |
+| Confirmation | `onclick="return confirm(…)"` carrying that same label and caption |
+| `false` from the service | Reported as "was not in the database", not as "nothing happened": a hard delete removes the files either way |
+| Upload a version | `asp-page="/Upload" asp-route-id="@Model.Id"`; `UploadModel.Id` is a bound hint the page shows, never a source of the published ID — that is read from the file |
+
+`src/BaGet.Identity/Pages/Packages/` was matched by `.gitignore`'s `**/packages/*`, so `Manage` had
+never been committed. A negation was added and the page is now tracked.
 
 ## Verification
 
 | # | Step | Expected |
 |---|---|---|
-| 1 | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` | 880 green (863 before C3/C4, plus 17) |
+| 1 | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` | 892 green (880 before C5/C6, plus 12) |
 | 2 | Stage, preview, submit while signed in | 200 and a published message (a page, not the API's 201), the package served, the token unknown afterwards |
 | 3 | Stage as user A, submit with user B's cookie | Rejected; A's file untouched |
 | 4 | Submit an ID owned by another user | 403, nothing indexed |
@@ -152,12 +166,14 @@ signed-in nav at `_Layout.cshtml:40-42`.
 | 9 | Cancel, then reuse the token | Token unknown |
 | 10 | Upload the same version twice | 409 as a readable message, not a stack trace |
 | 11 | `.snupkg` for a package that does not exist | The message B2 establishes |
-| 12 | Delete a version under each `PackageDeletionBehavior` | Unlisted or hard-deleted accordingly |
+| 12 | Delete a version under each `PackageDeletionBehavior` | Unlisted or hard-deleted accordingly, and the button says which |
 | 13 | A real `dotnet nuget push` after a browser upload | Unaffected; the API path must not regress |
+| 14 | A signed-in user's "my packages" list | Only the IDs they own; sign-in required |
 
 Steps 2-11 are pinned by `tests/BaGet.Tests/BrowserUploadTests.cs`; step 8 by
-`StagingIntegrationTests`, and step 13 by the existing push tests, which stayed green. Step 12
-belongs to C6 and is not covered yet.
+`StagingIntegrationTests`, step 13 by the existing push tests, which stayed green, and steps 12 and
+14 by `tests/BaGet.Tests/PackageManagementPageTests.cs` (one application per `PackageDeletionBehavior`,
+since a test host configuration is fixed when it is built).
 
 ## Risks
 

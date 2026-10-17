@@ -162,6 +162,9 @@ PublishScripts/
 **/packages/*
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
+# ... and except BaGet's own package-management Razor Pages, which live in a folder called
+# Packages: the rule above matched them and left the Manage page untracked.
+!src/BaGet.Identity/Pages/Packages/**
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/packages/repositories.config
 # NuGet v3's project.json files produces more ignoreable files

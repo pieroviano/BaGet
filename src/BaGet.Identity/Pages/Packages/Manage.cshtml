@@ -1,0 +1,132 @@
+@page "/packages/{id}/manage"
+@model BaGet.Identity.Pages.Packages.ManageModel
+@{
+    ViewData["Title"] = $"Manage {Model.Id}";
+}
+
+<div class="col-sm-12">
+    <h1>Manage @Model.Id</h1>
+    <hr class="breadcrumb-divider" />
+
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-info" role="alert" id="manage-message">@Model.Message</div>
+    }
+
+    <h2>Owners</h2>
+    <table class="table">
+        <tbody>
+            @foreach (var owner in Model.Owners)
+            {
+                <tr>
+                    <td><a href="~/profiles/@owner.OwnerName">@owner.OwnerName</a>@(owner.IsVerified ? " (verified)" : "")</td>
+                    <td>
+                        <form method="post" asp-page-handler="RemoveOwner">
+                            <input type="hidden" name="ownerName" value="@owner.OwnerName" />
+                            <button type="submit" class="btn btn-default btn-xs">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <form method="post" asp-page-handler="AddOwner" class="form-inline">
+        <input type="text" name="ownerName" class="form-control" placeholder="User or organization" />
+        <button type="submit" class="btn btn-primary">Add owner</button>
+    </form>
+
+    <h2>Versions</h2>
+    <p id="manage-upload">
+        <a asp-page="/Upload" asp-route-id="@Model.Id">Upload new version</a>
+    </p>
+    <p class="help-block" id="manage-delete-caption">
+        @Model.DeleteLabel: @Model.DeleteCaption
+        @if (!Model.DeletionIsPermanent)
+        {
+            <text>It is the same operation as the Unlist button beside each version.</text>
+        }
+    </p>
+    <table class="table">
+        <thead><tr><th>Version</th><th>Downloads</th><th>Listed</th><th>Deprecation</th><th></th><th></th></tr></thead>
+        <tbody>
+            @foreach (var package in Model.Versions)
+            {
+                var version = package.NormalizedVersionString;
+                <tr>
+                    <td><a href="~/packages/@Model.Id/@version">@version</a></td>
+                    <td>@package.Downloads.ToString("N0")</td>
+                    <td>
+                        @(package.Listed ? "Yes" : "No")
+                        <form method="post" asp-page-handler="@(package.Listed ? "Unlist" : "Relist")" style="display:inline">
+                            <input type="hidden" name="version" value="@version" />
+                            <button type="submit" class="btn btn-default btn-xs">@(package.Listed ? "Unlist" : "Relist")</button>
+                        </form>
+                    </td>
+                    <td>
+                        @if (package.Deprecation != null)
+                        {
+                            @string.Join(", ", package.Deprecation.Reasons ?? Array.Empty<string>())
+                            <form method="post" asp-page-handler="Undeprecate" style="display:inline">
+                                <input type="hidden" name="version" value="@version" />
+                                <button type="submit" class="btn btn-default btn-xs">Remove</button>
+                            </form>
+                        }
+                    </td>
+                    <td>
+                        <form method="post" asp-page-handler="Deprecate" class="form-inline">
+                            <input type="hidden" name="version" value="@version" />
+                            @foreach (var reason in PackageDeprecation.KnownReasons)
+                            {
+                                <label><input type="checkbox" name="reasons" value="@reason" /> @reason</label>
+                            }
+                            <input type="text" name="message" class="form-control input-sm" placeholder="Message" />
+                            <input type="text" name="alternatePackageId" class="form-control input-sm" placeholder="Alternate package" />
+                            <button type="submit" class="btn btn-warning btn-xs">Deprecate</button>
+                        </form>
+                    </td>
+                    <td>
+                        @* Labelled from the configured behaviour: on a server that unlists,
+                           this button must not claim to delete. *@
+                        <form method="post" asp-page-handler="Delete" style="display:inline">
+                            <input type="hidden" name="version" value="@version" />
+                            <button type="submit"
+                                    class="@(Model.DeletionIsPermanent ? "btn btn-danger btn-xs" : "btn btn-default btn-xs")"
+                                    onclick="return confirm('@Model.DeleteLabel @version? @Model.DeleteCaption')">
+                                @Model.DeleteLabel
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>Abuse reports</h2>
+    @if (Model.Reports.Count == 0)
+    {
+        <p>There are no open reports.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead><tr><th>Version</th><th>Reason</th><th>Details</th><th>Reporter</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var report in Model.Reports)
+                {
+                    <tr>
+                        <td>@report.PackageVersion</td>
+                        <td>@report.Reason</td>
+                        <td>@report.Details</td>
+                        <td>@report.ReporterEmail</td>
+                        <td>
+                            <form method="post" asp-page-handler="ResolveReport">
+                                <input type="hidden" name="key" value="@report.Key" />
+                                <button type="submit" class="btn btn-default btn-xs">Resolve</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

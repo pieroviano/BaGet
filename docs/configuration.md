@@ -96,6 +96,13 @@ downloaded if you know the package's id and version. You can override this behav
 }
 ```
 
+This setting also labels the button on a package's management page: it reads "Unlist this version"
+by default and "Delete this version permanently" with `HardDelete`, so the page never offers a
+deletion the server would only unlist. Two things a hard delete does *not* do: it leaves indexed
+symbols being served from `api/download/symbols/...`, and it does not update an external search
+index, so with `Search:Type=AzureSearch` the version can still appear in search results until it is
+reindexed.
+
 ## Enable package overwrites
 
 Normally, BaGet will reject a package upload if the id and version are already taken. You can configure BaGet
@@ -169,8 +176,9 @@ before. Turn them on with:
 ```
 
 Users then sign in at `/account/login`, create an account at `/account/register` (unless
-`AllowRegistration` is `false`), and create API keys at `/account/apikeys`. A key is shown once,
-and has:
+`AllowRegistration` is `false`), and create API keys at `/account/apikeys`. `/account/packages`
+lists the IDs they own, directly or through an organization, and links to each one's
+`/packages/{id}/manage`. A key is shown once, and has:
 
 | Property | Meaning |
 | --- | --- |
