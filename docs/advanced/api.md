@@ -73,7 +73,7 @@ With the [validation pipeline](../configuration.md#validate-packages-before-serv
 | Page | |
 | --- | --- |
 | `/packages`, `/packages/{id}/{version}` | search and package details |
-| `/upload` | push instructions for each client |
+| `/upload` | browser upload (two steps, with a metadata preview) and push instructions for each client |
 | `/stats` | totals, most downloaded packages, latest versions |
 | `/packages/{id}/{version}/report-abuse` | records a report for the package's owners |
 | `/account/login`, `/account/register`, `/account/apikeys`, `/account/organizations` | with accounts on |

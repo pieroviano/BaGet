@@ -5,29 +5,18 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using Markdig;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NuGet.Frameworks;
 using NuGet.Versioning;
 
 namespace BaGet.Web
 {
     public class PackageModel : PageModel
     {
-        private static readonly MarkdownPipeline MarkdownPipeline;
-
         private readonly IPackageService _packages;
         private readonly IPackageContentService _content;
         private readonly ISearchService _search;
         private readonly IUrlGenerator _url;
-
-        static PackageModel()
-        {
-            MarkdownPipeline = new MarkdownPipelineBuilder()
-                .UseAdvancedExtensions()
-                .Build();
-        }
 
         public PackageModel(
             IPackageService packages,
@@ -95,7 +84,7 @@ namespace BaGet.Web
             var dependents = await _search.FindDependentsAsync(Package.Id, cancellationToken);
 
             UsedBy = dependents.Data;
-            DependencyGroups = ToDependencyGroups(Package);
+            DependencyGroups = PackageDependencies.GroupByFramework(Package.Dependencies);
             Versions = ToVersions(listedPackages, packageVersion);
 
             if (Package.HasReadme)
@@ -108,75 +97,6 @@ namespace BaGet.Web
                 : Package.IconUrlString;
             LicenseUrl = Package.LicenseUrlString;
             PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
-        }
-
-        private IReadOnlyList<DependencyGroupModel> ToDependencyGroups(Package package)
-        {
-            return package
-                .Dependencies
-                .GroupBy(d => d.TargetFramework)
-                .Select(group =>
-                {
-                    return new DependencyGroupModel
-                    {
-                        Name = PrettifyTargetFramework(group.Key),
-                        Dependencies = group
-                            .Where(d => d.Id != null)
-                            .Select(d => new DependencyModel
-                            {
-                                PackageId = d.Id,
-                                VersionSpec = (d.VersionRange != null)
-                                    ? VersionRange.Parse(d.VersionRange).PrettyPrint()
-                                    : string.Empty
-                            })
-                            .ToList()
-                    };
-                })
-                .ToList();
-        }
-
-        private string PrettifyTargetFramework(string targetFramework)
-        {
-            if (targetFramework == null) return "All Frameworks";
-
-            NuGetFramework framework;
-            try
-            {
-                framework = NuGetFramework.Parse(targetFramework);
-            }
-            catch (Exception)
-            {
-                return targetFramework;
-            }
-
-            string frameworkName;
-            if (framework.Framework.Equals(FrameworkConstants.FrameworkIdentifiers.NetCoreApp,
-                StringComparison.OrdinalIgnoreCase))
-            {
-                frameworkName = (framework.Version.Major >= 5)
-                    ? ".NET"
-                    : ".NET Core";
-            }
-            else if (framework.Framework.Equals(FrameworkConstants.FrameworkIdentifiers.NetStandard,
-                StringComparison.OrdinalIgnoreCase))
-            {
-                frameworkName = ".NET Standard";
-            }
-            else if (framework.Framework.Equals(FrameworkConstants.FrameworkIdentifiers.Net,
-                StringComparison.OrdinalIgnoreCase))
-            {
-                frameworkName = ".NET Framework";
-            }
-            else
-            {
-                frameworkName = framework.Framework;
-            }
-
-            var frameworkVersion = (framework.Version.Build == 0)
-                ? framework.Version.ToString(2)
-                : framework.Version.ToString(3);
-
-            return $"{frameworkName} {frameworkVersion}";
         }
 
         private IReadOnlyList<VersionModel> ToVersions(IReadOnlyList<Package> packages, NuGetVersion selectedVersion)
@@ -209,20 +129,7 @@ namespace BaGet.Web
                 }
             }
 
-            var readmeHtml = Markdown.ToHtml(readme, MarkdownPipeline);
-            return new HtmlString(readmeHtml);
-        }
-
-        public class DependencyGroupModel
-        {
-            public string Name { get; set; }
-            public IReadOnlyList<DependencyModel> Dependencies { get; set; }
-        }
-
-        public record DependencyModel
-        {
-            public string PackageId { get; init; }
-            public string VersionSpec { get; init; }
+            return ReadmeMarkdown.ToHtml(readme);
         }
 
         public record VersionModel

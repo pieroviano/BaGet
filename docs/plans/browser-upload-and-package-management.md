@@ -94,33 +94,36 @@ interface above:
 
 ### C3 — Upload page (`src/BaGet.Web/Pages/Upload.cshtml`)
 
-Keep the existing CLI tabs (`Upload.cshtml:64-104`) below the form. Add `Upload.cshtml.cs`:
+Built. The CLI tabs stay, below the form. `UploadModel` is a plain `PageModel`, **not** an
+`AccountPageModel` (D3): that base answers 404 while accounts are disabled.
 
-| Handler | Does |
+| Handler | As built |
 |---|---|
-| `OnPostStageAsync(IFormFile package)` | Stage, read metadata with `PackageArchiveReader`, render the preview |
-| `OnPostSubmitAsync(string token)` | Re-open, authorize `PackageAction.Push` on the ID read from the package, `SubmitAsync`, `OnPushedAsync`, then `RemoveAsync` |
-| `OnPostCancelAsync(string token)` | `RemoveAsync`, return to step 1 |
+| `OnPostStageAsync(IFormFile package, string apiKey)` | Refuse read-only (401) → authenticate (401) → reject anything but `.nupkg`/`.snupkg` (400) → read the archive (400 if unreadable) → `AuthorizeAsync(Push, id)` **before** storing (403) → `StageAsync` → render the preview |
+| `OnPostSubmitAsync(string token, string apiKey, bool acceptTerms)` | Refuse read-only (401) → authenticate (401) → `OpenAsync(token, userId)`, null ⇒ 404 "no longer staged" → re-read the archive → require the checkbox (400, upload kept) → `AuthorizeAsync` again (403) → `SubmitAsync`, `OnPushedAsync`, `RemoveAsync` |
+| `OnPostCancelAsync(string token)` | `RemoveAsync`, back to step one. No authorization: the token is unguessable and removal only discards |
 
-Preview shows id, version, description, authors, license, dependencies by framework, and the readme.
-Submit stays disabled until the terms checkbox is ticked, matching nuget.org's shape.
-
-Mode selection, per D3:
-
-```csharp
-// Accounts off: there is no user to own the package, so the pusher proves itself with an API
-// key, exactly as the PUT endpoint requires. Accounts on: the signed-in session is the identity.
-var principal = _accounts.Value.Enabled
-    ? _sessionPrincipals.Create(User)
-    : await _authentication.AuthenticatePrincipalAsync(ApiKey, cancellationToken);
-```
-
-`IsReadOnlyMode` must short-circuit both modes, as `PackagePublishController.cs:46` does.
+| Point | As built |
+|---|---|
+| Preview | ID, version, description, authors, license (expression, else URL), dependencies by framework, readme. `PackageDependencies.GroupByFramework` and `ReadmeMarkdown` are shared with the package page, so a preview cannot describe the package differently from how it will be served |
+| Terms | Alpine disables the button until the box is ticked, **and** the handler refuses without it - with the upload kept staged, so ticking the box is all that is needed |
+| Mode | `AccountsEnabled` ⇒ `SessionPrincipalFactory.Create(User)`, resolved from `HttpContext.RequestServices` because the factory is only registered when accounts are on. Otherwise `AuthenticatePrincipalAsync(apiKey)` |
+| API key | Asked again on the confirm form rather than carried in a hidden field, so the key is never written into HTML (the risk table's last row) |
+| Authorization | Checked at both steps: the first spares the store a file nobody may publish, the second is the one that gates publishing (ownership can change while a preview is open) |
+| Antiforgery | Nothing added, per B4: the form tag helper's single hidden token plus the existing `FormOptions` and Kestrel settings are sufficient, and field order is irrelevant. No `[RequestSizeLimit]`/`[RequestFormLimits]` |
+| Failure | Every refusal is a sentence on the page with a matching status code (401/403/404/400/409/500), never a stack trace |
 
 ### C4 — Symbols
 
-The same two-step page accepting `.snupkg`, branching on the extension to `ISymbolIndexingService`.
-Symbols carry no standalone metadata, so step 2 shows the target package and the PDBs found.
+Built into the same page. The **content** decides the pipeline, not the file name: a symbol package
+declares `packageType="SymbolsPackage"` in its own nuspec, so renaming a file cannot route it to a
+pipeline its content does not belong to.
+
+| Point | As built |
+|---|---|
+| Preview | The target ID and version, and the `.pdb` entries found. `IPackageDatabase.FindOrNullAsync(id, version, includeUnlisted: true)` runs at **step one**, so a missing target is reported before the upload is confirmed (B2) |
+| Result | Branched on `SymbolIndexingResult`, not on a status code: `PackageNotFound` ⇒ "Symbols can only be uploaded for a package version already on this server. Push {id} {version} first."; `InvalidSymbolPackage` ⇒ a message about entries, non-portable PDBs or PDBs that do not match. The push endpoint reports both as 400, so a status-driven UI would say the wrong thing |
+| Ownership | No `OnPushedAsync` on this path, as on the symbol endpoint: a symbol upload claims no ID and grants no ownership. Pinned by a test |
 
 ### C5 — My packages (`src/BaGet.Identity/Pages/Account/Packages.cshtml`)
 
@@ -138,8 +141,8 @@ signed-in nav at `_Layout.cshtml:40-42`.
 
 | # | Step | Expected |
 |---|---|---|
-| 1 | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` | The 836 existing tests still green |
-| 2 | Stage, preview, submit while signed in | 201, package listed, staged file gone |
+| 1 | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` | 880 green (863 before C3/C4, plus 17) |
+| 2 | Stage, preview, submit while signed in | 200 and a published message (a page, not the API's 201), the package served, the token unknown afterwards |
 | 3 | Stage as user A, submit with user B's cookie | Rejected; A's file untouched |
 | 4 | Submit an ID owned by another user | 403, nothing indexed |
 | 5 | Push a brand-new ID through the browser | Succeeds, pusher becomes owner (`OnPushedAsync`) |
@@ -151,6 +154,10 @@ signed-in nav at `_Layout.cshtml:40-42`.
 | 11 | `.snupkg` for a package that does not exist | The message B2 establishes |
 | 12 | Delete a version under each `PackageDeletionBehavior` | Unlisted or hard-deleted accordingly |
 | 13 | A real `dotnet nuget push` after a browser upload | Unaffected; the API path must not regress |
+
+Steps 2-11 are pinned by `tests/BaGet.Tests/BrowserUploadTests.cs`; step 8 by
+`StagingIntegrationTests`, and step 13 by the existing push tests, which stayed green. Step 12
+belongs to C6 and is not covered yet.
 
 ## Risks
 

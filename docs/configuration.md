@@ -111,6 +111,22 @@ to overwrite the already existing package by setting `AllowPackageOverwrites`:
 }
 ```
 
+## Upload through the browser
+
+`/upload` accepts a `.nupkg` or a `.snupkg` in two steps: the file is staged, what it contains is
+shown, and nothing is published until the preview is confirmed. With
+[accounts](#accounts-package-owners-and-api-keys) on, the signed-in session is the identity and
+ownership decides what it may publish; with accounts off the page asks for the same `ApiKey` a push
+needs. `IsReadOnlyMode` refuses both. A `.snupkg` is indexed for a version the server already has -
+it never creates a package ID and confers no ownership.
+
+| Operating note | |
+| --- | --- |
+| Temporary space | Each upload is spooled to `ASPNETCORE_TEMP` (else the system temporary directory) before it is staged, so a browser upload needs free space there equal to the package's size, on top of the staged copy. |
+| Size ceiling | About 2 GB (`MultipartBodyLengthLimit` is `int.MaxValue`). Beyond it the request is rejected with a bare `400` before the page runs, so the page cannot explain it. Under IIS in-process, `IISServerOptions.MaxRequestBodySize` caps uploads at 250 MB and `requestLimits/maxAllowedContentLength` in `web.config` at 30 MB - the ceilings the push endpoint already has. |
+| Unconfirmed uploads | Staged under `staging/` in the configured store, and removed when the preview is confirmed or discarded. Whatever nobody comes back to is swept after 24 hours - on `FileSystem` and `Null` storage; the cloud providers cannot list a prefix yet, so abandoned uploads there accumulate. |
+| `Storage:Path` | Do not point it at the web root: static files would then serve the store, `staging/` and `validation/` included. That is a pre-existing misconfiguration rather than something uploads introduce. |
+
 ## NuGet V2 feed
 
 BaGet serves a NuGet V2 (OData) feed at `/api/v2` for clients that cannot use V3: `nuget list`,
