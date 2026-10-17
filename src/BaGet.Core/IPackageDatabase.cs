@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Versioning;
@@ -94,6 +94,37 @@ namespace BaGet.Core
         /// <param name="cancellationToken">A token to cancel the task.</param>
         /// <returns>False if the package doesn't exist.</returns>
         Task<bool> HardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Mark a package version as deprecated, replacing any earlier deprecation.
+        /// </summary>
+        /// <returns>False if the package version does not exist.</returns>
+        Task<bool> SetDeprecationAsync(
+            string id,
+            NuGetVersion version,
+            PackageDeprecation deprecation,
+            CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Remove a package version's deprecation, if it has one.
+        /// </summary>
+        /// <returns>False if the package version does not exist.</returns>
+        Task<bool> RemoveDeprecationAsync(string id, NuGetVersion version, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Replace the known vulnerabilities of a package version. An empty list clears them.
+        /// </summary>
+        /// <returns>False if the package version does not exist.</returns>
+        Task<bool> SetVulnerabilitiesAsync(
+            string id,
+            NuGetVersion version,
+            IReadOnlyList<PackageVulnerability> vulnerabilities,
+            CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Every known vulnerability, with the package version it affects.
+        /// </summary>
+        Task<IReadOnlyList<PackageVulnerability>> GetAllVulnerabilitiesAsync(CancellationToken cancellationToken);
     }
 
     /// <summary>

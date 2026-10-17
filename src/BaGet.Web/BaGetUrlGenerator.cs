@@ -157,6 +157,16 @@ namespace BaGet.Web
             return AbsoluteUrl("packages/{id}/{version}");
         }
 
+        public string GetVulnerabilityIndexUrl()
+        {
+            return AbsoluteUrl("v3/vulnerabilities/index.json");
+        }
+
+        public string GetVulnerabilityPageUrl(string pageName)
+        {
+            return AbsoluteUrl($"v3/vulnerabilities/{Uri.EscapeDataString(pageName)}.json");
+        }
+
         public string GetReportAbuseUriTemplate()
         {
             return AbsoluteUrl("packages/{id}/{version}/report-abuse");

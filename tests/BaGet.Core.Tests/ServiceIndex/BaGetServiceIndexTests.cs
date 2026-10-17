@@ -22,6 +22,7 @@ namespace BaGet.Core.Tests.ServiceIndex
             _url.Setup(u => u.GetAutocompleteResourceUrl()).Returns("https://test/v3/autocomplete");
             _url.Setup(u => u.GetPackageDetailsUriTemplate()).Returns("https://test/packages/{id}/{version}");
             _url.Setup(u => u.GetReportAbuseUriTemplate()).Returns("https://test/packages/{id}/{version}/report-abuse");
+            _url.Setup(u => u.GetVulnerabilityIndexUrl()).Returns("https://test/v3/vulnerabilities/index.json");
 
             _target = new BaGetServiceIndex(_url.Object);
         }

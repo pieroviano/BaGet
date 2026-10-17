@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using BaGet.Protocol.Models;
 
@@ -88,9 +89,57 @@ namespace BaGet.Core
                     Summary = package.Summary,
                     Tags = package.Tags,
                     Title = package.Title,
-                    DependencyGroups = ToDependencyGroups(package)
+                    DependencyGroups = ToDependencyGroups(package),
+                    Deprecation = ToDeprecation(package.Deprecation),
+                    Vulnerabilities = ToVulnerabilities(package.Vulnerabilities),
                 },
             };
+
+        // Inside BaGet.Core the entity BaGet.Core.PackageDeprecation is found before the
+        // protocol model of the same name, so the protocol model is named in full.
+        private static Protocol.Models.PackageDeprecation ToDeprecation(PackageDeprecation deprecation)
+        {
+            if (deprecation == null)
+            {
+                return null;
+            }
+
+            return new Protocol.Models.PackageDeprecation
+            {
+                Reasons = deprecation.Reasons ?? Array.Empty<string>(),
+                Message = deprecation.Message,
+                AlternatePackage = string.IsNullOrEmpty(deprecation.AlternatePackageId)
+                    ? null
+                    : new AlternatePackage
+                    {
+                        Id = deprecation.AlternatePackageId,
+
+                        // The protocol writes "*" for "any version".
+                        Range = string.IsNullOrEmpty(deprecation.AlternateVersionRange)
+                            ? "*"
+                            : deprecation.AlternateVersionRange,
+                    },
+            };
+        }
+
+        private static IReadOnlyList<PackageVulnerabilityMetadata> ToVulnerabilities(
+            IReadOnlyCollection<PackageVulnerability> vulnerabilities)
+        {
+            // Null rather than empty, so a version with no known vulnerabilities serialises
+            // exactly as it did before vulnerabilities existed.
+            if (vulnerabilities == null || vulnerabilities.Count == 0)
+            {
+                return null;
+            }
+
+            return vulnerabilities
+                .Select(v => new PackageVulnerabilityMetadata
+                {
+                    AdvisoryUrl = v.AdvisoryUrl,
+                    Severity = v.Severity.ToString(CultureInfo.InvariantCulture),
+                })
+                .ToList();
+        }
 
         private IReadOnlyList<DependencyGroupItem> ToDependencyGroups(Package package)
         {

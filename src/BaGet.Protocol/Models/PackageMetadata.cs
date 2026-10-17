@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -125,5 +125,11 @@ namespace BaGet.Protocol.Models
         /// </summary>
         [JsonPropertyName("title")]
         public string Title { get; set; }
+
+        /// <summary>
+        /// The known vulnerabilities affecting this version, or null if there are none.
+        /// </summary>
+        [JsonPropertyName("vulnerabilities")]
+        public IReadOnlyList<PackageVulnerabilityMetadata> Vulnerabilities { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -210,6 +210,41 @@ namespace BaGet.Azure
             }
 
             return true;
+        }
+
+        // Deprecation and vulnerability metadata are stored in relational tables. The Azure
+        // Table backend has no schema for them, and one cannot be verified without an Azure
+        // account, so it says so rather than silently discarding what it is given.
+        private const string MetadataNotSupported =
+            "Package deprecation and vulnerability metadata are not supported when the database is Azure Table storage.";
+
+        public Task<bool> SetDeprecationAsync(
+            string id,
+            NuGetVersion version,
+            PackageDeprecation deprecation,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException(MetadataNotSupported);
+        }
+
+        public Task<bool> RemoveDeprecationAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException(MetadataNotSupported);
+        }
+
+        public Task<bool> SetVulnerabilitiesAsync(
+            string id,
+            NuGetVersion version,
+            IReadOnlyList<PackageVulnerability> vulnerabilities,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException(MetadataNotSupported);
+        }
+
+        public Task<IReadOnlyList<PackageVulnerability>> GetAllVulnerabilitiesAsync(CancellationToken cancellationToken)
+        {
+            // Nothing can have been stored, so there is nothing to report.
+            return Task.FromResult<IReadOnlyList<PackageVulnerability>>(Array.Empty<PackageVulnerability>());
         }
     }
 }

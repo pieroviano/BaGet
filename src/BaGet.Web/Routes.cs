@@ -26,5 +26,11 @@
         public const string V2PackagesRouteName = "v2-packages";
         public const string V2PackagesByKeyRouteName = "v2-packages-by-key";
         public const string V2SearchRouteName = "v2-search";
+
+        public const string SetDeprecationRouteName = "set-deprecation";
+        public const string RemoveDeprecationRouteName = "remove-deprecation";
+        public const string SetVulnerabilitiesRouteName = "set-vulnerabilities";
+        public const string VulnerabilityIndexRouteName = "vulnerability-index";
+        public const string VulnerabilityPageRouteName = "vulnerability-page";
     }
 }

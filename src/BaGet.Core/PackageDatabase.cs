@@ -57,6 +57,8 @@ namespace BaGet.Core
                 .Include(p => p.Dependencies)
                 .Include(p => p.PackageTypes)
                 .Include(p => p.TargetFrameworks)
+                .Include(p => p.Deprecation)
+                .Include(p => p.Vulnerabilities)
                 .AsSplitQuery()
                 .Where(p => p.Id == id);
 
@@ -77,6 +79,8 @@ namespace BaGet.Core
             var query = _context.Packages
                 .Include(p => p.Dependencies)
                 .Include(p => p.TargetFrameworks)
+                .Include(p => p.Deprecation)
+                .Include(p => p.Vulnerabilities)
                 .AsSplitQuery()
                 .Where(p => p.Id == id)
                 .Where(p => p.NormalizedVersionString == version.ToNormalizedString());
@@ -111,6 +115,8 @@ namespace BaGet.Core
                 .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
                 .Include(p => p.Dependencies)
                 .Include(p => p.TargetFrameworks)
+                .Include(p => p.Deprecation)
+                .Include(p => p.Vulnerabilities)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -122,10 +128,110 @@ namespace BaGet.Core
             // The package to dependency relationship is optional in the database, so EF would
             // null the foreign key and leave these rows behind rather than delete them.
             _context.PackageDependencies.RemoveRange(package.Dependencies);
+
+            // The same holds for a package's deprecation and vulnerabilities.
+            if (package.Deprecation != null)
+            {
+                _context.PackageDeprecations.Remove(package.Deprecation);
+            }
+
+            _context.PackageVulnerabilities.RemoveRange(package.Vulnerabilities);
             _context.Packages.Remove(package);
             await _context.SaveChangesAsync(cancellationToken);
 
             return true;
+        }
+
+        public async Task<bool> SetDeprecationAsync(
+            string id,
+            NuGetVersion version,
+            PackageDeprecation deprecation,
+            CancellationToken cancellationToken)
+        {
+            if (deprecation == null) throw new ArgumentNullException(nameof(deprecation));
+
+            var package = await FindForUpdateAsync(id, version, cancellationToken);
+            if (package == null)
+            {
+                return false;
+            }
+
+            // A version has at most one deprecation, so setting one replaces the last.
+            if (package.Deprecation != null)
+            {
+                _context.PackageDeprecations.Remove(package.Deprecation);
+            }
+
+            package.Deprecation = deprecation;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+
+        public async Task<bool> RemoveDeprecationAsync(
+            string id,
+            NuGetVersion version,
+            CancellationToken cancellationToken)
+        {
+            var package = await FindForUpdateAsync(id, version, cancellationToken);
+            if (package == null)
+            {
+                return false;
+            }
+
+            if (package.Deprecation != null)
+            {
+                _context.PackageDeprecations.Remove(package.Deprecation);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            return true;
+        }
+
+        public async Task<bool> SetVulnerabilitiesAsync(
+            string id,
+            NuGetVersion version,
+            IReadOnlyList<PackageVulnerability> vulnerabilities,
+            CancellationToken cancellationToken)
+        {
+            if (vulnerabilities == null) throw new ArgumentNullException(nameof(vulnerabilities));
+
+            var package = await FindForUpdateAsync(id, version, cancellationToken);
+            if (package == null)
+            {
+                return false;
+            }
+
+            // The list replaces whatever the version had, so an empty list clears it.
+            _context.PackageVulnerabilities.RemoveRange(package.Vulnerabilities);
+            package.Vulnerabilities = vulnerabilities.ToList();
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+
+        public async Task<IReadOnlyList<PackageVulnerability>> GetAllVulnerabilitiesAsync(
+            CancellationToken cancellationToken)
+        {
+            return await _context.PackageVulnerabilities
+                .Include(v => v.Package)
+                .Where(v => v.Package != null)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        private Task<Package> FindForUpdateAsync(
+            string id,
+            NuGetVersion version,
+            CancellationToken cancellationToken)
+        {
+            return _context.Packages
+                .Include(p => p.Deprecation)
+                .Include(p => p.Vulnerabilities)
+                .AsSplitQuery()
+                .Where(p => p.Id == id)
+                .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
         private async Task<bool> TryUpdatePackageAsync(

@@ -19,6 +19,48 @@ namespace BaGet
             MapPackageMetadataRoutes(endpoints);
             MapPackageContentRoutes(endpoints);
             MapV2FeedRoutes(endpoints);
+            MapPackageMetadataAdminRoutes(endpoints);
+            MapVulnerabilityRoutes(endpoints);
+        }
+
+        /// <summary>
+        /// Deprecation and vulnerability metadata for a package version. Writes only, so they
+        /// share the authorisation of the publish endpoints.
+        /// </summary>
+        public void MapPackageMetadataAdminRoutes(IEndpointRouteBuilder endpoints)
+        {
+            endpoints.MapControllerRoute(
+                name: Routes.SetDeprecationRouteName,
+                pattern: "v3/package/{id}/{version}/deprecation",
+                defaults: new { controller = "PackageMetadataAdmin", action = "SetDeprecation" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.RemoveDeprecationRouteName,
+                pattern: "v3/package/{id}/{version}/deprecation",
+                defaults: new { controller = "PackageMetadataAdmin", action = "RemoveDeprecation" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.SetVulnerabilitiesRouteName,
+                pattern: "v3/package/{id}/{version}/vulnerabilities",
+                defaults: new { controller = "PackageMetadataAdmin", action = "SetVulnerabilities" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
+        }
+
+        public void MapVulnerabilityRoutes(IEndpointRouteBuilder endpoints)
+        {
+            endpoints.MapControllerRoute(
+                name: Routes.VulnerabilityIndexRouteName,
+                pattern: "v3/vulnerabilities/index.json",
+                defaults: new { controller = "Vulnerability", action = "Index" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+
+            endpoints.MapControllerRoute(
+                name: Routes.VulnerabilityPageRouteName,
+                pattern: "v3/vulnerabilities/{pageName}.json",
+                defaults: new { controller = "Vulnerability", action = "Page" },
+                constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
         }
 
         /// <summary>

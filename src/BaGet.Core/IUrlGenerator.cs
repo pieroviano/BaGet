@@ -64,6 +64,18 @@ namespace BaGet.Core
         string GetReportAbuseUriTemplate();
 
         /// <summary>
+        /// Get the URL of the vulnerability index, which lists the vulnerability pages.
+        /// See: https://learn.microsoft.com/en-us/nuget/api/vulnerability-info
+        /// </summary>
+        string GetVulnerabilityIndexUrl();
+
+        /// <summary>
+        /// Get the URL of one page of vulnerability data.
+        /// </summary>
+        /// <param name="pageName">The page's name, such as "base".</param>
+        string GetVulnerabilityPageUrl(string pageName);
+
+        /// <summary>
         /// Get the URL for the entry point of a package's metadata.
         /// See: https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#registration-index
         /// </summary>
