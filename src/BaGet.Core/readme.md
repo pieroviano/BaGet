@@ -2,8 +2,15 @@
 
 Contains BaGet's core logic. The important folders are:
 
-* Indexing - Logic to upload packages and symbols
-* Metadata - Used to track packages' metadata, usually in a database
-* Storage - Stores the content of packages and symbols
+* Authentication - API key authentication, and the `IPackageAuthorizationService` that accounts plug into
+* Configuration - BaGet's options (`BaGetOptions`, `AccountsOptions`, `ValidationOptions`, ...)
+* Content - Serves package content
+* Entities - The database model, shared by every database provider
+* Indexing - Logic to upload packages and symbols, and the `IPackageChangeHandler` hook told about every change
+* Metadata - Builds registration (package metadata) responses
 * Search - Used to search for packages
-* Mirror - Interactions with an upstream NuGet feed
+* ServiceIndex - The service index, which other projects add resources to through `IServiceIndexResourceProvider`
+* Statistics - Feed-wide download statistics
+* Storage - Stores the content of packages and symbols
+* Upstream - Interactions with an upstream NuGet feed, for mirroring
+* Validation - Validation of BaGet's own configuration

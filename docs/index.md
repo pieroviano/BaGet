@@ -17,6 +17,13 @@ You can run BaGet on your preferred platform:
 * [Google Cloud](installation/gcp.md)
 * [Alibaba Cloud (Aliyun)](installation/aliyun.md)
 
+## What BaGet serves
+
+BaGet speaks the NuGet V3 protocol, with a V2 feed for older clients, and serves symbols. Accounts
+with package owners and per-user API keys, and a validation pipeline with repository signing, can
+be switched on in its [configuration](configuration.md). The [server API](advanced/api.md) lists
+every resource and page, and [BaGet vs nuget.org](vs/nugetorg.md) compares the two.
+
 ## BaGet SDK
 
 You can also use the [`BaGet.Protocol`](https://www.nuget.org/packages/BaGet.Protocol) package to interact with a NuGet server. For more information, please refer to the [BaGet SDK](advanced/sdk.md) guide.

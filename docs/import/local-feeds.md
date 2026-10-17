@@ -11,7 +11,7 @@ Make sure that you've installed [nuget.exe](https://www.nuget.org/downloads). In
 
 ```ps1
 $source = "C:\path\to\local\feed"
-$destination = "http://localhost:5000/v3/index.json"
+$destination = "http://localhost:6060/v3/index.json"
 ```
 
 If you've [configured BaGet to require an API Key](https://loic-sharma.github.io/BaGet/configuration/#requiring-an-api-key), set it using [the `setapikey` command](https://docs.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-setapikey):

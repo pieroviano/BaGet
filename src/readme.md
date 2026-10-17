@@ -2,9 +2,13 @@
 
 These folders contain the core components of BaGet:
 
-* `BaGet` - The app's entry point that glues everything together.
+* `BaGet` - The app's entry point and command line (`import downloads`, `catalog rebuild`).
 * `BaGet.Core` - BaGet's core logic and services.
 * `BaGet.Web` - The [NuGet server APIs](https://docs.microsoft.com/en-us/nuget/api/overview) and web UI.
+* `BaGet.Web.V2` - The NuGet V2 (OData) feed, under `/api/v2`.
+* `BaGet.Catalog` - The NuGet V3 [catalog](https://learn.microsoft.com/nuget/api/catalog-resource), for mirrors.
+* `BaGet.Identity` - Accounts, package owners, organizations and per-user API keys, and their pages.
+* `BaGet.Validation` - The validation pipeline and repository signing.
 * `BaGet.Protocol` - Libraries to interact with [NuGet servers' APIs](https://docs.microsoft.com/en-us/nuget/api/overview).
 
 These folders contain database-specific components of BaGet:
@@ -18,6 +22,5 @@ These folders contain cloud-specific components of BaGet:
 
 * `BaGet.Aliyun` - BaGet's Alibaba Cloud(Aliyun) provider.
 * `BaGet.Aws` - BaGet's Amazon Web Services provider.
-* `BaGet.Azure` - BaGet's Azure provider.
+* `BaGet.Azure` - BaGet's Azure provider (Blob Storage, Table Storage, Azure Search).
 * `BaGet.Gcp` - BaGet's Google Cloud Platform provider.
-

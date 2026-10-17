@@ -20,7 +20,26 @@ As you can tell, nuget.org is a complex beast. Hosting your own instance of the 
 
 # BaGet vs nuget.org
 
-TODO. See [this issue](https://github.com/loic-sharma/BaGet/issues/71) for a deep-dive.
+See [this issue](https://github.com/loic-sharma/BaGet/issues/71) for a deep-dive.
+
+## Features
+
+| Feature | nuget.org | BaGet |
+| --- | --- | --- |
+| V3 push, restore, search, autocomplete, registration | yes | yes |
+| Symbol packages (`.snupkg`) and symbol server | yes | yes |
+| V2 (OData) feed | yes | yes, partial OData (`$skip`/`$top` only) |
+| Catalog | yes | yes |
+| Deprecation and vulnerability info | yes | yes, set through BaGet's [API](../advanced/api.md) or manage page |
+| Report abuse, package details URI templates | yes | yes |
+| Accounts, organizations, package owners | yes | yes, opt-in |
+| Scoped, expiring API keys | yes | yes, opt-in |
+| ID prefix reservation (`verified`) | yes | per owner, no page to set it yet |
+| Validation before a package is served | yes | yes, opt-in, in-process |
+| Repository signing | yes | yes, opt-in |
+| Download statistics | per day | totals only |
+| Reading requires authentication (private feed) | no | no |
+| Content moderation workflow | yes | reports only; owners and admins act on them |
 
 * BaGet only competes with [NuGet/NuGet.Services.Metadata](https://github.com/NuGet/NuGet.Services.Metadata/)
 * nuget.org's v3 implementation is static

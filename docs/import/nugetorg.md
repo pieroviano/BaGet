@@ -13,14 +13,16 @@ For more information, please see [Enable read-through caching](../configuration#
 
 ## Importing package downloads from nuget.org
 
-You can import package downloads from nuget.org:
+You can import nuget.org's download counts for the packages BaGet already has:
 
 1. Navigate to `.\BaGet\src\BaGet`
 2. Run:
 
 ```
-dotnet run -- import-downloads
+dotnet run -- import downloads
 ```
+
+Or, from a release: `dotnet BaGet.dll import downloads`.
 
 ## Importing all nuget.org packages
 

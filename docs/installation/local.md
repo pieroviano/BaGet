@@ -2,10 +2,14 @@
 
 ## Run BaGet
 
-1. Install the [.NET Core SDK](https://www.microsoft.com/net/download)
+1. Install the [.NET SDK](https://www.microsoft.com/net/download)
 1. Download and extract [BaGet's latest release](https://github.com/loic-sharma/BaGet/releases)
 1. Start the service with `dotnet BaGet.dll`
-1. Browse `http://localhost:5000/` in your browser
+1. Browse `http://localhost:6060/` in your browser
+
+!!! info
+    The port comes from `Kestrel:Endpoints` in `appsettings.json`, which takes precedence over
+    `--urls`. Change it there.
 
 ## Configure BaGet
 
@@ -16,13 +20,13 @@ You can modify BaGet's configurations by editing the `appsettings.json` file. Fo
 Publish your first package with:
 
 ```
-dotnet nuget push -s http://localhost:5000/v3/index.json package.1.0.0.nupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json package.1.0.0.nupkg
 ```
 
 Publish your first [symbol package](https://docs.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg) with:
 
 ```
-dotnet nuget push -s http://localhost:5000/v3/index.json symbol.package.1.0.0.snupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json symbol.package.1.0.0.snupkg
 ```
 
 !!! warning
@@ -32,7 +36,7 @@ dotnet nuget push -s http://localhost:5000/v3/index.json symbol.package.1.0.0.sn
 
 You can restore packages by using the following package source:
 
-`http://localhost:5000/v3/index.json`
+`http://localhost:6060/v3/index.json`
 
 Some helpful guides:
 
@@ -43,6 +47,6 @@ Some helpful guides:
 
 You can load symbols by using the following symbol location:
 
-`http://localhost:5000/api/download/symbols`
+`http://localhost:6060/api/download/symbols`
 
 For Visual Studio, please refer to the [Configure Debugging](https://docs.microsoft.com/en-us/visualstudio/debugger/specify-symbol-dot-pdb-and-source-files-in-the-visual-studio-debugger?view=vs-2017#configure-symbol-locations-and-loading-options) guide.

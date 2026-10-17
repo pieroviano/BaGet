@@ -9,6 +9,9 @@ Create a file named `baget.env` to store BaGet's configurations:
 # You should change this to a secret value to secure your server.
 ApiKey=NUGET-SERVER-API-KEY
 
+# Listen on every interface inside the container; appsettings.json binds to localhost:6060.
+Kestrel__Endpoints__Http__Url=http://+:80
+
 Storage__Type=FileSystem
 Storage__Path=/var/baget/packages
 Database__Type=Sqlite

@@ -10,10 +10,10 @@ A lightweight [NuGet] and [symbol] server.
 
 ## Getting Started
 
-1. Install the [.NET SDK]
+1. Install the [.NET SDK] (BaGet targets .NET 10)
 2. Download and extract [BaGet's latest release]
 3. Start the service with `dotnet BaGet.dll`
-4. Browse `http://localhost:5000/` in your browser
+4. Browse `http://localhost:6060/` in your browser (the port is set by `Kestrel:Endpoints` in `appsettings.json`)
 
 For more information, please refer to the [documentation].
 
@@ -21,9 +21,13 @@ For more information, please refer to the [documentation].
 
 * **Cross-platform**: runs on Windows, macOS, and Linux!
 * **Cloud native**: supports [Docker], [Azure], [AWS], [Google Cloud], [Alibaba Cloud]
+* **Four databases**: SQLite, SQL Server, PostgreSQL and MySQL, plus Azure Table Storage
 * **Offline support**: [mirror a NuGet server] to speed up builds and enable offline downloads
-
-Stay tuned, more features are planned!
+* **NuGet V3 protocol**, including the catalog, vulnerability info, deprecation, report abuse and package details templates
+* **NuGet V2 (OData) feed** for `nuget list`, older clients and PowerShellGet
+* **Accounts** (opt-in): sign-in, OpenID Connect, package owners, organizations and scoped, expiring API keys
+* **Validation pipeline** (opt-in): packages are checked before they are served, and can be repository signed
+* **Web UI**: package pages, owner management pages, profiles, statistics and abuse reports
 
 [Build status]: https://img.shields.io/github/actions/workflow/status/loic-sharma/BaGet/.github/workflows/main.yml
 [Discord image]: https://img.shields.io/discord/889377258068930591
@@ -34,7 +38,6 @@ Stay tuned, more features are planned!
 [NuGet]: https://learn.microsoft.com/nuget/what-is-nuget
 [symbol]: https://docs.microsoft.com/en-us/windows/desktop/debug/symbol-servers-and-symbol-stores
 [.NET SDK]: https://www.microsoft.com/net/download
-[Node.js]: https://nodejs.org/
 
 [BaGet's latest release]: https://github.com/loic-sharma/BaGet/releases
 

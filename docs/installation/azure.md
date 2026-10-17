@@ -69,7 +69,22 @@ Alternatively, you can use a full Azure Storage connection string:
 }
 ```
 
+Package downloads are redirected to the blob through a shared access signature, valid for 10
+minutes by default. To change it, set `DownloadUriExpiry` in the `Storage` section, as a time span
+such as `"00:30:00"`.
+
+### Azure Table Storage
+
+Set `"Database": { "Type": "AzureTable", ... }` to store package metadata in Table Storage. It only
+stores packages: accounts, the catalog, validation, statistics, abuse reports, deprecation and
+vulnerabilities need Azure SQL Database or another relational database.
+
 ### Azure Search
+
+The index needs a `normalizedId` field: searchable, filterable, analyzed with BaGet's exact match
+analyzer (`PackageDocument` declares it). Autocomplete and version listing use it. Documents
+indexed before the field existed keep working through a fallback, and gain the field the next
+time a version of their package is pushed.
 
 Update the `appsettings.json` file:
 
@@ -92,13 +107,13 @@ Update the `appsettings.json` file:
 Publish your first package with:
 
 ```
-dotnet nuget push -s http://localhost:5000/v3/index.json package.1.0.0.nupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json package.1.0.0.nupkg
 ```
 
 Publish your first [symbol package](https://docs.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg) with:
 
 ```
-dotnet nuget push -s http://localhost:5000/v3/index.json symbol.package.1.0.0.snupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json symbol.package.1.0.0.snupkg
 ```
 
 !!! warning
@@ -108,7 +123,7 @@ dotnet nuget push -s http://localhost:5000/v3/index.json symbol.package.1.0.0.sn
 
 You can restore packages by using the following package source:
 
-`http://localhost:5000/v3/index.json`
+`http://localhost:6060/v3/index.json`
 
 Some helpful guides:
 
@@ -119,6 +134,6 @@ Some helpful guides:
 
 You can load symbols by using the following symbol location:
 
-`http://localhost:5000/api/download/symbols`
+`http://localhost:6060/api/download/symbols`
 
 For Visual Studio, please refer to the [Configure Debugging](https://docs.microsoft.com/en-us/visualstudio/debugger/specify-symbol-dot-pdb-and-source-files-in-the-visual-studio-debugger?view=vs-2017#configure-symbol-locations-and-loading-options) guide.
