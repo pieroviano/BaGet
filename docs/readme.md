@@ -1,1 +1,1 @@
-This fork has no documentation site: browse this folder, or run `mkdocs serve` from the repository root.
+../readme.md

@@ -6,7 +6,7 @@ namespace BaGet.Azure;
 
 /// <summary>
 /// BaGet's configurations to use Azure Blob Storage to store packages.
-/// See: https://loic-sharma.github.io/BaGet/quickstart/azure/#azure-blob-storage
+/// See: https://pieroviano.github.io/BaGet/quickstart/azure/#azure-blob-storage
 /// </summary>
 public class AzureBlobStorageOptions : IValidatableObject
 {
@@ -45,7 +45,7 @@ public class AzureBlobStorageOptions : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        const string helpUrl = "https://loic-sharma.github.io/BaGet/quickstart/azure/#azure-blob-storage";
+        const string helpUrl = "https://pieroviano.github.io/BaGet/quickstart/azure/#azure-blob-storage";
 
         if (DownloadUriExpiry <= TimeSpan.Zero)
         {
