@@ -56,6 +56,25 @@ public class ReauthenticateModel : AccountPageModel
         return Challenge(properties, AccountsServiceCollectionExtensions.OpenIdConnectScheme);
     }
 
+    internal const string AuthTimeClaim = "auth_time";
+
+    /// <summary>Allowed difference between the provider's clock and ours.</summary>
+    internal static readonly System.TimeSpan ClockSkew = System.TimeSpan.FromMinutes(1);
+
+    /// <summary>True when <paramref name="authTime"/> (seconds since the epoch) is present and within the window.</summary>
+    internal static bool IsFresh(string authTime, System.DateTime now)
+    {
+        if (!long.TryParse(authTime, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var seconds)
+            || seconds < 0 || seconds > 253402300799L)
+        {
+            return false;
+        }
+
+        var age = now - System.DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+
+        return age >= -ClockSkew && age <= ReauthenticationWindow;
+    }
+
     public async Task<IActionResult> OnGetCallbackAsync()
     {
         var user = await UserManager.GetUserAsync(User);
@@ -74,9 +93,19 @@ public class ReauthenticateModel : AccountPageModel
             return Page();
         }
 
+        // The provider may ignore prompt=login / max_age (the handler does not enforce max_age),
+        // so the id_token's own auth_time (required by OIDC Core when max_age is sent) must show
+        // a sign-in within the window.
+        var now = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow;
+        if (!IsFresh(info.Principal?.FindFirst(AuthTimeClaim)?.Value, now))
+        {
+            Error = "The provider did not confirm a fresh sign-in. Sign in again and enter your credentials when asked.";
+            return Page();
+        }
+
         var authentication = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         var properties = authentication.Properties ?? new AuthenticationProperties();
-        properties.Items[ReauthenticatedItem] = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow.Ticks.ToString();
+        properties.Items[ReauthenticatedItem] = now.Ticks.ToString();
 
         // What RefreshSignInAsync keeps, plus the new property; the stamp is unchanged.
         var kept = new[] { ClaimTypes.AuthenticationMethod, "amr" }

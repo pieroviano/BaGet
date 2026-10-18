@@ -274,12 +274,12 @@ Other rules with email on:
 * Changing the email address, setting a first password, deleting the account and turning two-factor
   off or resetting it ask for the current password. An account without a password (external sign-in
   only) must instead sign in again with its provider (the provider is asked to prompt for credentials
-  again) within the last 5 minutes; without a configured provider it cannot do these, and an
+  again) within the last 5 minutes (the provider must return an `auth_time` claim inside that window, otherwise the sign-in is refused); without a configured provider it cannot do these, and an
   administrator uses `baget account reset-password`.
 * "Forgot password" answers identically, in the same time, for known and unknown accounts: the mail is
   sent from a background queue. One reset mail per account per 10 minutes is the real protection; 60 mails per client
-  address and 1000 for the whole site per 10 minutes are backstops (in memory, per process, bounded);
-  excess requests are answered the same and mail nothing. Requests for names that do not exist use up
+  address per 10 minutes is a backstop. There is no site-wide cap, which would let one caller block everyone's
+  reset. State is in memory, per process, and bounded by the number of accounts; excess requests are answered the same and mail nothing. Requests for names that do not exist use up
   nothing. Known limit: the client address comes from `X-Forwarded-For`, which BaGet trusts from any
   sender, so a caller can spoof it, and behind a proxy that sets no such header all callers share one
   address. Hence the per-client backstop is high and the per-account limit is what holds.

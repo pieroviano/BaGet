@@ -6,8 +6,9 @@ namespace BaGet.Identity;
 
 /// <summary>
 /// Limits "forgot password" mail: one per account per <see cref="Window"/> (the real
-/// protection), plus two generous backstops, <see cref="MaxPerClient"/> per client address and
-/// <see cref="MaxTotal"/> for the whole site, both per <see cref="Window"/>.
+/// protection), plus a generous backstop of <see cref="MaxPerClient"/> per client address per
+/// <see cref="Window"/>. There is deliberately no site-wide cap: it would let one caller, with a
+/// spoofed address and public account names, block everyone else's reset.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -17,11 +18,14 @@ namespace BaGet.Identity;
 /// client limit is high and is not the only gate.
 /// </para>
 /// <para>
-/// Only allowed mail is recorded, so the state never holds more than <see cref="MaxTotal"/>
-/// entries, and entries leave in the order they came in: expiry is O(1) amortised, with no
-/// scan. The caller asks only for accounts that exist, so requests for unknown names cost the
-/// limiter nothing. Like <see cref="ContactRateLimiter"/> the state is in memory: per process,
-/// reset on restart. The caller answers identically whether or not a request was allowed.
+/// Only allowed mail is recorded, and the caller asks only for accounts that exist, so the
+/// state holds at most one entry per account (an account cannot be acquired twice within the
+/// window) and at most as many client entries: it is bounded by the number of accounts, whatever
+/// the traffic. Entries leave in the order they came in, so expiry is O(1) amortised with no scan,
+/// and a client's count only ever drops with age, which can make the limiter more permissive
+/// for that client, never block an account. Like <see cref="ContactRateLimiter"/> the state is in
+/// memory: per process, reset on restart. The caller answers identically whether or not a request
+/// was allowed.
 /// </para>
 /// </remarks>
 public class PasswordResetRateLimiter
@@ -30,15 +34,13 @@ public class PasswordResetRateLimiter
 
     public const int MaxPerClient = 60;
 
-    public const int MaxTotal = 1000;
-
     private readonly SystemTime _time;
     private readonly Queue<(DateTime At, string Client, string Target)> _log = new();
     private readonly Dictionary<string, DateTime> _targets = new();
     private readonly Dictionary<string, int> _clients = new();
     private readonly object _gate = new object();
 
-    /// <summary>What is being remembered; never more than <see cref="MaxTotal"/>.</summary>
+    /// <summary>What is being remembered; never more than the number of accounts.</summary>
     internal int TrackedCount
     {
         get
@@ -51,7 +53,7 @@ public class PasswordResetRateLimiter
 
     /// <summary>
     /// Takes the allowance, or returns false when the target was mailed less than
-    /// <see cref="Window"/> ago, or the client or the site has used up its requests. Atomic.
+    /// <see cref="Window"/> ago, or the client has used up its requests. Atomic.
     /// </summary>
     public bool TryAcquire(string client, string target)
     {
@@ -62,7 +64,6 @@ public class PasswordResetRateLimiter
             Expire(now);
 
             if (_targets.ContainsKey(target)) return false;
-            if (_log.Count >= MaxTotal) return false;
             if (_clients.TryGetValue(client, out var used) && used >= MaxPerClient) return false;
 
             _log.Enqueue((now, client, target));

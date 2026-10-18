@@ -258,24 +258,36 @@ public class EmailLinkTests : IDisposable
     }
 
     [Fact]
-    public void TheStateIsHardBoundedAndTheSiteWideCapDoesNotStopAnAccountAfterTheWindow()
+    public void ThereIsNoSiteWideCapSoAFloodNeverBlocksAnotherAccount()
     {
         var time = new MutableTime();
         var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
-        var total = BaGet.Identity.PasswordResetRateLimiter.MaxTotal;
 
-        // A flood from distinct addresses: accepted up to the site-wide cap, then refused.
-        for (var i = 0; i < total; i++) Assert.True(limiter.TryAcquire("ip" + i, "account" + i));
-        Assert.False(limiter.TryAcquire("fresh-ip", "victim"));
-        Assert.Equal(total, StateSize(limiter));
+        // A flood from distinct (spoofed) addresses over many public account names.
+        for (var i = 0; i < 5000; i++) Assert.True(limiter.TryAcquire("ip" + i, "account" + i));
 
-        // Refused requests recorded nothing, however many arrive.
-        for (var i = 0; i < 50_000; i++) limiter.TryAcquire("spam" + i, "spam-account" + i);
-        Assert.Equal(total, StateSize(limiter));
-
-        // The window passes and everything is forgotten: the account is mailed.
-        time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
+        // Nobody else is blocked, and repeating a name still is.
         Assert.True(limiter.TryAcquire("fresh-ip", "victim"));
+        Assert.False(limiter.TryAcquire("fresh-ip-2", "account0"));
+    }
+
+    [Fact]
+    public void TheStateIsBoundedByTheAccountsAndForgottenAfterTheWindow()
+    {
+        var time = new MutableTime();
+        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+        const int accounts = 200;
+
+        // Repeated requests for the same accounts, from ever new addresses, record nothing more.
+        for (var round = 0; round < 50; round++)
+        {
+            for (var i = 0; i < accounts; i++) limiter.TryAcquire("ip" + round + "-" + i, "account" + i);
+        }
+
+        Assert.Equal(accounts, StateSize(limiter));
+
+        time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
+        Assert.True(limiter.TryAcquire("fresh-ip", "account0"));
         Assert.Equal(1, StateSize(limiter));
     }
 

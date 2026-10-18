@@ -100,9 +100,11 @@ public class AccountReauthenticationTests : IDisposable
     }
 
     /// <summary>The provider answers the re-authentication, then the browser comes back to the callback.</summary>
-    private static async Task<HttpResponseMessage> ReauthenticateAsync(Browser browser, string xsrf, string sub = "sub-1")
+    private async Task<HttpResponseMessage> ReauthenticateAsync(Browser browser, string xsrf, string sub = "sub-1", TimeSpan? authAge = null, bool authTime = true)
     {
-        using (await browser.GetAsync($"test/external?sub={sub}&name=alice&xsrf={Uri.EscapeDataString(xsrf)}")) { }
+        var at = new DateTimeOffset(_time.Now - (authAge ?? TimeSpan.Zero)).ToUnixTimeSeconds();
+        var claim = authTime ? $"&auth_time={at}" : "";
+        using (await browser.GetAsync($"test/external?sub={sub}&name=alice&xsrf={Uri.EscapeDataString(xsrf)}{claim}")) { }
 
         return await browser.GetAsync("account/reauthenticate?handler=Callback");
     }
@@ -190,6 +192,60 @@ public class AccountReauthenticationTests : IDisposable
         // Whatever is typed does not matter now.
         using (await ChangeEmailAsync(browser, "")) { }
         Assert.Equal("attacker@example.com", await EmailAsync(app));
+    }
+
+    [Fact]
+    public async Task AnAnswerWithoutAuthTimeIsNotAccepted()
+    {
+        var (app, browser, id) = await StartSignedInAsync();
+
+        using (var back = await ReauthenticateAsync(browser, id, authTime: false))
+        {
+            Assert.Equal(HttpStatusCode.OK, back.StatusCode);
+        }
+
+        using (await ChangeEmailAsync(browser, "")) { }
+        Assert.Equal("alice@example.com", await EmailAsync(app));
+    }
+
+    [Fact]
+    public async Task AnAnswerWithAStaleAuthTimeIsNotAccepted()
+    {
+        var (app, browser, id) = await StartSignedInAsync();
+
+        using (var back = await ReauthenticateAsync(browser, id, authAge: BaGet.Identity.Pages.Account.AccountPageModel.ReauthenticationWindow + TimeSpan.FromMinutes(1)))
+        {
+            Assert.Equal(HttpStatusCode.OK, back.StatusCode);
+        }
+
+        using (await ChangeEmailAsync(browser, "")) { }
+        Assert.Equal("alice@example.com", await EmailAsync(app));
+    }
+
+    [Fact]
+    public async Task AnAnswerWithARecentAuthTimeIsAccepted()
+    {
+        var (app, browser, id) = await StartSignedInAsync();
+
+        using (var back = await ReauthenticateAsync(browser, id, authAge: TimeSpan.FromMinutes(2)))
+        {
+            Assert.Equal(HttpStatusCode.Redirect, back.StatusCode);
+        }
+
+        using (await ChangeEmailAsync(browser, "")) { }
+        Assert.Equal("attacker@example.com", await EmailAsync(app));
+    }
+
+    [Fact]
+    public async Task TheSetPasswordFormOffersSigningInAgain()
+    {
+        var (_, browser, _) = await StartSignedInAsync();
+
+        var html = await browser.GetPageAsync("account/settings");
+        var form = html.Substring(html.IndexOf("handler=ChangePassword", StringComparison.Ordinal));
+        form = form.Substring(0, form.IndexOf("</form>", StringComparison.Ordinal));
+
+        Assert.Contains("Sign in again", form);
     }
 
     [Fact]

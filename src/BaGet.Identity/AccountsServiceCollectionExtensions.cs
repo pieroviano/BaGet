@@ -107,6 +107,9 @@ public static class AccountsServiceCollectionExtensions
                 oidc.ResponseType = "code";
                 oidc.Scope.Add("profile");
                 oidc.Scope.Add("email");
+
+                // Default claim mapping and ClaimActions keep the id_token's auth_time as it is
+                // sent; the re-authentication check relies on it.
             });
         }
 

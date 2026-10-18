@@ -92,6 +92,10 @@
             <label for="confirmPassword">Confirm new password</label>
             <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" autocomplete="new-password" />
         </div>
+        @if (!Model.HasPassword)
+        {
+            <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+        }
         <button type="submit" class="btn btn-primary">@(Model.HasPassword ? "Change password" : "Set password")</button>
     </form>
 

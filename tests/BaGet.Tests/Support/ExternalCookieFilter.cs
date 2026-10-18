@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 namespace BaGet.Tests;
 
 /// <summary>
-/// Stands in for an external provider's answer: <c>GET /test/external?sub=&amp;name=&amp;email=&amp;verified=&amp;xsrf=</c>
+/// Stands in for an external provider's answer: <c>GET /test/external?sub=&amp;name=&amp;email=&amp;verified=&amp;xsrf=&amp;auth_time=</c>
 /// fills the external cookie the way the provider's callback does. <c>xsrf</c> is the value
 /// the sign-in challenge was started with (the user id, for a re-authentication).
 /// </summary>
@@ -34,6 +34,8 @@ internal sealed class ExternalCookieFilter : IStartupFilter
             };
             if (!string.IsNullOrEmpty(query["email"])) claims.Add(new Claim(ClaimTypes.Email, query["email"]));
             if (!string.IsNullOrEmpty(query["verified"])) claims.Add(new Claim("email_verified", query["verified"]));
+
+            if (!string.IsNullOrEmpty(query["auth_time"])) claims.Add(new Claim("auth_time", query["auth_time"]));
 
             var properties = new AuthenticationProperties();
             properties.Items["LoginProvider"] = "oidc";
