@@ -193,11 +193,11 @@ public class PackageStorageService : IPackageStorageService
             // The "packages" prefix was lowercased, which was a breaking change
             // on filesystems that are case sensitive. Handle this case to help
             // users migrate to the latest version of BaGet.
-            // See https://github.com/loic-sharma/BaGet/issues/298
+            // See https://github.com/pieroviano/BaGet/issues/298
             _logger.LogError(
                 $"Unable to find the '{PackagesPathPrefix}' folder. " +
                 "If you've recently upgraded BaGet Extension, please make sure this folder starts with a lowercased letter. " +
-                "For more information, please see https://github.com/loic-sharma/BaGet/issues/298");
+                "For more information, please see https://github.com/pieroviano/BaGet/issues/298");
             // If content is referenced in the DB but missing on disk, return null
             // so callers handle the missing content gracefully instead of
             // throwing an unhandled exception.
