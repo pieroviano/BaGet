@@ -53,4 +53,4 @@ every resource and page, and [BaGet vs nuget.org](vs/nugetorg.md) compares the t
 
 You can also use the [`BaGet.Protocol`](https://www.nuget.org/packages/BaGet.Protocol) package to interact with a NuGet server. For more information, please refer to the [BaGet SDK](advanced/sdk.md) guide.
 
-To browse these pages without a site, see [reading this folder](readme.md).
+To browse these pages without a site, see [reading this folder](https://github.com/pieroviano/BaGet/tree/main/docs).

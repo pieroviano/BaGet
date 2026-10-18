@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.7.11919.86 stable
+VisualStudioVersion = 18.7.11919.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet", "src\BaGet\BaGet.csproj", "{284366CB-C68F-473E-908A-50A382616AE0}"
 EndProject
@@ -61,8 +61,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity", "src\BaGet.Identity\BaGet.Identity.csproj", "{C8689F3D-B2C3-4B67-B2D6-6727AD11103D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Validation", "src\BaGet.Validation\BaGet.Validation.csproj", "{E2D03D72-23F2-409E-B895-45BAEEC75768}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{278181DE-08D6-44A3-8710-4F78E266E0F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
