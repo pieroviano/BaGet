@@ -36,7 +36,8 @@ public class PackagesModel : AccountPageModel
             return;
         }
 
-        Packages = Summarise(ids, await ListVersionsAsync(ids, cancellationToken));
+        Packages = Summarise(ids, await ListVersionsAsync(
+            HttpContext.RequestServices.GetRequiredService<IContext>(), ids, cancellationToken));
     }
 
     /// <summary>
@@ -53,11 +54,11 @@ public class PackagesModel : AccountPageModel
     /// this page cannot work on a database without one either way, so routing it through
     /// <see cref="IPackageDatabase"/> bought nothing.
     /// </remarks>
-    private async Task<List<OwnedVersion>> ListVersionsAsync(
+    internal static async Task<List<OwnedVersion>> ListVersionsAsync(
+        IContext context,
         IReadOnlyList<string> ids,
         CancellationToken cancellationToken)
     {
-        var context = HttpContext.RequestServices.GetRequiredService<IContext>();
         var lowered = ids.Select(id => id.ToLowerInvariant()).ToList();
 
         // Unlisted versions included: they are the owner's own, and an ID whose versions
@@ -80,7 +81,7 @@ public class PackagesModel : AccountPageModel
     /// The highest version is decided here rather than in the query: version ordering is
     /// SemVer's, which no database sorts correctly.
     /// </summary>
-    private static List<OwnedPackage> Summarise(IReadOnlyList<string> ids, List<OwnedVersion> versions)
+    internal static List<OwnedPackage> Summarise(IReadOnlyList<string> ids, List<OwnedVersion> versions)
     {
         var byId = versions
             .GroupBy(v => v.Id, StringComparer.OrdinalIgnoreCase)
@@ -113,7 +114,7 @@ public class PackagesModel : AccountPageModel
     /// <summary>
     /// The columns the summary needs, and nothing else.
     /// </summary>
-    private class OwnedVersion
+    internal class OwnedVersion
     {
         public string Id { get; set; }
 

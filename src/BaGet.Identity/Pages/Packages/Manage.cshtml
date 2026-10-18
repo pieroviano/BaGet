@@ -13,6 +13,13 @@
         <div class="alert alert-info" role="alert" id="manage-message">@Model.Message</div>
     }
 
+    @if (Model.ActingAsAdministrator)
+    {
+        <div class="alert alert-warning" role="alert" id="manage-as-administrator">
+            You are managing this package as an administrator.
+        </div>
+    }
+
     @if (Model.IsReadOnlyMode)
     {
         @* The buttons stay on the page but do nothing: every handler here is refused while
@@ -106,6 +113,17 @@
                                 @Model.DeleteLabel
                             </button>
                         </form>
+                        @if (Model.IsAdministrator && !Model.DeletionIsPermanent)
+                        {
+                            @* The server only unlists; an administrator may still remove the version.
+                               The password is in the danger zone's form, which this button submits. *@
+                            <button type="submit" form="hard-delete-form" asp-page-handler="HardDelete"
+                                    name="version" value="@version" class="btn btn-danger btn-xs"
+                                    onclick="return confirm('Delete @version permanently? This cannot be undone. Enter your password in the Danger zone below first.')"
+                                    disabled="@Model.IsReadOnlyMode">
+                                Delete permanently
+                            </button>
+                        }
                     </td>
                 </tr>
             }
@@ -139,5 +157,37 @@
                 }
             </tbody>
         </table>
+    }
+
+    @if (Model.IsAdministrator)
+    {
+        <div class="panel panel-danger" id="danger-zone">
+            <div class="panel-heading"><h3 class="panel-title">Danger zone</h3></div>
+            <div class="panel-body">
+                <p>
+                    Deleting permanently removes the database rows and the files from storage, whatever
+                    the server's deletion setting says. It cannot be undone. Deleting every version also
+                    removes the owners, so the ID can be claimed again.
+                </p>
+                <form method="post" id="hard-delete-form">
+                    @if (Model.HasPassword)
+                    {
+                        <div class="form-group">
+                            <label for="hardDeletePassword">Your password</label>
+                            <input id="hardDeletePassword" name="password" type="password" class="form-control" autocomplete="current-password" />
+                        </div>
+                    }
+                    else
+                    {
+                        <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/Manage", new { id = Model.Id })))" />
+                    }
+                    <button type="submit" asp-page-handler="HardDeleteAll" class="btn btn-danger"
+                            onclick="return confirm('Delete every version of @Model.Id permanently? This cannot be undone.')"
+                            disabled="@Model.IsReadOnlyMode">
+                        Delete all versions permanently
+                    </button>
+                </form>
+            </div>
+        </div>
     }
 </div>

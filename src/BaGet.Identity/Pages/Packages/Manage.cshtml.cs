@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NuGet.Versioning;
 
@@ -17,7 +18,9 @@ namespace BaGet.Identity.Pages.Packages;
 
 /// <summary>
 /// The owners' page for a package ID: its owners, its versions' listing and
-/// deprecation, and the abuse reports against it.
+/// deprecation, and the abuse reports against it. An administrator may open it for any ID,
+/// ownerless ones included, and alone may delete permanently whatever
+/// <see cref="BaGetOptions.PackageDeletionBehavior"/> says, after confirming their password.
 /// </summary>
 public class ManageModel : AccountPageModel
 {
@@ -41,6 +44,24 @@ public class ManageModel : AccountPageModel
     public IReadOnlyList<AbuseReport> Reports { get; private set; } = Array.Empty<AbuseReport>();
 
     public string Message { get; private set; }
+
+    /// <summary>Whether the signed in user is an administrator.</summary>
+    public bool IsAdministrator { get; private set; }
+
+    /// <summary>
+    /// Whether the user manages this ID only as an administrator: they are not one of its
+    /// owners, directly or through an organization.
+    /// </summary>
+    public bool ActingAsAdministrator { get; private set; }
+
+    /// <summary>Whether the signed in administrator has a password to confirm with.</summary>
+    public bool HasPassword { get; private set; } = true;
+
+    /// <summary>For an account without a password: it signed in again with its provider a moment ago.</summary>
+    public bool Reauthenticated { get; private set; }
+
+    /// <summary>Whether an external provider is available to sign in again with.</summary>
+    public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
 
     private IPackageDatabase Packages => HttpContext.RequestServices.GetRequiredService<IPackageDatabase>();
 
@@ -78,13 +99,18 @@ public class ManageModel : AccountPageModel
         OnPageHandlerExecuting(context);
         if (context.Result != null) return;
 
-        // Only an owner, directly or through an organization, may manage the package.
-        if (!await Ownership.IsOwnerAsync(UserManager.GetUserId(User), User.Identity.Name, Id, HttpContext.RequestAborted))
+        // Only an owner, directly or through an organization, or an administrator, may
+        // manage the package.
+        var isOwner = await Ownership.IsOwnerAsync(UserManager.GetUserId(User), User.Identity.Name, Id, HttpContext.RequestAborted);
+        IsAdministrator = await HttpContext.RequestServices.GetRequiredService<AdministratorService>()
+            .IsAdministratorAsync(User, HttpContext.RequestAborted);
+        if (!isOwner && !IsAdministrator)
         {
             context.Result = StatusCode(403);
             return;
         }
 
+        ActingAsAdministrator = IsAdministrator && !isOwner;
         // Every handler on this page but the GET writes to the database, and most of
         // them notify the catalog as well. Refused here, once, rather than in each
         // handler: unlisting, relisting, deprecating and changing owners are the same
@@ -97,6 +123,16 @@ public class ManageModel : AccountPageModel
 
             context.Result = Page();
             return;
+        }
+
+        if (ActingAsAdministrator && HttpMethods.IsPost(HttpContext.Request.Method))
+        {
+            // The audit trail: an administrator changing what is not theirs.
+            HttpContext.RequestServices.GetRequiredService<ILogger<ManageModel>>().LogWarning(
+                "Administrator {Admin} ran {Handler} on {PackageId}",
+                User.Identity.Name,
+                context.HandlerMethod?.Name,
+                Id);
         }
 
         await next();
@@ -167,6 +203,79 @@ public class ManageModel : AccountPageModel
                 : $"There is no {Id} {normalized} to unlist.",
             cancellationToken);
     }
+
+    /// <summary>
+    /// Removes one version's rows and files whatever the server's deletion behaviour is.
+    /// Administrators only, and only after they confirm their password: it cannot be undone.
+    /// </summary>
+    public async Task<IActionResult> OnPostHardDeleteAsync(string version, string password, CancellationToken cancellationToken)
+    {
+        if (!IsAdministrator) return StatusCode(403);
+        if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
+
+        var refusal = await RefuseUnconfirmedAsync(password, cancellationToken);
+        if (refusal != null) return refusal;
+
+        var found = await Deletions.TryHardDeletePackageAsync(Id, parsed, cancellationToken);
+        var normalized = parsed.ToNormalizedString();
+
+        Log().LogWarning("Administrator {Admin} permanently deleted {PackageId} {PackageVersion}", User.Identity.Name, Id, normalized);
+
+        return await DoneAsync(
+            found
+                ? $"{Id} {normalized} is deleted permanently. Its rows and its files are gone, and consumers "
+                  + "can no longer restore it. Any indexed PDBs are still served, and an external "
+                  + "search index keeps the version until it is reindexed."
+                : $"{Id} {normalized} was not in the database. Any files left in storage for it were removed.",
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Removes every version of the ID, then its owners, so the ID is free to claim again.
+    /// Administrators only, and only after they confirm their password.
+    /// </summary>
+    public async Task<IActionResult> OnPostHardDeleteAllAsync(string password, CancellationToken cancellationToken)
+    {
+        if (!IsAdministrator) return StatusCode(403);
+
+        var refusal = await RefuseUnconfirmedAsync(password, cancellationToken);
+        if (refusal != null) return refusal;
+
+        var versions = await Packages.FindAsync(Id, includeUnlisted: true, cancellationToken);
+        foreach (var package in versions)
+        {
+            await Deletions.TryHardDeletePackageAsync(Id, package.Version, cancellationToken);
+        }
+
+        var lowerId = Id.ToLowerInvariant();
+        Context.PackageOwners.RemoveRange(await Context.PackageOwners
+            .Where(o => o.PackageId.ToLower() == lowerId)
+            .ToListAsync(cancellationToken));
+        await Context.SaveChangesAsync(cancellationToken);
+
+        Log().LogWarning(
+            "Administrator {Admin} permanently deleted every version of {PackageId} ({Count}) and removed its owners",
+            User.Identity.Name,
+            Id,
+            versions.Count);
+
+        return await DoneAsync(
+            $"Every version of {Id} ({versions.Count}) is deleted permanently, and the ID has no owners.",
+            cancellationToken);
+    }
+
+    /// <summary>Null when the signed in user confirmed with their password, otherwise the page to show.</summary>
+    private async Task<IActionResult> RefuseUnconfirmedAsync(string password, CancellationToken cancellationToken)
+    {
+        var current = await UserManager.GetUserAsync(User);
+        if (current == null) return Challenge();
+
+        return await IsConfirmedAsync(current, password)
+            ? null
+            : await DoneAsync("The confirmation is incorrect, so nothing was deleted.", cancellationToken);
+    }
+
+    private ILogger<ManageModel> Log() => HttpContext.RequestServices.GetRequiredService<ILogger<ManageModel>>();
 
     public async Task<IActionResult> OnPostDeprecateAsync(
         string version,
@@ -242,6 +351,13 @@ public class ManageModel : AccountPageModel
 
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
+        if (IsAdministrator)
+        {
+            var current = await UserManager.GetUserAsync(User);
+            HasPassword = current == null || await UserManager.HasPasswordAsync(current);
+            Reauthenticated = !HasPassword && await HasReauthenticatedRecentlyAsync();
+        }
+
         Owners = await Ownership.GetOwnersAsync(Id, cancellationToken);
         Versions = (await Packages.FindAsync(Id, includeUnlisted: true, cancellationToken))
             .OrderByDescending(p => p.Version)

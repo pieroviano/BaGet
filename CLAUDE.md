@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter "FullyQualifiedName~UploadPageTests"` |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1325 tests, all green** across `BaGet.Core.Tests` (443), `BaGet.Tests` (621),
+Baseline: **1351 tests, all green** across `BaGet.Core.Tests` (443), `BaGet.Tests` (647),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (33),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.

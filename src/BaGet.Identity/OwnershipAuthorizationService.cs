@@ -11,6 +11,10 @@ namespace BaGet.Identity;
 /// <list type="bullet">
 /// <item>The superuser may do anything.</item>
 /// <item>A key acts only within its scopes and its package glob.</item>
+/// <item>An administrator skips ownership, never the key's own limits (scopes and glob): a
+/// push-only key an administrator made for CI stays push-only. It may push a version of,
+/// or unlist, any existing ID, ownerless ones included; a new ID still needs
+/// <see cref="ApiKeyScopes.Push"/>.</item>
 /// <item>Pushing a new package ID needs <see cref="ApiKeyScopes.Push"/>, and makes the
 /// pusher its owner.</item>
 /// <item>Anything else needs the user to own the ID, directly or through an
@@ -44,6 +48,28 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
         if (principal == null) return false;
         if (principal.IsSuperuser) return true;
         if (!principal.MatchesPackage(packageId)) return false;
+
+        // An administrator skips ownership, never the key's own limits: a push-only key an
+        // administrator made for CI stays push-only.
+        if (principal.IsAdministrator)
+        {
+            switch (action)
+            {
+                case PackageAction.Push:
+                    var exists = await _packages.ExistsAsync(packageId, cancellationToken)
+                                 || await _ownership.HasOwnersAsync(packageId, cancellationToken);
+
+                    return exists
+                        ? principal.HasScope(ApiKeyScopes.Push) || principal.HasScope(ApiKeyScopes.PushVersion)
+                        : principal.HasScope(ApiKeyScopes.Push);
+
+                case PackageAction.Manage:
+                    return principal.HasScope(ApiKeyScopes.Unlist);
+
+                default:
+                    return false;
+            }
+        }
 
         var isOwner = await _ownership.IsOwnerAsync(principal.UserId, principal.UserName, packageId, cancellationToken);
 

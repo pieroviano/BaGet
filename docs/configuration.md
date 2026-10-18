@@ -127,6 +127,10 @@ symbols being served from `api/download/symbols/...`, and it does not update an 
 index, so with `Search:Type=AzureSearch` the version can still appear in search results until it is
 reindexed.
 
+Administrators (see [Administrators](#administrators)) can always hard-delete from a package's management
+page, after confirming their password, even with the default `Unlist`. The NuGet `DELETE` API keeps
+following this setting.
+
 ## Enable package overwrites
 
 Normally, BaGet Extension will reject a package upload if the id and version are already taken. You can configure BaGet Extension
@@ -249,7 +253,16 @@ account without one). Everyone else, and every request while accounts are off, g
 
 * The **last administrator cannot be demoted, and cannot delete their account**: promote another user first.
   If every administrator is lost anyway, use `baget account promote` or `InitialAdministrators` (the latter works again once no administrator is left).
-* The flag grants **no rights over packages**: ownership rules apply to an administrator as to anyone.
+* **Package powers.** An administrator skips *ownership* only, never a key's scopes or glob (a push-only key an
+  administrator made for CI stays push-only; use a separate non-admin account for CI keys):
+
+  | Where | Power |
+  | --- | --- |
+  | API | Push a version of, or unlist, any existing ID (needs `PushVersion`/`Push`, or `Unlist`). A new ID still needs `Push` and makes the pusher its owner. |
+  | `/packages/{id}/manage` | Opens for any ID, ownerless ones included, with a "managing as an administrator" banner. Writes by a non-owner administrator are logged (`Administrator {Admin} ran {Handler} on {PackageId}`). |
+  | Manage, *Delete permanently* | Hard-deletes one version, or every version and the owners (*Danger zone*), whatever `PackageDeletionBehavior` says. Needs the administrator's password (or a fresh provider sign-in); logged. Read-only mode refuses it. |
+  | `/admin/users/{name}/packages` | The IDs a user owns, with owners and a link to Manage. |
+  | `/admin/packages` | IDs with no owner (predating accounts, or left without one), 50 per page. |
 * The check reads the database on every request, so a demotion applies at once.
 
 ### Email (optional)
