@@ -72,13 +72,16 @@ public class PackagePublishController : Controller
                     return;
                 }
 
+                // Decided before the push: afterwards every ID exists.
+                var isNewId = packageId != null && !await _packages.ExistsAsync(packageId, cancellationToken);
+
                 var result = await _submissions.SubmitAsync(uploadStream, cancellationToken);
 
                 // An accepted package claims its ID now, as it would on nuget.org: it is
                 // the pusher's even while it is validated.
                 if (result == PackageIndexingResult.Success || result == PackageIndexingResult.Accepted)
                 {
-                    await _authorization.OnPushedAsync(principal, packageId, cancellationToken);
+                    await _authorization.OnPushedAsync(principal, packageId, isNewId, cancellationToken);
                 }
 
                 switch (result)

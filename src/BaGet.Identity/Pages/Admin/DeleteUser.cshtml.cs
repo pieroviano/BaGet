@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace BaGet.Identity.Pages.Admin;
 
@@ -38,6 +39,12 @@ public class DeleteUserModel : AdminPageModel
     /// <summary>Whether an external provider is available to sign in again with.</summary>
     public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
 
+    /// <summary>Read-only mode: the account may go, but package files are not deleted.</summary>
+    public bool IsReadOnlyMode => HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<BaGetOptions>>().Value.IsReadOnlyMode;
+
+    /// <summary>Shown when permanent package deletion is asked for in read-only mode.</summary>
+    public const string ReadOnlyMessage = "The server is read-only, so packages cannot be deleted. Leave them without owners, or turn read-only mode off.";
+
     /// <summary>Why the deletion was refused.</summary>
     public string Error { get; private set; }
 
@@ -59,6 +66,16 @@ public class DeleteUserModel : AdminPageModel
         if (refusal != null) return refusal;
 
         var current = await UserManager.GetUserAsync(User);
+        var deletePackages = string.Equals(SoleOwned, "delete", StringComparison.OrdinalIgnoreCase);
+
+        // The same refusal as the package page's hard delete: read-only mode freezes package removal.
+        if (deletePackages && IsReadOnlyMode)
+        {
+            Error = ReadOnlyMessage;
+            await LoadAsync(user, cancellationToken);
+
+            return Page();
+        }
 
         if (!await IsConfirmedAsync(current, password))
         {
@@ -70,7 +87,7 @@ public class DeleteUserModel : AdminPageModel
 
         var name = user.UserName;
         var outcome = await HttpContext.RequestServices.GetRequiredService<AccountDeletionService>()
-            .DeleteByAdministratorAsync(user, string.Equals(SoleOwned, "delete", StringComparison.OrdinalIgnoreCase), current.UserName, cancellationToken);
+            .DeleteByAdministratorAsync(user, deletePackages, current.UserName, cancellationToken);
 
         if (!outcome.Result.Succeeded)
         {

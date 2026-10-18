@@ -31,7 +31,14 @@ public interface IPackageAuthorizationService
     /// Called after a successful push, so that a user pushing a new package ID becomes
     /// its owner.
     /// </summary>
-    Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken);
+    /// <param name="principal">The pusher.</param>
+    /// <param name="packageId">The pushed ID.</param>
+    /// <param name="isNewId">
+    /// The ID had no version before this push, decided by the caller before submitting. Pushing a
+    /// version of an existing ID never claims it.
+    /// </param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -46,6 +53,6 @@ public class AllowAuthenticatedAuthorizationService : IPackageAuthorizationServi
         CancellationToken cancellationToken)
         => Task.FromResult(principal != null);
 
-    public Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken)
+    public Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken)
         => Task.CompletedTask;
 }

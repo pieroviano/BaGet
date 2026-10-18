@@ -94,9 +94,11 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
         }
     }
 
-    public async Task OnPushedAsync(BaGetPrincipal principal, string packageId, CancellationToken cancellationToken)
+    public async Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken)
     {
-        if (principal == null || principal.IsSuperuser || packageId == null) return;
+        // Only a new ID is claimed: an administrator may push to an existing ownerless one,
+        // and that must leave it ownerless.
+        if (!isNewId || principal == null || principal.IsSuperuser || packageId == null) return;
         if (await _ownership.HasOwnersAsync(packageId, cancellationToken)) return;
 
         // Two users pushing the same new ID at once may both become owners. That is

@@ -11,7 +11,7 @@ You can modify BaGet Extension's configurations by editing the `appsettings.json
 | `AllowedHosts` | `*` | see [Restrict the host names BaGet Extension serves](#restrict-the-host-names-baget-extension-serves) |
 | `PackageDeletionBehavior` | `Unlist` | `Unlist` or `HardDelete` |
 | `AllowPackageOverwrites` | `false` | accept a push of an existing id and version |
-| `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, deprecation/vulnerability changes, browser uploads and the manage page's POSTs |
+| `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, deprecation/vulnerability changes, browser uploads, the manage page's POSTs and an administrator's permanent deletion of a deleted user's packages |
 | `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet Extension starts |
 | `SettingsOverridesPath` | `appsettings.Overrides.json` | the file the [Settings page](#settings-page) saves to; relative paths start at the content root (or `BAGET_CONFIG_ROOT`) |
 

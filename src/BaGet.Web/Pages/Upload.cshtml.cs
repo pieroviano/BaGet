@@ -332,6 +332,8 @@ public class UploadModel : PageModel
         CancellationToken cancellationToken)
     {
         PackageIndexingResult result;
+        // Decided before the push: afterwards every ID exists.
+        var isNewId = !await _packages.ExistsAsync(staged.Id, cancellationToken);
         try
         {
             result = await _submissions.SubmitAsync(content, cancellationToken);
@@ -355,7 +357,7 @@ public class UploadModel : PageModel
         {
             if (result == PackageIndexingResult.Success || result == PackageIndexingResult.Accepted)
             {
-                await _authorization.OnPushedAsync(principal, staged.Id, cancellationToken);
+                await _authorization.OnPushedAsync(principal, staged.Id, isNewId, cancellationToken);
             }
         }
         catch (Exception e) when (!(e is OperationCanceledException))

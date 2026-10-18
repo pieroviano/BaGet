@@ -41,7 +41,7 @@
                         Leave them without owners. Only administrators and the global API key can manage them, like packages that predate accounts.</label>
                 </div>
                 <div class="radio">
-                    <label><input type="radio" name="soleOwned" value="delete" checked="@(Model.SoleOwned == "delete")" />
+                    <label><input type="radio" name="soleOwned" value="delete" checked="@(Model.SoleOwned == "delete")" disabled="@Model.IsReadOnlyMode" />
                         Delete them permanently, with all their versions.</label>
                 </div>
             }

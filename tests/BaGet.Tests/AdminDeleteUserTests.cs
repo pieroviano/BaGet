@@ -28,13 +28,16 @@ public class AdminDeleteUserTests : IDisposable
         foreach (var d in _disposables) d.Dispose();
     }
 
-    private async Task<(BaGetApplication App, Browser Admin)> StartAsync()
+    private async Task<(BaGetApplication App, Browser Admin)> StartAsync(bool readOnly = false)
     {
-        var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string>
+        var overrides = new Dictionary<string, string>
         {
             { "Accounts:Enabled", "true" },
             { "ApiKey", "" },
-        });
+        };
+        if (readOnly) overrides["IsReadOnlyMode"] = "true";
+
+        var app = new BaGetApplication(_output, configOverrides: overrides);
         _disposables.Add(app);
 
         await CreateUserAsync(app, "root", administrator: true);
@@ -122,6 +125,46 @@ public class AdminDeleteUserTests : IDisposable
         Assert.Empty(await OwnersAsync(app, "Alice.Solo"));
         Assert.Single(await VersionsAsync(app, "Alice.Shared"));
         Assert.Contains("Packages deleted: Alice.Solo.", await admin.GetPageAsync("admin/users"));
+    }
+
+    [Fact]
+    public async Task ReadOnlyModeRefusesToDeleteTheSoleOwnedPackages()
+    {
+        var (app, admin) = await StartAsync(readOnly: true);
+        await CreateUserAsync(app, "alice");
+        using (var package = TestPackages.Build("Alice.Solo", "1.0.0"))
+        {
+            await app.AddPackageAsync(package);
+        }
+        await AddOwnerAsync(app, "Alice.Solo", "alice");
+
+        var page = await admin.GetPageAsync("admin/users/alice/delete");
+        Assert.Contains("disabled", page.Substring(page.IndexOf("value=\"delete\"", StringComparison.Ordinal)).Split('>')[0]);
+
+        using var response = await DeleteAsync(admin, "alice", soleOwned: "delete");
+
+        Assert.Contains(BaGet.Identity.Pages.Admin.DeleteUserModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync());
+        Assert.True(await ExistsAsync(app, "alice"));
+        Assert.Single(await VersionsAsync(app, "Alice.Solo"));
+        Assert.Single(await OwnersAsync(app, "Alice.Solo"));
+    }
+
+    [Fact]
+    public async Task ReadOnlyModeStillDeletesTheAccountAndKeepsItsPackages()
+    {
+        var (app, admin) = await StartAsync(readOnly: true);
+        await CreateUserAsync(app, "alice");
+        using (var package = TestPackages.Build("Alice.Solo", "1.0.0"))
+        {
+            await app.AddPackageAsync(package);
+        }
+        await AddOwnerAsync(app, "Alice.Solo", "alice");
+
+        using var response = await DeleteAsync(admin, "alice", soleOwned: "keep");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.False(await ExistsAsync(app, "alice"));
+        Assert.Single(await VersionsAsync(app, "Alice.Solo"));
     }
 
     [Fact]

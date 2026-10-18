@@ -137,6 +137,30 @@ public class AdminPackageTests : PackageManagementPageTestBase
     }
 
     [Fact]
+    public async Task AnAdministratorPushingToAnExistingOwnerlessIdDoesNotClaimIt()
+    {
+        await SeedOwnerlessAsync("Legacy.Package");
+        await Bob.RegisterAsync("root");
+        await PromoteAsync("root");
+
+        await PushAsAsync("root", "Legacy.Package", "2.0.0");
+
+        Assert.NotNull(await FindAsync("Legacy.Package", "2.0.0"));
+        Assert.Empty(await WithScopeAsync(s => s.GetRequiredService<PackageOwnershipService>().GetOwnersAsync("Legacy.Package", CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task AnAdministratorPushingANewIdStillBecomesItsOwner()
+    {
+        await Bob.RegisterAsync("root");
+        await PromoteAsync("root");
+
+        await PushAsAsync("root", "Fresh.Package");
+
+        Assert.Equal("root", Assert.Single(await WithScopeAsync(s => s.GetRequiredService<PackageOwnershipService>().GetOwnersAsync("Fresh.Package", CancellationToken.None))).OwnerName);
+    }
+
+    [Fact]
     public async Task AnAdministratorOpensManageForAnOwnerlessId()
     {
         await SeedOwnerlessAsync("Legacy.Package");
