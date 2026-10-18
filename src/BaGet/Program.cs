@@ -82,6 +82,36 @@ public partial class Program
             });
         });
 
+        commands.Command("account", account =>
+        {
+            account.Command("reset-password", reset =>
+            {
+                reset.Description = "Set a generated password for a user and switch off their two-factor authentication.";
+                var userName = reset.Argument("user", "The user name.").IsRequired();
+                reset.OnExecuteAsync(async cancellationToken =>
+                {
+                    using var scope = app.Services.CreateScope();
+                    var recovery = scope.ServiceProvider.GetService<AccountRecoveryService>();
+                    if (recovery == null)
+                    {
+                        Console.Error.WriteLine("Accounts are not enabled (\"Accounts:Enabled\").");
+                        return 1;
+                    }
+
+                    var password = await recovery.ResetPasswordAsync(userName.Value, cancellationToken);
+                    if (password == null)
+                    {
+                        Console.Error.WriteLine($"There is no user named \"{userName.Value}\".");
+                        return 1;
+                    }
+
+                    Console.WriteLine($"New password for {userName.Value}: {password}");
+                    Console.WriteLine("Two-factor authentication is off for this user. Sign in and change the password now.");
+                    return 0;
+                });
+            });
+        });
+
         commands.Option("--urls", "The URLs that BaGet should bind to.", CommandOptionType.SingleValue);
 
         commands.OnExecuteAsync(async cancellationToken =>

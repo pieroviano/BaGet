@@ -204,6 +204,38 @@ Who may change a package:
 !!! warning
     With accounts off, set `ApiKey`. Without it the server is open: anyone may push anything.
 
+### Email (optional)
+
+Email is off until `Email:Smtp` has a `Host` and a `From`. While it is off, nothing that needs email
+is offered, and sign-in does not require a confirmed address. When it is on, sign-in requires one.
+
+```json
+{
+    "Email": {
+        "Smtp": {
+            "Host": "smtp.example.com",
+            "Port": 587,
+            "UserName": "baget",
+            "Password": "...",
+            "EnableSsl": true,
+            "From": "BaGet <baget@example.com>"
+        }
+    }
+}
+```
+
+`EnableSsl` uses implicit TLS on port 465 and STARTTLS otherwise. A send failure is logged and
+reported to the user as a failure.
+
+Without email, an administrator recovers an account from the command line:
+
+```
+baget account reset-password <user>
+```
+
+It prints a generated password, switches off the user's two-factor authentication and lifts any
+lockout. It needs `Accounts:Enabled` and works with or without SMTP.
+
 ### Organizations
 
 Signed-in users create organizations at `/account/organizations`. An organization can own packages

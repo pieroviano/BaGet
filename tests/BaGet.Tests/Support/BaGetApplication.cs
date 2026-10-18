@@ -6,12 +6,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit.Abstractions;
@@ -109,6 +111,11 @@ public class BaGetApplication : WebApplicationFactory<Program>
                     .Returns(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 
                 services.AddSingleton(time.Object);
+
+                // No real SMTP in tests: whatever would be mailed is captured instead.
+                services.RemoveAll<IEmailSender<BaGetUser>>();
+                services.AddSingleton<CapturingEmailSender>();
+                services.AddSingleton<IEmailSender<BaGetUser>>(p => p.GetRequiredService<CapturingEmailSender>());
                 _configureServices?.Invoke(services);
                 if (_upstreamClient != null)
                 {

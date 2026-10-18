@@ -71,5 +71,7 @@ public class BaGetOptions
 
     public AccountsOptions Accounts { get; set; }
 
+    public EmailOptions Email { get; set; }
+
     public ValidationOptions Validation { get; set; }
 }

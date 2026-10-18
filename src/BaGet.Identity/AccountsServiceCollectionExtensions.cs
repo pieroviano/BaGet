@@ -31,6 +31,20 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<PackageOwnershipService>();
         services.TryAddScoped<SessionPrincipalFactory>();
         services.TryAddTransient<ApiKeyAuthenticationService>();
+        services.TryAddScoped<AccountRecoveryService>();
+
+        // Email is optional. Nothing that needs it is offered while it is unconfigured, and
+        // Identity only demands a confirmed address when there is a way to send the link.
+        var email = configuration.GetSection(nameof(BaGetOptions.Email)).Get<EmailOptions>()
+                    ?? new EmailOptions();
+        if (email.IsConfigured)
+        {
+            services.TryAddTransient<IEmailSender<BaGetUser>, SmtpEmailSender>();
+        }
+        else
+        {
+            services.TryAddTransient<IEmailSender<BaGetUser>, NoOpEmailSender>();
+        }
         services.Replace(ServiceDescriptor.Transient<Core.IAuthenticationService, AccountAuthenticationService>());
         services.Replace(ServiceDescriptor.Transient<IPackageAuthorizationService, OwnershipAuthorizationService>());
 
@@ -45,6 +59,7 @@ public static class AccountsServiceCollectionExtensions
             {
                 identity.User.RequireUniqueEmail = false;
                 identity.Lockout.AllowedForNewUsers = true;
+                identity.SignIn.RequireConfirmedEmail = email.IsConfigured;
             })
             .AddSignInManager()
             .AddDefaultTokenProviders();
