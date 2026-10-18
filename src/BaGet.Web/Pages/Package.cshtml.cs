@@ -1,12 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 
 namespace BaGet.Web;
@@ -44,6 +46,12 @@ public class PackageModel : PageModel
     public IReadOnlyList<VersionModel> Versions { get; private set; }
 
     public HtmlString Readme { get; private set; }
+
+    internal IReadOnlyList<FrameworkGroup> FrameworkGroups { get; private set; } = Array.Empty<FrameworkGroup>();
+    internal IReadOnlyList<InstallSnippet> InstallTabs { get; private set; } = Array.Empty<InstallSnippet>();
+
+    /// <summary>Owner names; empty unless accounts are enabled and the package has owners.</summary>
+    public IReadOnlyList<string> Owners { get; private set; } = Array.Empty<string>();
 
     public string IconUrl { get; private set; }
     public string LicenseUrl { get; private set; }
@@ -95,8 +103,31 @@ public class PackageModel : PageModel
         IconUrl = Package.HasEmbeddedIcon
             ? _url.GetPackageIconDownloadUrl(Package.Id, packageVersion)
             : Package.IconUrlString;
-        LicenseUrl = Package.LicenseUrlString;
+        LicenseUrl = GetLicenseUrlOrNull(Package);
+        FrameworkGroups = PackageFrameworks.Compute(Package.TargetFrameworks?.Select(f => f.Moniker));
+        InstallTabs = InstallSnippets.Build(Package.Id, Package.NormalizedVersionString, IsDotnetTemplate, IsDotnetTool);
+
+        // PackageOwnershipService is only registered when accounts are enabled.
+        var ownership = HttpContext?.RequestServices.GetService<PackageOwnershipService>();
+        if (ownership != null)
+        {
+            var owners = await ownership.GetOwnersAsync(Package.Id, cancellationToken);
+            Owners = owners.Select(o => o.OwnerName).ToList();
+        }
         PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
+    }
+
+    /// <summary>
+    /// The license address, or null when there is none. A package that declares a license
+    /// expression or file carries only the deprecation placeholder here, which leads nowhere useful.
+    /// </summary>
+    private static string GetLicenseUrlOrNull(Package package)
+    {
+        var url = package.LicenseUrlString;
+        if (string.IsNullOrEmpty(url)) return null;
+        if (url.StartsWith("https://aka.ms/deprecateLicenseUrl", StringComparison.OrdinalIgnoreCase)) return null;
+
+        return url;
     }
 
     private IReadOnlyList<VersionModel> ToVersions(IReadOnlyList<Package> packages, NuGetVersion selectedVersion)

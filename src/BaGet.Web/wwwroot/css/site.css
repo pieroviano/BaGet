@@ -617,3 +617,97 @@ h4 {
     top: 2px;
     margin-right: 5px;
 }
+
+/* Package page tabs, frameworks and owners
+-------------------------------------------------- */
+.tabbed-info .content .script {
+    white-space: normal;
+}
+
+.tabbed-info .content .script .script-prefix {
+    float: left;
+    margin-right: 6px;
+    padding-top: 8px;
+    user-select: none;
+}
+
+.tabbed-info .content .script pre.snippet {
+    margin: 0;
+    padding: 8px 0 0 0;
+    overflow-x: auto;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    white-space: pre;
+}
+
+.package-tabs {
+    margin-top: 20px;
+}
+
+.package-tabs .package-tab-list {
+    margin: 0 0 15px 0;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.package-tabs .package-tab-list li a {
+    display: block;
+    padding: 8px 14px;
+    color: #004880;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+}
+
+.package-tabs .package-tab-list li.active a {
+    font-weight: 600;
+    color: #000;
+    border-bottom-color: #004880;
+}
+
+.package-tabs .tab-panel {
+    margin-bottom: 20px;
+}
+
+.package-frameworks .framework-group h4 {
+    margin: 12px 0 6px 0;
+}
+
+.package-frameworks .framework {
+    margin-bottom: 4px;
+}
+
+.package-frameworks .framework .label {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 0.9em;
+}
+
+.package-frameworks .framework-computed .label {
+    color: #555;
+    background-color: #e8e8e8;
+}
+
+.package-owners .owner {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.package-owners .owner-avatar {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+    line-height: 32px;
+    text-align: center;
+    font-weight: 600;
+    color: #fff;
+    background-color: #004880;
+    border-radius: 50%;
+}
