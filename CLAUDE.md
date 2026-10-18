@@ -67,7 +67,7 @@ through.
 
 **Settings overrides file.** `ConfigureConfiguration` inserts `appsettings.Overrides.json` (path from
 `SettingsOverridesPath`, default in the content root / `BAGET_CONFIG_ROOT`) after the last `appsettings*.json`
-source and before user secrets, environment variables and the command line. `SettingsService` /
+source and before environment variables and the command line. `SettingsService` /
 `SettingsOverridesStore` (`BaGet.Core`) write it; `AddBaGetOptions` records every options type as a
 `SettingsSchemaRegistration`, and `[RestartRequired]` / `[SensitiveSetting]` on options classify them. Tests
 set `SettingsOverridesPath` to the temp directory; `UseSetting` values arrive through the *last* (chained host)

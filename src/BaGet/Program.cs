@@ -252,6 +252,10 @@ public partial class Program
             // A read-only configuration root: the page then reports the error when saving.
         }
 
+        // A file provider needs an existing directory; without one there is nothing to load,
+        // and the host must still start.
+        if (!Directory.Exists(directory)) return path;
+
         var source = new JsonConfigurationSource
         {
             Path = Path.GetFileName(path),

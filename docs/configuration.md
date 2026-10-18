@@ -574,9 +574,9 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 
 | Source, lowest to highest precedence | Notes |
 | --- | --- |
-| `appsettings.json`, `appsettings.{Environment}.json`, `BaGet.settings*.json` | shipped defaults |
+| `appsettings.json`, `appsettings.{Environment}.json` | shipped defaults |
 | **the overrides file** | saved by the Settings page, reloaded when it changes |
-| user secrets, environment variables, command line | an operator's explicit setting still wins; the page marks a saved value that one of these overrides, because the saved value then has no effect |
+| environment variables, command line | an operator's explicit setting still wins; the page marks a saved value that one of these overrides, because the saved value then has no effect |
 
 - A setting read only at startup (`Accounts`, `Email`, `Database`, `Storage`, `Search`, `Mirror`,
   `Site:PublicUrl`, `PathBase`, `AllowedHosts`, `Urls`, `RunMigrationsAtStartup`, `IISServerOptions`) is marked
