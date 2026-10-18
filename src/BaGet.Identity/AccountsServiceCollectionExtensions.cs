@@ -38,6 +38,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<AccountRecoveryService>();
         services.TryAddScoped<AccountDeletionService>();
         services.TryAddScoped<AvatarService>();
+        services.TryAddScoped<AdministratorService>();
         services.TryAddSingleton<ContactRateLimiter>();
         services.TryAddSingleton<PasswordResetRateLimiter>();
         services.TryAddSingleton<BackgroundEmailQueue>();

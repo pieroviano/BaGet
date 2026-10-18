@@ -24,6 +24,13 @@ public class AccountsOptions
     public bool AllowRegistration { get; set; } = true;
 
     /// <summary>
+    /// User names promoted to administrator at startup, separated by semicolons. Only
+    /// existing accounts are promoted, so a listed name cannot be claimed by registering it;
+    /// removing a name does not demote. See also the "account promote" command.
+    /// </summary>
+    public string InitialAdministrators { get; set; }
+
+    /// <summary>
     /// An external OpenID Connect provider, such as Microsoft Entra ID. Unused unless
     /// <see cref="AccountsOpenIdConnectOptions.Authority"/> is set.
     /// </summary>

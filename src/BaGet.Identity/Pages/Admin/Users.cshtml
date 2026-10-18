@@ -1,0 +1,91 @@
+@page "/admin/users"
+@model BaGet.Identity.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="col-sm-12">
+    <h1>Users</h1>
+    <hr class="breadcrumb-divider" />
+
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-success" role="alert" id="users-message">@Model.Message</div>
+    }
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger" role="alert" id="users-error">@Model.Error</div>
+    }
+
+    <form method="get" class="form-inline">
+        <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Search user names" />
+        <button type="submit" class="btn btn-default">Search</button>
+    </form>
+
+    <form method="post" id="users-form">
+        <input type="hidden" name="q" value="@Model.Q" />
+        <input type="hidden" name="page" value="@Model.PageNumber" />
+
+        <table class="table">
+            <thead>
+                <tr><th></th><th>User</th><th>Email</th><th>Created</th><th>Role</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td><partial name="_Avatar" model="new BaGet.Core.AvatarModel(user.UserName, user.AvatarUrl, 24)" /></td>
+                        <td>@user.UserName</td>
+                        <td>@user.Email</td>
+                        <td>@user.Created.ToString("yyyy-MM-dd")</td>
+                        <td>@if (user.IsAdministrator) { <span class="label label-info">Administrator</span> }</td>
+                        <td>
+                            @if (user.IsAdministrator)
+                            {
+                                <button type="submit" class="btn btn-default btn-xs" asp-page-handler="Demote" name="userName" value="@user.UserName">Demote</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-default btn-xs" asp-page-handler="Promote" name="userName" value="@user.UserName">Promote</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.Users.Count == 0)
+        {
+            <p>No users match.</p>
+        }
+
+        <h2>Confirm</h2>
+        <p>Promoting or demoting asks for your password again.</p>
+        @if (Model.HasPassword)
+        {
+            <div class="form-group">
+                <label for="adminPassword">Your password</label>
+                <input id="adminPassword" name="password" type="password" class="form-control" autocomplete="current-password" />
+            </div>
+        }
+        else
+        {
+            <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Users"))" />
+        }
+    </form>
+
+    @if (Model.PageCount > 1)
+    {
+        <ul class="pager">
+            @if (Model.PageNumber > 1)
+            {
+                <li class="previous"><a asp-page="/Admin/Users" asp-route-q="@Model.Q" asp-route-page="@(Model.PageNumber - 1)">Previous</a></li>
+            }
+            <li>Page @Model.PageNumber of @Model.PageCount</li>
+            @if (Model.PageNumber < Model.PageCount)
+            {
+                <li class="next"><a asp-page="/Admin/Users" asp-route-q="@Model.Q" asp-route-page="@(Model.PageNumber + 1)">Next</a></li>
+            }
+        </ul>
+    }
+</div>

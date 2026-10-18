@@ -6,8 +6,16 @@
 
     // The signed-in user's avatar, for the account menu. The service exists only while accounts are enabled.
     string headerAvatar = null;
+    var isAdministrator = false;
     if (Accounts.Value.Enabled && User.Identity?.IsAuthenticated == true)
     {
+        // Likewise the administrator check: read from the database, so a demotion shows at once.
+        var administrators = Context.RequestServices.GetService<BaGet.Identity.AdministratorService>();
+        if (administrators != null)
+        {
+            isAdministrator = await administrators.IsAdministratorAsync(User, Context.RequestAborted);
+        }
+
         var avatars = Context.RequestServices.GetService<BaGet.Identity.AvatarService>();
         if (avatars != null)
         {
@@ -79,6 +87,12 @@
                                         <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
                                         <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>
                                         <li><a href="@Url.Page("/Upload")">Upload package</a></li>
+                                        @if (isAdministrator)
+                                        {
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="@Url.Page("/Admin/Settings")">Server settings</a></li>
+                                            <li><a href="@Url.Page("/Admin/Users")">Users</a></li>
+                                        }
                                         <li role="separator" class="divider"></li>
                                         <li><a href="@Url.Page("/Account/Logout")">Sign out</a></li>
                                     </ul>

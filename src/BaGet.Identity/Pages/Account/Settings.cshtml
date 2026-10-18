@@ -30,6 +30,10 @@
                 </ul>
             </div>
         }
+        @if (Model.Blockers.LastAdministrator)
+        {
+            <div class="alert alert-warning" role="alert">You are the last administrator. Promote another user first.</div>
+        }
         @if (Model.Blockers.Organizations.Count > 0)
         {
             <div class="alert alert-warning" role="alert">

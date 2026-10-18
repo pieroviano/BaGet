@@ -10,6 +10,12 @@ namespace BaGet.Core;
 public class BaGetUser : IdentityUser
 {
     public DateTime Created { get; set; }
+
+    /// <summary>
+    /// May change the server's settings and promote or demote administrators. It grants
+    /// nothing over packages: ownership rules apply to an administrator as to anyone.
+    /// </summary>
+    public bool IsAdministrator { get; set; }
 }
 
 /// <summary>

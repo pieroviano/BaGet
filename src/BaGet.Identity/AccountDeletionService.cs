@@ -21,9 +21,14 @@ namespace BaGet.Identity;
 /// that own packages and so cannot be left without anyone to run them. Same rule as
 /// <see cref="PackageOwnershipService.RemoveMemberAsync"/>.
 /// </param>
-public record DeletionBlockers(IReadOnlyList<string> LastOwnerPackageIds, IReadOnlyList<string> Organizations)
+/// <param name="LastAdministrator">
+/// The user is the server's only administrator, so deleting them would leave nobody able to
+/// change the settings.
+/// </param>
+public record DeletionBlockers(IReadOnlyList<string> LastOwnerPackageIds, IReadOnlyList<string> Organizations, bool LastAdministrator = false)
 {
-    public bool Any => LastOwnerPackageIds.Count > 0 || Organizations.Count > 0;
+    /// <summary>Whether anything blocks the deletion.</summary>
+    public bool Any => LastOwnerPackageIds.Count > 0 || Organizations.Count > 0 || LastAdministrator;
 }
 
 /// <summary>
@@ -72,7 +77,11 @@ public class AccountDeletionService
             if (blocked) blocking.Add(organization.Name);
         }
 
-        return new DeletionBlockers(lastOwner, blocking);
+        // Same rule as AdministratorService.IsLastAdministratorAsync.
+        var lastAdministrator = user.IsAdministrator
+            && await _context.Users.CountAsync(u => u.IsAdministrator, cancellationToken) <= 1;
+
+        return new DeletionBlockers(lastOwner, blocking, lastAdministrator);
     }
 
     /// <summary>

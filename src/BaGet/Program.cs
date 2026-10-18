@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
@@ -119,6 +120,51 @@ public partial class Program
                     return 0;
                 });
             });
+
+            foreach (var (name, promote) in new[] { ("promote", true), ("demote", false) })
+            {
+                account.Command(name, change =>
+                {
+                    change.Description = promote
+                        ? "Make a user an administrator, who may change the server's settings and promote other administrators."
+                        : "Remove a user's administrator flag. The last administrator cannot be demoted.";
+                    var userName = change.Argument("user", "The user name.").IsRequired();
+                    change.OnExecuteAsync(async cancellationToken =>
+                    {
+                        using var scope = app.Services.CreateScope();
+                        var administrators = scope.ServiceProvider.GetService<AdministratorService>();
+                        if (administrators == null)
+                        {
+                            Console.Error.WriteLine("Accounts are not enabled (\"Accounts:Enabled\").");
+                            return 1;
+                        }
+
+                        var result = promote
+                            ? await administrators.PromoteAsync(userName.Value, "command line", cancellationToken)
+                            : await administrators.DemoteAsync(userName.Value, "command line", cancellationToken);
+
+                        switch (result)
+                        {
+                            case AdministratorChange.UserNotFound:
+                                Console.Error.WriteLine($"There is no user named \"{userName.Value}\".");
+                                return 1;
+                            case AdministratorChange.LastAdministrator:
+                                Console.Error.WriteLine("The last administrator cannot be demoted. Promote another user first.");
+                                return 1;
+                            case AdministratorChange.Unchanged:
+                                Console.WriteLine(promote
+                                    ? $"{userName.Value} is already an administrator."
+                                    : $"{userName.Value} is not an administrator.");
+                                return 0;
+                            default:
+                                Console.WriteLine(promote
+                                    ? $"{userName.Value} is now an administrator."
+                                    : $"{userName.Value} is no longer an administrator.");
+                                return 0;
+                        }
+                    });
+                });
+            }
         });
 
         commands.Option("--urls", "The URLs that BaGet Extension should bind to.", CommandOptionType.SingleValue);
@@ -126,10 +172,25 @@ public partial class Program
         commands.OnExecuteAsync(async cancellationToken =>
         {
             await app.RunMigrationsAsync(cancellationToken);
+            await PromoteInitialAdministratorsAsync(app, cancellationToken);
             await app.RunAsync(cancellationToken);
         });
 
         await commands.ExecuteAsync(args);
+    }
+
+    /// <summary>
+    /// Promote the users named by <c>Accounts:InitialAdministrators</c>. Does nothing while
+    /// accounts are disabled, since then there is no <see cref="AdministratorService"/>.
+    /// </summary>
+    internal static async Task PromoteInitialAdministratorsAsync(WebApplication app, CancellationToken cancellationToken)
+    {
+        using var scope = app.Services.CreateScope();
+        var administrators = scope.ServiceProvider.GetService<AdministratorService>();
+        if (administrators == null) return;
+
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<AccountsOptions>>().Value;
+        await administrators.PromoteInitialAdministratorsAsync(options.InitialAdministrators, cancellationToken);
     }
 
     /// <summary>
