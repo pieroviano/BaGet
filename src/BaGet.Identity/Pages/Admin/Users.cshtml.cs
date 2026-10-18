@@ -102,7 +102,7 @@ public class UsersModel : AdminPageModel
             }
         }
 
-        return RedirectToPage(null, null, new { q = Q, page = PageNumber > 1 ? PageNumber : (int?)null });
+        return RedirectToPage("/Admin/Users", new { q = Q, page = PageNumber > 1 ? PageNumber : (int?)null });
     }
 
     private async Task LoadAsync(CancellationToken cancellationToken)

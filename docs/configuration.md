@@ -227,6 +227,30 @@ Who may change a package:
 !!! warning
     With accounts off, set `ApiKey`. Without it the server is open: anyone may push anything.
 
+### Administrators
+
+An account can be an **administrator**: a flag kept in the database, on the account. An administrator
+reaches `/admin/users` (the "Users" entry of the account menu), where they promote and demote other
+accounts, each time confirming with their password (or by signing in again with the provider, for an
+account without one). Everyone else, and every request while accounts are off, gets 404 there.
+
+```json
+"Accounts": {
+    "InitialAdministrators": "alice;bob"
+}
+```
+
+| Setting or command | Meaning |
+| --- | --- |
+| `Accounts:InitialAdministrators` | User names, separated by `;`, promoted at every start. Only accounts that already exist are promoted, so a name cannot be claimed by registering it later. Removing a name does not demote anyone. |
+| `baget account promote <user>` | Makes the user an administrator. Needs `Accounts:Enabled`; exit code 1 for an unknown user. |
+| `baget account demote <user>` | Removes the flag. Exit code 1 for an unknown user or the last administrator. |
+
+* The **last administrator cannot be demoted, and cannot delete their account**: promote another user first.
+  If every administrator is lost anyway, use `baget account promote` or `InitialAdministrators`.
+* The flag grants **no rights over packages**: ownership rules apply to an administrator as to anyone.
+* The check reads the database on every request, so a demotion applies at once.
+
 ### Email (optional)
 
 Email is off until `Email:Smtp` has a `Host` and a `From`. While it is off, nothing that needs email

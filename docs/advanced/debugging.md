@@ -46,3 +46,4 @@ console and debug providers. Raise it for a namespace, for example:
 | `dotnet BaGet.dll import downloads` | imports nuget.org download counts |
 | `dotnet BaGet.dll catalog rebuild` | appends the catalog entries missing for existing packages |
 | `dotnet BaGet.dll account reset-password <user> [--email <address>]` | sets a generated password, switches off two-factor, lifts lockout; needs `Accounts:Enabled` |
+| `dotnet BaGet.dll account promote <user>` / `demote <user>` | sets or clears the administrator flag; needs `Accounts:Enabled`; the last administrator cannot be demoted |
