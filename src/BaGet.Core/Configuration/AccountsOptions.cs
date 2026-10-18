@@ -34,6 +34,14 @@ public class AccountsOptions
     public string? InitialAdministrators { get; set; }
 
     /// <summary>
+    /// Whether a server with no users at all creates the administrator "Admin" at startup, with a
+    /// well-known default password that must be changed at the first sign-in. Turn it off to bootstrap
+    /// only through <see cref="InitialAdministrators"/> or the "account promote" command.
+    /// </summary>
+    [RestartRequired]
+    public bool CreateDefaultAdministrator { get; set; } = true;
+
+    /// <summary>
     /// An external OpenID Connect provider, such as Microsoft Entra ID. Unused unless
     /// <see cref="AccountsOpenIdConnectOptions.Authority"/> is set.
     /// </summary>

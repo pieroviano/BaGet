@@ -34,16 +34,71 @@ public enum AdministratorChange
 /// </summary>
 public class AdministratorService
 {
+    /// <summary>The administrator <see cref="CreateDefaultAdministratorAsync"/> creates on a server with no users.</summary>
+    public const string DefaultAdministratorUserName = "Admin";
+
+    /// <summary>
+    /// The default administrator's initial password. It is public knowledge, so it must be changed
+    /// right after the first sign-in; every startup warns while it still works.
+    /// </summary>
+    public const string DefaultAdministratorPassword = "Admin1234!";
+
     private readonly UserManager<BaGetUser> _users;
     private readonly IContext _context;
+    private readonly SystemTime _time;
     private readonly ILogger<AdministratorService> _logger;
 
     /// <summary>Creates the service.</summary>
-    public AdministratorService(UserManager<BaGetUser> users, IContext context, ILogger<AdministratorService> logger)
+    public AdministratorService(UserManager<BaGetUser> users, IContext context, SystemTime time, ILogger<AdministratorService> logger)
     {
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _time = time ?? throw new ArgumentNullException(nameof(time));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// On a server with no users at all, create the administrator <see cref="DefaultAdministratorUserName"/>
+    /// with the password <see cref="DefaultAdministratorPassword"/>, so that a fresh install can be signed in to
+    /// and configured. Its email counts as confirmed, so it can sign in while SMTP is configured, although it has no
+    /// address. Once any user exists this does nothing, even if that user is later deleted.
+    /// </summary>
+    /// <returns>Whether the administrator was created.</returns>
+    public async Task<bool> CreateDefaultAdministratorAsync(CancellationToken cancellationToken)
+    {
+        if (await _context.Users.AnyAsync(cancellationToken)) return false;
+
+        var user = new BaGetUser
+        {
+            UserName = DefaultAdministratorUserName,
+            EmailConfirmed = true,
+            IsAdministrator = true,
+            Created = _time.UtcNow,
+        };
+
+        var result = await _users.CreateAsync(user, DefaultAdministratorPassword);
+
+        // Several instances starting at once on an empty database may race; the unique user name lets
+        // only one of them create the account, and the others have nothing left to do.
+        if (!result.Succeeded && result.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.DuplicateUserName))) return false;
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join(" ", result.Errors.Select(e => e.Description)));
+        }
+
+        _logger.LogWarning(
+            "There were no users, so the administrator {User} was created with the default password. Sign in and change it now.",
+            DefaultAdministratorUserName);
+
+        return true;
+    }
+
+    /// <summary>Whether <see cref="DefaultAdministratorUserName"/> exists and still has the default password.</summary>
+    public async Task<bool> HasDefaultPasswordAsync()
+    {
+        var user = await _users.FindByNameAsync(DefaultAdministratorUserName);
+
+        return user != null && await _users.CheckPasswordAsync(user, DefaultAdministratorPassword);
     }
 
     /// <summary>Whether the signed in user is an administrator, according to the database.</summary>

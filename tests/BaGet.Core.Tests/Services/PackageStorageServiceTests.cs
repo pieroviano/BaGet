@@ -206,7 +206,7 @@ public class PackageStorageServiceTests
     public class GetPackageStreamAsync : FactsBase
     {
         [Fact]
-        public async Task ThrowsIfStorageThrows()
+        public async Task ReturnsNullIfDirectoryIsMissing()
         {
             // Arrange
             var cancellationToken = CancellationToken.None;
@@ -215,8 +215,10 @@ public class PackageStorageServiceTests
                 .ThrowsAsync(new DirectoryNotFoundException());
 
             // Act
-            await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-                _target.GetPackageStreamAsync(_package.Id, _package.Version, cancellationToken));
+            var result = await _target.GetPackageStreamAsync(_package.Id, _package.Version, cancellationToken);
+
+            // Assert
+            Assert.Null(result);
         }
 
         [Fact]
@@ -244,7 +246,7 @@ public class PackageStorageServiceTests
     public class GetNuspecStreamAsync : FactsBase
     {
         [Fact]
-        public async Task ThrowsIfDoesntExist()
+        public async Task ReturnsNullIfDirectoryIsMissing()
         {
             // Arrange
             var cancellationToken = CancellationToken.None;
@@ -253,8 +255,10 @@ public class PackageStorageServiceTests
                 .ThrowsAsync(new DirectoryNotFoundException());
 
             // Act
-            await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-                _target.GetNuspecStreamAsync(_package.Id, _package.Version, cancellationToken));
+            var result = await _target.GetNuspecStreamAsync(_package.Id, _package.Version, cancellationToken);
+
+            // Assert
+            Assert.Null(result);
         }
 
         [Fact]
@@ -282,7 +286,7 @@ public class PackageStorageServiceTests
     public class GetReadmeStreamAsync : FactsBase
     {
         [Fact]
-        public async Task ThrowsIfDoesntExist()
+        public async Task ReturnsNullIfDirectoryIsMissing()
         {
             // Arrange
             var cancellationToken = CancellationToken.None;
@@ -291,8 +295,10 @@ public class PackageStorageServiceTests
                 .ThrowsAsync(new DirectoryNotFoundException());
 
             // Act
-            await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-                _target.GetReadmeStreamAsync(_package.Id, _package.Version, cancellationToken));
+            var result = await _target.GetReadmeStreamAsync(_package.Id, _package.Version, cancellationToken);
+
+            // Assert
+            Assert.Null(result);
         }
 
         [Fact]

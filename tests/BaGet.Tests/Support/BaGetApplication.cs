@@ -67,6 +67,9 @@ public class BaGetApplication : WebApplicationFactory<Program>
             { "Storage:Path", storagePath },
             { "Search:Type", "Database" },
             { "Accounts:Enabled", "false" },
+            // WebApplicationFactory runs Main, whose startup would otherwise create "Admin" in every
+            // accounts-enabled test; tests that need it call AdministratorService directly.
+            { "Accounts:CreateDefaultAdministrator", "false" },
             { SettingsOverridesStore.PathKey, Path.Combine(tempPath, SettingsOverridesStore.DefaultFileName) },
             { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
             { "Mirror:PackageSource", "http://localhost/v3/index.json" },
