@@ -32,8 +32,8 @@ public class UsersModel : AdminPageModel
     [BindProperty(SupportsGet = true)]
     public string Q { get; set; }
 
-    /// <summary>One-based page number.</summary>
-    [BindProperty(SupportsGet = true, Name = "page")]
+    /// <summary>One-based page number. Not "page": Razor Pages reserves that route value for the page path.</summary>
+    [BindProperty(SupportsGet = true, Name = "p")]
     public int PageNumber { get; set; } = 1;
 
     /// <summary>The users on this page.</summary>
@@ -102,7 +102,7 @@ public class UsersModel : AdminPageModel
             }
         }
 
-        return RedirectToPage("/Admin/Users", new { q = Q, page = PageNumber > 1 ? PageNumber : (int?)null });
+        return RedirectToPage("/Admin/Users", new { q = Q, p = PageNumber > 1 ? PageNumber : (int?)null });
     }
 
     private async Task LoadAsync(CancellationToken cancellationToken)

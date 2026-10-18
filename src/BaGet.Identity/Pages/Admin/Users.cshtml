@@ -24,7 +24,7 @@
 
     <form method="post" id="users-form">
         <input type="hidden" name="q" value="@Model.Q" />
-        <input type="hidden" name="page" value="@Model.PageNumber" />
+        <input type="hidden" name="p" value="@Model.PageNumber" />
 
         <table class="table">
             <thead>
@@ -79,12 +79,12 @@
         <ul class="pager">
             @if (Model.PageNumber > 1)
             {
-                <li class="previous"><a asp-page="/Admin/Users" asp-route-q="@Model.Q" asp-route-page="@(Model.PageNumber - 1)">Previous</a></li>
+                <li class="previous"><a asp-page="/Admin/Users" asp-route-q="@Model.Q" asp-route-p="@(Model.PageNumber - 1)">Previous</a></li>
             }
             <li>Page @Model.PageNumber of @Model.PageCount</li>
             @if (Model.PageNumber < Model.PageCount)
             {
-                <li class="next"><a asp-page="/Admin/Users" asp-route-q="@Model.Q" asp-route-page="@(Model.PageNumber + 1)">Next</a></li>
+                <li class="next"><a asp-page="/Admin/Users" asp-route-q="@Model.Q" asp-route-p="@(Model.PageNumber + 1)">Next</a></li>
             }
         </ul>
     }

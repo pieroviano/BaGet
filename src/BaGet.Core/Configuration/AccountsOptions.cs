@@ -25,9 +25,10 @@ public class AccountsOptions
     public bool AllowRegistration { get; set; } = true;
 
     /// <summary>
-    /// User names promoted to administrator at startup, separated by semicolons. Only
-    /// existing accounts are promoted, so a listed name cannot be claimed by registering it;
-    /// removing a name does not demote. See also the "account promote" command.
+    /// User names promoted to administrator at startup, separated by semicolons. Applied
+    /// only while the server has no administrator, and only to accounts that already exist,
+    /// so it bootstraps the first administrator and nothing more: a listed name registered
+    /// later is not promoted, and a demotion is not reversed. See also the "account promote" command.
     /// </summary>
     [RestartRequired]
     public string InitialAdministrators { get; set; }

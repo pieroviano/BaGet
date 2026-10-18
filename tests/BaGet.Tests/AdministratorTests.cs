@@ -21,6 +21,7 @@ namespace BaGet.Tests;
 public class AdministratorTests : IDisposable
 {
     private const string Password = "Passw0rd!";
+    private const int UsersModelPageSize = BaGet.Identity.Pages.Admin.UsersModel.PageSize;
 
     private readonly ITestOutputHelper _output;
     private readonly List<IDisposable> _disposables = new List<IDisposable>();
@@ -151,7 +152,75 @@ public class AdministratorTests : IDisposable
         Assert.DoesNotContain(">bob<", filtered);
 
         // A page beyond the end shows the last one instead of an empty page.
-        Assert.Contains("alice", await admin.GetPageAsync("admin/users?page=99"));
+        Assert.Contains("alice", await admin.GetPageAsync("admin/users?p=99"));
+    }
+
+    [Fact]
+    public async Task TheUsersPageShowsLaterPagesAndKeepsThePageInItsLinks()
+    {
+        var (app, admin) = await StartWithAdministratorAsync();
+        await WithAsync(app, async p =>
+        {
+            var context = p.GetRequiredService<IContext>();
+            for (var i = 0; i < UsersModelPageSize; i++)
+            {
+                context.Users.Add(new BaGetUser { Id = $"id{i}", UserName = $"amber{i:D3}", NormalizedUserName = $"AMBER{i:D3}", Created = DateTime.UtcNow });
+            }
+
+            await context.SaveChangesAsync(CancellationToken.None);
+
+            return true;
+        });
+
+        // "root" plus 50 "amberNNN" names: root sorts after them, so it is on page 2 only.
+        var first = await admin.GetPageAsync("admin/users");
+        var second = await admin.GetPageAsync("admin/users?p=2");
+
+        Assert.Contains("amber000", first);
+        Assert.DoesNotContain("<td>root</td>", first);
+        Assert.Contains("p=2", first);
+        Assert.Contains("<td>root</td>", second);
+        Assert.DoesNotContain("amber000", second);
+    }
+
+    [Fact]
+    public async Task InitialAdministratorsDoNotPromoteOnceAnAdministratorExists()
+    {
+        var (app, admin) = await StartWithAdministratorAsync();
+
+        // The listed name is registered only after the server already has an administrator.
+        using var late = NewBrowser(app);
+        await late.RegisterAsync("alice");
+        await WithAsync(app, async p =>
+        {
+            await p.GetRequiredService<AdministratorService>()
+                .PromoteInitialAdministratorsAsync("alice;root", CancellationToken.None);
+
+            return true;
+        });
+
+        Assert.False(await IsAdministratorAsync(app, "alice"));
+        Assert.True(await IsAdministratorAsync(app, "root"));
+    }
+
+    [Fact]
+    public async Task InitialAdministratorsDoNotReverseADemotion()
+    {
+        var (app, _) = await StartWithAdministratorAsync();
+        using var other = NewBrowser(app);
+        await other.RegisterAsync("alice");
+        await PromoteAsync(app, "alice");
+        await DemoteAsync(app, "root");
+
+        await WithAsync(app, async p =>
+        {
+            await p.GetRequiredService<AdministratorService>()
+                .PromoteInitialAdministratorsAsync("root", CancellationToken.None);
+
+            return true;
+        });
+
+        Assert.False(await IsAdministratorAsync(app, "root"));
     }
 
     [Fact]

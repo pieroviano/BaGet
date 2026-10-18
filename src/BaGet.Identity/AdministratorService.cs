@@ -78,10 +78,15 @@ public class AdministratorService
     }
 
     /// <summary>
-    /// Promotes the semicolon separated user names. A name with no account is logged and skipped.
+    /// Bootstraps a server without administrators: promotes the semicolon separated user
+    /// names, but only while no administrator exists. Once one does, it does nothing, so a
+    /// listed name registered later is not promoted and a demotion is not reversed at restart.
+    /// A name with no account is logged and skipped.
     /// </summary>
     public async Task PromoteInitialAdministratorsAsync(string names, CancellationToken cancellationToken)
     {
+        if (await _context.Users.AnyAsync(u => u.IsAdministrator, cancellationToken)) return;
+
         var separators = new[] { ';' };
         foreach (var name in (names ?? string.Empty).Split(separators, StringSplitOptions.RemoveEmptyEntries).Select(n => n.Trim()).Where(n => n.Length > 0))
         {
