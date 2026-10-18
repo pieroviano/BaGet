@@ -3,6 +3,7 @@ namespace BaGet.Core;
 /// <summary>
 /// User accounts, package owners and per-user API keys.
 /// </summary>
+[RestartRequired]
 public class AccountsOptions
 {
     /// <summary>
@@ -28,6 +29,7 @@ public class AccountsOptions
     /// existing accounts are promoted, so a listed name cannot be claimed by registering it;
     /// removing a name does not demote. See also the "account promote" command.
     /// </summary>
+    [RestartRequired]
     public string InitialAdministrators { get; set; }
 
     /// <summary>
@@ -43,6 +45,7 @@ public class AccountsOpenIdConnectOptions
 
     public string ClientId { get; set; }
 
+    [SensitiveSetting]
     public string ClientSecret { get; set; }
 
     /// <summary>

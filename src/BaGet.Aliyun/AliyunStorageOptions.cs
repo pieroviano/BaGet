@@ -1,13 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 
+using BaGet.Core;
+
 namespace BaGet.Aliyun;
 
+[RestartRequired]
 public class AliyunStorageOptions
 {
     [Required]
+    [SensitiveSetting]
     public string AccessKey { get; set; }
 
     [Required]
+    [SensitiveSetting]
     public string AccessKeySecret { get; set; }
 
     [Required]

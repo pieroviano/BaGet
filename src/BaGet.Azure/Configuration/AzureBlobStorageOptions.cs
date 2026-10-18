@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BaGet.Core;
 using System.ComponentModel.DataAnnotations;
 
 namespace BaGet.Azure;
@@ -8,12 +9,14 @@ namespace BaGet.Azure;
 /// BaGet's configurations to use Azure Blob Storage to store packages.
 /// See: https://pieroviano.github.io/BaGet/quickstart/azure/#azure-blob-storage
 /// </summary>
+[RestartRequired]
 public class AzureBlobStorageOptions : IValidatableObject
 {
     /// <summary>
     /// The Azure Blob Storage connection string.
     /// If provided, ignores <see cref="AccountName"/> and <see cref="AccessKey"/>.
     /// </summary>
+    [SensitiveSetting]
     public string ConnectionString { get; set; }
 
     /// <summary>
@@ -24,6 +27,7 @@ public class AzureBlobStorageOptions : IValidatableObject
     /// <summary>
     /// The Azure Blob Storage access key. Ignored if <see cref="ConnectionString"/> is provided.
     /// </summary>        
+    [SensitiveSetting]
     public string AccessKey { get; set; }
 
     /// <summary>

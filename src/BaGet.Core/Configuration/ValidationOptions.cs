@@ -24,6 +24,7 @@ public class ValidationOptions
     /// </summary>
     public string RepositorySigningCertificatePath { get; set; }
 
+    [SensitiveSetting]
     public string RepositorySigningCertificatePassword { get; set; }
 
     /// <summary>

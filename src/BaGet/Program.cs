@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
@@ -14,6 +16,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.FileProviders.Physical;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -206,9 +211,9 @@ public partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        ConfigureConfiguration(builder.Configuration);
+        var overridesPath = ConfigureConfiguration(builder.Configuration, builder.Environment);
         ConfigureWebHost(builder.WebHost);
-        ConfigureServices(builder.Services, builder.Configuration);
+        ConfigureServices(builder.Services, builder.Configuration, overridesPath);
 
         var app = builder.Build();
 
@@ -217,7 +222,14 @@ public partial class Program
         return app;
     }
 
-    private static void ConfigureConfiguration(IConfigurationBuilder configuration)
+    /// <summary>
+    /// Apply BAGET_CONFIG_ROOT and add the Settings page's overrides file as a configuration
+    /// source. It sits right after the last appsettings*.json source, so it beats those
+    /// files but not user secrets, environment variables or the command line: an operator's
+    /// explicit environment still wins.
+    /// </summary>
+    /// <returns>The overrides file's absolute path.</returns>
+    private static string ConfigureConfiguration(ConfigurationManager configuration, IWebHostEnvironment environment)
     {
         var root = Environment.GetEnvironmentVariable("BAGET_CONFIG_ROOT");
 
@@ -225,6 +237,33 @@ public partial class Program
         {
             configuration.SetBasePath(root);
         }
+
+        var path = SettingsOverridesStore.ResolvePath(
+            configuration,
+            string.IsNullOrEmpty(root) ? environment.ContentRootPath : root);
+        var directory = Path.GetDirectoryName(path);
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // A read-only configuration root: the page then reports the error when saving.
+        }
+
+        var source = new JsonConfigurationSource
+        {
+            Path = Path.GetFileName(path),
+            Optional = true,
+            ReloadOnChange = true,
+            FileProvider = new PhysicalFileProvider(directory, ExclusionFilters.None),
+        };
+
+        var index = configuration.Sources.ToList().FindLastIndex(s => s is JsonConfigurationSource) + 1;
+        configuration.Sources.Insert(index, source);
+
+        return path;
     }
 
     private static void ConfigureWebHost(IWebHostBuilder web)
@@ -237,8 +276,10 @@ public partial class Program
         });
     }
 
-    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration, string overridesPath)
     {
+        services.AddSingleton(new SettingsOverridesStore(overridesPath));
+
         // Ideally we'd use:
         //
         //       services.ConfigureOptions<ConfigureBaGetOptions>();
@@ -294,6 +335,10 @@ public partial class Program
     private static void ConfigurePipeline(WebApplication app)
     {
         var options = app.Configuration.Get<BaGetOptions>();
+
+        // Take the Settings page's startup snapshot now, so that "pending restart" is judged
+        // against what this process started with.
+        app.Services.GetRequiredService<SettingsService>();
 
         // Reject a request whose "Host" header is not one BaGet serves, before anything
         // reads it. Every absolute URL BaGet advertises is built from that header, so a

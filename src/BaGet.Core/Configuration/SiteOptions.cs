@@ -25,6 +25,7 @@ public class SiteOptions
     /// switched off, because a forged Host header would otherwise decide where a password
     /// reset link points.
     /// </summary>
+    [RestartRequired]
     public string PublicUrl { get; set; }
 
     /// <summary>

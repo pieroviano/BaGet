@@ -19,6 +19,8 @@ public static partial class DependencyInjectionExtensions
         var app = new BaGetApplication(services);
 
         services.AddConfiguration();
+        services.TryAddSingleton<SettingsCatalog>();
+        services.TryAddSingleton<SettingsService>();
         services.AddBaGetServices();
         services.AddDefaultProviders();
 
@@ -45,6 +47,9 @@ public static partial class DependencyInjectionExtensions
         where TOptions : class
     {
         services.AddSingleton<IValidateOptions<TOptions>>(new ValidateBaGetOptions<TOptions>(key));
+
+        // The Settings page lists every options type, provider-specific ones included.
+        services.AddSingleton(new SettingsSchemaRegistration(typeof(TOptions), key));
         services.AddSingleton<IConfigureOptions<TOptions>>(provider =>
         {
             var config = provider.GetRequiredService<IConfiguration>();

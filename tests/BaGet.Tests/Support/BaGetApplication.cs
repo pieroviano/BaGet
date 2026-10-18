@@ -67,6 +67,7 @@ public class BaGetApplication : WebApplicationFactory<Program>
             { "Storage:Path", storagePath },
             { "Search:Type", "Database" },
             { "Accounts:Enabled", "false" },
+            { SettingsOverridesStore.PathKey, Path.Combine(tempPath, SettingsOverridesStore.DefaultFileName) },
             { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
             { "Mirror:PackageSource", "http://localhost/v3/index.json" },
         };

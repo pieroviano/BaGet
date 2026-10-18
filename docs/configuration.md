@@ -13,6 +13,7 @@ You can modify BaGet Extension's configurations by editing the `appsettings.json
 | `AllowPackageOverwrites` | `false` | accept a push of an existing id and version |
 | `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, deprecation/vulnerability changes, browser uploads and the manage page's POSTs |
 | `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet Extension starts |
+| `SettingsOverridesPath` | `appsettings.Overrides.json` | the file the [Settings page](#settings-page) saves to; relative paths start at the content root (or `BAGET_CONFIG_ROOT`) |
 
 ## Listening address
 
@@ -561,3 +562,28 @@ Note: If not specified, the MaxRequestBodySize in BaGet Extension defaults to 25
     ...
 }
 ```
+
+## Settings page
+
+Settings changed on the server's Settings page are saved to a JSON file, so `appsettings.json` and its
+comments stay untouched. The file is `appsettings.Overrides.json` in the content root (or in
+`BAGET_CONFIG_ROOT`); set `SettingsOverridesPath` (also as the environment variable
+`SettingsOverridesPath`) to put it elsewhere.
+
+| Source, lowest to highest precedence | Notes |
+| --- | --- |
+| `appsettings.json`, `appsettings.{Environment}.json`, `BaGet.settings*.json` | shipped defaults |
+| **the overrides file** | saved by the Settings page, reloaded when it changes |
+| user secrets, environment variables, command line | an operator's explicit setting still wins; the page marks a saved value that one of these overrides, because the saved value then has no effect |
+
+- A setting read only at startup (`Accounts`, `Email`, `Database`, `Storage`, `Search`, `Mirror`,
+  `Site:PublicUrl`, `PathBase`, `AllowedHosts`, `Urls`, `RunMigrationsAtStartup`, `IISServerOptions`) is marked
+  **restart required**; every other setting applies to the next request. The page lists the changes waiting for a restart.
+- A secret (API keys, connection strings, passwords, client secrets) is write-only: the page shows it masked,
+  a blank field keeps the current value, and "Clear" saves an empty one. It is stored in plain text in the
+  overrides file, as it would be in `appsettings.json`.
+- A change is validated before it is written, using the same rules as at startup. A failure that exists without the
+  change (an unused cloud provider's incomplete options) does not block a save.
+- The file is written atomically, so the folder must be writable. In a container, point `SettingsOverridesPath`
+  into a mounted volume, see [Docker](installation/docker.md). To recover from a bad value, edit or delete the file.
+- The page logs which keys changed and who changed them, never the values.

@@ -17,6 +17,10 @@ Storage__Path=/var/baget/packages
 Database__Type=Sqlite
 Database__ConnectionString=Data Source=/var/baget/baget.db
 Search__Type=Database
+
+# Where the server's Settings page saves the settings it changes. Keep it in the mounted volume,
+# otherwise a recreated container loses them.
+SettingsOverridesPath=/var/baget/appsettings.Overrides.json
 ```
 
 For a full list of configurations, please refer to [BaGet Extension's configuration](../configuration.md) guide.

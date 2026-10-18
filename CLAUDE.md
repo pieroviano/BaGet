@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter "FullyQualifiedName~UploadPageTests"` |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1219 tests, all green** across `BaGet.Core.Tests` (382), `BaGet.Tests` (576),
+Baseline: **1276 tests, all green** across `BaGet.Core.Tests` (428), `BaGet.Tests` (587),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (33),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
@@ -64,6 +64,15 @@ the first non-null, each provider deciding from configuration (`Database:Type`, 
 `Main` wraps it in a McMaster `CommandLineApplication` (`import downloads`, `catalog rebuild`), which
 is configured to **collect unrecognised arguments** so host arguments like `--environment` pass
 through.
+
+**Settings overrides file.** `ConfigureConfiguration` inserts `appsettings.Overrides.json` (path from
+`SettingsOverridesPath`, default in the content root / `BAGET_CONFIG_ROOT`) after the last `appsettings*.json`
+source and before user secrets, environment variables and the command line. `SettingsService` /
+`SettingsOverridesStore` (`BaGet.Core`) write it; `AddBaGetOptions` records every options type as a
+`SettingsSchemaRegistration`, and `[RestartRequired]` / `[SensitiveSetting]` on options classify them. Tests
+set `SettingsOverridesPath` to the temp directory; `UseSetting` values arrive through the *last* (chained host)
+provider, so they shadow saved overrides — integration tests that save a setting must use keys the harness does
+not set.
 
 **Registration-time configuration reads are load-bearing.** `AddBaGetAccounts` decides from
 `Accounts:Enabled` *while registering services*, so configuration must be in place before

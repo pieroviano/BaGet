@@ -8,11 +8,13 @@ public class BaGetOptions
     /// The API Key required to authenticate package
     /// operations. If empty, package operations do not require authentication.
     /// </summary>
+    [SensitiveSetting]
     public string ApiKey { get; set; }
 
     /// <summary>
     /// The application root URL for usage in reverse proxy scenarios.
     /// </summary>
+    [RestartRequired]
     public string PathBase { get; set; }
 
     /// <summary>
@@ -29,12 +31,14 @@ public class BaGetOptions
     /// value keeps working unchanged.
     /// See: https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/host-filtering
     /// </summary>
+    [RestartRequired]
     public string AllowedHosts { get; set; }
 
     /// <summary>
     /// If enabled, the database will be updated at app startup by running
     /// Entity Framework migrations. This is not recommended in production.
     /// </summary>
+    [RestartRequired]
     public bool RunMigrationsAtStartup { get; set; } = true;
 
     /// <summary>
@@ -57,6 +61,7 @@ public class BaGetOptions
     /// The URLs the BaGet server will use.
     /// As per documentation <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-3.1#server-urls">here (Server URLs)</a>.
     /// </summary>
+    [RestartRequired]
     public string Urls { get; set; }
 
     public DatabaseOptions Database { get; set; }

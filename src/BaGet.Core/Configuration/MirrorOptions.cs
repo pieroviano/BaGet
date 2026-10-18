@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BaGet.Core;
 
+[RestartRequired]
 public class MirrorOptions : IValidatableObject
 {
     /// <summary>

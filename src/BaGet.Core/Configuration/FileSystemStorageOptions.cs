@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace BaGet.Core;
 
+[RestartRequired]
 public class FileSystemStorageOptions : IValidatableObject
 {
     /// <summary>

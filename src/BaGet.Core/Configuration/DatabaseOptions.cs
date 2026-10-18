@@ -2,11 +2,13 @@
 
 namespace BaGet.Core;
 
+[RestartRequired]
 public class DatabaseOptions
 {
     public string Type { get; set; }
 
     [Required]
+    [SensitiveSetting]
     public string ConnectionString { get; set; }
 
     /// <summary>

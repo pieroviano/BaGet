@@ -3,12 +3,15 @@ using BaGet.Core;
 
 namespace BaGet.Aws;
 
+[RestartRequired]
 public class S3StorageOptions
 {
     [RequiredIf(nameof(SecretKey), null, IsInverted = true)]
+    [SensitiveSetting]
     public string AccessKey { get; set; }
 
     [RequiredIf(nameof(AccessKey), null, IsInverted = true)]
+    [SensitiveSetting]
     public string SecretKey { get; set; }
 
     [Required]
