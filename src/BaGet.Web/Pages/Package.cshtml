@@ -308,6 +308,20 @@ else
                         <a href="@Model.PackageDownloadUrl">Download package</a>
                     </li>
 
+                    <li class="package-explorer">
+                        <i class="ms-Icon ms-Icon--FabricFolderSearch" aria-hidden="true"
+                           title="nuget.info is a 3rd party website, not controlled by this server. It loads packages from nuget.org, so it only opens packages also published there."></i>
+                        <a href="@Model.PackageExplorerUrl" target="_blank" rel="nofollow noreferrer"
+                           aria-label="open in NuGet Package Explorer"
+                           title="nuget.info is a 3rd party website, not controlled by this server. It loads packages from nuget.org, so it only opens packages also published there.">Open in NuGet Package Explorer</a>
+                    </li>
+
+                    <li class="package-explorer-desktop">
+                        <i class="ms-Icon ms-Icon--Download" aria-hidden="true"></i>
+                        <a href="@Model.PackageDownloadUrl" download
+                           title="Downloads this version's .nupkg. With NuGet Package Explorer installed, opening the file opens it there. Works for packages only on this server.">Open in NuGet Package Explorer (desktop)</a>
+                    </li>
+
                     <li>
                         <i class="ms-Icon ms-Icon--Flag" aria-hidden="true"></i>
                         <a asp-page="/ReportAbuse" asp-route-id="@Model.Package.Id" asp-route-version="@Model.Package.NormalizedVersionString">Report package</a>

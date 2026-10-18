@@ -62,6 +62,12 @@ public class PackageModel : PageModel
     public string LicenseUrl { get; private set; }
     public string PackageDownloadUrl { get; private set; }
 
+    /// <summary>
+    /// This version on nuget.info, NuGet Package Explorer's web app, as nuget.org links it. nuget.info
+    /// always downloads from nuget.org, so the link only works for a package that is also published there.
+    /// </summary>
+    public string PackageExplorerUrl { get; private set; }
+
     public async Task OnGetAsync(string id, string version, CancellationToken cancellationToken)
     {
         var packages = await _packages.FindPackagesAsync(id, cancellationToken);
@@ -122,6 +128,8 @@ public class PackageModel : PageModel
                 .GetUrlsAsync(Owners, 32, cancellationToken);
         }
         PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
+        PackageExplorerUrl = "https://nuget.info/packages/"
+            + Uri.EscapeDataString(Package.Id) + "/" + Uri.EscapeDataString(Package.NormalizedVersionString);
     }
 
     /// <summary>

@@ -231,6 +231,25 @@ public class PackagePageTabsTests : IDisposable
         Assert.DoesNotContain("Download symbols", html);
     }
 
+    /// <summary>
+    /// As on nuget.org: the shown version on nuget.info, opened in a new tab as a third-party link,
+    /// and a desktop variant that downloads the .nupkg for NuGet Package Explorer's file association.
+    /// </summary>
+    [Fact]
+    public async Task AboutSidebarLinksToNuGetPackageExplorer()
+    {
+        var (app, browser) = Start();
+        await AddAsync(app, "Explore.Pkg", "1.0.0", new[] { "net8.0" });
+        await AddAsync(app, "Explore.Pkg", "2.0.0-beta.1", new[] { "net8.0" });
+
+        var html = Text(await browser.GetPageAsync("packages/Explore.Pkg/2.0.0-beta.1"));
+
+        Assert.Contains("href=\"https://nuget.info/packages/Explore.Pkg/2.0.0-beta.1\" target=\"_blank\" rel=\"nofollow noreferrer\"", html);
+        Assert.Contains("nuget.info is a 3rd party website", html);
+        Assert.Contains("Open in NuGet Package Explorer (desktop)", html);
+        Assert.Matches("<a href=\"[^\"]*/explore\\.pkg/2\\.0\\.0-beta\\.1/explore\\.pkg\\.2\\.0\\.0-beta\\.1\\.nupkg\" download", html);
+    }
+
     [Fact]
     public async Task OwnersAppearWithAnAvatarWhenAccountsAreOn()
     {

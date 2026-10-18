@@ -35,7 +35,7 @@ The screenshot above shows the upstream project's UI, not the current one.
 * **NuGet V2 (OData) feed** for `nuget list`, older clients and PowerShellGet (on by default; `Feeds:EnableV2=false` turns it off)
 * **Accounts** (on by default; `Accounts:Enabled=false` restores the global `ApiKey` alone; while `ApiKey` is empty, pushes need a user API key): sign-in, OpenID Connect, package owners, organizations and scoped, expiring API keys
 * **Validation pipeline** (opt-in): packages are checked before they are served, and can be repository signed
-* **Web UI**: package pages, owner management pages, profiles, statistics and abuse reports
+* **Web UI**: package pages (with "Open in NuGet Package Explorer", web and desktop), owner management pages, profiles, statistics and abuse reports
 
 [Build status]: https://img.shields.io/github/actions/workflow/status/pieroviano/BaGet/main.yml?branch=main
 
