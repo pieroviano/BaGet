@@ -8,6 +8,10 @@
     <!-- This is necessary because BaGet.Azure references Microsoft.Azure.Cosmos.Table which has -->
     <!-- a transitive dependency on Microsoft.Azure.DocumentDB.Core with deprecated win7-x64 RID -->
     <UseRidGraph>true</UseRidGraph>
+
+    <!-- src/Directory.Build.props turns publishing off for every project; the host is the one
+         deployable. Without this, "dotnet publish" copies nothing and then fails writing web.config. -->
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,6 +42,12 @@
 
   <ItemGroup>
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- LibMan's restore manifest is a development file. BaGet.Web has one too, and publishing
+         both to the same path fails with NETSDK1152. -->
+    <Content Update="libman.json" CopyToPublishDirectory="Never" Pack="false" />
   </ItemGroup>
 
   <ItemGroup>

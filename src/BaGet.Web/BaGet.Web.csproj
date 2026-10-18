@@ -27,6 +27,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- LibMan's restore manifest is a development file. The host has one too, and publishing
+         both to the same path fails with NETSDK1152. -->
+    <Content Update="libman.json" CopyToPublishDirectory="Never" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" />
   </ItemGroup>
 
