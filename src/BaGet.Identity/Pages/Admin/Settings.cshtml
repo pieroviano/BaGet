@@ -1,0 +1,72 @@
+@page "/admin/settings"
+@model BaGet.Identity.Pages.Admin.SettingsModel
+@{
+    ViewData["Title"] = "Server settings";
+}
+
+<div class="col-sm-12">
+    <h1>Server settings</h1>
+    <hr class="breadcrumb-divider" />
+    <p class="text-muted">Saved to <code>@Model.OverridesPath</code>. Environment variables and command-line arguments override saved values.</p>
+
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-success" role="alert" id="settings-message">@Model.Message</div>
+    }
+    @if (Model.PendingRestart.Count > 0)
+    {
+        <div class="alert alert-warning" role="alert" id="settings-restart">Restart BaGet to apply: @string.Join(", ", Model.PendingRestart)</div>
+    }
+
+    <div class="row">
+        <nav class="col-md-3">
+            <ul class="nav nav-pills nav-stacked settings-nav">
+                @foreach (var s in Model.Sections)
+                {
+                    <li><a href="#@s.Key">@(s.Key.Length == 0 ? "General" : s.Key)</a></li>
+                }
+            </ul>
+        </nav>
+        <div class="col-md-9">
+            @foreach (var s in Model.Sections)
+            {
+                var title = s.Key.Length == 0 ? "General" : s.Key;
+                <form method="post" id="@s.Key" class="panel panel-default">
+                    <div class="panel-heading">
+                        <strong>@title</strong>
+                        <a class="pull-right" href="@BaGet.Core.SettingsCatalog.DocsAnchor(s.Key)" target="_blank" rel="noopener">Docs</a>
+                    </div>
+                    <div class="panel-body">
+                        @if (Model.ErrorSection == s.Key)
+                        {
+                            <div class="alert alert-danger" role="alert"><ul>@foreach (var e in Model.Errors) { <li>@e</li> }</ul></div>
+                        }
+                        @foreach (var g in s.GroupBy(x => x.Descriptor.Group))
+                        {
+                            <fieldset>
+                                <legend>@g.Key</legend>
+                                @foreach (var f in g)
+                                {
+                                    <partial name="_SettingField" model="f" />
+                                }
+                            </fieldset>
+                        }
+                        <input type="hidden" name="section" value="@s.Key" />
+                        @if (Model.HasPassword)
+                        {
+                            <div class="form-group">
+                                <label>Your password</label>
+                                <input type="password" name="password" class="form-control" autocomplete="current-password" required />
+                            </div>
+                        }
+                        else
+                        {
+                            <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
+                        }
+                        <button type="submit" class="btn btn-primary">Save @title</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>

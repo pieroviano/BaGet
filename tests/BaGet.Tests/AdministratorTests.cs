@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -31,12 +32,12 @@ public class AdministratorTests : IDisposable
         foreach (var d in _disposables) d.Dispose();
     }
 
-    private (BaGetApplication App, Browser Browser) Start(bool accounts = true)
+    private (BaGetApplication App, Browser Browser) Start(bool accounts = true, string apiKey = "")
     {
         var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string>
         {
             { "Accounts:Enabled", accounts ? "true" : "false" },
-            { "ApiKey", "" },
+            { "ApiKey", apiKey },
         });
         _disposables.Add(app);
 
@@ -182,6 +183,130 @@ public class AdministratorTests : IDisposable
         Assert.Equal(HttpStatusCode.Redirect, demotion.StatusCode);
 
         Assert.Equal(HttpStatusCode.NotFound, (await second.GetAsync("admin/users")).StatusCode);
+    }
+
+    // --- Settings page ------------------------------------------------------------------
+
+    private static Task<HttpResponseMessage> PostSettingsAsync(Browser browser, Dictionary<string, string> fields, string password = Password, string section = "")
+    {
+        fields["section"] = section;
+        fields["password"] = password;
+
+        return browser.PostAsync("admin/settings", fields);
+    }
+
+    private static async Task<HttpStatusCode> PushAsync(BaGetApplication app, string apiKey)
+    {
+        using var client = app.CreateClient();
+        using var package = TestPackages.Build("Settings.Package", "1.0.0");
+        using var request = TestPackages.PushRequest(package, apiKey);
+        using var response = await client.SendAsync(request);
+
+        return response.StatusCode;
+    }
+
+    [Fact]
+    public async Task AnAdministratorSeesTheSettingsPage()
+    {
+        var (_, admin) = await StartWithAdministratorAsync();
+
+        var html = await admin.GetPageAsync("admin/settings");
+
+        Assert.Contains("Server settings", html);
+        Assert.Contains("AllowPackageOverwrites", html);
+        Assert.Contains("name=\"v:AllowPackageOverwrites\"", html);
+        Assert.Contains("appsettings.Overrides.json", html);
+    }
+
+    [Fact]
+    public async Task SavingASettingWritesTheOverridesFileAndAppliesWithoutARestart()
+    {
+        const string key = "secret-push-key";
+        var (app, admin) = Start(apiKey: key);
+        await admin.RegisterAsync("root");
+        await PromoteAsync(app, "root");
+
+        Assert.Equal(HttpStatusCode.Created, await PushAsync(app, key));
+        Assert.Equal(HttpStatusCode.Conflict, await PushAsync(app, key));
+
+        using var response = await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:AllowPackageOverwrites", "true" } });
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        var file = app.Services.GetRequiredService<SettingsOverridesStore>().FilePath;
+        Assert.Contains("\"AllowPackageOverwrites\": true", await File.ReadAllTextAsync(file));
+        Assert.Equal(HttpStatusCode.Created, await PushAsync(app, key));
+
+        var html = await admin.GetPageAsync("admin/settings");
+        Assert.Contains("Saved 1 setting(s).", html);
+        Assert.Contains("Saved override", html);
+    }
+
+    [Fact]
+    public async Task SavingASettingNeedsThePassword()
+    {
+        var (app, admin) = await StartWithAdministratorAsync();
+
+        var html = await (await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:AllowPackageOverwrites", "true" } }, password: "wrong")).Content.ReadAsStringAsync();
+
+        Assert.Contains("confirmation is incorrect", html);
+        Assert.False(File.Exists(app.Services.GetRequiredService<SettingsOverridesStore>().FilePath));
+    }
+
+    [Fact]
+    public async Task AnInvalidValueIsReportedInItsSection()
+    {
+        var (app, admin) = await StartWithAdministratorAsync();
+
+        var html = await (await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:Mirror:PackageDownloadTimeoutSeconds", "abc" } }, section: "Mirror")).Content.ReadAsStringAsync();
+
+        Assert.Contains("Mirror:PackageDownloadTimeoutSeconds: ", html);
+        Assert.Contains("alert-danger", html);
+        Assert.False(File.Exists(app.Services.GetRequiredService<SettingsOverridesStore>().FilePath));
+    }
+
+    [Fact]
+    public async Task ANonAdministratorCannotPostSettings()
+    {
+        var (app, _) = await StartWithAdministratorAsync();
+        using var other = NewBrowser(app);
+        await other.RegisterAsync("alice");
+
+        using var response = await other.PostAsync(
+            "admin/settings",
+            new Dictionary<string, string> { { "section", "" }, { "password", Password }, { "v:AllowPackageOverwrites", "true" } },
+            tokenPage: "account/settings");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(File.Exists(app.Services.GetRequiredService<SettingsOverridesStore>().FilePath));
+    }
+
+    [Fact]
+    public async Task ASecretValueNeverAppearsInThePage()
+    {
+        const string secret = "very-secret-api-key-value";
+        var (app, admin) = Start(apiKey: secret);
+        await admin.RegisterAsync("root");
+        await PromoteAsync(app, "root");
+
+        var html = await admin.GetPageAsync("admin/settings");
+
+        Assert.DoesNotContain(secret, html);
+        Assert.Contains("unchanged", html);
+    }
+
+    [Fact]
+    public async Task ASecretIsClearedExplicitlyAndKeptWhenBlank()
+    {
+        var (app, admin) = Start(apiKey: "kept-key");
+        await admin.RegisterAsync("root");
+        await PromoteAsync(app, "root");
+        var path = app.Services.GetRequiredService<SettingsOverridesStore>().FilePath;
+
+        await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:ApiKey", "" } });
+        Assert.False(File.Exists(path));
+
+        await PostSettingsAsync(admin, new Dictionary<string, string> { { "clear:ApiKey", "true" } });
+        Assert.Contains("\"ApiKey\": \"\"", await File.ReadAllTextAsync(path));
     }
 
     // --- Promote and demote -------------------------------------------------------------

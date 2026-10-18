@@ -722,3 +722,8 @@ h4 {
     margin-right: 6px;
     font-size: 12px;
 }
+
+.settings-nav {
+    position: sticky;
+    top: 70px;
+}

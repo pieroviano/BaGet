@@ -587,3 +587,14 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 - The file is written atomically, so the folder must be writable. In a container, point `SettingsOverridesPath`
   into a mounted volume, see [Docker](installation/docker.md). To recover from a bad value, edit or delete the file.
 - The page logs which keys changed and who changed them, never the values.
+
+### Using the Settings page
+
+- Open **Server settings** in the account menu (administrators only; anyone else gets a 404). The page has one form per
+  section, each with its own **Save** button; saving asks for your password (an account without one signs in
+  again with its provider instead).
+- Each setting shows its key, its description, and badges: **Restart required**, **Saved override** (tick *Reset to
+  default* to remove it) and **Overridden by environment variable / command line** (the saved value then has no effect).
+- A secret field is blank: leave it empty to keep the value, type to replace it, tick *Clear* to empty it.
+- Only changed values are saved. A value that fails to parse or validate is listed above its section and nothing in
+  that section is saved. Settings of other kinds (maps) are shown read-only.

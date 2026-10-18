@@ -1,0 +1,67 @@
+@model BaGet.Core.SettingState
+@using BaGet.Core
+@{
+    var d = Model.Descriptor;
+    var id = d.Key.Replace(':', '_');
+    var name = SettingsForm.ValuePrefix + d.Key;
+    var mask = "••••";
+}
+
+<div class="form-group">
+    <label for="@id"><code>@d.Key</code></label>
+    @if (d.RequiresRestart) { <span class="label label-warning">Restart required</span> }
+    @if (Model.IsOverridden) { <span class="label label-info">Saved override</span> }
+    @if (Model.ShadowedBy != null) { <span class="label label-danger">Overridden by @Model.ShadowedBy</span> }
+
+    @switch (d.Kind)
+    {
+        case SettingKind.Boolean:
+            <div class="checkbox">
+                <label>
+                    <input type="hidden" name="@name" value="false" />
+                    <input type="checkbox" id="@id" name="@name" value="true" checked="@(string.Equals(Model.EffectiveValue, "true", StringComparison.OrdinalIgnoreCase))" /> Enabled
+                </label>
+            </div>
+            break;
+        case SettingKind.Integer:
+            <input type="number" id="@id" name="@name" value="@Model.EffectiveValue" step="1" class="form-control" />
+            break;
+        case SettingKind.Number:
+            <input type="number" id="@id" name="@name" value="@Model.EffectiveValue" step="any" class="form-control" />
+            break;
+        case SettingKind.Enum:
+            <select id="@id" name="@name" class="form-control">
+                @foreach (var option in d.EnumValues)
+                {
+                    <option value="@option" selected="@(string.Equals(option, Model.EffectiveValue, StringComparison.OrdinalIgnoreCase))">@option</option>
+                }
+            </select>
+            break;
+        case SettingKind.StringList:
+            <textarea id="@id" name="@name" rows="3" class="form-control">@Model.EffectiveValue</textarea>
+            <p class="help-block">One entry per line.</p>
+            break;
+        case SettingKind.ReadOnly:
+            <pre>@(d.IsSensitive ? (Model.HasValue ? mask : string.Empty) : Model.EffectiveValue)</pre>
+            <p class="help-block">Edit the configuration file.</p>
+            break;
+        default:
+            if (d.IsSensitive)
+            {
+                <input type="password" id="@id" name="@name" value="" class="form-control" autocomplete="new-password" placeholder="@(Model.HasValue ? mask + " unchanged" : "not set")" />
+                <div class="checkbox"><label><input type="checkbox" name="@(SettingsForm.ClearPrefix + d.Key)" value="true" /> Clear</label></div>
+            }
+            else
+            {
+                <input type="text" id="@id" name="@name" value="@Model.EffectiveValue" class="form-control" />
+            }
+            break;
+    }
+
+    @if (!string.IsNullOrEmpty(d.Description)) { <p class="help-block">@d.Description</p> }
+    @if (Model.ShadowedBy != null) { <p class="help-block text-danger">The saved value has no effect while the @Model.ShadowedBy sets this key.</p> }
+    @if (Model.IsOverridden)
+    {
+        <div class="checkbox"><label><input type="checkbox" name="@(SettingsForm.ResetPrefix + d.Key)" value="true" /> Reset to default</label></div>
+    }
+</div>
