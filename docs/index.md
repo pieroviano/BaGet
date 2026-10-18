@@ -27,7 +27,7 @@ By default it listens on `http://localhost:6060` (`Kestrel:Endpoints`; `--urls` 
 every resource and page, and [BaGet Extension vs nuget.org](vs/nugetorg.md) compares the two.
 
 ## Architecture
-[See](docs/advanced/architecture.md)
+[See](advanced/architecture.md)
 
 ## Import packages
 
