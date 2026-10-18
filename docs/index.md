@@ -26,6 +26,9 @@ pipeline with repository signing is opt-in. Both are set in its [configuration](
 By default it listens on `http://localhost:6060` (`Kestrel:Endpoints`; `--urls` has no effect). The [server API](advanced/api.md) lists
 every resource and page, and [BaGet Extension vs nuget.org](vs/nugetorg.md) compares the two.
 
+## Architecture
+[See](docs/advanced/architecture.md)
+
 ## Import packages
 
 * [From nuget.org](import/nugetorg.md)

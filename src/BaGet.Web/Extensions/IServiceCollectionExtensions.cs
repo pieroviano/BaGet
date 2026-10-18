@@ -18,7 +18,15 @@ public static class IServiceCollectionExtensions
     {
         services
             .AddRouting(options => options.LowercaseUrls = true)
-            .AddControllers()
+            .AddControllers(options =>
+            {
+                // With nullable reference types on, MVC treats every non-nullable reference-type
+                // property or parameter it binds as [Required]. Optional query values such as the
+                // package list's "packageType" and "framework" would then fail validation whenever a
+                // request leaves them out, and the page answer 400. Validation stays what the
+                // attributes say it is; an explicit [Required] still applies.
+                options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+            })
             .AddApplicationPart(typeof(PackageContentController).Assembly)
             .AddJsonOptions(options =>
             {
