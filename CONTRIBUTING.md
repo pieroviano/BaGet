@@ -6,9 +6,10 @@ If you want to run from BaGet's source code:
 
 1. Install the [.NET SDK] (BaGet targets .NET 10)
 2. Run `git clone https://github.com/pieroviano/BaGet.git`
-3. Navigate to `./BaGet/src/BaGet`
-4. Start the service with `dotnet run -p:GeneratePackageOnBuild=false`
-5. Open the URL `http://localhost:6060/v3/index.json` in your browser
+3. Create the local package source with `mkdir BaGet/Packages` (nuget.config lists the untracked `Packages` folder as a package source; restore fails with NU1301 without it)
+4. Navigate to `./BaGet/src/BaGet`
+5. Start the service with `dotnet run -p:GeneratePackageOnBuild=false`
+6. Open the URL `http://localhost:6060/v3/index.json` in your browser
 
 Always pass `-p:GeneratePackageOnBuild=false` to `dotnet build`, `run` and `test`: `src/Directory.Build.props`
 packs on build into the shared `Packages` folder. `dotnet run` may rewrite

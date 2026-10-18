@@ -11,7 +11,7 @@ You can modify BaGet's configurations by editing the `appsettings.json` file.
 | `AllowedHosts` | `*` | see [Restrict the host names BaGet serves](#restrict-the-host-names-baget-serves) |
 | `PackageDeletionBehavior` | `Unlist` | `Unlist` or `HardDelete` |
 | `AllowPackageOverwrites` | `false` | accept a push of an existing id and version |
-| `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, browser uploads and the manage page's POSTs |
+| `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, deprecation/vulnerability changes, browser uploads and the manage page's POSTs |
 | `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet starts |
 
 ## Listening address
@@ -99,7 +99,7 @@ The following `Mirror` setting configures BaGet to index packages from [nuget.or
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `Legacy` | `false` | read the upstream through the NuGet V2 protocol |
-| `PackageDownloadTimeoutSeconds` | `600` | timeout for downloading a package from the upstream |
+| `PackageDownloadTimeoutSeconds` | `600` | timeout of every HTTP request to the upstream (and of `import downloads`) |
 
 ## Enable package hard deletions
 

@@ -34,7 +34,7 @@ Leave `AccessKey` and `SecretKey` empty to use the default AWS credential chain.
 | Key | Meaning |
 | --- | --- |
 | `Prefix` | Key prefix for objects in the bucket |
-| `UseInstanceProfile` | Use the EC2 instance profile credentials |
+| `UseInstanceProfile` | Use the default AWS credential chain (environment, profile, then EC2 instance profile), ignoring `AccessKey`/`SecretKey` |
 | `AssumeRoleArn` | Role to assume for bucket access |
 
 ### Amazon RDS

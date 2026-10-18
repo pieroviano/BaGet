@@ -9,7 +9,7 @@ You can configure BaGet to mirror nuget.org. For example, say you install BaGet,
 [`Newtonsoft.Json`](https://www.nuget.org/packages/Newtonsoft.Json/). BaGet doesn't have this package yet, so it will
 automatically index this package from nuget.org. This is also known as "read-through caching".
 
-For more information, please see [Enable read-through caching](../configuration.md#enable-read-through-caching). `Mirror:Legacy` reads a NuGet v2 source and `Mirror:PackageDownloadTimeoutSeconds` (default 600) bounds each package download.
+For more information, please see [Enable read-through caching](../configuration.md#enable-read-through-caching). `Mirror:Legacy` reads a NuGet v2 source and `Mirror:PackageDownloadTimeoutSeconds` (default 600) is the timeout of every HTTP request to the upstream.
 
 ## Importing package downloads from nuget.org
 

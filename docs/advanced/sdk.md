@@ -115,7 +115,7 @@ await processor.ProcessAsync();
 
 * `ExistsAsync(packageId)` and `ExistsAsync(packageId, version)`: whether a package or version exists
 * `DownloadPackageManifestAsync(packageId, version)`: the `.nuspec`
-* `AutocompleteAsync(...)`: package id (or version) suggestions
+* `AutocompleteAsync(...)`: package id suggestions (for version suggestions use `clientFactory.CreateAutocompleteClient().ListPackageVersionsAsync`)
 
 `NuGetClientFactoryExtensions.CreateCatalogProcessor` is a shortcut for the wiring in
 [Read a catalog](#read-a-catalog).

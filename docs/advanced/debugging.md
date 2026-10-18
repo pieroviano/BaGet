@@ -2,6 +2,8 @@
 
 ## Run
 
+In a fresh clone create the `Packages` folder at the repository root first: nuget.config lists the untracked `Packages` folder as a package source, and restore fails with NU1301 without it.
+
 ```
 cd src/BaGet
 dotnet run -p:GeneratePackageOnBuild=false
