@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity.Pages.Account;
 
@@ -35,6 +37,8 @@ public class LoginModel : AccountPageModel
     public string ExternalProviderName => Accounts.OpenIdConnect.DisplayName;
 
     public string Error { get; set; }
+
+    public string Notice { get; set; }
 
     public void OnGet()
     {
@@ -102,6 +106,36 @@ public class LoginModel : AccountPageModel
             return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl });
         }
 
+        if (result.IsLockedOut)
+        {
+            Error = "The account is locked after too many failed attempts. Try again later.";
+            return Page();
+        }
+
+        if (result.IsNotAllowed)
+        {
+            // This provider login already belongs to an account, which cannot sign in yet
+            // (its email is unconfirmed). Never make another account for it.
+            var existing = await UserManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (existing != null && await TrySendConfirmationAsync(existing))
+            {
+                Notice = "Confirm your email address before signing in. We sent you a new confirmation link.";
+            }
+            else
+            {
+                Error = "Confirm your email address before signing in. Use the link we sent you, or reset your password.";
+            }
+
+            return Page();
+        }
+
+        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        if (EmailConfigured && string.IsNullOrWhiteSpace(email))
+        {
+            Error = "The external account has no email address, which this server needs to confirm accounts.";
+            return Page();
+        }
+
         var name = await ChooseUserNameAsync(info.Principal, cancellationToken);
         if (name == null)
         {
@@ -112,7 +146,11 @@ public class LoginModel : AccountPageModel
         var user = new BaGetUser
         {
             UserName = name,
-            Email = info.Principal.FindFirstValue(ClaimTypes.Email),
+            Email = email,
+
+            // Only an address the provider vouches for is confirmed; any other must be
+            // proven by following a link, like one typed into the registration form.
+            EmailConfirmed = !string.IsNullOrWhiteSpace(email) && ProviderVerifiedEmail(info.Principal),
             Created = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow,
         };
 
@@ -124,13 +162,48 @@ public class LoginModel : AccountPageModel
 
         if (!created.Succeeded)
         {
+            // Do not leave an account behind that has no login to reach it.
+            if (user.Id != null && await UserManager.FindByIdAsync(user.Id) != null) await UserManager.DeleteAsync(user);
+
             Error = string.Join(" ", created.Errors.Select(e => e.Description));
+            return Page();
+        }
+
+        if (EmailConfigured && !user.EmailConfirmed)
+        {
+            Notice = await TrySendConfirmationAsync(user)
+                ? "Your account was created. Confirm your email address with the link we sent you, then sign in again."
+                : "Your account was created, but we could not send the confirmation email. Use \"Forgot password\" to get a link later.";
             return Page();
         }
 
         await SignInManager.SignInAsync(user, isPersistent: false);
 
         return RedirectToLocal(ReturnUrl);
+    }
+
+    private static bool ProviderVerifiedEmail(ClaimsPrincipal principal)
+        => bool.TryParse(principal.FindFirstValue("email_verified"), out var verified) && verified;
+
+    private async Task<bool> TrySendConfirmationAsync(BaGetUser user)
+    {
+        if (!EmailConfigured || string.IsNullOrEmpty(user.Email) || user.EmailConfirmed) return false;
+
+        try
+        {
+            var token = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+            var link = PageLink("/Account/ConfirmEmail", new { userId = user.Id, code = EncodeToken(token) });
+            await EmailSender.SendConfirmationLinkAsync(user, user.Email, link);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LoginModel>>()
+                .LogError(e, "Could not send a confirmation link.");
+
+            return false;
+        }
     }
 
     /// <summary>

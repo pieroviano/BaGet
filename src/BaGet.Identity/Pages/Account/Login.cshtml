@@ -13,6 +13,11 @@
         <div class="alert alert-danger" role="alert">@Model.Error</div>
     }
 
+    @if (Model.Notice != null)
+    {
+        <div class="alert alert-info" role="status">@Model.Notice</div>
+    }
+
     <form method="post">
         <input type="hidden" asp-for="ReturnUrl" />
         <div class="form-group">
