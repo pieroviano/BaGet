@@ -84,8 +84,7 @@ public class HeaderLinksTests : IDisposable
         Assert.DoesNotContain("account/login", html);
         Assert.DoesNotContain("account/register", html);
 
-        // The settings page does not exist until a later phase; do not link a 404.
-        Assert.DoesNotContain("account/settings", html);
+        Assert.Contains("account/settings", html);
     }
 
     [Fact]

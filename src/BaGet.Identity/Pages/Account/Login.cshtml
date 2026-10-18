@@ -31,6 +31,11 @@
         <button type="submit" class="btn btn-primary">Sign in</button>
     </form>
 
+    @if (Model.EmailIsConfigured)
+    {
+        <p><a asp-page="/Account/ForgotPassword">Forgot password?</a></p>
+    }
+
     @if (Model.HasExternalProvider)
     {
         <hr />

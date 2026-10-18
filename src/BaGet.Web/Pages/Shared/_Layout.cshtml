@@ -37,14 +37,13 @@
                             <ul class="nav navbar-nav navbar-right" role="tablist">
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
-                                    @* No "Account settings" entry yet: that page does not exist, and a
-                                       menu item must not lead to a 404. *@
                                     <li role="presentation" class="dropdown account-menu">
                                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                                             <span>@User.Identity.Name</span> <span class="caret"></span>
                                         </a>
                                         <ul class="dropdown-menu">
                                             <li><a href="@Url.Page("/Account/Profile")">Profile</a></li>
+                                            <li><a href="@Url.Page("/Account/Settings")">Account settings</a></li>
                                             <li><a href="@Url.Page("/Account/ApiKeys")">API keys</a></li>
                                             <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
                                             <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>

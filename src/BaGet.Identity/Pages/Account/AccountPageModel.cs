@@ -1,8 +1,11 @@
+using System;
+using System.Text;
 using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -30,6 +33,17 @@ public abstract class AccountPageModel : PageModel
     protected ApiKeyService ApiKeys
         => HttpContext.RequestServices.GetRequiredService<ApiKeyService>();
 
+    protected bool EmailConfigured
+        => HttpContext.RequestServices.GetRequiredService<IOptions<EmailOptions>>().Value.IsConfigured;
+
+    protected IEmailSender<BaGetUser> EmailSender
+        => HttpContext.RequestServices.GetRequiredService<IEmailSender<BaGetUser>>();
+
+    /// <summary>
+    /// Pages that only make sense when there is a way to send mail answer 404 otherwise.
+    /// </summary>
+    protected virtual bool RequiresEmail => false;
+
     /// <summary>
     /// Checked here rather than with [Authorize]: while accounts are disabled there is
     /// no scheme to challenge with, and the page must answer 404 instead.
@@ -39,6 +53,12 @@ public abstract class AccountPageModel : PageModel
     public override void OnPageHandlerExecuting(PageHandlerExecutingContext context)
     {
         if (!Accounts.Enabled)
+        {
+            context.Result = NotFound();
+            return;
+        }
+
+        if (RequiresEmail && !EmailConfigured)
         {
             context.Result = NotFound();
             return;
@@ -65,4 +85,31 @@ public abstract class AccountPageModel : PageModel
 
         return LocalRedirect(Url.Content("~/"));
     }
+
+    /// <summary>
+    /// Identity's tokens carry characters that do not survive a URL, so they travel encoded.
+    /// </summary>
+    protected static string EncodeToken(string token)
+        => WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+    protected static string DecodeToken(string code)
+    {
+        try
+        {
+            return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// An absolute link to an account page, for an email.
+    /// </summary>
+    protected string PageLink(string page, object values)
+        => Url.Page(page, pageHandler: null, values: values, protocol: Request.Scheme);
+
+    protected static string Describe(IdentityResult result)
+        => string.Join(" ", System.Linq.Enumerable.Select(result.Errors, e => e.Description));
 }

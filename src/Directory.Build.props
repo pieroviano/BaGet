@@ -58,6 +58,8 @@
     <NuGetPackageVersion>6.10.0</NuGetPackageVersion>
     <!-- SMTP client for BaGet.Identity's email sender; MIT. -->
     <MailKitPackageVersion>4.18.1</MailKitPackageVersion>
+    <!-- Renders the two-factor setup QR code as SVG on the server; MIT. -->
+    <QRCoderPackageVersion>1.6.0</QRCoderPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == ''">

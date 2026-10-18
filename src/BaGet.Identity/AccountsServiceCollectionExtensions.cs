@@ -32,6 +32,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<SessionPrincipalFactory>();
         services.TryAddTransient<ApiKeyAuthenticationService>();
         services.TryAddScoped<AccountRecoveryService>();
+        services.TryAddScoped<AccountDeletionService>();
 
         // Email is optional. Nothing that needs it is offered while it is unconfigured, and
         // Identity only demands a confirmed address when there is a way to send the link.

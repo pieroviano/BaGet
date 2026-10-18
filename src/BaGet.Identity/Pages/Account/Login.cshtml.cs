@@ -50,12 +50,21 @@ public class LoginModel : AccountPageModel
             return RedirectToLocal(ReturnUrl);
         }
 
+        if (result.RequiresTwoFactor)
+        {
+            return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl, RememberMe });
+        }
+
         Error = result.IsLockedOut
             ? "The account is locked after too many failed attempts. Try again later."
-            : "The user name or password is incorrect.";
+            : result.IsNotAllowed
+                ? "Confirm your email address before signing in. Use the link we sent you, or reset your password."
+                : "The user name or password is incorrect.";
 
         return Page();
     }
+
+    public bool EmailIsConfigured => EmailConfigured;
 
     public IActionResult OnPostExternal()
     {
@@ -86,6 +95,11 @@ public class LoginModel : AccountPageModel
         if (result.Succeeded)
         {
             return RedirectToLocal(ReturnUrl);
+        }
+
+        if (result.RequiresTwoFactor)
+        {
+            return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl });
         }
 
         var name = await ChooseUserNameAsync(info.Principal, cancellationToken);

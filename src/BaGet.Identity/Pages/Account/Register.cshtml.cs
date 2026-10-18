@@ -51,6 +51,11 @@ public class RegisterModel : AccountPageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
+        if (EmailConfigured && string.IsNullOrWhiteSpace(Email))
+        {
+            ModelState.AddModelError(nameof(Email), "An email address is required to confirm the account.");
+        }
+
         if (!ModelState.IsValid) return Page();
 
         // User and organization names share a namespace: either can own a package.
@@ -78,8 +83,32 @@ public class RegisterModel : AccountPageModel
             return Page();
         }
 
+        if (EmailConfigured)
+        {
+            // Signing in needs a confirmed address, so the user is not signed in yet.
+            var token = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+            var link = PageLink("/Account/ConfirmEmail", new { userId = user.Id, code = EncodeToken(token) });
+
+            try
+            {
+                await EmailSender.SendConfirmationLinkAsync(user, user.Email, link);
+                ConfirmationSent = true;
+            }
+            catch (Exception)
+            {
+                // The account exists; "Forgot password" mails a link that also confirms the address.
+                ModelState.AddModelError(string.Empty, "Your account was created, but we could not send the confirmation email. Use \"Forgot password\" to get a link later.");
+            }
+
+            return Page();
+        }
+
         await SignInManager.SignInAsync(user, isPersistent: false);
 
         return RedirectToLocal(ReturnUrl);
     }
+
+    public bool ConfirmationSent { get; private set; }
+
+    public bool EmailRequired => EmailConfigured;
 }

@@ -8,6 +8,15 @@
     <h1>Create an account</h1>
     <hr class="breadcrumb-divider" />
 
+    @if (Model.ConfirmationSent)
+    {
+        <div class="alert alert-success" role="alert">
+            Your account was created. We sent a link to your email address; follow it to confirm the address, then
+            <a asp-page="/Account/Login" asp-route-returnUrl="@Model.ReturnUrl">sign in</a>.
+        </div>
+    }
+    else
+    {
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <input type="hidden" asp-for="ReturnUrl" />
@@ -33,4 +42,5 @@
         </div>
         <button type="submit" class="btn btn-primary">Create account</button>
     </form>
+    }
 </div>

@@ -97,6 +97,12 @@ internal sealed class Browser : System.IDisposable
         return await _client.PostAsync(action, content);
     }
 
+    /// <summary>
+    /// Post without an antiforgery token, as a forged cross-site request would.
+    /// </summary>
+    public Task<HttpResponseMessage> RawPostAsync(string action, Dictionary<string, string> fields)
+        => _client.PostAsync(action, new FormUrlEncodedContent(fields));
+
     public async Task RegisterAsync(string userName)
     {
         using var response = await PostAsync("account/register", new Dictionary<string, string>
