@@ -45,6 +45,7 @@ public class AccountSettingsTests : IDisposable
         {
             settings["Email:Smtp:Host"] = "smtp.example.com";
             settings["Email:Smtp:From"] = "baget@example.com";
+            settings["Site:PublicUrl"] = "https://baget.example.com";
         }
 
         var app = new BaGetApplication(_output, configOverrides: settings);
@@ -326,6 +327,7 @@ public class AccountSettingsTests : IDisposable
 
         using var known = await browser.PostAsync("account/forgotpassword", new Dictionary<string, string> { { "Identifier", "alice@example.com" } });
         var knownBody = await known.Content.ReadAsStringAsync();
+        await WaitForAsync(() => sender.Sent.Count > before);
         var afterKnown = sender.Sent.Count;
         using var unknown = await browser.PostAsync("account/forgotpassword", new Dictionary<string, string> { { "Identifier", "nobody@example.com" } });
         var unknownBody = await unknown.Content.ReadAsStringAsync();
@@ -343,6 +345,8 @@ public class AccountSettingsTests : IDisposable
         var (app, browser) = Start(email: true);
         await RegisterConfirmedAsync(app, browser, "alice", "alice@example.com");
         await browser.PostAsync("account/forgotpassword", new Dictionary<string, string> { { "Identifier", "alice" } });
+        var sender = app.Services.GetRequiredService<CapturingEmailSender>();
+        await WaitForAsync(() => sender.Sent.Any(m => m.Kind == "reset-link"));
         var link = PathOf(app.Services.GetRequiredService<CapturingEmailSender>().Sent.Last().Payload);
 
         var form = await browser.GetPageAsync(link);
@@ -369,6 +373,16 @@ public class AccountSettingsTests : IDisposable
             { "Password", password },
             { "ConfirmPassword", password },
         });
+    }
+
+    /// <summary>
+    /// Mail goes out on a background queue, off the request path.
+    /// </summary>
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < 100 && !condition(); i++) await Task.Delay(50);
+
+        Assert.True(condition(), "The email was not sent in time.");
     }
 
     private static string StripToken(string html)

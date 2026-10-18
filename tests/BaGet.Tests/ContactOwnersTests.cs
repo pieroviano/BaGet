@@ -51,6 +51,7 @@ public class ContactOwnersTests : IDisposable
         {
             settings["Email:Smtp:Host"] = "smtp.example.com";
             settings["Email:Smtp:From"] = "baget@example.com";
+            settings["Site:PublicUrl"] = "https://baget.example.com";
         }
 
         var app = new BaGetApplication(

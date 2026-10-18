@@ -51,6 +51,7 @@ public class EmailTests
         {
             { "Email:Smtp:Host", "smtp.example.com" },
             { "Email:Smtp:From", "baget@example.com" },
+            { "Site:PublicUrl", "https://baget.example.com" },
         }));
     }
 
@@ -70,6 +71,7 @@ public class EmailTests
         {
             { "Email:Smtp:Host", "smtp.example.com" },
             { "Email:Smtp:From", "baget@example.com" },
+            { "Site:PublicUrl", "https://baget.example.com" },
         });
 
         Assert.IsType<SmtpEmailSender>(provider.GetRequiredService<IEmailSender<BaGetUser>>());

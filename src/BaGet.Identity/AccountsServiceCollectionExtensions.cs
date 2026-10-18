@@ -22,6 +22,9 @@ public static class AccountsServiceCollectionExtensions
         var options = configuration.GetSection(nameof(BaGetOptions.Accounts)).Get<AccountsOptions>()
                       ?? new AccountsOptions();
 
+        var site = configuration.GetSection(nameof(BaGetOptions.Site)).Get<SiteOptions>() ?? new SiteOptions();
+        EmailLinkPolicy.ValidatePublicUrl(site.PublicUrl);
+
         if (!options.Enabled)
         {
             services.AddAuthentication();
@@ -36,11 +39,20 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<AccountDeletionService>();
         services.TryAddScoped<AvatarService>();
         services.TryAddSingleton<ContactRateLimiter>();
+        services.TryAddSingleton<PasswordResetRateLimiter>();
+        services.TryAddSingleton<BackgroundEmailQueue>();
+        services.AddHostedService<BackgroundEmailService>();
 
         // Email is optional. Nothing that needs it is offered while it is unconfigured, and
         // Identity only demands a confirmed address when there is a way to send the link.
         var email = configuration.GetSection(nameof(BaGetOptions.Email)).Get<EmailOptions>()
                     ?? new EmailOptions();
+        // Links in emails need a trustworthy address for this server. Without one, email is
+        // switched off rather than built from the request's Host header.
+        var linksAvailable = EmailLinkPolicy.CanBuildLinks(site.PublicUrl, configuration["AllowedHosts"]);
+        if (email.IsConfigured && !linksAvailable) email.Suppressed = true;
+        services.PostConfigure<EmailOptions>(configured => configured.Suppressed = email.Suppressed);
+
         if (email.IsConfigured)
         {
             services.TryAddTransient<IEmailSender<BaGetUser>, SmtpEmailSender>();

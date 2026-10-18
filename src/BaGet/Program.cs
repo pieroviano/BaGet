@@ -245,6 +245,7 @@ public partial class Program
         app.UseHostFiltering();
 
         WarnIfNothingAuthenticates(app, options);
+        WarnIfEmailLinksCannotBeTrusted(app);
 
         if (app.Environment.IsDevelopment())
         {
@@ -288,6 +289,23 @@ public partial class Program
         // WebApplication is itself an endpoint route builder, so the endpoints are mapped
         // onto it directly rather than inside a UseEndpoints callback.
         new BaGetEndpointBuilder().MapEndpoints(app);
+    }
+
+    /// <summary>
+    /// Say once, at startup, that email was switched off because links in it could not be
+    /// trusted: see <see cref="EmailLinkPolicy"/>.
+    /// </summary>
+    private static void WarnIfEmailLinksCannotBeTrusted(WebApplication app)
+    {
+        var accounts = app.Configuration.GetSection(nameof(BaGetOptions.Accounts)).Get<AccountsOptions>();
+        var email = app.Configuration.GetSection(nameof(BaGetOptions.Email)).Get<EmailOptions>();
+        if (accounts?.Enabled != true || email?.IsConfigured != true) return;
+
+        var site = app.Configuration.GetSection(nameof(BaGetOptions.Site)).Get<SiteOptions>();
+        if (!EmailLinkPolicy.CanBuildLinks(site?.PublicUrl, app.Configuration["AllowedHosts"]))
+        {
+            app.Logger.LogWarning(EmailLinkPolicy.UnavailableWarning);
+        }
     }
 
     /// <summary>

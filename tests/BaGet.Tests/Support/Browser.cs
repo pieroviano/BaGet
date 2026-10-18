@@ -18,9 +18,11 @@ internal sealed class Browser : System.IDisposable
 {
     private readonly HttpClient _client;
 
-    public Browser(BaGetApplication app)
+    /// <param name="host">A "Host" header to send instead of the test server's.</param>
+    public Browser(BaGetApplication app, string host = null)
     {
         _client = app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        if (host != null) _client.DefaultRequestHeaders.Host = host;
     }
 
     public Task<HttpResponseMessage> GetAsync(string url) => _client.GetAsync(url);

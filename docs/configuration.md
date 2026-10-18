@@ -227,6 +227,36 @@ is offered, and sign-in does not require a confirmed address. When it is on, sig
 `EnableSsl` uses implicit TLS on port 465 and STARTTLS otherwise. A send failure is logged and
 reported to the user as a failure.
 
+**Links in emails need `Site:PublicUrl`.** Confirmation and password-reset links are never built from
+the request's `Host` header, which anyone can forge (a forged `Host` on "forgot password" would
+otherwise put the attacker's address in the victim's mail).
+
+| Configuration | Links point at |
+|---|---|
+| `Site:PublicUrl` set (absolute http/https, a path is allowed: `https://example.com/feed`) | `Site:PublicUrl` |
+| No `PublicUrl`, `AllowedHosts` is a real list | the request host (host filtering already restricts it) |
+| No `PublicUrl`, `AllowedHosts` unset or `*` (the default) | **email is switched off** and a startup warning says so |
+
+```json
+{ "Site": { "PublicUrl": "https://packages.example.com" } }
+```
+
+An invalid `PublicUrl` fails startup. While email is switched off for this reason, nothing that needs
+it is offered and sign-in does not require a confirmed address, exactly as with no SMTP.
+
+Other rules with email on:
+
+* Changing the email address asks for the current password (the user name for an account without one).
+* "Forgot password" answers identically, in the same time, for known and unknown accounts: the mail is
+  sent from a background queue. One reset mail per account per 10 minutes and 10 requests per client per
+  10 minutes (in memory, per process); excess requests are answered the same and mail nothing.
+* OpenID Connect accounts are confirmed only when the provider sends `email_verified=true`; otherwise a
+  confirmation link is mailed and the user signs in again once it is followed. A provider that sends no
+  email address cannot create accounts while email is on.
+* Contact owners uses the sender's address only if it is confirmed.
+* Browser sessions are checked against the database on every request, so a deleted user's other
+  sessions, or sessions of a user whose password was reset, stop working immediately.
+
 Without email, an administrator recovers an account from the command line:
 
 ```
@@ -234,7 +264,14 @@ baget account reset-password <user>
 ```
 
 It prints a generated password, switches off the user's two-factor authentication and lifts any
-lockout. It needs `Accounts:Enabled` and works with or without SMTP.
+lockout, and marks the user's email address confirmed (the administrator at the console is trusted).
+It needs `Accounts:Enabled` and works with or without SMTP.
+
+**Turning SMTP on with existing users.** Sign-in then requires a confirmed address. A user with an
+address who knows their password can use "Forgot password" (following the link confirms it). A user
+with no address cannot sign in: the administrator runs
+`baget account reset-password <user> --email <address>`, which sets the address, marks it confirmed
+and prints a new password.
 
 Email also enables **Contact owners** on a package page (`/packages/{id}/contact-owners`, signed-in
 users only). The message goes, one email each, to the owning users with a confirmed address and to the

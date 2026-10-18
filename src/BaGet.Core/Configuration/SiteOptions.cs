@@ -18,6 +18,16 @@ public class SiteOptions
     public string PrivacyPolicyPath { get; set; }
 
     /// <summary>
+    /// The absolute http or https URL users reach this server at, for example
+    /// "https://packages.example.com" (a path is allowed when served under one). Links in
+    /// account emails are built only from it. Without it they can only be built from the
+    /// request host when "AllowedHosts" restricts the hosts; with the default "*" email is
+    /// switched off, because a forged Host header would otherwise decide where a password
+    /// reset link points.
+    /// </summary>
+    public string PublicUrl { get; set; }
+
+    /// <summary>
     /// Show Gravatar avatars. Each avatar is a request to gravatar.com carrying a hash of the
     /// account's email, so a private feed can turn this off and get initial-letter placeholders.
     /// </summary>
