@@ -37,6 +37,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddTransient<ApiKeyAuthenticationService>();
         services.TryAddScoped<AccountRecoveryService>();
         services.TryAddScoped<AccountDeletionService>();
+        services.TryAddScoped<PasswordResetLinkSender>();
         services.TryAddScoped<AvatarService>();
         services.TryAddScoped<AdministratorService>();
         services.TryAddSingleton<ContactRateLimiter>();

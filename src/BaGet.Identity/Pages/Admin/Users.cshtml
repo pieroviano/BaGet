@@ -12,6 +12,18 @@
     {
         <div class="alert alert-success" role="alert" id="users-message">@Model.Message</div>
     }
+    @if (Model.GeneratedPassword != null)
+    {
+        <div class="alert alert-info" role="alert" id="generated-password-alert">
+            <p>New password for <strong>@Model.GeneratedFor</strong>. It is shown once and is not stored: copy it now and pass it on securely.
+                Their sessions have ended and two-factor sign-in is off.</p>
+            <p>
+                <code id="generated-password">@Model.GeneratedPassword</code>
+                <button type="button" class="btn btn-default btn-xs" id="copy-generated-password"
+                        onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('generated-password').textContent)">Copy</button>
+            </p>
+        </div>
+    }
     @if (Model.Error != null)
     {
         <div class="alert alert-danger" role="alert" id="users-error">@Model.Error</div>
@@ -48,6 +60,21 @@
                             {
                                 <button type="submit" class="btn btn-default btn-xs" asp-page-handler="Promote" name="userName" value="@user.UserName">Promote</button>
                             }
+                            @if (Model.CanAct(user))
+                            {
+                                <a class="btn btn-default btn-xs" href="@Url.Content("~/admin/users/" + Uri.EscapeDataString(user.UserName) + "/packages")">Packages</a>
+                                <span class="btn-group">
+                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Reset password <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><button type="submit" class="btn btn-link" asp-page-handler="ResetPassword" name="userName" value="@user.UserName">Generate a password</button></li>
+                                        @if (Model.CanEmailResetLink && !string.IsNullOrEmpty(user.Email))
+                                        {
+                                            <li><button type="submit" class="btn btn-link" asp-page-handler="SendResetLink" name="userName" value="@user.UserName">Email a reset link</button></li>
+                                        }
+                                    </ul>
+                                </span>
+                                <a class="btn btn-danger btn-xs" href="@Url.Content("~/admin/users/" + Uri.EscapeDataString(user.UserName) + "/delete")">Delete</a>
+                            }
                         </td>
                     </tr>
                 }
@@ -60,7 +87,7 @@
         }
 
         <h2>Confirm</h2>
-        <p>Promoting or demoting asks for your password again.</p>
+        <p>Every action here asks for your password again.</p>
         @if (Model.HasPassword)
         {
             <div class="form-group">

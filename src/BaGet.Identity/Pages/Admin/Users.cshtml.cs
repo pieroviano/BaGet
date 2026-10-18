@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity.Pages.Admin;
 
@@ -20,8 +22,11 @@ namespace BaGet.Identity.Pages.Admin;
 public record UserRow(string UserName, string Email, DateTime Created, bool IsAdministrator, string AvatarUrl);
 
 /// <summary>
-/// Lists the accounts and lets an administrator promote or demote them. Both actions ask for
-/// the administrator's password again.
+/// Lists the accounts and lets an administrator promote or demote them, reset their password
+/// (a generated one shown once, or a link mailed to them) and open their packages or the
+/// deletion page. Every action asks for the administrator's password again, and none is
+/// offered or accepted for the administrator's own account: that stays on
+/// <c>/account/settings</c>.
 /// </summary>
 public class UsersModel : AdminPageModel
 {
@@ -51,6 +56,34 @@ public class UsersModel : AdminPageModel
     /// <summary>Whether an external provider is available to sign in again with.</summary>
     public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
 
+    /// <summary>The signed in administrator's user name; their own row has no actions.</summary>
+    public string CurrentUserName { get; private set; }
+
+    /// <summary>Whether a reset link can be mailed: SMTP is configured.</summary>
+    public bool CanEmailResetLink => EmailConfigured;
+
+    /// <summary>
+    /// The password just generated. Only ever rendered by the response to the reset itself, never
+    /// kept in TempData or a cookie.
+    /// </summary>
+    public string GeneratedPassword { get; private set; }
+
+    /// <summary>The user <see cref="GeneratedPassword"/> belongs to.</summary>
+    public string GeneratedFor { get; private set; }
+
+    /// <summary>Whether <paramref name="row"/> is another account, so actions apply to it.</summary>
+    public bool CanAct(UserRow row)
+        => !string.Equals(row.UserName, CurrentUserName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The address with all but its first letter and domain hidden, for a confirmation.</summary>
+    public static string MaskEmail(string email)
+    {
+        var at = email?.LastIndexOf('@') ?? -1;
+        if (at < 1) return "the user's address";
+
+        return email.Substring(0, 1) + "***" + email.Substring(at);
+    }
+
     /// <summary>Outcome of the last action.</summary>
     [TempData]
     public string Message { get; set; }
@@ -69,6 +102,105 @@ public class UsersModel : AdminPageModel
     /// <summary>Removes a user's administrator flag.</summary>
     public Task<IActionResult> OnPostDemoteAsync(string userName, string password, CancellationToken cancellationToken)
         => ChangeAsync(userName, password, promote: false, cancellationToken);
+
+    /// <summary>
+    /// Replaces the user's password with a generated one and shows it once. The answer is the
+    /// page itself rather than a redirect, so the password never goes through TempData or a
+    /// cookie, and it is not cacheable. Two-factor is switched off, a lockout lifted and the
+    /// user's sessions end.
+    /// </summary>
+    public async Task<IActionResult> OnPostResetPasswordAsync(string userName, string password, CancellationToken cancellationToken)
+    {
+        var current = await UserManager.GetUserAsync(User);
+        if (current == null) return Challenge();
+
+        var refusal = await RefuseAsync(current, userName, password);
+        if (refusal != null)
+        {
+            Error = refusal;
+
+            return BackToUsers();
+        }
+
+        var generated = await HttpContext.RequestServices.GetRequiredService<AccountRecoveryService>()
+            .ResetPasswordAsync(userName, cancellationToken);
+        if (generated == null)
+        {
+            Error = "There is no user with that name.";
+
+            return BackToUsers();
+        }
+
+        HttpContext.RequestServices.GetRequiredService<ILogger<UsersModel>>()
+            .LogWarning("{Admin} reset the password of {User}", current.UserName, userName);
+
+        Response.Headers.CacheControl = "no-store";
+        GeneratedPassword = generated;
+        GeneratedFor = userName;
+        await LoadAsync(cancellationToken);
+
+        return Page();
+    }
+
+    /// <summary>Mails the user a password reset link. Only while SMTP is configured, and only to a user with an address.</summary>
+    public async Task<IActionResult> OnPostSendResetLinkAsync(string userName, string password, CancellationToken cancellationToken)
+    {
+        if (!EmailConfigured) return NotFound();
+
+        var current = await UserManager.GetUserAsync(User);
+        if (current == null) return Challenge();
+
+        var refusal = await RefuseAsync(current, userName, password);
+        if (refusal != null)
+        {
+            Error = refusal;
+
+            return BackToUsers();
+        }
+
+        var user = await UserManager.FindByNameAsync(userName);
+        if (user == null)
+        {
+            Error = "There is no user with that name.";
+        }
+        else if (string.IsNullOrEmpty(user.Email))
+        {
+            Error = $"{user.UserName} has no email address, so no link can be sent.";
+        }
+        else
+        {
+            // No rate limiter: an administrator acts, and no one can use this to probe for accounts.
+            var template = PageLink("/Account/ResetPassword", PasswordResetLinkSender.Template);
+            if (PasswordResetLinkSender.TryEnqueue(HttpContext.RequestServices, user.Id, template))
+            {
+                HttpContext.RequestServices.GetRequiredService<ILogger<UsersModel>>()
+                    .LogWarning("{Admin} sent a password reset link to {User}", current.UserName, user.UserName);
+                Message = $"Reset link sent to {MaskEmail(user.Email)}.";
+            }
+            else
+            {
+                Error = "The mail queue is full. Try again in a moment.";
+            }
+        }
+
+        return BackToUsers();
+    }
+
+    // Why a reset may not go ahead, or null.
+    private async Task<string> RefuseAsync(BaGetUser current, string userName, string password)
+    {
+        if (string.Equals(current.UserName, userName, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Reset your own password from your account settings.";
+        }
+
+        return await IsConfirmedAsync(current, password)
+            ? null
+            : "The confirmation is incorrect, so nothing was changed.";
+    }
+
+    private IActionResult BackToUsers()
+        => RedirectToPage("/Admin/Users", new { q = Q, p = PageNumber > 1 ? PageNumber : (int?)null });
 
     private async Task<IActionResult> ChangeAsync(string userName, string password, bool promote, CancellationToken cancellationToken)
     {
@@ -135,6 +267,7 @@ public class UsersModel : AdminPageModel
             .ToList();
 
         var current = await UserManager.GetUserAsync(User);
+        CurrentUserName = current?.UserName;
         HasPassword = current == null || await UserManager.HasPasswordAsync(current);
         Reauthenticated = !HasPassword && await HasReauthenticatedRecentlyAsync();
     }

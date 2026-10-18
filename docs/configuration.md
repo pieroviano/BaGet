@@ -265,6 +265,24 @@ account without one). Everyone else, and every request while accounts are off, g
   | `/admin/packages` | IDs with no owner (predating accounts, or left without one), 50 per page. |
 * The check reads the database on every request, so a demotion applies at once.
 
+**User powers** (`/admin/users`; each action asks for the administrator's password, and none applies to your own row, which stays on `/account/settings`):
+
+| Action | Behaviour |
+| --- | --- |
+| Packages | Opens `/admin/users/{name}/packages`. |
+| Reset password, *Generate* | Replaces the password with a generated one, shown **once** on the response (no redirect, `Cache-Control: no-store`, never stored or logged). Two-factor is switched off, a lockout lifted, the user's sessions end. |
+| Reset password, *Email link* | Mails the user a reset link. Only offered while SMTP is configured and the user has an address; no rate limit. |
+| Delete (`/admin/users/{name}/delete`) | Removes the account, its API keys and its ownerships. The last administrator cannot be deleted. |
+
+* **Account deletion by an administrator** is never blocked by ownership. A package ID the user alone owned is either
+  *left without owners* (the default: only administrators and the global API key manage it, like IDs that predate accounts)
+  or *deleted permanently with all its versions*. The user is removed first; a failure while deleting packages is reported
+  and never rolls the deletion back.
+* **Organizations**: if the user is the last organization administrator and others remain, the longest-standing member
+  becomes administrator. If the user is the only member and the organization owns packages, the organization is kept without members;
+  one that owns nothing is deleted.
+* **Audit log**: resets, reset links and deletions are logged at `Warning` with the administrator and the user, never a password.
+
 ### Email (optional)
 
 Email is off until `Email:Smtp` has a `Host` and a `From`. While it is off, nothing that needs email

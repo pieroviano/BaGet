@@ -2,10 +2,8 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using BaGet.Core;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity.Pages.Account;
 
@@ -23,9 +21,6 @@ public class ForgotPasswordModel : AccountPageModel
     public void OnGet()
     {
     }
-
-    private const string UserIdPlaceholder = "USERIDPLACEHOLDER";
-    private const string CodePlaceholder = "CODEPLACEHOLDER";
 
     /// <summary>
     /// Answers the same, in the same time, whether or not an account matches, whether or
@@ -54,7 +49,7 @@ public class ForgotPasswordModel : AccountPageModel
         var user = byName ?? byEmail;
 
         // One link template either way; the user and token are filled in later.
-        var template = PageLink("/Account/ResetPassword", new { userId = UserIdPlaceholder, code = CodePlaceholder });
+        var template = PageLink("/Account/ResetPassword", PasswordResetLinkSender.Template);
 
         // Only an account that would be mailed uses up an allowance, so requests for names
         // that do not exist can neither fill the limiter nor crowd real accounts out of it.
@@ -64,34 +59,11 @@ public class ForgotPasswordModel : AccountPageModel
             && !string.IsNullOrEmpty(user.Email)
             && HttpContext.RequestServices.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(client, user.Id))
         {
-            var userId = user.Id;
-            HttpContext.RequestServices.GetRequiredService<BackgroundEmailQueue>()
-                .TryEnqueue(services => SendAsync(services, userId, template));
+            PasswordResetLinkSender.TryEnqueue(HttpContext.RequestServices, user.Id, template);
         }
 
         Sent = true;
 
         return Page();
-    }
-
-    private static async Task SendAsync(IServiceProvider services, string userId, string template)
-    {
-        var users = services.GetRequiredService<UserManager<BaGetUser>>();
-        var user = await users.FindByIdAsync(userId);
-        if (user == null || string.IsNullOrEmpty(user.Email)) return;
-
-        var token = await users.GeneratePasswordResetTokenAsync(user);
-        var link = template
-            .Replace(UserIdPlaceholder, Uri.EscapeDataString(user.Id))
-            .Replace(CodePlaceholder, EncodeToken(token));
-
-        try
-        {
-            await services.GetRequiredService<IEmailSender<BaGetUser>>().SendPasswordResetLinkAsync(user, user.Email, link);
-        }
-        catch (Exception e)
-        {
-            services.GetRequiredService<ILogger<ForgotPasswordModel>>().LogError(e, "Could not send a password reset link.");
-        }
     }
 }

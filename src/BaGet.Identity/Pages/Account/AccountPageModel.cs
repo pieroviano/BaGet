@@ -92,7 +92,7 @@ public abstract class AccountPageModel : PageModel
     /// Identity's tokens carry characters that do not survive a URL, so they travel encoded.
     /// </summary>
     protected static string EncodeToken(string token)
-        => WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        => PasswordResetLinkSender.EncodeToken(token);
 
     protected static string DecodeToken(string code)
     {

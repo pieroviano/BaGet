@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity;
 
@@ -31,6 +32,33 @@ public record DeletionBlockers(IReadOnlyList<string> LastOwnerPackageIds, IReadO
     public bool Any => LastOwnerPackageIds.Count > 0 || Organizations.Count > 0 || LastAdministrator;
 }
 
+/// <summary>What an administrator's deletion of a user did.</summary>
+/// <param name="Result">The outcome of deleting the user. Failed with nothing deleted when refused.</param>
+/// <param name="KeptWithoutOwners">Sole-owned package IDs left without owners (only admins and the global key manage them).</param>
+/// <param name="DeletedPackageIds">Sole-owned package IDs removed with all their versions.</param>
+/// <param name="Failures">What could not be removed after the user was deleted; these IDs stay ownerless.</param>
+public record AdminDeletionResult(
+    IdentityResult Result,
+    IReadOnlyList<string> KeptWithoutOwners,
+    IReadOnlyList<string> DeletedPackageIds,
+    IReadOnlyList<string> Failures);
+
+/// <summary>What happens to one organization when an administrator deletes a member.</summary>
+/// <param name="Name">The organization.</param>
+/// <param name="Outcome">A sentence for the confirmation page.</param>
+public record OrganizationOutcome(string Name, string Outcome);
+
+/// <summary>What deleting a user as an administrator would remove or change.</summary>
+/// <param name="ApiKeys">How many API keys go.</param>
+/// <param name="DirectPackageIds">Package IDs the user owns directly.</param>
+/// <param name="SoleOwnedPackageIds">The subset nobody else owns.</param>
+/// <param name="Organizations">What happens to each organization the user belongs to.</param>
+public record AdminDeletionPreview(
+    int ApiKeys,
+    IReadOnlyList<string> DirectPackageIds,
+    IReadOnlyList<string> SoleOwnedPackageIds,
+    IReadOnlyList<OrganizationOutcome> Organizations);
+
 /// <summary>
 /// Atomically deletes a user together with what hangs off them: API keys, organization memberships
 /// and package ownerships. The ownership rows go too, because they are keyed by name and a
@@ -40,11 +68,22 @@ public class AccountDeletionService
 {
     private readonly IContext _context;
     private readonly UserManager<BaGetUser> _users;
+    private readonly IPackageDatabase _packages;
+    private readonly IPackageDeletionService _packageDeletion;
+    private readonly ILogger<AccountDeletionService> _logger;
 
-    public AccountDeletionService(IContext context, UserManager<BaGetUser> users)
+    public AccountDeletionService(
+        IContext context,
+        UserManager<BaGetUser> users,
+        IPackageDatabase packages,
+        IPackageDeletionService packageDeletion,
+        ILogger<AccountDeletionService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _users = users ?? throw new ArgumentNullException(nameof(users));
+        _packages = packages ?? throw new ArgumentNullException(nameof(packages));
+        _packageDeletion = packageDeletion ?? throw new ArgumentNullException(nameof(packageDeletion));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<DeletionBlockers> GetBlockersAsync(BaGetUser user, CancellationToken cancellationToken)
@@ -92,6 +131,139 @@ public class AccountDeletionService
         var blockers = await GetBlockersAsync(user, cancellationToken);
         if (blockers.Any) return (blockers, null);
 
+        await StageCleanupAsync(user, administrator: false, cancellationToken);
+
+        return (blockers, await SaveDeletionAsync(user));
+    }
+
+    /// <summary>
+    /// Delete another user as an administrator. Unlike <see cref="DeleteAsync"/> nothing but
+    /// <see cref="DeletionBlockers.LastAdministrator"/> blocks it: an organization whose last
+    /// administrator leaves hands the role to its longest-standing member, an organization of one
+    /// that owns packages is kept without members, and the IDs only this user owned are either
+    /// left without owners or deleted. The package deletion runs after the user is gone and
+    /// never undoes it: failures are returned.
+    /// </summary>
+    /// <param name="user">The user to delete.</param>
+    /// <param name="deleteSoleOwnedPackages">Delete the sole-owned IDs with all their versions instead of leaving them ownerless.</param>
+    /// <param name="actor">The administrator, for the log.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public async Task<AdminDeletionResult> DeleteByAdministratorAsync(
+        BaGetUser user, bool deleteSoleOwnedPackages, string actor, CancellationToken cancellationToken)
+    {
+        var none = Array.Empty<string>();
+
+        var blockers = await GetBlockersAsync(user, cancellationToken);
+        if (blockers.LastAdministrator)
+        {
+            return new AdminDeletionResult(
+                IdentityResult.Failed(new IdentityError { Description = "The last administrator cannot be deleted. Promote another user first." }),
+                none, none, none);
+        }
+
+        var soleOwned = blockers.LastOwnerPackageIds;
+        var userName = user.UserName;
+
+        await StageCleanupAsync(user, administrator: true, cancellationToken);
+        var result = await SaveDeletionAsync(user);
+        if (!result.Succeeded) return new AdminDeletionResult(result, none, none, none);
+
+        var deleted = new List<string>();
+        var failures = new List<string>();
+        if (deleteSoleOwnedPackages)
+        {
+            foreach (var id in soleOwned)
+            {
+                try
+                {
+                    var versions = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+                    var failed = false;
+                    foreach (var package in versions)
+                    {
+                        failed |= !await _packageDeletion.TryHardDeletePackageAsync(id, package.Version, cancellationToken);
+                    }
+
+                    (failed ? failures : deleted).Add(id);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    _logger.LogError(e, "Could not delete package {Id} of deleted user {User}", id, userName);
+                    failures.Add(id);
+                }
+            }
+        }
+
+        var kept = deleteSoleOwnedPackages ? none : soleOwned;
+        _logger.LogWarning(
+            "{Admin} deleted user {User}; sole-owned IDs {Ids} {Outcome}",
+            actor, userName, string.Join(", ", soleOwned), deleteSoleOwnedPackages ? "deleted" : "kept without owners");
+
+        return new AdminDeletionResult(result, kept, deleted, failures);
+    }
+
+    /// <summary>What <see cref="DeleteByAdministratorAsync"/> would do to <paramref name="user"/>, for the confirmation page.</summary>
+    public async Task<AdminDeletionPreview> PreviewAdministratorDeletionAsync(BaGetUser user, CancellationToken cancellationToken)
+    {
+        var name = user.UserName.ToLowerInvariant();
+        var blockers = await GetBlockersAsync(user, cancellationToken);
+
+        var direct = (await _context.PackageOwners
+                .AsNoTracking()
+                .Where(o => o.OwnerName.ToLower() == name)
+                .Select(o => o.PackageId)
+                .ToListAsync(cancellationToken))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(i => i, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var outcomes = new List<OrganizationOutcome>();
+        foreach (var organization in await OrganizationsToLeaveAsync(user, cancellationToken))
+        {
+            string outcome;
+            if (organization.OtherMembers == 0)
+            {
+                outcome = await OrganizationOwnsPackagesAsync(organization.Name, cancellationToken)
+                    ? "The organization owns packages, so it is kept without members."
+                    : "The organization has no other member and is deleted.";
+            }
+            else if (organization.IsLastAdmin)
+            {
+                var successor = await _context.OrganizationMembers
+                    .AsNoTracking()
+                    .Where(m => m.OrganizationKey == organization.Key && m.UserId != user.Id)
+                    .OrderBy(m => m.Key)
+                    .Select(m => m.UserId)
+                    .FirstAsync(cancellationToken);
+                var successorName = (await _users.FindByIdAsync(successor))?.UserName ?? successor;
+
+                outcome = $"{successorName}, its longest-standing member, becomes its administrator.";
+            }
+            else
+            {
+                outcome = "The user leaves the organization.";
+            }
+
+            outcomes.Add(new OrganizationOutcome(organization.Name, outcome));
+        }
+
+        var keys = await _context.ApiKeys.CountAsync(k => k.UserId == user.Id, cancellationToken);
+
+        return new AdminDeletionPreview(keys, direct, blockers.LastOwnerPackageIds, outcomes);
+    }
+
+    /// <summary>
+    /// Stage the removal of the user's API keys, ownerships and memberships; nothing is saved
+    /// until the user itself is deleted.
+    /// </summary>
+    /// <param name="user">The user being deleted.</param>
+    /// <param name="administrator">
+    /// An administrator is deleting: the last administrator of an organization with other members
+    /// is replaced by its longest-standing member, and an organization of one that owns packages
+    /// is kept. Otherwise those cases were refused beforehand.
+    /// </param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task StageCleanupAsync(BaGetUser user, bool administrator, CancellationToken cancellationToken)
+    {
         var keys = await _context.ApiKeys.Where(k => k.UserId == user.Id).ToListAsync(cancellationToken);
         _context.ApiKeys.RemoveRange(keys);
 
@@ -105,23 +277,34 @@ public class AccountDeletionService
                 .Where(m => m.OrganizationKey == organization.Key)
                 .ToListAsync(cancellationToken);
 
-            // An organization of one with nothing to its name goes with its only member.
-            _context.OrganizationMembers.RemoveRange(organization.OtherMembers == 0 ? members : members.Where(m => m.UserId == user.Id));
-            if (organization.OtherMembers == 0)
+            if (administrator && organization.OtherMembers > 0 && organization.IsLastAdmin)
+            {
+                members.Where(m => m.UserId != user.Id).OrderBy(m => m.Key).First().IsAdmin = true;
+            }
+
+            // An organization of one with nothing to its name goes with its only member; an
+            // administrator's deletion keeps one that owns packages, without members.
+            var removeOrganization = organization.OtherMembers == 0
+                && !(administrator && await OrganizationOwnsPackagesAsync(organization.Name, cancellationToken));
+            _context.OrganizationMembers.RemoveRange(removeOrganization ? members : members.Where(m => m.UserId == user.Id));
+            if (removeOrganization)
             {
                 _context.Organizations.RemoveRange(await _context.Organizations.Where(o => o.Key == organization.Key).ToListAsync(cancellationToken));
             }
         }
+    }
 
-        // The cleanup above is only staged. Deleting the user saves it in the same
-        // SaveChanges, so the database applies all of it or none of it: a user that cannot
-        // be deleted keeps its keys, ownerships and memberships.
+    // The cleanup is only staged. Deleting the user saves it in the same SaveChanges, so the
+    // database applies all of it or none of it: a user that cannot be deleted keeps its keys,
+    // ownerships and memberships.
+    private async Task<IdentityResult> SaveDeletionAsync(BaGetUser user)
+    {
         try
         {
             var result = await _users.DeleteAsync(user);
             if (!result.Succeeded) Discard();
 
-            return (blockers, result);
+            return result;
         }
         catch
         {
