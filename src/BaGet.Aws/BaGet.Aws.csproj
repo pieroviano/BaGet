@@ -10,6 +10,10 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="4.0.104.4" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.101.4" />
+    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="10.0.402">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.13" />
   </ItemGroup>
 
