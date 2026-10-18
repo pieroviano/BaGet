@@ -23,7 +23,7 @@ public class IndexModelFacts
             .Callback((SearchRequest r, CancellationToken c) => _capturedRequest = r)
             .ReturnsAsync(_response);
 
-        _target = new IndexModel(search.Object);
+        _target = new IndexModel(search.Object, new StatisticsService(new NullContext()));
     }
 
     [Fact]

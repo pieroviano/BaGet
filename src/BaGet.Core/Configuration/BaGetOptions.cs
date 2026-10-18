@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace BaGet.Core;
 
@@ -72,6 +72,8 @@ public class BaGetOptions
     public AccountsOptions Accounts { get; set; }
 
     public EmailOptions Email { get; set; }
+
+    public SiteOptions Site { get; set; }
 
     public ValidationOptions Validation { get; set; }
 }

@@ -94,4 +94,28 @@ public class StatisticsService
             RecentVersions = recent,
         };
     }
+
+    /// <summary>
+    /// When each package ID was last published to, for the IDs that have a listed version.
+    /// Empty when <see cref="IsSupported"/> is false.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, DateTime>> GetLastUpdatedAsync(
+        IReadOnlyCollection<string> packageIds,
+        CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        if (!IsSupported || packageIds == null || packageIds.Count == 0) return result;
+
+        var lowered = packageIds.Select(id => id.ToLower()).ToList();
+        var rows = await _context.Packages
+            .AsNoTracking()
+            .Where(p => p.Listed && lowered.Contains(p.Id.ToLower()))
+            .GroupBy(p => p.Id)
+            .Select(g => new { Id = g.Key, Published = g.Max(p => p.Published) })
+            .ToListAsync(cancellationToken);
+
+        foreach (var row in rows) result[row.Id] = row.Published;
+
+        return result;
+    }
 }

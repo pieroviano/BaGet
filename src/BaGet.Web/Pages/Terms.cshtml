@@ -1,0 +1,12 @@
+@page "/terms"
+@model BaGet.Web.TermsModel
+
+@{
+    ViewData["Title"] = "Terms of Use";
+}
+
+<div class="col-sm-12 legal-page">
+    <h1>Terms of Use</h1>
+    <hr class="breadcrumb-divider" />
+    @Model.Content
+</div>

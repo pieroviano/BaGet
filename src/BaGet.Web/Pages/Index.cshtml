@@ -1,10 +1,12 @@
 @page
 @using BaGet.Protocol.Models
 @model IndexModel
+@inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 
 @{
-    ViewData["Title"] = "Packages";
+    ViewData["Title"] = Model.IsHome ? "Home" : "Packages";
     ViewData["SearchQuery"] = Model.Query;
+    ViewData["HideSearchBar"] = Model.IsHome;
 }
 
 @section SearchForm
@@ -25,6 +27,44 @@
     {
         <input type="hidden" name="prerelease" value="False" />
     }
+}
+
+@if (Model.IsHome)
+{
+    <div class="home-hero">
+        <h1>Find and share packages</h1>
+        <form action="@Url.Page("/Index")" method="get" class="home-search">
+            <div class="input-group input-group-lg">
+                <input type="text"
+                       name="q"
+                       class="form-control"
+                       autoComplete="off"
+                       autofocus
+                       placeholder="Search for packages..." />
+                <span class="input-group-btn">
+                    <button type="submit" class="btn btn-default" title="Search for packages">
+                        <span class="ms-Icon ms-Icon--Search" aria-hidden="true"></span>
+                    </button>
+                </span>
+            </div>
+        </form>
+        <p class="home-links">
+            <a asp-page="/Index" asp-route-q="">Browse all packages</a>
+            <span aria-hidden="true">&middot;</span>
+            <a asp-page="/Upload">Upload a package</a>
+        </p>
+    </div>
+
+    @if (Model.Totals != null)
+    {
+        <div class="home-totals row text-center">
+            <div class="col-sm-4"><div class="total-number" id="home-packages">@Model.Totals.PackageIds.ToString("N0")</div><div class="total-label">packages</div></div>
+            <div class="col-sm-4"><div class="total-number" id="home-versions">@Model.Totals.PackageVersions.ToString("N0")</div><div class="total-label">package versions</div></div>
+            <div class="col-sm-4"><div class="total-number" id="home-downloads">@Model.Totals.Downloads.ToString("N0")</div><div class="total-label">downloads</div></div>
+        </div>
+    }
+
+    return;
 }
 
 <div class="search-options form-inline">
@@ -102,23 +142,48 @@
 }
 else
 {
+    <div class="search-results">
     @foreach (var package in Model.Packages)
     {
-        <div class="row search-result">
-            <div class="col-sm-1 hidden-xs hidden-sm">
+        var owners = Accounts.Value.Enabled && package.Owners != null && package.Owners.Count > 0
+            ? package.Owners
+            : null;
+
+        <div class="search-result package-card">
+            <div class="card-icon hidden-xs">
                 <img src="@package.IconUrl"
                      class="package-icon img-responsive"
                      onerror="this.src='@Url.Content("~/_content/BaGet.Web/images/default-package-icon-256x256.png")'"
                      alt="The package icon" />
             </div>
-            <div class="col-sm-11">
-                <div>
+            <div class="card-body">
+                <div class="card-heading">
                     <a asp-page="Package"
                        asp-route-id="@package.PackageId"
                        class="package-title">
                         @package.PackageId
                     </a>
-                    <span>by: @string.Join(" ", package.Authors)</span>
+                    @if (owners != null)
+                    {
+                        <span class="card-owners">by
+                            @for (var i = 0; i < owners.Count; i++)
+                            {
+                                <a href="@Url.Page("/Profiles/Profile", new { name = owners[i] })">@owners[i]</a>@(i < owners.Count - 1 ? ", " : "")
+                            }
+                        </span>
+                    }
+                    else if (package.Authors != null && package.Authors.Count > 0)
+                    {
+                        <span class="card-owners">by @string.Join(", ", package.Authors)</span>
+                    }
+                    @if (package.Verified == true)
+                    {
+                        <span class="label label-success badge-verified" title="Reserved for its owner">Verified</span>
+                    }
+                    @if (package.Deprecation != null)
+                    {
+                        <span class="label label-warning badge-deprecated" title="@package.Deprecation.Message">Deprecated</span>
+                    }
                 </div>
                 <ul class="info">
                     <li>
@@ -127,13 +192,22 @@ else
                             @package.TotalDownloads.ToMetric() total downloads
                         </span>
                     </li>
+                    @if (Model.LastUpdated.TryGetValue(package.PackageId, out var updated))
+                    {
+                        <li>
+                            <span class="last-updated" title="@updated.ToString("u")">
+                                <i class="ms-Icon ms-Icon--Calendar"></i>
+                                Last updated @updated.Humanize()
+                            </span>
+                        </li>
+                    }
                     <li>
                         <span>
                             <i class="ms-Icon ms-Icon--Flag"></i>
                             Latest version: @package.Version
                         </span>
                     </li>
-                    @if (package.Tags.Any())
+                    @if (package.Tags != null && package.Tags.Any())
                     {
                         <li>
                             <span class="tags">
@@ -143,12 +217,13 @@ else
                         </li>
                     }
                 </ul>
-                <div>
+                <div class="card-description">
                     @package.Description
                 </div>
             </div>
         </div>
     }
+    </div>
 
     var showPreviousLink = Model.PageIndex > 1;
     var showNextLink = Model.Packages.Count >= IndexModel.ResultsPerPage;

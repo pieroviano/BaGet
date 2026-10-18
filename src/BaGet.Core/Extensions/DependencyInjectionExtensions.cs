@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -68,6 +68,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
         services.AddBaGetOptions<AccountsOptions>(nameof(BaGetOptions.Accounts));
         services.AddBaGetOptions<EmailOptions>(nameof(BaGetOptions.Email));
+        services.AddBaGetOptions<SiteOptions>(nameof(BaGetOptions.Site));
         services.AddBaGetOptions<ValidationOptions>(nameof(BaGetOptions.Validation));
         services.AddBaGetOptions<SearchOptions>(nameof(BaGetOptions.Search));
         services.AddBaGetOptions<StorageOptions>(nameof(BaGetOptions.Storage));

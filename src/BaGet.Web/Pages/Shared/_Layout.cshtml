@@ -1,12 +1,15 @@
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
+@inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> Site
+@{
+    var hideSearchBar = ViewData["HideSearchBar"] is true;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="BaGet">
-    <meta name="author" content="Loic Sharma">
-
+    
     <link rel="shortcut icon" href="~/_content/BaGet.Web/favicon.ico">
 
     <link rel="stylesheet" href="~/_content/BaGet.Web/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -16,59 +19,79 @@
     <title>@ViewData["Title"] - BaGet</title>
 </head>
 <body>
-    <header>
-
+    <header class="site-header">
         <nav class="navbar navbar-inverse" role="navigation">
             <div class="container">
-                <div class="row">
-                    <div id="navbar" class="col-sm-12">
-                        <ul class="nav navbar-nav" role="tablist">
-                            <li role="presentation"><a href="/packages" role="tab" nav-link><span>Packages</span></a></li>
-                            <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
-                            <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
-                            <li role="presentation">
-                                <a role="tab" href="https://loic-sharma.github.io/BaGet/" target="_blank" rel="noopener noreferrer">
-                                    <span>Documentation</span>
-                                </a>
-                            </li>
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand brand" href="@Url.Page("/Index")" title="BaGet">
+                        <svg class="brand-logo" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
+                            <rect x="2" y="12" width="28" height="9" rx="4.5" transform="rotate(-30 16 16)" fill="#f5a623" />
+                            <path d="M9 19l4-7M14 16l4-7M19 13l4-7" stroke="#004880" stroke-width="1.6" stroke-linecap="round" fill="none" />
+                        </svg>
+                        <span class="brand-name">BaGet</span>
+                    </a>
+                </div>
+                <div id="navbar" class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav" role="tablist">
+                        <li role="presentation"><a href="/packages" role="tab" nav-link><span>Packages</span></a></li>
+                        <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
+                        <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
+                        <li role="presentation">
+                            <a role="tab" href="https://loic-sharma.github.io/BaGet/" target="_blank" rel="noopener noreferrer">
+                                <span>Documentation</span>
+                            </a>
+                        </li>
+                    </ul>
+                    @if (Accounts.Value.Enabled)
+                    {
+                        <ul class="nav navbar-nav navbar-right account-area" role="tablist">
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <li role="presentation" class="dropdown account-menu">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <span>@User.Identity.Name</span> <span class="caret"></span>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="@Url.Page("/Account/Profile")">Profile</a></li>
+                                        <li><a href="@Url.Page("/Account/Settings")">Account settings</a></li>
+                                        <li><a href="@Url.Page("/Account/ApiKeys")">API keys</a></li>
+                                        <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
+                                        <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>
+                                        <li><a href="@Url.Page("/Upload")">Upload package</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="@Url.Page("/Account/Logout")">Sign out</a></li>
+                                    </ul>
+                                </li>
+                            }
+                            else
+                            {
+                                <li role="presentation"><a href="@Url.Page("/Account/Login")" role="tab"><span>Sign in</span></a></li>
+                                @if (Accounts.Value.AllowRegistration)
+                                {
+                                    <li role="presentation"><a href="@Url.Page("/Account/Register")" role="tab"><span>Register</span></a></li>
+                                }
+                            }
                         </ul>
-                        @if (Accounts.Value.Enabled)
-                        {
-                            <ul class="nav navbar-nav navbar-right" role="tablist">
-                                @if (User.Identity?.IsAuthenticated == true)
-                                {
-                                    <li role="presentation" class="dropdown account-menu">
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                            <span>@User.Identity.Name</span> <span class="caret"></span>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li><a href="@Url.Page("/Account/Profile")">Profile</a></li>
-                                            <li><a href="@Url.Page("/Account/Settings")">Account settings</a></li>
-                                            <li><a href="@Url.Page("/Account/ApiKeys")">API keys</a></li>
-                                            <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
-                                            <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>
-                                            <li><a href="@Url.Page("/Upload")">Upload package</a></li>
-                                            <li role="separator" class="divider"></li>
-                                            <li><a href="@Url.Page("/Account/Logout")">Sign out</a></li>
-                                        </ul>
-                                    </li>
-                                }
-                                else
-                                {
-                                    <li role="presentation"><a href="@Url.Page("/Account/Login")" role="tab"><span>Sign in</span></a></li>
-                                    @if (Accounts.Value.AllowRegistration)
-                                    {
-                                        <li role="presentation"><a href="@Url.Page("/Account/Register")" role="tab"><span>Register</span></a></li>
-                                    }
-                                }
-                            </ul>
-                        }
-                    </div>
+                    }
                 </div>
             </div>
-            <div class="container search-container">
-                <div class="row">
-                    <form class="col-sm-12" action="@Url.Page("/Index")" method="get">
+        </nav>
+
+        @if (hideSearchBar)
+        {
+            IgnoreSection("SearchForm");
+        }
+        else
+        {
+            <div class="search-band">
+                <div class="container search-container">
+                    <form action="@Url.Page("/Index")" method="get">
                         <div class="input-group">
                             <input type="text"
                                    name="q"
@@ -90,12 +113,30 @@
                     </form>
                 </div>
             </div>
-        </nav>
+        }
     </header>
 
     <section role="main" class="container main-container">
         @RenderBody()
     </section>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="container">
+            <ul class="footer-links list-inline">
+                <li><a href="https://loic-sharma.github.io/BaGet/" target="_blank" rel="noopener noreferrer">Documentation</a></li>
+                <li><a href="https://github.com/loic-sharma/BaGet" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                @if (!string.IsNullOrWhiteSpace(Site.Value.TermsOfUsePath))
+                {
+                    <li><a href="@Url.Page("/Terms")" id="footer-terms">Terms of Use</a></li>
+                }
+                @if (!string.IsNullOrWhiteSpace(Site.Value.PrivacyPolicyPath))
+                {
+                    <li><a href="@Url.Page("/Privacy")" id="footer-privacy">Privacy Policy</a></li>
+                }
+            </ul>
+            <p class="footer-powered">Powered by BaGet</p>
+        </div>
+    </footer>
 
     <script src="~/_content/BaGet.Web/lib/alpinejs/dist/alpine.js"></script>
 

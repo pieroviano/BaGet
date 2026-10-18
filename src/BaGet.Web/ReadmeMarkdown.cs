@@ -13,6 +13,16 @@ public static class ReadmeMarkdown
         .UseAdvancedExtensions()
         .Build();
 
+    // For text that is not a package's: raw HTML in the source is escaped, and links with
+    // a script scheme are not produced, so a file an operator edits cannot inject markup.
+    private static readonly MarkdownPipeline SafePipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .DisableHtml()
+        .Build();
+
+    public static HtmlString ToSafeHtml(string markdown)
+        => markdown == null ? null : new HtmlString(Markdown.ToHtml(markdown, SafePipeline));
+
     public static HtmlString ToHtml(string markdown)
         => markdown == null ? null : new HtmlString(Markdown.ToHtml(markdown, Pipeline));
 }
