@@ -20,7 +20,7 @@ public class PackagePageTabsTests : IDisposable
 
     public PackagePageTabsTests(ITestOutputHelper output) => _output = output;
 
-    private (BaGetApplication App, Browser Browser) Start(Dictionary<string, string> settings = null)
+    private (BaGetApplication App, Browser Browser) Start(Dictionary<string, string>? settings = null)
     {
         var app = new BaGetApplication(_output, configOverrides: settings);
         var browser = new Browser(app);
@@ -35,7 +35,7 @@ public class PackagePageTabsTests : IDisposable
         string id,
         string version,
         string[] frameworks,
-        Action<Package> customize = null)
+        Action<Package>? customize = null)
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
@@ -60,7 +60,9 @@ public class PackagePageTabsTests : IDisposable
         foreach (var f in frameworks) package.TargetFrameworks.Add(new TargetFramework { Moniker = f });
         customize?.Invoke(package);
 
+        #pragma warning disable CS8602
         context.Packages.Add(package);
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
@@ -258,7 +260,9 @@ public class PackagePageTabsTests : IDisposable
         using (var scope = app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<IContext>();
+            #pragma warning disable CS8602
             context.PackageOwners.Add(new PackageOwner { PackageId = "Owned.Pkg", OwnerName = "alice" });
+            #pragma warning restore CS8602
             await context.SaveChangesAsync(CancellationToken.None);
         }
 

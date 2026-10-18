@@ -17,11 +17,11 @@ public class SettingsFormTests
     private static SettingState State(
         string key,
         SettingKind kind,
-        string value = null,
+        string? value = null,
         bool sensitive = false,
         bool overridden = false,
-        Type type = null,
-        string[] enumValues = null)
+        Type? type = null,
+        string[]? enumValues = null)
         => new(
             new SettingDescriptor(key, key.Split(':')[0], "Test", kind, type ?? typeof(string), enumValues ?? Array.Empty<string>(), sensitive, false, string.Empty),
             sensitive ? null : value,

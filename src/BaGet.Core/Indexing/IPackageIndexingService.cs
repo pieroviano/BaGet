@@ -42,5 +42,5 @@ public interface IPackageIndexingService
     /// <param name="stream">The stream containing the package's content.</param>
     /// <param name="cancellationToken"></param>
     /// <returns>The result of the attempted indexing operation.</returns>
-    Task<PackageIndexingResult> IndexAsync(Stream stream, CancellationToken cancellationToken);
+    Task<PackageIndexingResult> IndexAsync(Stream? stream, CancellationToken cancellationToken);
 }

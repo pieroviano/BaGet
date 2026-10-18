@@ -15,7 +15,7 @@ public class StatisticsModel : PageModel
         _statistics = statistics ?? throw new ArgumentNullException(nameof(statistics));
     }
 
-    public FeedStatistics Statistics { get; private set; }
+    public FeedStatistics? Statistics { get; private set; }
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {

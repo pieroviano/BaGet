@@ -6,8 +6,10 @@ namespace BaGet.Tests;
 
 public class InstallSnippetsTests
 {
-    private static string[] Lines(string name, string id = "My.Pkg", string version = "1.2.3")
+    #pragma warning disable CS8604
+    private static string[] Lines(string name, string? id = "My.Pkg", string? version = "1.2.3")
         => InstallSnippets.Build(id, version, isTemplate: false, isTool: false).Single(s => s.Name == name).Lines.ToArray();
+    #pragma warning restore CS8604
 
     [Fact]
     public void TabsAreInTheDocumentedOrder()

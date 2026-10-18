@@ -25,7 +25,7 @@ public class HeaderLinksTests : IDisposable
         bool accounts = true,
         bool allowRegistration = true,
         string apiKey = "",
-        Action<IServiceCollection> configureServices = null)
+        Action<IServiceCollection>? configureServices = null)
     {
         var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string>
         {
@@ -178,11 +178,13 @@ public class HeaderLinksTests : IDisposable
 
             public Capture(CapturingLoggerProvider owner) => _owner = owner;
 
-            public IDisposable BeginScope<TState>(TState state) => null;
+            #pragma warning disable CS8633
+            public IDisposable? BeginScope<TState>(TState state) => null;
+            #pragma warning restore CS8633
 
             public bool IsEnabled(LogLevel logLevel) => true;
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             {
                 lock (_owner.Messages)
                 {

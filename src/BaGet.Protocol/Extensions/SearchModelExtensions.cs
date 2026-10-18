@@ -15,7 +15,9 @@ public static class SearchModelExtensions
     /// <returns>The search result's version.</returns>
     public static NuGetVersion ParseVersion(this SearchResult result)
     {
+        #pragma warning disable CS8604
         return NuGetVersion.Parse(result.Version);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -25,6 +27,8 @@ public static class SearchModelExtensions
     /// <returns>The search result's version.</returns>
     public static NuGetVersion ParseVersion(this SearchResultVersion result)
     {
+        #pragma warning disable CS8604
         return NuGetVersion.Parse(result.Version);
+        #pragma warning restore CS8604
     }
 }

@@ -16,7 +16,7 @@ public class ApiKeyAuthenticationServiceTests
         return new ApiKeyAuthenticationService(options.Object);
     }
 
-    private static Task<bool> Authenticate(string configuredApiKey, string providedApiKey)
+    private static Task<bool> Authenticate(string configuredApiKey, string? providedApiKey)
         => Target(configuredApiKey).AuthenticateAsync(providedApiKey, CancellationToken.None);
 
     [Fact]
@@ -56,7 +56,7 @@ public class ApiKeyAuthenticationServiceTests
     [InlineData("Xecret")]
     [InlineData("secreX")]
     [InlineData("XXXXXX")]
-    public async Task RejectsAKeyOfTheRightLengthThatIsWrong(string providedApiKey)
+    public async Task RejectsAKeyOfTheRightLengthThatIsWrong(string? providedApiKey)
     {
         Assert.False(await Authenticate("secret", providedApiKey));
     }

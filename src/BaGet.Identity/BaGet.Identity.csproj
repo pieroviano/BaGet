@@ -7,6 +7,7 @@
     <Description>BaGet Extension's user accounts, package owners and per-user API keys.</Description>
     <RootNamespace>BaGet.Identity</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

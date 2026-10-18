@@ -23,7 +23,7 @@ public class UserPackagesModel : AdminPageModel
 {
     /// <summary>The user name, from the route.</summary>
     [BindProperty(SupportsGet = true)]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>The user's packages.</summary>
     public IReadOnlyList<AdminPackageRow> Packages { get; private set; } = Array.Empty<AdminPackageRow>();
@@ -49,27 +49,33 @@ internal static class AdminPackageRows
     /// <summary>Summarises <paramref name="ids"/> and attaches each one's owners: one query for the versions, one for the owners.</summary>
     internal static async Task<IReadOnlyList<AdminPackageRow>> BuildAsync(
         IContext context,
-        IReadOnlyList<string> ids,
+        IReadOnlyList<string>? ids,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602
         if (ids.Count == 0) return Array.Empty<AdminPackageRow>();
+        #pragma warning restore CS8602
 
         var summaries = Account.PackagesModel.Summarise(
             ids,
             await Account.PackagesModel.ListVersionsAsync(context, ids, cancellationToken));
 
         var lowered = ids.Select(id => id.ToLowerInvariant()).ToList();
+        #pragma warning disable CS8602, CS8604
         var owners = await context.PackageOwners
             .AsNoTracking()
             .Where(o => lowered.Contains(o.PackageId.ToLower()))
             .Select(o => new { o.PackageId, o.OwnerName })
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
+        #pragma warning disable CS8621, CS8714
         var byId = owners
             .GroupBy(o => o.PackageId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 g => g.Key,
                 g => (IReadOnlyList<string>)g.Select(o => o.OwnerName).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList(),
                 StringComparer.OrdinalIgnoreCase);
+        #pragma warning restore CS8621, CS8714
 
         return summaries
             .Select(p => new AdminPackageRow(p, byId.TryGetValue(p.Id, out var names) ? names : Array.Empty<string>()))

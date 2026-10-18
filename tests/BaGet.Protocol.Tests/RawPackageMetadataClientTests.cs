@@ -22,16 +22,22 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
         var result = await _target.GetRegistrationIndexOrNullAsync("Test.Package");
 
         Assert.NotNull(result);
+        #pragma warning disable CS8602
         Assert.Equal(2, result.Pages.Count);
+        #pragma warning restore CS8602
 
         Assert.True(result.Pages[0].Count == 1);
+        #pragma warning disable CS8602
         Assert.True(result.Pages[0].ItemsOrNull.Count == 1);
+        #pragma warning restore CS8602
         Assert.Equal("1.0.0", result.Pages[0].Lower);
         Assert.Equal("1.0.0", result.Pages[0].Upper);
         Assert.StartsWith(TestData.RegistrationIndexInlinedItemsUrl, result.Pages[0].RegistrationPageUrl);
 
         Assert.True(result.Pages[1].Count == 2);
+        #pragma warning disable CS8602
         Assert.True(result.Pages[1].ItemsOrNull.Count == 2);
+        #pragma warning restore CS8602
         Assert.Equal("2.0.0", result.Pages[1].Lower);
         Assert.Equal("3.0.0", result.Pages[1].Upper);
         Assert.StartsWith(TestData.RegistrationIndexInlinedItemsUrl, result.Pages[1].RegistrationPageUrl);
@@ -43,7 +49,9 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
         var result = await _target.GetRegistrationIndexOrNullAsync("Paged.Package");
 
         Assert.NotNull(result);
+        #pragma warning disable CS8602
         Assert.Equal(2, result.Pages.Count);
+        #pragma warning restore CS8602
 
         Assert.True(result.Pages[0].Count == 1);
         Assert.Null(result.Pages[0].ItemsOrNull);
@@ -70,7 +78,9 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
 
         var firstMetadata = result.ItemsOrNull[0].PackageMetadata;
 
+        #pragma warning disable CS8602
         Assert.Equal("Paged.Package", firstMetadata.PackageId);
+        #pragma warning restore CS8602
         Assert.Equal("2.0.0+build", firstMetadata.Version);
     }
 
@@ -84,13 +94,17 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
 
         var metadata = Assert.Single(result.ItemsOrNull).PackageMetadata;
 
+        #pragma warning disable CS8602
         Assert.Equal("Deprecated.Package", metadata.PackageId);
+        #pragma warning restore CS8602
         Assert.Equal("1.0.0", metadata.Version);
 
         var deprecation = metadata.Deprecation;
 
         Assert.NotNull(deprecation);
+        #pragma warning disable CS8604
         Assert.Equal(new[] { "Legacy", "CriticalBugs" }, deprecation.Reasons.ToArray());
+        #pragma warning restore CS8604
         Assert.Equal(
             "This package is deprecated, use the alternate package instead.",
             deprecation.Message);
@@ -106,7 +120,9 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
         var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
 
         Assert.NotNull(result);
+        #pragma warning disable CS8602, CS8604
         Assert.All(result.ItemsOrNull, item => Assert.Null(item.PackageMetadata.Deprecation));
+        #pragma warning restore CS8602, CS8604
     }
 
     [Fact]

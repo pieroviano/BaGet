@@ -18,7 +18,9 @@ public class RecordingLogger<T> : ILogger<T>
 
     public IEnumerable<LogEntry> Errors => _entries.Where(e => e.Level == LogLevel.Error);
 
+    #pragma warning disable CS8633
     public IDisposable BeginScope<TState>(TState state) => new NoopScope();
+    #pragma warning restore CS8633
 
     public bool IsEnabled(LogLevel logLevel) => true;
 
@@ -26,15 +28,15 @@ public class RecordingLogger<T> : ILogger<T>
         LogLevel logLevel,
         EventId eventId,
         TState state,
-        Exception exception,
-        Func<TState, Exception, string> formatter)
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
     {
         _entries.Add(new LogEntry(logLevel, formatter(state, exception), exception));
     }
 
     public class LogEntry
     {
-        public LogEntry(LogLevel level, string message, Exception exception)
+        public LogEntry(LogLevel level, string message, Exception? exception)
         {
             Level = level;
             Message = message;
@@ -43,7 +45,7 @@ public class RecordingLogger<T> : ILogger<T>
 
         public LogLevel Level { get; }
         public string Message { get; }
-        public Exception Exception { get; }
+        public Exception? Exception { get; }
 
         public override string ToString() => $"{Level}: {Message}";
     }

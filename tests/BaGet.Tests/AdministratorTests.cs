@@ -59,14 +59,16 @@ public class AdministratorTests : IDisposable
         return await action(scope.ServiceProvider);
     }
 
-    private static Task<AdministratorChange> PromoteAsync(BaGetApplication app, string userName)
+    private static Task<AdministratorChange> PromoteAsync(BaGetApplication app, string? userName)
         => WithAsync(app, p => p.GetRequiredService<AdministratorService>().PromoteAsync(userName, "test", CancellationToken.None));
 
-    private static Task<AdministratorChange> DemoteAsync(BaGetApplication app, string userName)
+    private static Task<AdministratorChange> DemoteAsync(BaGetApplication app, string? userName)
         => WithAsync(app, p => p.GetRequiredService<AdministratorService>().DemoteAsync(userName, "test", CancellationToken.None));
 
+    #pragma warning disable CS8602
     private static async Task<bool> IsAdministratorAsync(BaGetApplication app, string userName)
         => (await WithAsync(app, p => p.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync(userName))).IsAdministrator;
+    #pragma warning restore CS8602
 
     private static Task<HttpResponseMessage> PostUsersAsync(Browser browser, string handler, string userName, string password = Password)
         => browser.PostAsync("admin/users", new Dictionary<string, string>
@@ -119,7 +121,9 @@ public class AdministratorTests : IDisposable
         using var response = await browser.GetAsync("admin/users");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("account/login", response.Headers.Location.ToString());
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -263,7 +267,7 @@ public class AdministratorTests : IDisposable
         return browser.PostAsync("admin/settings", fields);
     }
 
-    private static async Task<HttpStatusCode> PushAsync(BaGetApplication app, string apiKey)
+    private static async Task<HttpStatusCode> PushAsync(BaGetApplication app, string? apiKey)
     {
         using var client = app.CreateClient();
         using var package = TestPackages.Build("Settings.Package", "1.0.0");

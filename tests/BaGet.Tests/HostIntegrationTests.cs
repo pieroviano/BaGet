@@ -65,7 +65,7 @@ public class HostIntegrationTests
         Assert.IsType<SqliteContext>(context);
     }
 
-    private IHost BuildHost(Dictionary<string, string> configs = null)
+    private IHost BuildHost(Dictionary<string, string>? configs = null)
     {
         // WebApplication.CreateBuilder reads the command line as a configuration source,
         // which is how these settings reach the host now that there is no host builder to

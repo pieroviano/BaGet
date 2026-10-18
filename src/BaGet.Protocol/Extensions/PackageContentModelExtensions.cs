@@ -17,9 +17,11 @@ public static class PackageContentModelExtensions
     /// <returns>The package versions.</returns>
     public static IReadOnlyList<NuGetVersion> ParseVersions(this PackageVersionsResponse response)
     {
+        #pragma warning disable CS8604
         return response
             .Versions
             .Select(NuGetVersion.Parse)
             .ToList();
+        #pragma warning restore CS8604
     }
 }

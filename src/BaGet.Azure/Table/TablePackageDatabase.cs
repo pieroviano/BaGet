@@ -24,7 +24,7 @@ public class TablePackageDatabase : IPackageDatabase
 
     public TablePackageDatabase(
         TableOperationBuilder operationBuilder,
-        CloudTableClient client,
+        CloudTableClient? client,
         ILogger<TablePackageDatabase> logger)
     {
         _operationBuilder = operationBuilder ?? throw new ArgumentNullException(nameof(operationBuilder));
@@ -88,9 +88,11 @@ public class TablePackageDatabase : IPackageDatabase
         }
     }
 
-    public async Task<bool> ExistsAsync(string id, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(string? id, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602
         var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, id.ToLowerInvariant());
+        #pragma warning restore CS8602
         var query = new TableQuery<PackageEntity>()
             .Select(MinimalColumnSet)
             .Where(filter)
@@ -102,23 +104,27 @@ public class TablePackageDatabase : IPackageDatabase
     }
 
     public async Task<bool> ExistsAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602
         var operation = TableOperation.Retrieve<PackageEntity>(
             id.ToLowerInvariant(),
             version.ToNormalizedString().ToLowerInvariant(),
             MinimalColumnSet);
+        #pragma warning restore CS8602
 
         var execution = await _table.ExecuteAsync(operation, cancellationToken);
 
         return execution.Result is PackageEntity;
     }
 
-    public async Task<IReadOnlyList<Package>> FindAsync(string id, bool includeUnlisted, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Package>> FindAsync(string? id, bool includeUnlisted, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602
         var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, id.ToLowerInvariant());
+        #pragma warning restore CS8602
         if (!includeUnlisted)
         {
             filter = TableQuery.CombineFilters(
@@ -131,7 +137,7 @@ public class TablePackageDatabase : IPackageDatabase
         var results = new List<Package>();
 
         // Request 500 results at a time from the server.
-        TableContinuationToken token = null;
+        TableContinuationToken? token = null;
         query.TakeCount = 500;
 
         do
@@ -148,15 +154,17 @@ public class TablePackageDatabase : IPackageDatabase
         return results.OrderBy(p => p.Version).ToList();
     }
 
-    public async Task<Package> FindOrNullAsync(
-        string id,
+    public async Task<Package?> FindOrNullAsync(
+        string? id,
         NuGetVersion version,
         bool includeUnlisted,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602
         var operation = TableOperation.Retrieve<PackageEntity>(
             id.ToLowerInvariant(),
             version.ToNormalizedString().ToLowerInvariant());
+        #pragma warning restore CS8602
 
         var result = await _table.ExecuteAsync(operation, cancellationToken);
         var entity = result.Result as PackageEntity;
@@ -175,21 +183,21 @@ public class TablePackageDatabase : IPackageDatabase
         return entity.AsPackage();
     }
 
-    public async Task<bool> HardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> HardDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await TryUpdatePackageAsync(
             _operationBuilder.HardDeletePackage(id, version),
             cancellationToken);
     }
 
-    public async Task<bool> RelistPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> RelistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await TryUpdatePackageAsync(
             _operationBuilder.RelistPackage(id, version),
             cancellationToken);
     }
 
-    public async Task<bool> UnlistPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> UnlistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await TryUpdatePackageAsync(
             _operationBuilder.UnlistPackage(id, version),
@@ -219,7 +227,7 @@ public class TablePackageDatabase : IPackageDatabase
         "Package deprecation and vulnerability metadata are not supported when the database is Azure Table storage.";
 
     public Task<bool> SetDeprecationAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         PackageDeprecation deprecation,
         CancellationToken cancellationToken)
@@ -227,7 +235,7 @@ public class TablePackageDatabase : IPackageDatabase
         throw new NotSupportedException(MetadataNotSupported);
     }
 
-    public Task<bool> RemoveDeprecationAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public Task<bool> RemoveDeprecationAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         throw new NotSupportedException(MetadataNotSupported);
     }

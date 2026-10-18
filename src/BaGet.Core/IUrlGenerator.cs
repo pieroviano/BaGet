@@ -11,7 +11,7 @@ public interface IUrlGenerator
     /// Get the URL for the package source (also known as the "service index").
     /// See: https://docs.microsoft.com/en-us/nuget/api/service-index
     /// </summary>
-    string GetServiceIndexUrl();
+    string? GetServiceIndexUrl();
 
     /// <summary>
     /// Get the URL for the root of the package content resource.
@@ -29,30 +29,30 @@ public interface IUrlGenerator
     /// Get the URL to publish packages.
     /// See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource
     /// </summary>
-    string GetPackagePublishResourceUrl();
+    string? GetPackagePublishResourceUrl();
 
     /// <summary>
     /// Get the URL to publish symbol packages.
     /// See: https://docs.microsoft.com/en-us/nuget/api/symbol-package-publish-resource
     /// </summary>
-    string GetSymbolPublishResourceUrl();
+    string? GetSymbolPublishResourceUrl();
 
     /// <summary>
     /// Get the URL to search for packages.
     /// See: https://docs.microsoft.com/en-us/nuget/api/search-query-service-resource
     /// </summary>
-    string GetSearchResourceUrl();
+    string? GetSearchResourceUrl();
 
     /// <summary>
     /// Get the URL to autocomplete package IDs.
     /// See: https://docs.microsoft.com/en-us/nuget/api/search-query-service-resource
     /// </summary>
-    string GetAutocompleteResourceUrl();
+    string? GetAutocompleteResourceUrl();
 
     /// <summary>
     /// Get the URL of the V2 (OData) feed, for clients that cannot use V3.
     /// </summary>
-    string GetV2FeedUrl();
+    string? GetV2FeedUrl();
 
     /// <summary>
     /// Get the URI template a client expands to reach a package's details page.
@@ -96,7 +96,7 @@ public interface IUrlGenerator
     /// Get the URL of one catalog leaf.
     /// </summary>
     /// <param name="commitId">The ID of the commit that wrote the leaf.</param>
-    string GetCatalogLeafUrl(string commitId);
+    string GetCatalogLeafUrl(string? commitId);
 
     /// <summary>
     /// Get the URL of the repository signatures resource.
@@ -115,7 +115,7 @@ public interface IUrlGenerator
     /// See: https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#registration-index
     /// </summary>
     /// <param name="id">The package's ID.</param>
-    string GetRegistrationIndexUrl(string id);
+    string? GetRegistrationIndexUrl(string? id);
 
     /// <summary>
     /// Get the URL for the metadata of several versions of a single package.
@@ -132,14 +132,14 @@ public interface IUrlGenerator
     /// </summary>
     /// <param name="id">The package's ID</param>
     /// <param name="version">The package's version</param>
-    string GetRegistrationLeafUrl(string id, NuGetVersion version);
+    string? GetRegistrationLeafUrl(string? id, NuGetVersion version);
 
     /// <summary>
     /// Get the URL that lists a package's versions.
     /// See: https://docs.microsoft.com/en-us/nuget/api/package-base-address-resource#enumerate-package-versions
     /// </summary>
     /// <param name="id">The package's ID</param>
-    string GetPackageVersionsUrl(string id);
+    string? GetPackageVersionsUrl(string id);
 
     /// <summary>
     /// Get the URL to download a package (.nupkg).
@@ -147,19 +147,19 @@ public interface IUrlGenerator
     /// </summary>
     /// <param name="id">The package's ID</param>
     /// <param name="version">The package's version</param>
-    string GetPackageDownloadUrl(string id, NuGetVersion version);
+    string? GetPackageDownloadUrl(string? id, NuGetVersion version);
 
     /// <summary>
     /// Get the URL to download a package's manifest (.nuspec).
     /// </summary>
     /// <param name="id">The package's ID</param>
     /// <param name="version">The package's version</param>
-    string GetPackageManifestDownloadUrl(string id, NuGetVersion version);
+    string? GetPackageManifestDownloadUrl(string id, NuGetVersion version);
 
     /// <summary>
     /// Get the URL to download a package icon.
     /// </summary>
     /// <param name="id">The package's ID</param>
     /// <param name="version">The package's version</param>
-    string GetPackageIconDownloadUrl(string id, NuGetVersion version);
+    string? GetPackageIconDownloadUrl(string? id, NuGetVersion version);
 }

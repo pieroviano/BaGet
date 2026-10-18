@@ -26,7 +26,9 @@ public static class AliyunApplicationExtensions
 
         app.Services.AddProvider<IStorageService>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasStorageType("AliyunOss")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<AliyunStorageService>();
         });

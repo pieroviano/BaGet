@@ -9,13 +9,13 @@ public class BaGetOptions
     /// operations. If empty, package operations do not require authentication.
     /// </summary>
     [SensitiveSetting]
-    public string ApiKey { get; set; }
+    public string? ApiKey { get; set; }
 
     /// <summary>
     /// The application root URL for usage in reverse proxy scenarios.
     /// </summary>
     [RestartRequired]
-    public string PathBase { get; set; }
+    public string? PathBase { get; set; }
 
     /// <summary>
     /// The host names BaGet will serve, separated by semicolons. A request whose
@@ -32,7 +32,7 @@ public class BaGetOptions
     /// See: https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/host-filtering
     /// </summary>
     [RestartRequired]
-    public string AllowedHosts { get; set; }
+    public string? AllowedHosts { get; set; }
 
     /// <summary>
     /// If enabled, the database will be updated at app startup by running
@@ -62,23 +62,23 @@ public class BaGetOptions
     /// As per documentation <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-3.1#server-urls">here (Server URLs)</a>.
     /// </summary>
     [RestartRequired]
-    public string Urls { get; set; }
+    public string? Urls { get; set; }
 
-    public DatabaseOptions Database { get; set; }
+    public DatabaseOptions? Database { get; set; }
 
-    public StorageOptions Storage { get; set; }
+    public StorageOptions? Storage { get; set; }
 
-    public SearchOptions Search { get; set; }
+    public SearchOptions? Search { get; set; }
 
-    public MirrorOptions Mirror { get; set; }
+    public MirrorOptions? Mirror { get; set; }
 
-    public FeedsOptions Feeds { get; set; }
+    public FeedsOptions? Feeds { get; set; }
 
-    public AccountsOptions Accounts { get; set; }
+    public AccountsOptions? Accounts { get; set; }
 
-    public EmailOptions Email { get; set; }
+    public EmailOptions? Email { get; set; }
 
-    public SiteOptions Site { get; set; }
+    public SiteOptions? Site { get; set; }
 
-    public ValidationOptions Validation { get; set; }
+    public ValidationOptions? Validation { get; set; }
 }

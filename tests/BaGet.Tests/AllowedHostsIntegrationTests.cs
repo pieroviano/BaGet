@@ -40,11 +40,15 @@ public class AllowedHostsIntegrationTests
         response.EnsureSuccessStatusCode();
         var content = JObject.Parse(await response.Content.ReadAsStringAsync());
 
+        #pragma warning disable CS8602
         foreach (var resource in content["resources"])
+        #pragma warning restore CS8602
         {
+            #pragma warning disable CS8604
             Assert.StartsWith(
                 "http://baget.example.com/",
                 resource["@id"].Value<string>());
+            #pragma warning restore CS8604
         }
     }
 
@@ -70,11 +74,15 @@ public class AllowedHostsIntegrationTests
         response.EnsureSuccessStatusCode();
         var content = JObject.Parse(await response.Content.ReadAsStringAsync());
 
+        #pragma warning disable CS8602
         foreach (var resource in content["resources"])
+        #pragma warning restore CS8602
         {
+            #pragma warning disable CS8604
             Assert.StartsWith(
                 "http://anything.example.com/",
                 resource["@id"].Value<string>());
+            #pragma warning restore CS8604
         }
     }
 
@@ -124,7 +132,7 @@ public class AllowedHostsIntegrationTests
     [InlineData("a.example.com;;b.example.com", "a.example.com|b.example.com")]
     [InlineData("a.example.com;A.EXAMPLE.COM", "a.example.com")]
     [InlineData("*.example.com;example.com:8080", "*.example.com|example.com:8080")]
-    public void ParseAllowedHostsMapsConfiguredValues(string configured, string expected)
+    public void ParseAllowedHostsMapsConfiguredValues(string? configured, string expected)
     {
         var hosts = ConfigureBaGetOptions.ParseAllowedHosts(configured);
 
@@ -139,12 +147,14 @@ public class AllowedHostsIntegrationTests
         string allowedHosts,
         bool expected)
     {
+        #pragma warning disable CS8620
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 { nameof(BaGetOptions.AllowedHosts), allowedHosts },
             })
             .Build();
+        #pragma warning restore CS8620
         var options = new HostFilteringOptions();
 
         new ConfigureBaGetOptions(configuration).Configure(options);
@@ -152,7 +162,7 @@ public class AllowedHostsIntegrationTests
         Assert.Equal(expected, options.AllowEmptyHosts);
     }
 
-    private BaGetApplication CreateApplication(string allowedHosts)
+    private BaGetApplication CreateApplication(string? allowedHosts)
     {
         var overrides = new Dictionary<string, string>();
         if (allowedHosts != null)
@@ -177,7 +187,7 @@ public class AllowedHostsIntegrationTests
     /// </remarks>
     private static BaGetApplication WithoutTheBuildersHostFiltering(
         ITestOutputHelper output,
-        Dictionary<string, string> configOverrides)
+        Dictionary<string, string>? configOverrides)
     {
         return new BaGetApplication(
             output,

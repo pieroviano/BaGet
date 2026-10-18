@@ -28,7 +28,7 @@ public class LookAndFeelTests : IDisposable
         Directory.CreateDirectory(_directory);
     }
 
-    private (BaGetApplication App, Browser Browser) Start(Dictionary<string, string> settings = null)
+    private (BaGetApplication App, Browser Browser) Start(Dictionary<string, string>? settings = null)
     {
         var app = new BaGetApplication(_output, configOverrides: settings);
         var browser = new Browser(app);
@@ -130,7 +130,9 @@ public class LookAndFeelTests : IDisposable
         using (var scope = app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<IContext>();
+            #pragma warning disable CS8602
             context.PackageOwners.Add(new PackageOwner { PackageId = "TestData", OwnerName = "alice" });
+            #pragma warning restore CS8602
             await context.SaveChangesAsync(CancellationToken.None);
         }
 

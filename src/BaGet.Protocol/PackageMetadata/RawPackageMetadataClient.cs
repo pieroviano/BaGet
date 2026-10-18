@@ -19,7 +19,7 @@ public class RawPackageMetadataClient : IPackageMetadataClient
     /// </summary>
     /// <param name="httpClient">The HTTP client used to send requests.</param>
     /// <param name="registrationBaseUrl">The NuGet server's registration resource URL.</param>
-    public RawPackageMetadataClient(HttpClient httpClient, string registrationBaseUrl)
+    public RawPackageMetadataClient(HttpClient? httpClient, string? registrationBaseUrl)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _packageMetadataUrl = registrationBaseUrl ?? throw new ArgumentNullException(nameof(registrationBaseUrl));
@@ -37,7 +37,7 @@ public class RawPackageMetadataClient : IPackageMetadataClient
 
     /// <inheritdoc />
     public async Task<RegistrationPageResponse> GetRegistrationPageAsync(
-        string pageUrl,
+        string? pageUrl,
         CancellationToken cancellationToken = default)
     {
         return await _httpClient.GetFromJsonAsync<RegistrationPageResponse>(pageUrl, cancellationToken);
@@ -45,7 +45,7 @@ public class RawPackageMetadataClient : IPackageMetadataClient
 
     /// <inheritdoc />
     public async Task<RegistrationLeafResponse> GetRegistrationLeafAsync(
-        string leafUrl,
+        string? leafUrl,
         CancellationToken cancellationToken = default)
     {
         return await _httpClient.GetFromJsonAsync<RegistrationLeafResponse>(leafUrl, cancellationToken);

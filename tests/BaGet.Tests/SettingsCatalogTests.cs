@@ -75,7 +75,7 @@ public class SettingsCatalogTests : IDisposable
     private static bool IsComplex(Type type)
         => type.IsClass && type != typeof(string) && type != typeof(Uri) && !typeof(IEnumerable).IsAssignableFrom(type);
 
-    private static IEnumerable<string> ExpectedKeys(Type type, string prefix, bool root, int depth)
+    private static IEnumerable<string> ExpectedKeys(Type type, string? prefix, bool root, int depth)
     {
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
@@ -108,7 +108,9 @@ public class SettingsCatalogTests : IDisposable
                 if (property.PropertyType != typeof(string) || !CredentialName.IsMatch(property.Name)) continue;
                 if (property.GetCustomAttribute<SensitiveSettingAttribute>() == null)
                 {
+                    #pragma warning disable CS8602
                     offenders.Add(property.DeclaringType.Name + "." + property.Name);
+                    #pragma warning restore CS8602
                 }
             }
         }
@@ -159,13 +161,17 @@ public class SettingsCatalogTests : IDisposable
     {
         var apiKey = Catalog.Find("ApiKey");
 
+        #pragma warning disable CS8602
         Assert.False(string.IsNullOrWhiteSpace(apiKey.Description));
+        #pragma warning restore CS8602
         Assert.DoesNotContain("<", apiKey.Description);
         Assert.DoesNotContain("  ", apiKey.Description);
         Assert.Contains("authenticat", apiKey.Description);
 
         // A see cref is shown as its last segment.
+        #pragma warning disable CS8602
         Assert.Contains("ApiKey", Catalog.Find("Accounts:Enabled").Description);
+        #pragma warning restore CS8602
     }
 
     [Theory]
@@ -198,7 +204,9 @@ public class SettingsCatalogTests : IDisposable
     {
         Assert.Single(Catalog.Descriptors, d => string.Equals(d.Key, "Storage:Type", StringComparison.OrdinalIgnoreCase));
         Assert.Single(Catalog.Descriptors, d => string.Equals(d.Key, "Database:ConnectionString", StringComparison.OrdinalIgnoreCase));
+        #pragma warning disable CS8602
         Assert.Equal("AzureBlobStorage", Catalog.Find("Storage:DownloadUriExpiry").Group);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -227,13 +235,17 @@ public class SettingsCatalogTests : IDisposable
     {
         var root = (IConfigurationRoot)_app.Services.GetRequiredService<IConfiguration>();
         var providers = root.Providers.ToList();
+        #pragma warning disable CS8604
         foreach (var provider in providers) _output.WriteLine(provider.ToString());
+        #pragma warning restore CS8604
 
         var storePath = _app.Services.GetRequiredService<SettingsOverridesStore>().FilePath;
         var overrides = providers.FindIndex(p => IsFile(p, out var path) && SamePath(path, storePath));
+        #pragma warning disable CS8602
         var lastAppsettings = providers.FindLastIndex(
             p => IsFile(p, out var path) && Path.GetFileName(path).StartsWith("appsettings", StringComparison.OrdinalIgnoreCase)
                  && !SamePath(path, storePath));
+        #pragma warning restore CS8602
         var environment = providers.FindLastIndex(p => p.GetType().Name.StartsWith("EnvironmentVariables"));
         var commandLine = providers.FindLastIndex(p => p.GetType().Name.StartsWith("CommandLine"));
 
@@ -243,15 +255,19 @@ public class SettingsCatalogTests : IDisposable
         if (commandLine >= 0) Assert.True(overrides < commandLine);
     }
 
-    private static bool IsFile(IConfigurationProvider provider, out string path)
+    private static bool IsFile(IConfigurationProvider provider, out string? path)
     {
         path = null;
         if (provider is not FileConfigurationProvider file) return false;
 
+        #pragma warning disable CS8604
         path = file.Source.FileProvider?.GetFileInfo(file.Source.Path)?.PhysicalPath;
+        #pragma warning restore CS8604
         return path != null;
     }
 
-    private static bool SamePath(string a, string b)
+    #pragma warning disable CS8604
+    private static bool SamePath(string? a, string b)
         => string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
+    #pragma warning restore CS8604
 }

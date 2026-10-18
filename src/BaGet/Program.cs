@@ -116,7 +116,9 @@ public partial class Program
                     Console.WriteLine("Two-factor authentication is off for this user. Sign in and change the password now.");
 
                     var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGetUser>>();
+                    #pragma warning disable CS8604
                     var user = await users.FindByNameAsync(userName.Value);
+                    #pragma warning restore CS8604
                     if (string.IsNullOrEmpty(user?.Email) && scope.ServiceProvider.GetRequiredService<IOptions<EmailOptions>>().Value.IsConfigured)
                     {
                         Console.WriteLine("This user has no email address, and sign-in needs a confirmed one while SMTP is configured. Run again with --email <address>.");
@@ -245,7 +247,9 @@ public partial class Program
 
         try
         {
+            #pragma warning disable CS8604
             Directory.CreateDirectory(directory);
+            #pragma warning restore CS8604
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -305,11 +309,13 @@ public partial class Program
         // You can swap between implementations of subsystems like storage and search using BaGet's configuration.
         // Each subsystem's implementation has a provider that reads the configuration to determine if it should be
         // activated. BaGet will run through all its providers until it finds one that is active.
+        #pragma warning disable CS8634
         services.AddScoped(DependencyInjectionExtensions.GetServiceFromProviders<IContext>);
         services.AddTransient(DependencyInjectionExtensions.GetServiceFromProviders<IStorageService>);
         services.AddTransient(DependencyInjectionExtensions.GetServiceFromProviders<IPackageDatabase>);
         services.AddTransient(DependencyInjectionExtensions.GetServiceFromProviders<ISearchService>);
         services.AddTransient(DependencyInjectionExtensions.GetServiceFromProviders<ISearchIndexer>);
+        #pragma warning restore CS8634
 
         services.AddSingleton<IConfigureOptions<MvcRazorRuntimeCompilationOptions>, ConfigureRazorRuntimeCompilation>();
 
@@ -366,7 +372,9 @@ public partial class Program
         // The configured path base may be absent, "." meaning the root, or a path that
         // is missing its leading slash. Normalise it once so that startup cannot fail on
         // an unusable value and so both uses below agree on it.
+        #pragma warning disable CS8602
         var pathBase = NormalizePathBase(options.PathBase);
+        #pragma warning restore CS8602
 
         app.UseForwardedHeaders();
         app.UsePathBase(pathBase);
@@ -425,9 +433,11 @@ public partial class Program
     /// is a legitimate configuration on a private network and the shipped default, which
     /// is exactly why it must not be silent.
     /// </summary>
-    private static void WarnIfNothingAuthenticates(WebApplication app, BaGetOptions options)
+    private static void WarnIfNothingAuthenticates(WebApplication app, BaGetOptions? options)
     {
+        #pragma warning disable CS8602
         if (options.IsReadOnlyMode) return;
+        #pragma warning restore CS8602
         if (!string.IsNullOrEmpty(options.ApiKey)) return;
 
         var accounts = app.Configuration.GetSection(nameof(BaGetOptions.Accounts)).Get<AccountsOptions>();
@@ -454,7 +464,7 @@ public partial class Program
     /// value, "." and "/" all mean "no path base"; anything else is given the leading
     /// slash that <see cref="PathString"/> requires.
     /// </summary>
-    internal static PathString NormalizePathBase(string value)
+    internal static PathString NormalizePathBase(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {

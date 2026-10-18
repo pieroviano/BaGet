@@ -24,7 +24,7 @@ public class DefaultPackageContentService : IPackageContentService
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
     }
 
-    public async Task<PackageVersionsResponse> GetPackageVersionsOrNullAsync(
+    public async Task<PackageVersionsResponse?> GetPackageVersionsOrNullAsync(
         string id,
         CancellationToken cancellationToken = default)
     {
@@ -43,7 +43,7 @@ public class DefaultPackageContentService : IPackageContentService
         };
     }
 
-    public async Task<Stream> GetPackageContentStreamOrNullAsync(
+    public async Task<Stream?> GetPackageContentStreamOrNullAsync(
         string id,
         NuGetVersion version,
         CancellationToken cancellationToken = default)
@@ -57,7 +57,7 @@ public class DefaultPackageContentService : IPackageContentService
         return await _storage.GetPackageStreamAsync(id, version, cancellationToken);
     }
 
-    public async Task<Stream> GetPackageManifestStreamOrNullAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetPackageManifestStreamOrNullAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
     {
         if (!await _packages.ExistsAsync(id, version, cancellationToken))
         {
@@ -67,7 +67,7 @@ public class DefaultPackageContentService : IPackageContentService
         return await _storage.GetNuspecStreamAsync(id, version, cancellationToken);
     }
 
-    public async Task<Stream> GetPackageReadmeStreamOrNullAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetPackageReadmeStreamOrNullAsync(string? id, NuGetVersion version, CancellationToken cancellationToken = default)
     {
         var package = await _packages.FindPackageOrNullAsync(id, version, cancellationToken);
         if (package == null || !package.HasReadme)
@@ -78,7 +78,7 @@ public class DefaultPackageContentService : IPackageContentService
         return await _storage.GetReadmeStreamAsync(id, version, cancellationToken);
     }
 
-    public async Task<Stream> GetPackageIconStreamOrNullAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetPackageIconStreamOrNullAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
     {
         var package = await _packages.FindPackageOrNullAsync(id, version, cancellationToken);
         if (package == null || !package.HasEmbeddedIcon)

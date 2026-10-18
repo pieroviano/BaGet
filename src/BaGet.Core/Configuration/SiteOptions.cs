@@ -23,12 +23,14 @@ public sealed class MarkdownFilePathAttribute : ValidationAttribute
     }
 
     /// <inheritdoc />
-    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+    #pragma warning disable CS8620
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         => value is not string path || IsAllowed(path)
             ? ValidationResult.Success
             : new ValidationResult(
                 $"{validationContext.MemberName} must be a Markdown file (.md) path without \"..\" segments.",
                 new[] { validationContext.MemberName });
+    #pragma warning restore CS8620
 }
 
 
@@ -43,13 +45,13 @@ public class SiteOptions
     /// A Markdown file (.md), absolute or relative to the content root, served at /terms.
     /// </summary>
     [MarkdownFilePath]
-    public string TermsOfUsePath { get; set; }
+    public string? TermsOfUsePath { get; set; }
 
     /// <summary>
     /// A Markdown file (.md), absolute or relative to the content root, served at /privacy.
     /// </summary>
     [MarkdownFilePath]
-    public string PrivacyPolicyPath { get; set; }
+    public string? PrivacyPolicyPath { get; set; }
 
     /// <summary>
     /// The absolute http or https URL users reach this server at, for example
@@ -60,7 +62,7 @@ public class SiteOptions
     /// reset link points.
     /// </summary>
     [RestartRequired]
-    public string PublicUrl { get; set; }
+    public string? PublicUrl { get; set; }
 
     /// <summary>
     /// Show Gravatar avatars. Each avatar is a request to gravatar.com carrying a hash of the

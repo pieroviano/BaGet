@@ -50,11 +50,11 @@ public class StoragePackageStagingService : IPackageStagingService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    internal static string StagedPath(string token) => $"{StagingPathPrefix}/{token}.nupkg";
+    internal static string StagedPath(string? token) => $"{StagingPathPrefix}/{token}.nupkg";
 
-    internal static string MetadataPath(string token) => $"{StagingPathPrefix}/{token}.json";
+    internal static string MetadataPath(string? token) => $"{StagingPathPrefix}/{token}.json";
 
-    public async Task<string> StageAsync(Stream package, string ownerId, CancellationToken cancellationToken = default)
+    public async Task<string> StageAsync(Stream? package, string? ownerId, CancellationToken cancellationToken = default)
     {
         if (package == null) throw new ArgumentNullException(nameof(package));
 
@@ -95,7 +95,7 @@ public class StoragePackageStagingService : IPackageStagingService
         return token;
     }
 
-    public async Task<Stream> OpenAsync(string token, string ownerId, CancellationToken cancellationToken = default)
+    public async Task<Stream?> OpenAsync(string? token, string? ownerId, CancellationToken cancellationToken = default)
     {
         if (!IsToken(token)) return null;
 
@@ -116,7 +116,7 @@ public class StoragePackageStagingService : IPackageStagingService
         return await OpenOrNullAsync(StagedPath(token), cancellationToken);
     }
 
-    public async Task<bool> RemoveAsync(string token, string ownerId, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveAsync(string? token, string? ownerId, CancellationToken cancellationToken = default)
     {
         if (!IsToken(token)) return false;
 
@@ -184,7 +184,7 @@ public class StoragePackageStagingService : IPackageStagingService
     /// upload staged a minute ago whose preview is still open.
     /// </summary>
     private async Task<bool> IsCollectableAsync(
-        string token,
+        string? token,
         DateTime stagedBefore,
         HashSet<string> stored,
         CancellationToken cancellationToken)
@@ -194,7 +194,7 @@ public class StoragePackageStagingService : IPackageStagingService
         switch (read.Status)
         {
             case StagedMetadataStatus.Readable:
-                return read.Metadata.StagedAtUtc < stagedBefore;
+                return read.Metadata?.StagedAtUtc < stagedBefore;
 
             case StagedMetadataStatus.Unreadable:
                 return true;
@@ -224,13 +224,13 @@ public class StoragePackageStagingService : IPackageStagingService
     /// Remove both of an upload's blobs, whoever owns it. Every caller that reaches here
     /// has already decided it may.
     /// </summary>
-    private async Task ForgetAsync(string token, CancellationToken cancellationToken)
+    private async Task ForgetAsync(string? token, CancellationToken cancellationToken)
     {
         await DeleteAsync(StagedPath(token), cancellationToken);
         await DeleteAsync(MetadataPath(token), cancellationToken);
     }
 
-    private async Task<StagedMetadataRead> ReadMetadataAsync(string token, CancellationToken cancellationToken)
+    private async Task<StagedMetadataRead> ReadMetadataAsync(string? token, CancellationToken cancellationToken)
     {
         using var stream = await OpenOrNullAsync(MetadataPath(token), cancellationToken);
         if (stream == null) return new StagedMetadataRead(StagedMetadataStatus.Unavailable, null);
@@ -253,7 +253,7 @@ public class StoragePackageStagingService : IPackageStagingService
         }
     }
 
-    private async Task<Stream> OpenOrNullAsync(string path, CancellationToken cancellationToken)
+    private async Task<Stream?> OpenOrNullAsync(string path, CancellationToken cancellationToken)
     {
         try
         {
@@ -290,17 +290,19 @@ public class StoragePackageStagingService : IPackageStagingService
     /// A short, non-reversible name for an upload, so a log can follow one upload without
     /// carrying the token that would let its reader act on it.
     /// </summary>
-    private static string Correlation(string token)
+    #pragma warning disable CS8604
+    private static string Correlation(string? token)
         => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)), 0, 4).ToLowerInvariant();
+    #pragma warning restore CS8604
 
-    private static bool IsOwner(StagedUpload metadata, string ownerId)
+    private static bool IsOwner(StagedUpload metadata, string? ownerId)
         => string.Equals(metadata.OwnerId, Owner(ownerId), StringComparison.Ordinal);
 
     /// <summary>
     /// A token becomes a storage path, so anything that is not one is refused before it
     /// gets there - a caller-supplied "../packages/..." must never be opened or deleted.
     /// </summary>
-    private static bool IsToken(string token)
+    private static bool IsToken(string? token)
     {
         if (token == null || token.Length != TokenLength) return false;
 
@@ -316,7 +318,7 @@ public class StoragePackageStagingService : IPackageStagingService
     /// <summary>
     /// The token a staged path belongs to, or null if the path is not one of ours.
     /// </summary>
-    private static string TokenOrNull(string path)
+    private static string? TokenOrNull(string? path)
     {
         if (path == null) return null;
         if (!path.StartsWith(StagingPathPrefix + "/", StringComparison.Ordinal)) return null;
@@ -333,7 +335,7 @@ public class StoragePackageStagingService : IPackageStagingService
     /// With accounts disabled there is no user to own an upload, so every upload shares
     /// the one empty owner - the same identity the API key path has there.
     /// </summary>
-    private static string Owner(string ownerId) => ownerId ?? string.Empty;
+    private static string Owner(string? ownerId) => ownerId ?? string.Empty;
 
     /// <summary>
     /// Why a metadata read did not produce metadata. "Not there" and "not readable right
@@ -357,7 +359,7 @@ public class StoragePackageStagingService : IPackageStagingService
 
     private readonly struct StagedMetadataRead
     {
-        public StagedMetadataRead(StagedMetadataStatus status, StagedUpload metadata)
+        public StagedMetadataRead(StagedMetadataStatus status, StagedUpload? metadata)
         {
             Status = status;
             Metadata = metadata;
@@ -365,12 +367,12 @@ public class StoragePackageStagingService : IPackageStagingService
 
         public StagedMetadataStatus Status { get; }
 
-        public StagedUpload Metadata { get; }
+        public StagedUpload? Metadata { get; }
     }
 
     internal class StagedUpload
     {
-        public string OwnerId { get; set; }
+        public string? OwnerId { get; set; }
 
         public DateTime StagedAtUtc { get; set; }
     }

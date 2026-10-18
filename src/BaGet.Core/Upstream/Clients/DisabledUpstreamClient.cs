@@ -24,11 +24,13 @@ public class DisabledUpstreamClient : IUpstreamClient
         return Task.FromResult(_emptyPackageList);
     }
 
-    public Task<Stream> DownloadPackageOrNullAsync(
-        string id,
+    public Task<Stream?> DownloadPackageOrNullAsync(
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8619, CS8625
         return Task.FromResult<Stream>(null);
+        #pragma warning restore CS8619, CS8625
     }
 }

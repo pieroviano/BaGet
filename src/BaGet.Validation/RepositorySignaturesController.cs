@@ -111,11 +111,13 @@ public class ValidationStatusController : Controller
 
         var lowerId = id.ToLowerInvariant();
         var normalized = nugetVersion.ToNormalizedString();
+        #pragma warning disable CS8602, CS8604
         var steps = await _context.PackageValidations
             .AsNoTracking()
             .Where(v => v.PackageId.ToLower() == lowerId && v.PackageVersion == normalized)
             .OrderByDescending(v => v.Key)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
 
         if (steps.Count == 0) return NotFound();
 
@@ -146,19 +148,19 @@ public class RepositorySignaturesResponse
     public bool AllRepositorySigned { get; set; }
 
     [JsonPropertyName("signingCertificates")]
-    public IReadOnlyList<RepositorySigningCertificate> SigningCertificates { get; set; }
+    public IReadOnlyList<RepositorySigningCertificate>? SigningCertificates { get; set; }
 }
 
 public class RepositorySigningCertificate
 {
     [JsonPropertyName("fingerprints")]
-    public IReadOnlyDictionary<string, string> Fingerprints { get; set; }
+    public IReadOnlyDictionary<string, string>? Fingerprints { get; set; }
 
     [JsonPropertyName("subject")]
-    public string Subject { get; set; }
+    public string? Subject { get; set; }
 
     [JsonPropertyName("issuer")]
-    public string Issuer { get; set; }
+    public string? Issuer { get; set; }
 
     [JsonPropertyName("notBefore")]
     public DateTime NotBefore { get; set; }
@@ -167,34 +169,34 @@ public class RepositorySigningCertificate
     public DateTime NotAfter { get; set; }
 
     [JsonPropertyName("contentUrl")]
-    public string ContentUrl { get; set; }
+    public string? ContentUrl { get; set; }
 }
 
 public class ValidationStatusResponse
 {
     [JsonPropertyName("submissionId")]
-    public string SubmissionId { get; set; }
+    public string? SubmissionId { get; set; }
 
     /// <summary>
     /// "Validating", "Available" or "Quarantined".
     /// </summary>
     [JsonPropertyName("status")]
-    public string Status { get; set; }
+    public string? Status { get; set; }
 
     [JsonPropertyName("steps")]
-    public IReadOnlyList<ValidationStep> Steps { get; set; }
+    public IReadOnlyList<ValidationStep>? Steps { get; set; }
 }
 
 public class ValidationStep
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     [JsonPropertyName("state")]
-    public string State { get; set; }
+    public string? State { get; set; }
 
     [JsonPropertyName("message")]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 }
 
 /// <summary>

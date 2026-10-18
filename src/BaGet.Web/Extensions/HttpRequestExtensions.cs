@@ -16,7 +16,7 @@ public static class HttpRequestExtensions
     {
         // Try to get the nupkg from the multipart/form-data. If that's empty,
         // fallback to the request's body.
-        Stream rawUploadStream = null;
+        Stream? rawUploadStream = null;
         try
         {
             if (request.HasFormContentType && request.Form.Files.Count > 0)
@@ -30,7 +30,9 @@ public static class HttpRequestExtensions
 
             // Convert the upload stream into a temporary file stream to
             // minimize memory usage.
+            #pragma warning disable CS8602
             return await rawUploadStream?.AsTemporaryFileStreamAsync(cancellationToken);
+            #pragma warning restore CS8602
         }
         finally
         {
@@ -42,7 +44,7 @@ public static class HttpRequestExtensions
     /// Read the package ID from an uploaded package, or null if it cannot be read. The
     /// stream is left open and rewound.
     /// </summary>
-    public static string ReadPackageIdOrNull(this Stream package)
+    public static string? ReadPackageIdOrNull(this Stream package)
     {
         try
         {
@@ -61,7 +63,7 @@ public static class HttpRequestExtensions
         }
     }
 
-    public static string GetApiKey(this HttpRequest request)
+    public static string? GetApiKey(this HttpRequest request)
     {
         return request.Headers[ApiKeyHeader];
     }

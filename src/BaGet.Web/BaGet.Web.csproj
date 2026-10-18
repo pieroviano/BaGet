@@ -7,6 +7,7 @@
     <Description>BaGet Extension's NuGet server implementation</Description>
     <RootNamespace>BaGet.Web</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

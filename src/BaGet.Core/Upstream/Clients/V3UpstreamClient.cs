@@ -25,8 +25,8 @@ public class V3UpstreamClient : IUpstreamClient
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Stream> DownloadPackageOrNullAsync(
-        string id,
+    public async Task<Stream?> DownloadPackageOrNullAsync(
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
@@ -117,7 +117,7 @@ public class V3UpstreamClient : IUpstreamClient
         };
     }
 
-    private Uri ParseUri(string uriString)
+    private Uri? ParseUri(string? uriString)
     {
         if (uriString == null) return null;
 
@@ -129,7 +129,7 @@ public class V3UpstreamClient : IUpstreamClient
         return uri;
     }
 
-    private string[] ParseAuthors(string authors)
+    private string[] ParseAuthors(string? authors)
     {
         if (string.IsNullOrEmpty(authors)) return Array.Empty<string>();
 
@@ -146,9 +146,11 @@ public class V3UpstreamClient : IUpstreamClient
             return new List<PackageDependency>();
         }
 
+        #pragma warning disable CS8604
         return package.DependencyGroups
             .SelectMany(ToDependencies)
             .ToList();
+        #pragma warning restore CS8604
     }
 
     private IEnumerable<PackageDependency> ToDependencies(DependencyGroupItem group)
@@ -168,11 +170,13 @@ public class V3UpstreamClient : IUpstreamClient
             };
         }
 
-        return group.Dependencies.Select(d => new PackageDependency
+        #pragma warning disable CS8603
+        return group.Dependencies?.Select(d => new PackageDependency
         {
             Id = d.Id,
             VersionRange = d.Range,
             TargetFramework = group.TargetFramework,
         });
+        #pragma warning restore CS8603
     }
 }

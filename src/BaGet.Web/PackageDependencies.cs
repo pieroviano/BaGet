@@ -16,7 +16,7 @@ namespace BaGet.Web;
 public static class PackageDependencies
 {
     public static IReadOnlyList<DependencyGroupModel> GroupByFramework(
-        IEnumerable<PackageDependency> dependencies)
+        IEnumerable<PackageDependency>? dependencies)
     {
         if (dependencies == null) return Array.Empty<DependencyGroupModel>();
 
@@ -39,7 +39,7 @@ public static class PackageDependencies
             .ToList();
     }
 
-    public static string PrettifyTargetFramework(string targetFramework)
+    public static string PrettifyTargetFramework(string? targetFramework)
     {
         if (targetFramework == null) return "All Frameworks";
 
@@ -86,12 +86,12 @@ public static class PackageDependencies
 
 public class DependencyGroupModel
 {
-    public string Name { get; set; }
-    public IReadOnlyList<DependencyModel> Dependencies { get; set; }
+    public string? Name { get; set; }
+    public IReadOnlyList<DependencyModel>? Dependencies { get; set; }
 }
 
 public record DependencyModel
 {
-    public string PackageId { get; init; }
-    public string VersionSpec { get; init; }
+    public string? PackageId { get; init; }
+    public string? VersionSpec { get; init; }
 }

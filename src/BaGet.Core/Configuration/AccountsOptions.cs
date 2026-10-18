@@ -31,7 +31,7 @@ public class AccountsOptions
     /// later is not promoted, and a demotion is not reversed. See also the "account promote" command.
     /// </summary>
     [RestartRequired]
-    public string InitialAdministrators { get; set; }
+    public string? InitialAdministrators { get; set; }
 
     /// <summary>
     /// An external OpenID Connect provider, such as Microsoft Entra ID. Unused unless
@@ -42,12 +42,12 @@ public class AccountsOptions
 
 public class AccountsOpenIdConnectOptions
 {
-    public string Authority { get; set; }
+    public string? Authority { get; set; }
 
-    public string ClientId { get; set; }
+    public string? ClientId { get; set; }
 
     [SensitiveSetting]
-    public string ClientSecret { get; set; }
+    public string? ClientSecret { get; set; }
 
     /// <summary>
     /// The provider's name on the sign-in button.

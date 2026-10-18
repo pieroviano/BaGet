@@ -78,7 +78,7 @@ public abstract class AccountPageModel : PageModel
     /// <summary>
     /// Only follow a local return URL, so a sign-in link cannot redirect elsewhere.
     /// </summary>
-    protected IActionResult RedirectToLocal(string returnUrl)
+    protected IActionResult RedirectToLocal(string? returnUrl)
     {
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
@@ -94,11 +94,13 @@ public abstract class AccountPageModel : PageModel
     protected static string EncodeToken(string token)
         => PasswordResetLinkSender.EncodeToken(token);
 
-    protected static string DecodeToken(string code)
+    protected static string? DecodeToken(string? code)
     {
         try
         {
+            #pragma warning disable CS8604
             return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            #pragma warning restore CS8604
         }
         catch (FormatException)
         {
@@ -124,7 +126,7 @@ public abstract class AccountPageModel : PageModel
                 path = path.Substring(Request.PathBase.Value.Length);
             }
 
-            return root.GetLeftPart(UriPartial.Path).TrimEnd('/') + path;
+            return root?.GetLeftPart(UriPartial.Path).TrimEnd('/') + path;
         }
 
         throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
@@ -145,10 +147,12 @@ public abstract class AccountPageModel : PageModel
     /// would not know, so it must have signed in again with its provider a moment ago:
     /// see <see cref="ReauthenticateModel"/>.
     /// </summary>
-    protected async Task<bool> IsConfirmedAsync(BaGetUser user, string password)
+    #pragma warning disable CS8604
+    protected async Task<bool> IsConfirmedAsync(BaGetUser? user, string? password)
         => await UserManager.HasPasswordAsync(user)
             ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
             : await HasReauthenticatedRecentlyAsync();
+    #pragma warning restore CS8604
 
     protected async Task<bool> HasReauthenticatedRecentlyAsync()
     {

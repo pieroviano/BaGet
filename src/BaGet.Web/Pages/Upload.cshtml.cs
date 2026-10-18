@@ -108,7 +108,7 @@ public class UploadModel : PageModel
     /// file, never from the request.
     /// </summary>
     [BindProperty(SupportsGet = true)]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     public bool AccountsEnabled => _accounts.Value.Enabled;
 
@@ -148,24 +148,24 @@ public class UploadModel : PageModel
     /// <summary>
     /// The staged upload awaiting confirmation, or null while on step one.
     /// </summary>
-    public StagedUpload Staged { get; private set; }
+    public StagedUpload? Staged { get; private set; }
 
-    public string Message { get; private set; }
+    public string? Message { get; private set; }
 
     public bool Failed { get; private set; }
 
     /// <summary>
     /// Set once something is published, so the page can link to it.
     /// </summary>
-    public StagedUpload Published { get; private set; }
+    public StagedUpload? Published { get; private set; }
 
     public void OnGet()
     {
     }
 
     public async Task<IActionResult> OnPostStageAsync(
-        IFormFile package,
-        string apiKey,
+        IFormFile? package,
+        string? apiKey,
         CancellationToken cancellationToken)
     {
         if (IsReadOnlyMode) return Refuse(401, ReadOnlyMessage);
@@ -238,7 +238,7 @@ public class UploadModel : PageModel
 
     public async Task<IActionResult> OnPostSubmitAsync(
         string token,
-        string apiKey,
+        string? apiKey,
         bool acceptTerms,
         CancellationToken cancellationToken)
     {
@@ -304,7 +304,7 @@ public class UploadModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnPostCancelAsync(
         string token,
-        string apiKey,
+        string? apiKey,
         CancellationToken cancellationToken)
     {
         if (IsReadOnlyMode) return Refuse(401, ReadOnlyMessage);
@@ -403,7 +403,7 @@ public class UploadModel : PageModel
 
     private async Task<IActionResult> PublishSymbolsAsync(
         StagedUpload staged,
-        Stream content,
+        Stream? content,
         BaGetPrincipal principal,
         CancellationToken cancellationToken)
     {
@@ -435,7 +435,7 @@ public class UploadModel : PageModel
     /// Who is uploading. With accounts on it is the signed-in session; with accounts off
     /// there is no session to trust, so a pasted API key authenticates instead.
     /// </summary>
-    private async Task<BaGetPrincipal> AuthenticateAsync(string apiKey, CancellationToken cancellationToken)
+    private async Task<BaGetPrincipal?> AuthenticateAsync(string? apiKey, CancellationToken cancellationToken)
     {
         if (!AccountsEnabled)
         {
@@ -450,7 +450,7 @@ public class UploadModel : PageModel
 
     private string NotAuthenticatedMessage => AccountsEnabled ? SignInMessage : ApiKeyRejectedMessage;
 
-    private static string Denied(string packageId)
+    private static string Denied(string? packageId)
         => $"You may not publish '{packageId}'. Either someone else owns it, or it predates "
            + "this server's accounts and only an administrator may publish to it.";
 
@@ -462,7 +462,7 @@ public class UploadModel : PageModel
     /// Everything the preview shows, read from the archive itself. Null when the file is
     /// not a package at all.
     /// </summary>
-    private async Task<StagedUpload> ReadOrNullAsync(Stream content, CancellationToken cancellationToken)
+    private async Task<StagedUpload?> ReadOrNullAsync(Stream content, CancellationToken cancellationToken)
     {
         try
         {
@@ -560,7 +560,7 @@ public class UploadModel : PageModel
     /// The token of a staged upload whose API key was rejected, so the key can be entered
     /// again. Nothing about the upload is shown: it was not authenticated.
     /// </summary>
-    public string RetryToken { get; private set; }
+    public string? RetryToken { get; private set; }
 
     private PageResult Refuse(int statusCode, string message)
     {
@@ -578,34 +578,34 @@ public class UploadModel : PageModel
     /// </summary>
     public class StagedUpload
     {
-        public string Token { get; set; }
+        public string? Token { get; set; }
 
         public bool IsSymbolPackage { get; set; }
 
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
-        public string Version { get; set; }
+        public string? Version { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         public IReadOnlyList<string> Authors { get; set; } = Array.Empty<string>();
 
         /// <summary>
         /// The license expression or license file the package declares, if any.
         /// </summary>
-        public string License { get; set; }
+        public string? License { get; set; }
 
-        public string LicenseUrl { get; set; }
+        public string? LicenseUrl { get; set; }
 
         public IReadOnlyList<DependencyGroupModel> DependencyGroups { get; set; }
             = Array.Empty<DependencyGroupModel>();
 
-        public HtmlString Readme { get; set; }
+        public HtmlString? Readme { get; set; }
 
         public IReadOnlyList<string> SymbolFiles { get; set; } = Array.Empty<string>();
 
         public bool TargetPackageExists { get; set; }
 
-        public string TargetPackageMessage { get; set; }
+        public string? TargetPackageMessage { get; set; }
     }
 }

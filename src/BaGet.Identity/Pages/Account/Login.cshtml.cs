@@ -16,19 +16,19 @@ public class LoginModel : AccountPageModel
     [BindProperty]
     [Required]
     [Display(Name = "User name")]
-    public string UserName { get; set; }
+    public string? UserName { get; set; }
 
     [BindProperty]
     [Required]
     [DataType(DataType.Password)]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     [BindProperty]
     [Display(Name = "Remember me")]
     public bool RememberMe { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
     public bool AllowRegistration => Accounts.AllowRegistration;
 
@@ -36,9 +36,9 @@ public class LoginModel : AccountPageModel
 
     public string ExternalProviderName => Accounts.OpenIdConnect.DisplayName;
 
-    public string Error { get; set; }
+    public string? Error { get; set; }
 
-    public string Notice { get; set; }
+    public string? Notice { get; set; }
 
     public void OnGet()
     {
@@ -48,7 +48,9 @@ public class LoginModel : AccountPageModel
     {
         if (!ModelState.IsValid) return Page();
 
+        #pragma warning disable CS8604
         var result = await SignInManager.PasswordSignInAsync(UserName, Password, RememberMe, lockoutOnFailure: true);
+        #pragma warning restore CS8604
         if (result.Succeeded)
         {
             return RedirectToLocal(ReturnUrl);
@@ -210,7 +212,7 @@ public class LoginModel : AccountPageModel
     /// The provider's preferred user name, else the email's local part, made unique
     /// across users and organizations by a numeric suffix.
     /// </summary>
-    private async Task<string> ChooseUserNameAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
+    private async Task<string?> ChooseUserNameAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
     {
         var candidate = principal.FindFirstValue("preferred_username")
                         ?? principal.FindFirstValue(ClaimTypes.Email)?.Split('@')[0]

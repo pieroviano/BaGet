@@ -8,7 +8,7 @@ namespace BaGet.Core.Tests.Extensions;
 
 public class PackageArchiveReaderExtensionsTests
 {
-    private static Package Read(string extraMetadata = "", IDictionary<string, string> files = null)
+    private static Package Read(string extraMetadata = "", IDictionary<string, string>? files = null)
     {
         using var stream = TestPackage.CreateMinimal(extraMetadata, files: files);
         using var reader = new PackageArchiveReader(stream);
@@ -99,7 +99,9 @@ public class PackageArchiveReaderExtensionsTests
         [Fact]
         public void AreEmptyWhenAbsent()
         {
+            #pragma warning disable CS8604
             Assert.Empty(Read().Tags);
+            #pragma warning restore CS8604
         }
 
         [Fact]
@@ -188,9 +190,9 @@ public class PackageArchiveReaderExtensionsTests
     <licenseUrl>https://example.test/licence</licenseUrl>
     <projectUrl>https://example.test/</projectUrl>");
 
-            Assert.Equal("https://example.test/icon.png", package.IconUrl.AbsoluteUri);
-            Assert.Equal("https://example.test/licence", package.LicenseUrl.AbsoluteUri);
-            Assert.Equal("https://example.test/", package.ProjectUrl.AbsoluteUri);
+            Assert.Equal("https://example.test/icon.png", package.IconUrl?.AbsoluteUri);
+            Assert.Equal("https://example.test/licence", package.LicenseUrl?.AbsoluteUri);
+            Assert.Equal("https://example.test/", package.ProjectUrl?.AbsoluteUri);
         }
 
         [Fact]
@@ -230,7 +232,7 @@ public class PackageArchiveReaderExtensionsTests
             var package = Read(
                 @"    <repository type=""git"" url=""https://example.test/repo"" />");
 
-            Assert.Equal("https://example.test/repo", package.RepositoryUrl.AbsoluteUri);
+            Assert.Equal("https://example.test/repo", package.RepositoryUrl?.AbsoluteUri);
             Assert.Equal("git", package.RepositoryType);
         }
 
@@ -258,7 +260,7 @@ public class PackageArchiveReaderExtensionsTests
             // The type attribute is optional; only the URL is required.
             var package = Read(@"    <repository url=""https://example.test/repo"" />");
 
-            Assert.Equal("https://example.test/repo", package.RepositoryUrl.AbsoluteUri);
+            Assert.Equal("https://example.test/repo", package.RepositoryUrl?.AbsoluteUri);
         }
     }
 
@@ -267,7 +269,9 @@ public class PackageArchiveReaderExtensionsTests
         [Fact]
         public void AreEmptyWhenAbsent()
         {
+            #pragma warning disable CS8604
             Assert.Empty(Read().Dependencies);
+            #pragma warning restore CS8604
         }
 
         [Fact]
@@ -280,7 +284,9 @@ public class PackageArchiveReaderExtensionsTests
       </group>
     </dependencies>");
 
+            #pragma warning disable CS8604
             var dependency = Assert.Single(package.Dependencies);
+            #pragma warning restore CS8604
             Assert.Equal("Other.Package", dependency.Id);
             Assert.Equal("netstandard2.0", dependency.TargetFramework);
             Assert.Contains("1.2.3", dependency.VersionRange);
@@ -294,7 +300,9 @@ public class PackageArchiveReaderExtensionsTests
       <group targetFramework="".NETStandard2.0"" />
     </dependencies>");
 
+            #pragma warning disable CS8604
             var dependency = Assert.Single(package.Dependencies);
+            #pragma warning restore CS8604
             Assert.Null(dependency.Id);
             Assert.Null(dependency.VersionRange);
             Assert.Equal("netstandard2.0", dependency.TargetFramework);
@@ -313,7 +321,7 @@ public class PackageArchiveReaderExtensionsTests
       </group>
     </dependencies>");
 
-            Assert.Equal(new[] { "A", "B" }, package.Dependencies.Select(d => d.Id));
+            Assert.Equal(new[] { "A", "B" }, package.Dependencies?.Select(d => d.Id));
         }
     }
 
@@ -322,7 +330,9 @@ public class PackageArchiveReaderExtensionsTests
         [Fact]
         public void DefaultsToTheDependencyPackageType()
         {
+            #pragma warning disable CS8604
             var packageType = Assert.Single(Read().PackageTypes);
+            #pragma warning restore CS8604
 
             Assert.Equal("Dependency", packageType.Name);
         }
@@ -335,13 +345,17 @@ public class PackageArchiveReaderExtensionsTests
       <packageType name=""DotnetTool"" />
     </packageTypes>");
 
+            #pragma warning disable CS8604
             Assert.Equal("DotnetTool", Assert.Single(package.PackageTypes).Name);
+            #pragma warning restore CS8604
         }
 
         [Fact]
         public void DefaultsToTheAnyFrameworkWhenThereAreNoLibraries()
         {
+            #pragma warning disable CS8604
             var targetFramework = Assert.Single(Read().TargetFrameworks);
+            #pragma warning restore CS8604
 
             Assert.Equal("any", targetFramework.Moniker);
         }
@@ -354,7 +368,9 @@ public class PackageArchiveReaderExtensionsTests
                 { "lib/netstandard2.0/Library.dll", "not a real assembly" },
             });
 
+            #pragma warning disable CS8604
             Assert.Equal("netstandard2.0", Assert.Single(package.TargetFrameworks).Moniker);
+            #pragma warning restore CS8604
         }
     }
 

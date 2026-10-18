@@ -17,17 +17,17 @@ public class BaGetPackageMetadata : PackageMetadata
     public bool HasReadme { get; set; }
 
     [JsonPropertyName("packageTypes")]
-    public IReadOnlyList<string> PackageTypes { get; set; }
+    public IReadOnlyList<string?>? PackageTypes { get; set; }
 
     /// <summary>
     /// The package's release notes.
     /// </summary>
     [JsonPropertyName("releaseNotes")]
-    public string ReleaseNotes { get; set; }
+    public string? ReleaseNotes { get; set; }
 
     [JsonPropertyName("repositoryUrl")]
-    public string RepositoryUrl { get; set; }
+    public string? RepositoryUrl { get; set; }
 
     [JsonPropertyName("repositoryType")]
-    public string RepositoryType { get; set; }
+    public string? RepositoryType { get; set; }
 }

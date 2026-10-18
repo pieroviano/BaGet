@@ -73,7 +73,9 @@ public class SearchFailoverTests
         var response = await CreateFactory().CreateSearchClient().SearchAsync();
 
         Assert.Equal(1, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal("Test.Package", Assert.Single(response.Data).PackageId);
+        #pragma warning restore CS8604
         Assert.Equal(1, _handler.RequestCount(FirstSearchUrl));
         Assert.Equal(1, _handler.RequestCount(SecondSearchUrl));
     }
@@ -193,7 +195,9 @@ public class SearchFailoverTests
         var response = await CreateFactory().CreateAutocompleteClient().AutocompleteAsync();
 
         Assert.Equal(1, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal("Test.Package", Assert.Single(response.Data));
+        #pragma warning restore CS8604
         Assert.Equal(1, _handler.RequestCount(FirstAutocompleteUrl));
         Assert.Equal(1, _handler.RequestCount(SecondAutocompleteUrl));
     }
@@ -262,7 +266,9 @@ public class SearchFailoverTests
         var response = await CreateFactory().CreateAutocompleteClient().AutocompleteAsync();
 
         Assert.Equal(0, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Empty(response.Data);
+        #pragma warning restore CS8604
     }
 
     [Fact]

@@ -9,7 +9,7 @@ public class Package
 {
     public int Key { get; set; }
 
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     public NuGetVersion Version
     {
@@ -17,10 +17,12 @@ public class Package
         {
             // Favor the original version string as it contains more information.
             // Packages uploaded with older versions of BaGet may not have the original version string.
+            #pragma warning disable CS8604
             return NuGetVersion.Parse(
                 OriginalVersionString != null
                     ? OriginalVersionString
                     : NormalizedVersionString);
+            #pragma warning restore CS8604
         }
 
         set
@@ -30,16 +32,16 @@ public class Package
         }
     }
 
-    public string[] Authors { get; set; }
-    public string Description { get; set; }
+    public string[]? Authors { get; set; }
+    public string? Description { get; set; }
     public long Downloads { get; set; }
     public bool HasReadme { get; set; }
     public bool HasEmbeddedIcon { get; set; }
     public bool IsPrerelease { get; set; }
-    public string ReleaseNotes { get; set; }
-    public string Language { get; set; }
+    public string? ReleaseNotes { get; set; }
+    public string? Language { get; set; }
     public bool Listed { get; set; }
-    public string MinClientVersion { get; set; }
+    public string? MinClientVersion { get; set; }
 
     /// <summary>
     /// The time at which the package was published, in UTC.
@@ -60,39 +62,39 @@ public class Package
 
     public bool RequireLicenseAcceptance { get; set; }
     public SemVerLevel SemVerLevel { get; set; }
-    public string Summary { get; set; }
-    public string Title { get; set; }
+    public string? Summary { get; set; }
+    public string? Title { get; set; }
 
-    public Uri IconUrl { get; set; }
-    public Uri LicenseUrl { get; set; }
-    public Uri ProjectUrl { get; set; }
+    public Uri? IconUrl { get; set; }
+    public Uri? LicenseUrl { get; set; }
+    public Uri? ProjectUrl { get; set; }
 
-    public Uri RepositoryUrl { get; set; }
-    public string RepositoryType { get; set; }
+    public Uri? RepositoryUrl { get; set; }
+    public string? RepositoryType { get; set; }
 
-    public string[] Tags { get; set; }
+    public string[]? Tags { get; set; }
 
     /// <summary>
     /// Used for optimistic concurrency.
     /// </summary>
-    public byte[] RowVersion { get; set; }
+    public byte[]? RowVersion { get; set; }
 
-    public List<PackageDependency> Dependencies { get; set; }
-    public List<PackageType> PackageTypes { get; set; }
-    public List<TargetFramework> TargetFrameworks { get; set; }
+    public List<PackageDependency>? Dependencies { get; set; }
+    public List<PackageType>? PackageTypes { get; set; }
+    public List<TargetFramework>? TargetFrameworks { get; set; }
 
     /// <summary>
     /// The deprecation of this version, or null if it is not deprecated.
     /// </summary>
-    public PackageDeprecation Deprecation { get; set; }
+    public PackageDeprecation? Deprecation { get; set; }
 
     /// <summary>
     /// The known vulnerabilities affecting this version.
     /// </summary>
-    public List<PackageVulnerability> Vulnerabilities { get; set; }
+    public List<PackageVulnerability>? Vulnerabilities { get; set; }
 
-    public string NormalizedVersionString { get; set; }
-    public string OriginalVersionString { get; set; }
+    public string? NormalizedVersionString { get; set; }
+    public string? OriginalVersionString { get; set; }
 
 
     public string IconUrlString => IconUrl?.AbsoluteUri ?? string.Empty;

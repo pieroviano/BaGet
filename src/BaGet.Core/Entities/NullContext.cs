@@ -10,27 +10,27 @@ public class NullContext : IContext
 {
     public DatabaseFacade Database => throw new NotImplementedException();
 
-    public DbSet<Package> Packages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<Package>? Packages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<PackageDependency> PackageDependencies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<PackageDependency>? PackageDependencies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<PackageDeprecation> PackageDeprecations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<PackageDeprecation>? PackageDeprecations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<PackageVulnerability> PackageVulnerabilities { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<PackageVulnerability>? PackageVulnerabilities { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<CatalogEntry> CatalogLeafs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<CatalogEntry>? CatalogLeafs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<Organization> Organizations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<Organization>? Organizations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<OrganizationMember> OrganizationMembers { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<OrganizationMember>? OrganizationMembers { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<PackageOwner> PackageOwners { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<PackageOwner>? PackageOwners { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<ApiKey> ApiKeys { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<ApiKey>? ApiKeys { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<PackageValidation> PackageValidations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<PackageValidation>? PackageValidations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    public DbSet<AbuseReport> AbuseReports { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<AbuseReport>? AbuseReports { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<BaGetUser> Users { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 

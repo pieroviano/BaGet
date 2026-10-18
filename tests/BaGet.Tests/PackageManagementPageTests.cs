@@ -27,7 +27,7 @@ public abstract class PackageManagementPageTestBase : IDisposable
 
     protected PackageManagementPageTestBase(
         ITestOutputHelper output,
-        string deletionBehavior = null,
+        string? deletionBehavior = null,
         bool readOnly = false)
     {
         var overrides = new Dictionary<string, string>
@@ -62,8 +62,10 @@ public abstract class PackageManagementPageTestBase : IDisposable
         {
             var user = await s.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync(userName);
 
+            #pragma warning disable CS8602
             return await s.GetRequiredService<ApiKeyService>().CreateAsync(
                 user.Id, "test", new[] { ApiKeyScopes.Push }, "*", expires: null, CancellationToken.None);
+            #pragma warning restore CS8602
         });
 
         using var package = TestPackages.Build(packageId, version);
@@ -77,7 +79,7 @@ public abstract class PackageManagementPageTestBase : IDisposable
     /// Index a package and record its owner directly, for a server that would refuse the
     /// push itself.
     /// </summary>
-    protected async Task SeedOwnedPackageAsync(string userName, string packageId, string version = "1.0.0")
+    protected async Task SeedOwnedPackageAsync(string? userName, string packageId, string version = "1.0.0")
     {
         using (var package = TestPackages.Build(packageId, version))
         {
@@ -90,7 +92,7 @@ public abstract class PackageManagementPageTestBase : IDisposable
         Assert.Equal(OwnerChangeResult.Success, result);
     }
 
-    protected Task<Package> FindAsync(string id, string version)
+    protected Task<Package?> FindAsync(string? id, string version)
         => WithScopeAsync(s => s.GetRequiredService<IPackageDatabase>()
             .FindOrNullAsync(id, NuGetVersion.Parse(version), includeUnlisted: true, CancellationToken.None));
 
@@ -167,7 +169,9 @@ public class PackageManagementPageTests : PackageManagementPageTestBase
         using var response = await Bob.GetAsync("account/packages");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("/account/login", response.Headers.Location.ToString());
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -224,8 +228,10 @@ public class PackageManagementPageTests : PackageManagementPageTestBase
     {
         await Alice.RegisterAsync("alice");
 
+        #pragma warning disable CS8602
         var aliceId = await WithScopeAsync(async s =>
             (await s.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync("alice")).Id);
+        #pragma warning restore CS8602
 
         await WithScopeAsync(async s =>
         {
@@ -370,7 +376,9 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
 
         // Unlisting is the very operation the Delete button is said to perform, so a
         // server that refuses one must refuse the other.
+        #pragma warning disable CS8602
         Assert.True((await FindAsync("Alice.Package", "1.0.0")).Listed);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -389,7 +397,9 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        #pragma warning disable CS8602
         Assert.False((await FindAsync("Alice.Package", "1.0.0")).Listed);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -406,7 +416,9 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        #pragma warning disable CS8602
         Assert.Null((await FindAsync("Alice.Package", "1.0.0")).Deprecation);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -441,7 +453,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
         Assert.Contains("manage-read-only", html);
     }
 
-    private Task<HttpResponseMessage> PostAsync(string handler, Dictionary<string, string> fields)
+    private Task<HttpResponseMessage> PostAsync(string handler, Dictionary<string, string>? fields)
         => Alice.PostAsync(
             "packages/Alice.Package/manage",
             fields,

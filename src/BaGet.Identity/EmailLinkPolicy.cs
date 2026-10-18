@@ -16,7 +16,7 @@ public static class EmailLinkPolicy
     /// Fails startup on a <see cref="SiteOptions.PublicUrl"/> that is set but is not an
     /// absolute http or https URL.
     /// </summary>
-    public static void ValidatePublicUrl(string publicUrl)
+    public static void ValidatePublicUrl(string? publicUrl)
     {
         if (string.IsNullOrWhiteSpace(publicUrl)) return;
 
@@ -28,7 +28,7 @@ public static class EmailLinkPolicy
         }
     }
 
-    public static bool TryParsePublicUrl(string publicUrl, out Uri uri)
+    public static bool TryParsePublicUrl(string? publicUrl, out Uri? uri)
     {
         uri = null;
         if (string.IsNullOrWhiteSpace(publicUrl)) return false;
@@ -47,7 +47,7 @@ public static class EmailLinkPolicy
     /// are attacker-influenced (a forged Host, a spoofed X-Forwarded-Proto) even when
     /// "AllowedHosts" restricts the host, so they are never used.
     /// </summary>
-    public static bool CanBuildLinks(string publicUrl) => TryParsePublicUrl(publicUrl, out _);
+    public static bool CanBuildLinks(string? publicUrl) => TryParsePublicUrl(publicUrl, out _);
 
     public const string UnavailableWarning =
         "Email is configured, but \"Site:PublicUrl\" is not set, so links in emails cannot be trusted to point "

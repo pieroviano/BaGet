@@ -5,6 +5,7 @@
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
     <Description>The libraries to host BaGet Extension on SQL Server.</Description>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

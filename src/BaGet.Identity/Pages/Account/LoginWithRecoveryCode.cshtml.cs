@@ -13,12 +13,12 @@ public class LoginWithRecoveryCodeModel : AccountPageModel
     [BindProperty]
     [Required]
     [Display(Name = "Recovery code")]
-    public string RecoveryCode { get; set; }
+    public string? RecoveryCode { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -32,7 +32,9 @@ public class LoginWithRecoveryCodeModel : AccountPageModel
         if (await SignInManager.GetTwoFactorAuthenticationUserAsync() == null) return RedirectToPage("/Account/Login");
         if (!ModelState.IsValid) return Page();
 
-        var result = await SignInManager.TwoFactorRecoveryCodeSignInAsync(RecoveryCode.Replace(" ", string.Empty));
+        #pragma warning disable CS8604
+        var result = await SignInManager.TwoFactorRecoveryCodeSignInAsync(RecoveryCode?.Replace(" ", string.Empty));
+        #pragma warning restore CS8604
 
         if (result.Succeeded) return RedirectToLocal(ReturnUrl);
 

@@ -44,30 +44,34 @@ internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>, IEmailMessageSe
     /// </summary>
     public Task SendAsync(
         string to,
-        string replyTo,
-        string replyToName,
+        string? replyTo,
+        string? replyToName,
         string subject,
         string textBody,
         CancellationToken cancellationToken)
         => SendAsync(BuildContactMessage(to, replyTo, replyToName, subject, textBody), subject, cancellationToken);
 
-    internal MimeMessage BuildContactMessage(string to, string replyTo, string replyToName, string subject, string textBody)
+    internal MimeMessage BuildContactMessage(string to, string? replyTo, string? replyToName, string? subject, string textBody)
     {
         var message = new MimeMessage();
+        #pragma warning disable CS8604
         message.From.Add(MailboxAddress.Parse(_options.Value.Smtp.From));
+        #pragma warning restore CS8604
         message.To.Add(MailboxAddress.Parse(to));
         if (!string.IsNullOrEmpty(replyTo))
         {
             message.ReplyTo.Add(new MailboxAddress(StripControl(replyToName), replyTo));
         }
 
+        #pragma warning disable CS8601
         message.Subject = StripControl(subject);
+        #pragma warning restore CS8601
         message.Body = new TextPart("plain") { Text = textBody };
 
         return message;
     }
 
-    private static string StripControl(string value)
+    private static string? StripControl(string? value)
         => value == null ? null : new string(value.Where(c => !char.IsControl(c)).ToArray());
 
     internal static string LinkBody(string text, string link)
@@ -80,7 +84,9 @@ internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>, IEmailMessageSe
     internal MimeMessage BuildMessage(string to, string subject, string htmlBody)
     {
         var message = new MimeMessage();
+        #pragma warning disable CS8604
         message.From.Add(MailboxAddress.Parse(_options.Value.Smtp.From));
+        #pragma warning restore CS8604
         message.To.Add(MailboxAddress.Parse(to));
         message.Subject = subject;
         message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
@@ -103,10 +109,14 @@ internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>, IEmailMessageSe
                 : smtp.Port == 465 ? SecureSocketOptions.SslOnConnect
                 : SecureSocketOptions.StartTls;
 
+            #pragma warning disable CS8604
             await client.ConnectAsync(smtp.Host, smtp.Port, security, cancellationToken);
+            #pragma warning restore CS8604
             if (!string.IsNullOrEmpty(smtp.UserName))
             {
+                #pragma warning disable CS8604
                 await client.AuthenticateAsync(smtp.UserName, smtp.Password, cancellationToken);
+                #pragma warning restore CS8604
             }
 
             await client.SendAsync(message, cancellationToken);

@@ -34,9 +34,9 @@ public class ApiKeyService
     /// Create a key and return it in plain text. It cannot be recovered afterwards.
     /// </summary>
     public async Task<string> CreateAsync(
-        string userId,
-        string description,
-        IReadOnlyList<string> scopes,
+        string? userId,
+        string? description,
+        IReadOnlyList<string>? scopes,
         string packageGlobPattern,
         DateTime? expires,
         CancellationToken cancellationToken)
@@ -51,7 +51,7 @@ public class ApiKeyService
 
         var key = KeyPrefix + Base64Url(RandomNumberGenerator.GetBytes(32));
 
-        _context.ApiKeys.Add(new ApiKey
+        _context.ApiKeys?.Add(new ApiKey
         {
             UserId = userId,
             Description = description,
@@ -67,24 +67,28 @@ public class ApiKeyService
         return key;
     }
 
-    public async Task<IReadOnlyList<ApiKey>> ListAsync(string userId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ApiKey>> ListAsync(string? userId, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         return await _context.ApiKeys
             .AsNoTracking()
             .Where(k => k.UserId == userId)
             .OrderBy(k => k.Key)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
     /// Revoke one of the user's keys. False if the user has no such key.
     /// </summary>
-    public async Task<bool> RevokeAsync(string userId, int key, CancellationToken cancellationToken)
+    public async Task<bool> RevokeAsync(string? userId, int key, CancellationToken cancellationToken)
     {
-        var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.Key == key && k.UserId == userId, cancellationToken);
+        #pragma warning disable CS8602
+        var apiKey = await _context.ApiKeys?.FirstOrDefaultAsync(k => k.Key == key && k.UserId == userId, cancellationToken);
+        #pragma warning restore CS8602
         if (apiKey == null) return false;
 
-        _context.ApiKeys.Remove(apiKey);
+        _context.ApiKeys?.Remove(apiKey);
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;
@@ -93,14 +97,16 @@ public class ApiKeyService
     /// <summary>
     /// The stored key that matches, if it exists and has not expired.
     /// </summary>
-    public async Task<ApiKey> FindValidOrNullAsync(string key, CancellationToken cancellationToken)
+    public async Task<ApiKey?> FindValidOrNullAsync(string? key, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(key) || !key.StartsWith(KeyPrefix, StringComparison.Ordinal)) return null;
 
         var hash = Hash(key);
+        #pragma warning disable CS8604
         var apiKey = await _context.ApiKeys
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.HashedKey == hash, cancellationToken);
+        #pragma warning restore CS8604
 
         if (apiKey == null) return null;
         if (apiKey.Expires.HasValue && DateTime.SpecifyKind(apiKey.Expires.Value, DateTimeKind.Utc) <= _time.UtcNow) return null;

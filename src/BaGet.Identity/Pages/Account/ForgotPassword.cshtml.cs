@@ -14,7 +14,7 @@ public class ForgotPasswordModel : AccountPageModel
     [BindProperty]
     [Required]
     [Display(Name = "User name or email")]
-    public string Identifier { get; set; }
+    public string? Identifier { get; set; }
 
     public bool Sent { get; private set; }
 
@@ -32,11 +32,13 @@ public class ForgotPasswordModel : AccountPageModel
     {
         if (!ModelState.IsValid) return Page();
 
-        var identifier = Identifier.Trim();
+        var identifier = Identifier?.Trim();
 
         // Both lookups always run, so the work done does not depend on which one matches.
+        #pragma warning disable CS8604
         var byName = await UserManager.FindByNameAsync(identifier);
-        BaGetUser byEmail = null;
+        #pragma warning restore CS8604
+        BaGetUser? byEmail = null;
         try
         {
             byEmail = await UserManager.FindByEmailAsync(identifier);

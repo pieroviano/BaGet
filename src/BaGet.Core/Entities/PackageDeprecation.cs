@@ -20,23 +20,23 @@ public class PackageDeprecation
     /// Why the package was deprecated. The protocol defines "Legacy", "CriticalBugs"
     /// and "Other"; a package may carry more than one.
     /// </summary>
-    public string[] Reasons { get; set; }
+    public string[]? Reasons { get; set; }
 
     /// <summary>
     /// Free text explaining the deprecation. Optional.
     /// </summary>
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>
     /// The ID of the package to use instead. Null if none was suggested.
     /// </summary>
-    public string AlternatePackageId { get; set; }
+    public string? AlternatePackageId { get; set; }
 
     /// <summary>
     /// The versions of the alternate package that may be used, or "*" for any.
     /// Null if no alternate package was suggested.
     /// </summary>
-    public string AlternateVersionRange { get; set; }
+    public string? AlternateVersionRange { get; set; }
 
     /// <summary>
     /// The key of the deprecated package version. Nullable so that the relationship
@@ -45,5 +45,5 @@ public class PackageDeprecation
     /// </summary>
     public int? PackageKey { get; set; }
 
-    public Package Package { get; set; }
+    public Package? Package { get; set; }
 }

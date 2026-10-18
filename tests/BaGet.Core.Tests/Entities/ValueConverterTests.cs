@@ -6,11 +6,11 @@ namespace BaGet.Core.Tests.Entities;
 
 public class StringArrayToJsonConverterTests
 {
-    private readonly StringArrayToJsonConverter _target = StringArrayToJsonConverter.Instance;
+    private readonly StringArrayToJsonConverter? _target = StringArrayToJsonConverter.Instance;
 
-    private string ToStore(string[] value) => (string)_target.ConvertToProvider(value);
+    private string? ToStore(string[] value) => (string?)_target?.ConvertToProvider(value);
 
-    private string[] FromStore(string value) => (string[])_target.ConvertFromProvider(value);
+    private string[]? FromStore(string? value) => (string[]?)_target?.ConvertFromProvider(value);
 
     public static IEnumerable<object[]> Arrays => new[]
     {
@@ -55,11 +55,11 @@ public class StringArrayToJsonConverterTests
 
 public class UriToStringConverterTests
 {
-    private readonly UriToStringConverter _target = UriToStringConverter.Instance;
+    private readonly UriToStringConverter? _target = UriToStringConverter.Instance;
 
-    private string ToStore(Uri value) => (string)_target.ConvertToProvider(value);
+    private string? ToStore(Uri value) => (string?)_target?.ConvertToProvider(value);
 
-    private Uri FromStore(string value) => (Uri)_target.ConvertFromProvider(value);
+    private Uri? FromStore(string? value) => (Uri?)_target?.ConvertFromProvider(value);
 
     [Theory]
     [InlineData("https://example.test/package")]

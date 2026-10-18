@@ -63,7 +63,9 @@ public class AzureSearchService : ISearchService
             var document = result.Document;
             var versions = new List<SearchResultVersion>();
 
+            #pragma warning disable CS8602
             if (document.Versions.Length != document.VersionDownloads.Length)
+            #pragma warning restore CS8602
             {
                 throw new InvalidOperationException($"Invalid document {document.Key} with mismatched versions");
             }
@@ -80,9 +82,11 @@ public class AzureSearchService : ISearchService
                 });
             }
 
+            #pragma warning disable CS8604
             var iconUrl = document.HasEmbeddedIcon
                 ? _url.GetPackageIconDownloadUrl(document.Id, NuGetVersion.Parse(document.Version))
                 : document.IconUrl;
+            #pragma warning restore CS8604
 
             results.Add(new SearchResult
             {
@@ -102,12 +106,14 @@ public class AzureSearchService : ISearchService
             });
         }
 
+        #pragma warning disable CS8629
         return new SearchResponse
         {
             TotalHits = response.Count.Value,
             Data = results,
             Context = SearchContext.Default(_url.GetPackageMetadataResourceUrl())
         };
+        #pragma warning restore CS8629
     }
 
     public async Task<AutocompleteResponse> AutocompleteAsync(
@@ -136,12 +142,14 @@ public class AzureSearchService : ISearchService
             .ToList()
             .AsReadOnly();
 
+        #pragma warning disable CS8629
         return new AutocompleteResponse
         {
             TotalHits = response.Count.Value,
             Data = results,
             Context = AutocompleteContext.Default
         };
+        #pragma warning restore CS8629
     }
 
     public async Task<AutocompleteResponse> ListPackageVersionsAsync(
@@ -185,7 +193,7 @@ public class AzureSearchService : ISearchService
     /// <summary>
     /// The OData filter for one package ID's document under these search filters.
     /// </summary>
-    internal static string BuildVersionsFilter(string packageId, string searchFilter)
+    internal static string BuildVersionsFilter(string? packageId, string searchFilter)
     {
         if (packageId == null) throw new ArgumentNullException(nameof(packageId));
 
@@ -200,7 +208,7 @@ public class AzureSearchService : ISearchService
     /// document indexed before "normalizedId" existed, the analyzed match autocomplete
     /// always made; plus the package type, if one was asked for.
     /// </summary>
-    internal static string BuildAutocompleteQuery(string query, string packageType)
+    internal static string BuildAutocompleteQuery(string? query, string? packageType)
     {
         var builder = new StringBuilder();
 
@@ -226,7 +234,7 @@ public class AzureSearchService : ISearchService
     }
 
     public async Task<DependentsResponse> FindDependentsAsync(
-        string packageId,
+        string? packageId,
         CancellationToken cancellationToken)
     {
         var query = BuildDependentsQuery(packageId);
@@ -249,18 +257,20 @@ public class AzureSearchService : ISearchService
             .ToList()
             .AsReadOnly();
 
+        #pragma warning disable CS8629
         return new DependentsResponse
         {
             TotalHits = response.Count.Value,
             Data = results
         };
+        #pragma warning restore CS8629
     }
 
     /// <summary>
     /// Builds the query that finds the packages which depend on <paramref name="packageId"/>.
     /// It runs with <see cref="QueryType.Full"/>, the full Lucene query syntax.
     /// </summary>
-    internal static string BuildDependentsQuery(string packageId)
+    internal static string BuildDependentsQuery(string? packageId)
     {
         if (packageId == null)
         {
@@ -306,7 +316,7 @@ public class AzureSearchService : ISearchService
     /// See the escaping rules for the full Lucene syntax:
     /// https://learn.microsoft.com/en-us/azure/search/query-lucene-syntax
     /// </remarks>
-    internal static string EscapeQueryTerm(string value)
+    internal static string EscapeQueryTerm(string? value)
     {
         if (value == null)
         {
@@ -329,7 +339,7 @@ public class AzureSearchService : ISearchService
         return builder.ToString();
     }
 
-    internal static string EscapeQueryPhrase(string value)
+    internal static string EscapeQueryPhrase(string? value)
     {
         if (value == null)
         {
@@ -355,7 +365,7 @@ public class AzureSearchService : ISearchService
         return builder.ToString();
     }
 
-    private string BuildSeachQuery(string query, string packageType, string framework)
+    private string BuildSeachQuery(string? query, string? packageType, string? framework)
     {
         var frameworks = string.IsNullOrEmpty(framework)
             ? null
@@ -370,9 +380,9 @@ public class AzureSearchService : ISearchService
     /// meaning of the query rather than being matched against.
     /// </summary>
     internal static string BuildSearchQuery(
-        string query,
-        string packageType,
-        IReadOnlyList<string> frameworks)
+        string? query,
+        string? packageType,
+        IReadOnlyList<string>? frameworks)
     {
         var queryBuilder = new StringBuilder();
 

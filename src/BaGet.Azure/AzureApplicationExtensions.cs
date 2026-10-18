@@ -44,23 +44,29 @@ public static class AzureApplicationExtensions
 
         app.Services.AddProvider<IPackageDatabase>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasDatabaseType("AzureTable")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<TablePackageDatabase>();
         });
 
         app.Services.AddProvider<ISearchService>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasSearchType("Database")) return null;
             if (!config.HasDatabaseType("AzureTable")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<TableSearchService>();
         });
 
         app.Services.AddProvider<ISearchIndexer>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasSearchType("Database")) return null;
             if (!config.HasDatabaseType("AzureTable")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<NullSearchIndexer>();
         });
@@ -111,7 +117,9 @@ public static class AzureApplicationExtensions
 
         app.Services.AddProvider<IStorageService>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasStorageType("AzureBlobStorage")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<BlobStorageService>();
         });
@@ -157,14 +165,18 @@ public static class AzureApplicationExtensions
 
         app.Services.AddProvider<ISearchService>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasSearchType("AzureSearch")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<AzureSearchService>();
         });
 
         app.Services.AddProvider<ISearchIndexer>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasSearchType("AzureSearch")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<AzureSearchIndexer>();
         });

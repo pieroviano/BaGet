@@ -28,7 +28,7 @@ public sealed class RequiredIfAttribute : ValidationAttribute
     /// <value>
     /// The display name of the other property.
     /// </value>
-    public string OtherPropertyDisplayName { get; set; }
+    public string? OtherPropertyDisplayName { get; set; }
 
     /// <summary>
     /// Gets or sets the other property value that will be relevant for validation.
@@ -36,7 +36,7 @@ public sealed class RequiredIfAttribute : ValidationAttribute
     /// <value>
     /// The other property value.
     /// </value>
-    public object OtherPropertyValue { get; }
+    public object? OtherPropertyValue { get; }
 
     /// <summary>
     /// Gets or sets a value indicating whether other property's value should match or differ from provided other property's value (default is <c>false</c>).
@@ -66,7 +66,7 @@ public sealed class RequiredIfAttribute : ValidationAttribute
     /// </summary>
     /// <param name="otherProperty">The other property.</param>
     /// <param name="otherPropertyValue">The other property value.</param>
-    public RequiredIfAttribute(string otherProperty, object otherPropertyValue)
+    public RequiredIfAttribute(string otherProperty, object? otherPropertyValue)
         : base("'{0}' is required because '{1}' has a value {3}'{2}'.")
     {
         OtherProperty = otherProperty;
@@ -102,7 +102,7 @@ public sealed class RequiredIfAttribute : ValidationAttribute
     /// <returns>
     /// An instance of the <see cref="T:System.ComponentModel.DataAnnotations.ValidationResult" /> class.
     /// </returns>
-    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         if (validationContext == null)
             throw new ArgumentNullException(nameof(validationContext));

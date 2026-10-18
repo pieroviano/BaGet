@@ -17,13 +17,13 @@ public class BaGetServiceIndex : IServiceIndexService
     {
     }
 
-    public BaGetServiceIndex(IUrlGenerator url, IEnumerable<IServiceIndexResourceProvider> providers)
+    public BaGetServiceIndex(IUrlGenerator url, IEnumerable<IServiceIndexResourceProvider>? providers)
     {
         _url = url ?? throw new ArgumentNullException(nameof(url));
         _providers = providers?.ToList() ?? throw new ArgumentNullException(nameof(providers));
     }
 
-    private IEnumerable<ServiceIndexItem> BuildResource(string name, string url, params string[] versions)
+    private IEnumerable<ServiceIndexItem> BuildResource(string name, string? url, params string[] versions)
     {
         foreach (var version in versions)
         {

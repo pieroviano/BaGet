@@ -14,11 +14,11 @@ public class ServiceIndexResponse
     /// The service index's version.
     /// </summary>
     [JsonPropertyName("version")]
-    public string Version { get; set; }
+    public string? Version { get; set; }
 
     /// <summary>
     /// The resources declared by this service index.
     /// </summary>
     [JsonPropertyName("resources")]
-    public IReadOnlyList<ServiceIndexItem> Resources { get; set; }
+    public IReadOnlyList<ServiceIndexItem>? Resources { get; set; }
 }

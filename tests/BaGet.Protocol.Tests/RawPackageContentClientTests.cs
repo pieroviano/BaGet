@@ -23,7 +23,9 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
         var result = await _target.GetPackageVersionsOrNullAsync("Test.Package");
 
         Assert.NotNull(result);
+        #pragma warning disable CS8602
         Assert.Equal(2, result.Versions.Count);
+        #pragma warning restore CS8602
         Assert.Equal("1.0.0", result.Versions[0]);
         Assert.Equal("2.0.0", result.Versions[1]);
     }

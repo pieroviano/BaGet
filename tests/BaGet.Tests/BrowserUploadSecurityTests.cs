@@ -94,7 +94,7 @@ public class BrowserUploadWithoutAnyApiKeyTests : IDisposable
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
-    private async Task<bool> ExistsAsync(string id, string version)
+    private async Task<bool> ExistsAsync(string? id, string version)
     {
         using var scope = _app.Services.CreateScope();
         var packages = scope.ServiceProvider.GetRequiredService<IPackageDatabase>();
@@ -150,13 +150,15 @@ public class BrowserUploadStorageFailureTests : IDisposable
 
     private sealed class UnwritableStaging : IPackageStagingService
     {
-        public Task<string> StageAsync(Stream package, string ownerId, CancellationToken cancellationToken = default)
+        public Task<string> StageAsync(Stream? package, string? ownerId, CancellationToken cancellationToken = default)
             => throw new IOException("the disk is full");
 
-        public Task<Stream> OpenAsync(string token, string ownerId, CancellationToken cancellationToken = default)
+        #pragma warning disable CS8619, CS8625
+        public Task<Stream?> OpenAsync(string token, string? ownerId, CancellationToken cancellationToken = default)
             => Task.FromResult<Stream>(null);
+        #pragma warning restore CS8619, CS8625
 
-        public Task<bool> RemoveAsync(string token, string ownerId, CancellationToken cancellationToken = default)
+        public Task<bool> RemoveAsync(string? token, string? ownerId, CancellationToken cancellationToken = default)
             => Task.FromResult(false);
 
         public Task<int> SweepAsync(DateTime stagedBefore, CancellationToken cancellationToken = default)
@@ -190,8 +192,10 @@ public class BrowserUploadCancelReadOnlyTests : IDisposable
 
         // Staged through the service: a read-only server refuses the upload itself, and
         // the case being pinned is a server switched to read-only while a preview is open.
+        #pragma warning disable CS8602
         var aliceId = await WithScopeAsync(async s =>
             (await s.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync("alice")).Id);
+        #pragma warning restore CS8602
 
         var staging = _app.Services.GetRequiredService<IPackageStagingService>();
         var token = await staging.StageAsync(Package(), aliceId, CancellationToken.None);
@@ -213,7 +217,7 @@ public class BrowserUploadCancelReadOnlyTests : IDisposable
         return await action(scope.ServiceProvider);
     }
 
-    private static Stream Package() => TestResources.GetResourceStream(TestResources.Package);
+    private static Stream? Package() => TestResources.GetResourceStream(TestResources.Package);
 
     public void Dispose() => _app.Dispose();
 }

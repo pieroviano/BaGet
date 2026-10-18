@@ -34,8 +34,8 @@ public interface IPackageContentClient
     /// <returns>
     /// The package's content stream, or null if the package does not exist. The stream may not be seekable.
     /// </returns>
-    Task<Stream> DownloadPackageOrNullAsync(
-        string packageId,
+    Task<Stream?> DownloadPackageOrNullAsync(
+        string? packageId,
         NuGetVersion packageVersion,
         CancellationToken cancellationToken = default);
 
@@ -49,7 +49,7 @@ public interface IPackageContentClient
     /// <returns>
     /// The package's manifest stream, or null if the package does not exist. The stream may not be seekable.
     /// </returns>
-    Task<Stream> DownloadPackageManifestOrNullAsync(
+    Task<Stream?> DownloadPackageManifestOrNullAsync(
         string packageId,
         NuGetVersion packageVersion,
         CancellationToken cancellationToken = default);

@@ -31,9 +31,9 @@ internal static class BrowserUpload
     public static Task<HttpResponseMessage> StageAsync(
         this Browser browser,
         string fileName,
-        Stream file,
-        string apiKey = null,
-        string tokenPage = null)
+        Stream? file,
+        string? apiKey = null,
+        string? tokenPage = null)
     {
         var fields = new Dictionary<string, string>();
         if (apiKey != null) fields["apiKey"] = apiKey;
@@ -51,8 +51,8 @@ internal static class BrowserUpload
         this Browser browser,
         string token,
         bool acceptTerms = true,
-        string apiKey = null,
-        string tokenPage = null)
+        string? apiKey = null,
+        string? tokenPage = null)
     {
         var fields = new Dictionary<string, string> { { "token", token } };
         if (acceptTerms) fields["acceptTerms"] = "true";
@@ -64,8 +64,8 @@ internal static class BrowserUpload
     public static Task<HttpResponseMessage> CancelAsync(
         this Browser browser,
         string token,
-        string apiKey = null,
-        string tokenPage = null)
+        string? apiKey = null,
+        string? tokenPage = null)
     {
         var fields = new Dictionary<string, string> { { "token", token } };
         if (apiKey != null) fields["apiKey"] = apiKey;
@@ -313,7 +313,9 @@ public class BrowserUploadTests : IDisposable
 
         // A symbol upload is never a first upload: it creates no package and no owner.
         Assert.False(await ExistsAsync("TestData", "1.2.3"));
+        #pragma warning disable CS8604
         Assert.Empty(await OwnersAsync("TestData"));
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -403,7 +405,7 @@ public class BrowserUploadTests : IDisposable
         return browser;
     }
 
-    private static async Task<string> StageAsync(Browser browser, string fileName, Stream file)
+    private static async Task<string> StageAsync(Browser browser, string fileName, Stream? file)
     {
         using var response = await browser.StageAsync(fileName, file);
         var html = await response.Content.ReadAsStringAsync();
@@ -423,7 +425,7 @@ public class BrowserUploadTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    private async Task<bool> ExistsAsync(string id, string version)
+    private async Task<bool> ExistsAsync(string? id, string version)
     {
         using var scope = _app.Services.CreateScope();
         var packages = scope.ServiceProvider.GetRequiredService<IPackageDatabase>();
@@ -431,14 +433,16 @@ public class BrowserUploadTests : IDisposable
         return await packages.ExistsAsync(id, NuGet.Versioning.NuGetVersion.Parse(version), CancellationToken.None);
     }
 
-    private async Task<IReadOnlyList<string>> OwnersAsync(string id)
+    private async Task<IReadOnlyList<string>?> OwnersAsync(string? id)
     {
         using var scope = _app.Services.CreateScope();
         var ownership = scope.ServiceProvider.GetRequiredService<PackageOwnershipService>();
 
+        #pragma warning disable CS8619
         return (await ownership.GetOwnersAsync(id, CancellationToken.None))
             .Select(o => o.OwnerName)
             .ToList();
+        #pragma warning restore CS8619
     }
 
     public void Dispose() => _app.Dispose();

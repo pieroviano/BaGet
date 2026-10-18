@@ -48,7 +48,9 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
 
         Assert.False(_target.Found);
+        #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
+        #pragma warning restore CS8602
         Assert.Null(_target.DependencyGroups);
         Assert.Null(_target.Versions);
     }
@@ -66,7 +68,9 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", version: null, _cancellation);
 
         Assert.False(_target.Found);
+        #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
+        #pragma warning restore CS8602
         Assert.Null(_target.DependencyGroups);
         Assert.Null(_target.Versions);
     }
@@ -86,15 +90,23 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", "2.0.0", _cancellation);
 
         Assert.True(_target.Found);
+        #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
+        #pragma warning restore CS8602
         Assert.Equal("2.0.0", _target.Package.NormalizedVersionString);
 
+        #pragma warning disable CS8602
         Assert.Equal(3, _target.Versions.Count);
         Assert.Equal("3.0.0", _target.Versions[0].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.False(_target.Versions[0].Selected);
+        #pragma warning disable CS8602
         Assert.Equal("2.0.0", _target.Versions[1].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.True(_target.Versions[1].Selected);
+        #pragma warning disable CS8602
         Assert.Equal("1.0.0", _target.Versions[2].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.False(_target.Versions[2].Selected);
     }
 
@@ -113,13 +125,19 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", "2.0.0", _cancellation);
 
         Assert.True(_target.Found);
+        #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
+        #pragma warning restore CS8602
         Assert.Equal("2.0.0", _target.Package.NormalizedVersionString);
 
+        #pragma warning disable CS8602
         Assert.Equal(2, _target.Versions.Count);
         Assert.Equal("3.0.0", _target.Versions[0].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.False(_target.Versions[0].Selected);
+        #pragma warning disable CS8602
         Assert.Equal("1.0.0", _target.Versions[1].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.False(_target.Versions[1].Selected);
     }
 
@@ -138,13 +156,19 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", "4.0.0", _cancellation);
 
         Assert.True(_target.Found);
+        #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
+        #pragma warning restore CS8602
         Assert.Equal("2.0.0", _target.Package.NormalizedVersionString);
 
+        #pragma warning disable CS8602
         Assert.Equal(2, _target.Versions.Count);
         Assert.Equal("2.0.0", _target.Versions[0].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.True(_target.Versions[0].Selected);
+        #pragma warning disable CS8602
         Assert.Equal("1.0.0", _target.Versions[1].Version.OriginalVersion);
+        #pragma warning restore CS8602
         Assert.False(_target.Versions[1].Selected);
     }
 
@@ -193,7 +217,9 @@ public class PackageModelFacts
 
         await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
 
+        #pragma warning disable CS8602
         Assert.Equal(2, _target.UsedBy.Count);
+        #pragma warning restore CS8602
         Assert.Equal("Used by 1", _target.UsedBy[0].Id);
         Assert.Equal("Used by 2", _target.UsedBy[1].Id);
     }
@@ -231,21 +257,33 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
 
         Assert.True(_target.Found);
+        #pragma warning disable CS8602
         Assert.Equal(2, _target.DependencyGroups.Count);
+        #pragma warning restore CS8602
         Assert.Equal(".NET 5.0", _target.DependencyGroups[0].Name);
         Assert.Equal(".NET Framework 4.8", _target.DependencyGroups[1].Name);
 
+        #pragma warning disable CS8602
         Assert.Equal(2, _target.DependencyGroups[0].Dependencies.Count);
+        #pragma warning restore CS8602
+        #pragma warning disable CS8604
         Assert.Single(_target.DependencyGroups[1].Dependencies);
+        #pragma warning restore CS8604
 
+        #pragma warning disable CS8602
         Assert.Equal("Dependency1", _target.DependencyGroups[0].Dependencies[0].PackageId);
         Assert.Equal("(>= 1.0.0)", _target.DependencyGroups[0].Dependencies[0].VersionSpec);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602
         Assert.Equal("Dependency3", _target.DependencyGroups[0].Dependencies[1].PackageId);
         Assert.Equal("(>= 3.0.0)", _target.DependencyGroups[0].Dependencies[1].VersionSpec);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602
         Assert.Equal("Dependency2", _target.DependencyGroups[1].Dependencies[0].PackageId);
         Assert.Equal("(>= 2.0.0)", _target.DependencyGroups[1].Dependencies[0].VersionSpec);
+        #pragma warning restore CS8602
     }
 
     [Theory]
@@ -274,7 +312,9 @@ public class PackageModelFacts
         await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
 
         Assert.True(_target.Found);
+        #pragma warning disable CS8604
         var group = Assert.Single(_target.DependencyGroups);
+        #pragma warning restore CS8604
         Assert.Equal(expectedResult, group.Name);
     }
 
@@ -328,9 +368,11 @@ public class PackageModelFacts
 
             await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
 
+            #pragma warning disable CS8602
             Assert.Equal(
                 "<h1 id=\"my-readme\">My readme</h1>\n<p>Hello world!</p>\n",
                 _target.Readme.Value);
+            #pragma warning restore CS8602
         }
     }
 
@@ -340,8 +382,8 @@ public class PackageModelFacts
         bool hasReadme = false,
         bool listed = true,
         DateTime? published = null,
-        IEnumerable<PackageDependency> dependencies = null,
-        IEnumerable<string> packageTypes = null)
+        IEnumerable<PackageDependency>? dependencies = null,
+        IEnumerable<string>? packageTypes = null)
     {
         published = published ?? DateTime.Now;
         dependencies = dependencies ?? Array.Empty<PackageDependency>();

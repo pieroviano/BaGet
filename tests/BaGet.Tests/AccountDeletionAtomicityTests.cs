@@ -55,7 +55,9 @@ public class AccountDeletionAtomicityTests : IDisposable
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
             var fresh = await users.FindByIdAsync(userId);
+            #pragma warning disable CS8604
             Assert.True((await users.SetPhoneNumberAsync(fresh, "123")).Succeeded);
+            #pragma warning restore CS8604
         }
 
         var (blockers, result) = await deleting.ServiceProvider.GetRequiredService<AccountDeletionService>()
@@ -67,6 +69,8 @@ public class AccountDeletionAtomicityTests : IDisposable
         using var check = _app.Services.CreateScope();
         Assert.NotNull(await check.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>().FindByIdAsync(userId));
         Assert.Single(await check.ServiceProvider.GetRequiredService<ApiKeyService>().ListAsync(userId, CancellationToken.None));
+        #pragma warning disable CS8604
         Assert.Single(await check.ServiceProvider.GetRequiredService<PackageOwnershipService>().GetOrganizationsAsync(userId, CancellationToken.None));
+        #pragma warning restore CS8604
     }
 }

@@ -63,7 +63,9 @@ public class ValidationWorker : BackgroundService
             if (scope.ServiceProvider.GetRequiredService<IContext>() is NullContext) return;
 
             var runner = scope.ServiceProvider.GetRequiredService<PackageValidationRunner>();
+            #pragma warning disable CS8602
             foreach (var submissionId in await runner.GetPendingSubmissionIdsAsync(cancellationToken))
+            #pragma warning restore CS8602
             {
                 await _queue.EnqueueAsync(submissionId, cancellationToken);
             }

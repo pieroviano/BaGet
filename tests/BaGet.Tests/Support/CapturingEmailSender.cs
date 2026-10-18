@@ -18,20 +18,20 @@ public class CapturingEmailSender : IEmailSender<BaGetUser>, IEmailMessageSender
 
     public IReadOnlyCollection<CapturedEmail> Sent => _sent.ToArray();
 
-    public Task SendConfirmationLinkAsync(BaGetUser user, string email, string confirmationLink)
+    public Task SendConfirmationLinkAsync(BaGetUser? user, string email, string confirmationLink)
         => Capture("confirmation", user, email, confirmationLink);
 
-    public Task SendPasswordResetLinkAsync(BaGetUser user, string email, string resetLink)
+    public Task SendPasswordResetLinkAsync(BaGetUser? user, string email, string resetLink)
         => Capture("reset-link", user, email, resetLink);
 
-    public Task SendPasswordResetCodeAsync(BaGetUser user, string email, string resetCode)
+    public Task SendPasswordResetCodeAsync(BaGetUser? user, string email, string resetCode)
         => Capture("reset-code", user, email, resetCode);
 
     public Task SendAsync(
         string to,
-        string replyTo,
-        string replyToName,
-        string subject,
+        string? replyTo,
+        string? replyToName,
+        string? subject,
         string textBody,
         CancellationToken cancellationToken)
     {
@@ -39,7 +39,7 @@ public class CapturingEmailSender : IEmailSender<BaGetUser>, IEmailMessageSender
         return Task.CompletedTask;
     }
 
-    private Task Capture(string kind, BaGetUser user, string email, string payload)
+    private Task Capture(string kind, BaGetUser? user, string email, string payload)
     {
         _sent.Enqueue(new CapturedEmail(kind, user?.UserName, email, payload));
         return Task.CompletedTask;
@@ -48,8 +48,8 @@ public class CapturingEmailSender : IEmailSender<BaGetUser>, IEmailMessageSender
 
 public record CapturedEmail(
     string Kind,
-    string UserName,
+    string? UserName,
     string To,
     string Payload,
-    string ReplyTo = null,
-    string Subject = null);
+    string? ReplyTo = null,
+    string? Subject = null);

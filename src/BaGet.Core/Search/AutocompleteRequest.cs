@@ -29,10 +29,10 @@ public class AutocompleteRequest
     /// <summary>
     /// Filter results to a package type. If null, no filter is applied.
     /// </summary>
-    public string PackageType { get; set; }
+    public string? PackageType { get; set; }
 
     /// <summary>
     /// The search query.
     /// </summary>
-    public string Query { get; set; }
+    public string? Query { get; set; }
 }

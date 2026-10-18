@@ -21,7 +21,7 @@ public class DefaultPackageMetadataService : IPackageMetadataService
         _builder = builder ?? throw new ArgumentNullException(nameof(builder));
     }
 
-    public async Task<BaGetRegistrationIndexResponse> GetRegistrationIndexOrNullAsync(
+    public async Task<BaGetRegistrationIndexResponse?> GetRegistrationIndexOrNullAsync(
         string packageId,
         CancellationToken cancellationToken = default)
     {
@@ -37,8 +37,8 @@ public class DefaultPackageMetadataService : IPackageMetadataService
                 packages));
     }
 
-    public async Task<RegistrationLeafResponse> GetRegistrationLeafOrNullAsync(
-        string id,
+    public async Task<RegistrationLeafResponse?> GetRegistrationLeafOrNullAsync(
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken = default)
     {

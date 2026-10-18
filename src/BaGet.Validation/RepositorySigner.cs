@@ -30,7 +30,7 @@ public class RepositorySigner
     /// <summary>
     /// The configured certificate, without its private key, or null if none is.
     /// </summary>
-    public X509Certificate2 GetPublicCertificateOrNull()
+    public X509Certificate2? GetPublicCertificateOrNull()
     {
         if (!IsConfigured) return null;
 
@@ -103,9 +103,11 @@ public class RepositorySigner
         }
     }
 
+    #pragma warning disable CS8604
     private X509Certificate2 LoadCertificate()
         => X509CertificateLoader.LoadPkcs12FromFile(
             _options.Value.RepositorySigningCertificatePath,
             _options.Value.RepositorySigningCertificatePassword,
             X509KeyStorageFlags.EphemeralKeySet);
+    #pragma warning restore CS8604
 }

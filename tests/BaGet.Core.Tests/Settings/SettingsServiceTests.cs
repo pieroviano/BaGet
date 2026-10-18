@@ -47,16 +47,24 @@ public class SettingsServiceTests : IDisposable
 
         public override void Load(Stream stream)
         {
-            var store = new SettingsOverridesStore(System.IO.Path.Combine(((PhysicalFileProvider)Source.FileProvider).Root, Source.Path));
-            Data = new Dictionary<string, string>(store.Read(), StringComparer.OrdinalIgnoreCase);
+            #pragma warning disable CS8602, CS8604
+            var store = new SettingsOverridesStore(System.IO.Path.Combine(((PhysicalFileProvider?)Source.FileProvider).Root, Source.Path));
+            #pragma warning restore CS8602, CS8604
+            #pragma warning disable CS8620
+            Data = new Dictionary<string, string?>(store.Read(), StringComparer.OrdinalIgnoreCase);
+            #pragma warning restore CS8620
         }
     }
 
-    private SettingsService Create(Dictionary<string, string> baseValues, Dictionary<string, string> afterOverrides = null)
+    private SettingsService Create(Dictionary<string, string>? baseValues, Dictionary<string, string>? afterOverrides = null)
     {
+        #pragma warning disable CS8620
         var builder = new ConfigurationBuilder().AddInMemoryCollection(baseValues);
+        #pragma warning restore CS8620
         builder.Add(new OverridesSource { Path = System.IO.Path.GetFileName(_path), FileProvider = new PhysicalFileProvider(_directory), Optional = true });
+        #pragma warning disable CS8620
         if (afterOverrides != null) builder.AddInMemoryCollection(afterOverrides);
+        #pragma warning restore CS8620
         var configuration = builder.Build();
 
         var services = new ServiceCollection();
@@ -77,13 +85,15 @@ public class SettingsServiceTests : IDisposable
             provider.GetRequiredService<SettingsOverridesStore>());
     }
 
-    private static Dictionary<string, string> Valid() => new()
+    private static Dictionary<string, string>? Valid() => new()
     {
         ["Database:ConnectionString"] = "Data Source=x",
     };
 
-    private static IReadOnlyDictionary<SettingDescriptor, object> Change(SettingsService service, string key, object value)
+    #pragma warning disable CS8601, CS8604
+    private static IReadOnlyDictionary<SettingDescriptor, object> Change(SettingsService service, string key, object? value)
         => new Dictionary<SettingDescriptor, object> { [service.Catalog.Find(key)] = value };
+    #pragma warning restore CS8601, CS8604
 
     private static SettingState State(SettingsService service, string key)
         => service.GetState().Single(s => s.Descriptor.Key == key);
@@ -154,7 +164,9 @@ public class SettingsServiceTests : IDisposable
 
     private SettingsService CreateSite()
     {
+        #pragma warning disable CS8620
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(Valid()).Build();
+        #pragma warning restore CS8620
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddBaGetOptions<DatabaseOptions>("Database");
@@ -222,7 +234,9 @@ public class SettingsServiceTests : IDisposable
     [Fact]
     public async Task ASourceBeforeTheOverridesFileDoesNotShadowIt()
     {
+        #pragma warning disable CS8604
         var service = Create(new Dictionary<string, string>(Valid()) { ["Mirror:PackageDownloadTimeoutSeconds"] = "5" });
+        #pragma warning restore CS8604
 
         await service.SaveAsync(Change(service, "Mirror:PackageDownloadTimeoutSeconds", 30L), "admin", CancellationToken.None);
 

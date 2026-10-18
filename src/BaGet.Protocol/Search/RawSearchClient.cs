@@ -23,14 +23,14 @@ public class RawSearchClient : ISearchClient
     /// </summary>
     /// <param name="httpClient">The HTTP client used to send requests.</param>
     /// <param name="searchUrl">The NuGet server's search URL.</param>
-    public RawSearchClient(HttpClient httpClient, string searchUrl)
+    public RawSearchClient(HttpClient? httpClient, string? searchUrl)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _searchUrl = searchUrl ?? throw new ArgumentNullException(nameof(searchUrl));
     }
 
     public async Task<SearchResponse> SearchAsync(
-        string query = null,
+        string? query = null,
         int skip = 0,
         int take = 20,
         bool includePrerelease = true,
@@ -44,7 +44,7 @@ public class RawSearchClient : ISearchClient
 
     internal static string AddSearchQueryString(
         string uri,
-        string query,
+        string? query,
         int? skip,
         int? take,
         bool includePrerelease,
@@ -53,8 +53,10 @@ public class RawSearchClient : ISearchClient
     {
         var queryString = new Dictionary<string, string>();
 
+        #pragma warning disable CS8601
         if (skip.HasValue && skip.Value > 0) queryString["skip"] = skip.ToString();
         if (take.HasValue) queryString["take"] = take.ToString();
+        #pragma warning restore CS8601
         if (includePrerelease) queryString["prerelease"] = true.ToString();
         if (includeSemVer2) queryString["semVerLevel"] = "2.0.0";
 

@@ -27,17 +27,19 @@ public static class CatalogModelExtensions
         DateTimeOffset maxCommitTimestamp,
         bool excludeRedundantLeaves)
     {
+        #pragma warning disable CS8604
         var leaves = catalogPage
             .Items
             .Where(x => x.CommitTimestamp > minCommitTimestamp && x.CommitTimestamp <= maxCommitTimestamp)
             .OrderBy(x => x.CommitTimestamp);
+        #pragma warning restore CS8604
 
         if (excludeRedundantLeaves)
         {
             leaves = leaves
                 .GroupBy(x => new
                 {
-                    PackageId = x.PackageId.ToLowerInvariant(),
+                    PackageId = x.PackageId?.ToLowerInvariant(),
                     PackageVersion = x.ParsePackageVersion()
                 })
                 .Select(x => x.Last())
@@ -74,10 +76,12 @@ public static class CatalogModelExtensions
     {
         // Filter out pages that fall entirely before the minimum commit timestamp and sort the remaining pages by
         // commit timestamp.
+        #pragma warning disable CS8604
         var upperRange = catalogIndex
             .Items
             .Where(x => x.CommitTimestamp > minCommitTimestamp)
             .OrderBy(x => x.CommitTimestamp);
+        #pragma warning restore CS8604
 
         // Take pages from the sorted list until the commit timestamp goes past the maximum commit timestamp. This
         // essentially LINQ's TakeWhile plus one more element.
@@ -99,7 +103,9 @@ public static class CatalogModelExtensions
     /// <returns>The package version.</returns>
     public static NuGetVersion ParsePackageVersion(this ICatalogLeafItem leaf)
     {
+        #pragma warning disable CS8604
         return NuGetVersion.Parse(leaf.PackageVersion);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -129,7 +135,9 @@ public static class CatalogModelExtensions
         // Client side treats empty string version ranges as the "all" range.
         // Source: https://github.com/NuGet/NuGet.Client/blob/849063018d8ee08625774a2dcd07ab84224dabb9/src/NuGet.Core/NuGet.Protocol/DependencyInfo/RegistrationUtility.cs#L20-L30
         // Example: https://api.nuget.org/v3/catalog0/data/2016.03.14.21.19.28/servicestack.extras.serilog.2.0.1.json
+        #pragma warning disable CS8604
         if (!VersionRange.TryParse(packageDependency.Range, out var parsed))
+        #pragma warning restore CS8604
         {
             return VersionRange.All;
         }
@@ -154,7 +162,7 @@ public static class CatalogModelExtensions
     /// <returns>True if the catalog leaf represents a package delete.</returns>
     public static bool IsPackageDelete(this CatalogLeaf leaf)
     {
-        return leaf.Type.FirstOrDefault() == "PackageDelete";
+        return leaf.Type?.FirstOrDefault() == "PackageDelete";
     }
 
     /// <summary>
@@ -174,7 +182,7 @@ public static class CatalogModelExtensions
     /// <returns>True if the catalog leaf contains package details.</returns>
     public static bool IsPackageDetails(this CatalogLeaf leaf)
     {
-        return leaf.Type.FirstOrDefault() == "PackageDetails";
+        return leaf.Type?.FirstOrDefault() == "PackageDetails";
     }
 
     /// <summary>

@@ -38,4 +38,4 @@ public sealed class HiddenSettingAttribute : Attribute
 /// </summary>
 /// <param name="OptionsType">The options type.</param>
 /// <param name="Section">The configuration section it is bound to, or null for the root.</param>
-public sealed record SettingsSchemaRegistration(Type OptionsType, string Section);
+public sealed record SettingsSchemaRegistration(Type OptionsType, string? Section);

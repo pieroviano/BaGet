@@ -42,12 +42,12 @@ public static class PackageEntityExtensions
         };
     }
 
-    private static Uri ParseUri(string input)
+    private static Uri? ParseUri(string? input)
     {
         return string.IsNullOrEmpty(input) ? null : new Uri(input);
     }
 
-    private static List<PackageDependency> ParseDependencies(string input)
+    private static List<PackageDependency> ParseDependencies(string? input)
     {
         return TableJson.Deserialize<List<DependencyModel>>(input)
             .Select(e => new PackageDependency
@@ -59,7 +59,7 @@ public static class PackageEntityExtensions
             .ToList();
     }
 
-    private static List<PackageType> ParsePackageTypes(string input)
+    private static List<PackageType> ParsePackageTypes(string? input)
     {
         return TableJson.Deserialize<List<PackageTypeModel>>(input)
             .Select(e => new PackageType
@@ -70,7 +70,7 @@ public static class PackageEntityExtensions
             .ToList();
     }
 
-    private static List<TargetFramework> ParseTargetFrameworks(string targetFrameworks)
+    private static List<TargetFramework> ParseTargetFrameworks(string? targetFrameworks)
     {
         return TableJson.Deserialize<List<string>>(targetFrameworks)
             .Select(f => new TargetFramework { Moniker = f })

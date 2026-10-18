@@ -22,7 +22,9 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal("Test.Package", Assert.Single(response.Data));
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -78,7 +80,9 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
 
         Assert.NotNull(response);
         Assert.Equal(3, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Data.ToArray());
+        #pragma warning restore CS8604
     }
 
     [Fact]

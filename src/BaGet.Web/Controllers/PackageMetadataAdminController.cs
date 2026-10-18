@@ -40,7 +40,7 @@ public class PackageMetadataAdminController : Controller
     }
 
     public async Task<IActionResult> SetDeprecation(
-        string id,
+        string? id,
         string version,
         [FromBody] DeprecationRequest request,
         CancellationToken cancellationToken)
@@ -59,6 +59,7 @@ public class PackageMetadataAdminController : Controller
             return BadRequest(error);
         }
 
+        #pragma warning disable CS8604
         var deprecation = new PackageDeprecation
         {
             Reasons = request.Reasons.Distinct(StringComparer.Ordinal).ToArray(),
@@ -66,12 +67,13 @@ public class PackageMetadataAdminController : Controller
             AlternatePackageId = request.AlternatePackageId,
             AlternateVersionRange = request.AlternatePackageId == null ? null : request.AlternateVersionRange,
         };
+        #pragma warning restore CS8604
 
         return await RunAsync(id, nugetVersion, () => _packages.SetDeprecationAsync(id, nugetVersion, deprecation, cancellationToken), cancellationToken);
     }
 
     public async Task<IActionResult> RemoveDeprecation(
-        string id,
+        string? id,
         string version,
         CancellationToken cancellationToken)
     {
@@ -118,7 +120,7 @@ public class PackageMetadataAdminController : Controller
         return await RunAsync(id, nugetVersion, () => _packages.SetVulnerabilitiesAsync(id, nugetVersion, vulnerabilities, cancellationToken), cancellationToken);
     }
 
-    internal static string Validate(DeprecationRequest request)
+    internal static string? Validate(DeprecationRequest? request)
     {
         if (request?.Reasons == null || request.Reasons.Count == 0)
         {
@@ -151,7 +153,7 @@ public class PackageMetadataAdminController : Controller
         return null;
     }
 
-    internal static string Validate(IReadOnlyList<VulnerabilityRequest> request)
+    internal static string? Validate(IReadOnlyList<VulnerabilityRequest>? request)
     {
         if (request == null)
         {
@@ -186,7 +188,7 @@ public class PackageMetadataAdminController : Controller
         return null;
     }
 
-    private async Task<IActionResult> AuthorizeAsync(string id, CancellationToken cancellationToken)
+    private async Task<IActionResult?> AuthorizeAsync(string? id, CancellationToken cancellationToken)
     {
         // The same rules as deleting or relisting a package.
         if (_options.Value.IsReadOnlyMode)
@@ -209,7 +211,7 @@ public class PackageMetadataAdminController : Controller
     }
 
     private async Task<IActionResult> RunAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         Func<Task<bool>> operation,
         CancellationToken cancellationToken)
@@ -236,26 +238,26 @@ public class PackageMetadataAdminController : Controller
 public class DeprecationRequest
 {
     [JsonPropertyName("reasons")]
-    public IReadOnlyList<string> Reasons { get; set; }
+    public IReadOnlyList<string>? Reasons { get; set; }
 
     [JsonPropertyName("message")]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     [JsonPropertyName("alternatePackageId")]
-    public string AlternatePackageId { get; set; }
+    public string? AlternatePackageId { get; set; }
 
     [JsonPropertyName("alternateVersionRange")]
-    public string AlternateVersionRange { get; set; }
+    public string? AlternateVersionRange { get; set; }
 }
 
 public class VulnerabilityRequest
 {
     [JsonPropertyName("advisoryUrl")]
-    public string AdvisoryUrl { get; set; }
+    public string? AdvisoryUrl { get; set; }
 
     [JsonPropertyName("severity")]
     public int Severity { get; set; }
 
     [JsonPropertyName("versionRange")]
-    public string VersionRange { get; set; }
+    public string? VersionRange { get; set; }
 }

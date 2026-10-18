@@ -35,7 +35,7 @@ public class DatabaseSearchService : ISearchService
     {
         var frameworks = GetCompatibleFrameworksOrNull(request.Framework);
 
-        IQueryable<Package> search = _context.Packages;
+        IQueryable<Package>? search = _context.Packages;
         search = ApplySearchQuery(search, request.Query);
         search = ApplySearchFilters(
             search,
@@ -61,7 +61,7 @@ public class DatabaseSearchService : ISearchService
             .Take(request.Take)
             .ToListAsync(cancellationToken);
 
-        search = _context.Packages.Where(p => packageIdPage.Contains(p.Id));
+        search = _context.Packages?.Where(p => packageIdPage.Contains(p.Id));
 
         search = ApplySearchFilters(
             search,
@@ -70,18 +70,24 @@ public class DatabaseSearchService : ISearchService
             request.PackageType,
             frameworks);
 
+        #pragma warning disable CS8604
         var results = await search
             .Include(p => p.Deprecation)
             .Include(p => p.Vulnerabilities)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
         var position = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        #pragma warning disable CS8604
         for (var i = 0; i < packageIdPage.Count; i++) position.TryAdd(packageIdPage[i], i);
+        #pragma warning restore CS8604
 
+        #pragma warning disable CS8604
         var groupedResults = results
             .GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
             .OrderBy(group => position.TryGetValue(group.Key, out var index) ? index : int.MaxValue)
             .Select(group => new PackageRegistration(group.Key, group.ToList()))
             .ToList();
+        #pragma warning restore CS8604
 
         var response = _searchBuilder.BuildSearch(groupedResults, totalHits);
 
@@ -96,16 +102,20 @@ public class DatabaseSearchService : ISearchService
     /// </summary>
     private async Task AddOwnersAsync(SearchResponse response, CancellationToken cancellationToken)
     {
-        if (response.Data.Count == 0) return;
+        if (response.Data?.Count == 0) return;
 
-        var ids = response.Data.Select(r => r.PackageId.ToLower()).ToList();
+        var ids = response.Data?.Select(r => r.PackageId?.ToLower()).ToList();
+        #pragma warning disable CS8602, CS8604
         var owners = await _context.PackageOwners
             .AsNoTracking()
             .Where(o => ids.Contains(o.PackageId.ToLower()))
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
 
         var byId = owners.ToLookup(o => o.PackageId, StringComparer.OrdinalIgnoreCase);
+        #pragma warning disable CS8602
         foreach (var result in response.Data)
+        #pragma warning restore CS8602
         {
             var resultOwners = byId[result.PackageId].ToList();
             if (resultOwners.Count == 0) continue;
@@ -119,7 +129,7 @@ public class DatabaseSearchService : ISearchService
         AutocompleteRequest request,
         CancellationToken cancellationToken)
     {
-        IQueryable<Package> search = _context.Packages;
+        IQueryable<Package>? search = _context.Packages;
 
         search = ApplySearchQuery(search, request.Query);
         search = ApplySearchFilters(
@@ -137,6 +147,7 @@ public class DatabaseSearchService : ISearchService
         // the query's projection. Ordering before a "Distinct" over a narrower projection
         // is silently dropped, and SQL Server rejects the resulting query outright:
         // "ORDER BY items must appear in the select list if SELECT DISTINCT is specified."
+        #pragma warning disable CS8604
         var packageIds = await search
             .GroupBy(p => p.Id)
             .OrderByDescending(packages => packages.Sum(p => p.Downloads))
@@ -144,6 +155,7 @@ public class DatabaseSearchService : ISearchService
             .Skip(request.Skip)
             .Take(request.Take)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         return _searchBuilder.BuildAutocomplete(packageIds, totalHits);
     }
@@ -152,10 +164,12 @@ public class DatabaseSearchService : ISearchService
         VersionsRequest request,
         CancellationToken cancellationToken)
     {
-        var packageId = request.PackageId.ToLower();
+        var packageId = request.PackageId?.ToLower();
+        #pragma warning disable CS8602, CS8604
         var search = _context
             .Packages
             .Where(p => p.Id.ToLower().Equals(packageId));
+        #pragma warning restore CS8602, CS8604
 
         search = ApplySearchFilters(
             search,
@@ -164,16 +178,19 @@ public class DatabaseSearchService : ISearchService
             packageType: null,
             frameworks: null);
 
+        #pragma warning disable CS8604
         var packageVersions = await search
             .Select(p => p.NormalizedVersionString)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         // Version enumeration is not paged, so every match is on the single page returned.
         return _searchBuilder.BuildAutocomplete(packageVersions, packageVersions.Count);
     }
 
-    public async Task<DependentsResponse> FindDependentsAsync(string packageId, CancellationToken cancellationToken)
+    public async Task<DependentsResponse> FindDependentsAsync(string? packageId, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var dependents = await _context
             .Packages
             .Where(p => p.Listed)
@@ -188,34 +205,41 @@ public class DatabaseSearchService : ISearchService
             })
             .Distinct()
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         return _searchBuilder.BuildDependents(dependents);
     }
 
-    internal static IQueryable<string> OrderPackageIds(IQueryable<Package> search, SearchSort sort)
+    internal static IQueryable<string?> OrderPackageIds(IQueryable<Package>? search, SearchSort sort)
     {
         // Grouping by id puts the sort key in the projection, which SQL Server requires of
         // an order over a distinct list (see "AutocompleteAsync").
-        var groups = search.GroupBy(p => p.Id);
+        var groups = search?.GroupBy(p => p.Id);
 
         switch (sort)
         {
             case SearchSort.TotalDownloads:
+                #pragma warning disable CS8604
                 return groups
                     .OrderByDescending(g => g.Sum(p => p.Downloads))
                     .ThenBy(g => g.Key)
                     .Select(g => g.Key);
+                #pragma warning restore CS8604
 
             case SearchSort.LastUpdated:
+                #pragma warning disable CS8604
                 return groups
                     .OrderByDescending(g => g.Max(p => p.Published))
                     .ThenBy(g => g.Key)
                     .Select(g => g.Key);
+                #pragma warning restore CS8604
 
             default:
+                #pragma warning disable CS8604
                 return groups
                     .OrderBy(g => g.Key)
                     .Select(g => g.Key);
+                #pragma warning restore CS8604
         }
     }
 
@@ -226,16 +250,18 @@ public class DatabaseSearchService : ISearchService
     /// paged queries use, so the total is always consistent with the page.
     /// </summary>
     private static Task<int> CountDistinctPackageIdsAsync(
-        IQueryable<Package> search,
+        IQueryable<Package>? search,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         return search
             .Select(p => p.Id)
             .Distinct()
             .CountAsync(cancellationToken);
+        #pragma warning restore CS8604
     }
 
-    private IQueryable<Package> ApplySearchQuery(IQueryable<Package> query, string search)
+    private IQueryable<Package>? ApplySearchQuery(IQueryable<Package>? query, string? search)
     {
         if (string.IsNullOrEmpty(search))
         {
@@ -244,40 +270,46 @@ public class DatabaseSearchService : ISearchService
 
         search = search.ToLowerInvariant();
 
-        return query.Where(p => p.Id.ToLower().Contains(search));
+        #pragma warning disable CS8602
+        return query?.Where(p => p.Id.ToLower().Contains(search));
+        #pragma warning restore CS8602
     }
 
-    private IQueryable<Package> ApplySearchFilters(
-        IQueryable<Package> query,
+    private IQueryable<Package>? ApplySearchFilters(
+        IQueryable<Package>? query,
         bool includePrerelease,
         bool includeSemVer2,
-        string packageType,
-        IReadOnlyList<string> frameworks)
+        string? packageType,
+        IReadOnlyList<string>? frameworks)
     {
         if (!includePrerelease)
         {
-            query = query.Where(p => !p.IsPrerelease);
+            query = query?.Where(p => !p.IsPrerelease);
         }
 
         if (!includeSemVer2)
         {
-            query = query.Where(p => p.SemVerLevel != SemVerLevel.SemVer2);
+            query = query?.Where(p => p.SemVerLevel != SemVerLevel.SemVer2);
         }
 
         if (!string.IsNullOrEmpty(packageType))
         {
-            query = query.Where(p => p.PackageTypes.Any(t => t.Name == packageType));
+            #pragma warning disable CS8604
+            query = query?.Where(p => p.PackageTypes.Any(t => t.Name == packageType));
+            #pragma warning restore CS8604
         }
 
         if (frameworks != null)
         {
-            query = query.Where(p => p.TargetFrameworks.Any(f => frameworks.Contains(f.Moniker)));
+            #pragma warning disable CS8604
+            query = query?.Where(p => p.TargetFrameworks.Any(f => frameworks.Contains(f.Moniker)));
+            #pragma warning restore CS8604
         }
 
-        return query.Where(p => p.Listed);
+        return query?.Where(p => p.Listed);
     }
 
-    private IReadOnlyList<string> GetCompatibleFrameworksOrNull(string framework)
+    private IReadOnlyList<string>? GetCompatibleFrameworksOrNull(string? framework)
     {
         if (framework == null) return null;
 

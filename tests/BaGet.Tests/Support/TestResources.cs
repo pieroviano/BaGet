@@ -21,7 +21,7 @@ public static class TestResources
     /// <summary>
     /// Buffer the resource stream into memory so the caller doesn't have to dispose.
     /// </summary>
-    public static MemoryStream GetResourceStream(string resourceName)
+    public static MemoryStream? GetResourceStream(string resourceName)
     {
         using var resourceStream = typeof(TestResources)
             .Assembly

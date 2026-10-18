@@ -73,9 +73,11 @@ public class AccountSettingsTests : IDisposable
         using var browser = new Browser(app);
         using var response = await SignInAsync(browser, userName, password);
 
+        #pragma warning disable CS8602
         return response.StatusCode == HttpStatusCode.Redirect
                && response.Headers.Location.ToString().IndexOf("2fa", StringComparison.OrdinalIgnoreCase) < 0
                && (await browser.GetAsync("account/settings")).StatusCode == HttpStatusCode.OK;
+        #pragma warning restore CS8602
     }
 
     private static async Task<T> WithAsync<T>(BaGetApplication app, Func<IServiceProvider, Task<T>> action)
@@ -85,7 +87,7 @@ public class AccountSettingsTests : IDisposable
         return await action(scope.ServiceProvider);
     }
 
-    private static Task<BaGetUser> FindAsync(BaGetApplication app, string userName)
+    private static Task<BaGetUser?> FindAsync(BaGetApplication app, string userName)
         => WithAsync(app, p => p.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync(userName));
 
     private static string PathOf(string link) => new Uri(link).PathAndQuery.TrimStart('/');
@@ -132,7 +134,9 @@ public class AccountSettingsTests : IDisposable
         using var response = await browser.GetAsync(url);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("account/login", response.Headers.Location.ToString());
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -227,7 +231,9 @@ public class AccountSettingsTests : IDisposable
         }, action: "account/settings?handler=ChangeEmail");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Equal("alice@example.com", (await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
         Assert.Empty(app.Services.GetRequiredService<CapturingEmailSender>().Sent);
     }
 
@@ -245,13 +251,17 @@ public class AccountSettingsTests : IDisposable
         }, action: "account/settings?handler=ChangeEmail");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Equal("old@example.com", (await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
         var mail = sender.Sent.Last();
         Assert.Equal("new@example.com", mail.To);
 
         using var followed = await browser.GetAsync(PathOf(mail.Payload));
         Assert.Equal(HttpStatusCode.OK, followed.StatusCode);
+        #pragma warning disable CS8602
         Assert.Equal("new@example.com", (await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
 
         // Move on to a third address through its own link.
         await browser.PostAsync("account/settings", new Dictionary<string, string> { { "newEmail", "third@example.com" }, { "password", Password } },
@@ -260,11 +270,15 @@ public class AccountSettingsTests : IDisposable
         Assert.Equal("third@example.com", thirdMail.To);
         using var movedOn = await browser.GetAsync(PathOf(thirdMail.Payload));
         Assert.Equal(HttpStatusCode.OK, movedOn.StatusCode);
+        #pragma warning disable CS8602
         Assert.Equal("third@example.com", (await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
 
         // The first link is spent: replaying it must not move the address back to new@example.com.
         using var again = await browser.GetAsync(PathOf(mail.Payload));
+        #pragma warning disable CS8602
         Assert.Equal("third@example.com", (await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
     }
 
     // --- Registration and confirmation --------------------------------------------------
@@ -289,7 +303,9 @@ public class AccountSettingsTests : IDisposable
 
         using var followed = await browser.GetAsync(PathOf(mail.Payload));
         Assert.Equal(HttpStatusCode.OK, followed.StatusCode);
+        #pragma warning disable CS8602
         Assert.True((await FindAsync(app, "alice")).EmailConfirmed);
+        #pragma warning restore CS8602
         Assert.True(await CanSignInAsync(app, "alice", Password));
     }
 
@@ -316,9 +332,13 @@ public class AccountSettingsTests : IDisposable
         await RegisterUnconfirmedAsync(browser, "alice", "alice@example.com");
         var alice = await FindAsync(app, "alice");
 
+        #pragma warning disable CS8602
         using var response = await browser.GetAsync($"account/confirmemail?userId={alice.Id}&code=bm9wZQ");
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602
         Assert.False((await FindAsync(app, "alice")).EmailConfirmed);
+        #pragma warning restore CS8602
     }
 
     // --- Forgot / reset password --------------------------------------------------------
@@ -372,6 +392,7 @@ public class AccountSettingsTests : IDisposable
     {
         var query = System.Web.HttpUtility.ParseQueryString(new Uri("http://x/" + link).Query);
 
+        #pragma warning disable CS8604
         return browser.PostAsync(link, new Dictionary<string, string>
         {
             { "UserId", query["userId"] },
@@ -379,6 +400,7 @@ public class AccountSettingsTests : IDisposable
             { "Password", password },
             { "ConfirmPassword", password },
         });
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -421,7 +443,9 @@ public class AccountSettingsTests : IDisposable
             action: "account/twofactor?handler=Enable");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.False((await FindAsync(app, "alice")).TwoFactorEnabled);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -435,7 +459,9 @@ public class AccountSettingsTests : IDisposable
         using var enabled = await browser.PostAsync("account/twofactor", new Dictionary<string, string> { { "code", await CurrentCodeAsync(app) } },
             action: "account/twofactor?handler=Enable");
         Assert.Equal(HttpStatusCode.OK, enabled.StatusCode);
+        #pragma warning disable CS8602
         Assert.True((await FindAsync(app, "alice")).TwoFactorEnabled);
+        #pragma warning restore CS8602
         var codes = Regex
             .Matches(await enabled.Content.ReadAsStringAsync(), "<code class=\"recovery-code\">([^<]+)</code>")
             .Select(m => m.Groups[1].Value)
@@ -447,7 +473,9 @@ public class AccountSettingsTests : IDisposable
         var second = NewBrowser(app);
         using var first = await SignInAsync(second, "alice");
         Assert.Equal(HttpStatusCode.Redirect, first.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("loginwith2fa", first.Headers.Location.ToString().ToLowerInvariant());
+        #pragma warning restore CS8602
         using var gated = await second.GetAsync("account/settings");
         Assert.Equal(HttpStatusCode.Redirect, gated.StatusCode);
 
@@ -475,10 +503,14 @@ public class AccountSettingsTests : IDisposable
         // Disabling needs the password, then sign-in is password-only again.
         using var refused = await second.PostAsync("account/twofactor", new Dictionary<string, string> { { "password", "wrong" } },
             action: "account/twofactor?handler=Disable");
+        #pragma warning disable CS8602
         Assert.True((await FindAsync(app, "alice")).TwoFactorEnabled);
+        #pragma warning restore CS8602
         using var disabled = await second.PostAsync("account/twofactor", new Dictionary<string, string> { { "password", Password } },
             action: "account/twofactor?handler=Disable");
+        #pragma warning disable CS8602
         Assert.False((await FindAsync(app, "alice")).TwoFactorEnabled);
+        #pragma warning restore CS8602
         Assert.True(await CanSignInAsync(app, "alice", Password));
     }
 
@@ -496,14 +528,18 @@ public class AccountSettingsTests : IDisposable
             action: "account/twofactor?handler=Reset");
 
         Assert.Equal(HttpStatusCode.OK, reset.StatusCode);
+        #pragma warning disable CS8602
         Assert.False((await FindAsync(app, "alice")).TwoFactorEnabled);
+        #pragma warning restore CS8602
         Assert.NotEqual(oldKey, await KeyAsync(app));
     }
 
-    private static Task<string> KeyAsync(BaGetApplication app) => WithAsync(app, async p =>
+    private static Task<string?> KeyAsync(BaGetApplication app) => WithAsync(app, async p =>
     {
         var users = p.GetRequiredService<UserManager<BaGetUser>>();
+        #pragma warning disable CS8604
         return await users.GetAuthenticatorKeyAsync(await users.FindByNameAsync("alice"));
+        #pragma warning restore CS8604
     });
 
     private static async Task<string> CurrentCodeAsync(BaGetApplication app) => Totp(await KeyAsync(app));
@@ -512,12 +548,14 @@ public class AccountSettingsTests : IDisposable
     /// RFC 6238 with SHA-1, 30 seconds and 6 digits, over the user's Base32 authenticator
     /// key: what an authenticator app computes from the QR code.
     /// </summary>
-    private static string Totp(string base32)
+    private static string Totp(string? base32)
     {
         const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
         var bytes = new List<byte>();
         int buffer = 0, bits = 0;
+        #pragma warning disable CS8602
         foreach (var c in base32.TrimEnd('=').ToUpperInvariant())
+        #pragma warning restore CS8602
         {
             buffer = (buffer << 5) | alphabet.IndexOf(c);
             bits += 5;
@@ -587,9 +625,13 @@ public class AccountSettingsTests : IDisposable
         await AddOwnerAsync(app, "Shared.Pkg", "bob");
         await WithAsync(app, async p =>
         {
+            #pragma warning disable CS8602
             await p.GetRequiredService<ApiKeyService>().CreateAsync(alice.Id, "ci", new[] { ApiKeyScopes.Push }, "*", null, CancellationToken.None);
+            #pragma warning restore CS8602
             var ownership = p.GetRequiredService<PackageOwnershipService>();
+            #pragma warning disable CS8602
             await ownership.CreateOrganizationAsync("Team", bob.Id, CancellationToken.None);
+            #pragma warning restore CS8602
             await ownership.AddMemberAsync("Team", alice.Id, false, CancellationToken.None);
             return 0;
         });
@@ -601,9 +643,13 @@ public class AccountSettingsTests : IDisposable
         Assert.Null(await FindAsync(app, "alice"));
         await WithAsync(app, async p =>
         {
+            #pragma warning disable CS8602
             Assert.Empty(await p.GetRequiredService<ApiKeyService>().ListAsync(alice.Id, CancellationToken.None));
+            #pragma warning restore CS8602
             var ownership = p.GetRequiredService<PackageOwnershipService>();
+            #pragma warning disable CS8604
             Assert.Empty(await ownership.GetOrganizationsAsync(alice.Id, CancellationToken.None));
+            #pragma warning restore CS8604
             Assert.Equal("bob", Assert.Single(await ownership.GetOwnersAsync("Shared.Pkg", CancellationToken.None)).OwnerName);
             // The name is free, so a newcomer under it inherits nothing.
             Assert.False(await ownership.AccountExistsAsync("alice", CancellationToken.None));
@@ -623,8 +669,10 @@ public class AccountSettingsTests : IDisposable
         await WithAsync(app, async p =>
         {
             var ownership = p.GetRequiredService<PackageOwnershipService>();
+            #pragma warning disable CS8602
             await ownership.CreateOrganizationAsync("Team", alice.Id, CancellationToken.None);
             await ownership.AddMemberAsync("Team", bob.Id, false, CancellationToken.None);
+            #pragma warning restore CS8602
             return 0;
         });
 
@@ -638,7 +686,7 @@ public class AccountSettingsTests : IDisposable
 
     // --- Helpers ------------------------------------------------------------------------
 
-    private static Task AddOwnerAsync(BaGetApplication app, string packageId, string owner)
+    private static Task AddOwnerAsync(BaGetApplication app, string? packageId, string? owner)
         => WithAsync(app, async p =>
         {
             await p.GetRequiredService<PackageOwnershipService>().AddOwnerAsync(packageId, owner, CancellationToken.None);

@@ -23,7 +23,9 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
+        #pragma warning disable CS8602
         Assert.Equal(2, result.Items.Count);
+        #pragma warning restore CS8602
         Assert.Equal(TestData.CatalogPageUrl, result.Items.Select(i => i.CatalogPageUrl).First());
     }
 
@@ -33,7 +35,9 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
         var page = await _target.GetPageAsync(TestData.CatalogPageUrl);
 
         Assert.Equal(2, page.Count);
+        #pragma warning disable CS8602
         Assert.Equal(2, page.Items.Count);
+        #pragma warning restore CS8602
         Assert.Equal(TestData.CatalogIndexUrl, page.CatalogIndexUrl);
         Assert.Equal(TestData.PackageDetailsCatalogLeafUrl, page.Items[0].CatalogLeafUrl);
         Assert.Equal(TestData.PackageDeleteCatalogLeafUrl, page.Items[1].CatalogLeafUrl);
@@ -45,7 +49,9 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
         var leaf = await _target.GetPackageDetailsLeafAsync(TestData.PackageDetailsCatalogLeafUrl);
 
         Assert.Equal(TestData.PackageDetailsCatalogLeafUrl, leaf.CatalogLeafUrl);
+        #pragma warning disable CS8602
         Assert.Equal("PackageDetails", leaf.Type[0]);
+        #pragma warning restore CS8602
         Assert.Equal("catalog:Permalink", leaf.Type[1]);
 
         Assert.Equal("Test.Package", leaf.PackageId);
@@ -58,7 +64,9 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
         var leaf = await _target.GetPackageDeleteLeafAsync(TestData.PackageDeleteCatalogLeafUrl);
 
         Assert.Equal(TestData.PackageDeleteCatalogLeafUrl, leaf.CatalogLeafUrl);
+        #pragma warning disable CS8602
         Assert.Equal("PackageDelete", leaf.Type[0]);
+        #pragma warning restore CS8602
         Assert.Equal("catalog:Permalink", leaf.Type[1]);
 
         Assert.Equal("Deleted.Package", leaf.PackageId);

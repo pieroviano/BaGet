@@ -58,6 +58,7 @@ public class RegistrationBuilder
         };
     }
 
+    #pragma warning disable CS8604
     private BaGetRegistrationIndexPageItem ToRegistrationIndexPageItem(Package package) =>
         new BaGetRegistrationIndexPageItem
         {
@@ -80,7 +81,7 @@ public class RegistrationBuilder
                 MinClientVersion = package.MinClientVersion,
                 ReleaseNotes = package.ReleaseNotes,
                 PackageContentUrl = _url.GetPackageDownloadUrl(package.Id, package.Version),
-                PackageTypes = package.PackageTypes.Select(t => t.Name).ToList(),
+                PackageTypes = package.PackageTypes?.Select(t => t.Name).ToList(),
                 ProjectUrl = package.ProjectUrlString,
                 RepositoryUrl = package.RepositoryUrlString,
                 RepositoryType = package.RepositoryType,
@@ -94,10 +95,11 @@ public class RegistrationBuilder
                 Vulnerabilities = ToVulnerabilities(package.Vulnerabilities),
             },
         };
+    #pragma warning restore CS8604
 
     // Inside BaGet.Core the entity BaGet.Core.PackageDeprecation is found before the
     // protocol model of the same name, so the protocol model is named in full.
-    internal static Protocol.Models.PackageDeprecation ToDeprecation(PackageDeprecation deprecation)
+    internal static Protocol.Models.PackageDeprecation? ToDeprecation(PackageDeprecation? deprecation)
     {
         if (deprecation == null)
         {
@@ -122,8 +124,8 @@ public class RegistrationBuilder
         };
     }
 
-    internal static IReadOnlyList<PackageVulnerabilityMetadata> ToVulnerabilities(
-        IReadOnlyCollection<PackageVulnerability> vulnerabilities)
+    internal static IReadOnlyList<PackageVulnerabilityMetadata>? ToVulnerabilities(
+        IReadOnlyCollection<PackageVulnerability>? vulnerabilities)
     {
         // Null rather than empty, so a version with no known vulnerabilities serialises
         // exactly as it did before vulnerabilities existed.
@@ -143,6 +145,7 @@ public class RegistrationBuilder
 
     internal static IReadOnlyList<DependencyGroupItem> ToDependencyGroups(Package package)
     {
+        #pragma warning disable CS8604
         return package.Dependencies
             .GroupBy(d => d.TargetFramework)
             .Select(group => new DependencyGroupItem
@@ -162,5 +165,6 @@ public class RegistrationBuilder
                     .ToList()
             })
             .ToList();
+        #pragma warning restore CS8604
     }
 }

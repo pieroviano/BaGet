@@ -25,7 +25,7 @@ public class Organization
 {
     public int Key { get; set; }
 
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     public DateTime Created { get; set; }
 }
@@ -39,12 +39,12 @@ public class OrganizationMember
     /// </summary>
     public int? OrganizationKey { get; set; }
 
-    public Organization Organization { get; set; }
+    public Organization? Organization { get; set; }
 
     /// <summary>
     /// The member's <see cref="IdentityUser.Id"/>.
     /// </summary>
-    public string UserId { get; set; }
+    public string? UserId { get; set; }
 
     /// <summary>
     /// An administrator can add and remove members.
@@ -63,12 +63,12 @@ public class PackageOwner
 {
     public int Key { get; set; }
 
-    public string PackageId { get; set; }
+    public string? PackageId { get; set; }
 
     /// <summary>
     /// A user name or an organization name.
     /// </summary>
-    public string OwnerName { get; set; }
+    public string? OwnerName { get; set; }
 
     /// <summary>
     /// Set by the server's administrator to mark the ID as reserved for this owner,
@@ -84,24 +84,24 @@ public class ApiKey
 {
     public int Key { get; set; }
 
-    public string UserId { get; set; }
+    public string? UserId { get; set; }
 
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// The key's SHA-256 hash, as lowercase hex.
     /// </summary>
-    public string HashedKey { get; set; }
+    public string? HashedKey { get; set; }
 
     /// <summary>
     /// What the key may do; see <see cref="ApiKeyScopes"/>.
     /// </summary>
-    public string[] Scopes { get; set; }
+    public string[]? Scopes { get; set; }
 
     /// <summary>
     /// The package IDs the key applies to, with "*" as a wildcard.
     /// </summary>
-    public string PackageGlobPattern { get; set; }
+    public string? PackageGlobPattern { get; set; }
 
     public DateTime Created { get; set; }
 

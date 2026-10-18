@@ -124,13 +124,13 @@ public class SettingsCatalog
     /// <summary>
     /// The settings of one section ("" for the top-level keys).
     /// </summary>
-    public IEnumerable<SettingDescriptor> InSection(string section)
+    public IEnumerable<SettingDescriptor> InSection(string? section)
         => _descriptors.Where(d => string.Equals(d.Section, section ?? string.Empty, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// The setting with this key, or null.
     /// </summary>
-    public SettingDescriptor Find(string key)
+    public SettingDescriptor? Find(string key)
         => _descriptors.FirstOrDefault(d => string.Equals(d.Key, key, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
@@ -150,7 +150,7 @@ public class SettingsCatalog
 
     private static void Collect(
         Type type,
-        string prefix,
+        string? prefix,
         bool scalarsOnly,
         bool inheritedRestart,
         int depth,

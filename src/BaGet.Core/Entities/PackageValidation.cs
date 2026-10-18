@@ -27,14 +27,14 @@ public class PackageValidation
 
     public int Key { get; set; }
 
-    public string SubmissionId { get; set; }
+    public string? SubmissionId { get; set; }
 
-    public string PackageId { get; set; }
+    public string? PackageId { get; set; }
 
     /// <summary>
     /// The normalized version.
     /// </summary>
-    public string PackageVersion { get; set; }
+    public string? PackageVersion { get; set; }
 
     /// <summary>
     /// The indexed package, once the submission succeeds. Nullable so that the
@@ -42,19 +42,19 @@ public class PackageValidation
     /// </summary>
     public int? PackageKey { get; set; }
 
-    public Package Package { get; set; }
+    public Package? Package { get; set; }
 
     /// <summary>
     /// The validator's name, or <see cref="IndexType"/>.
     /// </summary>
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     public PackageValidationState State { get; set; }
 
     /// <summary>
     /// Why the step failed, if it did.
     /// </summary>
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     public DateTime Created { get; set; }
 

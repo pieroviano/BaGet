@@ -5,6 +5,7 @@
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet;Amazon;Cloud</PackageTags>
     <Description>The libraries to host BaGet Extension on AWS.</Description>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

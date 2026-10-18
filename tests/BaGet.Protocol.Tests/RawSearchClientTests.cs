@@ -23,12 +23,18 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
 
+        #pragma warning disable CS8604
         var result = Assert.Single(response.Data);
+        #pragma warning restore CS8604
         Assert.Equal("Test.Package", result.PackageId);
+        #pragma warning disable CS8604
         Assert.Equal("Package Authors", Assert.Single(result.Authors));
+        #pragma warning restore CS8604
         Assert.Equal(TestData.RegistrationIndexInlinedItemsUrl, result.RegistrationIndexUrl);
 
+        #pragma warning disable CS8604
         var packageType = Assert.Single(result.PackageTypes);
+        #pragma warning restore CS8604
         Assert.Equal("Dependency", packageType.Name);
     }
 

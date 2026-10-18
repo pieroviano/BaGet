@@ -53,7 +53,7 @@ public class AvatarTests : IDisposable
         return Convert.ToHexString(md5.ComputeHash(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
     }
 
-    private static async Task CreateUserAsync(BaGetApplication app, string name, string email)
+    private static async Task CreateUserAsync(BaGetApplication app, string name, string? email)
     {
         using var scope = app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
@@ -67,6 +67,7 @@ public class AvatarTests : IDisposable
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
+        #pragma warning disable CS8602
         context.Packages.Add(new Package
         {
             Id = id,
@@ -83,6 +84,7 @@ public class AvatarTests : IDisposable
             TargetFrameworks = new List<TargetFramework>(),
         });
         foreach (var owner in owners) context.PackageOwners.Add(new PackageOwner { PackageId = id, OwnerName = owner });
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
@@ -90,7 +92,9 @@ public class AvatarTests : IDisposable
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
+        #pragma warning disable CS8602
         context.Organizations.Add(new Organization { Name = name, Created = DateTime.UtcNow });
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 

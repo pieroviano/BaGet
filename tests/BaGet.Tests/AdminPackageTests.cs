@@ -36,13 +36,15 @@ public class AdminPackageTests : PackageManagementPageTestBase
             return userName;
         });
 
-    private async Task<string> CreateKeyAsync(string userName, params string[] scopes)
+    private async Task<string> CreateKeyAsync(string userName, params string[]? scopes)
         => await WithScopeAsync(async s =>
         {
             var user = await s.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync(userName);
 
+            #pragma warning disable CS8602
             return await s.GetRequiredService<ApiKeyService>().CreateAsync(
                 user.Id, "test", scopes, "*", expires: null, CancellationToken.None);
+            #pragma warning restore CS8602
         });
 
     private async Task<HttpStatusCode> DeleteAsync(string id, string version, string apiKey)
@@ -54,7 +56,7 @@ public class AdminPackageTests : PackageManagementPageTestBase
         return response.StatusCode;
     }
 
-    private Task<HttpResponseMessage> PostManageAsync(Browser browser, string id, string handler, Dictionary<string, string> fields)
+    private Task<HttpResponseMessage> PostManageAsync(Browser browser, string id, string handler, Dictionary<string, string>? fields)
         => browser.PostAsync($"packages/{id}/manage", fields, action: $"packages/{id}/manage?handler={handler}");
 
     private async Task<HttpStatusCode> DownloadAsync(string id, string version)
@@ -94,7 +96,9 @@ public class AdminPackageTests : PackageManagementPageTestBase
         // The key's own scopes still decide: a push-only key of an administrator is push-only.
         Assert.Equal(HttpStatusCode.Forbidden, await DeleteAsync("Alice.Package", "1.0.0", plain));
         Assert.Equal(HttpStatusCode.NoContent, await DeleteAsync("Alice.Package", "1.0.0", unlist));
+        #pragma warning disable CS8602
         Assert.False((await FindAsync("Alice.Package", "1.0.0")).Listed);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -437,11 +441,13 @@ public class AdminPackageAuditTests : IDisposable
 
             public CapturingLogger(ConcurrentQueue<string> messages) => _messages = messages;
 
-            public IDisposable BeginScope<TState>(TState state) => null;
+            #pragma warning disable CS8633
+            public IDisposable? BeginScope<TState>(TState state) => null;
+            #pragma warning restore CS8633
 
             public bool IsEnabled(LogLevel logLevel) => true;
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
                 => _messages.Enqueue(formatter(state, exception));
         }
     }

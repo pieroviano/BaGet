@@ -52,9 +52,9 @@ public class CatalogWriter : IPackageChangeHandler
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    internal static string LeafPath(string commitId) => $"catalog/{commitId}.json";
+    internal static string LeafPath(string? commitId) => $"catalog/{commitId}.json";
 
-    public async Task OnPackageChangedAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task OnPackageChangedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         if (!_catalog.IsSupported) return;
 
@@ -78,7 +78,7 @@ public class CatalogWriter : IPackageChangeHandler
             cancellationToken);
     }
 
-    public async Task OnPackageDeletedAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task OnPackageDeletedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         if (!_catalog.IsSupported) return;
 
@@ -158,7 +158,7 @@ public class CatalogWriter : IPackageChangeHandler
 
     private async Task CommitAsync(
         string type,
-        string id,
+        string? id,
         NuGetVersion version,
         Func<string, DateTimeOffset, CatalogLeaf> buildLeaf,
         CancellationToken cancellationToken)
@@ -219,16 +219,16 @@ public class CatalogWriter : IPackageChangeHandler
         return (Convert.ToBase64String(hash), counting.BytesRead);
     }
 
-    private static string NullIfEmpty(string value) => string.IsNullOrEmpty(value) ? null : value;
+    private static string? NullIfEmpty(string? value) => string.IsNullOrEmpty(value) ? null : value;
 
     /// <summary>
     /// Counts the bytes read through it, since a storage stream may not know its length.
     /// </summary>
     private sealed class CountingStream : Stream
     {
-        private readonly Stream _source;
+        private readonly Stream? _source;
 
-        public CountingStream(Stream source) => _source = source;
+        public CountingStream(Stream? source) => _source = source;
 
         public long BytesRead { get; private set; }
 
@@ -240,14 +240,18 @@ public class CatalogWriter : IPackageChangeHandler
 
         public override int Read(byte[] buffer, int offset, int count)
         {
+            #pragma warning disable CS8602
             var read = _source.Read(buffer, offset, count);
+            #pragma warning restore CS8602
             BytesRead += read;
             return read;
         }
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
+            #pragma warning disable CS8602
             var read = await _source.ReadAsync(buffer, cancellationToken);
+            #pragma warning restore CS8602
             BytesRead += read;
             return read;
         }

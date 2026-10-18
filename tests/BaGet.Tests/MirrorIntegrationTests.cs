@@ -12,7 +12,7 @@ public class MirrorIntegrationTests : IDisposable
     private readonly BaGetApplication _upstream;
     private readonly BaGetApplication _downstream;
     private readonly HttpClient _downstreamClient;
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     public MirrorIntegrationTests(ITestOutputHelper output)
     {

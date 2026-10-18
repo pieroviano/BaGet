@@ -28,10 +28,10 @@ namespace BaGet.Core;
 /// <param name="PendingRestart">A restart-only setting whose value changed since startup.</param>
 public sealed record SettingState(
     SettingDescriptor Descriptor,
-    string EffectiveValue,
+    string? EffectiveValue,
     bool HasValue,
     bool IsOverridden,
-    string ShadowedBy,
+    string? ShadowedBy,
     bool PendingRestart);
 
 /// <summary>
@@ -59,7 +59,7 @@ public class SettingsService
     private readonly SettingsCatalog _catalog;
     private readonly IReadOnlyList<SettingsSchemaRegistration> _registrations;
     private readonly IServiceProvider _services;
-    private readonly SettingsOverridesStore _store;
+    private readonly SettingsOverridesStore? _store;
     private readonly ILogger<SettingsService> _logger;
     private readonly Dictionary<string, string> _startup = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim _saveLock = new(1, 1);
@@ -79,7 +79,7 @@ public class SettingsService
         IEnumerable<SettingsSchemaRegistration> registrations,
         IServiceProvider services,
         ILogger<SettingsService> logger,
-        SettingsOverridesStore store = null)
+        SettingsOverridesStore? store = null)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
@@ -90,7 +90,9 @@ public class SettingsService
 
         foreach (var descriptor in _catalog.Descriptors.Where(d => d.RequiresRestart))
         {
+            #pragma warning disable CS8601
             _startup[descriptor.Key] = ReadValue(descriptor);
+            #pragma warning restore CS8601
         }
     }
 
@@ -102,7 +104,7 @@ public class SettingsService
     /// <summary>
     /// The overrides file's path, or null when <see cref="IsAvailable"/> is false.
     /// </summary>
-    public string OverridesPath => _store?.FilePath;
+    public string? OverridesPath => _store?.FilePath;
 
     /// <summary>
     /// The catalog this service reports on.
@@ -113,7 +115,7 @@ public class SettingsService
     /// Why the overrides file could not be read by the last <see cref="GetState"/> (it is
     /// then treated as empty), or null.
     /// </summary>
-    public string OverridesError { get; private set; }
+    public string? OverridesError { get; private set; }
 
     /// <summary>
     /// The state of every setting.
@@ -146,7 +148,7 @@ public class SettingsService
     /// <param name="cancellationToken">Cancels the save.</param>
     public async Task<SettingsSaveResult> SaveAsync(
         IReadOnlyDictionary<SettingDescriptor, object> changes,
-        string actor,
+        string? actor,
         CancellationToken cancellationToken)
     {
         if (changes == null) throw new ArgumentNullException(nameof(changes));
@@ -223,14 +225,14 @@ public class SettingsService
     private SettingState StateOf(
         SettingDescriptor descriptor,
         IReadOnlyDictionary<string, string> overrides,
-        IConfigurationRoot root,
+        IConfigurationRoot? root,
         int overridesIndex)
     {
         var configured = ReadConfigured(_configuration, descriptor);
         var value = configured ?? DefaultValue(descriptor);
         var isOverridden = overrides.Keys.Any(k => IsKeyOrChild(k, descriptor.Key));
 
-        string shadowedBy = null;
+        string? shadowedBy = null;
         if (root != null && overridesIndex >= 0)
         {
             var providers = root.Providers.ToList();
@@ -303,10 +305,10 @@ public class SettingsService
     /// The value in effect: the configured one, or when no provider sets the key, the options
     /// type's default (a default-true boolean is on although no file mentions it).
     /// </summary>
-    private string ReadValue(SettingDescriptor descriptor)
+    private string? ReadValue(SettingDescriptor descriptor)
         => ReadConfigured(_configuration, descriptor) ?? DefaultValue(descriptor);
 
-    private string DefaultValue(SettingDescriptor descriptor)
+    private string? DefaultValue(SettingDescriptor descriptor)
     {
         foreach (var registration in _registrations)
         {
@@ -324,7 +326,7 @@ public class SettingsService
                 skip = prefix.Length;
             }
 
-            object instance;
+            object? instance;
             try
             {
                 instance = Activator.CreateInstance(registration.OptionsType);
@@ -358,7 +360,7 @@ public class SettingsService
         return null;
     }
 
-    private static string FormatDefault(object value)
+    private static string? FormatDefault(object value)
         => value switch
         {
             bool flag => flag ? "true" : "false",
@@ -370,13 +372,13 @@ public class SettingsService
             _ => value.ToString(),
         };
 
-    private static string FormatList(IEnumerable list)
+    private static string? FormatList(IEnumerable list)
     {
         var entries = list.Cast<object>().Where(o => o != null).Select(o => o.ToString()).ToList();
         return entries.Count == 0 ? null : string.Join("\n", entries);
     }
 
-    private static string ReadConfigured(IConfiguration configuration, SettingDescriptor descriptor)
+    private static string? ReadConfigured(IConfiguration configuration, SettingDescriptor descriptor)
     {
         if (descriptor.Kind != SettingKind.StringList) return configuration[descriptor.Key];
 
@@ -417,7 +419,7 @@ public class SettingsService
 
         foreach (var registration in _registrations)
         {
-            object instance;
+            object? instance;
             try
             {
                 instance = Activator.CreateInstance(registration.OptionsType);
@@ -431,7 +433,7 @@ public class SettingsService
             }
 
             var validatorType = typeof(IEnumerable<>).MakeGenericType(typeof(IValidateOptions<>).MakeGenericType(registration.OptionsType));
-            var validators = (IEnumerable)_services.GetService(validatorType);
+            var validators = (IEnumerable?)_services.GetService(validatorType);
             if (validators == null) continue;
 
             foreach (var validator in validators)
@@ -442,8 +444,10 @@ public class SettingsService
                                 && i.GetGenericArguments()[0] == registration.OptionsType)
                     .GetMethod(nameof(IValidateOptions<object>.Validate));
 
-                var result = (ValidateOptionsResult)method.Invoke(validator, new[] { Options.DefaultName, instance });
+                var result = (ValidateOptionsResult?)method?.Invoke(validator, new[] { Options.DefaultName, instance });
+                #pragma warning disable CS8602
                 if (result.Failed)
+                #pragma warning restore CS8602
                 {
                     foreach (var failure in result.Failures) failures.Add(failure);
                 }
@@ -459,9 +463,9 @@ public class SettingsService
 
         public FrozenProvider(IConfigurationProvider inner) => _inner = inner;
 
-        public bool TryGet(string key, out string value) => _inner.TryGet(key, out value);
+        public bool TryGet(string key, out string? value) => _inner.TryGet(key, out value);
 
-        public void Set(string key, string value)
+        public void Set(string key, string? value)
         {
         }
 
@@ -471,7 +475,7 @@ public class SettingsService
         {
         }
 
-        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
+        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string? parentPath)
             => _inner.GetChildKeys(earlierKeys, parentPath);
     }
 

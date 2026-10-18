@@ -37,5 +37,5 @@ public interface ISymbolIndexingService
     /// <param name="stream">The stream containing the symbol package's content.</param>
     /// <param name="cancellationToken"></param>
     /// <returns>The result of the attempted indexing operation.</returns>
-    Task<SymbolIndexingResult> IndexAsync(Stream stream, CancellationToken cancellationToken);
+    Task<SymbolIndexingResult> IndexAsync(Stream? stream, CancellationToken cancellationToken);
 }

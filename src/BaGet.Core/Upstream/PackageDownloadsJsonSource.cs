@@ -50,11 +50,13 @@ public class PackageDownloadsJsonSource : IPackageDownloadsSource
                         // What dominates memory is the dictionary returned below, which
                         // holds every package and version by design.
                         var record = JToken.ReadFrom(jsonReader);
-                        var id = string.Intern(record[0].ToString().ToLowerInvariant());
+                        #pragma warning disable CS8604
+                        var id = string.Intern(record[0]?.ToString().ToLowerInvariant());
+                        #pragma warning restore CS8604
 
                         // The second entry in each record should be an array of versions, if not move on to next entry.
                         // This is a check to safe guard against invalid entries.
-                        if (record.Count() == 2 && record[1].Type != JTokenType.Array)
+                        if (record.Count() == 2 && record[1]?.Type != JTokenType.Array)
                         {
                             continue;
                         }
@@ -68,8 +70,12 @@ public class PackageDownloadsJsonSource : IPackageDownloadsSource
                         {
                             if (token != null && token.Count() == 2)
                             {
-                                var version = string.Intern(NuGetVersion.Parse(token[0].ToString()).ToNormalizedString().ToLowerInvariant());
+                                #pragma warning disable CS8604
+                                var version = string.Intern(NuGetVersion.Parse(token[0]?.ToString()).ToNormalizedString().ToLowerInvariant());
+                                #pragma warning restore CS8604
+                                #pragma warning disable CS8602
                                 var downloads = token[1].ToObject<long>();
+                                #pragma warning restore CS8602
 
                                 results[id][version] = downloads;
                             }

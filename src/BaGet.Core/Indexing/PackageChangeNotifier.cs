@@ -22,24 +22,24 @@ public class PackageChangeNotifier
         new PackageChangeNotifier(Array.Empty<IPackageChangeHandler>(), logger: null);
 
     private readonly IReadOnlyList<IPackageChangeHandler> _handlers;
-    private readonly ILogger<PackageChangeNotifier> _logger;
+    private readonly ILogger<PackageChangeNotifier>? _logger;
 
     public PackageChangeNotifier(
-        IEnumerable<IPackageChangeHandler> handlers,
-        ILogger<PackageChangeNotifier> logger)
+        IEnumerable<IPackageChangeHandler>? handlers,
+        ILogger<PackageChangeNotifier>? logger)
     {
         _handlers = handlers?.ToList() ?? throw new ArgumentNullException(nameof(handlers));
         _logger = logger;
     }
 
-    public Task PackageChangedAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public Task PackageChangedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
         => NotifyAsync(id, version, (h, ct) => h.OnPackageChangedAsync(id, version, ct), cancellationToken);
 
-    public Task PackageDeletedAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public Task PackageDeletedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
         => NotifyAsync(id, version, (h, ct) => h.OnPackageDeletedAsync(id, version, ct), cancellationToken);
 
     private async Task NotifyAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         Func<IPackageChangeHandler, CancellationToken, Task> notify,
         CancellationToken cancellationToken)

@@ -47,7 +47,7 @@ public class AdminDeleteUserTests : IDisposable
         return (app, admin);
     }
 
-    private static Task<HttpResponseMessage> DeleteAsync(Browser admin, string userName, string soleOwned = null, string password = Password)
+    private static Task<HttpResponseMessage> DeleteAsync(Browser admin, string userName, string? soleOwned = null, string password = Password)
     {
         var fields = new Dictionary<string, string> { { "password", password } };
         if (soleOwned != null) fields["soleOwned"] = soleOwned;
@@ -184,8 +184,10 @@ public class AdminDeleteUserTests : IDisposable
         var carol = await FindAsync(app, "carol");
         var bob = await FindAsync(app, "bob");
         Assert.Equal(2, members.Count);
+        #pragma warning disable CS8602
         Assert.True(members.Single(m => m.UserId == carol.Id).IsAdmin);
         Assert.False(members.Single(m => m.UserId == bob.Id).IsAdmin);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -202,7 +204,9 @@ public class AdminDeleteUserTests : IDisposable
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.False(await ExistsAsync(app, "alice"));
         Assert.Empty(await WithAsync(app, p => p.GetRequiredService<PackageOwnershipService>().GetMembersAsync("acme", CancellationToken.None)));
+        #pragma warning disable CS8604
         Assert.True(await WithAsync(app, p => p.GetRequiredService<IContext>().Organizations.AnyAsync(o => o.Name == "acme")));
+        #pragma warning restore CS8604
         Assert.Equal("acme", Assert.Single(await OwnersAsync(app, "Acme.Package")).OwnerName);
     }
 
@@ -216,7 +220,9 @@ public class AdminDeleteUserTests : IDisposable
         using var response = await DeleteAsync(admin, "alice");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8604
         Assert.False(await WithAsync(app, p => p.GetRequiredService<IContext>().Organizations.AnyAsync(o => o.Name == "acme")));
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -231,7 +237,9 @@ public class AdminDeleteUserTests : IDisposable
             var users = p.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGetUser>>();
             var second = await users.FindByNameAsync("second");
             var root = await users.FindByNameAsync("root");
+            #pragma warning disable CS8602
             root.IsAdministrator = false;
+            #pragma warning restore CS8602
             await users.UpdateAsync(root);
 
             var outcome = await p.GetRequiredService<AccountDeletionService>()

@@ -12,13 +12,13 @@ public class FrameworkCompatibilityService : IFrameworkCompatibilityService
 {
     private const string AnyFramework = "any";
 
-    private static readonly Dictionary<string, NuGetFramework> KnownFrameworks;
+    private static readonly Dictionary<string, NuGetFramework?> KnownFrameworks;
     private static readonly IReadOnlyList<OneWayCompatibilityMappingEntry> CompatibilityMapping;
     private static readonly ConcurrentDictionary<NuGetFramework, IReadOnlyList<string>> CompatibleFrameworks;
 
     static FrameworkCompatibilityService()
     {
-        var supportedFrameworks = new HashSet<string>();
+        var supportedFrameworks = new HashSet<string?>();
         supportedFrameworks.Add(FrameworkIdentifiers.NetStandard);
         supportedFrameworks.Add(FrameworkIdentifiers.NetCoreApp);
         supportedFrameworks.Add(FrameworkIdentifiers.Net);
@@ -26,13 +26,15 @@ public class FrameworkCompatibilityService : IFrameworkCompatibilityService
         CompatibilityMapping = DefaultFrameworkMappings.Instance.CompatibilityMappings.ToList();
         CompatibleFrameworks = new ConcurrentDictionary<NuGetFramework, IReadOnlyList<string>>();
 
+        #pragma warning disable CS8619, CS8621, CS8714
         KnownFrameworks = typeof(CommonFrameworks)
             .GetFields()
             .Where(f => f.IsStatic)
             .Where(f => f.FieldType == typeof(NuGetFramework))
-            .Select(f => (NuGetFramework)f.GetValue(null))
-            .Where(f => supportedFrameworks.Contains(f.Framework))
-            .ToDictionary(f => f.GetShortFolderName());
+            .Select(f => (NuGetFramework?)f.GetValue(null))
+            .Where(f => supportedFrameworks.Contains(f?.Framework))
+            .ToDictionary(f => f?.GetShortFolderName());
+        #pragma warning restore CS8619, CS8621, CS8714
 
         // Add more frameworks missing from "CommonFrameworks"
         KnownFrameworks["net472"] = new NuGetFramework(FrameworkIdentifiers.Net, new Version(4, 7, 2, 0));
@@ -46,12 +48,14 @@ public class FrameworkCompatibilityService : IFrameworkCompatibilityService
             return new List<string> { name, AnyFramework };
         }
 
+        #pragma warning disable CS8604, CS8621
         return CompatibleFrameworks.GetOrAdd(framework, FindAllCompatibleFrameworks);
+        #pragma warning restore CS8604, CS8621
     }
 
-    private IReadOnlyList<string> FindAllCompatibleFrameworks(NuGetFramework targetFramework)
+    private IReadOnlyList<string?> FindAllCompatibleFrameworks(NuGetFramework targetFramework)
     {
-        var results = new HashSet<string> { AnyFramework };
+        var results = new HashSet<string?> { AnyFramework };
 
         // Find all framework mappings that apply to the target framework
         foreach (var mapping in CompatibilityMapping)
@@ -65,7 +69,9 @@ public class FrameworkCompatibilityService : IFrameworkCompatibilityService
             // Any framework that satisfies this mapping is compatible with the target framework.
             foreach (var possibleFramework in KnownFrameworks.Values)
             {
+                #pragma warning disable CS8604
                 if (mapping.SupportedFrameworkRange.Satisfies(possibleFramework))
+                #pragma warning restore CS8604
                 {
                     results.Add(possibleFramework.GetShortFolderName());
                 }
@@ -77,10 +83,10 @@ public class FrameworkCompatibilityService : IFrameworkCompatibilityService
         // with "net20" and "net45".
         foreach (var possibleFramework in KnownFrameworks.Values)
         {
-            if (possibleFramework.Framework == targetFramework.Framework &&
-                possibleFramework.Version <= targetFramework.Version)
+            if (possibleFramework?.Framework == targetFramework.Framework &&
+                possibleFramework?.Version <= targetFramework.Version)
             {
-                results.Add(possibleFramework.GetShortFolderName());
+                results.Add(possibleFramework?.GetShortFolderName());
             }
         }
 

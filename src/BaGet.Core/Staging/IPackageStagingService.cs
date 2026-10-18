@@ -16,13 +16,13 @@ public interface IPackageStagingService
     /// Stage an upload for <paramref name="ownerId"/>.
     /// </summary>
     /// <returns>An opaque token identifying the staged upload.</returns>
-    Task<string> StageAsync(Stream package, string ownerId, CancellationToken cancellationToken = default);
+    Task<string> StageAsync(Stream? package, string? ownerId, CancellationToken cancellationToken = default);
 
     /// <returns>
     /// The staged package, or null if the token is unknown, incomplete, or was staged by
     /// a different user.
     /// </returns>
-    Task<Stream> OpenAsync(string token, string ownerId, CancellationToken cancellationToken = default);
+    Task<Stream?> OpenAsync(string token, string? ownerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Forget a staged upload, whether it was confirmed or cancelled. The owner is
@@ -34,7 +34,7 @@ public interface IPackageStagingService
     /// Whether an upload was removed. False when the token is unknown or belongs to a
     /// different user, which are deliberately indistinguishable.
     /// </returns>
-    Task<bool> RemoveAsync(string token, string ownerId, CancellationToken cancellationToken = default);
+    Task<bool> RemoveAsync(string? token, string? ownerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Remove every upload staged before <paramref name="stagedBefore"/>. An upload that

@@ -32,7 +32,7 @@ public class EmailLinkTests : IDisposable
         foreach (var d in _disposables) d.Dispose();
     }
 
-    private BaGetApplication Start(Dictionary<string, string> extra = null, Action<IServiceCollection> configure = null)
+    private BaGetApplication Start(Dictionary<string, string>? extra = null, Action<IServiceCollection>? configure = null)
     {
         var settings = new Dictionary<string, string>
         {
@@ -49,7 +49,7 @@ public class EmailLinkTests : IDisposable
         return app;
     }
 
-    private Browser NewBrowser(BaGetApplication app, string host = null)
+    private Browser NewBrowser(BaGetApplication app, string? host = null)
     {
         var browser = new Browser(app, host);
         _disposables.Add(browser);
@@ -171,7 +171,7 @@ public class EmailLinkTests : IDisposable
     [InlineData(null, false)]
     [InlineData("", false)]
     [InlineData("ftp://x", false)]
-    public void LinksCanBeBuiltOnlyFromAPublicUrl(string publicUrl, bool expected)
+    public void LinksCanBeBuiltOnlyFromAPublicUrl(string? publicUrl, bool expected)
         => Assert.Equal(expected, BaGet.Identity.EmailLinkPolicy.CanBuildLinks(publicUrl));
 
     // --- S5: forgot password ------------------------------------------------------------

@@ -18,8 +18,10 @@ public class RawServiceIndexClientTests : IClassFixture<ProtocolFixture>
     {
         var result = await _target.GetAsync();
 
+        #pragma warning disable CS8602
         Assert.Equal("3.0.0", result.Version);
         Assert.Equal(5, result.Resources.Count);
+        #pragma warning restore CS8602
 
         Assert.Equal(TestData.CatalogIndexUrl, result.GetCatalogResourceUrl());
         Assert.Equal(TestData.PackageMetadataUrl, result.GetPackageMetadataResourceUrl());

@@ -57,7 +57,7 @@ public class AccountReviewFixesTests : IDisposable
         return browser;
     }
 
-    private static async Task<BaGetUser> FindAsync(BaGetApplication app, string name)
+    private static async Task<BaGetUser?> FindAsync(BaGetApplication app, string name)
     {
         using var scope = app.Services.CreateScope();
 
@@ -69,7 +69,7 @@ public class AccountReviewFixesTests : IDisposable
     [Theory]
     [InlineData(null)]
     [InlineData("wrong")]
-    public async Task ChangingTheEmailNeedsTheCurrentPassword(string password)
+    public async Task ChangingTheEmailNeedsTheCurrentPassword(string? password)
     {
         var app = Start();
         var browser = NewBrowser(app);
@@ -80,7 +80,9 @@ public class AccountReviewFixesTests : IDisposable
         using var response = await browser.PostAsync("account/settings", fields, action: "account/settings?handler=ChangeEmail");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Null((await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -97,7 +99,9 @@ public class AccountReviewFixesTests : IDisposable
         }, action: "account/settings?handler=ChangeEmail");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Equal("alice@example.com", (await FindAsync(app, "alice")).Email);
+        #pragma warning restore CS8602
     }
 
     // --- S3: a deleted user's other sessions stop working -------------------------------
@@ -146,20 +150,24 @@ public class AccountReviewFixesTests : IDisposable
                 Password)).Succeeded);
         }
 
-        string password;
+        string? password;
         using (var scope = app.Services.CreateScope())
         {
             password = await scope.ServiceProvider.GetRequiredService<AccountRecoveryService>()
                 .ResetPasswordAsync("alice", CancellationToken.None);
         }
 
+        #pragma warning disable CS8602
         Assert.True((await FindAsync(app, "alice")).EmailConfirmed);
+        #pragma warning restore CS8602
         var browser = NewBrowser(app);
+        #pragma warning disable CS8604
         using var login = await browser.PostAsync("account/login", new Dictionary<string, string>
         {
             { "UserName", "alice" },
             { "Password", password },
         });
+        #pragma warning restore CS8604
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
     }
 
@@ -180,7 +188,9 @@ public class AccountReviewFixesTests : IDisposable
         }
 
         var alice = await FindAsync(app, "alice");
+        #pragma warning disable CS8602
         Assert.Equal("alice@example.com", alice.Email);
+        #pragma warning restore CS8602
         Assert.True(alice.EmailConfirmed);
     }
 }

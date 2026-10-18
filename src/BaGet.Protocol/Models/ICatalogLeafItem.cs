@@ -19,10 +19,10 @@ public interface ICatalogLeafItem
     /// <summary>
     /// The package ID of the catalog item.
     /// </summary>
-    string PackageId { get; }
+    string? PackageId { get; }
 
     /// <summary>
     /// The package version of the catalog item.
     /// </summary>
-    string PackageVersion { get; }
+    string? PackageVersion { get; }
 }

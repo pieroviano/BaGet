@@ -12,25 +12,25 @@ public class ResetPasswordModel : AccountPageModel
     protected override bool RequiresEmail => true;
 
     [BindProperty(SupportsGet = true)]
-    public string UserId { get; set; }
+    public string? UserId { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string Code { get; set; }
+    public string? Code { get; set; }
 
     [BindProperty]
     [Required]
     [DataType(DataType.Password)]
     [Display(Name = "New password")]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     [BindProperty]
     [Required]
     [DataType(DataType.Password)]
     [Display(Name = "Confirm password")]
     [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
-    public string ConfirmPassword { get; set; }
+    public string? ConfirmPassword { get; set; }
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     public bool LinkIsUsable => !string.IsNullOrEmpty(UserId) && !string.IsNullOrEmpty(Code);
 
@@ -43,7 +43,9 @@ public class ResetPasswordModel : AccountPageModel
     {
         if (!ModelState.IsValid) return Page();
 
+        #pragma warning disable CS8604
         var user = LinkIsUsable ? await UserManager.FindByIdAsync(UserId) : null;
+        #pragma warning restore CS8604
         var token = LinkIsUsable ? DecodeToken(Code) : null;
         if (user == null || token == null)
         {
@@ -51,7 +53,9 @@ public class ResetPasswordModel : AccountPageModel
             return Page();
         }
 
+        #pragma warning disable CS8604
         var result = await UserManager.ResetPasswordAsync(user, token, Password);
+        #pragma warning restore CS8604
         if (!result.Succeeded)
         {
             Error = result.Errors.Any(e => e.Code == nameof(Microsoft.AspNetCore.Identity.IdentityErrorDescriber.InvalidToken))

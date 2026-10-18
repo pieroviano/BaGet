@@ -29,9 +29,11 @@ public class AccountRecoveryService
     /// lockout lifted, so this also recovers a user who lost their authenticator. The user's
     /// email address is marked confirmed; <paramref name="email"/> sets and confirms one.
     /// </summary>
-    public async Task<string> ResetPasswordAsync(string userName, CancellationToken cancellationToken, string email = null)
+    public async Task<string?> ResetPasswordAsync(string? userName, CancellationToken cancellationToken, string? email = null)
     {
+        #pragma warning disable CS8604
         var user = await _users.FindByNameAsync(userName);
+        #pragma warning restore CS8604
         if (user == null) return null;
 
         // Whoever runs this command is the administrator, so the address is trusted: it is

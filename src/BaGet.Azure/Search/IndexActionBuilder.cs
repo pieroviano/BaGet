@@ -65,18 +65,22 @@ public class IndexActionBuilder
             }
 
             var latest = versions.Last();
+            #pragma warning disable CS8604
             var dependencies = latest
                 .Dependencies
                 .Select(d => d.Id?.ToLowerInvariant())
                 .Where(d => d != null)
                 .Distinct()
                 .ToArray();
+            #pragma warning restore CS8604
 
             var document = new PackageDocument();
 
             document.Key = $"{encodedId}-{searchFilters}";
             document.Id = latest.Id;
+            #pragma warning disable CS8602
             document.NormalizedId = latest.Id.ToLowerInvariant();
+            #pragma warning restore CS8602
             document.Version = latest.Version.ToFullString();
             document.Description = latest.Description;
             document.Authors = latest.Authors;
@@ -93,8 +97,11 @@ public class IndexActionBuilder
             document.Versions = versions.Select(p => p.Version.ToFullString()).ToArray();
             document.VersionDownloads = versions.Select(p => p.Downloads.ToString()).ToArray();
             document.Dependencies = dependencies;
+            #pragma warning disable CS8604
             document.PackageTypes = latest.PackageTypes.Select(t => t.Name).ToArray();
+            #pragma warning disable CS8602
             document.Frameworks = latest.TargetFrameworks.Select(f => f.Moniker.ToLowerInvariant()).ToArray();
+            #pragma warning restore CS8602, CS8604
             document.SearchFilters = searchFilters.ToString();
 
             result.Add(

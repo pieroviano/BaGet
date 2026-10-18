@@ -30,5 +30,5 @@ public interface ISymbolStorageService
     /// <param name="file">The portable PDB's file name.</param>
     /// <param name="key">The portable PDB's Signature GUID followed by its age.</param>
     /// <returns>The portable PDB's stream, or null if it does not exist.</returns>
-    Task<Stream> GetPortablePdbContentStreamOrNullAsync(string file, string key);
+    Task<Stream?> GetPortablePdbContentStreamOrNullAsync(string file, string key);
 }

@@ -10,20 +10,20 @@ namespace BaGet.Protocol.Models;
 public class AlternatePackage
 {
     [JsonPropertyName("@id")]
-    public string Url { get; set; }
+    public string? Url { get; set; }
 
     [JsonPropertyName("@type")]
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>
     /// The ID of the alternate package.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>
     /// The allowed version range, or * if any version is allowed.
     /// </summary>
     [JsonPropertyName("range")]
-    public string Range { get; set; }
+    public string? Range { get; set; }
 }

@@ -15,8 +15,8 @@ public static class FakeServiceIndex
     /// plus the package content and metadata resources every index is required to have.
     /// </summary>
     public static string Json(
-        IEnumerable<string> searchUrls = null,
-        IEnumerable<string> autocompleteUrls = null)
+        IEnumerable<string>? searchUrls = null,
+        IEnumerable<string>? autocompleteUrls = null)
     {
         var resources = new List<string>
         {

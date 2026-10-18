@@ -47,7 +47,7 @@ public class AdministratorService
     }
 
     /// <summary>Whether the signed in user is an administrator, according to the database.</summary>
-    public async Task<bool> IsAdministratorAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
+    public async Task<bool> IsAdministratorAsync(ClaimsPrincipal? principal, CancellationToken cancellationToken)
     {
         var id = principal == null ? null : _users.GetUserId(principal);
 
@@ -59,18 +59,18 @@ public class AdministratorService
     /// <param name="userName">The user to promote.</param>
     /// <param name="actor">Who asks, for the log.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    public Task<AdministratorChange> PromoteAsync(string userName, string actor, CancellationToken cancellationToken)
+    public Task<AdministratorChange> PromoteAsync(string? userName, string? actor, CancellationToken cancellationToken)
         => SetAsync(userName, true, actor, cancellationToken);
 
     /// <summary>Removes the user's administrator flag, unless they are the last administrator.</summary>
     /// <param name="userName">The user to demote.</param>
     /// <param name="actor">Who asks, for the log.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    public Task<AdministratorChange> DemoteAsync(string userName, string actor, CancellationToken cancellationToken)
+    public Task<AdministratorChange> DemoteAsync(string? userName, string? actor, CancellationToken cancellationToken)
         => SetAsync(userName, false, actor, cancellationToken);
 
     /// <summary>Whether the user is an administrator and no other administrator exists.</summary>
-    public async Task<bool> IsLastAdministratorAsync(BaGetUser user, CancellationToken cancellationToken)
+    public async Task<bool> IsLastAdministratorAsync(BaGetUser? user, CancellationToken cancellationToken)
     {
         if (user == null || !user.IsAdministrator) return false;
 
@@ -83,7 +83,7 @@ public class AdministratorService
     /// listed name registered later is not promoted and a demotion is not reversed at restart.
     /// A name with no account is logged and skipped.
     /// </summary>
-    public async Task PromoteInitialAdministratorsAsync(string names, CancellationToken cancellationToken)
+    public async Task PromoteInitialAdministratorsAsync(string? names, CancellationToken cancellationToken)
     {
         if (await _context.Users.AnyAsync(u => u.IsAdministrator, cancellationToken)) return;
 
@@ -97,7 +97,7 @@ public class AdministratorService
         }
     }
 
-    private async Task<AdministratorChange> SetAsync(string userName, bool value, string actor, CancellationToken cancellationToken)
+    private async Task<AdministratorChange> SetAsync(string? userName, bool value, string? actor, CancellationToken cancellationToken)
     {
         var user = string.IsNullOrWhiteSpace(userName) ? null : await _users.FindByNameAsync(userName.Trim());
         if (user == null) return AdministratorChange.UserNotFound;

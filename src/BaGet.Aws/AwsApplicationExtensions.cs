@@ -22,7 +22,9 @@ public static class AwsApplicationExtensions
 
         app.Services.AddProvider<IStorageService>((provider, config) =>
         {
+            #pragma warning disable CS8603
             if (!config.HasStorageType("AwsS3")) return null;
+            #pragma warning restore CS8603
 
             return provider.GetRequiredService<S3StorageService>();
         });

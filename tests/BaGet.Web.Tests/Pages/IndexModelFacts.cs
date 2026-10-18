@@ -11,7 +11,7 @@ public class IndexModelFacts
 {
     private readonly IndexModel _target;
 
-    private SearchRequest _capturedRequest = null;
+    private SearchRequest? _capturedRequest = null;
     private readonly SearchResponse _response = new SearchResponse();
     private readonly CancellationToken _cancellation = CancellationToken.None;
 
@@ -31,7 +31,9 @@ public class IndexModelFacts
     {
         await _target.OnGetAsync(_cancellation);
 
+        #pragma warning disable CS8602
         Assert.Equal(0, _capturedRequest.Skip);
+        #pragma warning restore CS8602
         Assert.Equal(20, _capturedRequest.Take);
         Assert.True(_capturedRequest.IncludePrerelease);
         Assert.True(_capturedRequest.IncludeSemVer2);
@@ -51,7 +53,9 @@ public class IndexModelFacts
 
         await _target.OnGetAsync(_cancellation);
 
+        #pragma warning disable CS8602
         Assert.Equal(80, _capturedRequest.Skip);
+        #pragma warning restore CS8602
         Assert.Equal(20, _capturedRequest.Take);
         Assert.False(_capturedRequest.IncludePrerelease);
         Assert.True(_capturedRequest.IncludeSemVer2);

@@ -99,7 +99,9 @@ public class SettingsOverridesStore
 
                 break;
             default:
-                yield return new KeyValuePair<string, string>(key, ScalarText(value));
+                #pragma warning disable CS8619
+                yield return new KeyValuePair<string, string?>(key, ScalarText(value));
+                #pragma warning restore CS8619
                 break;
         }
     }
@@ -134,7 +136,9 @@ public class SettingsOverridesStore
             }
 
             var directory = Path.GetDirectoryName(FilePath);
+            #pragma warning disable CS8604
             Directory.CreateDirectory(directory);
+            #pragma warning restore CS8604
 
             var temp = Path.Combine(directory, "." + Path.GetFileName(FilePath) + "." + Guid.NewGuid().ToString("N") + ".tmp");
             try
@@ -177,7 +181,7 @@ public class SettingsOverridesStore
         }
     }
 
-    private static void Flatten(JsonNode node, string path, Dictionary<string, string> result)
+    private static void Flatten(JsonNode? node, string? path, Dictionary<string, string> result)
     {
         switch (node)
         {
@@ -203,7 +207,7 @@ public class SettingsOverridesStore
         }
     }
 
-    private static JsonNode ToNode(object value)
+    private static JsonNode? ToNode(object value)
         => value switch
         {
             string text => JsonValue.Create(text),
@@ -212,7 +216,7 @@ public class SettingsOverridesStore
             _ => ScalarNode(value),
         };
 
-    private static JsonNode ScalarNode(object value)
+    private static JsonNode? ScalarNode(object value)
         => value switch
         {
             sbyte or byte or short or ushort or int or uint or long => JsonValue.Create(Convert.ToInt64(value, CultureInfo.InvariantCulture)),
@@ -222,7 +226,7 @@ public class SettingsOverridesStore
             _ => JsonValue.Create(ScalarText(value)),
         };
 
-    private static string ScalarText(object value)
+    private static string? ScalarText(object value)
         => value switch
         {
             bool flag => flag ? "true" : "false",
@@ -231,10 +235,10 @@ public class SettingsOverridesStore
             _ => value.ToString(),
         };
 
-    private static string FindKey(JsonObject obj, string name)
+    private static string? FindKey(JsonObject obj, string name)
         => obj.Select(p => p.Key).FirstOrDefault(k => string.Equals(k, name, StringComparison.OrdinalIgnoreCase));
 
-    private static void Set(JsonObject root, string[] path, JsonNode value)
+    private static void Set(JsonObject root, string[] path, JsonNode? value)
     {
         var current = root;
         for (var i = 0; i < path.Length - 1; i++)

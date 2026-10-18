@@ -12,21 +12,21 @@ namespace BaGet.Web.V2;
 /// </summary>
 internal class V2FeedPackage
 {
-    public string Id { get; set; }
-    public string Version { get; set; }
-    public string NormalizedVersion { get; set; }
-    public string Authors { get; set; }
-    public string Description { get; set; }
-    public string Summary { get; set; }
-    public string Title { get; set; }
-    public string Tags { get; set; }
-    public string Language { get; set; }
-    public string ReleaseNotes { get; set; }
-    public string MinClientVersion { get; set; }
-    public string Dependencies { get; set; }
-    public string IconUrl { get; set; }
-    public string LicenseUrl { get; set; }
-    public string ProjectUrl { get; set; }
+    public string? Id { get; set; }
+    public string? Version { get; set; }
+    public string? NormalizedVersion { get; set; }
+    public string? Authors { get; set; }
+    public string? Description { get; set; }
+    public string? Summary { get; set; }
+    public string? Title { get; set; }
+    public string? Tags { get; set; }
+    public string? Language { get; set; }
+    public string? ReleaseNotes { get; set; }
+    public string? MinClientVersion { get; set; }
+    public string? Dependencies { get; set; }
+    public string? IconUrl { get; set; }
+    public string? LicenseUrl { get; set; }
+    public string? ProjectUrl { get; set; }
     public long DownloadCount { get; set; }
     public bool RequireLicenseAcceptance { get; set; }
     public bool Listed { get; set; }
@@ -35,7 +35,7 @@ internal class V2FeedPackage
     public bool IsAbsoluteLatestVersion { get; set; }
     public DateTime Published { get; set; }
     public DateTime LastUpdated { get; set; }
-    public string DownloadUrl { get; set; }
+    public string? DownloadUrl { get; set; }
 
     /// <summary>
     /// Project a set of versions of one package. The whole set is needed at once
@@ -98,7 +98,7 @@ internal class V2FeedPackage
     /// V2 flattens dependencies into one string: groups separated by "|", each entry
     /// "id:range:framework". A group with no packages contributes "::framework".
     /// </summary>
-    internal static string FormatDependencies(IEnumerable<PackageDependency> dependencies)
+    internal static string FormatDependencies(IEnumerable<PackageDependency>? dependencies)
     {
         if (dependencies == null) return string.Empty;
 

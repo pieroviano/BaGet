@@ -61,7 +61,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
         var response = await client.GetPackageVersionsOrNullAsync("Test.Package");
 
         Assert.NotNull(response);
+        #pragma warning disable CS8604
         Assert.Equal(new[] { "1.0.0", "2.0.0" }, response.Versions.ToArray());
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -72,7 +74,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
         var response = await client.GetPackageVersionsOrNullAsync("Paged.Package");
 
         Assert.NotNull(response);
+        #pragma warning disable CS8604
         Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Versions.ToArray());
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -84,7 +88,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
 
         Assert.NotNull(response);
         Assert.Equal(3, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal(new[] { "1.0.0", "2.0.0", "3.0.0" }, response.Data.ToArray());
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -95,14 +101,18 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
         var response = await client.GetRegistrationIndexOrNullAsync("Test.Package");
 
         Assert.NotNull(response);
+        #pragma warning disable CS8602
         Assert.Equal(2, response.Pages.Count);
+        #pragma warning restore CS8602
         Assert.All(response.Pages, page => Assert.NotNull(page.ItemsOrNull));
+        #pragma warning disable CS8602, CS8603
         Assert.Equal(
             new[] { "1.0.0", "2.0.0+build", "3.0.0" },
             response.Pages
                 .SelectMany(p => p.ItemsOrNull)
                 .Select(i => i.PackageMetadata.Version)
                 .ToArray());
+        #pragma warning restore CS8602, CS8603
     }
 
     [Fact]
@@ -113,7 +123,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
         var response = await client.GetRegistrationIndexOrNullAsync("Paged.Package");
 
         Assert.NotNull(response);
+        #pragma warning disable CS8602
         Assert.Equal(2, response.Pages.Count);
+        #pragma warning restore CS8602
         Assert.All(response.Pages, page => Assert.Null(page.ItemsOrNull));
         Assert.Equal(
             new[] { TestData.RegistrationPageFirstUrl, TestData.RegistrationPageUrl },
@@ -146,7 +158,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
 
         var metadata = response.ItemsOrNull[1].PackageMetadata;
 
+        #pragma warning disable CS8602
         Assert.Equal("Paged.Package", metadata.PackageId);
+        #pragma warning restore CS8602
         Assert.Equal("3.0.0", metadata.Version);
     }
 
@@ -159,7 +173,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal("Test.Package", Assert.Single(response.Data).PackageId);
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -171,7 +187,9 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
+        #pragma warning disable CS8604
         Assert.Equal("Test.Package", Assert.Single(response.Data));
+        #pragma warning restore CS8604
     }
 
     [Fact]

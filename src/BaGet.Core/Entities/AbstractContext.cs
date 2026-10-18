@@ -43,19 +43,19 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         : base(options)
     { }
 
-    public DbSet<Package> Packages { get; set; }
-    public DbSet<PackageDependency> PackageDependencies { get; set; }
-    public DbSet<PackageType> PackageTypes { get; set; }
-    public DbSet<TargetFramework> TargetFrameworks { get; set; }
-    public DbSet<PackageDeprecation> PackageDeprecations { get; set; }
-    public DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
-    public DbSet<CatalogEntry> CatalogLeafs { get; set; }
-    public DbSet<Organization> Organizations { get; set; }
-    public DbSet<OrganizationMember> OrganizationMembers { get; set; }
-    public DbSet<PackageOwner> PackageOwners { get; set; }
-    public DbSet<ApiKey> ApiKeys { get; set; }
-    public DbSet<PackageValidation> PackageValidations { get; set; }
-    public DbSet<AbuseReport> AbuseReports { get; set; }
+    public DbSet<Package>? Packages { get; set; }
+    public DbSet<PackageDependency>? PackageDependencies { get; set; }
+    public DbSet<PackageType>? PackageTypes { get; set; }
+    public DbSet<TargetFramework>? TargetFrameworks { get; set; }
+    public DbSet<PackageDeprecation>? PackageDeprecations { get; set; }
+    public DbSet<PackageVulnerability>? PackageVulnerabilities { get; set; }
+    public DbSet<CatalogEntry>? CatalogLeafs { get; set; }
+    public DbSet<Organization>? Organizations { get; set; }
+    public DbSet<OrganizationMember>? OrganizationMembers { get; set; }
+    public DbSet<PackageOwner>? PackageOwners { get; set; }
+    public DbSet<ApiKey>? ApiKeys { get; set; }
+    public DbSet<PackageValidation>? PackageValidations { get; set; }
+    public DbSet<AbuseReport>? AbuseReports { get; set; }
 
     public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -108,31 +108,43 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         package.Property(p => p.ReleaseNotes)
             .HasColumnName("ReleaseNotes");
 
+        #pragma warning disable CS8620
         package.Property(p => p.Authors)
             .HasMaxLength(DefaultMaxStringLength)
             .HasConversion(StringArrayToJsonConverter.Instance)
             .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        #pragma warning restore CS8620
 
+        #pragma warning disable CS8620
         package.Property(p => p.IconUrl)
             .HasConversion(UriToStringConverter.Instance)
             .HasMaxLength(DefaultMaxStringLength);
+        #pragma warning restore CS8620
 
+        #pragma warning disable CS8620
         package.Property(p => p.LicenseUrl)
             .HasConversion(UriToStringConverter.Instance)
             .HasMaxLength(DefaultMaxStringLength);
+        #pragma warning restore CS8620
 
+        #pragma warning disable CS8620
         package.Property(p => p.ProjectUrl)
             .HasConversion(UriToStringConverter.Instance)
             .HasMaxLength(DefaultMaxStringLength);
+        #pragma warning restore CS8620
 
+        #pragma warning disable CS8620
         package.Property(p => p.RepositoryUrl)
             .HasConversion(UriToStringConverter.Instance)
             .HasMaxLength(DefaultMaxStringLength);
+        #pragma warning restore CS8620
 
+        #pragma warning disable CS8620
         package.Property(p => p.Tags)
             .HasMaxLength(DefaultMaxStringLength)
             .HasConversion(StringArrayToJsonConverter.Instance)
             .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        #pragma warning restore CS8620
 
         package.Property(p => p.Description).HasMaxLength(DefaultMaxStringLength);
         package.Property(p => p.Language).HasMaxLength(MaxPackageLanguageLength);
@@ -169,11 +181,13 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     {
         deprecation.HasKey(d => d.Key);
 
+        #pragma warning disable CS8620
         deprecation
             .Property(d => d.Reasons)
             .HasMaxLength(DefaultMaxStringLength)
             .HasConversion(StringArrayToJsonConverter.Instance)
             .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        #pragma warning restore CS8620
 
         deprecation.Property(d => d.Message).HasMaxLength(DefaultMaxStringLength);
         deprecation.Property(d => d.AlternatePackageId).HasMaxLength(MaxPackageIdLength);
@@ -259,11 +273,13 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         apiKey.Property(k => k.HashedKey).HasMaxLength(MaxApiKeyHashLength).IsRequired();
         apiKey.Property(k => k.PackageGlobPattern).HasMaxLength(MaxPackageIdLength);
 
+        #pragma warning disable CS8620
         apiKey
             .Property(k => k.Scopes)
             .HasMaxLength(DefaultMaxStringLength)
             .HasConversion(StringArrayToJsonConverter.Instance)
             .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        #pragma warning restore CS8620
     }
 
     private void BuildPackageValidationEntity(EntityTypeBuilder<PackageValidation> validation)

@@ -27,7 +27,7 @@ public class SessionPrincipalFactory
     /// never the superuser; an administrator's session carries <see cref="BaGetPrincipal.IsAdministrator"/>.
     /// </summary>
     /// <returns>Null when nobody is signed in or the account no longer exists.</returns>
-    public async Task<BaGetPrincipal> CreateAsync(ClaimsPrincipal user)
+    public async Task<BaGetPrincipal?> CreateAsync(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true) return null;
 

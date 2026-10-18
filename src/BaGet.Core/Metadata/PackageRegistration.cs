@@ -14,7 +14,7 @@ public class PackageRegistration
     /// <param name="packageId"></param>
     /// <param name="packages">All versions of the package.</param>
     public PackageRegistration(
-        string packageId,
+        string? packageId,
         IReadOnlyList<Package> packages)
     {
         PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));

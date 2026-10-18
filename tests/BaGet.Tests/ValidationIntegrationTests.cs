@@ -110,7 +110,9 @@ public class ValidationIntegrationTests : IDisposable
 
         Assert.True(await reader.IsSignedAsync(CancellationToken.None));
         var signature = await reader.GetPrimarySignatureAsync(CancellationToken.None);
+        #pragma warning disable CS8602
         Assert.Equal(SignatureType.Repository, signature.Type);
+        #pragma warning restore CS8602
 
         // The resource lists the certificate that signed it, and serves it.
         using var resource = JsonDocument.Parse(await client.GetStringAsync("v3/repository-signatures/index.json"));
@@ -182,8 +184,8 @@ public class ValidationIntegrationTests : IDisposable
     }
 
     private HttpClient CreateClient(
-        Dictionary<string, string> config = null,
-        Action<IServiceCollection> configureServices = null)
+        Dictionary<string, string>? config = null,
+        Action<IServiceCollection>? configureServices = null)
     {
         var settings = new Dictionary<string, string> { { "Validation:Enabled", "true" } };
         foreach (var pair in config ?? new Dictionary<string, string>())
@@ -208,14 +210,14 @@ public class ValidationIntegrationTests : IDisposable
         return response.StatusCode;
     }
 
-    private static async Task<string> StatusAsync(HttpClient client, string id, string version)
+    private static async Task<string?> StatusAsync(HttpClient client, string id, string version)
     {
         using var status = JsonDocument.Parse(await client.GetStringAsync($"v3/package/{id}/{version}/validation"));
 
         return status.RootElement.GetProperty("status").GetString();
     }
 
-    private static async Task<string> WaitForResultAsync(HttpClient client, string id, string version)
+    private static async Task<string?> WaitForResultAsync(HttpClient client, string id, string version)
     {
         var deadline = DateTime.UtcNow.AddSeconds(30);
         while (true)
@@ -254,7 +256,9 @@ public class ValidationIntegrationTests : IDisposable
         using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
 
         var path = Path.Combine(Path.GetTempPath(), "BaGetTests", Guid.NewGuid().ToString("N") + ".pfx");
+        #pragma warning disable CS8604
         Directory.CreateDirectory(Path.GetDirectoryName(path));
+        #pragma warning restore CS8604
         File.WriteAllBytes(path, certificate.Export(X509ContentType.Pfx, "test"));
 
         return (path, RepositorySignaturesController.Fingerprint(certificate.RawData));

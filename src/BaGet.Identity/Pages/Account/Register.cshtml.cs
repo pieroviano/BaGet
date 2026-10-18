@@ -14,26 +14,26 @@ public class RegisterModel : AccountPageModel
     [BindProperty]
     [Required]
     [Display(Name = "User name")]
-    public string UserName { get; set; }
+    public string? UserName { get; set; }
 
     [BindProperty]
     [EmailAddress]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     [BindProperty]
     [Required]
     [DataType(DataType.Password)]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     [BindProperty]
     [Required]
     [DataType(DataType.Password)]
     [Display(Name = "Confirm password")]
     [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
-    public string ConfirmPassword { get; set; }
+    public string? ConfirmPassword { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
     public override void OnPageHandlerExecuting(PageHandlerExecutingContext context)
     {
@@ -72,7 +72,9 @@ public class RegisterModel : AccountPageModel
             Created = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow,
         };
 
+        #pragma warning disable CS8604
         var result = await UserManager.CreateAsync(user, Password);
+        #pragma warning restore CS8604
         if (!result.Succeeded)
         {
             foreach (var error in result.Errors)
@@ -91,7 +93,9 @@ public class RegisterModel : AccountPageModel
 
             try
             {
+                #pragma warning disable CS8604
                 await EmailSender.SendConfirmationLinkAsync(user, user.Email, link);
+                #pragma warning restore CS8604
                 ConfirmationSent = true;
             }
             catch (Exception)

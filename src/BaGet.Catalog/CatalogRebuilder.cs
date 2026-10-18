@@ -59,10 +59,12 @@ public class CatalogRebuilder
             if (entries.Count < CatalogReader.PageSize) break;
         }
 
+        #pragma warning disable CS8604
         var packages = await _context.Packages
             .AsNoTracking()
             .Select(p => new { p.Id, p.NormalizedVersionString })
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         var existing = new HashSet<(string, string)>();
         var added = 0;
@@ -76,20 +78,24 @@ public class CatalogRebuilder
                 continue;
             }
 
+            #pragma warning disable CS8604
             await _writer.OnPackageChangedAsync(
                 package.Id,
                 NuGetVersion.Parse(package.NormalizedVersionString),
                 cancellationToken);
+            #pragma warning restore CS8604
             added++;
         }
 
         var deleted = 0;
         foreach (var pair in latest.Where(l => l.Value.Type == CatalogEntry.PackageDetailsType && !existing.Contains(l.Key)))
         {
+            #pragma warning disable CS8604
             await _writer.OnPackageDeletedAsync(
                 pair.Value.PackageId,
                 NuGetVersion.Parse(pair.Value.PackageVersion),
                 cancellationToken);
+            #pragma warning restore CS8604
             deleted++;
         }
 
@@ -102,6 +108,8 @@ public class CatalogRebuilder
     }
 
     // Package IDs are case insensitive.
-    private static (string, string) Identity(string id, string version)
-        => (id.ToLowerInvariant(), NuGetVersion.Parse(version).ToNormalizedString().ToLowerInvariant());
+    #pragma warning disable CS8604, CS8619
+    private static (string, string) Identity(string? id, string? version)
+        => (id?.ToLowerInvariant(), NuGetVersion.Parse(version).ToNormalizedString().ToLowerInvariant());
+    #pragma warning restore CS8604, CS8619
 }

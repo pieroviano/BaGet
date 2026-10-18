@@ -9,7 +9,7 @@ public class ValidateBaGetOptionsTests
     private class Options
     {
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Range(1, 10)]
         public int Count { get; set; } = 1;

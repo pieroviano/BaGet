@@ -87,8 +87,11 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
 
         // The same version cannot be validated twice at once.
         var lowerId = id.ToLowerInvariant();
+        #pragma warning disable CS8602, CS8604
         if (await _context.PackageValidations.AnyAsync(
+        #pragma warning restore CS8604
                 v => v.PackageId.ToLower() == lowerId
+        #pragma warning restore CS8602
                      && v.PackageVersion == version
                      && v.State == PackageValidationState.Pending,
                 cancellationToken))

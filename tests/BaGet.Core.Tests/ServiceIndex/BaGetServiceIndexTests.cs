@@ -27,18 +27,20 @@ public class BaGetServiceIndexTests
         _target = new BaGetServiceIndex(_url.Object);
     }
 
-    private async Task<string[]> Types()
+    private async Task<string[]?>? Types()
     {
         var response = await _target.GetAsync(CancellationToken.None);
 
-        return response.Resources.Select(r => r.Type).ToArray();
+        #pragma warning disable CS8619
+        return response.Resources?.Select(r => r.Type).ToArray();
+        #pragma warning restore CS8619
     }
 
-    private async Task<string> UrlOf(string type)
+    private async Task<string?> UrlOf(string type)
     {
         var response = await _target.GetAsync(CancellationToken.None);
 
-        return response.Resources.Single(r => r.Type == type).ResourceUrl;
+        return response.Resources?.Single(r => r.Type == type).ResourceUrl;
     }
 
     [Fact]
@@ -64,7 +66,9 @@ public class BaGetServiceIndexTests
     [InlineData("SearchAutocompleteService/3.0.0-rc")]
     public async Task AdvertisesTheResource(string type)
     {
+        #pragma warning disable CS8602, CS8604
         Assert.Contains(type, await Types());
+        #pragma warning restore CS8602, CS8604
     }
 
     [Theory]
@@ -75,14 +79,18 @@ public class BaGetServiceIndexTests
     {
         // These are the @type strings nuget.org publishes. Note report abuse has no
         // "3.0.0" form: only the beta and rc ones.
+        #pragma warning disable CS8602, CS8604
         Assert.Contains(type, await Types());
+        #pragma warning restore CS8602, CS8604
     }
 
     [Fact]
     public async Task DoesNotAdvertiseAReportAbuseVersionNuGetOrgDoesNot()
     {
+        #pragma warning disable CS8602, CS8604
         Assert.DoesNotContain("ReportAbuseUriTemplate/3.0.0", await Types());
         Assert.DoesNotContain("ReportAbuseUriTemplate", await Types());
+        #pragma warning restore CS8602, CS8604
     }
 
     [Fact]
@@ -114,7 +122,9 @@ public class BaGetServiceIndexTests
     {
         var response = await _target.GetAsync(CancellationToken.None);
 
+        #pragma warning disable CS8604
         Assert.All(response.Resources, resource =>
+        #pragma warning restore CS8604
         {
             Assert.False(string.IsNullOrEmpty(resource.Type));
             Assert.False(string.IsNullOrEmpty(resource.ResourceUrl));

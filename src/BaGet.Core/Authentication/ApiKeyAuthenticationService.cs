@@ -9,7 +9,7 @@ namespace BaGet.Core;
 
 public class ApiKeyAuthenticationService : IAuthenticationService
 {
-    private readonly byte[] _apiKey;
+    private readonly byte[]? _apiKey;
 
     public ApiKeyAuthenticationService(IOptionsSnapshot<BaGetOptions> options)
     {
@@ -20,10 +20,10 @@ public class ApiKeyAuthenticationService : IAuthenticationService
             : Encoding.UTF8.GetBytes(options.Value.ApiKey);
     }
 
-    public Task<bool> AuthenticateAsync(string apiKey, CancellationToken cancellationToken)
+    public Task<bool> AuthenticateAsync(string? apiKey, CancellationToken cancellationToken)
         => Task.FromResult(Authenticate(apiKey));
 
-    private bool Authenticate(string apiKey)
+    private bool Authenticate(string? apiKey)
     {
         // No authentication is necessary if there is no required API key.
         if (_apiKey == null) return true;

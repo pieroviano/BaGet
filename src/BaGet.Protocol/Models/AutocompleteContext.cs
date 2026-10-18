@@ -10,5 +10,5 @@ public class AutocompleteContext
     };
 
     [JsonPropertyName("@vocab")]
-    public string Vocab { get; set; }
+    public string? Vocab { get; set; }
 }

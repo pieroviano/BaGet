@@ -34,7 +34,7 @@ public class AlpineExpressionTests : IDisposable
         foreach (var d in _disposables) d.Dispose();
     }
 
-    private (BaGetApplication App, Browser Browser) Start(Dictionary<string, string> settings = null)
+    private (BaGetApplication App, Browser Browser) Start(Dictionary<string, string>? settings = null)
     {
         var app = new BaGetApplication(_output, configOverrides: settings);
         var browser = new Browser(app);
@@ -49,6 +49,7 @@ public class AlpineExpressionTests : IDisposable
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
 
+        #pragma warning disable CS8602
         context.Packages.Add(new Package
         {
             Id = id,
@@ -64,6 +65,7 @@ public class AlpineExpressionTests : IDisposable
             PackageTypes = new List<PackageType>(),
             TargetFrameworks = new List<TargetFramework> { new TargetFramework { Moniker = "net8.0" } },
         });
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 

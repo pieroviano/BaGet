@@ -191,7 +191,7 @@ public class V2FeedController : Controller
     }
 
     private async Task<IActionResult> SearchFeed(
-        string query,
+        string? query,
         int? skip,
         int? top,
         bool includePrerelease,
@@ -217,7 +217,9 @@ public class V2FeedController : Controller
         // lists one entry per version, so the ids are re-read to get full metadata.
         var result = new List<V2FeedPackage>();
 
+        #pragma warning disable CS8602
         foreach (var match in response.Data)
+        #pragma warning restore CS8602
         {
             var packages = await _packages.FindAsync(match.PackageId, includeUnlisted: false, cancellationToken);
 
@@ -229,9 +231,11 @@ public class V2FeedController : Controller
 
     private List<V2FeedPackage> Project(IEnumerable<Package> packages)
     {
+        #pragma warning disable CS8603
         return V2FeedPackage.FromPackages(
             packages,
             p => _url.GetPackageDownloadUrl(p.Id, p.Version));
+        #pragma warning restore CS8603
     }
 
     private IActionResult Feed(IReadOnlyList<V2FeedPackage> packages, string title)

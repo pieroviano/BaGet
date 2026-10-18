@@ -24,9 +24,9 @@ public class ReauthenticateModel : AccountPageModel
     protected override bool RequiresSignIn => true;
 
     [BindProperty(SupportsGet = true)]
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     public void OnGet()
     {
@@ -62,7 +62,7 @@ public class ReauthenticateModel : AccountPageModel
     internal static readonly System.TimeSpan ClockSkew = System.TimeSpan.FromMinutes(1);
 
     /// <summary>True when <paramref name="authTime"/> (seconds since the epoch) is present and within the window.</summary>
-    internal static bool IsFresh(string authTime, System.DateTime now)
+    internal static bool IsFresh(string? authTime, System.DateTime now)
     {
         if (!long.TryParse(authTime, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var seconds)
             || seconds < 0 || seconds > 253402300799L)
@@ -97,7 +97,7 @@ public class ReauthenticateModel : AccountPageModel
         // so the id_token's own auth_time (required by OIDC Core when max_age is sent) must show
         // a sign-in within the window.
         var now = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow;
-        if (!IsFresh(info.Principal?.FindFirst(AuthTimeClaim)?.Value, now))
+        if (!IsFresh(info?.Principal?.FindFirst(AuthTimeClaim)?.Value, now))
         {
             Error = "The provider did not confirm a fresh sign-in. Sign in again and enter your credentials when asked.";
             return Page();
@@ -112,7 +112,9 @@ public class ReauthenticateModel : AccountPageModel
             .Select(type => authentication.Principal?.FindFirst(type))
             .Where(claim => claim != null)
             .ToList();
+        #pragma warning disable CS8620
         await SignInManager.SignInWithClaimsAsync(user, properties, kept);
+        #pragma warning restore CS8620
 
         return RedirectToLocal(ReturnUrl);
     }

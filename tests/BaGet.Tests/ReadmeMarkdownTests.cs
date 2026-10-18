@@ -14,9 +14,11 @@ public class ReadmeMarkdownTests
     [InlineData("<img src=x onerror=alert(1)>")]
     [InlineData("<a href=\"javascript:alert(1)\">x</a>")]
     [InlineData("<iframe src=\"https://evil.example\"></iframe>")]
-    public void RawHtmlIsEscapedNotRendered(string markdown)
+    public void RawHtmlIsEscapedNotRendered(string? markdown)
     {
+        #pragma warning disable CS8602
         var html = ReadmeMarkdown.ToHtml(markdown).ToString();
+        #pragma warning restore CS8602
 
         Assert.DoesNotContain("<script", html);
         Assert.DoesNotContain("<img", html);
@@ -30,9 +32,11 @@ public class ReadmeMarkdownTests
     [InlineData("![x](javascript:alert(1))")]
     [InlineData("[x](data:text/html;base64,PHNjcmlwdD4=)")]
     [InlineData("[x][r]\n\n[r]: javascript:alert(1)")]
-    public void ScriptSchemeLinksAreNotProduced(string markdown)
+    public void ScriptSchemeLinksAreNotProduced(string? markdown)
     {
+        #pragma warning disable CS8602
         var html = ReadmeMarkdown.ToHtml(markdown).ToString().ToLowerInvariant();
+        #pragma warning restore CS8602
 
         Assert.DoesNotContain("javascript:", html);
         Assert.DoesNotContain("data:text/html", html);
@@ -41,7 +45,9 @@ public class ReadmeMarkdownTests
     [Fact]
     public void OrdinaryMarkdownStillRenders()
     {
+        #pragma warning disable CS8602
         var html = ReadmeMarkdown.ToHtml("# Title\n\n**bold** [site](https://example.com)\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n```csharp\nvar x = 1;\n```").ToString();
+        #pragma warning restore CS8602
 
         Assert.Contains("<h1", html);
         Assert.Contains("<strong>bold</strong>", html);
@@ -70,10 +76,12 @@ public class ReadmeMarkdownTests
 
     [Theory]
     [MemberData(nameof(AttributePayloads))]
-    public void AttributeSyntaxNeverEmitsAnEventHandlerOrStyle(string markdown)
+    public void AttributeSyntaxNeverEmitsAnEventHandlerOrStyle(string? markdown)
     {
+        #pragma warning disable CS8602
         var html = ReadmeMarkdown.ToHtml(markdown).ToString();
         var legal = ReadmeMarkdown.ToSafeHtml(markdown).ToString();
+        #pragma warning restore CS8602
 
         foreach (var output in new[] { html, legal })
         {
@@ -83,9 +91,11 @@ public class ReadmeMarkdownTests
 
     [Theory]
     [MemberData(nameof(AttributePayloads))]
-    public void TheSanitiserHoldsEvenIfGenericAttributesWereEnabled(string markdown)
+    public void TheSanitiserHoldsEvenIfGenericAttributesWereEnabled(string? markdown)
     {
+        #pragma warning disable CS8602
         var html = ReadmeMarkdown.ToHtml(markdown, ReadmeMarkdown.CreatePipeline(genericAttributes: true)).ToString();
+        #pragma warning restore CS8602
 
         AssertNoUnsafeAttribute(html);
     }
@@ -93,7 +103,9 @@ public class ReadmeMarkdownTests
     [Fact]
     public void TheSanitiserKeepsHarmlessAttributes()
     {
+        #pragma warning disable CS8602
         var html = ReadmeMarkdown.ToHtml("# Hi {#anchor .big}", ReadmeMarkdown.CreatePipeline(genericAttributes: true)).ToString();
+        #pragma warning restore CS8602
 
         Assert.Contains("id=\"anchor\"", html);
         Assert.Contains("class=\"big\"", html);

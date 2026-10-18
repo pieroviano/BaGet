@@ -21,7 +21,7 @@ public class TableSearchService : ISearchService
     private readonly ISearchResponseBuilder _responseBuilder;
 
     public TableSearchService(
-        CloudTableClient client,
+        CloudTableClient? client,
         ISearchResponseBuilder responseBuilder)
     {
         _table = client?.GetTableReference(TableName) ?? throw new ArgumentNullException(nameof(client));
@@ -77,7 +77,7 @@ public class TableSearchService : ISearchService
         return _responseBuilder.BuildAutocomplete(versions, versions.Count);
     }
 
-    public Task<DependentsResponse> FindDependentsAsync(string packageId, CancellationToken cancellationToken)
+    public Task<DependentsResponse> FindDependentsAsync(string? packageId, CancellationToken cancellationToken)
     {
         var response = _responseBuilder.BuildDependents(new List<PackageDependent>());
 
@@ -102,7 +102,7 @@ public class TableSearchService : ISearchService
     }
 
     private async Task<SearchPage> SearchAsync(
-        string searchText,
+        string? searchText,
         int skip,
         int take,
         bool includePrerelease,
@@ -145,7 +145,7 @@ public class TableSearchService : ISearchService
         query.TakeCount = 1000;
 
         var partitionKeys = new List<string>();
-        TableContinuationToken token = null;
+        TableContinuationToken? token = null;
         do
         {
             var segment = await _table.ExecuteQuerySegmentedAsync(query, token, cancellationToken);
@@ -165,7 +165,7 @@ public class TableSearchService : ISearchService
     internal static long CountPartitions(IEnumerable<string> partitionKeys)
     {
         long count = 0;
-        string last = null;
+        string? last = null;
 
         foreach (var key in partitionKeys)
         {
@@ -187,8 +187,8 @@ public class TableSearchService : ISearchService
         var results = new List<Package>();
 
         var partitions = 0;
-        string lastPartitionKey = null;
-        TableContinuationToken token = null;
+        string? lastPartitionKey = null;
+        TableContinuationToken? token = null;
         do
         {
             var segment = await _table.ExecuteQuerySegmentedAsync(query, token, cancellationToken);
@@ -220,7 +220,7 @@ public class TableSearchService : ISearchService
     /// <summary>
     /// The rows of one package ID that these filters allow.
     /// </summary>
-    internal static string GenerateVersionsFilter(string packageId, bool includePrerelease, bool includeSemVer2)
+    internal static string GenerateVersionsFilter(string? packageId, bool includePrerelease, bool includeSemVer2)
     {
         if (packageId == null) throw new ArgumentNullException(nameof(packageId));
 
@@ -232,7 +232,7 @@ public class TableSearchService : ISearchService
         return GenerateFilters(partition, includePrerelease, includeSemVer2);
     }
 
-    internal static string GenerateSearchFilter(string searchText, bool includePrerelease, bool includeSemVer2)
+    internal static string GenerateSearchFilter(string? searchText, bool includePrerelease, bool includeSemVer2)
     {
         var result = "";
 

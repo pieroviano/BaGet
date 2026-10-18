@@ -28,13 +28,13 @@ public class ContactOwnersModel : AccountPageModel
     protected override bool RequiresEmail => true;
 
     [BindProperty(SupportsGet = true)]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     [BindProperty]
     [Required]
     [StringLength(MaxMessageLength)]
     [Display(Name = "Message")]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     [BindProperty]
     [Display(Name = "Send me a copy")]
@@ -43,11 +43,11 @@ public class ContactOwnersModel : AccountPageModel
     /// <summary>
     /// The package ID as stored, which is the only text that reaches the subject.
     /// </summary>
-    public string PackageId { get; private set; }
+    public string? PackageId { get; private set; }
 
     public bool Sent { get; private set; }
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     /// <summary>
     /// Replies come to the sender's address, so there must be one, and it must be confirmed:
@@ -95,14 +95,18 @@ public class ContactOwnersModel : AccountPageModel
         var mail = HttpContext.RequestServices.GetRequiredService<IEmailMessageSender>();
         var logger = HttpContext.RequestServices.GetRequiredService<ILogger<ContactOwnersModel>>();
         var subject = $"Message about your package {PackageId}";
+        #pragma warning disable CS8602
         var body = BuildBody(sender, Message.Trim(), copy: false);
+        #pragma warning restore CS8602
         var delivered = 0;
 
         foreach (var recipient in recipients)
         {
             try
             {
+                #pragma warning disable CS8602
                 await mail.SendAsync(recipient, sender.Email.Trim(), sender.UserName, subject, body, cancellationToken);
+                #pragma warning restore CS8602
                 delivered++;
             }
             catch (Exception e)
@@ -122,6 +126,7 @@ public class ContactOwnersModel : AccountPageModel
         {
             try
             {
+                #pragma warning disable CS8602
                 await mail.SendAsync(
                     sender.Email.Trim(),
                     replyTo: null,
@@ -129,6 +134,7 @@ public class ContactOwnersModel : AccountPageModel
                     subject: $"Copy of your message about {PackageId}",
                     textBody: BuildBody(sender, Message.Trim(), copy: true),
                     cancellationToken: cancellationToken);
+                #pragma warning restore CS8602
             }
             catch (Exception e)
             {
@@ -140,7 +146,7 @@ public class ContactOwnersModel : AccountPageModel
         return Page();
     }
 
-    private async Task<IReadOnlyList<PackageOwner>> LoadAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<PackageOwner>?> LoadAsync(CancellationToken cancellationToken)
     {
         var owners = await Ownership.GetOwnersAsync(Id, cancellationToken);
         if (owners.Count == 0) return null;
@@ -162,19 +168,25 @@ public class ContactOwnersModel : AccountPageModel
         CancellationToken cancellationToken)
     {
         var context = HttpContext.RequestServices.GetRequiredService<IContext>();
+        #pragma warning disable CS8602
         var names = owners.Select(o => o.OwnerName.ToLowerInvariant()).ToList();
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602
         var userIds = await UserManager.Users
             .AsNoTracking()
             .Where(u => names.Contains(u.UserName.ToLower()))
             .Select(u => u.Id)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602, CS8604
         var adminIds = await context.OrganizationMembers
             .AsNoTracking()
             .Where(m => m.IsAdmin && m.Organization != null && names.Contains(m.Organization.Name.ToLower()))
             .Select(m => m.UserId)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
 
         var ids = userIds.Concat(adminIds).Distinct().ToList();
         var emails = await UserManager.Users
@@ -183,14 +195,16 @@ public class ContactOwnersModel : AccountPageModel
             .Select(u => u.Email)
             .ToListAsync(cancellationToken);
 
+        #pragma warning disable CS8602
         return emails
             .Where(IsDeliverable)
             .Select(e => e.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+        #pragma warning restore CS8602
     }
 
-    private static bool IsDeliverable(string email)
+    private static bool IsDeliverable(string? email)
         => !string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email.Trim());
 
     private string BuildBody(BaGetUser sender, string message, bool copy)

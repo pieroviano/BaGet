@@ -29,11 +29,11 @@ public class CatalogPage
     /// The items used to discover <see cref="CatalogLeaf"/>s.
     /// </summary>
     [JsonPropertyName("items")]
-    public List<CatalogLeafItem> Items { get; set; }
+    public List<CatalogLeafItem>? Items { get; set; }
 
     /// <summary>
     /// The URL to the Catalog Index.
     /// </summary>
     [JsonPropertyName("parent")]
-    public string CatalogIndexUrl { get; set; }
+    public string? CatalogIndexUrl { get; set; }
 }

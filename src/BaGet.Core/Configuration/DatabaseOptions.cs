@@ -5,11 +5,11 @@ namespace BaGet.Core;
 [RestartRequired]
 public class DatabaseOptions
 {
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     [Required]
     [SensitiveSetting]
-    public string ConnectionString { get; set; }
+    public string? ConnectionString { get; set; }
 
     /// <summary>
     /// The MySQL server version, such as "8.0.0-mysql" or "10.11.0-mariadb". Optional.
@@ -21,5 +21,5 @@ public class DatabaseOptions
     /// makes commands such as "dotnet ef migrations add" fail even for another provider.
     /// Set this to keep option building offline.
     /// </remarks>
-    public string MySqlServerVersion { get; set; }
+    public string? MySqlServerVersion { get; set; }
 }

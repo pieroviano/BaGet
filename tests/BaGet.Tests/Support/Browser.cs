@@ -19,7 +19,7 @@ internal sealed class Browser : System.IDisposable
     private readonly HttpClient _client;
 
     /// <param name="host">A "Host" header to send instead of the test server's.</param>
-    public Browser(BaGetApplication app, string host = null)
+    public Browser(BaGetApplication app, string? host = null)
     {
         _client = app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         if (host != null) _client.DefaultRequestHeaders.Host = host;
@@ -60,11 +60,13 @@ internal sealed class Browser : System.IDisposable
     /// </param>
     public async Task<HttpResponseMessage> PostAsync(
         string page,
-        Dictionary<string, string> fields,
-        string action = null,
-        string tokenPage = null)
+        Dictionary<string, string>? fields,
+        string? action = null,
+        string? tokenPage = null)
     {
+        #pragma warning disable CS8602
         fields["__RequestVerificationToken"] = await TokenAsync(tokenPage ?? page);
+        #pragma warning restore CS8602
 
         return await _client.PostAsync(action ?? page, new FormUrlEncodedContent(fields));
     }
@@ -77,9 +79,9 @@ internal sealed class Browser : System.IDisposable
         string action,
         string fieldName,
         string fileName,
-        Stream file,
-        Dictionary<string, string> fields = null,
-        string tokenPage = null)
+        Stream? file,
+        Dictionary<string, string>? fields = null,
+        string? tokenPage = null)
     {
         using var content = new MultipartFormDataContent();
 
@@ -90,7 +92,9 @@ internal sealed class Browser : System.IDisposable
             content.Add(new StringContent(pair.Value), pair.Key);
         }
 
+        #pragma warning disable CS8604
         var fileContent = new StreamContent(file);
+        #pragma warning restore CS8604
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         content.Add(fileContent, fieldName, fileName);
 

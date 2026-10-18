@@ -91,7 +91,9 @@ public class AdminUserActionsTests : IDisposable
         {
             var users = p.GetRequiredService<UserManager<BaGetUser>>();
             var user = await users.FindByNameAsync("alice");
+            #pragma warning disable CS8604
             await users.SetTwoFactorEnabledAsync(user, true);
+            #pragma warning restore CS8604
 
             return true;
         });
@@ -99,7 +101,9 @@ public class AdminUserActionsTests : IDisposable
         using var response = await PostAsync(admin, "ResetPassword", "alice");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("no-store", response.Headers.CacheControl.ToString());
+        #pragma warning restore CS8602
         var html = await response.Content.ReadAsStringAsync();
         var generated = GeneratedPassword(html);
         Assert.NotEmpty(generated);
@@ -114,7 +118,9 @@ public class AdminUserActionsTests : IDisposable
 
         Assert.False(await CanSignInAsync(app, "alice", Password));
         Assert.True(await CanSignInAsync(app, "alice", generated));
+        #pragma warning disable CS8602
         Assert.False((await FindAsync(app, "alice")).TwoFactorEnabled);
+        #pragma warning restore CS8602
 
         // The user's earlier session ended with the new security stamp.
         using var stale = await alice.GetAsync("account/settings");

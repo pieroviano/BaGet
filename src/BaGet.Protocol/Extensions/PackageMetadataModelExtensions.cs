@@ -14,9 +14,11 @@ public static class RegistrationModelExtensions
     /// </summary>
     /// <param name="package">The package metadata.</param>
     /// <returns>The package version.</returns>
-    public static NuGetVersion ParseVersion(this PackageMetadata package)
+    public static NuGetVersion ParseVersion(this PackageMetadata? package)
     {
-        return NuGetVersion.Parse(package.Version);
+        #pragma warning disable CS8604
+        return NuGetVersion.Parse(package?.Version);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -43,7 +45,9 @@ public static class RegistrationModelExtensions
     /// <returns>The page's lower version.</returns>
     public static NuGetVersion ParseLower(this RegistrationIndexPage page)
     {
+        #pragma warning disable CS8604
         return NuGetVersion.Parse(page.Lower);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -53,6 +57,8 @@ public static class RegistrationModelExtensions
     /// <returns>The page's upper version.</returns>
     public static NuGetVersion ParseUpper(this RegistrationIndexPage page)
     {
+        #pragma warning disable CS8604
         return NuGetVersion.Parse(page.Upper);
+        #pragma warning restore CS8604
     }
 }

@@ -9,38 +9,38 @@ public interface IContext
 {
     DatabaseFacade Database { get; }
 
-    DbSet<Package> Packages { get; set; }
+    DbSet<Package>? Packages { get; set; }
 
     /// <summary>
     /// The dependencies declared by packages. A dependency belongs to the package that
     /// declares it, but the relationship is optional in the database, so deleting a
     /// package does not delete them.
     /// </summary>
-    DbSet<PackageDependency> PackageDependencies { get; set; }
+    DbSet<PackageDependency>? PackageDependencies { get; set; }
 
     /// <summary>
     /// The deprecations of package versions.
     /// </summary>
-    DbSet<PackageDeprecation> PackageDeprecations { get; set; }
+    DbSet<PackageDeprecation>? PackageDeprecations { get; set; }
 
     /// <summary>
     /// The known vulnerabilities affecting package versions.
     /// </summary>
-    DbSet<PackageVulnerability> PackageVulnerabilities { get; set; }
+    DbSet<PackageVulnerability>? PackageVulnerabilities { get; set; }
 
-    DbSet<CatalogEntry> CatalogLeafs { get; set; }
+    DbSet<CatalogEntry>? CatalogLeafs { get; set; }
 
-    DbSet<Organization> Organizations { get; set; }
+    DbSet<Organization>? Organizations { get; set; }
 
-    DbSet<OrganizationMember> OrganizationMembers { get; set; }
+    DbSet<OrganizationMember>? OrganizationMembers { get; set; }
 
-    DbSet<PackageOwner> PackageOwners { get; set; }
+    DbSet<PackageOwner>? PackageOwners { get; set; }
 
-    DbSet<ApiKey> ApiKeys { get; set; }
+    DbSet<ApiKey>? ApiKeys { get; set; }
 
-    DbSet<PackageValidation> PackageValidations { get; set; }
+    DbSet<PackageValidation>? PackageValidations { get; set; }
 
-    DbSet<AbuseReport> AbuseReports { get; set; }
+    DbSet<AbuseReport>? AbuseReports { get; set; }
 
     /// <summary>
     /// Identity's users. Declared here so that account services can query them through

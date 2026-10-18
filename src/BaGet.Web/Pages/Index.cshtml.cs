@@ -25,7 +25,7 @@ public class IndexModel : PageModel
     public const int ResultsPerPage = 20;
 
     [BindProperty(Name = "q", SupportsGet = true)]
-    public string Query { get; set; }
+    public string? Query { get; set; }
 
     [BindProperty(Name = "p", SupportsGet = true)]
     [Range(1, int.MaxValue)]
@@ -52,7 +52,7 @@ public class IndexModel : PageModel
 
     public bool CanSort => SupportedSorts.Count > 1;
 
-    public IReadOnlyList<SearchResult> Packages { get; private set; }
+    public IReadOnlyList<SearchResult>? Packages { get; private set; }
 
     /// <summary>
     /// True for the site's front page: the root URL with no search. Everything else,
@@ -63,7 +63,7 @@ public class IndexModel : PageModel
     /// <summary>
     /// The feed's totals, shown on the front page. Null when the database cannot report them.
     /// </summary>
-    public FeedStatistics Totals { get; private set; }
+    public FeedStatistics? Totals { get; private set; }
 
     /// <summary>
     /// When each listed package ID was last published, by ID. Empty when unsupported.

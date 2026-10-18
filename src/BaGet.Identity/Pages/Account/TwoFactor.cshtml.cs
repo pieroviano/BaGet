@@ -25,12 +25,12 @@ public class TwoFactorModel : AccountPageModel
     /// <summary>
     /// The key to type into an authenticator that cannot scan the QR code.
     /// </summary>
-    public string SharedKey { get; private set; }
+    public string? SharedKey { get; private set; }
 
     /// <summary>
     /// The QR code of the setup link, an SVG built here from the user's own key.
     /// </summary>
-    public string QrCodeSvg { get; private set; }
+    public string? QrCodeSvg { get; private set; }
 
     public bool Reauthenticated { get; private set; }
 
@@ -45,16 +45,16 @@ public class TwoFactorModel : AccountPageModel
     /// </summary>
     public IReadOnlyList<string> RecoveryCodes { get; private set; } = Array.Empty<string>();
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
-    public string Message { get; private set; }
+    public string? Message { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
         return await LoadAsync() ? Page() : Challenge();
     }
 
-    public async Task<IActionResult> OnPostEnableAsync(string code)
+    public async Task<IActionResult> OnPostEnableAsync(string? code)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -73,7 +73,9 @@ public class TwoFactorModel : AccountPageModel
         {
             await UserManager.SetTwoFactorEnabledAsync(user, true);
             await SignInManager.RefreshSignInAsync(user);
+            #pragma warning disable CS8604
             RecoveryCodes = (await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(user, RecoveryCodeCount)).ToList();
+            #pragma warning restore CS8604
             Message = "Two-factor authentication is on. Keep these recovery codes somewhere safe: each works once, and they are not shown again.";
         }
 
@@ -82,7 +84,7 @@ public class TwoFactorModel : AccountPageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostDisableAsync(string password)
+    public async Task<IActionResult> OnPostDisableAsync(string? password)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -107,7 +109,7 @@ public class TwoFactorModel : AccountPageModel
     /// A new key makes the old authenticator and every recovery code useless; it must be
     /// set up and enabled again.
     /// </summary>
-    public async Task<IActionResult> OnPostResetAsync(string password)
+    public async Task<IActionResult> OnPostResetAsync(string? password)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -158,10 +160,12 @@ public class TwoFactorModel : AccountPageModel
         return true;
     }
 
-    private static string Format(string key)
+    private static string Format(string? key)
     {
         var result = new StringBuilder();
+        #pragma warning disable CS8602
         for (var i = 0; i < key.Length; i += 4)
+        #pragma warning restore CS8602
         {
             if (i > 0) result.Append(' ');
             result.Append(key, i, Math.Min(4, key.Length - i));
@@ -170,9 +174,11 @@ public class TwoFactorModel : AccountPageModel
         return result.ToString();
     }
 
-    internal static string SetupUri(string userName, string key)
+    #pragma warning disable CS8604
+    internal static string SetupUri(string? userName, string? key)
         => $"otpauth://totp/{Uri.EscapeDataString(Issuer)}:{Uri.EscapeDataString(userName)}"
            + $"?secret={key}&issuer={Uri.EscapeDataString(Issuer)}&digits=6";
+    #pragma warning restore CS8604
 
     internal static string RenderQrCode(string text)
     {

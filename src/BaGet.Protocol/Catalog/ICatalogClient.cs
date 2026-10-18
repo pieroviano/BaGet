@@ -28,7 +28,7 @@ public interface ICatalogClient
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>A catalog page.</returns>
     Task<CatalogPage> GetPageAsync(
-        string pageUrl,
+        string? pageUrl,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -39,7 +39,7 @@ public interface ICatalogClient
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>A catalog leaf.</returns>
     Task<PackageDeleteCatalogLeaf> GetPackageDeleteLeafAsync(
-        string leafUrl,
+        string? leafUrl,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -50,6 +50,6 @@ public interface ICatalogClient
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>A catalog leaf.</returns>
     Task<PackageDetailsCatalogLeaf> GetPackageDetailsLeafAsync(
-        string leafUrl,
+        string? leafUrl,
         CancellationToken cancellationToken = default);
 }

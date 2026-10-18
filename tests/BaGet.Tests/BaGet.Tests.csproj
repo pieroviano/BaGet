@@ -7,6 +7,7 @@
     <!-- This is necessary because BaGet.Azure references Microsoft.Azure.Cosmos.Table which has -->
     <!-- a transitive dependency on Microsoft.Azure.DocumentDB.Core with deprecated win7-x64 RID -->
     <UseRidGraph>true</UseRidGraph>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

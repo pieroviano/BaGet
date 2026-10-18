@@ -27,7 +27,7 @@ public class PackageDeletionService : IPackageDeletionService
     public PackageDeletionService(
         IPackageDatabase packages,
         IPackageStorageService storage,
-        IOptionsSnapshot<BaGetOptions> options,
+        IOptionsSnapshot<BaGetOptions>? options,
         ILogger<PackageDeletionService> logger,
         PackageChangeNotifier notifier)
     {
@@ -38,7 +38,7 @@ public class PackageDeletionService : IPackageDeletionService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<bool> TryDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> TryDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         switch (_options.PackageDeletionBehavior)
         {
@@ -53,7 +53,7 @@ public class PackageDeletionService : IPackageDeletionService
         }
     }
 
-    private async Task<bool> TryUnlistPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    private async Task<bool> TryUnlistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Unlisting package {PackageId} {PackageVersion}...", id, version);
 
@@ -71,7 +71,7 @@ public class PackageDeletionService : IPackageDeletionService
         return true;
     }
 
-    public async Task<bool> TryHardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> TryHardDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "Hard deleting package {PackageId} {PackageVersion} from the database...",

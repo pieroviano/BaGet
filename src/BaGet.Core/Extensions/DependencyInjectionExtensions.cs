@@ -43,7 +43,7 @@ public static partial class DependencyInjectionExtensions
     /// <returns>The dependency injection container.</returns>
     public static IServiceCollection AddBaGetOptions<TOptions>(
         this IServiceCollection services,
-        string key = null)
+        string? key = null)
         where TOptions : class
     {
         services.AddSingleton<IValidateOptions<TOptions>>(new ValidateBaGetOptions<TOptions>(key));
@@ -127,14 +127,18 @@ public static partial class DependencyInjectionExtensions
 
     private static void AddDefaultProviders(this IServiceCollection services)
     {
+        #pragma warning disable CS8621, CS8634
         services.AddProvider((provider, configuration) =>
+        #pragma warning restore CS8621, CS8634
         {
             if (!configuration.HasSearchType("null")) return null;
 
             return provider.GetRequiredService<NullSearchService>();
         });
 
+        #pragma warning disable CS8621, CS8634
         services.AddProvider((provider, configuration) =>
+        #pragma warning restore CS8621, CS8634
         {
             if (!configuration.HasSearchType("null")) return null;
 
@@ -153,7 +157,9 @@ public static partial class DependencyInjectionExtensions
                 return provider.GetRequiredService<NullStorageService>();
             }
 
+            #pragma warning disable CS8603
             return null;
+            #pragma warning restore CS8603
         });
     }
 
@@ -186,8 +192,8 @@ public static partial class DependencyInjectionExtensions
         var options = provider.GetRequiredService<IOptions<MirrorOptions>>().Value;
 
         var assembly = Assembly.GetEntryAssembly();
-        var assemblyName = assembly.GetName().Name;
-        var assemblyVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0";
+        var assemblyName = assembly?.GetName().Name;
+        var assemblyVersion = assembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0";
 
         var client = new HttpClient(new HttpClientHandler
         {
@@ -207,7 +213,7 @@ public static partial class DependencyInjectionExtensions
 
         return new NuGetClientFactory(
             httpClient,
-            options.Value.PackageSource.ToString());
+            options.Value.PackageSource?.ToString());
     }
 
     private static IUpstreamClient UpstreamClientFactory(IServiceProvider provider)

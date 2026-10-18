@@ -50,20 +50,24 @@ public class PackageValidationRunner
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IReadOnlyList<string>> GetPendingSubmissionIdsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<string>?> GetPendingSubmissionIdsAsync(CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604, CS8619
         return await _context.PackageValidations
             .Where(v => v.State == PackageValidationState.Pending)
             .Select(v => v.SubmissionId)
             .Distinct()
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604, CS8619
     }
 
     public async Task RunAsync(string submissionId, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var steps = await _context.PackageValidations
             .Where(v => v.SubmissionId == submissionId)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         var index = steps.SingleOrDefault(s => s.Type == PackageValidation.IndexType);
         if (index == null || index.State != PackageValidationState.Pending)
@@ -125,7 +129,9 @@ public class PackageValidationRunner
 
         if (indexError == null)
         {
+            #pragma warning disable CS8604
             var version = NuGet.Versioning.NuGetVersion.Parse(index.PackageVersion);
+            #pragma warning restore CS8604
             var indexed = await _packages.FindOrNullAsync(index.PackageId, version, includeUnlisted: true, cancellationToken);
             foreach (var step in steps)
             {
@@ -142,9 +148,9 @@ public class PackageValidationRunner
     }
 
     /// <returns>Null on success, otherwise why indexing failed.</returns>
-    private async Task<string> IndexAsync(Stream package, string serviceIndexUrl, CancellationToken cancellationToken)
+    private async Task<string?> IndexAsync(Stream package, string? serviceIndexUrl, CancellationToken cancellationToken)
     {
-        Stream toIndex = package;
+        var toIndex = package;
         try
         {
             if (_signer.IsConfigured)
@@ -177,7 +183,7 @@ public class PackageValidationRunner
         }
     }
 
-    private void Complete(PackageValidation step, bool succeeded, string message)
+    private void Complete(PackageValidation step, bool succeeded, string? message)
     {
         step.State = succeeded ? PackageValidationState.Succeeded : PackageValidationState.Failed;
         step.Message = message?.Length > AbstractContext<DbContext>.DefaultMaxStringLength

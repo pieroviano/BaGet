@@ -17,23 +17,23 @@ public class AzureBlobStorageOptions : IValidatableObject
     /// If provided, ignores <see cref="AccountName"/> and <see cref="AccessKey"/>.
     /// </summary>
     [SensitiveSetting]
-    public string ConnectionString { get; set; }
+    public string? ConnectionString { get; set; }
 
     /// <summary>
     /// The Azure Blob Storage account name. Ignored if <see cref="ConnectionString"/> is provided.
     /// </summary>
-    public string AccountName { get; set; }
+    public string? AccountName { get; set; }
 
     /// <summary>
     /// The Azure Blob Storage access key. Ignored if <see cref="ConnectionString"/> is provided.
     /// </summary>        
     [SensitiveSetting]
-    public string AccessKey { get; set; }
+    public string? AccessKey { get; set; }
 
     /// <summary>
     /// The Azure Blob Storage container name.
     /// </summary>
-    public string Container { get; set; }
+    public string? Container { get; set; }
 
     /// <summary>
     /// How long the shared access signatures handed out by

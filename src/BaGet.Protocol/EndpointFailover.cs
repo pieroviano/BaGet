@@ -35,7 +35,7 @@ internal static class EndpointFailover
     /// endpoint's failure, in the order the endpoints were tried.
     /// </exception>
     public static async Task<TResult> ExecuteAsync<TClient, TResult>(
-        IReadOnlyList<TClient> clients,
+        IReadOnlyList<TClient>? clients,
         Func<TClient, CancellationToken, Task<TResult>> operation,
         CancellationToken cancellationToken)
     {
@@ -48,7 +48,7 @@ internal static class EndpointFailover
                 "The service index does not advertise any endpoint for this resource");
         }
 
-        List<Exception> failures = null;
+        List<Exception>? failures = null;
 
         foreach (var client in clients)
         {
@@ -69,14 +69,18 @@ internal static class EndpointFailover
         // keeps throwing exactly what that endpoint threw, so that existing error handling
         // still works. Several endpoints report every failure, as knowing why each endpoint
         // was unusable is the only way to tell a local network problem from a server outage.
-        if (failures.Count == 1)
+        if (failures?.Count == 1)
         {
-            ExceptionDispatchInfo.Capture(failures[0]).Throw();
+            #pragma warning disable CS8604
+            ExceptionDispatchInfo.Capture(failures?[0]).Throw();
+            #pragma warning restore CS8604
         }
 
+        #pragma warning disable CS8604
         throw new AggregateException(
-            $"All {failures.Count} endpoints for this resource failed",
+            $"All {failures?.Count} endpoints for this resource failed",
             failures);
+        #pragma warning restore CS8604
     }
 
     /// <summary>

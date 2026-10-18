@@ -26,7 +26,7 @@ namespace BaGet.Identity;
 /// The user is the server's only administrator, so deleting them would leave nobody able to
 /// change the settings.
 /// </param>
-public record DeletionBlockers(IReadOnlyList<string> LastOwnerPackageIds, IReadOnlyList<string> Organizations, bool LastAdministrator = false)
+public record DeletionBlockers(IReadOnlyList<string?> LastOwnerPackageIds, IReadOnlyList<string?> Organizations, bool LastAdministrator = false)
 {
     /// <summary>Whether anything blocks the deletion.</summary>
     public bool Any => LastOwnerPackageIds.Count > 0 || Organizations.Count > 0 || LastAdministrator;
@@ -39,14 +39,14 @@ public record DeletionBlockers(IReadOnlyList<string> LastOwnerPackageIds, IReadO
 /// <param name="Failures">What could not be removed after the user was deleted; these IDs stay ownerless.</param>
 public record AdminDeletionResult(
     IdentityResult Result,
-    IReadOnlyList<string> KeptWithoutOwners,
+    IReadOnlyList<string?> KeptWithoutOwners,
     IReadOnlyList<string> DeletedPackageIds,
-    IReadOnlyList<string> Failures);
+    IReadOnlyList<string?> Failures);
 
 /// <summary>What happens to one organization when an administrator deletes a member.</summary>
 /// <param name="Name">The organization.</param>
 /// <param name="Outcome">A sentence for the confirmation page.</param>
-public record OrganizationOutcome(string Name, string Outcome);
+public record OrganizationOutcome(string? Name, string Outcome);
 
 /// <summary>What deleting a user as an administrator would remove or change.</summary>
 /// <param name="ApiKeys">How many API keys go.</param>
@@ -55,8 +55,8 @@ public record OrganizationOutcome(string Name, string Outcome);
 /// <param name="Organizations">What happens to each organization the user belongs to.</param>
 public record AdminDeletionPreview(
     int ApiKeys,
-    IReadOnlyList<string> DirectPackageIds,
-    IReadOnlyList<string> SoleOwnedPackageIds,
+    IReadOnlyList<string?> DirectPackageIds,
+    IReadOnlyList<string?> SoleOwnedPackageIds,
     IReadOnlyList<OrganizationOutcome> Organizations);
 
 /// <summary>
@@ -86,32 +86,40 @@ public class AccountDeletionService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<DeletionBlockers> GetBlockersAsync(BaGetUser user, CancellationToken cancellationToken)
+    public async Task<DeletionBlockers> GetBlockersAsync(BaGetUser? user, CancellationToken cancellationToken)
     {
-        var name = user.UserName.ToLowerInvariant();
+        #pragma warning disable CS8602
+        var name = user.UserName?.ToLowerInvariant();
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602, CS8604
         var owned = await _context.PackageOwners
             .AsNoTracking()
             .Where(o => o.OwnerName.ToLower() == name)
             .Select(o => o.PackageId)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
 
-        var lastOwner = new List<string>();
+        var lastOwner = new List<string?>();
         foreach (var packageId in owned.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(i => i, StringComparer.OrdinalIgnoreCase))
         {
-            var id = packageId.ToLowerInvariant();
+            var id = packageId?.ToLowerInvariant();
+            #pragma warning disable CS8602
             if (await _context.PackageOwners.CountAsync(o => o.PackageId.ToLower() == id, cancellationToken) == 1)
+            #pragma warning restore CS8602
             {
                 lastOwner.Add(packageId);
             }
         }
 
-        var blocking = new List<string>();
+        var blocking = new List<string?>();
         foreach (var organization in await OrganizationsToLeaveAsync(user, cancellationToken))
         {
+            #pragma warning disable CS8602
             var blocked = organization.OtherMembers > 0
                 ? organization.IsLastAdmin
                 : await OrganizationOwnsPackagesAsync(organization.Name, cancellationToken);
+            #pragma warning restore CS8602
 
             if (blocked) blocking.Add(organization.Name);
         }
@@ -126,10 +134,12 @@ public class AccountDeletionService
     /// <summary>
     /// Delete the user, or return the reasons it cannot be done.
     /// </summary>
-    public async Task<(DeletionBlockers Blockers, IdentityResult Result)> DeleteAsync(BaGetUser user, CancellationToken cancellationToken)
+    public async Task<(DeletionBlockers Blockers, IdentityResult Result)> DeleteAsync(BaGetUser? user, CancellationToken cancellationToken)
     {
         var blockers = await GetBlockersAsync(user, cancellationToken);
+        #pragma warning disable CS8619
         if (blockers.Any) return (blockers, null);
+        #pragma warning restore CS8619
 
         await StageCleanupAsync(user, administrator: false, cancellationToken);
 
@@ -149,7 +159,7 @@ public class AccountDeletionService
     /// <param name="actor">The administrator, for the log.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     public async Task<AdminDeletionResult> DeleteByAdministratorAsync(
-        BaGetUser user, bool deleteSoleOwnedPackages, string actor, CancellationToken cancellationToken)
+        BaGetUser? user, bool deleteSoleOwnedPackages, string? actor, CancellationToken cancellationToken)
     {
         var none = Array.Empty<string>();
 
@@ -162,14 +172,14 @@ public class AccountDeletionService
         }
 
         var soleOwned = blockers.LastOwnerPackageIds;
-        var userName = user.UserName;
+        var userName = user?.UserName;
 
         await StageCleanupAsync(user, administrator: true, cancellationToken);
         var result = await SaveDeletionAsync(user);
         if (!result.Succeeded) return new AdminDeletionResult(result, none, none, none);
 
         var deleted = new List<string>();
-        var failures = new List<string>();
+        var failures = new List<string?>();
         if (deleteSoleOwnedPackages)
         {
             foreach (var id in soleOwned)
@@ -183,7 +193,9 @@ public class AccountDeletionService
                         failed |= !await _packageDeletion.TryHardDeletePackageAsync(id, package.Version, cancellationToken);
                     }
 
+                    #pragma warning disable CS8604, CS8619
                     (failed ? failures : deleted).Add(id);
+                    #pragma warning restore CS8604, CS8619
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -204,9 +216,10 @@ public class AccountDeletionService
     /// <summary>What <see cref="DeleteByAdministratorAsync"/> would do to <paramref name="user"/>, for the confirmation page.</summary>
     public async Task<AdminDeletionPreview> PreviewAdministratorDeletionAsync(BaGetUser user, CancellationToken cancellationToken)
     {
-        var name = user.UserName.ToLowerInvariant();
+        var name = user.UserName?.ToLowerInvariant();
         var blockers = await GetBlockersAsync(user, cancellationToken);
 
+        #pragma warning disable CS8602, CS8604
         var direct = (await _context.PackageOwners
                 .AsNoTracking()
                 .Where(o => o.OwnerName.ToLower() == name)
@@ -215,6 +228,7 @@ public class AccountDeletionService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(i => i, StringComparer.OrdinalIgnoreCase)
             .ToList();
+        #pragma warning restore CS8602, CS8604
 
         var outcomes = new List<OrganizationOutcome>();
         foreach (var organization in await OrganizationsToLeaveAsync(user, cancellationToken))
@@ -222,12 +236,15 @@ public class AccountDeletionService
             string outcome;
             if (organization.OtherMembers == 0)
             {
+                #pragma warning disable CS8602
                 outcome = await OrganizationOwnsPackagesAsync(organization.Name, cancellationToken)
                     ? "The organization owns packages, so it is kept without members."
                     : "The organization has no other member and is deleted.";
+                #pragma warning restore CS8602
             }
             else if (organization.IsLastAdmin)
             {
+                #pragma warning disable CS8604
                 var successor = await _context.OrganizationMembers
                     .AsNoTracking()
                     .Where(m => m.OrganizationKey == organization.Key && m.UserId != user.Id)
@@ -235,6 +252,7 @@ public class AccountDeletionService
                     .Select(m => m.UserId)
                     .FirstAsync(cancellationToken);
                 var successorName = (await _users.FindByIdAsync(successor))?.UserName ?? successor;
+                #pragma warning restore CS8604
 
                 outcome = $"{successorName}, its longest-standing member, becomes its administrator.";
             }
@@ -246,7 +264,9 @@ public class AccountDeletionService
             outcomes.Add(new OrganizationOutcome(organization.Name, outcome));
         }
 
-        var keys = await _context.ApiKeys.CountAsync(k => k.UserId == user.Id, cancellationToken);
+        #pragma warning disable CS8602
+        var keys = await _context.ApiKeys?.CountAsync(k => k.UserId == user.Id, cancellationToken);
+        #pragma warning restore CS8602
 
         return new AdminDeletionPreview(keys, direct, blockers.LastOwnerPackageIds, outcomes);
     }
@@ -262,34 +282,44 @@ public class AccountDeletionService
     /// is kept. Otherwise those cases were refused beforehand.
     /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    private async Task StageCleanupAsync(BaGetUser user, bool administrator, CancellationToken cancellationToken)
+    private async Task StageCleanupAsync(BaGetUser? user, bool administrator, CancellationToken cancellationToken)
     {
-        var keys = await _context.ApiKeys.Where(k => k.UserId == user.Id).ToListAsync(cancellationToken);
-        _context.ApiKeys.RemoveRange(keys);
+        #pragma warning disable CS8602
+        var keys = await _context.ApiKeys?.Where(k => k.UserId == user.Id).ToListAsync(cancellationToken);
+        #pragma warning restore CS8602
+        _context.ApiKeys?.RemoveRange(keys);
 
-        var name = user.UserName.ToLowerInvariant();
-        var ownerships = await _context.PackageOwners.Where(o => o.OwnerName.ToLower() == name).ToListAsync(cancellationToken);
-        _context.PackageOwners.RemoveRange(ownerships);
+        var name = user?.UserName?.ToLowerInvariant();
+        #pragma warning disable CS8602
+        var ownerships = await _context.PackageOwners?.Where(o => o.OwnerName.ToLower() == name).ToListAsync(cancellationToken);
+        #pragma warning restore CS8602
+        _context.PackageOwners?.RemoveRange(ownerships);
 
         foreach (var organization in await OrganizationsToLeaveAsync(user, cancellationToken))
         {
+            #pragma warning disable CS8604
             var members = await _context.OrganizationMembers
                 .Where(m => m.OrganizationKey == organization.Key)
                 .ToListAsync(cancellationToken);
+            #pragma warning restore CS8604
 
             if (administrator && organization.OtherMembers > 0 && organization.IsLastAdmin)
             {
-                members.Where(m => m.UserId != user.Id).OrderBy(m => m.Key).First().IsAdmin = true;
+                members.Where(m => m.UserId != user?.Id).OrderBy(m => m.Key).First().IsAdmin = true;
             }
 
             // An organization of one with nothing to its name goes with its only member; an
             // administrator's deletion keeps one that owns packages, without members.
+            #pragma warning disable CS8602
             var removeOrganization = organization.OtherMembers == 0
                 && !(administrator && await OrganizationOwnsPackagesAsync(organization.Name, cancellationToken));
-            _context.OrganizationMembers.RemoveRange(removeOrganization ? members : members.Where(m => m.UserId == user.Id));
+            #pragma warning restore CS8602
+            _context.OrganizationMembers.RemoveRange(removeOrganization ? members : members.Where(m => m.UserId == user?.Id));
             if (removeOrganization)
             {
-                _context.Organizations.RemoveRange(await _context.Organizations.Where(o => o.Key == organization.Key).ToListAsync(cancellationToken));
+                #pragma warning disable CS8602
+                _context.Organizations?.RemoveRange(await _context.Organizations?.Where(o => o.Key == organization.Key).ToListAsync(cancellationToken));
+                #pragma warning restore CS8602
             }
         }
     }
@@ -297,11 +327,13 @@ public class AccountDeletionService
     // The cleanup is only staged. Deleting the user saves it in the same SaveChanges, so the
     // database applies all of it or none of it: a user that cannot be deleted keeps its keys,
     // ownerships and memberships.
-    private async Task<IdentityResult> SaveDeletionAsync(BaGetUser user)
+    private async Task<IdentityResult> SaveDeletionAsync(BaGetUser? user)
     {
         try
         {
+            #pragma warning disable CS8604
             var result = await _users.DeleteAsync(user);
+            #pragma warning restore CS8604
             if (!result.Succeeded) Discard();
 
             return result;
@@ -321,24 +353,28 @@ public class AccountDeletionService
         if (_context is DbContext context) context.ChangeTracker.Clear();
     }
 
-    private sealed record Membership(int Key, string Name, bool IsLastAdmin, int OtherMembers);
+    private sealed record Membership(int Key, string? Name, bool IsLastAdmin, int OtherMembers);
 
-    private async Task<IReadOnlyList<Membership>> OrganizationsToLeaveAsync(BaGetUser user, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<Membership>> OrganizationsToLeaveAsync(BaGetUser? user, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602, CS8604
         var mine = await _context.OrganizationMembers
             .AsNoTracking()
             .Where(m => m.UserId == user.Id && m.Organization != null)
             .Select(m => new { m.OrganizationKey, m.IsAdmin, m.Organization.Name })
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
 
         var result = new List<Membership>();
         foreach (var membership in mine)
         {
+            #pragma warning disable CS8602
             var others = await _context.OrganizationMembers
                 .AsNoTracking()
                 .Where(m => m.OrganizationKey == membership.OrganizationKey && m.UserId != user.Id)
                 .Select(m => m.IsAdmin)
                 .ToListAsync(cancellationToken);
+            #pragma warning restore CS8602
 
             result.Add(new Membership(
                 membership.OrganizationKey.GetValueOrDefault(),
@@ -350,10 +386,12 @@ public class AccountDeletionService
         return result;
     }
 
-    private Task<bool> OrganizationOwnsPackagesAsync(string organization, CancellationToken cancellationToken)
+    private Task<bool>? OrganizationOwnsPackagesAsync(string? organization, CancellationToken cancellationToken)
     {
-        var name = organization.ToLowerInvariant();
+        var name = organization?.ToLowerInvariant();
 
-        return _context.PackageOwners.AnyAsync(o => o.OwnerName.ToLower() == name, cancellationToken);
+        #pragma warning disable CS8602
+        return _context.PackageOwners?.AnyAsync(o => o.OwnerName.ToLower() == name, cancellationToken);
+        #pragma warning restore CS8602
     }
 }

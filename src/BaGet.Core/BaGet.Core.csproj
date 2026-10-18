@@ -5,6 +5,7 @@
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
     <Description>The core libraries that power BaGet Extension.</Description>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

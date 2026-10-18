@@ -39,7 +39,7 @@ public class ContactOwnersTests : IDisposable
         public override DateTime UtcNow => Now;
     }
 
-    private (BaGetApplication App, Browser Browser) Start(bool email = true, bool accounts = true, Action<IServiceCollection> configure = null)
+    private (BaGetApplication App, Browser Browser) Start(bool email = true, bool accounts = true, Action<IServiceCollection>? configure = null)
     {
         var settings = new Dictionary<string, string>
         {
@@ -68,7 +68,7 @@ public class ContactOwnersTests : IDisposable
         return (app, browser);
     }
 
-    private static async Task CreateUserAsync(BaGetApplication app, string name, string email, bool confirmed = true)
+    private static async Task CreateUserAsync(BaGetApplication app, string name, string? email, bool confirmed = true)
     {
         using var scope = app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
@@ -82,6 +82,7 @@ public class ContactOwnersTests : IDisposable
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
+        #pragma warning disable CS8602
         context.Packages.Add(new Package
         {
             Id = id,
@@ -98,6 +99,7 @@ public class ContactOwnersTests : IDisposable
             TargetFrameworks = new List<TargetFramework>(),
         });
         foreach (var owner in owners) context.PackageOwners.Add(new PackageOwner { PackageId = id, OwnerName = owner });
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
@@ -107,11 +109,15 @@ public class ContactOwnersTests : IDisposable
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
         var organization = new Organization { Name = name, Created = DateTime.UtcNow };
+        #pragma warning disable CS8602
         context.Organizations.Add(organization);
+        #pragma warning restore CS8602
         foreach (var (user, admin) in members)
         {
             var account = await users.FindByNameAsync(user);
+            #pragma warning disable CS8602
             context.OrganizationMembers.Add(new OrganizationMember { Organization = organization, UserId = account.Id, IsAdmin = admin });
+            #pragma warning restore CS8602
         }
 
         await context.SaveChangesAsync(CancellationToken.None);
@@ -147,7 +153,7 @@ public class ContactOwnersTests : IDisposable
     /// <summary>
     /// owner1 and acme (admin1 admin, member1 member) own Contact.Pkg; sender is signed in.
     /// </summary>
-    private async Task<(BaGetApplication App, Browser Browser)> SeedAsync(Action<IServiceCollection> configure = null)
+    private async Task<(BaGetApplication App, Browser Browser)> SeedAsync(Action<IServiceCollection>? configure = null)
     {
         var (app, browser) = Start(configure: configure);
         await CreateUserAsync(app, "owner1", "owner1@example.com");
@@ -202,7 +208,9 @@ public class ContactOwnersTests : IDisposable
         var html = await browser.GetPageAsync("packages/Contact.Pkg");
 
         Assert.Equal(HttpStatusCode.Redirect, page.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("account/login", page.Headers.Location.ToString());
+        #pragma warning restore CS8602
         Assert.DoesNotContain("contact-owners", html);
     }
 
@@ -389,7 +397,9 @@ public class ContactOwnersTests : IDisposable
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
             var sender = await users.FindByNameAsync("sender");
+            #pragma warning disable CS8602
             sender.EmailConfirmed = false;
+            #pragma warning restore CS8602
             Assert.True((await users.UpdateAsync(sender)).Succeeded);
         }
 

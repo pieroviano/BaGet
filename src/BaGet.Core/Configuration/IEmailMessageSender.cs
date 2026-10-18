@@ -17,8 +17,8 @@ public interface IEmailMessageSender
     /// <param name="textBody">The message.</param>
     Task SendAsync(
         string to,
-        string replyTo,
-        string replyToName,
+        string? replyTo,
+        string? replyToName,
         string subject,
         string textBody,
         CancellationToken cancellationToken);

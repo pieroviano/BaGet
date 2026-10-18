@@ -62,7 +62,7 @@ public class CatalogReader
     /// <summary>
     /// One page, or null if the page does not exist.
     /// </summary>
-    public async Task<CatalogPage> GetPageOrNullAsync(int pageIndex, CancellationToken cancellationToken)
+    public async Task<CatalogPage?> GetPageOrNullAsync(int pageIndex, CancellationToken cancellationToken)
     {
         if (pageIndex < 0) return null;
 
@@ -90,23 +90,23 @@ public class CatalogReader
     /// <summary>
     /// One leaf document as JSON, or null if no such leaf exists.
     /// </summary>
-    public async Task<string> GetLeafOrNullAsync(string commitId, CancellationToken cancellationToken)
+    public async Task<string?> GetLeafOrNullAsync(string commitId, CancellationToken cancellationToken)
     {
         if (!Guid.TryParseExact(commitId, "D", out _)) return null;
 
         var entry = await _catalog.FindOrNullAsync(commitId, cancellationToken);
         if (entry == null) return null;
 
-        JsonNode leaf;
+        JsonNode? leaf;
         using (var stream = await _storage.GetAsync(CatalogWriter.LeafPath(entry.CommitId), cancellationToken))
         {
             leaf = await JsonNode.ParseAsync(stream, cancellationToken: cancellationToken);
         }
 
         // The leaf's own URL is not stored, so it follows the host like every other URL.
-        leaf["@id"] = _url.GetCatalogLeafUrl(entry.CommitId);
+        leaf?["@id"] = _url.GetCatalogLeafUrl(entry.CommitId);
 
-        return leaf.ToJsonString();
+        return leaf?.ToJsonString();
     }
 
     internal static int PageCount(int entries) => (entries + PageSize - 1) / PageSize;

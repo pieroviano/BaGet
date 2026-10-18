@@ -91,7 +91,7 @@ public static class AccountsServiceCollectionExtensions
         services.Configure<SecurityStampValidatorOptions>(validation => validation.ValidationInterval = TimeSpan.Zero);
 
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
-        authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie.Configure(cookie =>
+        authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie?.Configure(cookie =>
         {
             cookie.LoginPath = "/account/login";
             cookie.LogoutPath = "/account/logout";

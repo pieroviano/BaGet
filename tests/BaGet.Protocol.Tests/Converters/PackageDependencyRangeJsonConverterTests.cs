@@ -68,7 +68,9 @@ public class PackageDependencyRangeJsonConverterTests
         var options = new JsonSerializerOptions();
         options.Converters.Add(new StringOrStringArrayJsonConverter());
 
+        #pragma warning disable CS8625
         var json = JsonSerializer.Serialize<string>(null, options);
+        #pragma warning restore CS8625
 
         Assert.Equal("null", json);
     }

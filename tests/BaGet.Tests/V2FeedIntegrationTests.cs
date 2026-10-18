@@ -23,7 +23,7 @@ public class V2FeedIntegrationTests : IDisposable
 
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     public V2FeedIntegrationTests(ITestOutputHelper output)
     {
@@ -32,10 +32,12 @@ public class V2FeedIntegrationTests : IDisposable
         _packageStream = TestResources.GetResourceStream(TestResources.Package);
     }
 
+    #pragma warning disable CS8602
     private static IEnumerable<XElement> Entries(string document)
         => XDocument.Parse(document).Root.Elements(Atom + "entry");
+    #pragma warning restore CS8602
 
-    private static string PropertyOf(XElement entry, string name)
+    private static string? PropertyOf(XElement entry, string name)
         => entry.Descendants(DataServices + name).FirstOrDefault()?.Value;
 
     [Fact]
@@ -64,12 +66,16 @@ public class V2FeedIntegrationTests : IDisposable
 
         var entityType = document.Descendants()
             .Single(e => e.Name.LocalName == "EntityType");
+        #pragma warning disable CS8602
         Assert.Equal("V2FeedPackage", entityType.Attribute("Name").Value);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8602
         var properties = entityType.Elements()
             .Where(e => e.Name.LocalName == "Property")
             .Select(e => e.Attribute("Name").Value)
             .ToList();
+        #pragma warning restore CS8602
 
         Assert.Contains("Id", properties);
         Assert.Contains("Version", properties);
@@ -118,7 +124,9 @@ public class V2FeedIntegrationTests : IDisposable
         using var feed = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'");
         var entry = Entries(await feed.Content.ReadAsStringAsync()).Single();
 
+        #pragma warning disable CS8602
         var source = entry.Element(Atom + "content").Attribute("src").Value;
+        #pragma warning restore CS8602
 
         // The advertised content URL has to actually serve the nupkg.
         using var download = await _client.GetAsync(source);
@@ -149,7 +157,9 @@ public class V2FeedIntegrationTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var document = XDocument.Parse(await response.Content.ReadAsStringAsync());
+        #pragma warning disable CS8602
         Assert.Equal("entry", document.Root.Name.LocalName);
+        #pragma warning restore CS8602
         Assert.Equal("1.2.3", PropertyOf(document.Root, "NormalizedVersion"));
     }
 
@@ -173,7 +183,9 @@ public class V2FeedIntegrationTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var entries = Entries(await response.Content.ReadAsStringAsync()).ToList();
 
+        #pragma warning disable CS8602
         Assert.Contains("TestData", entries.Select(e => e.Element(Atom + "title").Value));
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -192,7 +204,9 @@ public class V2FeedIntegrationTests : IDisposable
     {
         using var response = await _client.GetAsync("api/v2/Packages()");
 
+        #pragma warning disable CS8602
         Assert.Equal("application/atom+xml", response.Content.Headers.ContentType.MediaType);
+        #pragma warning restore CS8602
     }
 
     public void Dispose()

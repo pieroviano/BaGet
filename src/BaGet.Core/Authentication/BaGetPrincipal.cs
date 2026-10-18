@@ -22,11 +22,11 @@ public sealed class BaGetPrincipal
         packageGlobPattern: "*");
 
     public BaGetPrincipal(
-        string userId,
-        string userName,
+        string? userId,
+        string? userName,
         bool isSuperuser,
-        IReadOnlyList<string> scopes,
-        string packageGlobPattern,
+        IReadOnlyList<string>? scopes,
+        string? packageGlobPattern,
         bool isAdministrator = false)
     {
         UserId = userId;
@@ -37,9 +37,9 @@ public sealed class BaGetPrincipal
         PackageGlobPattern = string.IsNullOrEmpty(packageGlobPattern) ? "*" : packageGlobPattern;
     }
 
-    public string UserId { get; }
+    public string? UserId { get; }
 
-    public string UserName { get; }
+    public string? UserName { get; }
 
     public bool IsSuperuser { get; }
 
@@ -54,13 +54,13 @@ public sealed class BaGetPrincipal
 
     public bool HasScope(string scope) => IsSuperuser || Scopes.Contains(scope, StringComparer.Ordinal);
 
-    public bool MatchesPackage(string packageId) => IsSuperuser || GlobMatches(PackageGlobPattern, packageId);
+    public bool MatchesPackage(string? packageId) => IsSuperuser || GlobMatches(PackageGlobPattern, packageId);
 
     /// <summary>
     /// Match a package ID against a glob in which "*" stands for any run of characters.
     /// Package IDs are case insensitive, so the match is too.
     /// </summary>
-    internal static bool GlobMatches(string pattern, string packageId)
+    internal static bool GlobMatches(string pattern, string? packageId)
     {
         if (packageId == null) return false;
 

@@ -17,10 +17,12 @@ public class XunitLogger : ILogger
         _category = category ?? throw new ArgumentNullException(nameof(category));
     }
 
+    #pragma warning disable CS8633
     public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
+    #pragma warning restore CS8633
     public bool IsEnabled(LogLevel logLevel) => true;
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         _output.WriteLine($"{_category} [{eventId}] {formatter(state, exception)}");
 

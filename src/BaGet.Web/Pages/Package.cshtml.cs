@@ -34,41 +34,41 @@ public class PackageModel : PageModel
 
     public bool Found { get; private set; }
 
-    public Package Package { get; private set; }
+    public Package? Package { get; private set; }
 
     public bool IsDotnetTemplate { get; private set; }
     public bool IsDotnetTool { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public long TotalDownloads { get; private set; }
 
-    public IReadOnlyList<PackageDependent> UsedBy { get; set; }
-    public IReadOnlyList<DependencyGroupModel> DependencyGroups { get; private set; }
-    public IReadOnlyList<VersionModel> Versions { get; private set; }
+    public IReadOnlyList<PackageDependent>? UsedBy { get; set; }
+    public IReadOnlyList<DependencyGroupModel>? DependencyGroups { get; private set; }
+    public IReadOnlyList<VersionModel>? Versions { get; private set; }
 
-    public HtmlString Readme { get; private set; }
+    public HtmlString? Readme { get; private set; }
 
     internal IReadOnlyList<FrameworkGroup> FrameworkGroups { get; private set; } = Array.Empty<FrameworkGroup>();
     internal IReadOnlyList<InstallSnippet> InstallTabs { get; private set; } = Array.Empty<InstallSnippet>();
 
     /// <summary>Owner names; empty unless accounts are enabled and the package has owners.</summary>
-    public IReadOnlyList<string> Owners { get; private set; } = Array.Empty<string>();
+    public IReadOnlyList<string?> Owners { get; private set; } = Array.Empty<string>();
 
     /// <summary>
     /// Each owner's avatar address by name. Empty when Gravatar is off or accounts are disabled.
     /// </summary>
     public IReadOnlyDictionary<string, string> OwnerAvatars { get; private set; } = new Dictionary<string, string>();
 
-    public string IconUrl { get; private set; }
-    public string LicenseUrl { get; private set; }
-    public string PackageDownloadUrl { get; private set; }
+    public string? IconUrl { get; private set; }
+    public string? LicenseUrl { get; private set; }
+    public string? PackageDownloadUrl { get; private set; }
 
     /// <summary>
     /// This version on nuget.info, NuGet Package Explorer's web app, as nuget.org links it. nuget.info
     /// always downloads from nuget.org, so the link only works for a package that is also published there.
     /// </summary>
-    public string PackageExplorerUrl { get; private set; }
+    public string? PackageExplorerUrl { get; private set; }
 
-    public async Task OnGetAsync(string id, string version, CancellationToken cancellationToken)
+    public async Task OnGetAsync(string id, string? version, CancellationToken cancellationToken)
     {
         var packages = await _packages.FindPackagesAsync(id, cancellationToken);
         var listedPackages = packages.Where(p => p.Listed).ToList();
@@ -95,8 +95,11 @@ public class PackageModel : PageModel
         var packageVersion = Package.Version;
 
         Found = true;
+        #pragma warning disable CS8602, CS8604
         IsDotnetTemplate = Package.PackageTypes.Any(t => t.Name.Equals("Template", StringComparison.OrdinalIgnoreCase));
+        #pragma warning restore CS8604
         IsDotnetTool = Package.PackageTypes.Any(t => t.Name.Equals("DotnetTool", StringComparison.OrdinalIgnoreCase));
+        #pragma warning restore CS8602
         LastUpdated = packages.Max(p => p.Published);
         TotalDownloads = packages.Sum(p => p.Downloads);
 
@@ -124,19 +127,23 @@ public class PackageModel : PageModel
         {
             var owners = await ownership.GetOwnersAsync(Package.Id, cancellationToken);
             Owners = owners.Select(o => o.OwnerName).ToList();
+            #pragma warning disable CS8602
             OwnerAvatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
                 .GetUrlsAsync(Owners, 32, cancellationToken);
+            #pragma warning restore CS8602
         }
         PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
+        #pragma warning disable CS8604
         PackageExplorerUrl = "https://nuget.info/packages/"
             + Uri.EscapeDataString(Package.Id) + "/" + Uri.EscapeDataString(Package.NormalizedVersionString);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
     /// The license address, or null when there is none. A package that declares a license
     /// expression or file carries only the deprecation placeholder here, which leads nowhere useful.
     /// </summary>
-    private static string GetLicenseUrlOrNull(Package package)
+    private static string? GetLicenseUrlOrNull(Package package)
     {
         var url = package.LicenseUrlString;
         if (string.IsNullOrEmpty(url)) return null;
@@ -159,8 +166,8 @@ public class PackageModel : PageModel
             .ToList();
     }
 
-    private async Task<HtmlString> GetReadmeHtmlStringOrNullAsync(
-        string packageId,
+    private async Task<HtmlString?> GetReadmeHtmlStringOrNullAsync(
+        string? packageId,
         NuGetVersion packageVersion,
         CancellationToken cancellationToken)
     {
@@ -180,7 +187,7 @@ public class PackageModel : PageModel
 
     public record VersionModel
     {
-        public NuGetVersion Version { get; init; }
+        public NuGetVersion? Version { get; init; }
         public long Downloads { get; init; }
         public bool Selected { get; init; }
         public DateTime LastUpdated { get; init; }

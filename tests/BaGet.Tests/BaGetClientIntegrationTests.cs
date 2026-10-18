@@ -19,7 +19,7 @@ public class BaGetClientIntegrationTests : IDisposable
     private readonly NuGetClientFactory _clientFactory;
     private readonly NuGetClient _client;
 
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     public BaGetClientIntegrationTests(ITestOutputHelper output)
     {
@@ -40,9 +40,12 @@ public class BaGetClientIntegrationTests : IDisposable
         var client = _clientFactory.CreateServiceIndexClient();
         var index = await client.GetAsync();
 
+        #pragma warning disable CS8602
         Assert.Equal("3.0.0", index.Version);
         Assert.Equal(17, index.Resources.Count);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8604
         Assert.NotEmpty(index.GetResourceUrl(new[] { "PackageBaseAddress/3.0.0" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "PackagePublish/2.0.0" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "RegistrationsBaseUrl" }));
@@ -51,6 +54,7 @@ public class BaGetClientIntegrationTests : IDisposable
         Assert.NotEmpty(index.GetResourceUrl(new[] { "PackageDetailsUriTemplate/5.1.0" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "ReportAbuseUriTemplate/3.0.0-rc" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SymbolPackagePublish/4.9.0" }));
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -60,9 +64,11 @@ public class BaGetClientIntegrationTests : IDisposable
 
         var results = await _client.SearchAsync();
 
+        #pragma warning disable CS8604
         var result = Assert.Single(results);
         var author = Assert.Single(result.Authors);
         var version = Assert.Single(result.Versions);
+        #pragma warning restore CS8604
 
         Assert.Equal("TestData", result.PackageId);
         Assert.Equal("1.2.3", result.Version);
@@ -79,7 +85,9 @@ public class BaGetClientIntegrationTests : IDisposable
     {
         var results = await _client.SearchAsync("PackageDoesNotExist");
 
+        #pragma warning disable CS8604
         Assert.Empty(results);
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -87,9 +95,13 @@ public class BaGetClientIntegrationTests : IDisposable
     {
         await _app.AddPackageAsync(_packageStream);
 
+        #pragma warning disable CS8602
         var results = await _client.AutocompleteAsync();
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8604
         var result = Assert.Single(results);
+        #pragma warning restore CS8604
 
         Assert.Equal("TestData", result);
     }
@@ -97,9 +109,13 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsEmpty()
     {
+        #pragma warning disable CS8602
         var results = await _client.AutocompleteAsync("PackageDoesNotExist");
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8604
         Assert.Empty(results);
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -110,7 +126,9 @@ public class BaGetClientIntegrationTests : IDisposable
         var client = _clientFactory.CreateAutocompleteClient();
         var results = await client.ListPackageVersionsAsync("TestData");
 
+        #pragma warning disable CS8604
         var result = Assert.Single(results.Data);
+        #pragma warning restore CS8604
 
         Assert.Equal(1, results.TotalHits);
         Assert.Equal("1.2.3", result);
@@ -122,7 +140,9 @@ public class BaGetClientIntegrationTests : IDisposable
         var client = _clientFactory.CreateAutocompleteClient();
         var results = await client.ListPackageVersionsAsync("PackageDoesNotExist");
 
+        #pragma warning disable CS8604
         Assert.Empty(results.Data);
+        #pragma warning restore CS8604
         Assert.Equal(0, results.TotalHits);
     }
 
@@ -150,7 +170,7 @@ public class BaGetClientIntegrationTests : IDisposable
     [InlineData("TestData", "1.0.0", false)]
     [InlineData("TestData", "1.2.3", true)]
     [InlineData("PackageDoesNotExists", "1.0.0", false)]
-    public async Task PackageDownloadWorks(string packageId, string packageVersion, bool exists)
+    public async Task PackageDownloadWorks(string? packageId, string packageVersion, bool exists)
     {
         await _app.AddPackageAsync(_packageStream);
 

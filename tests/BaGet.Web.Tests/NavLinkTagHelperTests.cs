@@ -33,7 +33,7 @@ public class NavLinkTagHelperTests
     private static IHttpContextAccessor Accessor(
         string viewEnginePath,
         string requestPath = "/",
-        string areaName = null,
+        string? areaName = null,
         bool withEndpoint = true,
         bool withHttpContext = true)
     {
@@ -62,7 +62,7 @@ public class NavLinkTagHelperTests
         return new HttpContextAccessor { HttpContext = httpContext };
     }
 
-    private static string ClassOf(TagHelperOutput output)
+    private static string? ClassOf(TagHelperOutput output)
         => output.Attributes.ContainsName("class")
             ? output.Attributes["class"].Value?.ToString()
             : null;

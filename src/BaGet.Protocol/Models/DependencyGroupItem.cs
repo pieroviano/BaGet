@@ -14,11 +14,11 @@ public class DependencyGroupItem
     /// The target framework that these dependencies are applicable to.
     /// </summary>
     [JsonPropertyName("targetFramework")]
-    public string TargetFramework { get; set; }
+    public string? TargetFramework { get; set; }
 
     /// <summary>
     /// A list of dependencies.
     /// </summary>
     [JsonPropertyName("dependencies")]
-    public List<DependencyItem> Dependencies { get; set; }
+    public List<DependencyItem>? Dependencies { get; set; }
 }

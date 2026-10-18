@@ -100,7 +100,7 @@ public static class PackageArchiveReaderExtensions
         return SemVerLevel.Unknown;
     }
 
-    private static Uri ParseUri(string uriString)
+    private static Uri? ParseUri(string uriString)
     {
         if (string.IsNullOrEmpty(uriString)) return null;
 
@@ -134,12 +134,16 @@ public static class PackageArchiveReaderExtensions
         if (string.IsNullOrEmpty(repository?.Url) ||
             !Uri.TryCreate(repository.Url, UriKind.Absolute, out var repositoryUri))
         {
+            #pragma warning disable CS8619
             return (null, null);
+            #pragma warning restore CS8619
         }
 
         if (repositoryUri.Scheme != Uri.UriSchemeHttps)
         {
+            #pragma warning disable CS8619
             return (null, null);
+            #pragma warning restore CS8619
         }
 
         if (repository.Type.Length > 100)

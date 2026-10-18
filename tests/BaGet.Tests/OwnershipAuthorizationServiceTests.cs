@@ -28,10 +28,10 @@ public class OwnershipAuthorizationServiceTests : IDisposable
 
     public void Dispose() => _app.Dispose();
 
-    private static BaGetPrincipal Principal(bool administrator, string glob = "*", params string[] scopes)
+    private static BaGetPrincipal Principal(bool administrator, string? glob = "*", params string[]? scopes)
         => new BaGetPrincipal("someone-id", "someone", isSuperuser: false, scopes, glob, isAdministrator: administrator);
 
-    private async Task<bool> AuthorizeAsync(BaGetPrincipal principal, PackageAction action, string id)
+    private async Task<bool> AuthorizeAsync(BaGetPrincipal? principal, PackageAction action, string? id)
     {
         using var scope = _app.Services.CreateScope();
 
@@ -74,11 +74,13 @@ public class OwnershipAuthorizationServiceTests : IDisposable
     [Theory]
     [InlineData(ApiKeyScopes.Push)]
     [InlineData(ApiKeyScopes.PushVersion)]
-    public async Task AnAdministratorPushesAVersionOfAnExistingIdWithEitherPushScope(string scope)
+    public async Task AnAdministratorPushesAVersionOfAnExistingIdWithEitherPushScope(string? scope)
     {
         await SeedOwnerlessAsync("Other.Package");
 
+        #pragma warning disable CS8604
         Assert.True(await AuthorizeAsync(Principal(true, "*", scope), PackageAction.Push, "Other.Package"));
+        #pragma warning restore CS8604
     }
 
     [Fact]

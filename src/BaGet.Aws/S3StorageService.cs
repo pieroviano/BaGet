@@ -24,8 +24,8 @@ public class S3StorageService : IStorageService, IListableStorageService
     // See: https://github.com/dotnet/corefx/blob/master/src/Common/src/CoreLib/System/IO/Stream.cs#L35
     private const int DefaultCopyBufferSize = 81920;
 
-    private readonly string _bucket;
-    private readonly string _prefix;
+    private readonly string? _bucket;
+    private readonly string? _prefix;
     private readonly AmazonS3Client _client;
 
     public S3StorageService(IOptionsSnapshot<S3StorageOptions> options, AmazonS3Client client)
@@ -141,7 +141,7 @@ public class S3StorageService : IStorageService, IListableStorageService
         // "staging-archive/...".
         var prefix = PrepareKey(pathPrefix.TrimEnd('/') + Separator);
         var paths = new List<string>();
-        string continuation = null;
+        string? continuation = null;
 
         do
         {

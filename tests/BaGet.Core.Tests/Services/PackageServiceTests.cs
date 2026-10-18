@@ -91,8 +91,8 @@ public class PackageServiceTests
         }
 
         private void Setup(
-            IReadOnlyList<Package> localPackages = null,
-            IReadOnlyList<NuGetVersion> upstreamPackages = null)
+            IReadOnlyList<Package>? localPackages = null,
+            IReadOnlyList<NuGetVersion>? upstreamPackages = null)
         {
             localPackages = localPackages ?? new List<Package>();
             upstreamPackages = upstreamPackages ?? new List<NuGetVersion>();
@@ -181,8 +181,8 @@ public class PackageServiceTests
         }
 
         private void Setup(
-            IReadOnlyList<Package> localPackages = null,
-            IReadOnlyList<Package> upstreamPackages = null)
+            IReadOnlyList<Package>? localPackages = null,
+            IReadOnlyList<Package>? upstreamPackages = null)
         {
             localPackages = localPackages ?? new List<Package>();
             upstreamPackages = upstreamPackages ?? new List<Package>();
@@ -229,7 +229,7 @@ public class PackageServiceTests
         {
             _db
                 .Setup(p => p.FindOrNullAsync(_id, _version,  /*includeUnlisted:*/ true, _cancellationToken))
-                .ReturnsAsync((Package)null);
+                .ReturnsAsync((Package?)null);
 
             var result = await _target.FindPackageOrNullAsync(_id, _version, _cancellationToken);
 
@@ -296,7 +296,7 @@ public class PackageServiceTests
 
             _upstream
                 .Setup(u => u.DownloadPackageOrNullAsync(_id, _version, _cancellationToken))
-                .ReturnsAsync((Stream)null);
+                .ReturnsAsync((Stream?)null);
 
             await TargetAsync();
 

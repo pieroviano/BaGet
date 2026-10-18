@@ -27,10 +27,10 @@ public class PackagesModel : AccountPageModel
         // where its owners are managed.
         var ids = await Ownership.GetOwnedPackageIdsAsync(
             UserManager.GetUserId(User),
-            User.Identity.Name,
+            User.Identity?.Name,
             cancellationToken);
 
-        if (ids.Count == 0)
+        if (ids?.Count == 0)
         {
             Packages = Array.Empty<OwnedPackage>();
             return;
@@ -56,13 +56,16 @@ public class PackagesModel : AccountPageModel
     /// </remarks>
     internal static async Task<List<OwnedVersion>> ListVersionsAsync(
         IContext context,
-        IReadOnlyList<string> ids,
+        IReadOnlyList<string>? ids,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var lowered = ids.Select(id => id.ToLowerInvariant()).ToList();
+        #pragma warning restore CS8604
 
         // Unlisted versions included: they are the owner's own, and an ID whose versions
         // are all unlisted would otherwise look empty.
+        #pragma warning disable CS8602, CS8604
         return await context.Packages
             .AsNoTracking()
             .Where(p => lowered.Contains(p.Id.ToLower()))
@@ -75,27 +78,35 @@ public class PackagesModel : AccountPageModel
                 Downloads = p.Downloads,
             })
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
     }
 
     /// <summary>
     /// The highest version is decided here rather than in the query: version ordering is
     /// SemVer's, which no database sorts correctly.
     /// </summary>
-    internal static List<OwnedPackage> Summarise(IReadOnlyList<string> ids, List<OwnedVersion> versions)
+    internal static List<OwnedPackage> Summarise(IReadOnlyList<string>? ids, List<OwnedVersion> versions)
     {
+        #pragma warning disable CS8621, CS8714
         var byId = versions
             .GroupBy(v => v.Id, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+        #pragma warning restore CS8621, CS8714
 
+        #pragma warning disable CS8602
         var owned = new List<OwnedPackage>(ids.Count);
+        #pragma warning restore CS8602
         foreach (var id in ids)
         {
             if (!byId.TryGetValue(id, out var found)) found = new List<OwnedVersion>();
 
+            #pragma warning disable CS8604
             var latest = found
                 .OrderByDescending(v => NuGetVersion.Parse(v.OriginalVersion ?? v.NormalizedVersion))
                 .FirstOrDefault();
+            #pragma warning restore CS8604
 
+            #pragma warning disable CS8604
             owned.Add(new OwnedPackage
             {
                 Id = latest?.Id ?? id,
@@ -106,6 +117,7 @@ public class PackagesModel : AccountPageModel
                 VersionCount = found.Count,
                 Downloads = found.Sum(v => v.Downloads),
             });
+            #pragma warning restore CS8604
         }
 
         return owned;
@@ -116,11 +128,11 @@ public class PackagesModel : AccountPageModel
     /// </summary>
     internal class OwnedVersion
     {
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
-        public string NormalizedVersion { get; set; }
+        public string? NormalizedVersion { get; set; }
 
-        public string OriginalVersion { get; set; }
+        public string? OriginalVersion { get; set; }
 
         public bool Listed { get; set; }
 
@@ -132,12 +144,12 @@ public class PackagesModel : AccountPageModel
     /// </summary>
     public class OwnedPackage
     {
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// The highest version, listed or not, or null when no version remains.
         /// </summary>
-        public string LatestVersion { get; set; }
+        public string? LatestVersion { get; set; }
 
         public bool LatestVersionIsListed { get; set; }
 

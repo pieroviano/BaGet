@@ -14,12 +14,12 @@ public class DependencyItem
     /// The ID of the package dependency.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>
     /// The allowed version range of the dependency.
     /// </summary>
     [JsonPropertyName("range")]
     [JsonConverter(typeof(PackageDependencyRangeJsonConverter))]
-    public string Range { get; set; }
+    public string? Range { get; set; }
 }

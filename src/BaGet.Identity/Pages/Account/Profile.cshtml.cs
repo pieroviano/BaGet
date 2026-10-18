@@ -9,5 +9,7 @@ public class MyProfileModel : AccountPageModel
 {
     protected override bool RequiresSignIn => true;
 
-    public IActionResult OnGet() => LocalRedirect(Url.Content($"~/profiles/{System.Uri.EscapeDataString(User.Identity.Name)}"));
+    #pragma warning disable CS8604
+    public IActionResult OnGet() => LocalRedirect(Url.Content($"~/profiles/{System.Uri.EscapeDataString(User.Identity?.Name)}"));
+    #pragma warning restore CS8604
 }

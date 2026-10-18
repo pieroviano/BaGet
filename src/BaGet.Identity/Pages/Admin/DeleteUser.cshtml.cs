@@ -18,14 +18,14 @@ public class DeleteUserModel : AdminPageModel
 {
     /// <summary>The user to delete.</summary>
     [BindProperty(SupportsGet = true)]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>"keep" (default) or "delete": what to do with the IDs only this user owns.</summary>
     [BindProperty]
     public string SoleOwned { get; set; } = "keep";
 
     /// <summary>What the deletion would remove or change.</summary>
-    public AdminDeletionPreview Preview { get; private set; }
+    public AdminDeletionPreview? Preview { get; private set; }
 
     /// <summary>Whether the user is the server's only administrator.</summary>
     public bool LastAdministrator { get; private set; }
@@ -46,7 +46,7 @@ public class DeleteUserModel : AdminPageModel
     public const string ReadOnlyMessage = "The server is read-only, so packages cannot be deleted. Leave them without owners, or turn read-only mode off.";
 
     /// <summary>Why the deletion was refused.</summary>
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     /// <summary>Shows what the deletion does.</summary>
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
@@ -60,7 +60,7 @@ public class DeleteUserModel : AdminPageModel
     }
 
     /// <summary>Deletes the user after the administrator's password, then returns to the users.</summary>
-    public async Task<IActionResult> OnPostAsync(string password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostAsync(string? password, CancellationToken cancellationToken)
     {
         var (user, refusal) = await FindTargetAsync();
         if (refusal != null) return refusal;
@@ -87,7 +87,7 @@ public class DeleteUserModel : AdminPageModel
 
         var name = user.UserName;
         var outcome = await HttpContext.RequestServices.GetRequiredService<AccountDeletionService>()
-            .DeleteByAdministratorAsync(user, deletePackages, current.UserName, cancellationToken);
+            .DeleteByAdministratorAsync(user, deletePackages, current?.UserName, cancellationToken);
 
         if (!outcome.Result.Succeeded)
         {
@@ -106,7 +106,7 @@ public class DeleteUserModel : AdminPageModel
         return RedirectToPage("/Admin/Users");
     }
 
-    private static string Summarize(string name, AdminDeletionResult outcome)
+    private static string Summarize(string? name, AdminDeletionResult outcome)
     {
         var text = $"{name} was deleted.";
         if (outcome.DeletedPackageIds.Count > 0) text += $" Packages deleted: {string.Join(", ", outcome.DeletedPackageIds)}.";
@@ -119,19 +119,27 @@ public class DeleteUserModel : AdminPageModel
     private async Task<(BaGetUser User, IActionResult Refusal)> FindTargetAsync()
     {
         var current = await UserManager.GetUserAsync(User);
+        #pragma warning disable CS8619
         if (current == null) return (null, Challenge());
+        #pragma warning restore CS8619
 
         var user = string.IsNullOrEmpty(Name) ? null : await UserManager.FindByNameAsync(Name);
+        #pragma warning disable CS8619
         if (user == null) return (null, NotFound());
+        #pragma warning restore CS8619
 
         if (user.Id == current.Id)
         {
             TempData["Error"] = "Delete your own account from your account settings.";
 
+            #pragma warning disable CS8619
             return (null, RedirectToPage("/Admin/Users"));
+            #pragma warning restore CS8619
         }
 
+        #pragma warning disable CS8619
         return (user, null);
+        #pragma warning restore CS8619
     }
 
     private async Task LoadAsync(BaGetUser user, CancellationToken cancellationToken)

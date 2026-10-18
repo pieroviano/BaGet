@@ -485,7 +485,7 @@ public class PackageStorageServiceTests
 
         protected string FullPath(string path) => Path.Combine(_storePath, path);
 
-        protected async Task<PackageSaveResult> SaveAsync(string package, string nuspec, string readme, string icon)
+        protected async Task<PackageSaveResult> SaveAsync(string? package, string? nuspec, string? readme, string? icon)
         {
             using (var packageStream = StringStream(package))
             using (var nuspecStream = StringStream(nuspec))
@@ -506,7 +506,9 @@ public class PackageStorageServiceTests
         {
             var fullPath = FullPath(path);
 
+            #pragma warning disable CS8604
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            #pragma warning restore CS8604
             await File.WriteAllTextAsync(fullPath, content);
         }
 
@@ -515,7 +517,7 @@ public class PackageStorageServiceTests
             return File.ReadAllTextAsync(FullPath(path));
         }
 
-        private Stream StringStream(string input)
+        private Stream? StringStream(string? input)
         {
             if (input == null) return null;
 
@@ -556,9 +558,11 @@ public class PackageStorageServiceTests
             return new MemoryStream(bytes);
         }
 
-        protected async Task<string> ToStringAsync(Stream input)
+        protected async Task<string> ToStringAsync(Stream? input)
         {
+            #pragma warning disable CS8604
             using (var reader = new StreamReader(input))
+            #pragma warning restore CS8604
             {
                 return await reader.ReadToEndAsync();
             }

@@ -340,7 +340,7 @@ public class SymbolIndexingServiceTests
                 It.IsAny<NuGetVersion>(),
                 It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Package)null);
+            .ReturnsAsync((Package?)null);
     }
 
     /// <summary>

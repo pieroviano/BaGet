@@ -16,10 +16,10 @@ namespace BaGet.Protocol;
 /// </summary>
 public class NuGetClient
 {
-    private readonly IPackageContentClient _contentClient;
-    private readonly IPackageMetadataClient _metadataClient;
-    private readonly ISearchClient _searchClient;
-    private readonly IAutocompleteClient _autocompleteClient;
+    private readonly IPackageContentClient? _contentClient;
+    private readonly IPackageMetadataClient? _metadataClient;
+    private readonly ISearchClient? _searchClient;
+    private readonly IAutocompleteClient? _autocompleteClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NuGetClient"/> class
@@ -37,7 +37,7 @@ public class NuGetClient
     ///
     /// For NuGet.org, use https://api.nuget.org/v3/index.json
     /// </param>
-    public NuGetClient(string serviceIndexUrl)
+    public NuGetClient(string? serviceIndexUrl)
     {
         var httpClient = new HttpClient(new HttpClientHandler
         {
@@ -76,9 +76,13 @@ public class NuGetClient
         string packageId,
         CancellationToken cancellationToken = default)
     {
-        var versions = await _contentClient.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+        #pragma warning disable CS8602
+        var versions = await _contentClient?.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8604
         return (versions != null && versions.Versions.Any());
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -93,7 +97,9 @@ public class NuGetClient
         NuGetVersion packageVersion,
         CancellationToken cancellationToken = default)
     {
-        var versions = await _contentClient.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+        #pragma warning disable CS8602
+        var versions = await _contentClient?.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+        #pragma warning restore CS8602
 
         if (versions == null)
         {
@@ -115,9 +121,11 @@ public class NuGetClient
     /// <exception cref="PackageNotFoundException">
     ///     The package could not be found.
     /// </exception>
-    public virtual async Task<Stream> DownloadPackageAsync(string packageId, NuGetVersion packageVersion, CancellationToken cancellationToken = default)
+    public virtual async Task<Stream> DownloadPackageAsync(string? packageId, NuGetVersion packageVersion, CancellationToken cancellationToken = default)
     {
-        var stream = await _contentClient.DownloadPackageOrNullAsync(packageId, packageVersion, cancellationToken);
+        #pragma warning disable CS8602
+        var stream = await _contentClient?.DownloadPackageOrNullAsync(packageId, packageVersion, cancellationToken);
+        #pragma warning restore CS8602
 
         if (stream == null)
         {
@@ -142,7 +150,9 @@ public class NuGetClient
         NuGetVersion packageVersion,
         CancellationToken cancellationToken = default)
     {
-        var stream = await _contentClient.DownloadPackageManifestOrNullAsync(packageId, packageVersion, cancellationToken);
+        #pragma warning disable CS8602
+        var stream = await _contentClient?.DownloadPackageManifestOrNullAsync(packageId, packageVersion, cancellationToken);
+        #pragma warning restore CS8602
 
         if (stream == null)
         {
@@ -193,7 +203,9 @@ public class NuGetClient
             return await ListPackageVersionsAsync(packageId, cancellationToken);
         }
 
-        var response = await _contentClient.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+        #pragma warning disable CS8602
+        var response = await _contentClient?.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+        #pragma warning restore CS8602
 
         if (response == null)
         {
@@ -215,14 +227,18 @@ public class NuGetClient
     {
         var result = new List<PackageMetadata>();
 
-        var registrationIndex = await _metadataClient.GetRegistrationIndexOrNullAsync(packageId, cancellationToken);
+        #pragma warning disable CS8602
+        var registrationIndex = await _metadataClient?.GetRegistrationIndexOrNullAsync(packageId, cancellationToken);
+        #pragma warning restore CS8602
 
         if (registrationIndex == null)
         {
             return result;
         }
 
+        #pragma warning disable CS8602
         foreach (var registrationIndexPage in registrationIndex.Pages)
+        #pragma warning restore CS8602
         {
             // If the package's registration index is too big, it will be split into registration
             // pages stored at different URLs. We will need to fetch each page's items individually.
@@ -230,9 +246,11 @@ public class NuGetClient
             var items = registrationIndexPage.ItemsOrNull;
             if (items == null)
             {
-                var externalRegistrationPage = await _metadataClient.GetRegistrationPageAsync(
+                #pragma warning disable CS8602
+                var externalRegistrationPage = await _metadataClient?.GetRegistrationPageAsync(
                     registrationIndexPage.RegistrationPageUrl,
                     cancellationToken);
+                #pragma warning restore CS8602
 
                 // Skip malformed external pages.
                 if (externalRegistrationPage?.ItemsOrNull == null) continue;
@@ -240,7 +258,9 @@ public class NuGetClient
                 items = externalRegistrationPage.ItemsOrNull;
             }
 
+            #pragma warning disable CS8620
             result.AddRange(items.Select(i => i.PackageMetadata));
+            #pragma warning restore CS8620
         }
 
         return result;
@@ -256,19 +276,23 @@ public class NuGetClient
     /// <exception cref="PackageNotFoundException">
     ///     The package could not be found.
     /// </exception>
-    public virtual async Task<PackageMetadata> GetPackageMetadataAsync(
+    public virtual async Task<PackageMetadata?> GetPackageMetadataAsync(
         string packageId,
         NuGetVersion packageVersion,
         CancellationToken cancellationToken = default)
     {
-        var registrationIndex = await _metadataClient.GetRegistrationIndexOrNullAsync(packageId, cancellationToken);
+        #pragma warning disable CS8602
+        var registrationIndex = await _metadataClient?.GetRegistrationIndexOrNullAsync(packageId, cancellationToken);
+        #pragma warning restore CS8602
 
         if (registrationIndex == null)
         {
             throw new PackageNotFoundException(packageId, packageVersion);
         }
 
+        #pragma warning disable CS8602
         foreach (var registrationIndexPage in registrationIndex.Pages)
+        #pragma warning restore CS8602
         {
             // Skip pages that do not contain the desired package version.
             var pageLowerVersion = registrationIndexPage.ParseLower();
@@ -283,9 +307,11 @@ public class NuGetClient
             var items = registrationIndexPage.ItemsOrNull;
             if (items == null)
             {
-                var externalRegistrationPage = await _metadataClient.GetRegistrationPageAsync(
+                #pragma warning disable CS8602
+                var externalRegistrationPage = await _metadataClient?.GetRegistrationPageAsync(
                     registrationIndexPage.RegistrationPageUrl,
                     cancellationToken);
+                #pragma warning restore CS8602
 
                 // Skip malformed external pages.
                 if (externalRegistrationPage?.ItemsOrNull == null) continue;
@@ -315,11 +341,13 @@ public class NuGetClient
     /// </param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The search results, including prerelease packages.</returns>
-    public virtual async Task<IReadOnlyList<SearchResult>> SearchAsync(
-        string query = null,
+    public virtual async Task<IReadOnlyList<SearchResult>?> SearchAsync(
+        string? query = null,
         CancellationToken cancellationToken = default)
     {
-        var response = await _searchClient.SearchAsync(query, cancellationToken: cancellationToken);
+        #pragma warning disable CS8602
+        var response = await _searchClient?.SearchAsync(query, cancellationToken: cancellationToken);
+        #pragma warning restore CS8602
 
         return response.Data;
     }
@@ -334,19 +362,21 @@ public class NuGetClient
     /// <param name="take">The number of results to include.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The search results, including prerelease packages.</returns>
-    public virtual async Task<IReadOnlyList<SearchResult>> SearchAsync(
-        string query,
+    public virtual async Task<IReadOnlyList<SearchResult>?> SearchAsync(
+        string? query,
         int skip,
         int take,
         CancellationToken cancellationToken = default)
     {
-        var response =  await _searchClient.SearchAsync(
+        #pragma warning disable CS8602
+        var response =  await _searchClient?.SearchAsync(
             query,
             skip,
             take,
             includePrerelease: true,
             includeSemVer2: true,
             cancellationToken: cancellationToken);
+        #pragma warning restore CS8602
 
         return response.Data;
     }
@@ -360,15 +390,17 @@ public class NuGetClient
     /// <param name="includePrerelease">Whether to include prerelease packages.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The search results.</returns>
-    public virtual async Task<IReadOnlyList<SearchResult>> SearchAsync(
-        string query,
+    public virtual async Task<IReadOnlyList<SearchResult>?> SearchAsync(
+        string? query,
         bool includePrerelease,
         CancellationToken cancellationToken = default)
     {
-        var response = await _searchClient.SearchAsync(
+        #pragma warning disable CS8602
+        var response = await _searchClient?.SearchAsync(
             query,
             includePrerelease: includePrerelease,
             cancellationToken: cancellationToken);
+        #pragma warning restore CS8602
 
         return response.Data;
     }
@@ -384,20 +416,22 @@ public class NuGetClient
     /// <param name="includePrerelease">Whether to include prerelease packages.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The search results, including prerelease packages.</returns>
-    public virtual async Task<IReadOnlyList<SearchResult>> SearchAsync(
-        string query,
+    public virtual async Task<IReadOnlyList<SearchResult>?> SearchAsync(
+        string? query,
         int skip,
         int take,
         bool includePrerelease,
         CancellationToken cancellationToken = default)
     {
-        var response = await _searchClient.SearchAsync(
+        #pragma warning disable CS8602
+        var response = await _searchClient?.SearchAsync(
             query,
             skip,
             take,
             includePrerelease,
             includeSemVer2: true,
             cancellationToken);
+        #pragma warning restore CS8602
 
         return response.Data;
     }
@@ -410,13 +444,17 @@ public class NuGetClient
     /// </param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The package IDs that matched the query.</returns>
-    public virtual async Task<IReadOnlyList<string>> AutocompleteAsync(
-        string query = null,
+    public virtual async Task<IReadOnlyList<string>?>? AutocompleteAsync(
+        string? query = null,
         CancellationToken cancellationToken = default)
     {
-        var response = await _autocompleteClient.AutocompleteAsync(query, cancellationToken: cancellationToken);
+        #pragma warning disable CS8602
+        var response = await _autocompleteClient?.AutocompleteAsync(query, cancellationToken: cancellationToken);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8619
         return response.Data;
+        #pragma warning restore CS8619
     }
 
     /// <summary>
@@ -429,21 +467,25 @@ public class NuGetClient
     /// <param name="take">The number of results to include.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The package IDs that matched the query.</returns>
-    public virtual async Task<IReadOnlyList<string>> AutocompleteAsync(
-        string query,
+    public virtual async Task<IReadOnlyList<string>?>? AutocompleteAsync(
+        string? query,
         int skip,
         int take,
         CancellationToken cancellationToken = default)
     {
-        var response = await _autocompleteClient.AutocompleteAsync(
+        #pragma warning disable CS8602
+        var response = await _autocompleteClient?.AutocompleteAsync(
             query,
             skip,
             take,
             includePrerelease: true,
             includeSemVer2: true,
             cancellationToken);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8619
         return response.Data;
+        #pragma warning restore CS8619
     }
 
     /// <summary>
@@ -455,17 +497,21 @@ public class NuGetClient
     /// <param name="includePrerelease">Whether to include prerelease packages.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The package IDs that matched the query.</returns>
-    public virtual async Task<IReadOnlyList<string>> AutocompleteAsync(
-        string query,
+    public virtual async Task<IReadOnlyList<string>?>? AutocompleteAsync(
+        string? query,
         bool includePrerelease,
         CancellationToken cancellationToken = default)
     {
-        var response = await _autocompleteClient.AutocompleteAsync(
+        #pragma warning disable CS8602
+        var response = await _autocompleteClient?.AutocompleteAsync(
             query,
             includePrerelease: includePrerelease,
             cancellationToken: cancellationToken);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8619
         return response.Data;
+        #pragma warning restore CS8619
     }
 
     /// <summary>
@@ -479,21 +525,25 @@ public class NuGetClient
     /// <param name="includePrerelease">Whether to include prerelease packages.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The package IDs that matched the query.</returns>
-    public virtual async Task<IReadOnlyList<string>> AutocompleteAsync(
-        string query,
+    public virtual async Task<IReadOnlyList<string>?>? AutocompleteAsync(
+        string? query,
         int skip,
         int take,
         bool includePrerelease,
         CancellationToken cancellationToken = default)
     {
-        var response = await _autocompleteClient.AutocompleteAsync(
+        #pragma warning disable CS8602
+        var response = await _autocompleteClient?.AutocompleteAsync(
             query,
             skip,
             take,
             includePrerelease,
             includeSemVer2: true,
             cancellationToken);
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8619
         return response.Data;
+        #pragma warning restore CS8619
     }
 }

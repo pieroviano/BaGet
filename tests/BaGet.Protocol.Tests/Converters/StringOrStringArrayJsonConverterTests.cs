@@ -17,7 +17,9 @@ public class StringOrStringArrayJsonConverterTests
 
         var result = JsonSerializer.Deserialize<IReadOnlyList<string>>(json, options);
 
+        #pragma warning disable CS8604
         var first = Assert.Single(result);
+        #pragma warning restore CS8604
         Assert.NotNull(first);
         Assert.True(string.IsNullOrEmpty(first));
     }
@@ -32,7 +34,9 @@ public class StringOrStringArrayJsonConverterTests
 
         var result = JsonSerializer.Deserialize<IReadOnlyList<string>>(json, options);
 
+        #pragma warning disable CS8604
         var first = Assert.Single(result);
+        #pragma warning restore CS8604
         Assert.Equal("Foo bar", first);
     }
 
@@ -46,7 +50,9 @@ public class StringOrStringArrayJsonConverterTests
 
         var result = JsonSerializer.Deserialize<IReadOnlyList<string>>(json, options);
 
+        #pragma warning disable CS8604
         Assert.Empty(result);
+        #pragma warning restore CS8604
     }
 
     [Fact]
@@ -59,7 +65,9 @@ public class StringOrStringArrayJsonConverterTests
 
         var result = JsonSerializer.Deserialize<IReadOnlyList<string>>(json, options);
 
+        #pragma warning disable CS8602
         Assert.Equal(2, result.Count);
+        #pragma warning restore CS8602
         Assert.Equal("Foo", result[0]);
         Assert.Equal("bar", result[1]);
     }
@@ -87,7 +95,7 @@ public class StringOrStringArrayJsonConverterTests
         var options = new JsonSerializerOptions();
         options.Converters.Add(new StringOrStringArrayJsonConverter());
 
-        IReadOnlyList<string> list = null;
+        IReadOnlyList<string>? list = null;
 
         var json = JsonSerializer.Serialize(list, options);
 
@@ -113,7 +121,9 @@ public class StringOrStringArrayJsonConverterTests
         var options = new JsonSerializerOptions();
         options.Converters.Add(new StringOrStringArrayJsonConverter());
 
-        IReadOnlyList<string> list = new List<string> { "Hello", "World", null };
+        #pragma warning disable CS8625
+        IReadOnlyList<string>? list = new List<string> { "Hello", "World", null };
+        #pragma warning restore CS8625
 
         var json = JsonSerializer.Serialize(list, options);
 

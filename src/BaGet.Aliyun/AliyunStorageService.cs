@@ -16,8 +16,8 @@ public class AliyunStorageService : IStorageService, IListableStorageService
     // See: https://github.com/dotnet/corefx/blob/master/src/Common/src/CoreLib/System/IO/Stream.cs#L35
     private const int DefaultCopyBufferSize = 81920;
 
-    private readonly string _bucket;
-    private readonly string _prefix;
+    private readonly string? _bucket;
+    private readonly string? _prefix;
     private readonly OssClient _client;
 
     public AliyunStorageService(IOptionsSnapshot<AliyunStorageOptions> options, OssClient client)
@@ -130,7 +130,7 @@ public class AliyunStorageService : IStorageService, IListableStorageService
         // "staging-archive/...".
         var prefix = PrepareKey(pathPrefix.TrimEnd('/') + Separator);
         var paths = new List<string>();
-        string marker = null;
+        string? marker = null;
 
         do
         {

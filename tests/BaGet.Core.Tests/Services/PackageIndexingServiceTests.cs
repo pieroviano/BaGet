@@ -28,10 +28,10 @@ public class PackageIndexingServiceTests
     private readonly BaGetOptions _options;
     private readonly PackageIndexingService _target;
 
-    private Package _savedPackage;
-    private byte[] _savedNuspec;
-    private byte[] _savedReadme;
-    private byte[] _savedIcon;
+    private Package? _savedPackage;
+    private byte[]? _savedNuspec;
+    private byte[]? _savedReadme;
+    private byte[]? _savedIcon;
     private bool _nuspecStreamWasNull;
     private bool _readmeStreamWasNull;
     private bool _iconStreamWasNull;
@@ -287,7 +287,7 @@ public class PackageIndexingServiceTests
     [Fact]
     public async Task SavesThePackageStreamFromItsBeginning()
     {
-        byte[] actual = null;
+        byte[]? actual = null;
         long positionAtSave = -1;
 
         _storage
@@ -335,7 +335,7 @@ public class PackageIndexingServiceTests
             var result = await _target.IndexAsync(stream, CancellationToken.None);
 
             Assert.Equal(PackageIndexingResult.Success, result);
-            Assert.False(_savedPackage.HasReadme);
+            Assert.False(_savedPackage?.HasReadme);
             Assert.True(_readmeStreamWasNull);
             Assert.Null(_savedReadme);
         }
@@ -351,9 +351,11 @@ public class PackageIndexingServiceTests
             var result = await _target.IndexAsync(stream, CancellationToken.None);
 
             Assert.Equal(PackageIndexingResult.Success, result);
-            Assert.True(_savedPackage.HasReadme);
+            Assert.True(_savedPackage?.HasReadme);
             Assert.False(_readmeStreamWasNull);
+            #pragma warning disable CS8604
             Assert.Equal("# Hello", Encoding.UTF8.GetString(_savedReadme));
+            #pragma warning restore CS8604
         }
     }
 
@@ -365,7 +367,7 @@ public class PackageIndexingServiceTests
             var result = await _target.IndexAsync(stream, CancellationToken.None);
 
             Assert.Equal(PackageIndexingResult.Success, result);
-            Assert.False(_savedPackage.HasEmbeddedIcon);
+            Assert.False(_savedPackage?.HasEmbeddedIcon);
             Assert.True(_iconStreamWasNull);
             Assert.Null(_savedIcon);
         }
@@ -381,9 +383,11 @@ public class PackageIndexingServiceTests
             var result = await _target.IndexAsync(stream, CancellationToken.None);
 
             Assert.Equal(PackageIndexingResult.Success, result);
-            Assert.True(_savedPackage.HasEmbeddedIcon);
+            Assert.True(_savedPackage?.HasEmbeddedIcon);
             Assert.False(_iconStreamWasNull);
+            #pragma warning disable CS8604
             Assert.Equal("icon content", Encoding.UTF8.GetString(_savedIcon));
+            #pragma warning restore CS8604
         }
     }
 
@@ -446,7 +450,7 @@ public class PackageIndexingServiceTests
         return metadata.ToString();
     }
 
-    private static byte[] ReadEntry(MemoryStream packageStream, string path)
+    private static byte[]? ReadEntry(MemoryStream packageStream, string path)
     {
         var position = packageStream.Position;
 
@@ -455,7 +459,7 @@ public class PackageIndexingServiceTests
             packageStream.Position = 0;
 
             using (var archive = new ZipArchive(packageStream, ZipArchiveMode.Read, leaveOpen: true))
-            using (var entry = archive.GetEntry(path).Open())
+            using (var entry = archive.GetEntry(path)?.Open())
             {
                 return ReadAllBytes(entry);
             }
@@ -466,7 +470,7 @@ public class PackageIndexingServiceTests
         }
     }
 
-    private static byte[] ReadAllBytes(Stream stream)
+    private static byte[]? ReadAllBytes(Stream? stream)
     {
         if (stream == null) return null;
 

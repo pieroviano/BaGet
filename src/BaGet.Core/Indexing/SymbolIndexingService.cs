@@ -57,7 +57,7 @@ public class SymbolIndexingService : ISymbolIndexingService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<SymbolIndexingResult> IndexAsync(Stream stream, CancellationToken cancellationToken)
+    public async Task<SymbolIndexingResult> IndexAsync(Stream? stream, CancellationToken cancellationToken)
     {
         try
         {
@@ -123,7 +123,7 @@ public class SymbolIndexingService : ISymbolIndexingService
         }
     }
 
-    private async Task<IReadOnlyList<string>> GetSymbolPackagePdbPathsOrNullAsync(
+    private async Task<IReadOnlyList<string>?> GetSymbolPackagePdbPathsOrNullAsync(
         PackageArchiveReader symbolPackage,
         CancellationToken cancellationToken)
     {
@@ -175,13 +175,13 @@ public class SymbolIndexingService : ISymbolIndexingService
         return entries.All(IsValidSymbolFile);
     }
 
-    private async Task<PortablePdb> ExtractPortablePdbOrNullAsync(
+    private async Task<PortablePdb?> ExtractPortablePdbOrNullAsync(
         PackageArchiveReader symbolPackage,
         string pdbPath,
         CancellationToken cancellationToken)
     {
-        Stream pdbStream = null;
-        PortablePdb result = null;
+        Stream? pdbStream = null;
+        PortablePdb? result = null;
 
         try
         {
@@ -328,7 +328,7 @@ public class SymbolIndexingService : ISymbolIndexingService
     /// A symbol package mirrors the layout of the package it belongs to, so the assembly a
     /// PDB describes sits at the same path with an assembly extension.
     /// </summary>
-    private static string FindAssemblyPathOrNull(IReadOnlyList<string> packageFiles, string pdbPath)
+    private static string? FindAssemblyPathOrNull(IReadOnlyList<string> packageFiles, string pdbPath)
     {
         foreach (var extension in AssemblyExtensions)
         {

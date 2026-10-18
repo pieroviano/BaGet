@@ -18,24 +18,28 @@ public partial class NuGetClientFactory
             _clientfactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         }
 
-        public async Task<Stream> DownloadPackageOrNullAsync(
-            string packageId,
+        public async Task<Stream?> DownloadPackageOrNullAsync(
+            string? packageId,
             NuGetVersion packageVersion,
             CancellationToken cancellationToken = default)
         {
             var client = await _clientfactory.GetPackageContentClientAsync(cancellationToken);
 
-            return await client.DownloadPackageOrNullAsync(packageId, packageVersion, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.DownloadPackageOrNullAsync(packageId, packageVersion, cancellationToken);
+            #pragma warning restore CS8602
         }
 
-        public async Task<Stream> DownloadPackageManifestOrNullAsync(
+        public async Task<Stream?> DownloadPackageManifestOrNullAsync(
             string packageId,
             NuGetVersion packageVersion,
             CancellationToken cancellationToken = default)
         {
             var client = await _clientfactory.GetPackageContentClientAsync(cancellationToken);
 
-            return await client.DownloadPackageManifestOrNullAsync(packageId, packageVersion, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.DownloadPackageManifestOrNullAsync(packageId, packageVersion, cancellationToken);
+            #pragma warning restore CS8602
         }
 
         public async Task<PackageVersionsResponse> GetPackageVersionsOrNullAsync(
@@ -44,7 +48,9 @@ public partial class NuGetClientFactory
         {
             var client = await _clientfactory.GetPackageContentClientAsync(cancellationToken);
 
-            return await client.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetPackageVersionsOrNullAsync(packageId, cancellationToken);
+            #pragma warning restore CS8602
         }
     }
 }

@@ -4,6 +4,7 @@
     <Description>The libraries to host BaGet Extension on Alibaba Cloud (Aliyun).</Description>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

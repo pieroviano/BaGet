@@ -28,12 +28,14 @@ public class BaGetUrlGenerator : IUrlGenerator
         _linkGenerator = linkGenerator ?? throw new ArgumentNullException(nameof(linkGenerator));
     }
 
-    public string GetServiceIndexUrl()
+    public string? GetServiceIndexUrl()
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.IndexRouteName,
             values: null);
+        #pragma warning restore CS8604
     }
 
     public string GetPackageContentResourceUrl()
@@ -46,44 +48,54 @@ public class BaGetUrlGenerator : IUrlGenerator
         return AbsoluteUrl("v3/registration");
     }
 
-    public string GetPackagePublishResourceUrl()
+    public string? GetPackagePublishResourceUrl()
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.UploadPackageRouteName,
             values: null);
+        #pragma warning restore CS8604
     }
 
-    public string GetSymbolPublishResourceUrl()
+    public string? GetSymbolPublishResourceUrl()
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.UploadSymbolRouteName,
             values: null);
+        #pragma warning restore CS8604
     }
 
-    public string GetSearchResourceUrl()
+    public string? GetSearchResourceUrl()
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.SearchRouteName,
             values: null);
+        #pragma warning restore CS8604
     }
 
-    public string GetAutocompleteResourceUrl()
+    public string? GetAutocompleteResourceUrl()
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.AutocompleteRouteName,
             values: null);
+        #pragma warning restore CS8604
     }
 
-    public string GetRegistrationIndexUrl(string id)
+    public string? GetRegistrationIndexUrl(string? id)
     {
+        #pragma warning disable CS8602, CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.RegistrationIndexRouteName,
             values: new { Id = id.ToLowerInvariant() });
+        #pragma warning restore CS8602, CS8604
     }
 
     public string GetRegistrationPageUrl(string id, NuGetVersion lower, NuGetVersion upper)
@@ -92,8 +104,9 @@ public class BaGetUrlGenerator : IUrlGenerator
         throw new NotImplementedException();
     }
 
-    public string GetRegistrationLeafUrl(string id, NuGetVersion version)
+    public string? GetRegistrationLeafUrl(string? id, NuGetVersion version)
     {
+        #pragma warning disable CS8602, CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.RegistrationLeafRouteName,
@@ -102,21 +115,27 @@ public class BaGetUrlGenerator : IUrlGenerator
                 Id = id.ToLowerInvariant(),
                 Version = version.ToNormalizedString().ToLowerInvariant(),
             });
+        #pragma warning restore CS8602, CS8604
     }
 
-    public string GetPackageVersionsUrl(string id)
+    public string? GetPackageVersionsUrl(string id)
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.PackageVersionsRouteName,
             values: new { Id = id.ToLowerInvariant() });
+        #pragma warning restore CS8604
     }
 
-    public string GetPackageDownloadUrl(string id, NuGetVersion version)
+    public string? GetPackageDownloadUrl(string? id, NuGetVersion version)
     {
+        #pragma warning disable CS8602
         id = id.ToLowerInvariant();
+        #pragma warning restore CS8602
         var versionString = version.ToNormalizedString().ToLowerInvariant();
 
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.PackageDownloadRouteName,
@@ -126,13 +145,15 @@ public class BaGetUrlGenerator : IUrlGenerator
                 Version = versionString,
                 IdVersion = $"{id}.{versionString}"
             });
+        #pragma warning restore CS8604
     }
 
-    public string GetPackageManifestDownloadUrl(string id, NuGetVersion version)
+    public string? GetPackageManifestDownloadUrl(string id, NuGetVersion version)
     {
         id = id.ToLowerInvariant();
         var versionString = version.ToNormalizedString().ToLowerInvariant();
 
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.PackageDownloadRouteName,
@@ -142,13 +163,17 @@ public class BaGetUrlGenerator : IUrlGenerator
                 Version = versionString,
                 Id2 = id,
             });
+        #pragma warning restore CS8604
     }
 
-    public string GetPackageIconDownloadUrl(string id, NuGetVersion version)
+    public string? GetPackageIconDownloadUrl(string? id, NuGetVersion version)
     {
+        #pragma warning disable CS8602
         id = id.ToLowerInvariant();
+        #pragma warning restore CS8602
         var versionString = version.ToNormalizedString().ToLowerInvariant();
 
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.PackageDownloadIconRouteName,
@@ -157,14 +182,17 @@ public class BaGetUrlGenerator : IUrlGenerator
                 Id = id,
                 Version = versionString
             });
+        #pragma warning restore CS8604
     }
 
-    public string GetV2FeedUrl()
+    public string? GetV2FeedUrl()
     {
+        #pragma warning disable CS8604
         return _linkGenerator.GetUriByRouteValues(
             _httpContextAccessor.HttpContext,
             Routes.V2RootRouteName,
             values: null);
+        #pragma warning restore CS8604
     }
 
     // These two are templates for the client to expand, not URLs for a specific
@@ -195,9 +223,11 @@ public class BaGetUrlGenerator : IUrlGenerator
         return AbsoluteUrl($"v3/catalog/page{pageIndex.ToString(CultureInfo.InvariantCulture)}.json");
     }
 
-    public string GetCatalogLeafUrl(string commitId)
+    public string GetCatalogLeafUrl(string? commitId)
     {
+        #pragma warning disable CS8604
         return AbsoluteUrl($"v3/catalog/data/{Uri.EscapeDataString(commitId)}.json");
+        #pragma warning restore CS8604
     }
 
     public string GetRepositorySignaturesUrl()
@@ -217,7 +247,9 @@ public class BaGetUrlGenerator : IUrlGenerator
 
     private string AbsoluteUrl(string relativePath)
     {
+        #pragma warning disable CS8602
         var request = _httpContextAccessor.HttpContext.Request;
+        #pragma warning restore CS8602
 
         return string.Concat(
             request.Scheme,

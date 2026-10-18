@@ -28,8 +28,8 @@ public class SearchSortWebTests : IDisposable
     }
 
     private (BaGetApplication App, Browser Browser) Start(
-        Dictionary<string, string> settings = null,
-        Action<IServiceCollection> configure = null)
+        Dictionary<string, string>? settings = null,
+        Action<IServiceCollection>? configure = null)
     {
         var app = new BaGetApplication(_output, configOverrides: settings, configureServices: configure);
         var browser = new Browser(app);
@@ -44,6 +44,7 @@ public class SearchSortWebTests : IDisposable
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
 
+        #pragma warning disable CS8602
         context.Packages.Add(new Package
         {
             Id = id,
@@ -60,6 +61,7 @@ public class SearchSortWebTests : IDisposable
             PackageTypes = new List<PackageType>(),
             TargetFrameworks = new List<TargetFramework>(),
         });
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
@@ -69,6 +71,7 @@ public class SearchSortWebTests : IDisposable
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
         var parsed = NuGetVersion.Parse(version);
 
+        #pragma warning disable CS8602
         context.Packages.Add(new Package
         {
             Id = id,
@@ -85,6 +88,7 @@ public class SearchSortWebTests : IDisposable
             PackageTypes = new List<PackageType>(),
             TargetFrameworks = new List<TargetFramework>(),
         });
+        #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
@@ -236,7 +240,7 @@ public class SearchSortWebTests : IDisposable
         public Task<AutocompleteResponse> ListPackageVersionsAsync(VersionsRequest request, CancellationToken cancellationToken)
             => _inner.ListPackageVersionsAsync(request, cancellationToken);
 
-        public Task<DependentsResponse> FindDependentsAsync(string packageId, CancellationToken cancellationToken)
+        public Task<DependentsResponse> FindDependentsAsync(string? packageId, CancellationToken cancellationToken)
             => _inner.FindDependentsAsync(packageId, cancellationToken);
     }
 }

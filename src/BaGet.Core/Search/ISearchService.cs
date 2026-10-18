@@ -53,6 +53,6 @@ public interface ISearchService
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The dependents response.</returns>
     Task<DependentsResponse> FindDependentsAsync(
-        string packageId,
+        string? packageId,
         CancellationToken cancellationToken);
 }

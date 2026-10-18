@@ -7,9 +7,9 @@ namespace BaGet.Azure;
 public class AzureSearchOptions
 {
     [Required]
-    public string AccountName { get; set; }
+    public string? AccountName { get; set; }
 
     [Required]
     [SensitiveSetting]
-    public string ApiKey { get; set; }
+    public string? ApiKey { get; set; }
 }

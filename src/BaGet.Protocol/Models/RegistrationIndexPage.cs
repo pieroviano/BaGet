@@ -14,7 +14,7 @@ public class RegistrationIndexPage
     /// The URL to the registration page.
     /// </summary>
     [JsonPropertyName("@id")]
-    public string RegistrationPageUrl { get; set; }
+    public string? RegistrationPageUrl { get; set; }
 
     /// <summary>
     /// The number of registration leafs in the page.
@@ -27,19 +27,19 @@ public class RegistrationIndexPage
     /// by following the page's <see cref="RegistrationPageUrl"/>.
     /// </summary>
     [JsonPropertyName("items")]
-    public IReadOnlyList<RegistrationIndexPageItem> ItemsOrNull { get; set; }
+    public IReadOnlyList<RegistrationIndexPageItem>? ItemsOrNull { get; set; }
 
     /// <summary>
     /// This page's lowest package version. The version should be lowercased, normalized,
     /// and the SemVer 2.0.0 build metadata removed, if any.
     /// </summary>
     [JsonPropertyName("lower")]
-    public string Lower { get; set; }
+    public string? Lower { get; set; }
 
     /// <summary>
     /// This page's highest package version. The version should be lowercased, normalized,
     /// and the SemVer 2.0.0 build metadata removed, if any.
     /// </summary>
     [JsonPropertyName("upper")]
-    public string Upper { get; set; }
+    public string? Upper { get; set; }
 }

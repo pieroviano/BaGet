@@ -19,5 +19,7 @@ internal static class TableJson
 
     public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Options);
 
-    public static T Deserialize<T>(string json) => JsonSerializer.Deserialize<T>(json, Options);
+    #pragma warning disable CS8603, CS8604
+    public static T Deserialize<T>(string? json) => JsonSerializer.Deserialize<T>(json, Options);
+    #pragma warning restore CS8603, CS8604
 }

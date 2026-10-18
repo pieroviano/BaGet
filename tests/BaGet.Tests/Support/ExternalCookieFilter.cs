@@ -27,6 +27,7 @@ internal sealed class ExternalCookieFilter : IStartupFilter
             }
 
             var query = context.Request.Query;
+            #pragma warning disable CS8604
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, query["sub"]),
@@ -34,8 +35,11 @@ internal sealed class ExternalCookieFilter : IStartupFilter
             };
             if (!string.IsNullOrEmpty(query["email"])) claims.Add(new Claim(ClaimTypes.Email, query["email"]));
             if (!string.IsNullOrEmpty(query["verified"])) claims.Add(new Claim("email_verified", query["verified"]));
+            #pragma warning restore CS8604
 
+            #pragma warning disable CS8604
             if (!string.IsNullOrEmpty(query["auth_time"])) claims.Add(new Claim("auth_time", query["auth_time"]));
+            #pragma warning restore CS8604
 
             var properties = new AuthenticationProperties();
             properties.Items["LoginProvider"] = "oidc";

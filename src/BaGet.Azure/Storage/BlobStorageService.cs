@@ -98,7 +98,7 @@ public class BlobStorageService : IStorageService, IListableStorageService
         // a "staging-archive" container entry.
         var prefix = pathPrefix.TrimEnd('/') + "/";
         var paths = new List<string>();
-        BlobContinuationToken continuation = null;
+        BlobContinuationToken? continuation = null;
 
         do
         {

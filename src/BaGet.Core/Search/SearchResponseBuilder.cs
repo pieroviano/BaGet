@@ -61,7 +61,7 @@ public class SearchResponseBuilder : ISearchResponseBuilder
         };
     }
 
-    public AutocompleteResponse BuildAutocomplete(IReadOnlyList<string> data, long totalHits)
+    public AutocompleteResponse BuildAutocomplete(IReadOnlyList<string?> data, long totalHits)
     {
         return new AutocompleteResponse
         {

@@ -16,6 +16,7 @@ public class TableOperationBuilder
         var version = package.Version;
         var normalizedVersion = version.ToNormalizedString();
 
+        #pragma warning disable CS8602
         var entity = new PackageEntity
         {
             PartitionKey = package.Id.ToLowerInvariant(),
@@ -49,6 +50,7 @@ public class TableOperationBuilder
             PackageTypes = SerializeList(package.PackageTypes, AsPackageTypeModel),
             TargetFrameworks = SerializeList(package.TargetFrameworks, f => f.Moniker)
         };
+        #pragma warning restore CS8602
 
         return TableOperation.Insert(entity);
     }
@@ -65,22 +67,26 @@ public class TableOperationBuilder
         return TableOperation.Merge(entity);
     }
 
-    public TableOperation HardDeletePackage(string packageId, NuGetVersion packageVersion)
+    public TableOperation HardDeletePackage(string? packageId, NuGetVersion packageVersion)
     {
         var entity = new PackageEntity();
 
+        #pragma warning disable CS8602
         entity.PartitionKey = packageId.ToLowerInvariant();
+        #pragma warning restore CS8602
         entity.RowKey = packageVersion.ToNormalizedString().ToLowerInvariant();
         entity.ETag = "*";
 
         return TableOperation.Delete(entity);
     }
 
-    public TableOperation UnlistPackage(string packageId, NuGetVersion packageVersion)
+    public TableOperation UnlistPackage(string? packageId, NuGetVersion packageVersion)
     {
         var entity = new PackageListingEntity();
 
+        #pragma warning disable CS8602
         entity.PartitionKey = packageId.ToLowerInvariant();
+        #pragma warning restore CS8602
         entity.RowKey = packageVersion.ToNormalizedString().ToLowerInvariant();
         entity.Listed = false;
         entity.ETag = "*";
@@ -88,11 +94,13 @@ public class TableOperationBuilder
         return TableOperation.Merge(entity);
     }
 
-    public TableOperation RelistPackage(string packageId, NuGetVersion packageVersion)
+    public TableOperation RelistPackage(string? packageId, NuGetVersion packageVersion)
     {
         var entity = new PackageListingEntity();
 
+        #pragma warning disable CS8602
         entity.PartitionKey = packageId.ToLowerInvariant();
+        #pragma warning restore CS8602
         entity.RowKey = packageVersion.ToNormalizedString().ToLowerInvariant();
         entity.Listed = true;
         entity.ETag = "*";
@@ -100,9 +108,11 @@ public class TableOperationBuilder
         return TableOperation.Merge(entity);
     }
 
-    private static string SerializeList<TIn, TOut>(IReadOnlyList<TIn> objects, Func<TIn, TOut> map)
+    private static string SerializeList<TIn, TOut>(IReadOnlyList<TIn>? objects, Func<TIn, TOut> map)
     {
+        #pragma warning disable CS8604
         var data = objects.Select(map).ToList();
+        #pragma warning restore CS8604
 
         return TableJson.Serialize(data);
     }

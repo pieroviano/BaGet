@@ -17,5 +17,5 @@ public class BaGetRegistrationIndexPage : RegistrationIndexPage
     // Ordered so the serialized property order is unchanged by inheriting the base type.
     [JsonPropertyName("items")]
     [JsonPropertyOrder(1)]
-    public new IReadOnlyList<BaGetRegistrationIndexPageItem> ItemsOrNull { get; set; }
+    public new IReadOnlyList<BaGetRegistrationIndexPageItem>? ItemsOrNull { get; set; }
 }

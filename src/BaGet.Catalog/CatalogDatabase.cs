@@ -25,39 +25,45 @@ public class CatalogDatabase : ICatalogDatabase
     public async Task<DateTime?> GetLastCommitTimestampAsync(CancellationToken cancellationToken)
     {
         // Entries are added in commit order, so the highest key is the newest.
+        #pragma warning disable CS8604
         var last = await _context.CatalogLeafs
             .OrderByDescending(e => e.Key)
             .Select(e => (DateTime?)e.CommitTimestamp)
             .FirstOrDefaultAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         return last.HasValue ? AsUtc(last.Value) : (DateTime?)null;
     }
 
     public async Task AddAsync(CatalogEntry entry, CancellationToken cancellationToken)
     {
-        _context.CatalogLeafs.Add(entry);
+        _context.CatalogLeafs?.Add(entry);
 
         await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<DateTime>> GetCommitTimestampsAsync(CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var timestamps = await _context.CatalogLeafs
             .OrderBy(e => e.Key)
             .Select(e => e.CommitTimestamp)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         return timestamps.Select(AsUtc).ToList();
     }
 
     public async Task<IReadOnlyList<CatalogEntry>> GetEntriesAsync(int skip, int take, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var entries = await _context.CatalogLeafs
             .AsNoTracking()
             .OrderBy(e => e.Key)
             .Skip(skip)
             .Take(take)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         foreach (var entry in entries)
         {
@@ -67,11 +73,13 @@ public class CatalogDatabase : ICatalogDatabase
         return entries;
     }
 
-    public async Task<CatalogEntry> FindOrNullAsync(string commitId, CancellationToken cancellationToken)
+    public async Task<CatalogEntry?> FindOrNullAsync(string commitId, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var entry = await _context.CatalogLeafs
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.CommitId == commitId, cancellationToken);
+        #pragma warning restore CS8604
 
         if (entry != null)
         {
@@ -105,6 +113,8 @@ public class NullCatalogDatabase : ICatalogDatabase
     public Task<IReadOnlyList<CatalogEntry>> GetEntriesAsync(int skip, int take, CancellationToken cancellationToken)
         => Task.FromResult<IReadOnlyList<CatalogEntry>>(Array.Empty<CatalogEntry>());
 
-    public Task<CatalogEntry> FindOrNullAsync(string commitId, CancellationToken cancellationToken)
+    #pragma warning disable CS8619, CS8625
+    public Task<CatalogEntry?> FindOrNullAsync(string commitId, CancellationToken cancellationToken)
         => Task.FromResult<CatalogEntry>(null);
+    #pragma warning restore CS8619, CS8625
 }

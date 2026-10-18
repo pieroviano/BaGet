@@ -22,8 +22,8 @@ public static class TestPackage
     /// </summary>
     public static MemoryStream Create(
         string metadata,
-        IDictionary<string, string> files = null,
-        IDictionary<string, byte[]> binaryFiles = null)
+        IDictionary<string, string>? files = null,
+        IDictionary<string, byte[]>? binaryFiles = null)
     {
         var nuspec = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <package xmlns=""http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd"">
@@ -38,7 +38,7 @@ public static class TestPackage
     /// <summary>
     /// Create a zip archive shaped like a package, but with no nuspec in it.
     /// </summary>
-    public static MemoryStream CreateWithoutNuspec(IDictionary<string, string> files = null)
+    public static MemoryStream CreateWithoutNuspec(IDictionary<string, string>? files = null)
     {
         return Build(nuspec: null, files: files);
     }
@@ -52,9 +52,9 @@ public static class TestPackage
     }
 
     private static MemoryStream Build(
-        string nuspec,
-        IDictionary<string, string> files,
-        IDictionary<string, byte[]> binaryFiles = null)
+        string? nuspec,
+        IDictionary<string, string>? files,
+        IDictionary<string, byte[]>? binaryFiles = null)
     {
         var result = new MemoryStream();
 
@@ -89,8 +89,8 @@ public static class TestPackage
         string id = "Test.Package",
         string version = "1.0.0",
         string authors = "Test Author",
-        IDictionary<string, string> files = null,
-        IDictionary<string, byte[]> binaryFiles = null)
+        IDictionary<string, string>? files = null,
+        IDictionary<string, byte[]>? binaryFiles = null)
     {
         return Create(
             $@"    <id>{id}</id>
@@ -109,8 +109,8 @@ public static class TestPackage
     public static MemoryStream CreateSymbols(
         string id = "Test.Package",
         string version = "1.0.0",
-        IDictionary<string, string> files = null,
-        IDictionary<string, byte[]> binaryFiles = null)
+        IDictionary<string, string>? files = null,
+        IDictionary<string, byte[]>? binaryFiles = null)
     {
         return CreateMinimal(
             extraMetadata: @"    <packageTypes>

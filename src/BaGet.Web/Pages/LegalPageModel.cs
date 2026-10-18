@@ -25,9 +25,9 @@ public abstract class LegalPageModel : PageModel
         _environment = environment ?? throw new ArgumentNullException(nameof(environment));
     }
 
-    public HtmlString Content { get; private set; }
+    public HtmlString? Content { get; private set; }
 
-    protected abstract string ConfiguredPath { get; }
+    protected abstract string? ConfiguredPath { get; }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
@@ -54,7 +54,7 @@ public class TermsModel : LegalPageModel
         _site = site ?? throw new ArgumentNullException(nameof(site));
     }
 
-    protected override string ConfiguredPath => _site.Value.TermsOfUsePath;
+    protected override string? ConfiguredPath => _site.Value.TermsOfUsePath;
 }
 
 public class PrivacyModel : LegalPageModel
@@ -67,5 +67,5 @@ public class PrivacyModel : LegalPageModel
         _site = site ?? throw new ArgumentNullException(nameof(site));
     }
 
-    protected override string ConfiguredPath => _site.Value.PrivacyPolicyPath;
+    protected override string? ConfiguredPath => _site.Value.PrivacyPolicyPath;
 }

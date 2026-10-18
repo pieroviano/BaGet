@@ -21,18 +21,18 @@ public class AbuseReport
 
     public int Key { get; set; }
 
-    public string PackageId { get; set; }
+    public string? PackageId { get; set; }
 
-    public string PackageVersion { get; set; }
+    public string? PackageVersion { get; set; }
 
-    public string Reason { get; set; }
+    public string? Reason { get; set; }
 
-    public string Details { get; set; }
+    public string? Details { get; set; }
 
     /// <summary>
     /// Where to reply, if the reporter gave an address.
     /// </summary>
-    public string ReporterEmail { get; set; }
+    public string? ReporterEmail { get; set; }
 
     public DateTime Created { get; set; }
 

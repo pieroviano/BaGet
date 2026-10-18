@@ -152,7 +152,9 @@ public class NuGetClientTests : IClassFixture<ProtocolFixture>
     {
         var metadata = await _target.GetPackageMetadataAsync("Test.Package", NuGetVersion.Parse("2.0.0"));
 
+        #pragma warning disable CS8602
         Assert.Equal("Test.Package", metadata.PackageId);
+        #pragma warning restore CS8602
         Assert.Equal("2.0.0+build", metadata.Version);
         Assert.Equal("Test Author", metadata.Authors);
     }
@@ -162,7 +164,9 @@ public class NuGetClientTests : IClassFixture<ProtocolFixture>
     {
         var metadata = await _target.GetPackageMetadataAsync("Paged.Package", NuGetVersion.Parse("3.0.0"));
 
+        #pragma warning disable CS8602
         Assert.Equal("Paged.Package", metadata.PackageId);
+        #pragma warning restore CS8602
         Assert.Equal("3.0.0", metadata.Version);
         Assert.True(metadata.Listed);
     }
@@ -186,19 +190,27 @@ public class NuGetClientTests : IClassFixture<ProtocolFixture>
     {
         var results = await _target.SearchAsync();
 
+        #pragma warning disable CS8604
         var result = Assert.Single(results);
+        #pragma warning restore CS8604
 
         Assert.Equal("Test.Package", result.PackageId);
         Assert.Equal("3.0.0", result.Version);
+        #pragma warning disable CS8604
         Assert.Equal("Package Authors", Assert.Single(result.Authors));
+        #pragma warning restore CS8604
     }
 
     [Fact]
     public async Task Autocompletes()
     {
+        #pragma warning disable CS8602
         var results = await _target.AutocompleteAsync();
+        #pragma warning restore CS8602
 
+        #pragma warning disable CS8604
         Assert.Equal("Test.Package", Assert.Single(results));
+        #pragma warning restore CS8604
     }
 
     [Fact]

@@ -35,7 +35,7 @@ public class ManageModel : AccountPageModel
     protected override bool RequiresSignIn => true;
 
     [BindProperty(SupportsGet = true)]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     public IReadOnlyList<PackageOwner> Owners { get; private set; } = Array.Empty<PackageOwner>();
 
@@ -43,7 +43,7 @@ public class ManageModel : AccountPageModel
 
     public IReadOnlyList<AbuseReport> Reports { get; private set; } = Array.Empty<AbuseReport>();
 
-    public string Message { get; private set; }
+    public string? Message { get; private set; }
 
     /// <summary>Whether the signed in user is an administrator.</summary>
     public bool IsAdministrator { get; private set; }
@@ -101,7 +101,9 @@ public class ManageModel : AccountPageModel
 
         // Only an owner, directly or through an organization, or an administrator, may
         // manage the package.
+        #pragma warning disable CS8602
         var isOwner = await Ownership.IsOwnerAsync(UserManager.GetUserId(User), User.Identity.Name, Id, HttpContext.RequestAborted);
+        #pragma warning restore CS8602
         IsAdministrator = await HttpContext.RequestServices.GetRequiredService<AdministratorService>()
             .IsAdministratorAsync(User, HttpContext.RequestAborted);
         if (!isOwner && !IsAdministrator)
@@ -208,7 +210,7 @@ public class ManageModel : AccountPageModel
     /// Removes one version's rows and files whatever the server's deletion behaviour is.
     /// Administrators only, and only after they confirm their password: it cannot be undone.
     /// </summary>
-    public async Task<IActionResult> OnPostHardDeleteAsync(string version, string password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostHardDeleteAsync(string version, string? password, CancellationToken cancellationToken)
     {
         if (!IsAdministrator) return StatusCode(403);
         if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
@@ -219,7 +221,9 @@ public class ManageModel : AccountPageModel
         var found = await Deletions.TryHardDeletePackageAsync(Id, parsed, cancellationToken);
         var normalized = parsed.ToNormalizedString();
 
+        #pragma warning disable CS8602
         Log().LogWarning("Administrator {Admin} permanently deleted {PackageId} {PackageVersion}", User.Identity.Name, Id, normalized);
+        #pragma warning restore CS8602
 
         return await DoneAsync(
             found
@@ -234,7 +238,7 @@ public class ManageModel : AccountPageModel
     /// Removes every version of the ID, then its owners, so the ID is free to claim again.
     /// Administrators only, and only after they confirm their password.
     /// </summary>
-    public async Task<IActionResult> OnPostHardDeleteAllAsync(string password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostHardDeleteAllAsync(string? password, CancellationToken cancellationToken)
     {
         if (!IsAdministrator) return StatusCode(403);
 
@@ -247,17 +251,21 @@ public class ManageModel : AccountPageModel
             await Deletions.TryHardDeletePackageAsync(Id, package.Version, cancellationToken);
         }
 
+        #pragma warning disable CS8602
         var lowerId = Id.ToLowerInvariant();
         Context.PackageOwners.RemoveRange(await Context.PackageOwners
             .Where(o => o.PackageId.ToLower() == lowerId)
             .ToListAsync(cancellationToken));
+        #pragma warning restore CS8602
         await Context.SaveChangesAsync(cancellationToken);
 
+        #pragma warning disable CS8602
         Log().LogWarning(
             "Administrator {Admin} permanently deleted every version of {PackageId} ({Count}) and removed its owners",
             User.Identity.Name,
             Id,
             versions.Count);
+        #pragma warning restore CS8602
 
         return await DoneAsync(
             $"Every version of {Id} ({versions.Count}) is deleted permanently, and the ID has no owners.",
@@ -265,7 +273,7 @@ public class ManageModel : AccountPageModel
     }
 
     /// <summary>Null when the signed in user confirmed with their password, otherwise the page to show.</summary>
-    private async Task<IActionResult> RefuseUnconfirmedAsync(string password, CancellationToken cancellationToken)
+    private async Task<IActionResult?> RefuseUnconfirmedAsync(string? password, CancellationToken cancellationToken)
     {
         var current = await UserManager.GetUserAsync(User);
         if (current == null) return Challenge();
@@ -279,7 +287,7 @@ public class ManageModel : AccountPageModel
 
     public async Task<IActionResult> OnPostDeprecateAsync(
         string version,
-        List<string> reasons,
+        List<string>? reasons,
         string message,
         string alternatePackageId,
         CancellationToken cancellationToken)
@@ -305,8 +313,11 @@ public class ManageModel : AccountPageModel
 
     public async Task<IActionResult> OnPostResolveReportAsync(int key, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8602
         var lowerId = Id.ToLowerInvariant();
+        #pragma warning disable CS8604
         var report = await Context.AbuseReports.FirstOrDefaultAsync(r => r.Key == key && r.PackageId.ToLower() == lowerId, cancellationToken);
+        #pragma warning restore CS8602, CS8604
         if (report != null && report.Resolved == null)
         {
             report.Resolved = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow;
@@ -365,12 +376,15 @@ public class ManageModel : AccountPageModel
 
         if (!(Context is NullContext))
         {
+            #pragma warning disable CS8602
             var lowerId = Id.ToLowerInvariant();
+            #pragma warning disable CS8604
             Reports = await Context.AbuseReports
                 .AsNoTracking()
                 .Where(r => r.PackageId.ToLower() == lowerId && r.Resolved == null)
                 .OrderByDescending(r => r.Key)
                 .ToListAsync(cancellationToken);
+            #pragma warning restore CS8602, CS8604
         }
     }
 

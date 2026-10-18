@@ -25,7 +25,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
 {
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     private readonly SourceRepository _repository;
     private readonly SourceCacheContext _cache;
@@ -60,8 +60,10 @@ public class NuGetV2ClientIntegrationTests : IDisposable
         await _app.AddPackageAsync(_packageStream);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        #pragma warning disable CS8602
         var versions = await resource.GetAllVersionsAsync(
             "TestData", _cache, _logger, _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Equal(new[] { "1.2.3" }, versions.Select(v => v.ToNormalizedString()));
     }
@@ -70,8 +72,10 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     public async Task TheClientFindsNoVersionsForAnUnknownPackage()
     {
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        #pragma warning disable CS8602
         var versions = await resource.GetAllVersionsAsync(
             "No.Such.Package", _cache, _logger, _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Empty(versions);
     }
@@ -82,8 +86,10 @@ public class NuGetV2ClientIntegrationTests : IDisposable
         await _app.AddPackageAsync(_packageStream);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
+        #pragma warning disable CS8602
         var info = await resource.GetDependencyInfoAsync(
             "TestData", NuGetVersion.Parse("1.2.3"), _cache, _logger, _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.NotNull(info);
         Assert.Equal("TestData", info.PackageIdentity.Id);
@@ -97,6 +103,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
 
         using var downloaded = new MemoryStream();
+        #pragma warning disable CS8602
         var copied = await resource.CopyNupkgToStreamAsync(
             "TestData",
             NuGetVersion.Parse("1.2.3"),
@@ -104,6 +111,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.True(copied);
         Assert.NotEqual(0, downloaded.Length);
@@ -115,6 +123,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
         await _app.AddPackageAsync(_packageStream);
 
         var resource = await _repository.GetResourceAsync<PackageSearchResource>(_cancellationToken);
+        #pragma warning disable CS8602
         var results = await resource.SearchAsync(
             "TestData",
             new SearchFilter(includePrerelease: false),
@@ -122,6 +131,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
             take: 20,
             log: _logger,
             cancellationToken: _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Contains("TestData", results.Select(r => r.Identity.Id));
     }

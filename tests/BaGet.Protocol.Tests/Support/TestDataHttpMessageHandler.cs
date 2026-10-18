@@ -45,9 +45,11 @@ public class TestDataHttpMessageHandler : HttpMessageHandler
 
     private HttpResponseMessage Send(HttpRequestMessage request)
     {
-        Func<string> getContent;
+        Func<string>? getContent;
+        #pragma warning disable CS8602
         if (request.Method != HttpMethod.Get
             || !UrlToGetContent.TryGetValue(request.RequestUri.AbsoluteUri, out getContent))
+        #pragma warning restore CS8602
         {
             return new HttpResponseMessage
             {

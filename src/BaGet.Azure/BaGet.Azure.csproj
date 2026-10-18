@@ -10,6 +10,7 @@
     <!-- This is necessary because Microsoft.Azure.Cosmos.Table has a transitive dependency -->
     <!-- on Microsoft.Azure.DocumentDB.Core which includes deprecated win7-x64 RID -->
     <UseRidGraph>true</UseRidGraph>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   
   <ItemGroup>

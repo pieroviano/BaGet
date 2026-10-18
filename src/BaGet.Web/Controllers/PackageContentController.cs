@@ -64,7 +64,7 @@ public class PackageContentController : Controller
         return File(nuspecStream, "text/xml");
     }
 
-    public async Task<IActionResult> DownloadReadmeAsync(string id, string version, CancellationToken cancellationToken)
+    public async Task<IActionResult> DownloadReadmeAsync(string? id, string version, CancellationToken cancellationToken)
     {
         if (!NuGetVersion.TryParse(version, out var nugetVersion))
         {

@@ -104,8 +104,8 @@ public class ModelTests
     [MemberData(nameof(ExtendedModelsData))]
     public void ValidateExtendedModels(ExtendedModelData data)
     {
-        IReadOnlyDictionary<string, PropertyInfo> originalProperties = PropertiesOf(data.OriginalType);
-        IReadOnlyDictionary<string, PropertyInfo> derivedProperties = PropertiesOf(data.DerivedType);
+        var originalProperties = PropertiesOf(data.OriginalType);
+        var derivedProperties = PropertiesOf(data.DerivedType);
 
         // Check that all properties on the original model are present on the derived model.
         var missingProperties = originalProperties.Keys.Where(name => !derivedProperties.ContainsKey(name));
@@ -194,7 +194,7 @@ public class ModelTests
         }
     }
 
-    private IList<CustomAttributeTypedArgument> GetAttributeArgs<TAttribute>(PropertyInfo property)
+    private IList<CustomAttributeTypedArgument>? GetAttributeArgs<TAttribute>(PropertyInfo property)
     {
         return property
             .CustomAttributes
@@ -207,13 +207,13 @@ public class ModelTests
         /// <summary>
         /// The model's type in the "BaGet.Protocol" project that was extended.
         /// </summary>
-        public Type OriginalType { get; set; }
+        public Type? OriginalType { get; set; }
 
         /// <summary>
         /// The model's type in the "BaGet.Core" project that extends a
         /// type from the "BaGet.Protocol" project.
         /// </summary>
-        public Type DerivedType { get; set; }
+        public Type? DerivedType { get; set; }
 
         /// <summary>
         /// The properties added by the model type in the "BaGet.Core" project.
@@ -234,9 +234,9 @@ public class ModelTests
     /// reports one declaration per declaring type; keep the most derived one, which is
     /// the declaration that is serialized.
     /// </summary>
-    private static IReadOnlyDictionary<string, PropertyInfo> PropertiesOf(Type type)
+    private static IReadOnlyDictionary<string, PropertyInfo> PropertiesOf(Type? type)
     {
-        static int InheritanceDepth(Type declaringType)
+        static int InheritanceDepth(Type? declaringType)
         {
             var depth = 0;
             for (var current = declaringType; current != null; current = current.BaseType)
@@ -247,6 +247,7 @@ public class ModelTests
             return depth;
         }
 
+        #pragma warning disable CS8602
         return type
             .GetProperties()
             .GroupBy(p => p.Name)
@@ -255,6 +256,7 @@ public class ModelTests
                 group => group
                     .OrderByDescending(p => InheritanceDepth(p.DeclaringType))
                     .First());
+        #pragma warning restore CS8602
     }
 
 }

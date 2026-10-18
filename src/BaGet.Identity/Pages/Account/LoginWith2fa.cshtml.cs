@@ -13,15 +13,15 @@ public class LoginWith2faModel : AccountPageModel
     [BindProperty]
     [Required]
     [Display(Name = "Authenticator code")]
-    public string Code { get; set; }
+    public string? Code { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public bool RememberMe { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -35,8 +35,10 @@ public class LoginWith2faModel : AccountPageModel
         if (await SignInManager.GetTwoFactorAuthenticationUserAsync() == null) return RedirectToPage("/Account/Login");
         if (!ModelState.IsValid) return Page();
 
-        var code = Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+        var code = Code?.Replace(" ", string.Empty).Replace("-", string.Empty);
+        #pragma warning disable CS8604
         var result = await SignInManager.TwoFactorAuthenticatorSignInAsync(code, RememberMe, rememberClient: false);
+        #pragma warning restore CS8604
 
         if (result.Succeeded) return RedirectToLocal(ReturnUrl);
 

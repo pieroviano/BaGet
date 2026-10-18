@@ -16,7 +16,7 @@ public class ApiKeysModel : AccountPageModel
 
     [BindProperty]
     [StringLength(AbstractContext<Microsoft.EntityFrameworkCore.DbContext>.MaxApiKeyDescriptionLength)]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [BindProperty]
     public List<string> Scopes { get; set; } = new List<string>();
@@ -35,7 +35,7 @@ public class ApiKeysModel : AccountPageModel
     /// <summary>
     /// The key just created. Shown once: only its hash is kept.
     /// </summary>
-    public string CreatedKey { get; private set; }
+    public string? CreatedKey { get; private set; }
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {

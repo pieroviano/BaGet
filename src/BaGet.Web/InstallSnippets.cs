@@ -4,12 +4,12 @@ namespace BaGet.Web;
 
 internal sealed class InstallSnippet
 {
-    public string Name { get; init; }
+    public string? Name { get; init; }
 
     /// <summary>A shell prompt shown before the first line; not part of the copied text.</summary>
-    public string Prefix { get; init; }
+    public string? Prefix { get; init; }
 
-    public IReadOnlyList<string> Lines { get; init; }
+    public IReadOnlyList<string>? Lines { get; init; }
 }
 
 /// <summary>
@@ -17,7 +17,7 @@ internal sealed class InstallSnippet
 /// </summary>
 internal static class InstallSnippets
 {
-    public static IReadOnlyList<InstallSnippet> Build(string id, string version, bool isTemplate, bool isTool)
+    public static IReadOnlyList<InstallSnippet> Build(string? id, string? version, bool isTemplate, bool isTool)
     {
         if (isTemplate)
         {
@@ -36,7 +36,9 @@ internal static class InstallSnippets
         }
 
         // Cake needs an explicit opt-in to resolve a prerelease version.
+        #pragma warning disable CS8602
         var cakeSuffix = version.Contains('-') ? "&prerelease" : string.Empty;
+        #pragma warning restore CS8602
         var cakeSource = $"nuget:?package={id}&version={version}{cakeSuffix}";
 
         return new[]

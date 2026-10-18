@@ -22,9 +22,9 @@ public enum PackageAction
 public interface IPackageAuthorizationService
 {
     Task<bool> AuthorizeAsync(
-        BaGetPrincipal principal,
+        BaGetPrincipal? principal,
         PackageAction action,
-        string packageId,
+        string? packageId,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -38,7 +38,7 @@ public interface IPackageAuthorizationService
     /// version of an existing ID never claims it.
     /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken);
+    Task OnPushedAsync(BaGetPrincipal principal, string? packageId, bool isNewId, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -47,12 +47,12 @@ public interface IPackageAuthorizationService
 public class AllowAuthenticatedAuthorizationService : IPackageAuthorizationService
 {
     public Task<bool> AuthorizeAsync(
-        BaGetPrincipal principal,
+        BaGetPrincipal? principal,
         PackageAction action,
-        string packageId,
+        string? packageId,
         CancellationToken cancellationToken)
         => Task.FromResult(principal != null);
 
-    public Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken)
+    public Task OnPushedAsync(BaGetPrincipal principal, string? packageId, bool isNewId, CancellationToken cancellationToken)
         => Task.CompletedTask;
 }

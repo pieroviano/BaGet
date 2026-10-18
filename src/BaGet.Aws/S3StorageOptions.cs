@@ -8,21 +8,21 @@ public class S3StorageOptions
 {
     [RequiredIf(nameof(SecretKey), null, IsInverted = true)]
     [SensitiveSetting]
-    public string AccessKey { get; set; }
+    public string? AccessKey { get; set; }
 
     [RequiredIf(nameof(AccessKey), null, IsInverted = true)]
     [SensitiveSetting]
-    public string SecretKey { get; set; }
+    public string? SecretKey { get; set; }
 
     [Required]
-    public string Region { get; set; }
+    public string? Region { get; set; }
 
     [Required]
-    public string Bucket { get; set; }
+    public string? Bucket { get; set; }
 
-    public string Prefix { get; set; }
+    public string? Prefix { get; set; }
 
     public bool UseInstanceProfile { get; set; }
 
-    public string AssumeRoleArn { get; set; }
+    public string? AssumeRoleArn { get; set; }
 }

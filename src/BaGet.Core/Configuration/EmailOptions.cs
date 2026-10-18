@@ -22,14 +22,14 @@ public class EmailOptions
 
 public class SmtpOptions
 {
-    public string Host { get; set; }
+    public string? Host { get; set; }
 
     public int Port { get; set; } = 587;
 
-    public string UserName { get; set; }
+    public string? UserName { get; set; }
 
     [SensitiveSetting]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>
     /// Use TLS: implicit on port 465, STARTTLS otherwise.
@@ -39,5 +39,5 @@ public class SmtpOptions
     /// <summary>
     /// The sender's address, optionally with a display name: "BaGet &lt;baget@example.com&gt;".
     /// </summary>
-    public string From { get; set; }
+    public string? From { get; set; }
 }

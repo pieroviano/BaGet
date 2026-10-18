@@ -14,8 +14,8 @@ public class SearchContext
     }
 
     [JsonPropertyName("@vocab")]
-    public string Vocab { get; set; }
+    public string? Vocab { get; set; }
 
     [JsonPropertyName("@base")]
-    public string Base { get; set; }
+    public string? Base { get; set; }
 }

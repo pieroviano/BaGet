@@ -79,7 +79,9 @@ public class WebUiIntegrationTests : IDisposable
     {
         using var scope = _app.Services.CreateScope();
 
+        #pragma warning disable CS8604
         return await scope.ServiceProvider.GetRequiredService<IContext>().AbuseReports.ToListAsync();
+        #pragma warning restore CS8604
     }
 
     public void Dispose()
@@ -121,7 +123,9 @@ public class AccountsUiIntegrationTests : IDisposable
 
         using var redirect = await _alice.GetAsync("account/profile");
         Assert.Equal(HttpStatusCode.Redirect, redirect.StatusCode);
+        #pragma warning disable CS8602
         Assert.EndsWith("/profiles/alice", redirect.Headers.Location.ToString());
+        #pragma warning restore CS8602
 
         var html = await _bob.GetPageAsync("profiles/alice");
         Assert.Contains("Alice.Package", html);
@@ -149,7 +153,9 @@ public class AccountsUiIntegrationTests : IDisposable
         Assert.Contains("is unlisted", await response.Content.ReadAsStringAsync());
         var package = await WithScopeAsync(s => s.GetRequiredService<IPackageDatabase>()
             .FindOrNullAsync("Alice.Package", NuGet.Versioning.NuGetVersion.Parse("1.0.0"), includeUnlisted: true, CancellationToken.None));
+        #pragma warning disable CS8602
         Assert.False(package.Listed);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -188,7 +194,9 @@ public class AccountsUiIntegrationTests : IDisposable
         using var response = await _bob.GetAsync("packages/Alice.Package/manage");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("/account/login", response.Headers.Location.ToString());
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -225,7 +233,9 @@ public class AccountsUiIntegrationTests : IDisposable
         var html = await _alice.GetPageAsync("packages/Alice.Package/manage");
         Assert.Contains("Suspicious behaviour", html);
 
+        #pragma warning disable CS8604
         var key = await WithScopeAsync(async s => (await s.GetRequiredService<IContext>().AbuseReports.SingleAsync()).Key);
+        #pragma warning restore CS8604
         using (await _alice.PostAsync("packages/Alice.Package/manage", new Dictionary<string, string>
                {
                    { "key", key.ToString() },
@@ -258,8 +268,10 @@ public class AccountsUiIntegrationTests : IDisposable
         {
             var user = await s.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGetUser>>().FindByNameAsync(userName);
 
+            #pragma warning disable CS8602
             return await s.GetRequiredService<ApiKeyService>().CreateAsync(
                 user.Id, "test", new[] { ApiKeyScopes.Push }, "*", expires: null, CancellationToken.None);
+            #pragma warning restore CS8602
         });
 
         using var package = TestPackages.Build(packageId, "1.0.0");

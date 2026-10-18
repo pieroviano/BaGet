@@ -80,10 +80,12 @@ public class AccountReauthenticationTests : IDisposable
         var alice = await FindAsync(app);
         Assert.False(await HasPasswordAsync(app));
 
+        #pragma warning disable CS8602
         return (app, browser, alice.Id);
+        #pragma warning restore CS8602
     }
 
-    private static async Task<BaGetUser> FindAsync(BaGetApplication app)
+    private static async Task<BaGetUser?> FindAsync(BaGetApplication app)
     {
         using var scope = app.Services.CreateScope();
 
@@ -95,7 +97,9 @@ public class AccountReauthenticationTests : IDisposable
         using var scope = app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
 
+        #pragma warning disable CS8604
         return await users.HasPasswordAsync(await users.FindByNameAsync("alice"));
+        #pragma warning restore CS8604
     }
 
     /// <summary>The provider answers the re-authentication, then the browser comes back to the callback.</summary>
@@ -114,7 +118,9 @@ public class AccountReauthenticationTests : IDisposable
             new Dictionary<string, string> { { "newEmail", "attacker@example.com" }, { "password", password } },
             action: "account/settings?handler=ChangeEmail");
 
-    private static async Task<string> EmailAsync(BaGetApplication app) => (await FindAsync(app)).Email;
+    #pragma warning disable CS8602
+    private static async Task<string?> EmailAsync(BaGetApplication app) => (await FindAsync(app)).Email;
+    #pragma warning restore CS8602
 
     private static Task<HttpResponseMessage> SetPasswordAsync(Browser browser)
         => browser.PostAsync(
@@ -166,7 +172,9 @@ public class AccountReauthenticationTests : IDisposable
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
             var alice = await users.FindByNameAsync("alice");
+            #pragma warning disable CS8602
             alice.TwoFactorEnabled = true;
+            #pragma warning restore CS8602
             await users.UpdateAsync(alice);
         }
 
@@ -175,7 +183,9 @@ public class AccountReauthenticationTests : IDisposable
                    new Dictionary<string, string> { { "password", "alice" } },
                    action: "account/twofactor?handler=" + handler)) { }
 
+        #pragma warning disable CS8602
         Assert.True((await FindAsync(app)).TwoFactorEnabled);
+        #pragma warning restore CS8602
     }
 
     [Fact]
@@ -307,7 +317,9 @@ public class AccountReauthenticationTests : IDisposable
             tokenPage: "account/settings");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8602
         var location = response.Headers.Location.ToString();
+        #pragma warning restore CS8602
         Assert.StartsWith("https://idp.example.com/authorize", location);
         Assert.Contains("prompt=login", location);
         Assert.Contains("max_age=0", location);

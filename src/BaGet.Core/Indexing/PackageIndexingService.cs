@@ -47,13 +47,13 @@ public class PackageIndexingService : IPackageIndexingService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<PackageIndexingResult> IndexAsync(Stream packageStream, CancellationToken cancellationToken)
+    public async Task<PackageIndexingResult> IndexAsync(Stream? packageStream, CancellationToken cancellationToken)
     {
         // Try to extract all the necessary information from the package.
         Package package;
         Stream nuspecStream;
-        Stream readmeStream;
-        Stream iconStream;
+        Stream? readmeStream;
+        Stream? iconStream;
 
         try
         {
@@ -119,7 +119,7 @@ public class PackageIndexingService : IPackageIndexingService
 
         try
         {
-            packageStream.Position = 0;
+            packageStream?.Position = 0;
 
             storageResult = await _storage.SavePackageContentAsync(
                 package,

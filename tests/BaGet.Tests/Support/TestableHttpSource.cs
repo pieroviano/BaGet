@@ -13,7 +13,9 @@ public class TestableHttpSource : HttpSource
 {
     public static TestableHttpSource Create(SourceRepository source, HttpClient client)
     {
-        Func<Task<HttpHandlerResource>> factory = () => source.GetResourceAsync<HttpHandlerResource>();
+        #pragma warning disable CS8619
+        Func<Task<HttpHandlerResource>?> factory = () => source.GetResourceAsync<HttpHandlerResource>();
+        #pragma warning restore CS8619
 
         var httpCacheDirectory = Path.Combine(
             Path.GetTempPath(),
@@ -28,13 +30,15 @@ public class TestableHttpSource : HttpSource
             httpCacheDirectory);
     }
 
+    #pragma warning disable CS8620
     private TestableHttpSource(
         PackageSource packageSource,
-        Func<Task<HttpHandlerResource>> messageHandlerFactory,
+        Func<Task<HttpHandlerResource>?> messageHandlerFactory,
         IThrottle throttle,
         HttpClient httpClient,
         string httpCacheDirectory)
         : base(packageSource, messageHandlerFactory, throttle)
+    #pragma warning restore CS8620
     {
         // Set the HTTP client on the parent's private field.
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;

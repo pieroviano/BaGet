@@ -18,7 +18,7 @@ internal static class HttpClientExtensions
     /// <returns>The deserialized JSON content</returns>
     public static async Task<TResult> GetFromJsonAsync<TResult>(
         this HttpClient httpClient,
-        string requestUri,
+        string? requestUri,
         CancellationToken cancellationToken = default)
     {
         using (var response = await httpClient.GetAsync(
@@ -32,7 +32,9 @@ internal static class HttpClientExtensions
 
             using (var stream = await response.Content.ReadAsStreamAsync())
             {
+                #pragma warning disable CS8603
                 return await JsonSerializer.DeserializeAsync<TResult>(stream, cancellationToken: cancellationToken);
+                #pragma warning restore CS8603
             }
         }
     }
@@ -58,14 +60,18 @@ internal static class HttpClientExtensions
         {
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
+                #pragma warning disable CS8603
                 return default;
+                #pragma warning restore CS8603
             }
 
             response.EnsureSuccessStatusCode();
 
             using (var stream = await response.Content.ReadAsStreamAsync())
             {
+                #pragma warning disable CS8603
                 return await JsonSerializer.DeserializeAsync<TResult>(stream, cancellationToken: cancellationToken);
+                #pragma warning restore CS8603
             }
         }
     }

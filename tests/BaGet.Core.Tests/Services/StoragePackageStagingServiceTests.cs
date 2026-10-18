@@ -298,9 +298,11 @@ public class StoragePackageStagingServiceTests
 
         protected Stream StringStream(string input) => new MemoryStream(Encoding.UTF8.GetBytes(input));
 
-        protected async Task<string> ToStringAsync(Stream input)
+        protected async Task<string> ToStringAsync(Stream? input)
         {
+            #pragma warning disable CS8604
             using var reader = new StreamReader(input);
+            #pragma warning restore CS8604
 
             return await reader.ReadToEndAsync();
         }

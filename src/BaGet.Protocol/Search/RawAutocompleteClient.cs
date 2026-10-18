@@ -21,14 +21,14 @@ public class RawAutocompleteClient : IAutocompleteClient
     /// </summary>
     /// <param name="httpClient">The HTTP client used to send requests.</param>
     /// <param name="autocompleteUrl">The NuGet server's autocomplete URL.</param>
-    public RawAutocompleteClient(HttpClient httpClient, string autocompleteUrl)
+    public RawAutocompleteClient(HttpClient? httpClient, string? autocompleteUrl)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _autocompleteUrl = autocompleteUrl ?? throw new ArgumentNullException(nameof(autocompleteUrl));
     }
 
     public async Task<AutocompleteResponse> AutocompleteAsync(
-        string query = null,
+        string? query = null,
         int skip = 0,
         int take = 20,
         bool includePrerelease = true,
@@ -48,7 +48,7 @@ public class RawAutocompleteClient : IAutocompleteClient
     }
 
     public async Task<AutocompleteResponse> ListPackageVersionsAsync(
-        string packageId,
+        string? packageId,
         bool includePrerelease = true,
         bool includeSemVer2 = true,
         CancellationToken cancellationToken = default)

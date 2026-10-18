@@ -89,8 +89,8 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
         }
     }
 
-    public async Task<Stream> DownloadPackageOrNullAsync(
-        string id,
+    public async Task<Stream?> DownloadPackageOrNullAsync(
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
@@ -194,11 +194,13 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
             };
         }
 
-        return group.Packages.Select(d => new PackageDependency
+        #pragma warning disable CS8603
+        return group.Packages?.Select(d => new PackageDependency
         {
             Id = d.Id,
             VersionRange = d.VersionRange?.ToString(),
             TargetFramework = framework,
         });
+        #pragma warning restore CS8603
     }
 }

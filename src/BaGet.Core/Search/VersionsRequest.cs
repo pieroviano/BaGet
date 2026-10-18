@@ -19,5 +19,5 @@ public class VersionsRequest
     /// <summary>
     /// The package ID whose versions should be fetched.
     /// </summary>
-    public string PackageId { get; set; }
+    public string? PackageId { get; set; }
 }

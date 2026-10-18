@@ -19,7 +19,7 @@ public class DependentsResponse
     /// The package IDs matched by the dependent query.
     /// </summary>
     [JsonPropertyName("data")]
-    public IReadOnlyList<PackageDependent> Data { get; set; }
+    public IReadOnlyList<PackageDependent>? Data { get; set; }
 }
 
 /// <summary>
@@ -31,13 +31,13 @@ public class PackageDependent
     /// The dependent package id.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>
     /// The description of the dependent package.
     /// </summary>
     [JsonPropertyName("description")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// The total downloads for the dependent package.

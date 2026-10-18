@@ -25,7 +25,7 @@ public interface ISearchResponseBuilder
     /// This is reported as <see cref="AutocompleteResponse.TotalHits"/>, so it must count
     /// every match and not merely the ones on the current page.
     /// </param>
-    AutocompleteResponse BuildAutocomplete(IReadOnlyList<string> data, long totalHits);
+    AutocompleteResponse BuildAutocomplete(IReadOnlyList<string?> data, long totalHits);
 
     DependentsResponse BuildDependents(IReadOnlyList<PackageDependent> results);
 }

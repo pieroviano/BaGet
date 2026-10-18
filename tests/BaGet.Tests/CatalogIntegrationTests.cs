@@ -26,7 +26,7 @@ public class CatalogIntegrationTests : IDisposable
 {
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     public CatalogIntegrationTests(ITestOutputHelper output)
     {
@@ -45,9 +45,11 @@ public class CatalogIntegrationTests : IDisposable
             .CreateServiceIndexClient()
             .GetAsync();
 
+        #pragma warning disable CS8602, CS8604
         Assert.Equal(
             "http://localhost/v3/catalog/index.json",
             index.Resources.Single(r => r.Type == "Catalog/3.0.0").ResourceUrl);
+        #pragma warning restore CS8602, CS8604
     }
 
     [Fact]
@@ -124,7 +126,9 @@ public class CatalogIntegrationTests : IDisposable
         using (var scope = _app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<IContext>();
+            #pragma warning disable CS8602
             context.CatalogLeafs.RemoveRange(context.CatalogLeafs);
+            #pragma warning restore CS8602
             await context.SaveChangesAsync(CancellationToken.None);
         }
 
@@ -181,7 +185,7 @@ public class CatalogIntegrationTests : IDisposable
         return processor.Leaves;
     }
 
-    private async Task<JsonDocument> GetJsonAsync(string url)
+    private async Task<JsonDocument> GetJsonAsync(string? url)
     {
         using var response = await _client.GetAsync(url);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -193,7 +197,9 @@ public class CatalogIntegrationTests : IDisposable
     {
         _app.Dispose();
         _client.Dispose();
+        #pragma warning disable CS8602
         _packageStream.Dispose();
+        #pragma warning restore CS8602
     }
 
     private class RecordingLeafProcessor : ICatalogLeafProcessor

@@ -88,7 +88,7 @@ public class AccountsWithoutGlobalKeyTests : IDisposable
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    private async Task<HttpStatusCode> PushAsync(string id, string version, string apiKey)
+    private async Task<HttpStatusCode> PushAsync(string id, string version, string? apiKey)
     {
         using var package = TestPackages.Build(id, version);
         using var request = TestPackages.PushRequest(package, apiKey);
@@ -97,16 +97,18 @@ public class AccountsWithoutGlobalKeyTests : IDisposable
         return response.StatusCode;
     }
 
-    private async Task<IReadOnlyList<string>> OwnersAsync(string id)
+    private async Task<IReadOnlyList<string>?> OwnersAsync(string? id)
     {
         using var scope = _app.Services.CreateScope();
         var ownership = scope.ServiceProvider.GetRequiredService<PackageOwnershipService>();
 
         var owners = await ownership.GetOwnersAsync(id, CancellationToken.None);
-        var names = new List<string>();
+        var names = new List<string?>();
         foreach (var owner in owners) names.Add(owner.OwnerName);
 
+        #pragma warning disable CS8619
         return names;
+        #pragma warning restore CS8619
     }
 
     private async Task<BaGetUser> CreateUserAsync(string userName)

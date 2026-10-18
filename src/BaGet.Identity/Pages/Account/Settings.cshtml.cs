@@ -16,7 +16,7 @@ public class SettingsModel : AccountPageModel
 {
     protected override bool RequiresSignIn => true;
 
-    public string Email { get; private set; }
+    public string? Email { get; private set; }
 
     public bool EmailConfirmed { get; private set; }
 
@@ -31,21 +31,21 @@ public class SettingsModel : AccountPageModel
 
     public bool CanSendEmail => EmailConfigured;
 
-    public string Message { get; private set; }
+    public string? Message { get; private set; }
 
-    public string Error { get; private set; }
+    public string? Error { get; private set; }
 
     /// <summary>
     /// Why the account cannot be deleted yet, when it cannot.
     /// </summary>
-    public DeletionBlockers Blockers { get; private set; }
+    public DeletionBlockers? Blockers { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
         return await LoadAsync() ? Page() : Challenge();
     }
 
-    public async Task<IActionResult> OnPostChangePasswordAsync(string currentPassword, string newPassword, string confirmPassword)
+    public async Task<IActionResult> OnPostChangePasswordAsync(string? currentPassword, string newPassword, string confirmPassword)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -87,7 +87,7 @@ public class SettingsModel : AccountPageModel
     /// The password is asked again, like for deleting the account: the address is where
     /// password resets go, so a stolen session must not be able to repoint it.
     /// </summary>
-    public async Task<IActionResult> OnPostChangeEmailAsync(string newEmail, string password)
+    public async Task<IActionResult> OnPostChangeEmailAsync(string? newEmail, string? password)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -137,7 +137,7 @@ public class SettingsModel : AccountPageModel
     /// The password is asked again, so a stolen session cannot delete the account. An
     /// account without a password (external sign-in only) signs in again with its provider.
     /// </summary>
-    public async Task<IActionResult> OnPostDeleteAsync(string password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostDeleteAsync(string? password, CancellationToken cancellationToken)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();

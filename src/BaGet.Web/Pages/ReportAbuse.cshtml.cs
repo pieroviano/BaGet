@@ -28,25 +28,25 @@ public class ReportAbuseModel : PageModel
     }
 
     [BindProperty(SupportsGet = true)]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string Version { get; set; }
+    public string? Version { get; set; }
 
     [BindProperty]
     [Required]
-    public string Reason { get; set; }
+    public string? Reason { get; set; }
 
     [BindProperty]
     [Required]
     [StringLength(AbstractContext<DbContext>.DefaultMaxStringLength)]
-    public string Details { get; set; }
+    public string? Details { get; set; }
 
     [BindProperty]
     [EmailAddress]
     [StringLength(AbstractContext<DbContext>.MaxEmailLength)]
     [Display(Name = "Your email (optional)")]
-    public string ReporterEmail { get; set; }
+    public string? ReporterEmail { get; set; }
 
     public bool Submitted { get; private set; }
 
@@ -76,6 +76,7 @@ public class ReportAbuseModel : PageModel
 
         if (!ModelState.IsValid) return Page();
 
+        #pragma warning disable CS8602
         _context.AbuseReports.Add(new AbuseReport
         {
             PackageId = Id,
@@ -85,6 +86,7 @@ public class ReportAbuseModel : PageModel
             ReporterEmail = string.IsNullOrWhiteSpace(ReporterEmail) ? null : ReporterEmail.Trim(),
             Created = _time.UtcNow,
         });
+        #pragma warning restore CS8602
         await _context.SaveChangesAsync(cancellationToken);
 
         Submitted = true;

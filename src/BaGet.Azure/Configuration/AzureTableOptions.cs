@@ -8,5 +8,5 @@ public class AzureTableOptions
 {
     [Required]
     [SensitiveSetting]
-    public string ConnectionString { get; set; }
+    public string? ConnectionString { get; set; }
 }

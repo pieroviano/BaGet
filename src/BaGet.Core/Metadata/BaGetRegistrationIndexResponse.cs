@@ -19,7 +19,7 @@ public class BaGetRegistrationIndexResponse : RegistrationIndexResponse
     // Ordered so the serialized property order is unchanged by inheriting the base type.
     [JsonPropertyName("items")]
     [JsonPropertyOrder(1)]
-    public new IReadOnlyList<BaGetRegistrationIndexPage> Pages { get; set; }
+    public new IReadOnlyList<BaGetRegistrationIndexPage>? Pages { get; set; }
 
     /// <summary>
     /// The package's total downloads across all versions.

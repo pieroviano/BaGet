@@ -20,10 +20,12 @@ public class SmtpEmailSenderTests
         Options.Create(new EmailOptions { Smtp = new SmtpOptions { Host = "smtp.example.com", From = "noreply@example.com" } }),
         NullLogger<SmtpEmailSender>.Instance);
 
-    private static string Serialize(MimeMessage message)
+    private static string Serialize(MimeMessage? message)
     {
         using var stream = new MemoryStream();
+        #pragma warning disable CS8602
         message.WriteTo(stream);
+        #pragma warning restore CS8602
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
@@ -60,7 +62,7 @@ public class SmtpEmailSenderTests
     [Fact]
     public void ALineBreakInTheReplyToAddressNeverReachesTheHeaders()
     {
-        MimeMessage message = null;
+        MimeMessage? message = null;
         var thrown = Record.Exception(() => message = _target.BuildContactMessage(
             "owner@example.com", "sender@example.com\r\nBcc: victim@example.com", "Sender",
             "Subject", "body"));
@@ -68,7 +70,9 @@ public class SmtpEmailSenderTests
         if (thrown == null)
         {
             Assert.DoesNotContain(HeaderLines(Serialize(message)), h => h.StartsWith("Bcc:", StringComparison.OrdinalIgnoreCase));
+            #pragma warning disable CS8602
             Assert.Empty(message.Bcc);
+            #pragma warning restore CS8602
         }
     }
 

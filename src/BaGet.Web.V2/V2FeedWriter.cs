@@ -114,7 +114,7 @@ internal static class V2FeedWriter
         string selfUrl,
         string baseUrl,
         DateTime updated,
-        string nextUrl = null)
+        string? nextUrl = null)
     {
         var feed = new XElement(
             Atom + "feed",
@@ -166,6 +166,7 @@ internal static class V2FeedWriter
             properties.Add(Property(name, type, Value(package, name)));
         }
 
+        #pragma warning disable CS8604
         return new XElement(
             Atom + "entry",
             new XElement(Atom + "id", EntityId(baseUrl, package)),
@@ -182,6 +183,7 @@ internal static class V2FeedWriter
                 new XAttribute("term", "NuGetGallery.V2FeedPackage"),
                 new XAttribute("scheme", "http://schemas.microsoft.com/ado/2007/08/dataservices/scheme")),
             properties);
+        #pragma warning restore CS8604
     }
 
     /// <summary>
@@ -193,7 +195,7 @@ internal static class V2FeedWriter
                + "/Packages(Id='" + package.Id + "',Version='" + package.Version + "')";
     }
 
-    private static XElement Property(string name, string type, string value)
+    private static XElement Property(string name, string type, string? value)
     {
         var element = new XElement(DataServices + name);
 
@@ -207,7 +209,7 @@ internal static class V2FeedWriter
         return element;
     }
 
-    private static string Value(V2FeedPackage p, string name) => name switch
+    private static string? Value(V2FeedPackage p, string name) => name switch
     {
         "Version" => p.Version,
         "NormalizedVersion" => p.NormalizedVersion,

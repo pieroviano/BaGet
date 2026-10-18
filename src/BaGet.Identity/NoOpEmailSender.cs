@@ -22,7 +22,7 @@ internal sealed class NoOpEmailSender : IEmailSender<BaGetUser>, IEmailMessageSe
 
     public Task SendPasswordResetCodeAsync(BaGetUser user, string email, string resetCode) => Skip();
 
-    public Task SendAsync(string to, string replyTo, string replyToName, string subject, string textBody, CancellationToken cancellationToken)
+    public Task SendAsync(string to, string? replyTo, string? replyToName, string subject, string textBody, CancellationToken cancellationToken)
         => Skip();
 
     private Task Skip()

@@ -29,7 +29,9 @@ public class DownloadsImporter
     public async Task ImportAsync(CancellationToken cancellationToken)
     {
         var packageDownloads = await _downloadsSource.GetPackageDownloadsAsync();
-        var packages = await _context.Packages.CountAsync();
+        #pragma warning disable CS8602
+        var packages = await _context.Packages?.CountAsync();
+        #pragma warning restore CS8602
         var batches = (packages / BatchSize) + 1;
 
         for (var batch = 0; batch < batches; batch++)
@@ -38,11 +40,13 @@ public class DownloadsImporter
 
             foreach (var package in await GetBatchAsync(batch, cancellationToken))
             {
-                var packageId = package.Id.ToLowerInvariant();
-                var packageVersion = package.NormalizedVersionString.ToLowerInvariant();
+                var packageId = package.Id?.ToLowerInvariant();
+                var packageVersion = package.NormalizedVersionString?.ToLowerInvariant();
 
+                #pragma warning disable CS8604
                 if (!packageDownloads.ContainsKey(packageId) ||
                     !packageDownloads[packageId].ContainsKey(packageVersion))
+                #pragma warning restore CS8604
                 {
                     continue;
                 }
@@ -56,10 +60,12 @@ public class DownloadsImporter
         }
     }
 
+    #pragma warning disable CS8604
     private Task<List<Package>> GetBatchAsync(int batch, CancellationToken cancellationToken)
         => _context.Packages
             .OrderBy(p => p.Key)
             .Skip(batch * BatchSize)
             .Take(BatchSize)
             .ToListAsync(cancellationToken);
+    #pragma warning restore CS8604
 }

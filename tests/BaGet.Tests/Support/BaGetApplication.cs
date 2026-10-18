@@ -23,9 +23,9 @@ namespace BaGet.Tests;
 public class BaGetApplication : WebApplicationFactory<Program>
 {
     private readonly ITestOutputHelper _output;
-    private readonly HttpClient _upstreamClient;
-    private readonly Dictionary<string, string> _configOverrides;
-    private readonly Action<IServiceCollection> _configureServices;
+    private readonly HttpClient? _upstreamClient;
+    private readonly Dictionary<string, string>? _configOverrides;
+    private readonly Action<IServiceCollection>? _configureServices;
     private readonly string _environment;
 
     /// <param name="environment">
@@ -34,9 +34,9 @@ public class BaGetApplication : WebApplicationFactory<Program>
     /// </param>
     public BaGetApplication(
         ITestOutputHelper output,
-        HttpClient upstreamClient = null,
-        Dictionary<string, string> configOverrides = null,
-        Action<IServiceCollection> configureServices = null,
+        HttpClient? upstreamClient = null,
+        Dictionary<string, string>? configOverrides = null,
+        Action<IServiceCollection>? configureServices = null,
         string environment = "Production")
     {
         _configureServices = configureServices;
@@ -149,7 +149,7 @@ internal static class BaGetWebApplicationFactoryExtensions
 {
     public static async Task AddPackageAsync(
         this WebApplicationFactory<Program> factory,
-        Stream package,
+        Stream? package,
         CancellationToken cancellationToken = default)
     {
         var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
@@ -166,7 +166,7 @@ internal static class BaGetWebApplicationFactoryExtensions
 
     public static async Task AddSymbolPackageAsync(
         this WebApplicationFactory<Program> factory,
-        Stream symbolPackage,
+        Stream? symbolPackage,
         CancellationToken cancellationToken = default)
     {
         var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();

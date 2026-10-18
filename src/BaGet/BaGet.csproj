@@ -12,6 +12,7 @@
     <!-- src/Directory.Build.props turns publishing off for every project; the host is the one
          deployable. Without this, "dotnet publish" copies nothing and then fails writing web.config. -->
     <IsPublishable>true</IsPublishable>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

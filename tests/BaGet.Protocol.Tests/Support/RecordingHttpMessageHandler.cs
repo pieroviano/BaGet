@@ -15,7 +15,7 @@ namespace BaGet.Protocol.Tests;
 public class RecordingHttpMessageHandler : HttpMessageHandler
 {
     private readonly string _content;
-    private readonly List<Uri> _requests = new List<Uri>();
+    private readonly List<Uri?> _requests = new List<Uri?>();
 
     public RecordingHttpMessageHandler(string content = "{}")
     {
@@ -31,7 +31,9 @@ public class RecordingHttpMessageHandler : HttpMessageHandler
         {
             lock (_requests)
             {
+                #pragma warning disable CS8619
                 return _requests.ToArray();
+                #pragma warning restore CS8619
             }
         }
     }

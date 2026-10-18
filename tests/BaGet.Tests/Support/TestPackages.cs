@@ -33,7 +33,7 @@ internal static class TestPackages
     /// <summary>
     /// A push request as "dotnet nuget push" sends it.
     /// </summary>
-    public static HttpRequestMessage PushRequest(Stream package, string apiKey)
+    public static HttpRequestMessage PushRequest(Stream package, string? apiKey)
     {
         var content = new MultipartFormDataContent();
         var file = new StreamContent(package);
@@ -61,8 +61,8 @@ internal static class TestPackages
 
         public string Path { get; }
         public string EffectivePath => Path;
-        public NuGet.Frameworks.NuGetFramework NuGetFramework => null;
-        public System.Runtime.Versioning.FrameworkName TargetFramework => null;
+        public NuGet.Frameworks.NuGetFramework? NuGetFramework => null;
+        public System.Runtime.Versioning.FrameworkName? TargetFramework => null;
         public System.DateTimeOffset LastWriteTime => System.DateTimeOffset.UnixEpoch;
 
         public Stream GetStream() => new MemoryStream(_content);

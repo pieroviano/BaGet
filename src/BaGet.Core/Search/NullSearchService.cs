@@ -51,7 +51,7 @@ public class NullSearchService : ISearchService
         return EmptyAutocompleteResponseTask;
     }
 
-    public Task<DependentsResponse> FindDependentsAsync(string packageId, CancellationToken cancellationToken)
+    public Task<DependentsResponse> FindDependentsAsync(string? packageId, CancellationToken cancellationToken)
     {
         return EmptyDependentsResponseTask;
     }

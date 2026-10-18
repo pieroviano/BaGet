@@ -29,23 +29,23 @@ public class SettingsModel : AdminPageModel
     public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
 
     /// <summary>The file the settings are saved to.</summary>
-    public string OverridesPath => Settings.OverridesPath;
+    public string? OverridesPath => Settings.OverridesPath;
 
     /// <summary>The keys changed since startup that only apply after a restart.</summary>
     public IReadOnlyList<string> PendingRestart { get; private set; } = Array.Empty<string>();
 
     /// <summary>Outcome of the last save.</summary>
     [TempData]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>Why the last save was refused.</summary>
     public IReadOnlyList<string> Errors { get; private set; } = Array.Empty<string>();
 
     /// <summary>The section the <see cref="Errors"/> belong to.</summary>
-    public string ErrorSection { get; private set; }
+    public string? ErrorSection { get; private set; }
 
     /// <summary>Why the overrides file could not be read, or null.</summary>
-    public string LoadError { get; private set; }
+    public string? LoadError { get; private set; }
 
     /// <summary>Shows the settings.</summary>
     public async Task<IActionResult> OnGetAsync()
@@ -57,7 +57,7 @@ public class SettingsModel : AdminPageModel
     }
 
     /// <summary>Saves the settings of one section after the administrator confirms.</summary>
-    public async Task<IActionResult> OnPostAsync(string section, string password)
+    public async Task<IActionResult> OnPostAsync(string section, string? password)
     {
         if (!Settings.IsAvailable) return NotFound();
 

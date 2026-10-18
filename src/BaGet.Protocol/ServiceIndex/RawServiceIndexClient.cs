@@ -21,14 +21,14 @@ public class RawServiceIndexClient : IServiceIndexClient
     /// </summary>
     /// <param name="httpClient">The HTTP client used to send requests.</param>
     /// <param name="serviceIndexUrl">The NuGet server's service index URL.</param>
-    public RawServiceIndexClient(HttpClient httpClient, string serviceIndexUrl)
+    public RawServiceIndexClient(HttpClient? httpClient, string? serviceIndexUrl)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _serviceIndexUrl = serviceIndexUrl ?? throw new ArgumentNullException(nameof(serviceIndexUrl));
     }
 
     /// <inheritdoc />
-    public async Task<ServiceIndexResponse> GetAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceIndexResponse?> GetAsync(CancellationToken cancellationToken = default)
     {
         return await _httpClient.GetFromJsonAsync<ServiceIndexResponse>(
             _serviceIndexUrl,

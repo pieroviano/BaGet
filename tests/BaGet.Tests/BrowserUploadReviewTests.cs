@@ -150,10 +150,10 @@ namespace BaGet.Tests
 
         private sealed class FailingOwnership : IPackageAuthorizationService
         {
-            public Task<bool> AuthorizeAsync(BaGetPrincipal principal, PackageAction action, string packageId, CancellationToken cancellationToken)
+            public Task<bool> AuthorizeAsync(BaGetPrincipal? principal, PackageAction action, string? packageId, CancellationToken cancellationToken)
                 => Task.FromResult(true);
 
-            public Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken)
+            public Task OnPushedAsync(BaGetPrincipal principal, string? packageId, bool isNewId, CancellationToken cancellationToken)
                 => throw new InvalidOperationException("the database is down");
         }
     }

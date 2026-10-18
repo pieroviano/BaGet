@@ -33,17 +33,17 @@ public static class ServiceIndexModelExtensions
     private static readonly string[] RepositorySignatures = { "RepositorySignatures" + Version500, "RepositorySignatures" + Version490, "RepositorySignatures" + Version470 };
     private static readonly string[] SymbolPackagePublish = { "SymbolPackagePublish" + Version490 };
 
-    public static string GetPackageContentResourceUrl(this ServiceIndexResponse serviceIndex)
+    public static string? GetPackageContentResourceUrl(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetRequiredResourceUrl(PackageBaseAddress, nameof(PackageBaseAddress));
     }
 
-    public static string GetPackageMetadataResourceUrl(this ServiceIndexResponse serviceIndex)
+    public static string? GetPackageMetadataResourceUrl(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetRequiredResourceUrl(RegistrationsBaseUrl, nameof(RegistrationsBaseUrl));
     }
 
-    public static string GetSearchQueryResourceUrl(this ServiceIndexResponse serviceIndex)
+    public static string? GetSearchQueryResourceUrl(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetRequiredResourceUrl(SearchQueryService, nameof(SearchQueryService));
     }
@@ -52,7 +52,7 @@ public static class ServiceIndexModelExtensions
     /// All the Search resource's endpoints, in the order a client should try them.
     /// A service index may advertise several endpoints for this resource.
     /// </summary>
-    public static IReadOnlyList<string> GetSearchQueryResourceUrls(this ServiceIndexResponse serviceIndex)
+    public static IReadOnlyList<string?> GetSearchQueryResourceUrls(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetRequiredResourceUrls(SearchQueryService, nameof(SearchQueryService));
     }
@@ -61,22 +61,22 @@ public static class ServiceIndexModelExtensions
     /// All the Autocomplete resource's endpoints, in the order a client should try them.
     /// The list is empty if the service index does not advertise this optional resource.
     /// </summary>
-    public static IReadOnlyList<string> GetSearchAutocompleteResourceUrls(this ServiceIndexResponse serviceIndex)
+    public static IReadOnlyList<string?> GetSearchAutocompleteResourceUrls(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetResourceUrls(SearchAutocompleteService);
     }
 
-    public static string GetCatalogResourceUrl(this ServiceIndexResponse serviceIndex)
+    public static string? GetCatalogResourceUrl(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetResourceUrl(Catalog);
     }
 
-    public static string GetSearchAutocompleteResourceUrl(this ServiceIndexResponse serviceIndex)
+    public static string? GetSearchAutocompleteResourceUrl(this ServiceIndexResponse? serviceIndex)
     {
         return serviceIndex.GetResourceUrl(SearchAutocompleteService);
     }
 
-    public static string GetResourceUrl(this ServiceIndexResponse serviceIndex, string[] types)
+    public static string? GetResourceUrl(this ServiceIndexResponse? serviceIndex, string[] types)
     {
         return serviceIndex.GetResourceUrls(types).FirstOrDefault();
     }
@@ -92,7 +92,7 @@ public static class ServiceIndexModelExtensions
     /// <param name="serviceIndex">The service index to read.</param>
     /// <param name="types">The resource's type identifiers, most preferred first.</param>
     /// <returns>The resource's endpoints. Empty if the resource is not advertised.</returns>
-    public static IReadOnlyList<string> GetResourceUrls(this ServiceIndexResponse serviceIndex, string[] types)
+    public static IReadOnlyList<string?> GetResourceUrls(this ServiceIndexResponse? serviceIndex, string[] types)
     {
         if (serviceIndex == null) throw new ArgumentNullException(nameof(serviceIndex));
         if (types == null) throw new ArgumentNullException(nameof(types));
@@ -110,7 +110,7 @@ public static class ServiceIndexModelExtensions
             .ToList();
     }
 
-    public static string GetRequiredResourceUrl(this ServiceIndexResponse serviceIndex, string[] types, string resourceName)
+    public static string? GetRequiredResourceUrl(this ServiceIndexResponse? serviceIndex, string[] types, string resourceName)
     {
         return serviceIndex.GetRequiredResourceUrls(types, resourceName)[0];
     }
@@ -122,8 +122,8 @@ public static class ServiceIndexModelExtensions
     /// <param name="types">The resource's type identifiers, most preferred first.</param>
     /// <param name="resourceName">The resource's name, used in the error message.</param>
     /// <returns>The resource's endpoints, in the order a client should try them.</returns>
-    public static IReadOnlyList<string> GetRequiredResourceUrls(
-        this ServiceIndexResponse serviceIndex,
+    public static IReadOnlyList<string?> GetRequiredResourceUrls(
+        this ServiceIndexResponse? serviceIndex,
         string[] types,
         string resourceName)
     {

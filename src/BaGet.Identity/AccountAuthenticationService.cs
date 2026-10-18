@@ -29,10 +29,10 @@ public class AccountAuthenticationService : Core.IAuthenticationService
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<bool> AuthenticateAsync(string apiKey, CancellationToken cancellationToken)
+    public async Task<bool> AuthenticateAsync(string? apiKey, CancellationToken cancellationToken)
         => await AuthenticatePrincipalAsync(apiKey, cancellationToken) != null;
 
-    public async Task<BaGetPrincipal> AuthenticatePrincipalAsync(string apiKey, CancellationToken cancellationToken)
+    public async Task<BaGetPrincipal?> AuthenticatePrincipalAsync(string? apiKey, CancellationToken cancellationToken)
     {
         // The global key is the superuser, as it always was - but only when one is
         // configured. An empty ApiKey means "there is no global key", never "every
@@ -49,7 +49,9 @@ public class AccountAuthenticationService : Core.IAuthenticationService
         var key = await _apiKeys.FindValidOrNullAsync(apiKey, cancellationToken);
         if (key == null) return null;
 
+        #pragma warning disable CS8604
         var user = await _users.FindByIdAsync(key.UserId);
+        #pragma warning restore CS8604
         if (user == null) return null;
 
         return new BaGetPrincipal(

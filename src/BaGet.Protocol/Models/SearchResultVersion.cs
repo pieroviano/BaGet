@@ -13,13 +13,13 @@ public class SearchResultVersion
     /// The registration leaf URL for this single version of the matched package.
     /// </summary>
     [JsonPropertyName("@id")]
-    public string RegistrationLeafUrl { get; set; }
+    public string? RegistrationLeafUrl { get; set; }
 
     /// <summary>
     /// The package's full NuGet version after normalization, including any SemVer 2.0.0 build metadata.
     /// </summary>
     [JsonPropertyName("version")]
-    public string Version { get; set; }
+    public string? Version { get; set; }
 
     /// <summary>
     /// The downloads for this single version of the matched package.

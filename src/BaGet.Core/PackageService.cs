@@ -63,8 +63,8 @@ public class PackageService : IPackageService
         return result.Values.ToList();
     }
 
-    public async Task<Package> FindPackageOrNullAsync(
-        string id,
+    public async Task<Package?> FindPackageOrNullAsync(
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
@@ -76,7 +76,7 @@ public class PackageService : IPackageService
         return await _db.FindOrNullAsync(id, version, includeUnlisted: true, cancellationToken);
     }
 
-    public async Task<bool> ExistsAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await MirrorAsync(id, version, cancellationToken);
     }
@@ -93,7 +93,7 @@ public class PackageService : IPackageService
     /// <param name="version">The package version to index from an upstream.</param>
     /// <param name="cancellationToken"></param>
     /// <returns>True if the package exists locally or was indexed from an upstream source.</returns>
-    private async Task<bool> MirrorAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    private async Task<bool> MirrorAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         if (await _db.ExistsAsync(id, version, cancellationToken))
         {

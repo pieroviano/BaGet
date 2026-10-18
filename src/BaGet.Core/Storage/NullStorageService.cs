@@ -26,12 +26,16 @@ public class NullStorageService : IStorageService, IListableStorageService
 
     public Task<Stream> GetAsync(string path, CancellationToken cancellationToken = default)
     {
+        #pragma warning disable CS8625
         return Task.FromResult<Stream>(null);
+        #pragma warning restore CS8625
     }
 
     public Task<Uri> GetDownloadUriAsync(string path, CancellationToken cancellationToken = default)
     {
+        #pragma warning disable CS8625
         return Task.FromResult<Uri>(null);
+        #pragma warning restore CS8625
     }
 
     public Task<StoragePutResult> PutAsync(

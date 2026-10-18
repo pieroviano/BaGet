@@ -151,10 +151,12 @@ public class EmailTests
                 "Old-Passw0rd!");
             Assert.True(created.Succeeded);
             var alice = await users.FindByNameAsync("alice");
+            #pragma warning disable CS8604
             await users.SetLockoutEndDateAsync(alice, DateTimeOffset.UtcNow.AddDays(1));
+            #pragma warning restore CS8604
         }
 
-        string password;
+        string? password;
         using (var scope = app.Services.CreateScope())
         {
             var recovery = scope.ServiceProvider.GetRequiredService<AccountRecoveryService>();
@@ -167,7 +169,9 @@ public class EmailTests
             var alice = await users.FindByNameAsync("alice");
 
             Assert.NotNull(password);
+            #pragma warning disable CS8604
             Assert.True(await users.CheckPasswordAsync(alice, password));
+            #pragma warning restore CS8604
             Assert.False(await users.CheckPasswordAsync(alice, "Old-Passw0rd!"));
             Assert.False(alice.TwoFactorEnabled);
             Assert.False(await users.IsLockedOutAsync(alice));
@@ -203,17 +207,21 @@ public class EmailTests
     private static SmtpEmailSender NewSender(EmailOptions options)
         => new(Options.Create(options), new ListLogger<SmtpEmailSender>(new List<string>()));
 
-    private static bool RequireConfirmedEmail(Dictionary<string, string> settings)
+    private static bool RequireConfirmedEmail(Dictionary<string, string>? settings)
     {
         using var provider = BuildProvider(settings);
 
         return provider.GetRequiredService<IOptions<IdentityOptions>>().Value.SignIn.RequireConfirmedEmail;
     }
 
-    private static ServiceProvider BuildProvider(Dictionary<string, string> settings)
+    private static ServiceProvider BuildProvider(Dictionary<string, string>? settings)
     {
+        #pragma warning disable CS8602
         settings.TryAdd("Accounts:Enabled", "true");
+        #pragma warning restore CS8602
+        #pragma warning disable CS8620
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        #pragma warning restore CS8620
 
         var services = new ServiceCollection();
         services.AddLogging();
@@ -230,11 +238,13 @@ public class EmailTests
 
         public ListLogger(List<string> lines) => _lines = lines;
 
-        public IDisposable BeginScope<TState>(TState state) => null;
+        #pragma warning disable CS8633
+        public IDisposable? BeginScope<TState>(TState state) => null;
+        #pragma warning restore CS8633
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             => _lines.Add($"{logLevel}: {formatter(state, exception)}");
     }
 }

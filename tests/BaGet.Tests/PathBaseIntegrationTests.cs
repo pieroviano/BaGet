@@ -40,9 +40,13 @@ public class PathBaseIntegrationTests : IDisposable
         response.EnsureSuccessStatusCode();
         var content = JObject.Parse(await response.Content.ReadAsStringAsync());
 
+        #pragma warning disable CS8602
         foreach (var resource in content["resources"])
+        #pragma warning restore CS8602
         {
+            #pragma warning disable CS8604
             var id = resource["@id"].Value<string>();
+            #pragma warning restore CS8604
             Assert.StartsWith("http://localhost/nuget/", id);
         }
     }
@@ -56,9 +60,13 @@ public class PathBaseIntegrationTests : IDisposable
         response.EnsureSuccessStatusCode();
         var content = JObject.Parse(await response.Content.ReadAsStringAsync());
 
+        #pragma warning disable CS8602
         foreach (var resource in content["resources"])
+        #pragma warning restore CS8602
         {
+            #pragma warning disable CS8604
             var id = resource["@id"].Value<string>();
+            #pragma warning restore CS8604
             Assert.StartsWith("http://localhost/nuget/", id);
         }
     }
@@ -91,9 +99,13 @@ public class PathBaseIntegrationTests : IDisposable
         response.EnsureSuccessStatusCode();
         var content = JObject.Parse(await response.Content.ReadAsStringAsync());
 
+        #pragma warning disable CS8602
         foreach (var resource in content["resources"])
+        #pragma warning restore CS8602
         {
+            #pragma warning disable CS8604
             Assert.StartsWith("http://localhost/", resource["@id"].Value<string>());
+            #pragma warning restore CS8604
         }
     }
 
@@ -110,9 +122,13 @@ public class PathBaseIntegrationTests : IDisposable
         response.EnsureSuccessStatusCode();
         var content = JObject.Parse(await response.Content.ReadAsStringAsync());
 
+        #pragma warning disable CS8602
         foreach (var resource in content["resources"])
+        #pragma warning restore CS8602
         {
+            #pragma warning disable CS8604
             Assert.StartsWith("http://localhost/nuget/", resource["@id"].Value<string>());
+            #pragma warning restore CS8604
         }
     }
 
@@ -126,7 +142,7 @@ public class PathBaseIntegrationTests : IDisposable
     [InlineData("nuget", "/nuget")]
     [InlineData("/nuget/", "/nuget")]
     [InlineData("/nuget/feed", "/nuget/feed")]
-    public void NormalizePathBaseMapsConfiguredValues(string configured, string expected)
+    public void NormalizePathBaseMapsConfiguredValues(string? configured, string expected)
     {
         Assert.Equal(expected, BaGet.Program.NormalizePathBase(configured).Value ?? "");
     }

@@ -20,7 +20,7 @@ public class NavLinkTagHelper : TagHelper
     }
 
     [HtmlAttributeName("asp-page")]
-    public string Page { get; set; }
+    public string? Page { get; set; }
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
@@ -38,7 +38,7 @@ public class NavLinkTagHelper : TagHelper
         output.Attributes.SetAttribute("class", WithActiveClass(existing));
     }
 
-    private static string WithActiveClass(string classes)
+    private static string WithActiveClass(string? classes)
     {
         if (string.IsNullOrWhiteSpace(classes))
         {
@@ -77,7 +77,9 @@ public class NavLinkTagHelper : TagHelper
 
         // Routing is case-insensitive and tolerates a trailing slash, so the comparison
         // must be too.
+        #pragma warning disable CS8602
         var path = httpContext.Request.Path.Value?.TrimEnd('/');
+        #pragma warning restore CS8602
 
         return string.IsNullOrEmpty(path)
                || string.Equals(path, PackagesPath, StringComparison.OrdinalIgnoreCase);

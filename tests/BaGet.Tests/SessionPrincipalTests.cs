@@ -59,7 +59,9 @@ public class SessionPrincipalTests : IDisposable
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
             var stored = await users.FindByIdAsync(alice.Id);
+            #pragma warning disable CS8602
             stored.IsAdministrator = true;
+            #pragma warning restore CS8602
             Assert.True((await users.UpdateAsync(stored)).Succeeded);
         }
 
@@ -137,7 +139,7 @@ public class SessionPrincipalTests : IDisposable
         return principal;
     }
 
-    private async Task<bool> AuthorizeAsync(BaGetPrincipal principal, PackageAction action, string packageId)
+    private async Task<bool> AuthorizeAsync(BaGetPrincipal? principal, PackageAction action, string? packageId)
     {
         using var scope = _app.Services.CreateScope();
         var authorization = scope.ServiceProvider.GetRequiredService<IPackageAuthorizationService>();
@@ -145,7 +147,7 @@ public class SessionPrincipalTests : IDisposable
         return await authorization.AuthorizeAsync(principal, action, packageId, CancellationToken.None);
     }
 
-    private async Task<HttpStatusCode> PushAsync(string id, string version, string apiKey)
+    private async Task<HttpStatusCode> PushAsync(string id, string version, string? apiKey)
     {
         using var package = TestPackages.Build(id, version);
         using var request = TestPackages.PushRequest(package, apiKey);

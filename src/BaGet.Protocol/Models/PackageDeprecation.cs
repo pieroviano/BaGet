@@ -14,24 +14,24 @@ public class PackageDeprecation
     /// The URL to the document used to produce this object.
     /// </summary>
     [JsonPropertyName("@id")]
-    public string CatalogLeafUrl { get; set; }
+    public string? CatalogLeafUrl { get; set; }
 
     /// <summary>
     /// The reasons why the package was deprecated.
     /// Deprecation reasons include: "Legacy", "CriticalBugs", and "Other".
     /// </summary>
     [JsonPropertyName("reasons")]
-    public IReadOnlyList<string> Reasons { get; set; }
+    public IReadOnlyList<string>? Reasons { get; set; }
 
     /// <summary>
     /// The additional details about this deprecation.
     /// </summary>
     [JsonPropertyName("message")]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>
     /// The alternate package that should be used instead.
     /// </summary>
     [JsonPropertyName("alternatePackage")]
-    public AlternatePackage AlternatePackage { get; set; }
+    public AlternatePackage? AlternatePackage { get; set; }
 }

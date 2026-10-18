@@ -53,7 +53,9 @@ public class FileStorageServiceTests
         [Fact]
         public async Task NoAccessOutsideStorePath()
         {
+            #pragma warning disable CS8602
             foreach (var path in OutsideStorePathData)
+            #pragma warning restore CS8602
             {
                 await Assert.ThrowsAsync<ArgumentException>(async () =>
                     await _target.GetAsync(path));
@@ -75,7 +77,9 @@ public class FileStorageServiceTests
         [Fact]
         public async Task NoAccessOutsideStorePath()
         {
+            #pragma warning disable CS8602
             foreach (var path in OutsideStorePathData)
+            #pragma warning restore CS8602
             {
                 await Assert.ThrowsAsync<ArgumentException>(async () =>
                     await _target.GetDownloadUriAsync(path));
@@ -107,7 +111,9 @@ public class FileStorageServiceTests
             // Arrange
             var path = Path.Combine(_storePath, "test.txt");
 
+            #pragma warning disable CS8604
             Directory.CreateDirectory(Path.GetDirectoryName(path));
+            #pragma warning restore CS8604
             File.WriteAllText(path, "Hello world");
 
             StoragePutResult result;
@@ -127,7 +133,9 @@ public class FileStorageServiceTests
             // Arrange
             var path = Path.Combine(_storePath, "test.txt");
 
+            #pragma warning disable CS8604
             Directory.CreateDirectory(Path.GetDirectoryName(path));
+            #pragma warning restore CS8604
             File.WriteAllText(path, "Hello world");
 
             StoragePutResult result;
@@ -144,7 +152,9 @@ public class FileStorageServiceTests
         [Fact]
         public async Task NoAccessOutsideStorePath()
         {
+            #pragma warning disable CS8602
             foreach (var path in OutsideStorePathData)
+            #pragma warning restore CS8602
             {
                 using (var content = StringStream("Hello world"))
                 {
@@ -181,7 +191,9 @@ public class FileStorageServiceTests
         [Fact]
         public async Task NoAccessOutsideStorePath()
         {
+            #pragma warning disable CS8602
             foreach (var path in OutsideStorePathData)
+            #pragma warning restore CS8602
             {
                 await Assert.ThrowsAsync<ArgumentException>(async () =>
                     await _target.DeleteAsync(path));
@@ -220,7 +232,9 @@ public class FileStorageServiceTests
         [Fact]
         public async Task NoAccessOutsideStorePath()
         {
+            #pragma warning disable CS8602
             foreach (var path in OutsideStorePathData)
+            #pragma warning restore CS8602
             {
                 await Assert.ThrowsAsync<ArgumentException>(async () =>
                     await _target.ListAsync(path));
@@ -272,7 +286,7 @@ public class FileStorageServiceTests
             }
         }
 
-        public IEnumerable<string> OutsideStorePathData
+        public IEnumerable<string>? OutsideStorePathData
         {
             get
             {
@@ -286,8 +300,12 @@ public class FileStorageServiceTests
                 yield return fullPath + Path.DirectorySeparatorChar;
                 yield return fullPath + Path.DirectorySeparatorChar + "..";
                 yield return fullPath + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "file";
+                #pragma warning disable CS8603
                 yield return Path.GetPathRoot(_storePath);
+                #pragma warning restore CS8603
+                #pragma warning disable CS8604
                 yield return Path.Combine(Path.GetPathRoot(_storePath), "file");
+                #pragma warning restore CS8604
             }
         }
     }

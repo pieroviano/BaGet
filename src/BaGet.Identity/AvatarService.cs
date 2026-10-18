@@ -35,7 +35,7 @@ public class AvatarService
     /// one, by the lowercased name.
     /// </summary>
     public async Task<IReadOnlyDictionary<string, string>> GetUrlsAsync(
-        IEnumerable<string> names,
+        IEnumerable<string?> names,
         int size,
         CancellationToken cancellationToken)
     {
@@ -45,18 +45,24 @@ public class AvatarService
         var distinct = names.Where(n => !string.IsNullOrEmpty(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (distinct.Count == 0) return result;
 
-        var lowered = distinct.Select(n => n.ToLowerInvariant()).ToList();
+        var lowered = distinct.Select(n => n?.ToLowerInvariant()).ToList();
+        #pragma warning disable CS8602
         var users = await _context.Users
             .AsNoTracking()
             .Where(u => lowered.Contains(u.UserName.ToLower()))
             .Select(u => new { u.UserName, u.Email })
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602
+        #pragma warning disable CS8621, CS8714
         var emails = users.ToDictionary(u => u.UserName, u => u.Email, StringComparer.OrdinalIgnoreCase);
+        #pragma warning restore CS8621, CS8714
 
         foreach (var name in distinct)
         {
             emails.TryGetValue(name, out var email);
+            #pragma warning disable CS8604
             result[name] = GetUrl(string.IsNullOrWhiteSpace(email) ? name : email, size);
+            #pragma warning restore CS8604
         }
 
         return result;

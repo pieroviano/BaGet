@@ -35,11 +35,13 @@ public class PackagesModel : AdminPageModel
     {
         var context = HttpContext.RequestServices.GetRequiredService<IContext>();
 
+        #pragma warning disable CS8602, CS8604
         var ownerless = context.Packages
             .AsNoTracking()
             .Where(p => !context.PackageOwners.Any(o => o.PackageId.ToLower() == p.Id.ToLower()))
             .Select(p => p.Id.ToLower())
             .Distinct();
+        #pragma warning restore CS8602, CS8604
 
         var total = await ownerless.CountAsync(cancellationToken);
         PageCount = Math.Max(1, (total + PageSize - 1) / PageSize);

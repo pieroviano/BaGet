@@ -24,14 +24,14 @@ public partial class NuGetClientFactory
     /// </summary>
     internal static readonly TimeSpan DefaultServiceIndexCacheDuration = TimeSpan.FromMinutes(40);
 
-    private readonly HttpClient _httpClient;
-    private readonly string _serviceIndexUrl;
+    private readonly HttpClient? _httpClient;
+    private readonly string? _serviceIndexUrl;
 
     private readonly TimeSpan _serviceIndexCacheDuration = DefaultServiceIndexCacheDuration;
     private readonly Func<DateTimeOffset> _clock = () => DateTimeOffset.UtcNow;
 
-    private readonly SemaphoreSlim _mutex;
-    private volatile NuGetClients _clients;
+    private readonly SemaphoreSlim? _mutex;
+    private volatile NuGetClients? _clients;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NuGetClientFactory"/> class
@@ -50,7 +50,7 @@ public partial class NuGetClientFactory
     ///
     /// For NuGet.org, use https://api.nuget.org/v3/index.json
     /// </param>
-    public NuGetClientFactory(HttpClient httpClient, string serviceIndexUrl)
+    public NuGetClientFactory(HttpClient? httpClient, string? serviceIndexUrl)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _serviceIndexUrl = serviceIndexUrl ?? throw new ArgumentNullException(nameof(serviceIndexUrl));
@@ -146,32 +146,32 @@ public partial class NuGetClientFactory
     }
 
 
-    private Task<ServiceIndexResponse> GetServiceIndexAsync(CancellationToken cancellationToken = default)
+    private Task<ServiceIndexResponse?> GetServiceIndexAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync(c => c.ServiceIndex, cancellationToken);
     }
 
-    private Task<IPackageContentClient> GetPackageContentClientAsync(CancellationToken cancellationToken = default)
+    private Task<IPackageContentClient?> GetPackageContentClientAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync(c => c.PackageContentClient, cancellationToken);
     }
 
-    private Task<IPackageMetadataClient> GetPackageMetadataClientAsync(CancellationToken cancellationToken = default)
+    private Task<IPackageMetadataClient?> GetPackageMetadataClientAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync(c => c.PackageMetadataClient, cancellationToken);
     }
 
-    private Task<IReadOnlyList<ISearchClient>> GetSearchClientsAsync(CancellationToken cancellationToken = default)
+    private Task<IReadOnlyList<ISearchClient>?> GetSearchClientsAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync(c => c.SearchClients, cancellationToken);
     }
 
-    private Task<IReadOnlyList<IAutocompleteClient>> GetAutocompleteClientsAsync(CancellationToken cancellationToken = default)
+    private Task<IReadOnlyList<IAutocompleteClient>?> GetAutocompleteClientsAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync(c => c.AutocompleteClients, cancellationToken);
     }
 
-    private Task<ICatalogClient> GetCatalogClientAsync(CancellationToken cancellationToken = default)
+    private Task<ICatalogClient?> GetCatalogClientAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync(c => c.CatalogClient, cancellationToken);
     }
@@ -182,7 +182,9 @@ public partial class NuGetClientFactory
 
         if (clients == null || _clock() >= clients.ExpiresAt)
         {
-            await _mutex.WaitAsync(cancellationToken);
+            #pragma warning disable CS8602
+            await _mutex?.WaitAsync(cancellationToken);
+            #pragma warning restore CS8602
 
             try
             {
@@ -196,7 +198,7 @@ public partial class NuGetClientFactory
             }
             finally
             {
-                _mutex.Release();
+                _mutex?.Release();
             }
         }
 
@@ -250,7 +252,7 @@ public partial class NuGetClientFactory
 
     private class NuGetClients
     {
-        public ServiceIndexResponse ServiceIndex { get; set; }
+        public ServiceIndexResponse? ServiceIndex { get; set; }
 
         /// <summary>
         /// When these clients stop being used, and the service index is fetched again.
@@ -258,10 +260,10 @@ public partial class NuGetClientFactory
         /// </summary>
         public DateTimeOffset ExpiresAt { get; set; }
 
-        public IPackageContentClient PackageContentClient { get; set; }
-        public IPackageMetadataClient PackageMetadataClient { get; set; }
-        public IReadOnlyList<ISearchClient> SearchClients { get; set; }
-        public IReadOnlyList<IAutocompleteClient> AutocompleteClients { get; set; }
-        public ICatalogClient CatalogClient { get; set; }
+        public IPackageContentClient? PackageContentClient { get; set; }
+        public IPackageMetadataClient? PackageMetadataClient { get; set; }
+        public IReadOnlyList<ISearchClient>? SearchClients { get; set; }
+        public IReadOnlyList<IAutocompleteClient>? AutocompleteClients { get; set; }
+        public ICatalogClient? CatalogClient { get; set; }
     }
 }

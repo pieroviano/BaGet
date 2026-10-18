@@ -13,5 +13,5 @@ public class SearchResultPackageType
     /// The name of the package type.
     /// </summary>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }

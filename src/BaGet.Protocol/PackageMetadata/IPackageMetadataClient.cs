@@ -28,7 +28,7 @@ public interface IPackageMetadataClient
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The registration index page.</returns>
     Task<RegistrationPageResponse> GetRegistrationPageAsync(
-        string pageUrl,
+        string? pageUrl,
         CancellationToken cancellationToken = default);
 
     /// <summary>

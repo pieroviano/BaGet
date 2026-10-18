@@ -21,7 +21,7 @@ public class PackageDatabase : IPackageDatabase
     {
         try
         {
-            _context.Packages.Add(package);
+            _context.Packages?.Add(package);
 
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -34,25 +34,30 @@ public class PackageDatabase : IPackageDatabase
         }
     }
 
-    public async Task<bool> ExistsAsync(string id, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(string? id, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         return await _context
             .Packages
             .Where(p => p.Id == id)
             .AnyAsync(cancellationToken);
+        #pragma warning restore CS8604
     }
 
-    public async Task<bool> ExistsAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         return await _context
             .Packages
             .Where(p => p.Id == id)
             .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
             .AnyAsync(cancellationToken);
+        #pragma warning restore CS8604
     }
 
-    public async Task<IReadOnlyList<Package>> FindAsync(string id, bool includeUnlisted, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Package>> FindAsync(string? id, bool includeUnlisted, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var query = _context.Packages
             .Include(p => p.Dependencies)
             .Include(p => p.PackageTypes)
@@ -61,6 +66,7 @@ public class PackageDatabase : IPackageDatabase
             .Include(p => p.Vulnerabilities)
             .AsSplitQuery()
             .Where(p => p.Id == id);
+        #pragma warning restore CS8604
 
         if (!includeUnlisted)
         {
@@ -70,12 +76,13 @@ public class PackageDatabase : IPackageDatabase
         return (await query.ToListAsync(cancellationToken)).AsReadOnly();
     }
 
-    public Task<Package> FindOrNullAsync(
-        string id,
+    public Task<Package?> FindOrNullAsync(
+        string? id,
         NuGetVersion version,
         bool includeUnlisted,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var query = _context.Packages
             .Include(p => p.Dependencies)
             .Include(p => p.TargetFrameworks)
@@ -84,6 +91,7 @@ public class PackageDatabase : IPackageDatabase
             .AsSplitQuery()
             .Where(p => p.Id == id)
             .Where(p => p.NormalizedVersionString == version.ToNormalizedString());
+        #pragma warning restore CS8604
 
         if (!includeUnlisted)
         {
@@ -93,23 +101,24 @@ public class PackageDatabase : IPackageDatabase
         return query.FirstOrDefaultAsync(cancellationToken);
     }
 
-    public Task<bool> UnlistPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public Task<bool> UnlistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return TryUpdatePackageAsync(id, version, p => p.Listed = false, cancellationToken);
     }
 
-    public Task<bool> RelistPackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public Task<bool> RelistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return TryUpdatePackageAsync(id, version, p => p.Listed = true, cancellationToken);
     }
 
-    public async Task AddDownloadAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task AddDownloadAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         await TryUpdatePackageAsync(id, version, p => p.Downloads += 1, cancellationToken);
     }
 
-    public async Task<bool> HardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> HardDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var package = await _context.Packages
             .Where(p => p.Id == id)
             .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
@@ -119,6 +128,7 @@ public class PackageDatabase : IPackageDatabase
             .Include(p => p.Vulnerabilities)
             .AsSplitQuery()
             .FirstOrDefaultAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         if (package == null)
         {
@@ -127,15 +137,19 @@ public class PackageDatabase : IPackageDatabase
 
         // The package to dependency relationship is optional in the database, so EF would
         // null the foreign key and leave these rows behind rather than delete them.
-        _context.PackageDependencies.RemoveRange(package.Dependencies);
+        #pragma warning disable CS8604
+        _context.PackageDependencies?.RemoveRange(package.Dependencies);
+        #pragma warning restore CS8604
 
         // The same holds for a package's deprecation and vulnerabilities.
         if (package.Deprecation != null)
         {
-            _context.PackageDeprecations.Remove(package.Deprecation);
+            _context.PackageDeprecations?.Remove(package.Deprecation);
         }
 
-        _context.PackageVulnerabilities.RemoveRange(package.Vulnerabilities);
+        #pragma warning disable CS8604
+        _context.PackageVulnerabilities?.RemoveRange(package.Vulnerabilities);
+        #pragma warning restore CS8604
         _context.Packages.Remove(package);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -143,7 +157,7 @@ public class PackageDatabase : IPackageDatabase
     }
 
     public async Task<bool> SetDeprecationAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         PackageDeprecation deprecation,
         CancellationToken cancellationToken)
@@ -159,7 +173,7 @@ public class PackageDatabase : IPackageDatabase
         // A version has at most one deprecation, so setting one replaces the last.
         if (package.Deprecation != null)
         {
-            _context.PackageDeprecations.Remove(package.Deprecation);
+            _context.PackageDeprecations?.Remove(package.Deprecation);
         }
 
         package.Deprecation = deprecation;
@@ -169,7 +183,7 @@ public class PackageDatabase : IPackageDatabase
     }
 
     public async Task<bool> RemoveDeprecationAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
@@ -181,7 +195,7 @@ public class PackageDatabase : IPackageDatabase
 
         if (package.Deprecation != null)
         {
-            _context.PackageDeprecations.Remove(package.Deprecation);
+            _context.PackageDeprecations?.Remove(package.Deprecation);
             await _context.SaveChangesAsync(cancellationToken);
         }
 
@@ -189,7 +203,7 @@ public class PackageDatabase : IPackageDatabase
     }
 
     public async Task<bool> SetVulnerabilitiesAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         IReadOnlyList<PackageVulnerability> vulnerabilities,
         CancellationToken cancellationToken)
@@ -203,7 +217,9 @@ public class PackageDatabase : IPackageDatabase
         }
 
         // The list replaces whatever the version had, so an empty list clears it.
-        _context.PackageVulnerabilities.RemoveRange(package.Vulnerabilities);
+        #pragma warning disable CS8604
+        _context.PackageVulnerabilities?.RemoveRange(package.Vulnerabilities);
+        #pragma warning restore CS8604
         package.Vulnerabilities = vulnerabilities.ToList();
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -213,18 +229,21 @@ public class PackageDatabase : IPackageDatabase
     public async Task<IReadOnlyList<PackageVulnerability>> GetAllVulnerabilitiesAsync(
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         return await _context.PackageVulnerabilities
             .Include(v => v.Package)
             .Where(v => v.Package != null)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
     }
 
-    private Task<Package> FindForUpdateAsync(
-        string id,
+    private Task<Package?> FindForUpdateAsync(
+        string? id,
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         return _context.Packages
             .Include(p => p.Deprecation)
             .Include(p => p.Vulnerabilities)
@@ -232,18 +251,21 @@ public class PackageDatabase : IPackageDatabase
             .Where(p => p.Id == id)
             .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
             .FirstOrDefaultAsync(cancellationToken);
+        #pragma warning restore CS8604
     }
 
     private async Task<bool> TryUpdatePackageAsync(
-        string id,
+        string? id,
         NuGetVersion version,
         Action<Package> action,
         CancellationToken cancellationToken)
     {
+        #pragma warning disable CS8604
         var package = await _context.Packages
             .Where(p => p.Id == id)
             .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
             .FirstOrDefaultAsync();
+        #pragma warning restore CS8604
 
         if (package != null)
         {

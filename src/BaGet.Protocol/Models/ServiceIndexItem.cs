@@ -13,17 +13,17 @@ public class ServiceIndexItem
     /// The resource's base URL.
     /// </summary>
     [JsonPropertyName("@id")]
-    public string ResourceUrl { get; set; }
+    public string? ResourceUrl { get; set; }
 
     /// <summary>
     /// The resource's type.
     /// </summary>
     [JsonPropertyName("@type")]
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>
     /// Human readable comments about the resource.
     /// </summary>
     [JsonPropertyName("comment")]
-    public string Comment { get; set; }
+    public string? Comment { get; set; }
 }

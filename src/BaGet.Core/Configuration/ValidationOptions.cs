@@ -22,10 +22,10 @@ public class ValidationOptions
     /// validation. Unused unless set; the RepositorySignatures resource is only
     /// advertised when it is.
     /// </summary>
-    public string RepositorySigningCertificatePath { get; set; }
+    public string? RepositorySigningCertificatePath { get; set; }
 
     [SensitiveSetting]
-    public string RepositorySigningCertificatePassword { get; set; }
+    public string? RepositorySigningCertificatePassword { get; set; }
 
     /// <summary>
     /// This server's public service index URL, recorded in every repository signature;
@@ -33,5 +33,5 @@ public class ValidationOptions
     /// since signing runs in the background, outside any request to read it from, and
     /// it must be https: NuGet rejects a repository signature for any other scheme.
     /// </summary>
-    public string RepositorySigningServiceIndexUrl { get; set; }
+    public string? RepositorySigningServiceIndexUrl { get; set; }
 }

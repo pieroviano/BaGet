@@ -19,7 +19,7 @@ namespace BaGet.Identity.Pages.Admin;
 /// <param name="Created">When the account was created.</param>
 /// <param name="IsAdministrator">Whether the user is an administrator.</param>
 /// <param name="AvatarUrl">The avatar's address, or null for the initial.</param>
-public record UserRow(string UserName, string Email, DateTime Created, bool IsAdministrator, string AvatarUrl);
+public record UserRow(string? UserName, string? Email, DateTime Created, bool IsAdministrator, string? AvatarUrl);
 
 /// <summary>
 /// Lists the accounts and lets an administrator promote or demote them, reset their password
@@ -35,7 +35,7 @@ public class UsersModel : AdminPageModel
 
     /// <summary>User-name filter (contains).</summary>
     [BindProperty(SupportsGet = true)]
-    public string Q { get; set; }
+    public string? Q { get; set; }
 
     /// <summary>One-based page number. Not "page": Razor Pages reserves that route value for the page path.</summary>
     [BindProperty(SupportsGet = true, Name = "p")]
@@ -57,7 +57,7 @@ public class UsersModel : AdminPageModel
     public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
 
     /// <summary>The signed in administrator's user name; their own row has no actions.</summary>
-    public string CurrentUserName { get; private set; }
+    public string? CurrentUserName { get; private set; }
 
     /// <summary>Whether a reset link can be mailed: SMTP is configured.</summary>
     public bool CanEmailResetLink => EmailConfigured;
@@ -66,41 +66,43 @@ public class UsersModel : AdminPageModel
     /// The password just generated. Only ever rendered by the response to the reset itself, never
     /// kept in TempData or a cookie.
     /// </summary>
-    public string GeneratedPassword { get; private set; }
+    public string? GeneratedPassword { get; private set; }
 
     /// <summary>The user <see cref="GeneratedPassword"/> belongs to.</summary>
-    public string GeneratedFor { get; private set; }
+    public string? GeneratedFor { get; private set; }
 
     /// <summary>Whether <paramref name="row"/> is another account, so actions apply to it.</summary>
     public bool CanAct(UserRow row)
         => !string.Equals(row.UserName, CurrentUserName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The address with all but its first letter and domain hidden, for a confirmation.</summary>
-    public static string MaskEmail(string email)
+    public static string MaskEmail(string? email)
     {
         var at = email?.LastIndexOf('@') ?? -1;
         if (at < 1) return "the user's address";
 
+        #pragma warning disable CS8602
         return email.Substring(0, 1) + "***" + email.Substring(at);
+        #pragma warning restore CS8602
     }
 
     /// <summary>Outcome of the last action.</summary>
     [TempData]
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>Why the last action was refused.</summary>
     [TempData]
-    public string Error { get; set; }
+    public string? Error { get; set; }
 
     /// <summary>Lists the users.</summary>
     public async Task OnGetAsync(CancellationToken cancellationToken) => await LoadAsync(cancellationToken);
 
     /// <summary>Makes a user an administrator.</summary>
-    public Task<IActionResult> OnPostPromoteAsync(string userName, string password, CancellationToken cancellationToken)
+    public Task<IActionResult> OnPostPromoteAsync(string userName, string? password, CancellationToken cancellationToken)
         => ChangeAsync(userName, password, promote: true, cancellationToken);
 
     /// <summary>Removes a user's administrator flag.</summary>
-    public Task<IActionResult> OnPostDemoteAsync(string userName, string password, CancellationToken cancellationToken)
+    public Task<IActionResult> OnPostDemoteAsync(string userName, string? password, CancellationToken cancellationToken)
         => ChangeAsync(userName, password, promote: false, cancellationToken);
 
     /// <summary>
@@ -109,7 +111,7 @@ public class UsersModel : AdminPageModel
     /// cookie, and it is not cacheable. Two-factor is switched off, a lockout lifted and the
     /// user's sessions end.
     /// </summary>
-    public async Task<IActionResult> OnPostResetPasswordAsync(string userName, string password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostResetPasswordAsync(string userName, string? password, CancellationToken cancellationToken)
     {
         var current = await UserManager.GetUserAsync(User);
         if (current == null) return Challenge();
@@ -143,7 +145,7 @@ public class UsersModel : AdminPageModel
     }
 
     /// <summary>Mails the user a password reset link. Only while SMTP is configured, and only to a user with an address.</summary>
-    public async Task<IActionResult> OnPostSendResetLinkAsync(string userName, string password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostSendResetLinkAsync(string userName, string? password, CancellationToken cancellationToken)
     {
         if (!EmailConfigured) return NotFound();
 
@@ -187,7 +189,7 @@ public class UsersModel : AdminPageModel
     }
 
     // Why a reset may not go ahead, or null.
-    private async Task<string> RefuseAsync(BaGetUser current, string userName, string password)
+    private async Task<string?> RefuseAsync(BaGetUser current, string userName, string? password)
     {
         if (string.Equals(current.UserName, userName, StringComparison.OrdinalIgnoreCase))
         {
@@ -202,7 +204,7 @@ public class UsersModel : AdminPageModel
     private IActionResult BackToUsers()
         => RedirectToPage("/Admin/Users", new { q = Q, p = PageNumber > 1 ? PageNumber : (int?)null });
 
-    private async Task<IActionResult> ChangeAsync(string userName, string password, bool promote, CancellationToken cancellationToken)
+    private async Task<IActionResult> ChangeAsync(string userName, string? password, bool promote, CancellationToken cancellationToken)
     {
         var current = await UserManager.GetUserAsync(User);
         if (current == null) return Challenge();
@@ -245,7 +247,9 @@ public class UsersModel : AdminPageModel
         if (!string.IsNullOrWhiteSpace(Q))
         {
             var term = Q.Trim().ToLowerInvariant();
+            #pragma warning disable CS8602
             query = query.Where(u => u.UserName.ToLower().Contains(term));
+            #pragma warning restore CS8602
         }
 
         var total = await query.CountAsync(cancellationToken);
@@ -262,9 +266,11 @@ public class UsersModel : AdminPageModel
         var avatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
             .GetUrlsAsync(page.Select(u => u.UserName).ToList(), 24, cancellationToken);
 
+        #pragma warning disable CS8620
         Users = page
             .Select(u => new UserRow(u.UserName, u.Email, u.Created, u.IsAdministrator, avatars.GetValueOrDefault(u.UserName)))
             .ToList();
+        #pragma warning restore CS8620
 
         var current = await UserManager.GetUserAsync(User);
         CurrentUserName = current?.UserName;

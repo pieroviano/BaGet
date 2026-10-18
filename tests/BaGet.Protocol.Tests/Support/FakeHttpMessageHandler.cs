@@ -130,5 +130,7 @@ public class FakeHttpMessageHandler : HttpMessageHandler
 
     private static string Key(string url) => Key(new Uri(url));
 
-    private static string Key(Uri url) => url.GetLeftPart(UriPartial.Path).TrimEnd('/');
+    #pragma warning disable CS8602
+    private static string Key(Uri? url) => url.GetLeftPart(UriPartial.Path).TrimEnd('/');
+    #pragma warning restore CS8602
 }

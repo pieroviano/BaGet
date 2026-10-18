@@ -19,7 +19,7 @@ public class AzureSearchQueryTests
         [InlineData("my-package", "\"my-package\"")]
         [InlineData("my_package", "\"my_package\"")]
         [InlineData("Package1", "\"Package1\"")]
-        public void QuotesOrdinaryIds(string input, string expected)
+        public void QuotesOrdinaryIds(string? input, string expected)
         {
             Assert.Equal(expected, AzureSearchService.EscapeQueryPhrase(input));
         }

@@ -7,15 +7,15 @@ public class RequiredIfAttributeTests
 {
     private class Model
     {
-        public string Mode { get; set; }
+        public string? Mode { get; set; }
 
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 
-    private static ValidationResult Validate(
+    private static ValidationResult? Validate(
         RequiredIfAttribute attribute,
-        string mode,
-        string value,
+        string? mode,
+        string? value,
         string displayName = "Value")
     {
         var model = new Model { Mode = mode, Value = value };
@@ -53,7 +53,7 @@ public class RequiredIfAttributeTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("\t")]
-    public void TreatsAWhitespaceOnlyStringAsMissing(string value)
+    public void TreatsAWhitespaceOnlyStringAsMissing(string? value)
     {
         var result = Validate(new RequiredIfAttribute("Mode", "needed"), "needed", value);
 
@@ -94,7 +94,7 @@ public class RequiredIfAttributeTests
         var result = Validate(new RequiredIfAttribute("NoSuchProperty", "x"), "x", null);
 
         Assert.NotEqual(ValidationResult.Success, result);
-        Assert.Contains("NoSuchProperty", result.ErrorMessage);
+        Assert.Contains("NoSuchProperty", result?.ErrorMessage);
     }
 
     [Fact]
@@ -102,10 +102,10 @@ public class RequiredIfAttributeTests
     {
         var result = Validate(new RequiredIfAttribute("Mode", "needed"), "needed", null);
 
-        Assert.Contains("Value", result.ErrorMessage);
-        Assert.Contains("Mode", result.ErrorMessage);
-        Assert.Contains("needed", result.ErrorMessage);
-        Assert.Contains("of ", result.ErrorMessage);
+        Assert.Contains("Value", result?.ErrorMessage);
+        Assert.Contains("Mode", result?.ErrorMessage);
+        Assert.Contains("needed", result?.ErrorMessage);
+        Assert.Contains("of ", result?.ErrorMessage);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class RequiredIfAttributeTests
 
         var result = Validate(attribute, "something else", null);
 
-        Assert.Contains("other than ", result.ErrorMessage);
+        Assert.Contains("other than ", result?.ErrorMessage);
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class RequiredIfAttributeTests
 
         var result = Validate(attribute, "needed", null);
 
-        Assert.Contains("Operating mode", result.ErrorMessage);
+        Assert.Contains("Operating mode", result?.ErrorMessage);
     }
 
     [Fact]

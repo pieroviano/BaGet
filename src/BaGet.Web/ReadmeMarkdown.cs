@@ -48,11 +48,11 @@ public static class ReadmeMarkdown
 
     private static readonly string[] UnsafeSchemes = { "javascript:", "vbscript:", "data:" };
 
-    public static HtmlString ToSafeHtml(string markdown) => ToHtml(markdown);
+    public static HtmlString? ToSafeHtml(string? markdown) => ToHtml(markdown);
 
-    public static HtmlString ToHtml(string markdown) => ToHtml(markdown, Pipeline);
+    public static HtmlString? ToHtml(string? markdown) => ToHtml(markdown, Pipeline);
 
-    internal static HtmlString ToHtml(string markdown, MarkdownPipeline pipeline)
+    internal static HtmlString? ToHtml(string? markdown, MarkdownPipeline pipeline)
     {
         if (markdown == null) return null;
 
@@ -84,7 +84,7 @@ public static class ReadmeMarkdown
         }
     }
 
-    private static bool IsUnsafeAttribute(string name)
+    private static bool IsUnsafeAttribute(string? name)
     {
         var cleaned = new string((name ?? string.Empty).Where(c => !char.IsWhiteSpace(c) && !char.IsControl(c)).ToArray());
 
@@ -94,7 +94,7 @@ public static class ReadmeMarkdown
 
     private static readonly string[] UnsafeAttributes = { "style", "formaction", "form", "srcdoc", "href", "src", "action", "xlink:href", "data" };
 
-    private static bool IsUnsafe(string url)
+    private static bool IsUnsafe(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return false;
 

@@ -29,19 +29,19 @@ public class PackageStorageService : IPackageStorageService
     }
 
     public async Task<PackageSaveResult> SavePackageContentAsync(
-        Package package,
-        Stream packageStream,
-        Stream nuspecStream,
-        Stream readmeStream,
-        Stream iconStream,
+        Package? package,
+        Stream? packageStream,
+        Stream? nuspecStream,
+        Stream? readmeStream,
+        Stream? iconStream,
         CancellationToken cancellationToken = default)
     {
         package = package ?? throw new ArgumentNullException(nameof(package));
         packageStream = packageStream ?? throw new ArgumentNullException(nameof(packageStream));
         nuspecStream = nuspecStream ?? throw new ArgumentNullException(nameof(nuspecStream));
 
-        var lowercasedId = package.Id.ToLowerInvariant();
-        var lowercasedNormalizedVersion = package.NormalizedVersionString.ToLowerInvariant();
+        var lowercasedId = package.Id?.ToLowerInvariant();
+        var lowercasedNormalizedVersion = package.NormalizedVersionString?.ToLowerInvariant();
 
         var packagePath = PackagePath(lowercasedId, lowercasedNormalizedVersion);
         var nuspecPath = NuspecPath(lowercasedId, lowercasedNormalizedVersion);
@@ -138,29 +138,29 @@ public class PackageStorageService : IPackageStorageService
         return PackageSaveResult.Success;
     }
 
-    public async Task<Stream> GetPackageStreamAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<Stream?> GetPackageStreamAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await GetStreamAsync(id, version, PackagePath, cancellationToken);
     }
 
-    public async Task<Stream> GetNuspecStreamAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<Stream?> GetNuspecStreamAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await GetStreamAsync(id, version, NuspecPath, cancellationToken);
     }
 
-    public async Task<Stream> GetReadmeStreamAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<Stream?> GetReadmeStreamAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await GetStreamAsync(id, version, ReadmePath, cancellationToken);
     }
 
-    public async Task<Stream> GetIconStreamAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<Stream?> GetIconStreamAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         return await GetStreamAsync(id, version, IconPath, cancellationToken);
     }
 
-    public async Task DeleteAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task DeleteAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
-        var lowercasedId = id.ToLowerInvariant();
+        var lowercasedId = id?.ToLowerInvariant();
         var lowercasedNormalizedVersion = version.ToNormalizedString().ToLowerInvariant();
 
         var packagePath = PackagePath(lowercasedId, lowercasedNormalizedVersion);
@@ -174,13 +174,13 @@ public class PackageStorageService : IPackageStorageService
         await _storage.DeleteAsync(iconPath, cancellationToken);
     }
 
-    private async Task<Stream> GetStreamAsync(
-        string id,
+    private async Task<Stream?> GetStreamAsync(
+        string? id,
         NuGetVersion version,
-        Func<string, string, string> pathFunc,
+        Func<string?, string, string> pathFunc,
         CancellationToken cancellationToken)
     {
-        var lowercasedId = id.ToLowerInvariant();
+        var lowercasedId = id?.ToLowerInvariant();
         var lowercasedNormalizedVersion = version.ToNormalizedString().ToLowerInvariant();
         var path = pathFunc(lowercasedId, lowercasedNormalizedVersion);
 
@@ -212,39 +212,47 @@ public class PackageStorageService : IPackageStorageService
         }
     }
 
-    private string PackagePath(string lowercasedId, string lowercasedNormalizedVersion)
+    private string PackagePath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
+        #pragma warning disable CS8604
         return Path.Combine(
             PackagesPathPrefix,
             lowercasedId,
             lowercasedNormalizedVersion,
             $"{lowercasedId}.{lowercasedNormalizedVersion}.nupkg");
+        #pragma warning restore CS8604
     }
 
-    private string NuspecPath(string lowercasedId, string lowercasedNormalizedVersion)
+    private string NuspecPath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
+        #pragma warning disable CS8604
         return Path.Combine(
             PackagesPathPrefix,
             lowercasedId,
             lowercasedNormalizedVersion,
             $"{lowercasedId}.nuspec");
+        #pragma warning restore CS8604
     }
 
-    private string ReadmePath(string lowercasedId, string lowercasedNormalizedVersion)
+    private string ReadmePath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
+        #pragma warning disable CS8604
         return Path.Combine(
             PackagesPathPrefix,
             lowercasedId,
             lowercasedNormalizedVersion,
             "readme");
+        #pragma warning restore CS8604
     }
 
-    private string IconPath(string lowercasedId, string lowercasedNormalizedVersion)
+    private string IconPath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
+        #pragma warning disable CS8604
         return Path.Combine(
             PackagesPathPrefix,
             lowercasedId,
             lowercasedNormalizedVersion,
             "icon");
+        #pragma warning restore CS8604
     }
 }

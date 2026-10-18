@@ -112,7 +112,7 @@ public class PackagePublishController : Controller
         }
     }
 
-    private async Task<IActionResult> AuthorizeManageAsync(string id, CancellationToken cancellationToken)
+    private async Task<IActionResult?> AuthorizeManageAsync(string? id, CancellationToken cancellationToken)
     {
         var principal = await _authentication.AuthenticatePrincipalAsync(Request.GetApiKey(), cancellationToken);
         if (principal == null)
@@ -129,7 +129,7 @@ public class PackagePublishController : Controller
     }
 
     [HttpDelete]
-    public async Task<IActionResult> Delete(string id, string version, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(string? id, string version, CancellationToken cancellationToken)
     {
         if (_options.Value.IsReadOnlyMode)
         {
@@ -158,7 +158,7 @@ public class PackagePublishController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Relist(string id, string version, CancellationToken cancellationToken)
+    public async Task<IActionResult> Relist(string? id, string version, CancellationToken cancellationToken)
     {
         if (_options.Value.IsReadOnlyMode)
         {

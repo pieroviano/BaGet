@@ -21,13 +21,13 @@ public class RegistrationLeafResponse
     /// The URL to the registration leaf.
     /// </summary>
     [JsonPropertyName("@id")]
-    public string RegistrationLeafUrl { get; set; }
+    public string? RegistrationLeafUrl { get; set; }
 
     /// <summary>
     /// The registration leaf's type.
     /// </summary>
     [JsonPropertyName("@type")]
-    public IReadOnlyList<string> Type { get; set; }
+    public IReadOnlyList<string>? Type { get; set; }
 
     /// <summary>
     /// Whether the package is listed.
@@ -39,7 +39,7 @@ public class RegistrationLeafResponse
     /// The URL to the package content (.nupkg).
     /// </summary>
     [JsonPropertyName("packageContent")]
-    public string PackageContentUrl { get; set; }
+    public string? PackageContentUrl { get; set; }
 
     /// <summary>
     /// The date the package was published. On NuGet.org, <see cref="Published"/>
@@ -52,5 +52,5 @@ public class RegistrationLeafResponse
     /// The URL to the package's registration index.
     /// </summary>
     [JsonPropertyName("registration")]
-    public string RegistrationIndexUrl { get; set; }
+    public string? RegistrationIndexUrl { get; set; }
 }

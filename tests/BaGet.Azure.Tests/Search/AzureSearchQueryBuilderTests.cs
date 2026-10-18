@@ -16,7 +16,7 @@ public class AzureSearchQueryBuilderTests
         [InlineData("Newtonsoft.Json", "Newtonsoft.Json")]
         [InlineData("my_package", "my_package")]
         [InlineData("", "")]
-        public void LeavesAnOrdinaryTermAlone(string input, string expected)
+        public void LeavesAnOrdinaryTermAlone(string? input, string expected)
         {
             Assert.Equal(expected, AzureSearchService.EscapeQueryTerm(input));
         }
@@ -39,7 +39,7 @@ public class AzureSearchQueryBuilderTests
         [InlineData("?", @"\?")]
         [InlineData(":", @"\:")]
         [InlineData("/", @"\/")]
-        public void EscapesEachSyntaxCharacter(string input, string expected)
+        public void EscapesEachSyntaxCharacter(string? input, string expected)
         {
             Assert.Equal(expected, AzureSearchService.EscapeQueryTerm(input));
         }

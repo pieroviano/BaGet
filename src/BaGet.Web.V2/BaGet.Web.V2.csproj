@@ -6,6 +6,7 @@
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet Extension's NuGet V2 (OData) feed, for clients that cannot use V3.</Description>
     <RootNamespace>BaGet.Web.V2</RootNamespace>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

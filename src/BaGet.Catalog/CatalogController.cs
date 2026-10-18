@@ -55,7 +55,7 @@ public class CatalogController : Controller
     [HttpGet]
     public async Task<IActionResult> Leaf(string commitId, CancellationToken cancellationToken)
     {
-        string leaf;
+        string? leaf;
         try
         {
             leaf = await _reader.GetLeafOrNullAsync(commitId, cancellationToken);

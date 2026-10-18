@@ -23,7 +23,9 @@ public class FileStorageService : IStorageService, IListableStorageService
         if (options == null) throw new ArgumentNullException(nameof(options));
 
         // Resolve relative path components ('.'/'..') and ensure there is a trailing slash.
+        #pragma warning disable CS8604
         _storePath = Path.GetFullPath(options.Value.Path);
+        #pragma warning restore CS8604
         if (!_storePath.EndsWith(Path.DirectorySeparatorChar.ToString()))
             _storePath += Path.DirectorySeparatorChar;
     }
@@ -61,7 +63,9 @@ public class FileStorageService : IStorageService, IListableStorageService
         path = GetFullPath(path);
 
         // Ensure that the path exists.
+        #pragma warning disable CS8604
         Directory.CreateDirectory(Path.GetDirectoryName(path));
+        #pragma warning restore CS8604
 
         try
         {

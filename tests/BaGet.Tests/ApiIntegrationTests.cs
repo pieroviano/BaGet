@@ -12,8 +12,8 @@ public class ApiIntegrationTests : IDisposable
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
 
-    private readonly Stream _packageStream;
-    private readonly Stream _symbolPackageStream;
+    private readonly Stream? _packageStream;
+    private readonly Stream? _symbolPackageStream;
 
     public ApiIntegrationTests(ITestOutputHelper output)
     {

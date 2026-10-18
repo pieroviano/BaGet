@@ -40,9 +40,9 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
     }
 
     public async Task<bool> AuthorizeAsync(
-        BaGetPrincipal principal,
+        BaGetPrincipal? principal,
         PackageAction action,
-        string packageId,
+        string? packageId,
         CancellationToken cancellationToken)
     {
         if (principal == null) return false;
@@ -94,7 +94,7 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
         }
     }
 
-    public async Task OnPushedAsync(BaGetPrincipal principal, string packageId, bool isNewId, CancellationToken cancellationToken)
+    public async Task OnPushedAsync(BaGetPrincipal? principal, string? packageId, bool isNewId, CancellationToken cancellationToken)
     {
         // Only a new ID is claimed: an administrator may push to an existing ownerless one,
         // and that must leave it ownerless.

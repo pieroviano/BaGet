@@ -18,22 +18,22 @@ public class FeedStatistics
     /// <summary>
     /// The most downloaded package IDs, all versions together.
     /// </summary>
-    public IReadOnlyList<PackageDownloads> TopPackages { get; set; }
+    public IReadOnlyList<PackageDownloads>? TopPackages { get; set; }
 
     /// <summary>
     /// The most recently published versions.
     /// </summary>
-    public IReadOnlyList<PackageDownloads> RecentVersions { get; set; }
+    public IReadOnlyList<PackageDownloads>? RecentVersions { get; set; }
 }
 
 public class PackageDownloads
 {
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>
     /// Null when the downloads are a whole package ID's.
     /// </summary>
-    public string Version { get; set; }
+    public string? Version { get; set; }
 
     public long Downloads { get; set; }
 
@@ -62,8 +62,9 @@ public class StatisticsService
 
     public async Task<FeedStatistics> GetAsync(CancellationToken cancellationToken)
     {
-        var listed = _context.Packages.AsNoTracking().Where(p => p.Listed);
+        var listed = _context.Packages?.AsNoTracking().Where(p => p.Listed);
 
+        #pragma warning disable CS8604
         var top = await listed
             .GroupBy(p => p.Id)
             .Select(g => new PackageDownloads { Id = g.Key, Downloads = g.Sum(p => p.Downloads) })
@@ -71,6 +72,7 @@ public class StatisticsService
             .ThenBy(p => p.Id)
             .Take(ListSize)
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
 
         var recent = await listed
             .OrderByDescending(p => p.Published)
@@ -102,7 +104,7 @@ public class StatisticsService
     /// "last updated" order.
     /// </summary>
     public async Task<IReadOnlyDictionary<string, DateTime>> GetLastUpdatedAsync(
-        IReadOnlyCollection<string> packageIds,
+        IReadOnlyCollection<string?>? packageIds,
         CancellationToken cancellationToken,
         bool includePrerelease = true,
         bool includeSemVer2 = true)
@@ -110,18 +112,24 @@ public class StatisticsService
         var result = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         if (!IsSupported || packageIds == null || packageIds.Count == 0) return result;
 
-        var lowered = packageIds.Select(id => id.ToLower()).ToList();
-        IQueryable<Package> packages = _context.Packages.AsNoTracking();
+        var lowered = packageIds.Select(id => id?.ToLower()).ToList();
+        var packages = _context.Packages?.AsNoTracking();
+        #pragma warning disable CS8604
         if (!includePrerelease) packages = packages.Where(p => !p.IsPrerelease);
         if (!includeSemVer2) packages = packages.Where(p => p.SemVerLevel != SemVerLevel.SemVer2);
+        #pragma warning restore CS8604
 
+        #pragma warning disable CS8602, CS8604
         var rows = await packages
             .Where(p => p.Listed && lowered.Contains(p.Id.ToLower()))
             .GroupBy(p => p.Id)
             .Select(g => new { Id = g.Key, Published = g.Max(p => p.Published) })
             .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
 
+        #pragma warning disable CS8604
         foreach (var row in rows) result[row.Id] = row.Published;
+        #pragma warning restore CS8604
 
         return result;
     }

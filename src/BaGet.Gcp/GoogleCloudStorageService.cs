@@ -15,7 +15,7 @@ namespace BaGet.Gcp;
 
 public class GoogleCloudStorageService : IStorageService, IListableStorageService
 {
-    private readonly string _bucketName;
+    private readonly string? _bucketName;
 
     public GoogleCloudStorageService(IOptionsSnapshot<GoogleCloudStorageOptions> options)
     {

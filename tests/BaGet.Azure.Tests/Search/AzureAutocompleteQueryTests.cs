@@ -29,7 +29,7 @@ public class AzureAutocompleteQueryTests
     [InlineData("")]
     [InlineData("  ")]
     [InlineData("*")]
-    public void AnEmptyQueryMatchesEverything(string query)
+    public void AnEmptyQueryMatchesEverything(string? query)
     {
         Assert.Equal("*", AzureSearchService.BuildAutocompleteQuery(query, packageType: null));
     }

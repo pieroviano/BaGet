@@ -16,5 +16,5 @@ public class BaGetRegistrationIndexPageItem : RegistrationIndexPageItem
     // Ordered so the serialized property order is unchanged by inheriting the base type.
     [JsonPropertyName("catalogEntry")]
     [JsonPropertyOrder(1)]
-    public new BaGetPackageMetadata PackageMetadata { get; set; }
+    public new BaGetPackageMetadata? PackageMetadata { get; set; }
 }

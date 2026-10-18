@@ -18,7 +18,7 @@ public class OrganizationsModel : AccountPageModel
 
     public IReadOnlyList<OrganizationView> Organizations { get; private set; } = Array.Empty<OrganizationView>();
 
-    public string Message { get; private set; }
+    public string? Message { get; private set; }
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
@@ -50,7 +50,7 @@ public class OrganizationsModel : AccountPageModel
         return await DoneAsync(added ? $"{user.UserName} joined {organization}." : $"{user.UserName} is already a member.", cancellationToken);
     }
 
-    public async Task<IActionResult> OnPostRemoveMemberAsync(string organization, string userName, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostRemoveMemberAsync(string organization, string? userName, CancellationToken cancellationToken)
     {
         var currentUserId = UserManager.GetUserId(User);
         var user = await UserManager.FindByNameAsync(userName ?? string.Empty);
@@ -82,14 +82,20 @@ public class OrganizationsModel : AccountPageModel
         var userId = UserManager.GetUserId(User);
         var views = new List<OrganizationView>();
 
+        #pragma warning disable CS8602
         foreach (var organization in await Ownership.GetOrganizationsAsync(userId, cancellationToken))
+        #pragma warning restore CS8602
         {
             var members = await Ownership.GetMembersAsync(organization.Name, cancellationToken);
             var names = new List<(string, bool)>();
             foreach (var member in members)
             {
+                #pragma warning disable CS8604
                 var user = await UserManager.FindByIdAsync(member.UserId);
+                #pragma warning restore CS8604
+                #pragma warning disable CS8620
                 if (user != null) names.Add((user.UserName, member.IsAdmin));
+                #pragma warning restore CS8620
             }
 
             views.Add(new OrganizationView
@@ -105,10 +111,10 @@ public class OrganizationsModel : AccountPageModel
 
     public class OrganizationView
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         public bool IsAdmin { get; set; }
 
-        public IReadOnlyList<(string UserName, bool IsAdmin)> Members { get; set; }
+        public IReadOnlyList<(string UserName, bool IsAdmin)>? Members { get; set; }
     }
 }

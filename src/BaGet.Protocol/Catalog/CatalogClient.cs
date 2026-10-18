@@ -20,28 +20,36 @@ public partial class NuGetClientFactory
         {
             var client = await _clientfactory.GetCatalogClientAsync(cancellationToken);
 
-            return await client.GetIndexAsync(cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetIndexAsync(cancellationToken);
+            #pragma warning restore CS8602
         }
 
-        public async Task<CatalogPage> GetPageAsync(string pageUrl, CancellationToken cancellationToken = default)
+        public async Task<CatalogPage> GetPageAsync(string? pageUrl, CancellationToken cancellationToken = default)
         {
             var client = await _clientfactory.GetCatalogClientAsync(cancellationToken);
 
-            return await client.GetPageAsync(pageUrl, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetPageAsync(pageUrl, cancellationToken);
+            #pragma warning restore CS8602
         }
 
-        public async Task<PackageDetailsCatalogLeaf> GetPackageDetailsLeafAsync(string leafUrl, CancellationToken cancellationToken = default)
+        public async Task<PackageDetailsCatalogLeaf> GetPackageDetailsLeafAsync(string? leafUrl, CancellationToken cancellationToken = default)
         {
             var client = await _clientfactory.GetCatalogClientAsync(cancellationToken);
 
-            return await client.GetPackageDetailsLeafAsync(leafUrl, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetPackageDetailsLeafAsync(leafUrl, cancellationToken);
+            #pragma warning restore CS8602
         }
 
-        public async Task<PackageDeleteCatalogLeaf> GetPackageDeleteLeafAsync(string leafUrl, CancellationToken cancellationToken = default)
+        public async Task<PackageDeleteCatalogLeaf> GetPackageDeleteLeafAsync(string? leafUrl, CancellationToken cancellationToken = default)
         {
             var client = await _clientfactory.GetCatalogClientAsync(cancellationToken);
 
-            return await client.GetPackageDeleteLeafAsync(leafUrl, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetPackageDeleteLeafAsync(leafUrl, cancellationToken);
+            #pragma warning restore CS8602
         }
     }
 }

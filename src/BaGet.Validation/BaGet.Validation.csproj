@@ -6,6 +6,7 @@
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet Extension's validation pipeline: pushed packages are validated, and optionally repository signed, before they are served.</Description>
     <RootNamespace>BaGet.Validation</RootNamespace>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

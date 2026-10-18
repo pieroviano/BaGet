@@ -71,7 +71,7 @@ public class CatalogProcessor
         _logger.LogInformation(
             "{pages} pages were in the time bounds, out of {totalPages}.",
             pageItems.Count,
-            index.Items.Count);
+            index.Items?.Count);
 
         var success = true;
         for (var i = 0; i < pageItems.Count; i++)
@@ -105,7 +105,7 @@ public class CatalogProcessor
             "On page {page}, {leaves} out of {totalLeaves} were in the time bounds.",
             pageItem.CatalogPageUrl,
             leafItems.Count,
-            page.Items.Count);
+            page.Items?.Count);
 
         DateTimeOffset? newCursor = null;
         var success = true;

@@ -22,16 +22,20 @@ public partial class NuGetClientFactory
         {
             var client = await _clientfactory.GetPackageMetadataClientAsync(cancellationToken);
 
-            return await client.GetRegistrationIndexOrNullAsync(packageId, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetRegistrationIndexOrNullAsync(packageId, cancellationToken);
+            #pragma warning restore CS8602
         }
 
         public async Task<RegistrationPageResponse> GetRegistrationPageAsync(
-            string pageUrl,
+            string? pageUrl,
             CancellationToken cancellationToken = default)
         {
             var client = await _clientfactory.GetPackageMetadataClientAsync(cancellationToken);
 
-            return await client.GetRegistrationPageAsync(pageUrl, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetRegistrationPageAsync(pageUrl, cancellationToken);
+            #pragma warning restore CS8602
         }
 
         public async Task<RegistrationLeafResponse> GetRegistrationLeafAsync(
@@ -40,7 +44,9 @@ public partial class NuGetClientFactory
         {
             var client = await _clientfactory.GetPackageMetadataClientAsync(cancellationToken);
 
-            return await client.GetRegistrationLeafAsync(leafUrl, cancellationToken);
+            #pragma warning disable CS8602
+            return await client?.GetRegistrationLeafAsync(leafUrl, cancellationToken);
+            #pragma warning restore CS8602
         }
     }
 }

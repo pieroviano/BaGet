@@ -23,7 +23,7 @@ public interface ISearchClient
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>The search response.</returns>
     Task<SearchResponse> SearchAsync(
-        string query = null,
+        string? query = null,
         int skip = 0,
         int take = 20,
         bool includePrerelease = true,

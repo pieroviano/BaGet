@@ -10,7 +10,7 @@ namespace BaGet.Web;
 /// </summary>
 internal sealed class FrameworkGroup
 {
-    public string Name { get; init; }
+    public string? Name { get; init; }
 
     /// <summary>Frameworks the package ships assets for.</summary>
     public List<string> Declared { get; } = new List<string>();
@@ -42,8 +42,9 @@ internal static class PackageFrameworks
         "net481", "net48", "net472", "net471", "net47", "net462", "net461", "net46", "net452", "net451", "net45",
     };
 
-    public static IReadOnlyList<FrameworkGroup> Compute(IEnumerable<string> declaredMonikers)
+    public static IReadOnlyList<FrameworkGroup> Compute(IEnumerable<string?>? declaredMonikers)
     {
+        #pragma warning disable CS8602
         var declared = (declaredMonikers ?? Enumerable.Empty<string>())
             .Where(m => !string.IsNullOrWhiteSpace(m))
             .Select(m => (Moniker: m.Trim(), Framework: NuGetFramework.ParseFolder(m.Trim())))
@@ -51,6 +52,7 @@ internal static class PackageFrameworks
             .GroupBy(f => f.Moniker, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .ToList();
+        #pragma warning restore CS8602
 
         var groups = new Dictionary<string, FrameworkGroup>();
 

@@ -191,8 +191,10 @@ public class AccountsIntegrationTests : IDisposable
             s => s.SetVerifiedAsync("Alice.Package", verified: true, CancellationToken.None));
 
         using var search = System.Text.Json.JsonDocument.Parse(await _client.GetStringAsync("v3/search"));
+        #pragma warning disable CS8621, CS8714
         var results = search.RootElement.GetProperty("data").EnumerateArray()
             .ToDictionary(r => r.GetProperty("id").GetString());
+        #pragma warning restore CS8621, CS8714
 
         Assert.Equal("alice", results["Alice.Package"].GetProperty("owners")[0].GetString());
         Assert.True(results["Alice.Package"].GetProperty("verified").GetBoolean());
@@ -239,10 +241,12 @@ public class AccountsIntegrationTests : IDisposable
         using var response = await _browser.GetAsync("account/apikeys");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        #pragma warning disable CS8602
         Assert.Contains("/account/login", response.Headers.Location.ToString());
+        #pragma warning restore CS8602
     }
 
-    private async Task<HttpStatusCode> PushAsync(string id, string version, string apiKey)
+    private async Task<HttpStatusCode> PushAsync(string id, string version, string? apiKey)
     {
         using var package = TestPackages.Build(id, version);
         using var request = TestPackages.PushRequest(package, apiKey);
@@ -280,7 +284,9 @@ public class AccountsIntegrationTests : IDisposable
     {
         using var scope = _app.Services.CreateScope();
 
+        #pragma warning disable CS8714
         return await action(scope.ServiceProvider.GetRequiredService<TService>());
+        #pragma warning restore CS8714
     }
 
     private async Task<string> GetFormAsync(string url)

@@ -13,10 +13,10 @@ public interface IPackageChangeHandler
     /// <summary>
     /// The package version was added, relisted or unlisted, or its metadata changed.
     /// </summary>
-    Task OnPackageChangedAsync(string id, NuGetVersion version, CancellationToken cancellationToken);
+    Task OnPackageChangedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken);
 
     /// <summary>
     /// The package version was permanently deleted.
     /// </summary>
-    Task OnPackageDeletedAsync(string id, NuGetVersion version, CancellationToken cancellationToken);
+    Task OnPackageDeletedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken);
 }

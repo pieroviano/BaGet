@@ -61,7 +61,7 @@ public class PackageDatabaseTests
         [InlineData("Package", "1.0.0.0", true)]
         [InlineData("Unlisted.Package", "1.0.0", true)]
         [InlineData("Fake.Package", "1.0.0", false)]
-        public async Task ReturnsTrueIfPackageExists(string packageId, string packageVersion, bool exists)
+        public async Task ReturnsTrueIfPackageExists(string? packageId, string packageVersion, bool exists)
         {
             var result = await _target.ExistsAsync(
                 packageId, NuGetVersion.Parse(packageVersion), Cancellation);
@@ -73,7 +73,7 @@ public class PackageDatabaseTests
         [InlineData("Package", true)]
         [InlineData("Unlisted.Package", true)]
         [InlineData("Fake.Package", false)]
-        public async Task TheIdOnlyOverloadIgnoresTheVersion(string packageId, bool exists)
+        public async Task TheIdOnlyOverloadIgnoresTheVersion(string? packageId, bool exists)
         {
             Assert.Equal(exists, await _target.ExistsAsync(packageId, Cancellation));
         }
@@ -98,7 +98,7 @@ public class PackageDatabaseTests
 
         [Theory]
         [MemberData(nameof(ReturnsPackagesData))]
-        public async Task ReturnsPackages(string packageId, string packageVersion, bool includeUnlisted, bool exists)
+        public async Task ReturnsPackages(string? packageId, string packageVersion, bool includeUnlisted, bool exists)
         {
             var result = await _target.FindAsync(packageId, includeUnlisted, Cancellation);
 
@@ -126,9 +126,11 @@ public class PackageDatabaseTests
             var result = await _target.FindAsync("Package", includeUnlisted: true, Cancellation);
 
             var package = Assert.Single(result);
+            #pragma warning disable CS8604
             Assert.Equal("Other.Package", Assert.Single(package.Dependencies).Id);
             Assert.Equal("netstandard2.0", Assert.Single(package.TargetFrameworks).Moniker);
             Assert.Equal("Dependency", Assert.Single(package.PackageTypes).Name);
+            #pragma warning restore CS8604
         }
 
         public static IEnumerable<object[]> ReturnsPackagesData()
@@ -200,8 +202,10 @@ public class PackageDatabaseTests
             var result = await _target.FindOrNullAsync(
                 "Package", NuGetVersion.Parse("1.0.0"), includeUnlisted: true, Cancellation);
 
-            Assert.Equal("Other.Package", Assert.Single(result.Dependencies).Id);
-            Assert.Equal("netstandard2.0", Assert.Single(result.TargetFrameworks).Moniker);
+            #pragma warning disable CS8604
+            Assert.Equal("Other.Package", Assert.Single(result?.Dependencies).Id);
+            Assert.Equal("netstandard2.0", Assert.Single(result?.TargetFrameworks).Moniker);
+            #pragma warning restore CS8604
         }
 
         public static IEnumerable<object[]> ReturnsPackageData()
@@ -338,6 +342,7 @@ public class PackageDatabaseTests
             // left behind with a null package reference.
             await _target.HardDeletePackageAsync("Package", NuGetVersion.Parse("1.0.0"), Cancellation);
 
+            #pragma warning disable CS8604
             var dependencies = await _context.PackageDependencies
                 .AsNoTracking()
                 .Include(d => d.Package)
@@ -346,6 +351,7 @@ public class PackageDatabaseTests
                 .AsNoTracking()
                 .Include(f => f.Package)
                 .ToListAsync();
+            #pragma warning restore CS8604
 
             Assert.DoesNotContain(dependencies, d => d.Package == null || d.Package.Id == "Package");
             Assert.DoesNotContain(frameworks, f => f.Package == null || f.Package.Id == "Package");
@@ -396,8 +402,8 @@ public class PackageDatabaseTests
                     .Options);
             _context.Database.EnsureCreated();
 
-            _context.Packages.Add(CreatePackage("Package", "1.0.0"));
-            _context.Packages.Add(CreatePackage("Unlisted.Package", "1.0.0", listed: false));
+            _context.Packages?.Add(CreatePackage("Package", "1.0.0"));
+            _context.Packages?.Add(CreatePackage("Unlisted.Package", "1.0.0", listed: false));
             _context.SaveChanges();
 
             _target = new PackageDatabase(_context);
@@ -453,9 +459,11 @@ public class PackageDatabaseTests
         {
             var normalized = NuGetVersion.Parse(version).ToNormalizedString();
 
+            #pragma warning disable CS8604
             return await _context.Packages
                 .AsNoTracking()
                 .FirstAsync(p => p.Id == id && p.NormalizedVersionString == normalized);
+            #pragma warning restore CS8604
         }
 
         public void Dispose()

@@ -20,7 +20,7 @@ public class NuGetClientIntegrationTests : IDisposable
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
 
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     private readonly SourceRepository _repository;
     private readonly SourceCacheContext _cache;
@@ -51,7 +51,9 @@ public class NuGetClientIntegrationTests : IDisposable
     {
         var index = await _repository.GetResourceAsync<ServiceIndexResourceV3>();
 
+        #pragma warning disable CS8602
         Assert.Equal(17, index.Entries.Count);
+        #pragma warning restore CS8602
 
         Assert.NotEmpty(index.GetServiceEntries("PackageBaseAddress/3.0.0"));
         Assert.NotEmpty(index.GetServiceEntries("PackagePublish/2.0.0"));
@@ -71,6 +73,7 @@ public class NuGetClientIntegrationTests : IDisposable
         var resource = await _repository.GetResourceAsync<PackageSearchResource>();
         var searchFilter = new SearchFilter(includePrerelease: true);
 
+        #pragma warning disable CS8602
         var results = await resource.SearchAsync(
             "",
             searchFilter,
@@ -78,6 +81,7 @@ public class NuGetClientIntegrationTests : IDisposable
             take: 20,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         var result = Assert.Single(results);
 
@@ -100,6 +104,7 @@ public class NuGetClientIntegrationTests : IDisposable
         var resource = await _repository.GetResourceAsync<PackageSearchResource>();
         var searchFilter = new SearchFilter(includePrerelease: true);
 
+        #pragma warning disable CS8602
         var results = await resource.SearchAsync(
             "PackageDoesNotExist",
             searchFilter,
@@ -107,6 +112,7 @@ public class NuGetClientIntegrationTests : IDisposable
             take: 20,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Empty(results);
     }
@@ -117,11 +123,13 @@ public class NuGetClientIntegrationTests : IDisposable
         await _app.AddPackageAsync(_packageStream);
 
         var resource = await _repository.GetResourceAsync<AutoCompleteResource>();
+        #pragma warning disable CS8602
         var results = await resource.IdStartsWith(
             "",
             includePrerelease: true,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         var result = Assert.Single(results);
 
@@ -132,11 +140,13 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task AutocompleteReturnsEmpty()
     {
         var resource = await _repository.GetResourceAsync<AutoCompleteResource>();
+        #pragma warning disable CS8602
         var results = await resource.IdStartsWith(
             "PackageDoesNotExist",
             includePrerelease: true,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Empty(results);
     }
@@ -147,11 +157,13 @@ public class NuGetClientIntegrationTests : IDisposable
         await _app.AddPackageAsync(_packageStream);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        #pragma warning disable CS8602
         var versions = await resource.GetAllVersionsAsync(
             "TestData",
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         var version = Assert.Single(versions);
 
@@ -162,11 +174,13 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task VersionListReturnsEmpty()
     {
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        #pragma warning disable CS8602
         var versions = await resource.GetAllVersionsAsync(
             "PackageDoesNotExist",
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Empty(versions);
     }
@@ -181,12 +195,14 @@ public class NuGetClientIntegrationTests : IDisposable
 
         var version = NuGetVersion.Parse(packageVersion);
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        #pragma warning disable CS8602
         var result = await resource.DoesPackageExistAsync(
             packageId,
             version,
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Equal(exists, result);
     }
@@ -203,6 +219,7 @@ public class NuGetClientIntegrationTests : IDisposable
 
         var version = NuGetVersion.Parse(packageVersion);
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        #pragma warning disable CS8602
         var result = await resource.CopyNupkgToStreamAsync(
             packageId,
             version,
@@ -210,6 +227,7 @@ public class NuGetClientIntegrationTests : IDisposable
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         packageStream.Position = 0;
 
@@ -223,6 +241,7 @@ public class NuGetClientIntegrationTests : IDisposable
         await _app.AddPackageAsync(_packageStream);
 
         var resource = await _repository.GetResourceAsync<PackageMetadataResource>();
+        #pragma warning disable CS8602
         var packages = await resource.GetMetadataAsync(
             "TestData",
             includePrerelease: true,
@@ -230,6 +249,7 @@ public class NuGetClientIntegrationTests : IDisposable
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         var package = Assert.Single(packages);
 
@@ -244,6 +264,7 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task PackageMetadataReturnsEmty()
     {
         var resource = await _repository.GetResourceAsync<PackageMetadataResource>();
+        #pragma warning disable CS8602
         var packages = await resource.GetMetadataAsync(
             "PackageDoesNotExist",
             includePrerelease: true,
@@ -251,6 +272,7 @@ public class NuGetClientIntegrationTests : IDisposable
             _cache,
             _logger,
             _cancellationToken);
+        #pragma warning restore CS8602
 
         Assert.Empty(packages);
     }

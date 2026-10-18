@@ -20,7 +20,7 @@ public class PackageMetadataAdminTests : IDisposable
 
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
-    private readonly Stream _packageStream;
+    private readonly Stream? _packageStream;
 
     public PackageMetadataAdminTests(ITestOutputHelper output)
     {
@@ -171,7 +171,7 @@ public class PackageMetadataAdminTests : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, string body = null)
+    private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, string? body = null)
     {
         var request = new HttpRequestMessage(method, url);
         request.Headers.Add("X-NuGet-ApiKey", ApiKey);
@@ -183,7 +183,7 @@ public class PackageMetadataAdminTests : IDisposable
         return await _client.SendAsync(request);
     }
 
-    private async Task<JsonDocument> GetJsonAsync(string url)
+    private async Task<JsonDocument> GetJsonAsync(string? url)
     {
         using var response = await _client.GetAsync(url);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -206,6 +206,8 @@ public class PackageMetadataAdminTests : IDisposable
     {
         _app.Dispose();
         _client.Dispose();
+        #pragma warning disable CS8602
         _packageStream.Dispose();
+        #pragma warning restore CS8602
     }
 }

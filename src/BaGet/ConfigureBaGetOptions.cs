@@ -38,8 +38,8 @@ public class ConfigureBaGetOptions
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    private static readonly HashSet<string> ValidDatabaseTypes
-        = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string?> ValidDatabaseTypes
+        = new HashSet<string?>(StringComparer.OrdinalIgnoreCase)
         {
             "AzureTable",
             "MySql",
@@ -48,8 +48,8 @@ public class ConfigureBaGetOptions
             "SqlServer",
         };
 
-    private static readonly HashSet<string> ValidStorageTypes
-        = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string?> ValidStorageTypes
+        = new HashSet<string?>(StringComparer.OrdinalIgnoreCase)
         {
             "AliyunOss",
             "AwsS3",
@@ -59,8 +59,8 @@ public class ConfigureBaGetOptions
             "Null",
         };
 
-    private static readonly HashSet<string> ValidSearchTypes
-        = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string?> ValidSearchTypes
+        = new HashSet<string?>(StringComparer.OrdinalIgnoreCase)
         {
             "AzureSearch",
             "Database",
@@ -108,7 +108,7 @@ public class ConfigureBaGetOptions
     /// host filtering middleware expects. An absent or blank value means "allow any
     /// host", so that a deployment which never configured this keeps working.
     /// </summary>
-    internal static List<string> ParseAllowedHosts(string value)
+    internal static List<string> ParseAllowedHosts(string? value)
     {
         var hosts = (value ?? string.Empty)
             .Split(';', StringSplitOptions.RemoveEmptyEntries)
@@ -133,7 +133,7 @@ public class ConfigureBaGetOptions
         options.MaxRequestBodySize = 262144000;
     }
 
-    public ValidateOptionsResult Validate(string name, BaGetOptions options)
+    public ValidateOptionsResult Validate(string? name, BaGetOptions options)
     {
         var failures = new List<string>();
 

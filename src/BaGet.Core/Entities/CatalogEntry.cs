@@ -21,7 +21,7 @@ public class CatalogEntry
     /// <summary>
     /// The commit's unique ID. It also names the leaf document in storage.
     /// </summary>
-    public string CommitId { get; set; }
+    public string? CommitId { get; set; }
 
     /// <summary>
     /// When the entry was committed, in UTC. Strictly increasing in commit order.
@@ -31,12 +31,12 @@ public class CatalogEntry
     /// <summary>
     /// <see cref="PackageDetailsType"/> or <see cref="PackageDeleteType"/>.
     /// </summary>
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
-    public string PackageId { get; set; }
+    public string? PackageId { get; set; }
 
     /// <summary>
     /// The normalized version.
     /// </summary>
-    public string PackageVersion { get; set; }
+    public string? PackageVersion { get; set; }
 }

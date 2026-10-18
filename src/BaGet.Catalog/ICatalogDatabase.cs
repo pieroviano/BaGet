@@ -34,5 +34,5 @@ public interface ICatalogDatabase
     /// </summary>
     Task<IReadOnlyList<CatalogEntry>> GetEntriesAsync(int skip, int take, CancellationToken cancellationToken);
 
-    Task<CatalogEntry> FindOrNullAsync(string commitId, CancellationToken cancellationToken);
+    Task<CatalogEntry?> FindOrNullAsync(string commitId, CancellationToken cancellationToken);
 }

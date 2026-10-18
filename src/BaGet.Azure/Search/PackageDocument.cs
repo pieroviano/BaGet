@@ -12,7 +12,7 @@ public class PackageDocument : KeyedDocument
     public const string IndexName = "packages";
 
     [IsSearchable, IsFilterable, IsSortable]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     /// <summary>
     /// The lowercased ID as a single token, for exact lookups and prefix matches; "id"
@@ -22,31 +22,31 @@ public class PackageDocument : KeyedDocument
     /// </summary>
     [IsSearchable, IsFilterable]
     [Analyzer(ExactMatchCustomAnalyzer.Name)]
-    public string NormalizedId { get; set; }
+    public string? NormalizedId { get; set; }
 
     /// <summary>
     /// The package's full versions after normalization, including any SemVer 2.0.0 build metadata.
     /// </summary>
     [IsSearchable, IsFilterable, IsSortable]
-    public string Version { get; set; }
+    public string? Version { get; set; }
 
     [IsSearchable]
-    public string Description { get; set; }
-    public string[] Authors { get; set; }
+    public string? Description { get; set; }
+    public string[]? Authors { get; set; }
     public bool HasEmbeddedIcon { get; set; }
-    public string IconUrl { get; set; }
-    public string LicenseUrl { get; set; }
-    public string ProjectUrl { get; set; }
+    public string? IconUrl { get; set; }
+    public string? LicenseUrl { get; set; }
+    public string? ProjectUrl { get; set; }
     public DateTimeOffset Published { get; set; }
 
     [IsSearchable]
-    public string Summary { get; set; }
+    public string? Summary { get; set; }
 
     [IsSearchable, IsFilterable, IsFacetable]
-    public string[] Tags { get; set; }
+    public string[]? Tags { get; set; }
 
     [IsSearchable]
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     [IsFilterable, IsSortable]
     public long TotalDownloads { get; set; }
@@ -57,33 +57,33 @@ public class PackageDocument : KeyedDocument
     /// <summary>
     /// The package's full versions after normalization, including any SemVer 2.0.0 build metadata.
     /// </summary>
-    public string[] Versions { get; set;  }
-    public string[] VersionDownloads { get; set; }
+    public string[]? Versions { get; set;  }
+    public string[]? VersionDownloads { get; set; }
 
     [IsSearchable]
     [Analyzer(ExactMatchCustomAnalyzer.Name)]
-    public string[] Dependencies { get; set; }
+    public string?[]? Dependencies { get; set; }
 
     [IsSearchable]
     [Analyzer(ExactMatchCustomAnalyzer.Name)]
-    public string[] PackageTypes { get; set; }
+    public string?[]? PackageTypes { get; set; }
 
     [IsSearchable]
     [Analyzer(ExactMatchCustomAnalyzer.Name)]
-    public string[] Frameworks { get; set; }
+    public string[]? Frameworks { get; set; }
 
     [IsFilterable]
-    public string SearchFilters { get; set; }
+    public string? SearchFilters { get; set; }
 }
 
 [SerializePropertyNamesAsCamelCase]
 public class KeyedDocument : IKeyedDocument
 {
     [Key]
-    public string Key { get; set; }
+    public string? Key { get; set; }
 }
 
 public interface IKeyedDocument
 {
-    string Key { get; set; }
+    string? Key { get; set; }
 }

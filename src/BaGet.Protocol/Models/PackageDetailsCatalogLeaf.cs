@@ -17,13 +17,13 @@ public class PackageDetailsCatalogLeaf : CatalogLeaf
     /// The package's authors.
     /// </summary>
     [JsonPropertyName("authors")]
-    public string Authors { get; set; }
+    public string? Authors { get; set; }
 
     /// <summary>
     /// The package's copyright.
     /// </summary>
     [JsonPropertyName("copyright")]
-    public string Copyright { get; set; }
+    public string? Copyright { get; set; }
 
     /// <summary>
     /// A timestamp of when the package was first created. Fallback property: <see cref="CatalogLeaf.Published"/>.
@@ -41,19 +41,19 @@ public class PackageDetailsCatalogLeaf : CatalogLeaf
     /// The dependencies of the package, grouped by target framework.
     /// </summary>
     [JsonPropertyName("dependencyGroups")]
-    public List<DependencyGroupItem> DependencyGroups { get; set; }
+    public List<DependencyGroupItem>? DependencyGroups { get; set; }
 
     /// <summary>
     /// The package's description.
     /// </summary>
     [JsonPropertyName("description")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// The URL to the package's icon.
     /// </summary>
     [JsonPropertyName("iconUrl")]
-    public string IconUrl { get; set; }
+    public string? IconUrl { get; set; }
 
     /// <summary>
     /// Whether or not the package is prerelease. Can be detected from <see cref="CatalogLeaf.PackageVersion"/>.
@@ -67,13 +67,13 @@ public class PackageDetailsCatalogLeaf : CatalogLeaf
     /// The package's language.
     /// </summary>
     [JsonPropertyName("language")]
-    public string Language { get; set; }
+    public string? Language { get; set; }
 
     /// <summary>
     /// THe URL to the package's license.
     /// </summary>
     [JsonPropertyName("licenseUrl")]
-    public string LicenseUrl { get; set; }
+    public string? LicenseUrl { get; set; }
 
     /// <summary>
     /// Whether the pacakge is listed.
@@ -85,20 +85,20 @@ public class PackageDetailsCatalogLeaf : CatalogLeaf
     /// The minimum NuGet client version needed to use this package.
     /// </summary>
     [JsonPropertyName("minClientVersion")]
-    public string MinClientVersion { get; set; }
+    public string? MinClientVersion { get; set; }
 
     /// <summary>
     /// The hash of the package encoded using Base64.
     /// Hash algorithm can be detected using <see cref="PackageHashAlgorithm"/>.
     /// </summary>
     [JsonPropertyName("packageHash")]
-    public string PackageHash { get; set; }
+    public string? PackageHash { get; set; }
 
     /// <summary>
     /// The algorithm used to hash <see cref="PackageHash"/>.
     /// </summary>
     [JsonPropertyName("packageHashAlgorithm")]
-    public string PackageHashAlgorithm { get; set; }
+    public string? PackageHashAlgorithm { get; set; }
 
     /// <summary>
     /// The size of the package .nupkg in bytes.
@@ -110,13 +110,13 @@ public class PackageDetailsCatalogLeaf : CatalogLeaf
     /// The URL for the package's home page.
     /// </summary>
     [JsonPropertyName("projectUrl")]
-    public string ProjectUrl { get; set; }
+    public string? ProjectUrl { get; set; }
 
     /// <summary>
     /// The package's release notes.
     /// </summary>
     [JsonPropertyName("releaseNotes")]
-    public string ReleaseNotes { get; set; }
+    public string? ReleaseNotes { get; set; }
 
     /// <summary>
     /// If true, the package requires its license to be accepted.
@@ -128,41 +128,41 @@ public class PackageDetailsCatalogLeaf : CatalogLeaf
     /// The package's summary.
     /// </summary>
     [JsonPropertyName("summary")]
-    public string Summary { get; set; }
+    public string? Summary { get; set; }
 
     /// <summary>
     /// The package's tags.
     /// </summary>
     [JsonPropertyName("tags")]
-    public List<string> Tags { get; set; }
+    public List<string>? Tags { get; set; }
 
     /// <summary>
     /// The package's title.
     /// </summary>
     [JsonPropertyName("title")]
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// The version string as it's originally found in the .nuspec.
     /// </summary>
     [JsonPropertyName("verbatimVersion")]
-    public string VerbatimVersion { get; set; }
+    public string? VerbatimVersion { get; set; }
 
     /// <summary>
     /// The package's License Expression.
     /// </summary>
     [JsonPropertyName("licenseExpression")]
-    public string LicenseExpression { get; set; }
+    public string? LicenseExpression { get; set; }
 
     /// <summary>
     /// The package's license file.
     /// </summary>
     [JsonPropertyName("licenseFile")]
-    public string LicenseFile { get; set; }
+    public string? LicenseFile { get; set; }
 
     /// <summary>
     /// The package's icon file.
     /// </summary>
     [JsonPropertyName("iconFile")]
-    public string IconFile { get; set; }
+    public string? IconFile { get; set; }
 }

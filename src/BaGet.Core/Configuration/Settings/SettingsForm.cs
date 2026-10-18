@@ -60,7 +60,9 @@ internal static class SettingsForm
 
             if (fields.ContainsKey(ResetPrefix + key))
             {
+                #pragma warning disable CS8625
                 if (state.IsOverridden) changes[descriptor] = null;
+                #pragma warning restore CS8625
                 continue;
             }
 
@@ -120,7 +122,9 @@ internal static class SettingsForm
         }
 
         // A blank number, duration or name is left unchanged: "reset" is how to go back to the default.
+        #pragma warning disable CS8619
         if (text.Length == 0) return (false, null);
+        #pragma warning restore CS8619
 
         switch (descriptor.Kind)
         {
@@ -178,7 +182,7 @@ internal static class SettingsForm
         }
     }
 
-    private static string Normalize(SettingDescriptor descriptor, object value)
+    private static string? Normalize(SettingDescriptor descriptor, object value)
         => value switch
         {
             null => string.Empty,
@@ -190,7 +194,7 @@ internal static class SettingsForm
             _ => value.ToString(),
         };
 
-    private static string Normalize(SettingDescriptor descriptor, string text)
+    private static string Normalize(SettingDescriptor descriptor, string? text)
     {
         text ??= string.Empty;
 

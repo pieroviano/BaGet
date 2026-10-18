@@ -58,7 +58,7 @@ public class ExternalLoginTests : IDisposable
         return (app, browser);
     }
 
-    private static async Task ProviderAnswersAsync(Browser browser, string sub, string email, string verified)
+    private static async Task ProviderAnswersAsync(Browser browser, string sub, string email, string? verified)
     {
         var query = $"sub={Uri.EscapeDataString(sub)}&email={Uri.EscapeDataString(email)}&name=alice";
         if (verified != null) query += "&verified=" + verified;
@@ -97,7 +97,7 @@ public class ExternalLoginTests : IDisposable
     [Theory]
     [InlineData(null)]
     [InlineData("false")]
-    public async Task AnUnverifiedProviderEmailIsNotConfirmedAndIsMailedALinkInsteadOfSigningIn(string verified)
+    public async Task AnUnverifiedProviderEmailIsNotConfirmedAndIsMailedALinkInsteadOfSigningIn(string? verified)
     {
         var (app, browser) = Start(email: true);
         await ProviderAnswersAsync(browser, "sub-1", "alice@example.com", verified);

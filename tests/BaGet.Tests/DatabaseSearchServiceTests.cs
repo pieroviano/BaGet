@@ -71,7 +71,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var response = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads), _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Equal(new[] { "B.Many", "C.Some", "A.Few" }, response.Data.Select(r => r.PackageId));
+            #pragma warning restore CS8604
         }
 
         [Fact]
@@ -84,7 +86,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var response = await _target.SearchAsync(Sorted(SearchSort.LastUpdated), _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Equal(new[] { "B.Fresh", "C.Mid", "A.Old" }, response.Data.Select(r => r.PackageId));
+            #pragma warning restore CS8604
         }
 
         [Theory]
@@ -101,13 +105,17 @@ public class DatabaseSearchServiceTests : IDisposable
             request.IncludePrerelease = prerelease;
             request.IncludeSemVer2 = true;
             var response = await _target.SearchAsync(request, _cancellationToken);
+            #pragma warning disable CS8604
             var ids = response.Data.Select(r => r.PackageId).ToList();
+            #pragma warning restore CS8604
 
             var dates = await new StatisticsService(_context).GetLastUpdatedAsync(
                 ids, _cancellationToken, includePrerelease: prerelease, includeSemVer2: true);
 
             Assert.Equal(expectedOrder, ids);
+            #pragma warning disable CS8604
             Assert.Equal(expectedYears, ids.Select(id => dates[id].Year));
+            #pragma warning restore CS8604
         }
 
         [Fact]
@@ -125,7 +133,9 @@ public class DatabaseSearchServiceTests : IDisposable
             for (var skip = 0; skip < ids.Count; skip += 7)
             {
                 var page = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip, take: 7), _cancellationToken);
+                #pragma warning disable CS8604, CS8620
                 paged.AddRange(page.Data.Select(r => r.PackageId));
+                #pragma warning restore CS8604, CS8620
                 Assert.Equal(ids.Count, page.TotalHits);
             }
 
@@ -154,7 +164,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var first = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, take: 1), _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Equal("C", Assert.Single(first.Data).PackageId);
+            #pragma warning restore CS8604
         }
 
         [Fact]
@@ -165,7 +177,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var response = await _target.SearchAsync(Sorted(SearchSort.Relevance), _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Equal(new[] { "A", "B" }, response.Data.Select(r => r.PackageId));
+            #pragma warning restore CS8604
         }
     }
 
@@ -178,7 +192,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var response = await _target.SearchAsync(Request(skip: 0, take: 20), _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(3, response.Data.Count);
+            #pragma warning restore CS8602
             Assert.Equal(3, response.TotalHits);
         }
 
@@ -191,9 +207,13 @@ public class DatabaseSearchServiceTests : IDisposable
             var secondPage = await _target.SearchAsync(Request(skip: 3, take: 3), _cancellationToken);
             var lastPage = await _target.SearchAsync(Request(skip: 9, take: 3), _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(3, firstPage.Data.Count);
             Assert.Equal(3, secondPage.Data.Count);
+            #pragma warning restore CS8602
+            #pragma warning disable CS8604
             Assert.Single(lastPage.Data);
+            #pragma warning restore CS8604
 
             // The total is the number of matches, not the size of the page returned.
             Assert.Equal(10, firstPage.TotalHits);
@@ -208,7 +228,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var response = await _target.SearchAsync(Request(skip: 100, take: 20), _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Empty(response.Data);
+            #pragma warning restore CS8604
             Assert.Equal(5, response.TotalHits);
         }
 
@@ -221,7 +243,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 Request(skip: 0, take: 20, query: "no.such.package"),
                 _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Empty(response.Data);
+            #pragma warning restore CS8604
             Assert.Equal(0, response.TotalHits);
         }
 
@@ -230,7 +254,9 @@ public class DatabaseSearchServiceTests : IDisposable
         {
             var response = await _target.SearchAsync(Request(skip: 0, take: 20), _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Empty(response.Data);
+            #pragma warning restore CS8604
             Assert.Equal(0, response.TotalHits);
         }
 
@@ -245,7 +271,9 @@ public class DatabaseSearchServiceTests : IDisposable
 
             var response = await _target.SearchAsync(Request(skip: 0, take: 20), _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(2, response.Data.Count);
+            #pragma warning restore CS8602
             Assert.Equal(2, response.TotalHits);
         }
 
@@ -280,7 +308,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new AutocompleteRequest { Skip = 0, Take = 20 },
                 _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(3, response.Data.Count);
+            #pragma warning restore CS8602
             Assert.Equal(3, response.TotalHits);
         }
 
@@ -293,7 +323,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new AutocompleteRequest { Skip = 2, Take = 3 },
                 _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(3, response.Data.Count);
+            #pragma warning restore CS8602
             Assert.Equal(10, response.TotalHits);
         }
 
@@ -306,7 +338,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new AutocompleteRequest { Skip = 100, Take = 20 },
                 _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Empty(response.Data);
+            #pragma warning restore CS8604
             Assert.Equal(5, response.TotalHits);
         }
 
@@ -319,7 +353,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new AutocompleteRequest { Skip = 0, Take = 20, Query = "no.such.package" },
                 _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Empty(response.Data);
+            #pragma warning restore CS8604
             Assert.Equal(0, response.TotalHits);
         }
 
@@ -334,7 +370,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new AutocompleteRequest { Skip = 0, Take = 20 },
                 _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(2, response.Data.Count);
+            #pragma warning restore CS8602
             Assert.Equal(2, response.TotalHits);
         }
 
@@ -401,7 +439,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new VersionsRequest { PackageId = "Package.A" },
                 _cancellationToken);
 
+            #pragma warning disable CS8602
             Assert.Equal(2, response.Data.Count);
+            #pragma warning restore CS8602
             Assert.Equal(2, response.TotalHits);
         }
 
@@ -414,7 +454,9 @@ public class DatabaseSearchServiceTests : IDisposable
                 new VersionsRequest { PackageId = "No.Such.Package" },
                 _cancellationToken);
 
+            #pragma warning disable CS8604
             Assert.Empty(response.Data);
+            #pragma warning restore CS8604
             Assert.Equal(0, response.TotalHits);
         }
     }
@@ -422,7 +464,7 @@ public class DatabaseSearchServiceTests : IDisposable
     private static SearchRequest Request(
         int skip,
         int take,
-        string query = null,
+        string? query = null,
         bool includePrerelease = true,
         bool includeSemVer2 = true)
     {
@@ -461,6 +503,7 @@ public class DatabaseSearchServiceTests : IDisposable
     {
         var parsedVersion = NuGetVersion.Parse(version);
 
+        #pragma warning disable CS8602
         _context.Packages.Add(new Package
         {
             Id = packageId,
@@ -478,6 +521,7 @@ public class DatabaseSearchServiceTests : IDisposable
             PackageTypes = new List<PackageType>(),
             TargetFrameworks = new List<TargetFramework>(),
         });
+        #pragma warning restore CS8602
 
         await _context.SaveChangesAsync(_cancellationToken);
     }

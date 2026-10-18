@@ -6,6 +6,7 @@
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet Extension's NuGet V3 catalog: an append-only log of package changes, for mirrors.</Description>
     <RootNamespace>BaGet.Catalog</RootNamespace>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

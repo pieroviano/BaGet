@@ -58,9 +58,11 @@ public class SettingsOverridesStoreTests : IDisposable
         await Write(("Email:Smtp:Host", "a"));
         await Write(("email:SMTP:host", "b"));
 
-        var json = JsonNode.Parse(File.ReadAllText(_path)).AsObject();
+        var json = JsonNode.Parse(File.ReadAllText(_path))?.AsObject();
 
+        #pragma warning disable CS8604
         Assert.Single(json);
+        #pragma warning restore CS8604
         Assert.Equal("b", _store.Read()["Email:Smtp:Host"]);
     }
 
@@ -69,16 +71,22 @@ public class SettingsOverridesStoreTests : IDisposable
     {
         await Write(("Email:Smtp:Host", "a"), ("ApiKey", "k"));
 
+        #pragma warning disable CS8620
         await Write(("Email:Smtp:Host", null));
+        #pragma warning restore CS8620
 
-        var json = JsonNode.Parse(File.ReadAllText(_path)).AsObject();
+        var json = JsonNode.Parse(File.ReadAllText(_path))?.AsObject();
+        #pragma warning disable CS8604
         Assert.Equal(new[] { "ApiKey" }, json.Select(p => p.Key));
+        #pragma warning restore CS8604
     }
 
     [Fact]
     public async Task ARemovedKeyThatIsAbsentIsIgnored()
     {
+        #pragma warning disable CS8620
         await Write(("Not:There", null));
+        #pragma warning restore CS8620
 
         Assert.Empty(_store.Read());
     }
@@ -107,14 +115,17 @@ public class SettingsOverridesStoreTests : IDisposable
             ("Items", new[] { "a", "b" }),
             ("Text", "t"));
 
-        var json = JsonNode.Parse(File.ReadAllText(_path)).AsObject();
+        var json = JsonNode.Parse(File.ReadAllText(_path))?.AsObject();
 
+        #pragma warning disable CS8602, CS8604
         Assert.True((bool)json["Flag"]);
+        #pragma warning restore CS8602
         Assert.Equal(7L, (long)json["Count"]);
         Assert.Equal(1.5d, (double)json["Ratio"]);
-        Assert.Equal("00:10:00", (string)json["Span"]);
-        Assert.Equal(2, json["Items"].AsArray().Count);
-        Assert.Equal("t", (string)json["Text"]);
+        #pragma warning restore CS8604
+        Assert.Equal("00:10:00", (string?)json["Span"]);
+        Assert.Equal(2, json["Items"]?.AsArray().Count);
+        Assert.Equal("t", (string?)json["Text"]);
     }
 
     [Fact]
@@ -123,7 +134,9 @@ public class SettingsOverridesStoreTests : IDisposable
         await Write(("A", "1"));
         await Write(("A", "2"));
 
+        #pragma warning disable CS8604
         var files = Directory.GetFiles(Path.GetDirectoryName(_path), "*", SearchOption.AllDirectories);
+        #pragma warning restore CS8604
 
         Assert.Equal(new[] { _path }, files);
     }
@@ -131,7 +144,9 @@ public class SettingsOverridesStoreTests : IDisposable
     [Fact]
     public async Task CommentsAndTrailingCommasInTheFileAreTolerated()
     {
+        #pragma warning disable CS8604
         Directory.CreateDirectory(Path.GetDirectoryName(_path));
+        #pragma warning restore CS8604
         File.WriteAllText(_path, "{ // note\n \"A\": { \"B\": 1, }, }");
 
         Assert.Equal("1", _store.Read()["A:B"]);
@@ -145,7 +160,9 @@ public class SettingsOverridesStoreTests : IDisposable
     [Fact]
     public void AnInvalidFileIsReportedWithItsPath()
     {
+        #pragma warning disable CS8604
         Directory.CreateDirectory(Path.GetDirectoryName(_path));
+        #pragma warning restore CS8604
         File.WriteAllText(_path, "{ not json");
 
         var error = Assert.Throws<InvalidOperationException>(() => _store.Read());
@@ -157,9 +174,11 @@ public class SettingsOverridesStoreTests : IDisposable
     public void ResolvePathUsesTheConfiguredPathOrTheDefaultFileUnderTheBase()
     {
         var empty = new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();
+        #pragma warning disable CS8620
         var configured = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string> { [SettingsOverridesStore.PathKey] = "conf/x.json" })
             .Build();
+        #pragma warning restore CS8620
 
         Assert.Equal(
             Path.GetFullPath(Path.Combine(_directory, SettingsOverridesStore.DefaultFileName)),

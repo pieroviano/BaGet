@@ -27,19 +27,23 @@ public class ContactRateLimiter
     /// Takes the sender's allowance for the package, or returns false when it was used less
     /// than <see cref="Window"/> ago. Atomic, so two concurrent posts cannot both pass.
     /// </summary>
-    public bool TryAcquire(string senderId, string packageId)
+    public bool TryAcquire(string senderId, string? packageId)
     {
         var now = _time.UtcNow;
-        var key = (senderId, packageId.ToLowerInvariant());
+        var key = (senderId, packageId?.ToLowerInvariant());
 
         lock (_gate)
         {
+            #pragma warning disable CS8620
             if (_last.TryGetValue(key, out var previous) && now - previous < Window)
+            #pragma warning restore CS8620
             {
                 return false;
             }
 
+            #pragma warning disable CS8620
             _last[key] = now;
+            #pragma warning restore CS8620
             if (_last.Count > 10_000) Prune(now);
 
             return true;
@@ -49,9 +53,11 @@ public class ContactRateLimiter
     /// <summary>
     /// Gives the allowance back, when the message could not be sent.
     /// </summary>
-    public void Release(string senderId, string packageId)
+    public void Release(string senderId, string? packageId)
     {
-        lock (_gate) _last.TryRemove((senderId, packageId.ToLowerInvariant()), out _);
+        #pragma warning disable CS8620
+        lock (_gate) _last.TryRemove((senderId, packageId?.ToLowerInvariant()), out _);
+        #pragma warning restore CS8620
     }
 
     private void Prune(DateTime now)

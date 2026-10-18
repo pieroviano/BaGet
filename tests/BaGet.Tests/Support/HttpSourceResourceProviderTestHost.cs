@@ -28,11 +28,11 @@ public class HttpSourceResourceProviderTestHost : ResourceProvider
         _httpClient = httpClient;
     }
 
-    public override Task<Tuple<bool, INuGetResource>> TryCreate(SourceRepository source, CancellationToken token)
+    public override Task<Tuple<bool, INuGetResource?>> TryCreate(SourceRepository source, CancellationToken token)
     {
         Debug.Assert(source.PackageSource.IsHttp, "HTTP source requested for a non-http source.");
 
-        HttpSourceResource curResource = null;
+        HttpSourceResource? curResource = null;
 
         if (source.PackageSource.IsHttp)
         {
@@ -41,6 +41,6 @@ public class HttpSourceResourceProviderTestHost : ResourceProvider
                 packageSource => new HttpSourceResource(TestableHttpSource.Create(source, _httpClient)));
         }
 
-        return Task.FromResult(new Tuple<bool, INuGetResource>(curResource != null, curResource));
+        return Task.FromResult(new Tuple<bool, INuGetResource?>(curResource != null, curResource));
     }
 }

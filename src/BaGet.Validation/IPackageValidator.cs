@@ -50,7 +50,7 @@ public sealed class PackageValidatorResult
 {
     public static readonly PackageValidatorResult Valid = new PackageValidatorResult(true, null);
 
-    private PackageValidatorResult(bool isValid, string message)
+    private PackageValidatorResult(bool isValid, string? message)
     {
         IsValid = isValid;
         Message = message;
@@ -61,7 +61,7 @@ public sealed class PackageValidatorResult
     /// <summary>
     /// Why the package is invalid. Shown to the package's owners.
     /// </summary>
-    public string Message { get; }
+    public string? Message { get; }
 
     public static PackageValidatorResult Invalid(string message)
         => new PackageValidatorResult(false, message ?? throw new ArgumentNullException(nameof(message)));

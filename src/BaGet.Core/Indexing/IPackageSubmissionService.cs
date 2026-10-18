@@ -29,6 +29,6 @@ public class DirectPackageSubmissionService : IPackageSubmissionService
         _indexer = indexer ?? throw new System.ArgumentNullException(nameof(indexer));
     }
 
-    public Task<PackageIndexingResult> SubmitAsync(Stream package, CancellationToken cancellationToken)
+    public Task<PackageIndexingResult> SubmitAsync(Stream? package, CancellationToken cancellationToken)
         => _indexer.IndexAsync(package, cancellationToken);
 }

@@ -15,7 +15,9 @@ public class StringOrStringArrayJsonConverter : JsonConverter<IReadOnlyList<stri
         // Try to read a single string first.
         if (reader.TokenType == JsonTokenType.String)
         {
+            #pragma warning disable CS8604
             return new List<string> { reader.GetString() };
+            #pragma warning restore CS8604
         }
 
         // Try to read an array of strings.
@@ -24,7 +26,7 @@ public class StringOrStringArrayJsonConverter : JsonConverter<IReadOnlyList<stri
             throw new JsonException();
         }
 
-        var result = new List<string>();
+        var result = new List<string?>();
 
         while (reader.Read())
         {
@@ -34,7 +36,9 @@ public class StringOrStringArrayJsonConverter : JsonConverter<IReadOnlyList<stri
             }
             else if (reader.TokenType == JsonTokenType.EndArray)
             {
+                #pragma warning disable CS8619
                 return result;
+                #pragma warning restore CS8619
             }
             else
             {

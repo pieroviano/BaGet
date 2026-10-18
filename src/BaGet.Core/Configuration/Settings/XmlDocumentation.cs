@@ -21,7 +21,7 @@ public static class XmlDocumentation
     /// The summary of a property: whitespace collapsed, a <c>see cref</c> replaced by the last
     /// segment of its target. An empty string if the file or the member is missing.
     /// </summary>
-    public static string GetSummary(PropertyInfo property)
+    public static string GetSummary(PropertyInfo? property)
     {
         if (property?.DeclaringType == null) return string.Empty;
 
@@ -41,7 +41,9 @@ public static class XmlDocumentation
             var candidates = new List<string>();
             if (!string.IsNullOrEmpty(assembly.Location))
             {
+                #pragma warning disable CS8604
                 candidates.Add(Path.Combine(Path.GetDirectoryName(assembly.Location), name));
+                #pragma warning restore CS8604
             }
 
             candidates.Add(Path.Combine(AppContext.BaseDirectory, name));
@@ -53,7 +55,7 @@ public static class XmlDocumentation
                 var document = XDocument.Load(path);
                 foreach (var member in document.Descendants("member"))
                 {
-                    var id = (string)member.Attribute("name");
+                    var id = (string?)member.Attribute("name");
                     var summary = member.Element("summary");
                     if (id != null && id.StartsWith("P:", StringComparison.Ordinal) && summary != null)
                     {
@@ -83,14 +85,14 @@ public static class XmlDocumentation
                     text.Append(t.Value);
                     break;
                 case XElement e when e.Name == "see" || e.Name == "seealso":
-                    var cref = (string)e.Attribute("cref");
-                    var langword = (string)e.Attribute("langword");
+                    var cref = (string?)e.Attribute("cref");
+                    var langword = (string?)e.Attribute("langword");
                     if (cref != null) text.Append(LastSegment(cref));
                     else if (langword != null) text.Append(langword);
                     else text.Append(Text(e));
                     break;
                 case XElement e when e.Name == "paramref" || e.Name == "typeparamref":
-                    text.Append((string)e.Attribute("name"));
+                    text.Append((string?)e.Attribute("name"));
                     break;
                 case XElement e:
                     text.Append(Text(e));
