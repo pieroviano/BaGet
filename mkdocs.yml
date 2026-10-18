@@ -48,6 +48,7 @@ pages:
     - NuGet.Server: import/nugetserver.md
     - NuGet.org: import/nugetorg.md
   - Advanced:
+    - Architecture: advanced/architecture.md
     - Debugging: advanced/debugging.md
     - BaGet Extension SDK: advanced/sdk.md
     - Server API: advanced/api.md
