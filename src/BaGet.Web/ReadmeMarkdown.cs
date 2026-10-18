@@ -1,4 +1,8 @@
+using System;
+using System.Linq;
 using Markdig;
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 using Microsoft.AspNetCore.Html;
 
 namespace BaGet.Web;
@@ -9,20 +13,43 @@ namespace BaGet.Web;
 /// </summary>
 public static class ReadmeMarkdown
 {
+    // Readmes are written by whoever pushed the package, so they are untrusted: raw HTML in
+    // the source is escaped rather than rendered, and links and images with a script scheme
+    // are neutralised. Markdown itself (headings, tables, code, ordinary links) is unaffected.
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
-        .UseAdvancedExtensions()
-        .Build();
-
-    // For text that is not a package's: raw HTML in the source is escaped, and links with
-    // a script scheme are not produced, so a file an operator edits cannot inject markup.
-    private static readonly MarkdownPipeline SafePipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .DisableHtml()
         .Build();
 
-    public static HtmlString ToSafeHtml(string markdown)
-        => markdown == null ? null : new HtmlString(Markdown.ToHtml(markdown, SafePipeline));
+    private static readonly string[] UnsafeSchemes = { "javascript:", "vbscript:", "data:" };
+
+    public static HtmlString ToSafeHtml(string markdown) => ToHtml(markdown);
 
     public static HtmlString ToHtml(string markdown)
-        => markdown == null ? null : new HtmlString(Markdown.ToHtml(markdown, Pipeline));
+    {
+        if (markdown == null) return null;
+
+        var document = Markdown.Parse(markdown, Pipeline);
+        foreach (var link in document.Descendants<LinkInline>())
+        {
+            if (IsUnsafe(link.Url)) link.Url = "#";
+        }
+
+        foreach (var autolink in document.Descendants<AutolinkInline>())
+        {
+            if (IsUnsafe(autolink.Url)) autolink.Url = "#";
+        }
+
+        return new HtmlString(document.ToHtml(Pipeline));
+    }
+
+    private static bool IsUnsafe(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return false;
+
+        // Browsers ignore whitespace and control characters inside the scheme.
+        var cleaned = new string(url.Where(c => !char.IsWhiteSpace(c) && !char.IsControl(c)).ToArray());
+
+        return UnsafeSchemes.Any(scheme => cleaned.StartsWith(scheme, StringComparison.OrdinalIgnoreCase));
+    }
 }
