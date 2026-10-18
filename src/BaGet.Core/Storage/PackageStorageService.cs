@@ -198,7 +198,17 @@ public class PackageStorageService : IPackageStorageService
                 $"Unable to find the '{PackagesPathPrefix}' folder. " +
                 "If you've recently upgraded BaGet Extension, please make sure this folder starts with a lowercased letter. " +
                 "For more information, please see https://github.com/loic-sharma/BaGet/issues/298");
-            throw;
+            // If content is referenced in the DB but missing on disk, return null
+            // so callers handle the missing content gracefully instead of
+            // throwing an unhandled exception.
+            return null;
+        }
+        catch (FileNotFoundException)
+        {
+            // The requested file doesn't exist on disk. Log and return null so callers
+            // treat the content as missing instead of crashing the request.
+            _logger.LogWarning("Requested file not found on disk at path: {Path}", path);
+            return null;
         }
     }
 
