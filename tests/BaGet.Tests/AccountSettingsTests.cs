@@ -223,6 +223,7 @@ public class AccountSettingsTests : IDisposable
         using var response = await browser.PostAsync("account/settings", new Dictionary<string, string>
         {
             { "newEmail", "alice@example.com" },
+            { "password", Password },
         }, action: "account/settings?handler=ChangeEmail");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -240,6 +241,7 @@ public class AccountSettingsTests : IDisposable
         using var response = await browser.PostAsync("account/settings", new Dictionary<string, string>
         {
             { "newEmail", "new@example.com" },
+            { "password", Password },
         }, action: "account/settings?handler=ChangeEmail");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -252,7 +254,7 @@ public class AccountSettingsTests : IDisposable
         Assert.Equal("new@example.com", (await FindAsync(app, "alice")).Email);
 
         // The link is spent: replaying it after another change does nothing.
-        await browser.PostAsync("account/settings", new Dictionary<string, string> { { "newEmail", "third@example.com" } },
+        await browser.PostAsync("account/settings", new Dictionary<string, string> { { "newEmail", "third@example.com" }, { "password", Password } },
             action: "account/settings?handler=ChangeEmail");
         using var again = await browser.GetAsync(PathOf(mail.Payload));
         Assert.Equal("new@example.com", (await FindAsync(app, "alice")).Email);

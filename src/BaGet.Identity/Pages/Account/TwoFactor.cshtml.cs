@@ -68,6 +68,7 @@ public class TwoFactorModel : AccountPageModel
         else
         {
             await UserManager.SetTwoFactorEnabledAsync(user, true);
+            await SignInManager.RefreshSignInAsync(user);
             RecoveryCodes = (await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(user, RecoveryCodeCount)).ToList();
             Message = "Two-factor authentication is on. Keep these recovery codes somewhere safe: each works once, and they are not shown again.";
         }
@@ -89,6 +90,7 @@ public class TwoFactorModel : AccountPageModel
         else
         {
             await UserManager.SetTwoFactorEnabledAsync(user, false);
+            await SignInManager.RefreshSignInAsync(user);
             Message = "Two-factor authentication is off.";
         }
 
@@ -143,6 +145,9 @@ public class TwoFactorModel : AccountPageModel
             if (string.IsNullOrEmpty(key))
             {
                 await UserManager.ResetAuthenticatorKeyAsync(user);
+
+                // The security stamp changed with the key; keep this session signed in.
+                await SignInManager.RefreshSignInAsync(user);
                 key = await UserManager.GetAuthenticatorKeyAsync(user);
             }
 

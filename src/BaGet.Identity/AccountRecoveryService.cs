@@ -26,12 +26,26 @@ public class AccountRecoveryService
     /// <summary>
     /// Replace the user's password with a generated one and return it, or null if there is
     /// no such user. Two-factor authentication is switched off, its key discarded, and any
-    /// lockout lifted, so this also recovers a user who lost their authenticator.
+    /// lockout lifted, so this also recovers a user who lost their authenticator. The user's
+    /// email address is marked confirmed; <paramref name="email"/> sets and confirms one.
     /// </summary>
-    public async Task<string> ResetPasswordAsync(string userName, CancellationToken cancellationToken)
+    public async Task<string> ResetPasswordAsync(string userName, CancellationToken cancellationToken, string email = null)
     {
         var user = await _users.FindByNameAsync(userName);
         if (user == null) return null;
+
+        // Whoever runs this command is the administrator, so the address is trusted: it is
+        // confirmed, or replaced by <paramref name="email"/> and confirmed. Without that, a
+        // user with no confirmed address could never sign in once SMTP is switched on.
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            Check(await _users.SetEmailAsync(user, email.Trim()));
+        }
+
+        if (!string.IsNullOrEmpty(user.Email) && !user.EmailConfirmed)
+        {
+            Check(await _users.ConfirmEmailAsync(user, await _users.GenerateEmailConfirmationTokenAsync(user)));
+        }
 
         var password = GeneratePassword();
 

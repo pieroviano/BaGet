@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
@@ -88,6 +88,7 @@ public partial class Program
             {
                 reset.Description = "Set a generated password for a user and switch off their two-factor authentication.";
                 var userName = reset.Argument("user", "The user name.").IsRequired();
+                var email = reset.Option("--email <address>", "Set this email address for the user and mark it confirmed. Needed for a user with no address when SMTP is configured.", CommandOptionType.SingleValue);
                 reset.OnExecuteAsync(async cancellationToken =>
                 {
                     using var scope = app.Services.CreateScope();
@@ -98,7 +99,7 @@ public partial class Program
                         return 1;
                     }
 
-                    var password = await recovery.ResetPasswordAsync(userName.Value, cancellationToken);
+                    var password = await recovery.ResetPasswordAsync(userName.Value, cancellationToken, email.Value());
                     if (password == null)
                     {
                         Console.Error.WriteLine($"There is no user named \"{userName.Value}\".");
@@ -107,6 +108,14 @@ public partial class Program
 
                     Console.WriteLine($"New password for {userName.Value}: {password}");
                     Console.WriteLine("Two-factor authentication is off for this user. Sign in and change the password now.");
+
+                    var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGetUser>>();
+                    var user = await users.FindByNameAsync(userName.Value);
+                    if (string.IsNullOrEmpty(user?.Email) && scope.ServiceProvider.GetRequiredService<IOptions<EmailOptions>>().Value.IsConfigured)
+                    {
+                        Console.WriteLine("This user has no email address, and sign-in needs a confirmed one while SMTP is configured. Run again with --email <address>.");
+                    }
+
                     return 0;
                 });
             });

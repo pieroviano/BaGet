@@ -61,6 +61,10 @@
                 <p class="help-block">We send a link to the new address; it changes when you follow it.</p>
             }
         </div>
+        <div class="form-group">
+            <label for="emailPassword">@(Model.HasPassword ? "Your password" : "Type your user name to confirm")</label>
+            <input id="emailPassword" name="password" type="@(Model.HasPassword ? "password" : "text")" class="form-control" autocomplete="off" />
+        </div>
         <button type="submit" class="btn btn-primary">Change email</button>
     </form>
 

@@ -1,3 +1,4 @@
+using System;
 using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -68,6 +69,12 @@ public static class AccountsServiceCollectionExtensions
             })
             .AddSignInManager()
             .AddDefaultTokenProviders();
+
+        // Identity re-checks a session against the database only every 30 minutes by default,
+        // so the session of a deleted user, or of one whose password was reset, would keep
+        // acting until then. Browser sessions are few next to API traffic, so every request
+        // is checked: no principal for a user that no longer exists or whose stamp changed.
+        services.Configure<SecurityStampValidatorOptions>(validation => validation.ValidationInterval = TimeSpan.Zero);
 
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie.Configure(cookie =>

@@ -40,7 +40,7 @@ public class ContactOwnersTests : IDisposable
         public override DateTime UtcNow => Now;
     }
 
-    private (BaGetApplication App, Browser Browser) Start(bool email = true, bool accounts = true)
+    private (BaGetApplication App, Browser Browser) Start(bool email = true, bool accounts = true, Action<IServiceCollection> configure = null)
     {
         var settings = new Dictionary<string, string>
         {
@@ -56,7 +56,11 @@ public class ContactOwnersTests : IDisposable
         var app = new BaGetApplication(
             _output,
             configOverrides: settings,
-            configureServices: services => services.AddSingleton<SystemTime>(_time));
+            configureServices: services =>
+            {
+                services.AddSingleton<SystemTime>(_time);
+                configure?.Invoke(services);
+            });
         var browser = new Browser(app);
         _disposables.Add(app);
         _disposables.Add(browser);
@@ -143,9 +147,9 @@ public class ContactOwnersTests : IDisposable
     /// <summary>
     /// owner1 and acme (admin1 admin, member1 member) own Contact.Pkg; sender is signed in.
     /// </summary>
-    private async Task<(BaGetApplication App, Browser Browser)> SeedAsync()
+    private async Task<(BaGetApplication App, Browser Browser)> SeedAsync(Action<IServiceCollection> configure = null)
     {
-        var (app, browser) = Start();
+        var (app, browser) = Start(configure: configure);
         await CreateUserAsync(app, "owner1", "owner1@example.com");
         await CreateUserAsync(app, "admin1", "admin1@example.com");
         await CreateUserAsync(app, "member1", "member1@example.com");
@@ -372,6 +376,32 @@ public class ContactOwnersTests : IDisposable
 
         Assert.Contains("email address", form, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(Contacts(app));
+    }
+
+    [Fact]
+    public async Task ASenderWhoseEmailIsNotConfirmedCannotUseItAsReplyToOrForACopy()
+    {
+        // Identity re-checks a session only every so often by default, so a session can
+        // outlive its user's confirmation; the page must not rely on the cookie alone.
+        var (app, browser) = await SeedAsync(services => services.Configure<SecurityStampValidatorOptions>(
+            validation => validation.ValidationInterval = TimeSpan.FromMinutes(30)));
+        using (var scope = app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
+            var sender = await users.FindByNameAsync("sender");
+            sender.EmailConfirmed = false;
+            Assert.True((await users.UpdateAsync(sender)).Succeeded);
+        }
+
+        // The form is not rendered for such a sender, so the token comes from another page.
+        using var response = await browser.PostAsync(
+            Url,
+            new Dictionary<string, string> { { "Message", "Hello" }, { "CopyToSelf", "true" } },
+            tokenPage: "account/settings");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Empty(Contacts(app));
+        Assert.Contains("confirm", body, StringComparison.OrdinalIgnoreCase);
     }
 
     // --- Rate limit ---------------------------------------------------------------------

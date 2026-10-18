@@ -50,7 +50,8 @@ public class ContactOwnersModel : AccountPageModel
     public string Error { get; private set; }
 
     /// <summary>
-    /// Replies come to the sender's address, so there must be one.
+    /// Replies come to the sender's address, so there must be one, and it must be confirmed:
+    /// an unconfirmed address could be anyone's.
     /// </summary>
     public bool SenderHasEmail { get; private set; }
 
@@ -69,7 +70,7 @@ public class ContactOwnersModel : AccountPageModel
 
         if (!SenderHasEmail)
         {
-            Error = "Add an email address to your account first, so the owners can reply.";
+            Error = "Add an email address to your account and confirm it first, so the owners can reply.";
             return Page();
         }
 
@@ -147,7 +148,7 @@ public class ContactOwnersModel : AccountPageModel
         PackageId = owners[0].PackageId;
 
         var user = await UserManager.GetUserAsync(User);
-        SenderHasEmail = user != null && IsDeliverable(user.Email);
+        SenderHasEmail = user != null && user.EmailConfirmed && IsDeliverable(user.Email);
 
         return owners;
     }

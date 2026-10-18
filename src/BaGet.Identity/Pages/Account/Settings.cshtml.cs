@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -68,21 +69,33 @@ public class SettingsModel : AccountPageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostChangeEmailAsync(string newEmail)
+    /// <summary>
+    /// The password is asked again, like for deleting the account: the address is where
+    /// password resets go, so a stolen session must not be able to repoint it.
+    /// </summary>
+    public async Task<IActionResult> OnPostChangeEmailAsync(string newEmail, string password)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
         newEmail = newEmail?.Trim();
 
-        if (string.IsNullOrEmpty(newEmail) || !new EmailAddressAttribute().IsValid(newEmail))
+        if (!await IsConfirmedAsync(user, password))
+        {
+            Error = "The confirmation is incorrect, so the email address was not changed.";
+        }
+        else if (string.IsNullOrEmpty(newEmail) || !new EmailAddressAttribute().IsValid(newEmail))
         {
             Error = "Enter a valid email address.";
         }
         else if (!EmailConfigured)
         {
             var result = await UserManager.SetEmailAsync(user, newEmail);
-            if (result.Succeeded) Message = "Your email address has been changed.";
+            if (result.Succeeded)
+            {
+                await SignInManager.RefreshSignInAsync(user);
+                Message = "Your email address has been changed.";
+            }
             else Error = Describe(result);
         }
         else
@@ -115,11 +128,7 @@ public class SettingsModel : AccountPageModel
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var confirmed = await UserManager.HasPasswordAsync(user)
-            ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
-            : string.Equals(password, user.UserName, System.StringComparison.Ordinal);
-
-        if (!confirmed)
+        if (!await IsConfirmedAsync(user, password))
         {
             Error = "The confirmation is incorrect, so the account was not deleted.";
         }
@@ -149,6 +158,14 @@ public class SettingsModel : AccountPageModel
 
         return Page();
     }
+
+    /// <summary>
+    /// The password, or for an account without one (external sign-in only) its user name.
+    /// </summary>
+    private async Task<bool> IsConfirmedAsync(BaGetUser user, string password)
+        => await UserManager.HasPasswordAsync(user)
+            ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
+            : string.Equals(password, user.UserName, System.StringComparison.Ordinal);
 
     private async Task<bool> LoadAsync()
     {
