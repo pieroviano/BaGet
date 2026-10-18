@@ -1,10 +1,14 @@
 using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 using BaGet.Catalog;
 using BaGet.Core;
+using BaGet.Identity;
 using BaGet.Validation;
 using BaGet.Web;
+using BaGet.Web.V2;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,7 +31,7 @@ public static class IServiceCollectionExtensions
                 // attributes say it is; an explicit [Required] still applies.
                 options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
             })
-            .AddApplicationPart(typeof(PackageContentController).Assembly)
+            .AddBaGetApplicationParts()
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -51,5 +55,39 @@ public static class IServiceCollectionExtensions
         services.AddHostedService<StagingSweepWorker>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Register every BaGet assembly that holds controllers or Razor Pages. MVC otherwise finds
+    /// them only through the [ApplicationPart] attributes the Web SDK generates into the entry
+    /// assembly, which a host built with another SDK (a worker service, a test runner) lacks:
+    /// accounts, the catalog, validation and the V2 feed would then answer 404.
+    /// </summary>
+    internal static IMvcBuilder AddBaGetApplicationParts(this IMvcBuilder builder)
+    {
+        var assemblies = new[]
+        {
+            typeof(PackageContentController).Assembly,
+            typeof(V2FeedController).Assembly,
+            typeof(CatalogController).Assembly,
+            typeof(RepositorySignaturesController).Assembly,
+            typeof(AccountsServiceCollectionExtensions).Assembly,
+        };
+
+        return builder.ConfigureApplicationPartManager(manager =>
+        {
+            foreach (var assembly in assemblies)
+            {
+                // The entry assembly may already have contributed it.
+                var name = assembly.GetName().Name;
+                if (manager.ApplicationParts.Any(part => part.Name == name)) continue;
+
+                var factory = ApplicationPartFactory.GetApplicationPartFactory(assembly);
+                foreach (var part in factory.GetApplicationParts(assembly))
+                {
+                    manager.ApplicationParts.Add(part);
+                }
+            }
+        });
     }
 }

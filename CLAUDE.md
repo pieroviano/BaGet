@@ -21,8 +21,9 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1378 tests, all green** across `BaGet.Core.Tests` (443), `BaGet.Tests` (674),
-`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (33),
+Baseline: **1384 tests**, 3 failing (`PackageStorageServiceTests` `ThrowsIfDoesntExist` x2 and
+`ThrowsIfStorageThrows`, pre-existing) across `BaGet.Core.Tests` (443), `BaGet.Tests` (674),
+`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (39),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
 
@@ -84,6 +85,10 @@ not set.
 `BuildApplication` runs. This is why `tests/BaGet.Tests/Support/BaGetApplication.cs` supplies settings
 with `builder.UseSetting(...)` and **not** `ConfigureAppConfiguration`, which is merged too late.
 Anything read through `IOptions`/`IOptionsSnapshot` is unaffected.
+
+**MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
+(`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host
+without the Web SDK has no generated `[ApplicationPart]` attributes. A new such assembly must be added there.
 
 Routes are named constants in `src/BaGet.Web/Routes.cs`, mapped in `BaGetEndpointBuilder.MapEndpoints`,
 and absolute URLs are built only via `IUrlGenerator` — add a member there rather than assembling URLs
