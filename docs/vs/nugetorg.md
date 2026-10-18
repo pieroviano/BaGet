@@ -1,65 +1,66 @@
 # nuget.org
 
-!!! warning
-    This page is a work in progress!
+[nuget.org](https://www.nuget.org/), the "Gallery", is the default public NuGet feed. Publish open-source
+packages there; use BaGet for private or mirrored feeds.
 
-[nuget.org](https://www.nuget.org/), also known as the "Gallery", is the defacto feed to host open
-source packages. You should publish NuGet packages for your open-source projects here.
+Gallery code (self-hosting is possible but not simple; the
+[hosting wiki](https://github.com/NuGet/NuGetGallery/wiki/Hosting-nuget.org's-v3-services) was last edited in 2018, so verify it before use):
 
-The Gallery is battle-tested and proven to scale well. You can find a guide on how to host
-your own Gallery instance on [the Gallery's wiki](https://github.com/NuGet/NuGetGallery/wiki/Hosting-nuget.org's-v3-services).
-You can find the Gallery's code on GitHub:
-
-* [NuGet/NuGetGallery](https://github.com/NuGet/NuGetGallery) - the [nuget.org](https://nuget.org)
-website and v2 APIs
-* [NuGet/NuGet.Jobs](https://github.com/NuGet/NuGet.Jobs/) - the Gallery's jobs for things like validation and package statistics.
-* [NuGet/NuGet.Services.Metadata](https://github.com/NuGet/NuGet.Services.Metadata/) - NuGet's v3 implementation
-* [NuGet/ServerCommon](https://github.com/NuGet/ServerCommon) - common libraries used across NuGet's services
-
-As you can tell, nuget.org is a complex beast. Hosting your own instance of the Gallery is not for the faint of heart.
+* [NuGet/NuGetGallery](https://github.com/NuGet/NuGetGallery) - website, jobs, V3 pipeline and search
+* NuGet.Jobs, NuGet.Services.Metadata and ServerCommon are archived and merged into NuGetGallery
 
 # BaGet vs nuget.org
 
-See [this issue](https://github.com/loic-sharma/BaGet/issues/71) for a deep-dive.
-
-## Features
-
 | Feature | nuget.org | BaGet |
 | --- | --- | --- |
-| V3 push, restore, search, autocomplete, registration | yes | yes |
-| Symbol packages (`.snupkg`) and symbol server | yes | yes |
-| V2 (OData) feed | yes | yes, partial OData (`$skip`/`$top` only) |
-| Catalog | yes | yes, not on Azure Table |
-| Deprecation and vulnerability info | yes | yes, set through BaGet's [API](../advanced/api.md) or manage page |
-| Report abuse, package details URI templates | yes | yes |
-| Accounts, organizations, package owners | yes | yes, opt-in |
-| Scoped, expiring API keys | yes | yes, opt-in |
-| ID prefix reservation (`verified`) | yes | per owner, no page to set it yet |
-| Validation before a package is served | yes | yes, opt-in, in-process |
-| Repository signing | yes | yes, opt-in |
-| Download statistics | per day | totals only, plus a statistics page |
-| Search sort (most downloaded, recently updated) | yes | web UI only, `Database` search provider only |
-| Upload through the browser | yes | yes, with a preview step |
-| Contact owners | yes | yes, needs SMTP |
-| Two-factor sign-in, OpenID Connect sign-in, avatars | yes | yes, opt-in |
-| Reading requires authentication (private feed) | no | no |
-| Content moderation workflow | yes | reports only; owners and admins act on them |
+| Visibility | Public; no private packages | Public or internal; reads are never authenticated (no private reads) |
+| V3 (push, restore, search, autocomplete, registration) | Yes | Yes (registration not paged) |
+| V2 (OData) | Yes | Yes, on by default (`Feeds:EnableV2`); `$skip`/`$top`, `searchTerm`, `id`, `includePrerelease`, `semVerLevel`; `$filter`/`$orderby`/`$select`/`$expand` ignored |
+| Symbols (`.snupkg`) | Yes | Yes, portable PDBs only |
+| Catalog | Yes | Yes, relational DB only (`catalog rebuild` to backfill) |
+| Vulnerability info | Yes | Manual entry through the [API](../advanced/api.md); no advisory import |
+| Deprecation | Yes | Manual (API or manage page) |
+| Accounts, organizations, owners | Yes (Microsoft/Entra login) | Yes, on by default (`Accounts:Enabled=true` in shipped settings); optional OpenID Connect |
+| API keys | Yes: scoped (glob), expiring; new keys max 30 days since 2026-08-17, older keys expire 2026-11-01 | Global `ApiKey`, plus scoped expiring per-account keys (on with accounts) |
+| Two-factor sign-in | Required since 2022-03-08 (via MSA/Entra) | TOTP + recovery codes |
+| ID prefix reservation | Yes | Not supported (per-ID verified-owner flag only, no UI) |
+| Validation before serving | Yes | Opt-in (`Validation:Enabled`), in-process; no malware scanner built in |
+| Repository signing | Yes | Opt-in (needs a certificate) |
+| Package size limit | 250 MB | About 2 GB for push and upload (multipart limit); IIS 250 MB |
+| Deletion | Generally not supported ([policy](https://learn.microsoft.com/en-us/nuget/nuget-org/policies/deleting-packages)) | Unlist (default) or hard delete; overwrite off by default |
+| Mirroring | n/a | Optional read-through from one upstream; search does not query it |
+| Download statistics | Not re-verified | Totals plus `/stats` page; no per-day |
+| Search | Full index | Package ID substring only (`Database`), or Azure Search |
+| Web UI | Full Gallery | Search, details, upload, manage, stats, account |
+| Storage / DB | Azure (Blob, SQL, Search, CDN) | FileSystem, Azure Blob, S3, GCS, Aliyun OSS; SQLite, SQL Server, PostgreSQL, MySQL, Azure Table |
+| Platform | Azure-hosted service | .NET 10, Windows/Linux/macOS, Docker, IIS |
+| Scale / HA | Global, CDN-backed | Single instance in practice; multi-instance not documented |
+| Licence / cost | Free service; Gallery code Apache-2.0 | MIT, self-hosted, infrastructure cost only |
 
-* BaGet covers the v3 services ([NuGet/NuGet.Services.Metadata](https://github.com/NuGet/NuGet.Services.Metadata/)) and a subset of the Gallery
-* Still missing: private (authenticated) reads, per-day statistics, a prefix-reservation page, malware and license scanning, moderation beyond abuse reports
-* nuget.org's v3 implementation is static
-    * Runs only on Windows
-    * Highly tied to Azure
-    * Scales reads to near infinity
-    * Doesn't scale well for writes
-    * Static JSON files are hosted on Azure Blob Storage
-    * Served by a Content Delivery Network
-    * Files are updated by `feed2catalog`, `catalog2registration`, `catalog2dnx`, and `catalog2lucene` jobs
-* BaGet's v3 implementation is dynamic
-    * Cross-platform implementation
-    * Requests are served by a service that queries a database
-    * Simpler architecture, which makes it easier to deploy and run small feeds
-    * Easier to scale for writes
-    * Harder to scale for reads
-    * Easier to add new features
-    * Harder to make as reliable
+## Architecture
+
+* nuget.org V3 is static (JSON on blob storage behind a CDN, built by catalog jobs): reads scale
+  almost without limit, writes and operation are heavy and tied to Azure.
+* BaGet V3 is dynamic (service plus database): simple to deploy, easy to extend, weaker read
+  scaling and reliability.
+
+## When to choose which
+
+* Publish public open-source packages: nuget.org.
+* Internal or private packages, or a cache of nuget.org for CI or offline use: BaGet.
+* Need CDN-scale reads or prefix reservation: nuget.org.
+* Need your own accounts, ownership and validation on infrastructure you control: BaGet.
+
+See also [importing from nuget.org](../import/nugetorg.md) and [configuration](../configuration.md).
+
+## Sources
+
+Checked 2026-10.
+
+* <https://learn.microsoft.com/en-us/nuget/nuget-org/nuget-org-faq>
+* <https://learn.microsoft.com/en-us/nuget/api/overview>
+* <https://learn.microsoft.com/en-us/nuget/hosting-packages/overview>
+* <https://github.com/NuGet/NuGetGallery> (Apache-2.0, active)
+* <https://github.com/NuGet/NuGetGallery/wiki/Hosting-nuget.org's-v3-services>
+* <https://devblogs.microsoft.com/dotnet/?p=60516> (API key expiry)
+* <https://devblogs.microsoft.com/nuget/requiring-two-factor-authentication-on-nuget-org/>
