@@ -179,7 +179,7 @@ public partial class Program
         commands.OnExecuteAsync(async cancellationToken =>
         {
             await app.RunMigrationsAsync(cancellationToken);
-            await PromoteInitialAdministratorsAsync(app, cancellationToken);
+            await BootstrapAdministratorsAsync(app, cancellationToken);
             await app.RunAsync(cancellationToken);
         });
 
@@ -187,10 +187,12 @@ public partial class Program
     }
 
     /// <summary>
-    /// Promote the users named by <c>Accounts:InitialAdministrators</c>. Does nothing while
-    /// accounts are disabled, since then there is no <see cref="AdministratorService"/>.
+    /// Promote the users named by <c>Accounts:InitialAdministrators</c>; on a server with no users,
+    /// create the default administrator unless <c>Accounts:CreateDefaultAdministrator</c> is off;
+    /// and warn while it still has the default password. Does
+    /// nothing while accounts are disabled, since then there is no <see cref="AdministratorService"/>.
     /// </summary>
-    internal static async Task PromoteInitialAdministratorsAsync(WebApplication app, CancellationToken cancellationToken)
+    internal static async Task BootstrapAdministratorsAsync(WebApplication app, CancellationToken cancellationToken)
     {
         using var scope = app.Services.CreateScope();
         var administrators = scope.ServiceProvider.GetService<AdministratorService>();
@@ -198,6 +200,16 @@ public partial class Program
 
         var options = scope.ServiceProvider.GetRequiredService<IOptions<AccountsOptions>>().Value;
         await administrators.PromoteInitialAdministratorsAsync(options.InitialAdministrators, cancellationToken);
+
+        // Just created, it already said so; otherwise repeat the warning at every start until it is changed.
+        var created = options.CreateDefaultAdministrator
+            && await administrators.CreateDefaultAdministratorAsync(cancellationToken);
+        if (!created && await administrators.HasDefaultPasswordAsync())
+        {
+            app.Logger.LogWarning(
+                "The administrator {User} still has the default password. Sign in and change it.",
+                AdministratorService.DefaultAdministratorUserName);
+        }
     }
 
     /// <summary>

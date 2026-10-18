@@ -248,6 +248,7 @@ account without one). Everyone else, and every request while accounts are off, g
 | Setting or command | Meaning |
 | --- | --- |
 | `Accounts:InitialAdministrators` | User names, separated by `;`, promoted at start **only while no administrator exists** (it bootstraps an empty server). Only accounts that already exist are promoted; once any administrator exists the list is ignored, so registering a listed name later grants nothing and a demotion is not reversed. |
+| `Accounts:CreateDefaultAdministrator` | Default `true`. On a server with **no users at all**, startup creates the administrator `Admin` with password `Admin1234!` (email counted as confirmed, so it can sign in while SMTP is configured). Every start warns until the password is changed. Set `false` to bootstrap only through `InitialAdministrators` or `account promote`. |
 | `baget account promote <user>` | Makes the user an administrator. Needs `Accounts:Enabled`; exit code 1 for an unknown user. |
 | `baget account demote <user>` | Removes the flag. Exit code 1 for an unknown user or the last administrator. |
 

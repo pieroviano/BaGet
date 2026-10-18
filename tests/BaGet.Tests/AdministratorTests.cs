@@ -512,6 +512,66 @@ public class AdministratorTests : IDisposable
 
     // --- The service --------------------------------------------------------------------
 
+    private static Task<bool> CreateDefaultAdministratorAsync(BaGetApplication app)
+        => WithAsync(app, p => p.GetRequiredService<AdministratorService>().CreateDefaultAdministratorAsync(CancellationToken.None));
+
+    private static async Task<HttpStatusCode> SignInAsDefaultAdministratorAsync(Browser browser)
+    {
+        using var login = await browser.PostAsync("account/login", new Dictionary<string, string>
+        {
+            { "UserName", AdministratorService.DefaultAdministratorUserName },
+            { "Password", AdministratorService.DefaultAdministratorPassword },
+        });
+
+        return login.StatusCode;
+    }
+
+    [Fact]
+    public async Task AServerWithNoUsersGetsTheDefaultAdministrator()
+    {
+        var (app, browser) = Start();
+
+        Assert.True(await CreateDefaultAdministratorAsync(app));
+        Assert.False(await CreateDefaultAdministratorAsync(app));
+
+        Assert.True(await IsAdministratorAsync(app, AdministratorService.DefaultAdministratorUserName));
+        Assert.True(await WithAsync(app, p => p.GetRequiredService<AdministratorService>().HasDefaultPasswordAsync()));
+        Assert.Equal(HttpStatusCode.Redirect, await SignInAsDefaultAdministratorAsync(browser));
+        Assert.Contains("admin/users", await browser.GetPageAsync("stats"));
+    }
+
+    [Fact]
+    public async Task TheDefaultAdministratorIsNotCreatedOnceAUserExists()
+    {
+        var (app, browser) = Start();
+        await browser.RegisterAsync("alice");
+
+        Assert.False(await CreateDefaultAdministratorAsync(app));
+        Assert.Null(await WithAsync(app, p => p.GetRequiredService<UserManager<BaGetUser>>()
+            .FindByNameAsync(AdministratorService.DefaultAdministratorUserName)));
+        Assert.False(await WithAsync(app, p => p.GetRequiredService<AdministratorService>().HasDefaultPasswordAsync()));
+    }
+
+    /// <summary>
+    /// With SMTP configured, sign-in needs a confirmed email. The default administrator has no address, so it
+    /// is created confirmed; otherwise a fresh install with SMTP could never be signed in to.
+    /// </summary>
+    [Fact]
+    public async Task TheDefaultAdministratorCanSignInWhileSmtpIsConfigured()
+    {
+        var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string>
+        {
+            { "Accounts:Enabled", "true" },
+            { "Email:Smtp:Host", "smtp.example.com" },
+            { "Email:Smtp:From", "baget@example.com" },
+            { "Site:PublicUrl", "https://baget.example.com" },
+        });
+        _disposables.Add(app);
+
+        Assert.True(await CreateDefaultAdministratorAsync(app));
+        Assert.Equal(HttpStatusCode.Redirect, await SignInAsDefaultAdministratorAsync(NewBrowser(app)));
+    }
+
     [Fact]
     public async Task InitialAdministratorsAreOnlyPromotedWhenTheyExist()
     {

@@ -21,8 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1384 tests**, 3 failing (`PackageStorageServiceTests` `ThrowsIfDoesntExist` x2 and
-`ThrowsIfStorageThrows`, pre-existing) across `BaGet.Core.Tests` (443), `BaGet.Tests` (674),
+Baseline: **1387 tests, all green** across `BaGet.Core.Tests` (443), `BaGet.Tests` (677),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (39),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
