@@ -9,7 +9,6 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 

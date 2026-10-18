@@ -6,7 +6,6 @@ using BaGet.Protocol;
 using BaGet.Protocol.Models;
 using NuGet.Versioning;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 

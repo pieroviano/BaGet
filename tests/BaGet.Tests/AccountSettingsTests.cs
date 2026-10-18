@@ -12,7 +12,6 @@ using BaGet.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 

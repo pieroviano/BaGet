@@ -18,13 +18,18 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Build | `dotnet build BaGet.sln -p:GeneratePackageOnBuild=false` |
 | Test (all) | `dotnet test BaGet.sln -p:GeneratePackageOnBuild=false` |
 | Test (one project) | `dotnet test tests/BaGet.Core.Tests/BaGet.Core.Tests.csproj -p:GeneratePackageOnBuild=false` |
-| Test (one class or method) | add `--filter "FullyQualifiedName~UploadPageTests"` |
+| Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
 Baseline: **1377 tests, all green** across `BaGet.Core.Tests` (443), `BaGet.Tests` (673),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (33),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
+
+Tests are **xUnit v3** (`xunit.v3`, version lever `XUnitPackageVersion` in `tests/Directory.Build.props`), so test
+projects are executables (`OutputType=Exe`) running on **Microsoft.Testing.Platform**: `global.json`
+`"test": { "runner": "Microsoft.Testing.Platform" }` opts `dotnet test` in, and there is no VSTest adapter,
+`Microsoft.NET.Test.Sdk` or coverlet collector. `ITestOutputHelper` lives in `Xunit`, not `Xunit.Abstractions`.
 
 `build.ps1` wraps clean/restore/build, with `-Run` and `-Publish`.
 

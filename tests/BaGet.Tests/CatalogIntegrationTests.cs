@@ -15,7 +15,6 @@ using BaGet.Protocol.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 

@@ -10,7 +10,6 @@ using BaGet.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using Xunit.Abstractions;
 using static BaGet.Tests.AdminTestSupport;
 
 namespace BaGet.Tests;

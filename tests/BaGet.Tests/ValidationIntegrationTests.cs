@@ -14,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
 using NuGet.Packaging.Signing;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 

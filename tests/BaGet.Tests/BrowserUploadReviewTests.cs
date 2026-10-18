@@ -9,7 +9,6 @@ using BaGet.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests
 {

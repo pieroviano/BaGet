@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NuGet.Versioning;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 

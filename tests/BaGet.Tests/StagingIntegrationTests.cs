@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace BaGet.Tests;
 
