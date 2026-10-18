@@ -266,6 +266,15 @@
 
     <div>You can push packages using the service index <code>@serviceIndexUrl</code>.</div>
 
+    @if (Model.AccountsEnabled)
+    {
+        <p id="upload-api-key-note">
+            Accounts are enabled, so a push must carry an API key: add
+            <code>-k &lt;your API key&gt;</code> to the command. Create one on the
+            <a href="@Url.Page("/Account/ApiKeys")">API keys</a> page.
+        </p>
+    }
+
     <div class="tabbed-info" x-data="{ tabs: tabs, active: tabs[0] }">
         <ul class="nav">
             <template x-for="tab in tabs" :key="tab.name">
@@ -312,13 +321,13 @@
     let tabs = [
         {
             name: ".NET CLI",
-            content: ["dotnet nuget push -s @serviceIndexUrl package.nupkg"],
+            content: ["dotnet nuget push -s @serviceIndexUrl @Html.Raw(Model.AccountsEnabled ? "-k <your API key> " : "")package.nupkg"],
             documentation: "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-push",
         },
 
         {
             name: "NuGet",
-            content: ["nuget push -Source @serviceIndexUrl package.nupkg"],
+            content: ["nuget push -Source @serviceIndexUrl @Html.Raw(Model.AccountsEnabled ? "-ApiKey <your API key> " : "")package.nupkg"],
             documentation: "https://docs.microsoft.com/en-us/nuget/tools/cli-ref-push",
         },
 

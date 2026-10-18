@@ -37,14 +37,30 @@
                             <ul class="nav navbar-nav navbar-right" role="tablist">
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
-                                    <li role="presentation"><a href="~/account/profile" role="tab"><span>@User.Identity.Name</span></a></li>
-                                    <li role="presentation"><a href="~/account/packages" role="tab"><span>My packages</span></a></li>
-                                    <li role="presentation"><a href="~/account/apikeys" role="tab"><span>API keys</span></a></li>
-                                    <li role="presentation"><a href="~/account/logout" role="tab"><span>Sign out</span></a></li>
+                                    @* No "Account settings" entry yet: that page does not exist, and a
+                                       menu item must not lead to a 404. *@
+                                    <li role="presentation" class="dropdown account-menu">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                            <span>@User.Identity.Name</span> <span class="caret"></span>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="@Url.Page("/Account/Profile")">Profile</a></li>
+                                            <li><a href="@Url.Page("/Account/ApiKeys")">API keys</a></li>
+                                            <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
+                                            <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>
+                                            <li><a href="@Url.Page("/Upload")">Upload package</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="@Url.Page("/Account/Logout")">Sign out</a></li>
+                                        </ul>
+                                    </li>
                                 }
                                 else
                                 {
-                                    <li role="presentation"><a href="~/account/login" role="tab"><span>Sign in</span></a></li>
+                                    <li role="presentation"><a href="@Url.Page("/Account/Login")" role="tab"><span>Sign in</span></a></li>
+                                    @if (Accounts.Value.AllowRegistration)
+                                    {
+                                        <li role="presentation"><a href="@Url.Page("/Account/Register")" role="tab"><span>Register</span></a></li>
+                                    }
                                 }
                             </ul>
                         }

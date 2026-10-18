@@ -264,7 +264,17 @@ public partial class Program
         if (!string.IsNullOrEmpty(options.ApiKey)) return;
 
         var accounts = app.Configuration.GetSection(nameof(BaGetOptions.Accounts)).Get<AccountsOptions>();
-        if (accounts?.Enabled == true) return;
+        if (accounts?.Enabled == true)
+        {
+            // Accounts on and no global key: nothing authenticates a caller who sends no
+            // key, by design - otherwise ownership could be bypassed - so a keyless push
+            // (for example from CI written before accounts were on) gets a 401.
+            app.Logger.LogWarning(
+                "Accounts are enabled and no global \"ApiKey\" is configured, so keyless pushes "
+                + "are refused with 401. Create a user API key on the \"API keys\" page and push "
+                + "with it, or set \"ApiKey\".");
+            return;
+        }
 
         app.Logger.LogWarning(
             "No API key is configured and accounts are disabled, so anyone who can reach this "

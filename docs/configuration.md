@@ -157,8 +157,9 @@ older `Install-Package`, and PowerShellGet. It is on by default. To turn it off:
 
 ## Accounts, package owners and API keys
 
-Accounts are **off** by default; with them off, only the global `ApiKey` authenticates, exactly as
-before. Turn them on with:
+Accounts are **on** in the shipped `appsettings.json` (the code default, for hosts embedding BaGet, is
+off). With them off, only the global `ApiKey` authenticates. Set `Accounts:Enabled` to `false` to get
+that behaviour back; otherwise configure them with:
 
 ```json
 {
@@ -194,8 +195,14 @@ Who may change a package:
 * A package pushed before accounts were enabled has no owner, and only the global `ApiKey` may change it.
   Add owners from its manage page (`/packages/{id}/manage`) to hand it over.
 
+!!! warning "Upgrade note: keyless pushes are refused"
+    Earlier releases shipped with accounts off, so a default install accepted `dotnet nuget push` with
+    no key. With accounts on and `ApiKey` empty, a push without a key now gets **401**; BaGet logs a
+    warning at startup. Fix CI by pushing with `-k <key>`, using a user key from `/account/apikeys` (or
+    the global `ApiKey`), or restore the old behaviour with `"Accounts": { "Enabled": false }`.
+
 !!! warning
-    Set `ApiKey`. Without it the server is open: anyone may push anything, and per-user keys restrict nothing.
+    With accounts off, set `ApiKey`. Without it the server is open: anyone may push anything.
 
 ### Organizations
 
