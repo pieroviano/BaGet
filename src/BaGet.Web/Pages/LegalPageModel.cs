@@ -32,7 +32,7 @@ public abstract class LegalPageModel : PageModel
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         var path = ConfiguredPath;
-        if (string.IsNullOrWhiteSpace(path)) return NotFound();
+        if (string.IsNullOrWhiteSpace(path) || !MarkdownFilePathAttribute.IsAllowed(path)) return NotFound();
 
         // Path.Combine keeps an absolute path as it is.
         var fullPath = Path.Combine(_environment.ContentRootPath, path);

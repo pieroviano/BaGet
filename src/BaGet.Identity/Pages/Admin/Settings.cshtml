@@ -9,6 +9,10 @@
     <hr class="breadcrumb-divider" />
     <p class="text-muted">Saved to <code>@Model.OverridesPath</code>. Environment variables and command-line arguments override saved values.</p>
 
+    @if (Model.LoadError != null)
+    {
+        <div class="alert alert-danger" role="alert" id="settings-load-error">@Model.LoadError</div>
+    }
     @if (Model.Message != null)
     {
         <div class="alert alert-success" role="alert" id="settings-message">@Model.Message</div>

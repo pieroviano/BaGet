@@ -44,6 +44,9 @@ public class SettingsModel : AdminPageModel
     /// <summary>The section the <see cref="Errors"/> belong to.</summary>
     public string ErrorSection { get; private set; }
 
+    /// <summary>Why the overrides file could not be read, or null.</summary>
+    public string LoadError { get; private set; }
+
     /// <summary>Shows the settings.</summary>
     public async Task<IActionResult> OnGetAsync()
     {
@@ -92,6 +95,7 @@ public class SettingsModel : AdminPageModel
     private async Task LoadAsync()
     {
         var states = Settings.GetState();
+        LoadError = Settings.OverridesError;
 
         Sections = states
             .GroupBy(s => s.Descriptor.Section ?? string.Empty, StringComparer.OrdinalIgnoreCase)

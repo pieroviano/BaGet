@@ -259,6 +259,16 @@ public class LookAndFeelTests : IDisposable
     }
 
     [Fact]
+    public void ALegalPagePathToANonMarkdownFileIsRefusedAtStartup()
+    {
+        // The host refuses to start, as for any other invalid options.
+        Assert.ThrowsAny<Exception>(() => Start(new Dictionary<string, string>
+        {
+            { "Site:TermsOfUsePath", WriteFile("secrets.json", "{}") },
+        }));
+    }
+
+    [Fact]
     public async Task ALegalPageIs404WhenItsFileIsMissing()
     {
         var (_, browser) = Start(new Dictionary<string, string>

@@ -461,6 +461,8 @@ The catalog is not available with Azure Table Storage.
 `Site:TermsOfUsePath` and `Site:PrivacyPolicyPath` point at Markdown files (absolute, or relative to the
 content root). They are served at `/terms` and `/privacy`, and the footer links to each only while its
 path is set; BaGet Extension ships no legal text. A page whose path is unset or whose file is missing answers 404.
+The path must end in `.md` and contain no `..` segment (the pages are public, so no other file may be served); a
+other value is refused when saved on the Settings page and at startup.
 
 ```json
 { "Site": { "TermsOfUsePath": "legal/terms.md", "PrivacyPolicyPath": "legal/privacy.md" } }
@@ -598,3 +600,6 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 - A secret field is blank: leave it empty to keep the value, type to replace it, tick *Clear* to empty it.
 - Only changed values are saved. A value that fails to parse or validate is listed above its section and nothing in
   that section is saved. Settings of other kinds (maps) are shown read-only.
+- A setting no file sets shows the built-in default (for example `Feeds:EnableV2` is ticked) and can be changed from it.
+- If the overrides file cannot be written (a read-only content root) or is not valid JSON, the page shows the error,
+  naming the path, instead of failing; point `SettingsOverridesPath` at a writable file.

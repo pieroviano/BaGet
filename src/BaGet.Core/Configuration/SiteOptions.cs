@@ -1,4 +1,36 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+
 namespace BaGet.Core;
+
+/// <summary>
+/// Accepts only a Markdown file path (*.md) without a ".." segment. The legal pages are public,
+/// so a path to any other file (appsettings.json, the settings overrides file) would publish it.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class MarkdownFilePathAttribute : ValidationAttribute
+{
+    /// <summary>Whether <paramref name="path"/> is empty or an allowed Markdown file path.</summary>
+    public static bool IsAllowed(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return true;
+
+        if (!path.Trim().EndsWith(".md", StringComparison.OrdinalIgnoreCase)) return false;
+
+        return !path.Split('/', (char)92).Any(segment => segment.Trim() == "..");
+    }
+
+    /// <inheritdoc />
+    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        => value is not string path || IsAllowed(path)
+            ? ValidationResult.Success
+            : new ValidationResult(
+                $"{validationContext.MemberName} must be a Markdown file (.md) path without \"..\" segments.",
+                new[] { validationContext.MemberName });
+}
+
 
 /// <summary>
 /// Settings of the web site's chrome. BaGet ships no legal text: the operator supplies
@@ -8,13 +40,15 @@ namespace BaGet.Core;
 public class SiteOptions
 {
     /// <summary>
-    /// A Markdown file, absolute or relative to the content root, served at /terms.
+    /// A Markdown file (.md), absolute or relative to the content root, served at /terms.
     /// </summary>
+    [MarkdownFilePath]
     public string TermsOfUsePath { get; set; }
 
     /// <summary>
-    /// A Markdown file, absolute or relative to the content root, served at /privacy.
+    /// A Markdown file (.md), absolute or relative to the content root, served at /privacy.
     /// </summary>
+    [MarkdownFilePath]
     public string PrivacyPolicyPath { get; set; }
 
     /// <summary>

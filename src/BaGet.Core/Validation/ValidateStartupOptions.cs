@@ -13,6 +13,7 @@ public class ValidateStartupOptions
     private readonly IOptions<DatabaseOptions> _database;
     private readonly IOptions<StorageOptions> _storage;
     private readonly IOptions<MirrorOptions> _mirror;
+    private readonly IOptions<SiteOptions> _site;
     private readonly ILogger<ValidateStartupOptions> _logger;
 
     public ValidateStartupOptions(
@@ -20,12 +21,14 @@ public class ValidateStartupOptions
         IOptions<DatabaseOptions> database,
         IOptions<StorageOptions> storage,
         IOptions<MirrorOptions> mirror,
+        IOptions<SiteOptions> site,
         ILogger<ValidateStartupOptions> logger)
     {
         _root = root ?? throw new ArgumentNullException(nameof(root));
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _mirror = mirror ?? throw new ArgumentNullException(nameof(mirror));
+        _site = site ?? throw new ArgumentNullException(nameof(site));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,6 +42,7 @@ public class ValidateStartupOptions
             _ = _database.Value;
             _ = _storage.Value;
             _ = _mirror.Value;
+            _ = _site.Value;
 
             return true;
         }

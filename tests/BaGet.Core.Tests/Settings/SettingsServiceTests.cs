@@ -89,6 +89,95 @@ public class SettingsServiceTests : IDisposable
         => service.GetState().Single(s => s.Descriptor.Key == key);
 
     [Fact]
+    public void AKeyNoSourceSetsShowsTheOptionsDefault()
+    {
+        var service = Create(Valid());
+
+        Assert.Equal("true", State(service, "RunMigrationsAtStartup").EffectiveValue);
+        Assert.False(State(service, "RunMigrationsAtStartup").HasValue);
+        Assert.Equal("600", State(service, "Mirror:PackageDownloadTimeoutSeconds").EffectiveValue);
+    }
+
+    [Fact]
+    public async Task ADefaultTrueBooleanCanBeTurnedOff()
+    {
+        var service = Create(Valid());
+        var state = State(service, "RunMigrationsAtStartup");
+        var form = new[] { new KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues>(SettingsForm.ValuePrefix + state.Descriptor.Key, new[] { "false" }) };
+
+        var (changes, errors) = SettingsForm.Parse(form, new[] { state });
+        Assert.Empty(errors);
+        Assert.Single(changes);
+        var result = await service.SaveAsync(changes, "admin", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("false", State(service, "RunMigrationsAtStartup").EffectiveValue, ignoreCase: true);
+    }
+
+    [Fact]
+    public async Task AnUnwritableOverridesLocationFailsTheSaveWithAMessage()
+    {
+        Directory.CreateDirectory(_path); // a directory where the file should be
+        var service = Create(Valid());
+
+        var result = await service.SaveAsync(Change(service, "AllowPackageOverwrites", true), "admin", CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Errors, e => e.Contains(_path));
+    }
+
+    [Fact]
+    public async Task AMalformedOverridesFileIsReportedNotThrown()
+    {
+        var service = Create(Valid());
+        File.WriteAllText(_path, "{ not json");
+
+        var states = service.GetState();
+        var result = await service.SaveAsync(Change(service, "AllowPackageOverwrites", true), "admin", CancellationToken.None);
+
+        Assert.NotEmpty(states);
+        Assert.Contains("not valid JSON", service.OverridesError);
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Errors, e => e.Contains("not valid JSON"));
+    }
+
+    [Fact]
+    public async Task ASaveFailsForAnIllegalLegalPagePath()
+    {
+        var service = CreateSite();
+
+        var result = await service.SaveAsync(Change(service, "Site:TermsOfUsePath", "appsettings.Overrides.json"), "admin", CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.False(File.Exists(_path));
+    }
+
+    private SettingsService CreateSite()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(Valid()).Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddBaGetOptions<DatabaseOptions>("Database");
+        services.AddBaGetOptions<SiteOptions>("Site");
+        services.AddSingleton(new SettingsOverridesStore(_path));
+        var provider = services.BuildServiceProvider();
+        var registrations = provider.GetServices<SettingsSchemaRegistration>().ToList();
+        return new SettingsService(configuration, new SettingsCatalog(registrations), registrations, provider, NullLogger<SettingsService>.Instance, provider.GetRequiredService<SettingsOverridesStore>());
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData("", true)]
+    [InlineData("legal/terms.md", true)]
+    [InlineData(@"C:\legal\TERMS.MD", true)]
+    [InlineData("appsettings.json", false)]
+    [InlineData("appsettings.Overrides.json", false)]
+    [InlineData("../terms.md", false)]
+    [InlineData(@"a\..\terms.md", false)]
+    public void OnlyMarkdownPathsWithoutParentSegmentsAreAllowed(string path, bool allowed)
+        => Assert.Equal(allowed, MarkdownFilePathAttribute.IsAllowed(path));
+
+    [Fact]
     public async Task ASavedValueTakesEffectAtOnceAndIsMarkedOverridden()
     {
         var service = Create(Valid());

@@ -90,7 +90,7 @@ public class SettingsService
 
         foreach (var descriptor in _catalog.Descriptors.Where(d => d.RequiresRestart))
         {
-            _startup[descriptor.Key] = ReadValue(_configuration, descriptor);
+            _startup[descriptor.Key] = ReadValue(descriptor);
         }
     }
 
@@ -110,11 +110,27 @@ public class SettingsService
     public SettingsCatalog Catalog => _catalog;
 
     /// <summary>
+    /// Why the overrides file could not be read by the last <see cref="GetState"/> (it is
+    /// then treated as empty), or null.
+    /// </summary>
+    public string OverridesError { get; private set; }
+
+    /// <summary>
     /// The state of every setting.
     /// </summary>
     public IReadOnlyList<SettingState> GetState()
     {
-        var overrides = _store?.Read() ?? new Dictionary<string, string>();
+        IReadOnlyDictionary<string, string> overrides = new Dictionary<string, string>();
+        OverridesError = null;
+        try
+        {
+            overrides = _store?.Read() ?? overrides;
+        }
+        catch (Exception e) when (IsStoreFailure(e))
+        {
+            OverridesError = e.Message;
+        }
+
         var root = _configuration as IConfigurationRoot;
         var overridesIndex = root == null ? -1 : FindOverridesProvider(root.Providers.ToList());
 
@@ -146,7 +162,16 @@ public class SettingsService
             }
 
             var providers = root.Providers.ToList();
-            var current = _store.Read();
+            IReadOnlyDictionary<string, string> current;
+            try
+            {
+                current = _store.Read();
+            }
+            catch (Exception e) when (IsStoreFailure(e))
+            {
+                return SettingsSaveResult.Failed(new[] { e.Message });
+            }
+
             var candidate = new Dictionary<string, string>(current, StringComparer.OrdinalIgnoreCase);
             foreach (var change in changes)
             {
@@ -165,7 +190,20 @@ public class SettingsService
             var introduced = Validate(BuildRoot(providers, candidate)).Where(f => !before.Contains(f)).ToList();
             if (introduced.Count > 0) return SettingsSaveResult.Failed(introduced);
 
-            await _store.WriteAsync(changes, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await _store.WriteAsync(changes, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e) when (IsStoreFailure(e))
+            {
+                _logger.LogError(e, "Saving settings to {Path} failed", _store.FilePath);
+                return SettingsSaveResult.Failed(new[]
+                {
+                    $"The settings could not be saved to \"{_store.FilePath}\": {e.Message} "
+                    + "Make that location writable, or set SettingsOverridesPath to a writable file.",
+                });
+            }
+
             root.Reload();
 
             // Keys only: a value may be a credential.
@@ -188,7 +226,8 @@ public class SettingsService
         IConfigurationRoot root,
         int overridesIndex)
     {
-        var value = ReadValue(_configuration, descriptor);
+        var configured = ReadConfigured(_configuration, descriptor);
+        var value = configured ?? DefaultValue(descriptor);
         var isOverridden = overrides.Keys.Any(k => IsKeyOrChild(k, descriptor.Key));
 
         string shadowedBy = null;
@@ -212,7 +251,7 @@ public class SettingsService
         return new SettingState(
             descriptor,
             descriptor.IsSensitive ? null : value,
-            !string.IsNullOrEmpty(value),
+            !string.IsNullOrEmpty(configured),
             isOverridden,
             shadowedBy,
             pending);
@@ -257,7 +296,87 @@ public class SettingsService
         => string.Equals(candidate, key, StringComparison.OrdinalIgnoreCase)
            || candidate.StartsWith(key + ":", StringComparison.OrdinalIgnoreCase);
 
-    private static string ReadValue(IConfiguration configuration, SettingDescriptor descriptor)
+    private static bool IsStoreFailure(Exception e)
+        => e is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException;
+
+    /// <summary>
+    /// The value in effect: the configured one, or when no provider sets the key, the options
+    /// type's default (a default-true boolean is on although no file mentions it).
+    /// </summary>
+    private string ReadValue(SettingDescriptor descriptor)
+        => ReadConfigured(_configuration, descriptor) ?? DefaultValue(descriptor);
+
+    private string DefaultValue(SettingDescriptor descriptor)
+    {
+        foreach (var registration in _registrations)
+        {
+            var path = descriptor.Key.Split(':');
+            var skip = 0;
+            if (registration.Section != null)
+            {
+                var prefix = registration.Section.Split(':');
+                if (path.Length <= prefix.Length
+                    || !prefix.SequenceEqual(path.Take(prefix.Length), StringComparer.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                skip = prefix.Length;
+            }
+
+            object instance;
+            try
+            {
+                instance = Activator.CreateInstance(registration.OptionsType);
+            }
+            catch (Exception e) when (e is MissingMethodException or System.Reflection.TargetInvocationException)
+            {
+                continue;
+            }
+
+            foreach (var segment in path.Skip(skip))
+            {
+                if (instance == null) break;
+
+                var property = instance.GetType().GetProperty(
+                    segment,
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+                if (property == null || property.GetIndexParameters().Length > 0)
+                {
+                    instance = null;
+                    break;
+                }
+
+                instance = property.GetValue(instance);
+            }
+
+            if (instance == null) continue;
+
+            return FormatDefault(instance);
+        }
+
+        return null;
+    }
+
+    private static string FormatDefault(object value)
+        => value switch
+        {
+            bool flag => flag ? "true" : "false",
+            string text => text,
+            TimeSpan span => span.ToString("c", System.Globalization.CultureInfo.InvariantCulture),
+            IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+            IDictionary => null,
+            IEnumerable list => FormatList(list),
+            _ => value.ToString(),
+        };
+
+    private static string FormatList(IEnumerable list)
+    {
+        var entries = list.Cast<object>().Where(o => o != null).Select(o => o.ToString()).ToList();
+        return entries.Count == 0 ? null : string.Join("\n", entries);
+    }
+
+    private static string ReadConfigured(IConfiguration configuration, SettingDescriptor descriptor)
     {
         if (descriptor.Kind != SettingKind.StringList) return configuration[descriptor.Key];
 
