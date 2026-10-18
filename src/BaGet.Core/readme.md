@@ -10,7 +10,8 @@ Contains BaGet's core logic. The important folders are:
 * Metadata - Builds registration (package metadata) responses
 * Search - Used to search for packages
 * ServiceIndex - The service index, which other projects add resources to through `IServiceIndexResourceProvider`
+* Staging - `IPackageStagingService`: holds a browser upload (`/upload`) in storage between its preview and its confirmation
 * Statistics - Feed-wide download statistics
 * Storage - Stores the content of packages and symbols
 * Upstream - Interactions with an upstream NuGet feed, for mirroring
-* Validation - Validation of BaGet's own configuration
+* Validation - Validation of BaGet's own configuration (package validation is in `BaGet.Validation`)

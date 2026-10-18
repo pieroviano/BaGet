@@ -1,6 +1,6 @@
 # BaGet :baguette_bread:
 
-![Build status] [![Discord][Discord image]][Discord link] [![Twitter][Twitter image]][Twitter link]
+![Build status]
 
 A lightweight [NuGet] and [symbol] server.
 
@@ -11,11 +11,18 @@ A lightweight [NuGet] and [symbol] server.
 ## Getting Started
 
 1. Install the [.NET SDK] (BaGet targets .NET 10)
-2. Download and extract [BaGet's latest release]
+2. Download and extract [BaGet's latest release], or build it from source (see [CONTRIBUTING.md](CONTRIBUTING.md))
 3. Start the service with `dotnet BaGet.dll`
 4. Browse `http://localhost:6060/` in your browser (the port is set by `Kestrel:Endpoints` in `appsettings.json`)
 
-For more information, please refer to the [documentation].
+For more information, please refer to the [documentation]. To build and test from source:
+
+```
+dotnet build BaGet.sln -p:GeneratePackageOnBuild=false
+dotnet test BaGet.sln -p:GeneratePackageOnBuild=false
+```
+
+The screenshot above shows the upstream project's UI, not the current one.
 
 ## Features
 
@@ -24,28 +31,24 @@ For more information, please refer to the [documentation].
 * **Four databases**: SQLite, SQL Server, PostgreSQL and MySQL, plus Azure Table Storage
 * **Offline support**: [mirror a NuGet server] to speed up builds and enable offline downloads
 * **NuGet V3 protocol**, including the catalog, vulnerability info, deprecation, report abuse and package details templates
-* **NuGet V2 (OData) feed** for `nuget list`, older clients and PowerShellGet
-* **Accounts** (opt-in): sign-in, OpenID Connect, package owners, organizations and scoped, expiring API keys
+* **NuGet V2 (OData) feed** for `nuget list`, older clients and PowerShellGet (on by default; `Feeds:EnableV2=false` turns it off)
+* **Accounts** (on by default; `Accounts:Enabled=false` restores the global `ApiKey` alone; while `ApiKey` is empty, pushes need a user API key): sign-in, OpenID Connect, package owners, organizations and scoped, expiring API keys
 * **Validation pipeline** (opt-in): packages are checked before they are served, and can be repository signed
 * **Web UI**: package pages, owner management pages, profiles, statistics and abuse reports
 
-[Build status]: https://img.shields.io/github/actions/workflow/status/loic-sharma/BaGet/.github/workflows/main.yml
-[Discord image]: https://img.shields.io/discord/889377258068930591
-[Discord link]: https://discord.gg/MWbhpf66mk
-[Twitter image]: https://img.shields.io/twitter/follow/bagetapp?label=Follow
-[Twitter link]: https://twitter.com/bagetapp
+[Build status]: https://img.shields.io/github/actions/workflow/status/pieroviano/BaGet/main.yml?branch=main
 
 [NuGet]: https://learn.microsoft.com/nuget/what-is-nuget
 [symbol]: https://docs.microsoft.com/en-us/windows/desktop/debug/symbol-servers-and-symbol-stores
 [.NET SDK]: https://www.microsoft.com/net/download
 
-[BaGet's latest release]: https://github.com/loic-sharma/BaGet/releases
+[BaGet's latest release]: https://github.com/pieroviano/BaGet/releases
 
-[Documentation]: https://loic-sharma.github.io/BaGet/
-[Docker]: https://loic-sharma.github.io/BaGet/installation/docker/
-[Azure]: https://loic-sharma.github.io/BaGet/installation/azure/
-[AWS]: https://loic-sharma.github.io/BaGet/installation/aws/
-[Google Cloud]: https://loic-sharma.github.io/BaGet/installation/gcp/
-[Alibaba Cloud]: https://loic-sharma.github.io/BaGet/installation/aliyun/
+[Documentation]: docs/index.md
+[Docker]: docs/installation/docker.md
+[Azure]: docs/installation/azure.md
+[AWS]: docs/installation/aws.md
+[Google Cloud]: docs/installation/gcp.md
+[Alibaba Cloud]: docs/installation/aliyun.md
 
-[Mirror a NuGet server]: https://loic-sharma.github.io/BaGet/configuration/#enable-read-through-caching
+[Mirror a NuGet server]: docs/configuration.md#enable-read-through-caching

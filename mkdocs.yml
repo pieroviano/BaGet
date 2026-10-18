@@ -3,8 +3,8 @@ site_description: A lightweight NuGet and symbol server
 site_author: Loic Sharma
 site_url: https://loic-sharma.github.io/BaGet/
 
-repo_name: loic-sharma/BaGet
-repo_url: https://github.com/loic-sharma/BaGet
+repo_name: pieroviano/BaGet
+repo_url: https://github.com/pieroviano/BaGet
 
 copyright: 'Copyright &copy; 2020 Loic Sharma'
 

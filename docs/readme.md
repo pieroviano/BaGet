@@ -1,2 +1,1 @@
-Please use the [documentation website](https://loic-sharma.github.io/BaGet/)
-for the best browsing experience.
+This fork has no documentation site: browse this folder, or run `mkdocs serve` from the repository root.

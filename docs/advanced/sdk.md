@@ -109,9 +109,20 @@ var processor = new CatalogProcessor(
 await processor.ProcessAsync();
 ```
 
+## Other calls
+
+`NuGetClient` also has:
+
+* `ExistsAsync(packageId)` and `ExistsAsync(packageId, version)`: whether a package or version exists
+* `DownloadPackageManifestAsync(packageId, version)`: the `.nuspec`
+* `AutocompleteAsync(...)`: package id (or version) suggestions
+
+`NuGetClientFactoryExtensions.CreateCatalogProcessor` is a shortcut for the wiring in
+[Read a catalog](#read-a-catalog).
+
 ## Multiple search endpoints
 
 When a server's service index lists several endpoints for search or autocomplete, as nuget.org's
 does, the client tries them in order and moves to the next on a network failure, a timeout, a 408,
-a 429, a 5xx or an unreadable response. Any other status, such as a 404, is the server's answer and
+a 429, a 5xx, a dropped connection (`IOException`) or an unreadable response. Any other status, such as a 404, is the server's answer and
 is returned as is. The service index is re-read after 40 minutes.
