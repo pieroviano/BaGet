@@ -61,6 +61,26 @@
             any time, with an API key.
         </p>
     }
+    else if (Model.RetryToken != null)
+    {
+        <form method="post" asp-page-handler="Submit" id="upload-retry" x-data="{ accepted: false }">
+            <input type="hidden" name="token" value="@Model.RetryToken" />
+            <div class="form-group">
+                <label for="retryApiKey">API key</label>
+                <input type="password" id="retryApiKey" name="apiKey" class="form-control" autocomplete="off" />
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="acceptTerms" value="true" x-model="accepted" />
+                    I have the right to publish this.
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary" x-bind:disabled="!accepted">Publish</button>
+            <button type="submit" class="btn btn-default" formaction="@Url.Page("/Upload", "Cancel")">
+                Discard this upload
+            </button>
+        </form>
+    }
     else if (staged != null)
     {
         @* Step two: what was staged, and nothing is published until it is confirmed. *@
