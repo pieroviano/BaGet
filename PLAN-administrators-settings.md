@@ -364,3 +364,134 @@ Each phase builds and tests with `-p:GeneratePackageOnBuild=false` and commits i
 | A restart-only setting is misclassified as live | V1. When in doubt, mark restart. |
 | The UI can break the server (bad `Database:*`) | Validation before saving; restart-only changes apply at the next start; to recover, delete or edit the overrides file. |
 | Secrets stored in plain text in the overrides file | Same as `appsettings.json`; documented. |
+
+---
+
+# Part B — Admins reset passwords, manage any package, delete accounts
+
+Status: Part A (sections 0–7) is implemented and merged (`1515d26..924e426`); its worktrees and branches are removed.
+
+## B0. Blocking verification
+| # | Check | How |
+|---|---|---|
+| BV1 | `SessionPrincipalFactory.Create` (`SessionPrincipalFactory.cs:29`) has a single caller, `Upload.cshtml.cs:444`. It becomes async. | `grep -rn "SessionPrincipalFactory" src tests` |
+| BV2 | `IPackageDeletionService` has one implementation (`PackageDeletionService.cs:10`), plus any test doubles. | `grep -rn "IPackageDeletionService" src tests` |
+| BV3 | How `ForgotPassword.cshtml.cs` builds the reset-link template (`UserIdPlaceholder`/`CodePlaceholder`, `EmailLinkPolicy`), so it can be moved and not copied. | Read `ForgotPassword.cshtml.cs:1-100` |
+
+## B1. Decisions
+| Decision (user) | Consequence |
+|---|---|
+| Password reset: **generated password and an email link** | *Generate* reuses `AccountRecoveryService.ResetPasswordAsync` (`AccountRecoveryService.cs:32`): 2FA off, lockout lifted, the user's sessions end (security stamp). *Email link* only shows while `Email.IsConfigured` and the user has an address. |
+| Deletion covers **packages and accounts** | Admin deletes any version, or a whole ID, and any other account. |
+| **Web UI and API** | Admin sessions and admin users' API keys skip **ownership**. |
+| **Admin can always hard-delete** | A *Delete permanently* button for admins in the web UI even when `PackageDeletionBehavior=Unlist`. The NuGet `DELETE` API keeps following the server setting (the protocol has no hard flag). |
+
+| Decision (mine, flagged — change before implementing if wrong) | Why |
+|---|---|
+| Admin keys **still obey their scopes and glob**; only ownership is skipped. Not `IsSuperuser`. | A push-only CI key an admin made must stay push-only. A full superuser would ignore scopes (`BaGetPrincipal.cs:50-52`). |
+| Admin pushing a new ID still becomes its owner (`OwnershipAuthorizationService.cs:71`) | Same as any user. |
+| Admin deletion of a user who is the **sole owner** of IDs: radio buttons, default *leave without owners* (only admins and the global key can manage them, like IDs that predate accounts), or *delete permanently (all versions)*. | Owner deletions are blocked (`AccountDeletionService.cs:51-68`); an admin needs a way through. |
+| Org blockers when an admin deletes: if the user is the last org admin and others remain, the longest-standing member (lowest `Key`) becomes org admin. If the user is the only member and the org owns packages, the org is kept without members. | Admins have no organization UI; deletion must not get stuck. |
+| An admin can't delete or reset their **own** account from the admin pages | Self-service stays on `/account/settings` (password confirmation and the last-admin guard). |
+| Not in scope: an admin toggle for *verified* (`docs/configuration.md` "Verified packages") and a CLI `account delete` | Not requested. |
+
+## B2. Admin bypasses ownership (API and session)
+- `src/BaGet.Core/Authentication/BaGetPrincipal.cs:24-35`: optional ctor parameter `bool isAdministrator = false` and a property `IsAdministrator`, documented as *"skips package ownership, never the key's scopes or glob"*.
+- `AccountAuthenticationService.cs:55`: pass `isAdministrator: user.IsAdministrator`.
+- `SessionPrincipalFactory.cs:29`: becomes `Task<BaGetPrincipal> CreateAsync(ClaimsPrincipal user)`, which loads the user (`FindByIdAsync`) and passes `user.IsAdministrator`. Update the caller `Upload.cshtml.cs:444` and the XML doc ("never the superuser" stays true).
+- `OwnershipAuthorizationService.cs:45-46`, after `MatchesPackage`:
+```csharp
+// An administrator skips ownership, never the key's own limits: a push-only key an
+// administrator made for CI stays push-only.
+if (principal.IsAdministrator)
+{
+    return action switch
+    {
+        PackageAction.Push => await _packages.ExistsAsync(packageId, cancellationToken) || await _ownership.HasOwnersAsync(packageId, cancellationToken)
+            ? principal.HasScope(ApiKeyScopes.Push) || principal.HasScope(ApiKeyScopes.PushVersion)
+            : principal.HasScope(ApiKeyScopes.Push),
+        PackageAction.Manage => principal.HasScope(ApiKeyScopes.Unlist),
+        _ => false,
+    };
+}
+```
+  Update the class's `<list>` doc (`:9-21`) with the new rule.
+
+## B3. Manage any package — `src/BaGet.Identity/Pages/Packages/Manage.cshtml(.cs)`
+- `:80-85`: allow when owner **or** `AdministratorService.IsAdministratorAsync`. Set `public bool ActingAsAdministrator` (admin and not owner). The view shows `alert-warning` "You are managing this package as an administrator."
+- Admin POSTs where the admin isn't an owner are logged once in `OnPageHandlerExecutionAsync`: `LogWarning("Administrator {Admin} ran {Handler} on {Id}", ...)`.
+- Hard delete, for admins only, password-confirmed (`IsConfirmedAsync`, `AccountPageModel.cs:148`; `_Reauthenticate` partial for accounts without a password):
+  - `OnPostHardDeleteAsync(string version, string password)`: one version.
+  - `OnPostHardDeleteAllAsync(string password)`: every version of the ID, then removes its owner rows.
+  - Buttons: per version, *Delete permanently*, shown when `IsAdministrator && !DeletionIsPermanent` (when the server already hard-deletes, the normal button does it). *Delete all versions permanently* in a red "Danger zone" panel at the bottom, always for admins.
+- `src/BaGet.Core/Indexing/IPackageDeletionService.cs`: add
+```csharp
+/// <summary>
+/// Remove the version's rows and files whatever <see cref="BaGetOptions.PackageDeletionBehavior"/> says.
+/// For administrators; the protocol's DELETE keeps following the setting.
+/// </summary>
+/// <returns>False if the database held no such version (its files are removed either way).</returns>
+Task<bool> TryHardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken);
+```
+  `PackageDeletionService.cs:74`: the existing private method becomes this public member, with no behaviour change.
+- Read-only mode still refuses every POST (`:87-99`), admins included.
+
+## B4. Users page actions — `src/BaGet.Identity/Pages/Admin/Users.cshtml(.cs)`
+Per row (not for the current admin's own row): **Packages**, **Reset password ▾** (Generate / Email link), **Delete**.
+| Handler | Behaviour |
+|---|---|
+| `OnPostResetPasswordAsync(userName, password)` | Confirm → `AccountRecoveryService.ResetPasswordAsync(userName, ct)`. Renders `Page()` (no PRG, so the password never goes into TempData or a cookie) with `GeneratedPassword` in a one-time `alert-info` and a copy button. Sets `Cache-Control: no-store`. Logs `"{Admin} reset the password of {User}"` without the value. |
+| `OnPostSendResetLinkAsync(userName, password)` | Confirm. 404 unless `Email.IsConfigured`. Error if the user has no address. Enqueues through `PasswordResetLinkSender` (below). No rate limiter (admin action). Message: "Reset link sent to {masked email}". |
+
+`src/BaGet.Identity/PasswordResetLinkSender.cs` (new, scoped): the template building and `SendAsync` moved out of `ForgotPassword.cshtml.cs:~40-100` (BV3). `ForgotPasswordModel` calls it, so there's one implementation, and its rate limiting stays in the page.
+
+## B5. Delete another account — `Pages/Admin/DeleteUser.cshtml(.cs)` (`/admin/users/{name}/delete`)
+- GET: shows what goes: API key count, direct ownerships, **sole-owned IDs** (from `GetBlockersAsync`), organizations and what happens to each (B1). Radio `soleOwned=keep|delete` (default `keep`). Password field.
+- POST: refuses self (`name == current`) and the last admin; confirm → `AccountDeletionService.DeleteByAdministratorAsync(user, deleteSoleOwnedPackages, actor, ct)`; redirect to Users with a summary.
+- `src/BaGet.Identity/AccountDeletionService.cs`: new method beside `DeleteAsync` (`:90`), sharing the staging code (extract `StageCleanupAsync`):
+  1. Ignore `LastOwnerPackageIds` and organization blockers (`LastAdministrator` still blocks).
+  2. Organizations: the user is the last org admin and others remain → set `IsAdmin = true` on the remaining member with the lowest `Key`. The user is the only member and the org owns packages → remove the membership, keep the `Organization` row.
+  3. Delete the user (one `SaveChanges`, as today: `:115-130`).
+  4. Only after that commits, if `deleteSoleOwnedPackages`: `TryHardDeletePackageAsync` for every version of each sole-owned ID (`IPackageDatabase.FindAsync(id, includeUnlisted: true)`). Collect failures and return them; never roll the user back.
+  5. Log `"{Admin} deleted user {User}; sole-owned IDs {Ids} {kept|deleted}"`.
+  Returns `AdminDeletionResult(IdentityResult Result, IReadOnlyList<string> KeptWithoutOwners, IReadOnlyList<string> DeletedPackageIds, IReadOnlyList<string> Failures)`.
+
+## B6. A user's packages and ownerless packages
+- `Pages/Admin/UserPackages.cshtml(.cs)` (`/admin/users/{name}/packages`): `PackageOwnershipService.GetOwnedPackageIdsAsync(user.Id, user.UserName, ct)` (`PackageOwnershipService.cs:83`) → table: ID, latest version, downloads, owners, link to `/packages/{id}/manage`.
+- `Pages/Admin/Packages.cshtml(.cs)` (`/admin/packages`): IDs with no `PackageOwner` row (pre-accounts, or left by B5), paged 50 per page (`p`), each linking to Manage.
+- `_Layout.cshtml` admin menu: add **Packages** (`/Admin/Packages`).
+
+## B7. Tests
+| Test | Asserts |
+|---|---|
+| `OwnershipAuthorizationServiceTests` (Core/Identity unit) | Admin: manage a non-owned ID with the `Unlist` scope; refused without the scope or outside the glob; push to an existing ID with `PushVersion`; a new ID needs `Push`. Non-admin unchanged. |
+| `AdminPackageTests` (integration) | Admin API key unlists another user's package over `DELETE`; admin session opens Manage for a non-owned and an ownerless ID (non-admin 403); hard delete with `Unlist` behaviour removes rows and the `.nupkg`; wrong password refused; hard-delete-all removes owners; read-only refuses; the action is logged. |
+| `AdminUserActionsTests` (integration) | Generate reset: new password works, old one fails, 2FA off, password not in TempData or cookies, `no-store`. Email link: sent through a captured sender when SMTP is configured, 404 otherwise. Own row has no actions; self-delete or self-reset POST refused. |
+| `AdminDeleteUserTests` (integration) | Sole-owned `keep` → ID is ownerless and listed on `/admin/packages`; `delete` → versions gone; org last-admin handover; memberless org kept; last admin refused; non-admin 404. |
+| `ForgotPassword*` existing tests | Still green after the `PasswordResetLinkSender` move. |
+
+## B8. Documentation (same commits)
+| File | Change |
+|---|---|
+| `docs/configuration.md` `### Administrators` | Powers: settings, users, password reset (both kinds), manage any package (UI and API; keys keep scopes and glob), hard delete in the UI, account deletion rules (sole-owned IDs, orgs), audit logging. |
+| `docs/configuration.md` "Enable package hard deletions" | Admins can always hard-delete from the UI; the API follows the setting. |
+| XML docs | `BaGetPrincipal.IsAdministrator`, `OwnershipAuthorizationService` rule list, `IPackageDeletionService`, new services and pages. |
+| `CLAUDE.md` | Test counts. |
+
+## B9. Execution (workflow, ≤5 agents)
+| Phase | Where | Agent | Content |
+|---|---|---|---|
+| B-0 | `main` | Sonnet | BV1–BV3; B3's `IPackageDeletionService.TryHardDeletePackageAsync`; B2 principal flag. Commit. These are the shared seams both branches need. |
+| B-1 (parallel) | `../BaGet-wt-packages` / `wt/packages` | Sonnet | B2 authorization rule, B3, B6, related tests and docs. |
+| | `../BaGet-wt-users` / `wt/users` | Sonnet | B4, B5, related tests and docs; the per-row *Packages* link to B6's route. |
+| B-2 | rebase both onto `main`, `merge --ff-only`, full tests | Sonnet | |
+| B-3 | `main` | Opus review → Sonnet fix (≤2 rounds) | |
+| B-4 | — | orchestrator | Remove worktrees and branches, delete this plan, commit. |
+
+## B10. Risks
+| Risk | Mitigation |
+|---|---|
+| A stolen admin API key reaches every package | Scopes and glob still apply; docs advise a separate non-admin account for CI keys. |
+| Hard delete is irreversible | Admin only, password confirmation, a JS confirm, logged. |
+| Partial failure while deleting the packages of a deleted user | The user deletion is committed first; failures are reported and the leftover IDs appear on `/admin/packages` for a retry. |
+| A generated password is visible on screen | Shown once, `no-store`, never stored or logged; the user's sessions end. |
