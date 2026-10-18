@@ -236,6 +236,24 @@ baget account reset-password <user>
 It prints a generated password, switches off the user's two-factor authentication and lifts any
 lockout. It needs `Accounts:Enabled` and works with or without SMTP.
 
+Email also enables **Contact owners** on a package page (`/packages/{id}/contact-owners`, signed-in
+users only). The message goes, one email each, to the owning users with a confirmed address and to the
+administrators of owning organizations, with the sender in `Reply-To`; the sender never sees owner
+addresses. One message per sender per package every 10 minutes, counted in memory per process (it
+resets on restart and is not shared between instances). Without email the page answers 404 and the
+link is not shown.
+
+### Avatars
+
+Owners, profiles and the account menu show a [Gravatar](https://gravatar.com) (`d=retro`), keyed by
+the MD5 of the user's email, or of the name for organizations and users without an email. Every
+avatar is a request from the visitor's browser to gravatar.com carrying that hash. A private feed can
+turn them off, which shows initial-letter placeholders instead:
+
+```json
+{ "Site": { "UseGravatar": false } }
+```
+
 ### Organizations
 
 Signed-in users create organizations at `/account/organizations`. An organization can own packages
@@ -271,6 +289,13 @@ whatever `AllowRegistration` says: the provider decides who may sign in.
 
 An owner can be marked as verified for a package ID, which search reports as `verified`. There is no
 page for this yet; it is set through `PackageOwnershipService.SetVerifiedAsync`.
+
+## Search sort
+
+The package list offers *Most downloaded* and *Recently updated* beside relevance (web UI only; the V3
+search API has no sort parameter and is unchanged). The `Database` search provider sorts on the
+server. `AzureSearch` and Azure Table do not (the index has no sortable `published` field, and Table
+storage cannot order), so the control is hidden there.
 
 ## Validate packages before serving them
 

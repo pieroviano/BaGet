@@ -14,6 +14,12 @@ namespace BaGet.Azure;
 using QueryType = Microsoft.Azure.Search.Models.QueryType;
 using SearchParameters = Microsoft.Azure.Search.Models.SearchParameters;
 
+/// <remarks>
+/// <see cref="SearchRequest.SortBy"/> is ignored (<see cref="ISearchService.SupportedSorts"/> is the
+/// default, relevance only). The index could order by "totalDownloads", but "published" is not
+/// sortable, and adding it means changing the index definition, which an existing index would
+/// need rebuilt. Offering one of the two sorts would also make the UI inconsistent.
+/// </remarks>
 public class AzureSearchService : ISearchService
 {
     private readonly SearchIndexClient _searchClient;

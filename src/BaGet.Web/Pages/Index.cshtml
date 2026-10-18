@@ -27,6 +27,11 @@
     {
         <input type="hidden" name="prerelease" value="False" />
     }
+
+    @if (Model.CanSort && Model.SortBy != SearchSort.Relevance)
+    {
+        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+    }
 }
 
 @if (Model.IsHome)
@@ -116,6 +121,28 @@
             </div>
         </div>
     </div>
+
+    @if (Model.CanSort)
+    {
+        <div class="form-group">
+            <label>Sort by:</label>
+
+            <div class="search-dropdown">
+                <div class="dropdown">
+                    <button class="btn btn-default dropdown-toggle" type="button" id="search-sort" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                        @SortLabels.GetValueOrDefault(Model.SortBy, "Relevance")
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="search-sort">
+                        @foreach (var sort in SortLabels.Where(s => Model.SupportedSorts.Contains(s.Key)))
+                        {
+                            <li><a href="@SearchLink(sortBy: sort.Key, page: 1)">@sort.Value</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
 
     <div class="form-group form-check">
         <label for="prerelease">Include prerelease:</label>
@@ -312,7 +339,15 @@ else
         { "net11", ".NET Framework 1.1" },
     };
 
+    private IReadOnlyDictionary<SearchSort, string> SortLabels { get; } = new Dictionary<SearchSort, string>()
+    {
+        { SearchSort.Relevance, "Relevance" },
+        { SearchSort.TotalDownloads, "Most downloaded" },
+        { SearchSort.LastUpdated, "Recently updated" },
+    };
+
     private string SearchLink(
+        SearchSort? sortBy = null,
         string packageType = null,
         string framework = null,
         bool? prerelease = null,
@@ -323,12 +358,14 @@ else
         framework = framework ?? Model.Framework;
         prerelease = prerelease ?? Model.Prerelease;
         page = page ?? Model.PageIndex;
+        sortBy = sortBy ?? Model.SortBy;
 
         // Remove query parameters that have default value
         if (packageType == "any") packageType = null;
         if (framework == "any") framework = null;
         if (prerelease == true) prerelease = null;
         if (page == 1) page = null;
+        if (sortBy == SearchSort.Relevance || !Model.CanSort) sortBy = null;
 
         return Url.Page("Index", new
         {
@@ -337,6 +374,7 @@ else
             packageType,
             framework,
             prerelease,
+            sortBy,
         });
     }
 }

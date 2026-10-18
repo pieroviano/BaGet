@@ -5,7 +5,7 @@
 }
 
 <div class="col-sm-12">
-    <h1 id="profile-name">@Model.Name</h1>
+    <h1 id="profile-name"><partial name="_Avatar" model="new BaGet.Core.AvatarModel(Model.Name, Model.AvatarUrl, 64)" /> @Model.Name</h1>
     <hr class="breadcrumb-divider" />
 
     @if (Model.IsOrganization)

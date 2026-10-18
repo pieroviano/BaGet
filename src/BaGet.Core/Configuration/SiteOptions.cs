@@ -16,4 +16,10 @@ public class SiteOptions
     /// A Markdown file, absolute or relative to the content root, served at /privacy.
     /// </summary>
     public string PrivacyPolicyPath { get; set; }
+
+    /// <summary>
+    /// Show Gravatar avatars. Each avatar is a request to gravatar.com carrying a hash of the
+    /// account's email, so a private feed can turn this off and get initial-letter placeholders.
+    /// </summary>
+    public bool UseGravatar { get; set; } = true;
 }

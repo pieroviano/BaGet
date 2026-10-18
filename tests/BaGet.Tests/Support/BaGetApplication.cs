@@ -116,6 +116,8 @@ public class BaGetApplication : WebApplicationFactory<Program>
                 services.RemoveAll<IEmailSender<BaGetUser>>();
                 services.AddSingleton<CapturingEmailSender>();
                 services.AddSingleton<IEmailSender<BaGetUser>>(p => p.GetRequiredService<CapturingEmailSender>());
+                services.RemoveAll<IEmailMessageSender>();
+                services.AddSingleton<IEmailMessageSender>(p => p.GetRequiredService<CapturingEmailSender>());
                 _configureServices?.Invoke(services);
                 if (_upstreamClient != null)
                 {

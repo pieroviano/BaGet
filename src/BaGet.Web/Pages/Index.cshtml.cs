@@ -40,6 +40,18 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public bool Prerelease { get; set; } = true;
 
+    [BindProperty(Name = "sortBy", SupportsGet = true)]
+    public SearchSort SortBy { get; set; } = SearchSort.Relevance;
+
+    /// <summary>
+    /// The orders the search provider can apply on the server. With only the default there
+    /// is nothing to choose, so the page shows no sort control.
+    /// </summary>
+    public IReadOnlyCollection<SearchSort> SupportedSorts
+        => _search.SupportedSorts ?? new[] { SearchSort.Relevance };
+
+    public bool CanSort => SupportedSorts.Count > 1;
+
     public IReadOnlyList<SearchResult> Packages { get; private set; }
 
     /// <summary>
@@ -61,7 +73,7 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return BadRequest();
+        if (!ModelState.IsValid || !Enum.IsDefined(typeof(SearchSort), SortBy)) return BadRequest();
 
         IsHome = IsFrontPage();
         if (IsHome)
@@ -88,6 +100,10 @@ public class IndexModel : PageModel
                 PackageType = packageType,
                 Framework = framework,
                 Query = Query,
+
+                // A provider that cannot sort ignores the request, so the page stays honest
+                // about it by not offering the choice.
+                SortBy = CanSort && SupportedSorts.Contains(SortBy) ? SortBy : SearchSort.Relevance,
             },
             cancellationToken);
 

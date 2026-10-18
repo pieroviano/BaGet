@@ -44,6 +44,91 @@ public class DatabaseSearchServiceTests : IDisposable
             new SearchResponseBuilder(Mock.Of<IUrlGenerator>()));
     }
 
+    public class SortBy : DatabaseSearchServiceTests
+    {
+        private SearchRequest Sorted(SearchSort sort, int skip = 0, int take = 20)
+        {
+            var request = Request(skip, take);
+            request.SortBy = sort;
+            return request;
+        }
+
+        [Fact]
+        public void TheDatabaseProviderSupportsEverySort()
+        {
+            Assert.Equal(
+                new[] { SearchSort.Relevance, SearchSort.TotalDownloads, SearchSort.LastUpdated },
+                ((ISearchService)_target).SupportedSorts.OrderBy(s => s));
+        }
+
+        [Fact]
+        public async Task TotalDownloadsOrdersByTheSumOverAllVersions()
+        {
+            await AddPackageAsync("A.Few", "1.0.0", downloads: 10);
+            await AddPackageAsync("B.Many", "1.0.0", downloads: 300);
+            await AddPackageAsync("B.Many", "2.0.0", downloads: 300);
+            await AddPackageAsync("C.Some", "1.0.0", downloads: 100);
+
+            var response = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads), _cancellationToken);
+
+            Assert.Equal(new[] { "B.Many", "C.Some", "A.Few" }, response.Data.Select(r => r.PackageId));
+        }
+
+        [Fact]
+        public async Task LastUpdatedOrdersByTheNewestVersionFirst()
+        {
+            await AddPackageAsync("A.Old", "1.0.0", published: new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddPackageAsync("B.Fresh", "1.0.0", published: new DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddPackageAsync("B.Fresh", "2.0.0", published: new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddPackageAsync("C.Mid", "1.0.0", published: new DateTime(2022, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var response = await _target.SearchAsync(Sorted(SearchSort.LastUpdated), _cancellationToken);
+
+            Assert.Equal(new[] { "B.Fresh", "C.Mid", "A.Old" }, response.Data.Select(r => r.PackageId));
+        }
+
+        [Fact]
+        public async Task TiesAreBrokenByIdSoPagesNeverOverlapOrSkip()
+        {
+            foreach (var id in new[] { "E", "B", "D", "A", "C" })
+            {
+                await AddPackageAsync(id, "1.0.0", downloads: 7);
+            }
+
+            var first = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip: 0, take: 2), _cancellationToken);
+            var second = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip: 2, take: 2), _cancellationToken);
+            var third = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip: 4, take: 2), _cancellationToken);
+
+            Assert.Equal(
+                new[] { "A", "B", "C", "D", "E" },
+                first.Data.Concat(second.Data).Concat(third.Data).Select(r => r.PackageId));
+            Assert.Equal(5, first.TotalHits);
+        }
+
+        [Fact]
+        public async Task SortingAcrossPagesIsGlobalNotPerPage()
+        {
+            await AddPackageAsync("A", "1.0.0", downloads: 1);
+            await AddPackageAsync("B", "1.0.0", downloads: 2);
+            await AddPackageAsync("C", "1.0.0", downloads: 3);
+
+            var first = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, take: 1), _cancellationToken);
+
+            Assert.Equal("C", Assert.Single(first.Data).PackageId);
+        }
+
+        [Fact]
+        public async Task RelevanceKeepsTheExistingIdOrder()
+        {
+            await AddPackageAsync("B", "1.0.0", downloads: 999);
+            await AddPackageAsync("A", "1.0.0", downloads: 1);
+
+            var response = await _target.SearchAsync(Sorted(SearchSort.Relevance), _cancellationToken);
+
+            Assert.Equal(new[] { "A", "B" }, response.Data.Select(r => r.PackageId));
+        }
+    }
+
     public class SearchAsync : DatabaseSearchServiceTests
     {
         [Fact]
@@ -331,7 +416,8 @@ public class DatabaseSearchServiceTests : IDisposable
         string packageId,
         string version,
         bool listed = true,
-        long downloads = 0)
+        long downloads = 0,
+        DateTime? published = null)
     {
         var parsedVersion = NuGetVersion.Parse(version);
 
@@ -345,7 +431,7 @@ public class DatabaseSearchServiceTests : IDisposable
             Downloads = downloads,
             IsPrerelease = parsedVersion.IsPrerelease,
             SemVerLevel = SemVerLevel.Unknown,
-            Published = DateTime.UtcNow,
+            Published = published ?? DateTime.UtcNow,
             Summary = "Summary",
             Tags = Array.Empty<string>(),
             Dependencies = new List<PackageDependency>(),

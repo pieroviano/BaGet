@@ -27,6 +27,11 @@ public class ProfileModel : AccountPageModel
 
     public bool IsCurrentUser { get; private set; }
 
+    /// <summary>
+    /// The account's avatar address, or null when Gravatar is off.
+    /// </summary>
+    public string AvatarUrl { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         var context = HttpContext.RequestServices.GetRequiredService<IContext>();
@@ -70,6 +75,10 @@ public class ProfileModel : AccountPageModel
                 .Select(o => o.PackageId)
                 .ToListAsync(cancellationToken);
         }
+
+        var avatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
+            .GetUrlsAsync(new[] { Name }, 64, cancellationToken);
+        AvatarUrl = avatars.GetValueOrDefault(Name);
 
         var lowerIds = ids.Select(i => i.ToLowerInvariant()).Distinct().ToList();
         Packages = await context.Packages

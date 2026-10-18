@@ -53,6 +53,11 @@ public class PackageModel : PageModel
     /// <summary>Owner names; empty unless accounts are enabled and the package has owners.</summary>
     public IReadOnlyList<string> Owners { get; private set; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Each owner's avatar address by name. Empty when Gravatar is off or accounts are disabled.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> OwnerAvatars { get; private set; } = new Dictionary<string, string>();
+
     public string IconUrl { get; private set; }
     public string LicenseUrl { get; private set; }
     public string PackageDownloadUrl { get; private set; }
@@ -113,6 +118,8 @@ public class PackageModel : PageModel
         {
             var owners = await ownership.GetOwnersAsync(Package.Id, cancellationToken);
             Owners = owners.Select(o => o.OwnerName).ToList();
+            OwnerAvatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
+                .GetUrlsAsync(Owners, 32, cancellationToken);
         }
         PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
     }

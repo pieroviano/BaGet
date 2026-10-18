@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,6 +9,10 @@ using Microsoft.Azure.Cosmos.Table;
 
 namespace BaGet.Azure;
 
+/// <remarks>
+/// <see cref="SearchRequest.SortBy"/> is ignored: Azure Table storage cannot order by anything
+/// but its keys, and sorting one page in memory would be wrong.
+/// </remarks>
 public class TableSearchService : ISearchService
 {
     private const string TableName = "Packages";

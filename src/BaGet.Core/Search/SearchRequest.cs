@@ -40,4 +40,10 @@ public class SearchRequest
     /// The search query.
     /// </summary>
     public string Query { get; set; }
+
+    /// <summary>
+    /// How to order the results. Set by the web UI only; a provider that cannot sort on
+    /// the server ignores it (see <see cref="ISearchService.SupportedSorts"/>).
+    /// </summary>
+    public SearchSort SortBy { get; set; } = SearchSort.Relevance;
 }

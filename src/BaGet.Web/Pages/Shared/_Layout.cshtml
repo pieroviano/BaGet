@@ -1,7 +1,20 @@
+@using Microsoft.Extensions.DependencyInjection
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> Site
 @{
     var hideSearchBar = ViewData["HideSearchBar"] is true;
+
+    // The signed-in user's avatar, for the account menu. The service exists only while accounts are enabled.
+    string headerAvatar = null;
+    if (Accounts.Value.Enabled && User.Identity?.IsAuthenticated == true)
+    {
+        var avatars = Context.RequestServices.GetService<BaGet.Identity.AvatarService>();
+        if (avatars != null)
+        {
+            headerAvatar = (await avatars.GetUrlsAsync(new[] { User.Identity.Name }, 24, Context.RequestAborted))
+                .GetValueOrDefault(User.Identity.Name);
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -55,6 +68,7 @@
                             {
                                 <li role="presentation" class="dropdown account-menu">
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <partial name="_Avatar" model="new BaGet.Core.AvatarModel(User.Identity.Name, headerAvatar, 24)" />
                                         <span>@User.Identity.Name</span> <span class="caret"></span>
                                     </a>
                                     <ul class="dropdown-menu">

@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using MailKit.Net.Smtp;
@@ -15,7 +17,7 @@ namespace BaGet.Identity;
 /// Sends Identity's emails over SMTP with MailKit. A failure is logged and then
 /// rethrown, so a caller can say "could not send" and never reports success.
 /// </summary>
-internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>
+internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>, IEmailMessageSender
 {
     private readonly IOptions<EmailOptions> _options;
     private readonly ILogger<SmtpEmailSender> _logger;
@@ -35,6 +37,39 @@ internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>
     public Task SendPasswordResetCodeAsync(BaGetUser user, string email, string resetCode)
         => SendAsync(email, "Reset your password", $"<p>Your password reset code is <b>{WebUtility.HtmlEncode(resetCode)}</b>.</p>");
 
+    /// <summary>
+    /// A user's message as plain text. The subject is fixed text chosen by the caller, control
+    /// characters are dropped from it and from the name, and addresses are parsed and encoded
+    /// by MimeKit, which keeps line breaks out of headers.
+    /// </summary>
+    public Task SendAsync(
+        string to,
+        string replyTo,
+        string replyToName,
+        string subject,
+        string textBody,
+        CancellationToken cancellationToken)
+        => SendAsync(BuildContactMessage(to, replyTo, replyToName, subject, textBody), subject, cancellationToken);
+
+    internal MimeMessage BuildContactMessage(string to, string replyTo, string replyToName, string subject, string textBody)
+    {
+        var message = new MimeMessage();
+        message.From.Add(MailboxAddress.Parse(_options.Value.Smtp.From));
+        message.To.Add(MailboxAddress.Parse(to));
+        if (!string.IsNullOrEmpty(replyTo))
+        {
+            message.ReplyTo.Add(new MailboxAddress(StripControl(replyToName), replyTo));
+        }
+
+        message.Subject = StripControl(subject);
+        message.Body = new TextPart("plain") { Text = textBody };
+
+        return message;
+    }
+
+    private static string StripControl(string value)
+        => value == null ? null : new string(value.Where(c => !char.IsControl(c)).ToArray());
+
     internal static string LinkBody(string text, string link)
     {
         var encoded = WebUtility.HtmlEncode(link);
@@ -53,27 +88,29 @@ internal sealed class SmtpEmailSender : IEmailSender<BaGetUser>
         return message;
     }
 
-    private async Task SendAsync(string to, string subject, string htmlBody)
+    private Task SendAsync(string to, string subject, string htmlBody)
+        => SendAsync(BuildMessage(to, subject, htmlBody), subject, CancellationToken.None);
+
+    private async Task SendAsync(MimeMessage message, string subject, CancellationToken cancellationToken)
     {
         var smtp = _options.Value.Smtp;
 
         try
         {
-            var message = BuildMessage(to, subject, htmlBody);
 
             using var client = new SmtpClient();
             var security = !smtp.EnableSsl ? SecureSocketOptions.None
                 : smtp.Port == 465 ? SecureSocketOptions.SslOnConnect
                 : SecureSocketOptions.StartTls;
 
-            await client.ConnectAsync(smtp.Host, smtp.Port, security);
+            await client.ConnectAsync(smtp.Host, smtp.Port, security, cancellationToken);
             if (!string.IsNullOrEmpty(smtp.UserName))
             {
-                await client.AuthenticateAsync(smtp.UserName, smtp.Password);
+                await client.AuthenticateAsync(smtp.UserName, smtp.Password, cancellationToken);
             }
 
-            await client.SendAsync(message);
-            await client.DisconnectAsync(quit: true);
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(quit: true, cancellationToken);
         }
         catch (Exception e)
         {

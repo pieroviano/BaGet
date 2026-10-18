@@ -24,6 +24,13 @@ public class DatabaseSearchService : ISearchService
         _searchBuilder = searchBuilder ?? throw new ArgumentNullException(nameof(searchBuilder));
     }
 
+    public IReadOnlyCollection<SearchSort> SupportedSorts { get; } = new[]
+    {
+        SearchSort.Relevance,
+        SearchSort.TotalDownloads,
+        SearchSort.LastUpdated,
+    };
+
     public async Task<SearchResponse> SearchAsync(SearchRequest request,  CancellationToken cancellationToken)
     {
         var frameworks = GetCompatibleFrameworksOrNull(request.Framework);
@@ -42,29 +49,19 @@ public class DatabaseSearchService : ISearchService
         // those distinct ids - not the matching rows, of which there is one per package version.
         var totalHits = await CountDistinctPackageIdsAsync(search, cancellationToken);
 
-        var packageIds = search
-            .Select(p => p.Id)
-            .Distinct()
-            .OrderBy(id => id)
+        // The page is drawn from the distinct package ids, in the requested order. Every order
+        // ends in the id so that it is total: without a tie-breaker, equal downloads or dates
+        // would let a package appear on two pages or on none.
+        //
+        // The ids are fetched first, rather than as a subquery of the next query, because that
+        // query returns one row per version in no particular order: the page's order has to be
+        // restored from this list. (It also covers providers that cannot limit a subquery.)
+        var packageIdPage = await OrderPackageIds(search, request.SortBy)
             .Skip(request.Skip)
-            .Take(request.Take);
+            .Take(request.Take)
+            .ToListAsync(cancellationToken);
 
-        // This query MUST fetch all versions for each package that matches the search,
-        // otherwise the results for a package's latest version may be incorrect.
-        // If possible, we'll find all these packages in a single query by matching
-        // the package IDs in a subquery. Otherwise, run two queries:
-        //   1. Find the package IDs that match the search
-        //   2. Find all package versions for these package IDs
-        if (_context.SupportsLimitInSubqueries)
-        {
-            search = _context.Packages.Where(p => packageIds.Contains(p.Id));
-        }
-        else
-        {
-            var packageIdResults = await packageIds.ToListAsync(cancellationToken);
-
-            search = _context.Packages.Where(p => packageIdResults.Contains(p.Id));
-        }
+        search = _context.Packages.Where(p => packageIdPage.Contains(p.Id));
 
         search = ApplySearchFilters(
             search,
@@ -77,8 +74,12 @@ public class DatabaseSearchService : ISearchService
             .Include(p => p.Deprecation)
             .Include(p => p.Vulnerabilities)
             .ToListAsync(cancellationToken);
+        var position = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < packageIdPage.Count; i++) position.TryAdd(packageIdPage[i], i);
+
         var groupedResults = results
             .GroupBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(group => position.TryGetValue(group.Key, out var index) ? index : int.MaxValue)
             .Select(group => new PackageRegistration(group.Key, group.ToList()))
             .ToList();
 
@@ -189,6 +190,33 @@ public class DatabaseSearchService : ISearchService
             .ToListAsync(cancellationToken);
 
         return _searchBuilder.BuildDependents(dependents);
+    }
+
+    private static IQueryable<string> OrderPackageIds(IQueryable<Package> search, SearchSort sort)
+    {
+        // Grouping by id puts the sort key in the projection, which SQL Server requires of
+        // an order over a distinct list (see "AutocompleteAsync").
+        var groups = search.GroupBy(p => p.Id);
+
+        switch (sort)
+        {
+            case SearchSort.TotalDownloads:
+                return groups
+                    .OrderByDescending(g => g.Sum(p => p.Downloads))
+                    .ThenBy(g => g.Key)
+                    .Select(g => g.Key);
+
+            case SearchSort.LastUpdated:
+                return groups
+                    .OrderByDescending(g => g.Max(p => p.Published))
+                    .ThenBy(g => g.Key)
+                    .Select(g => g.Key);
+
+            default:
+                return groups
+                    .OrderBy(g => g.Key)
+                    .Select(g => g.Key);
+        }
     }
 
     /// <summary>

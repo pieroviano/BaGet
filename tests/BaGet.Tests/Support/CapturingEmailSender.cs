@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -11,7 +12,7 @@ namespace BaGet.Tests;
 /// Stands in for SMTP in the integration harness: records what would have been sent so
 /// a test can assert on it and follow the link in it.
 /// </summary>
-public class CapturingEmailSender : IEmailSender<BaGetUser>
+public class CapturingEmailSender : IEmailSender<BaGetUser>, IEmailMessageSender
 {
     private readonly ConcurrentQueue<CapturedEmail> _sent = new();
 
@@ -26,6 +27,18 @@ public class CapturingEmailSender : IEmailSender<BaGetUser>
     public Task SendPasswordResetCodeAsync(BaGetUser user, string email, string resetCode)
         => Capture("reset-code", user, email, resetCode);
 
+    public Task SendAsync(
+        string to,
+        string replyTo,
+        string replyToName,
+        string subject,
+        string textBody,
+        CancellationToken cancellationToken)
+    {
+        _sent.Enqueue(new CapturedEmail("contact", null, to, textBody, replyTo, subject));
+        return Task.CompletedTask;
+    }
+
     private Task Capture(string kind, BaGetUser user, string email, string payload)
     {
         _sent.Enqueue(new CapturedEmail(kind, user?.UserName, email, payload));
@@ -33,4 +46,10 @@ public class CapturingEmailSender : IEmailSender<BaGetUser>
     }
 }
 
-public record CapturedEmail(string Kind, string UserName, string To, string Payload);
+public record CapturedEmail(
+    string Kind,
+    string UserName,
+    string To,
+    string Payload,
+    string ReplyTo = null,
+    string Subject = null);

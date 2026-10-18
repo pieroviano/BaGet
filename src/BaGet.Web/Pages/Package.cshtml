@@ -1,5 +1,6 @@
 @page "/packages/{id}/{version?}"
 @model PackageModel
+@inject Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> EmailOptions
 
 @{
     ViewData["Title"] = Model.Found
@@ -335,9 +336,8 @@ else
                     <ul class="list-unstyled ms-Icon-ul">
                         @foreach (var owner in Model.Owners)
                         {
-                            @* Avatar hook: a later phase swaps this initial for an image. No third-party request is made here. *@
                             <li class="owner">
-                                <span class="owner-avatar" aria-hidden="true" data-owner="@owner">@char.ToUpperInvariant(owner[0])</span>
+                                <partial name="_Avatar" model="new AvatarModel(owner, Model.OwnerAvatars.GetValueOrDefault(owner), 32)" />
                                 <a href="@Url.Page("/Profiles/Profile", new { name = owner })">@owner</a>
                             </li>
                         }
@@ -347,6 +347,13 @@ else
                                 <i class="ms-Icon ms-Icon--Settings" aria-hidden="true"></i>
                                 <a href="~/packages/@Model.Package.Id/manage">Manage package</a>
                             </li>
+                            @if (Model.Owners.Any() && EmailOptions.Value.IsConfigured)
+                            {
+                                <li>
+                                    <i class="ms-Icon ms-Icon--Mail" aria-hidden="true"></i>
+                                    <a href="~/packages/@Model.Package.Id/contact-owners">Contact owners</a>
+                                </li>
+                            }
                         }
                     </ul>
                 </div>

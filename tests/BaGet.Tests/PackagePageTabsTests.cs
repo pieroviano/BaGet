@@ -215,7 +215,7 @@ public class PackagePageTabsTests : IDisposable
     }
 
     [Fact]
-    public async Task OwnersAppearWithAnAvatarPlaceholderWhenAccountsAreOn()
+    public async Task OwnersAppearWithAnAvatarWhenAccountsAreOn()
     {
         var (app, browser) = Start(new Dictionary<string, string> { { "Accounts:Enabled", "true" } });
         await AddAsync(app, "Owned.Pkg", "1.0.0", new[] { "net8.0" });
@@ -230,7 +230,7 @@ public class PackagePageTabsTests : IDisposable
 
         Assert.Contains("owner-avatar", html);
         Assert.Contains(">alice<", html);
-        Assert.DoesNotContain("gravatar.com", html);
+        Assert.Contains("gravatar.com/avatar/", html);
     }
 
     [Fact]

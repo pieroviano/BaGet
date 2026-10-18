@@ -699,15 +699,26 @@ h4 {
     margin-bottom: 6px;
 }
 
-.package-owners .owner-avatar {
+.owner-avatar {
     display: inline-block;
     width: 32px;
     height: 32px;
     margin-right: 8px;
     line-height: 32px;
+    vertical-align: middle;
     text-align: center;
     font-weight: 600;
     color: #fff;
     background-color: #004880;
     border-radius: 50%;
+}
+
+.avatar-img {
+    background-color: #fff;
+    object-fit: cover;
+}
+
+.account-menu .owner-avatar {
+    margin-right: 6px;
+    font-size: 12px;
 }

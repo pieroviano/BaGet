@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Protocol.Models;
@@ -11,6 +12,13 @@ namespace BaGet.Core;
 /// </summary>
 public interface ISearchService
 {
+    /// <summary>
+    /// The orders this provider can apply on the server. A provider that cannot sort
+    /// reports only <see cref="SearchSort.Relevance"/> and ignores <see cref="SearchRequest.SortBy"/>:
+    /// sorting one page in memory would be wrong, so the UI hides its sort control instead.
+    /// </summary>
+    IReadOnlyCollection<SearchSort> SupportedSorts => new[] { SearchSort.Relevance };
+
     /// <summary>
     /// Perform a search query.
     /// See: https://docs.microsoft.com/en-us/nuget/api/search-query-service-resource#search-for-packages

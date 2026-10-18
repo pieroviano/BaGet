@@ -33,6 +33,8 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddTransient<ApiKeyAuthenticationService>();
         services.TryAddScoped<AccountRecoveryService>();
         services.TryAddScoped<AccountDeletionService>();
+        services.TryAddScoped<AvatarService>();
+        services.TryAddSingleton<ContactRateLimiter>();
 
         // Email is optional. Nothing that needs it is offered while it is unconfigured, and
         // Identity only demands a confirmed address when there is a way to send the link.
@@ -41,10 +43,12 @@ public static class AccountsServiceCollectionExtensions
         if (email.IsConfigured)
         {
             services.TryAddTransient<IEmailSender<BaGetUser>, SmtpEmailSender>();
+            services.TryAddTransient<IEmailMessageSender, SmtpEmailSender>();
         }
         else
         {
             services.TryAddTransient<IEmailSender<BaGetUser>, NoOpEmailSender>();
+            services.TryAddTransient<IEmailMessageSender, NoOpEmailSender>();
         }
         services.Replace(ServiceDescriptor.Transient<Core.IAuthenticationService, AccountAuthenticationService>());
         services.Replace(ServiceDescriptor.Transient<IPackageAuthorizationService, OwnershipAuthorizationService>());
