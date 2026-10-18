@@ -1,8 +1,5 @@
 # Import nuget.org packages
 
-!!! warning
-    This page is a work in progress!
-
 ## Mirroring
 
 You can configure BaGet to mirror nuget.org. For example, say you install BaGet, enable mirroring, and try to install the package

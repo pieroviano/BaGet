@@ -1,8 +1,5 @@
 # Run BaGet on Google Cloud Platform
 
-!!! warning
-    This page is a work in progress!
-
 We're open source and accept contributions!
 Fork this repository on GitHub.
 
