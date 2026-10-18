@@ -104,6 +104,12 @@ Unit tests reach internals through `InternalsVisibleTo`, declared in each **proj
 `AssemblyInfo.cs`) — already present in `BaGet.Core`, `BaGet`, `BaGet.Azure`, `BaGet.Protocol`,
 `BaGet.Identity`, `BaGet.Catalog`, `BaGet.Validation`, `BaGet.Web.V2`.
 
+## Packaging
+
+`Extension.BaGet` (the `BaGet` host) also packs `BaGet.Web/wwwroot` at `wwwroot/` (a `None` item in
+`src/BaGet/BaGet.csproj`), for hosts that embed BaGet without the Web SDK's static web assets and serve those
+files from `wwwroot/_content/BaGet.Web` (e.g. BaGet.Service).
+
 ## Package versions
 
 All shared versions are single levers in `src/Directory.Build.props`; provider projects must read them
