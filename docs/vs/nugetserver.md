@@ -14,7 +14,8 @@
     * Not well maintained
 * BaGet
     * Cross-platform
-    * Supports NuGet v3 APIs
+    * Supports NuGet v3 APIs, plus an optional V2 feed at `/api/v2`
+    * Verified owners and repository signing
 
 ## Migration Guide
 

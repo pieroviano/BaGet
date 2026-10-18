@@ -12,5 +12,6 @@
 * BaGet
     * Supports NuGet's v3 APIs
     * Stores packages' metadata in a database
-    * Capable of ingesting all packages on nuget.org
+    * Can mirror nuget.org on demand (read-through)
+    * Serves a V2 feed at `/api/v2`, and supports repository signing and verified owners
     * Can run on Azure

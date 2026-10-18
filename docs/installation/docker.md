@@ -5,8 +5,8 @@
 Create a file named `baget.env` to store BaGet's configurations:
 
 ```
-# The following config is the API Key used to publish packages.
-# You should change this to a secret value to secure your server.
+# The global API Key used to publish packages. NUGET-SERVER-API-KEY is only an example: change it
+# to a secret value. With accounts on, users can also push with their own keys (/account/apikeys).
 ApiKey=NUGET-SERVER-API-KEY
 
 # Listen on every interface inside the container; appsettings.json binds to localhost:6060.
@@ -22,23 +22,23 @@ Search__Type=Database
 For a full list of configurations, please refer to [BaGet's configuration](../configuration.md) guide.
 
 !!! info
-    The `baget.env` file stores [BaGet's configuration](configuration) as environment
+    The `baget.env` file stores [BaGet's configuration](../configuration.md) as environment
     variables. To learn how these configurations work, please refer to
-    [ASP.NET Core's configuration documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-2.1&tabs=basicconfiguration#configuration-by-environment).
+    [ASP.NET Core's configuration documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-10.0&tabs=basicconfiguration#configuration-by-environment).
 
 ## Run BaGet
 
 1. Create a folder named `baget-data` in the same directory as the `baget.env` file. This will be used by BaGet to persist its state.
-2. Pull BaGet's latest [docker image](https://hub.docker.com/r/loicsharma/baget):
+2. Get BaGet's docker image: pull the image this fork's release workflow publishes (the `DOCKER_IMAGE` repository variable, else `<DOCKER_USERNAME>/baget`), or build it from the repository root:
 
 ```
-docker pull loicsharma/baget
+docker build -t baget .
 ```
 
 You can now run BaGet:
 
 ```
-docker run --rm --name nuget-server -p 5555:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" loicsharma/baget:latest
+docker run --rm --name nuget-server -p 5555:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" baget:latest
 ```
 
 ## Publish packages
@@ -56,7 +56,7 @@ dotnet nuget push -s http://localhost:5555/v3/index.json -k NUGET-SERVER-API-KEY
 ```
 
 !!! warning
-    The default API Key to publish packages is `NUGET-SERVER-API-KEY`. You should change this to a secret value to secure your server. See [Configure BaGet](#configure-baget).
+    `NUGET-SERVER-API-KEY` is only the example value in `baget.env`: change it to a secret value. With an empty `ApiKey` and [accounts](../configuration.md#accounts-package-owners-and-api-keys) on, a push needs a user API key from `/account/apikeys`. See [Configure BaGet](#configure-baget).
 
 ## Browse packages
 

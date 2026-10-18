@@ -8,7 +8,6 @@ Use Azure to scale BaGet. You can store metadata on [Azure SQL Database](https:/
 ## TODO
 
 * App Service
-* Table Storage
 * High availability setup
 
 ## Configure BaGet
@@ -77,7 +76,8 @@ such as `"00:30:00"`.
 
 Set `"Database": { "Type": "AzureTable", ... }` to store package metadata in Table Storage. It only
 stores packages: accounts, the catalog, validation, statistics, abuse reports, deprecation and
-vulnerabilities need Azure SQL Database or another relational database.
+vulnerabilities need Azure SQL Database or another relational database. With it, `Search:Type` `Database`
+is served by the table provider.
 
 ### Azure Search
 
@@ -93,7 +93,7 @@ Update the `appsettings.json` file:
     ...
 
     "Search": {
-        "Type": "Azure",
+        "Type": "AzureSearch",
         "AccountName": "my-account",
         "ApiKey": "ABCD1234"
     },
@@ -107,17 +107,17 @@ Update the `appsettings.json` file:
 Publish your first package with:
 
 ```
-dotnet nuget push -s http://localhost:6060/v3/index.json package.1.0.0.nupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json -k <your API key> package.1.0.0.nupkg
 ```
 
 Publish your first [symbol package](https://docs.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg) with:
 
 ```
-dotnet nuget push -s http://localhost:6060/v3/index.json symbol.package.1.0.0.snupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json -k <your API key> symbol.package.1.0.0.snupkg
 ```
 
 !!! warning
-    You should secure your server by requiring an API Key to publish packages. For more information, please refer to the [Require an API Key](../configuration.md#require-an-api-key) guide.
+    With [accounts](../configuration.md#accounts-package-owners-and-api-keys) on (the default) and an empty `ApiKey`, a push without a key is refused with `401`. Pass either a user API key (created on `/account/apikeys`) or a non-empty global `ApiKey`, with `-k <key>`. See also [Require an API key](../configuration.md#require-an-api-key).
 
 ## Restore packages
 

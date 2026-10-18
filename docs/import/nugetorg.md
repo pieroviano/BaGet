@@ -9,7 +9,7 @@ You can configure BaGet to mirror nuget.org. For example, say you install BaGet,
 [`Newtonsoft.Json`](https://www.nuget.org/packages/Newtonsoft.Json/). BaGet doesn't have this package yet, so it will
 automatically index this package from nuget.org. This is also known as "read-through caching".
 
-For more information, please see [Enable read-through caching](../configuration#enable-read-through-caching).
+For more information, please see [Enable read-through caching](../configuration.md#enable-read-through-caching). `Mirror:Legacy` reads a NuGet v2 source and `Mirror:PackageDownloadTimeoutSeconds` (default 600) bounds each package download.
 
 ## Importing package downloads from nuget.org
 
@@ -24,9 +24,8 @@ dotnet run -- import downloads
 
 Or, from a release: `dotnet BaGet.dll import downloads`.
 
+It overwrites the stored download count of every package version nuget.org lists, and needs a relational database (not Azure Table).
+
 ## Importing all nuget.org packages
 
-* TODO Check-in code
-* Explain scaling
-* Rebuild indexes at end
-* Importing downloads from nuget.org
+Not supported as a command. Use read-through mirroring (above), which indexes packages on demand.

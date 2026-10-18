@@ -29,7 +29,7 @@ See [this issue](https://github.com/loic-sharma/BaGet/issues/71) for a deep-dive
 | V3 push, restore, search, autocomplete, registration | yes | yes |
 | Symbol packages (`.snupkg`) and symbol server | yes | yes |
 | V2 (OData) feed | yes | yes, partial OData (`$skip`/`$top` only) |
-| Catalog | yes | yes |
+| Catalog | yes | yes, not on Azure Table |
 | Deprecation and vulnerability info | yes | yes, set through BaGet's [API](../advanced/api.md) or manage page |
 | Report abuse, package details URI templates | yes | yes |
 | Accounts, organizations, package owners | yes | yes, opt-in |
@@ -37,11 +37,16 @@ See [this issue](https://github.com/loic-sharma/BaGet/issues/71) for a deep-dive
 | ID prefix reservation (`verified`) | yes | per owner, no page to set it yet |
 | Validation before a package is served | yes | yes, opt-in, in-process |
 | Repository signing | yes | yes, opt-in |
-| Download statistics | per day | totals only |
+| Download statistics | per day | totals only, plus a statistics page |
+| Search sort (most downloaded, recently updated) | yes | web UI only, `Database` search provider only |
+| Upload through the browser | yes | yes, with a preview step |
+| Contact owners | yes | yes, needs SMTP |
+| Two-factor sign-in, OpenID Connect sign-in, avatars | yes | yes, opt-in |
 | Reading requires authentication (private feed) | no | no |
 | Content moderation workflow | yes | reports only; owners and admins act on them |
 
-* BaGet only competes with [NuGet/NuGet.Services.Metadata](https://github.com/NuGet/NuGet.Services.Metadata/)
+* BaGet covers the v3 services ([NuGet/NuGet.Services.Metadata](https://github.com/NuGet/NuGet.Services.Metadata/)) and a subset of the Gallery
+* Still missing: private (authenticated) reads, per-day statistics, a prefix-reservation page, malware and license scanning, moderation beyond abuse reports
 * nuget.org's v3 implementation is static
     * Runs only on Windows
     * Highly tied to Azure

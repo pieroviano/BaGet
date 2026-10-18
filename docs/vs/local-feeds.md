@@ -8,7 +8,7 @@ use a folder as a NuGet package source. You can access these packages using a ne
 
 # BaGet vs local feeds
 
-Local feeds are very simple and are lack features like:
+Local feeds are very simple and lack features like:
 
 1. Search functionality
 1. A user interface to browse your packages

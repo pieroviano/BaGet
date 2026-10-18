@@ -14,11 +14,13 @@ $source = "<NuGet.Server package source>"
 $destination = "<BaGet package source>"
 ```
 
-If you've [configured BaGet to require an API Key](https://loic-sharma.github.io/BaGet/configuration/#requiring-an-api-key), set it using [the `setapikey` command](https://docs.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-setapikey):
+If BaGet requires an API key (a global `ApiKey`, or [accounts](../configuration.md#accounts-package-owners-and-api-keys), on by default), set it using [the `setapikey` command](https://docs.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-setapikey):
 
 ```ps1
 & nuget.exe setapikey "MY-API-KEY" -Source $destination
 ```
+
+With accounts on, use a user API key from `/account/apikeys`; the account must own each package, or its ID must be new.
 
 Now run the following PowerShell script:
 
