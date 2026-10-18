@@ -441,7 +441,9 @@ public class UploadModel : PageModel
         }
 
         // Resolved per request: the factory is only registered while accounts are on.
-        return HttpContext.RequestServices.GetService<SessionPrincipalFactory>()?.Create(User);
+        var factory = HttpContext.RequestServices.GetService<SessionPrincipalFactory>();
+
+        return factory == null ? null : await factory.CreateAsync(User);
     }
 
     private string NotAuthenticatedMessage => AccountsEnabled ? SignInMessage : ApiKeyRejectedMessage;

@@ -71,7 +71,7 @@ public class PackageDeletionService : IPackageDeletionService
         return true;
     }
 
-    private async Task<bool> TryHardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    public async Task<bool> TryHardDeletePackageAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "Hard deleting package {PackageId} {PackageVersion} from the database...",

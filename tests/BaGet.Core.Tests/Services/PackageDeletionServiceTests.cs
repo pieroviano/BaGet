@@ -110,4 +110,25 @@ public class PackageDeletionServiceTests
             p => p.UnlistPackageAsync(It.IsAny<string>(), It.IsAny<NuGetVersion>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TryHardDeletePackage_HardDeletesWhateverTheSettingSays(bool packageExists)
+    {
+        _options.PackageDeletionBehavior = PackageDeletionBehavior.Unlist;
+        var cancellationToken = CancellationToken.None;
+
+        _packages
+            .Setup(p => p.HardDeletePackageAsync(PackageId, PackageVersion, cancellationToken))
+            .ReturnsAsync(packageExists);
+
+        var result = await _target.TryHardDeletePackageAsync(PackageId, PackageVersion, cancellationToken);
+
+        Assert.Equal(packageExists, result);
+        _storage.Verify(s => s.DeleteAsync(PackageId, PackageVersion, cancellationToken), Times.Once);
+        _packages.Verify(
+            p => p.UnlistPackageAsync(It.IsAny<string>(), It.IsAny<NuGetVersion>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }

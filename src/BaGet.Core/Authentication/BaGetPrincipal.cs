@@ -26,11 +26,13 @@ public sealed class BaGetPrincipal
         string userName,
         bool isSuperuser,
         IReadOnlyList<string> scopes,
-        string packageGlobPattern)
+        string packageGlobPattern,
+        bool isAdministrator = false)
     {
         UserId = userId;
         UserName = userName;
         IsSuperuser = isSuperuser;
+        IsAdministrator = isAdministrator;
         Scopes = scopes ?? Array.Empty<string>();
         PackageGlobPattern = string.IsNullOrEmpty(packageGlobPattern) ? "*" : packageGlobPattern;
     }
@@ -40,6 +42,11 @@ public sealed class BaGetPrincipal
     public string UserName { get; }
 
     public bool IsSuperuser { get; }
+
+    /// <summary>
+    /// The user is an administrator: skips package ownership, never the key's scopes or glob.
+    /// </summary>
+    public bool IsAdministrator { get; }
 
     public IReadOnlyList<string> Scopes { get; }
 

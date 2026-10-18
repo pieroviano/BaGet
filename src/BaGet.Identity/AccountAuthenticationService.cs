@@ -57,6 +57,7 @@ public class AccountAuthenticationService : Core.IAuthenticationService
             user.UserName,
             isSuperuser: false,
             key.Scopes,
-            key.PackageGlobPattern);
+            key.PackageGlobPattern,
+            isAdministrator: user.IsAdministrator);
     }
 }

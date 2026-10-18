@@ -51,13 +51,32 @@ public class SessionPrincipalTests : IDisposable
     }
 
     [Fact]
-    public void AnAnonymousSessionHasNoPrincipal()
+    public async Task OnlyAnAdministratorsSessionIsAnAdministrator()
+    {
+        var alice = await CreateUserAsync("alice");
+        Assert.False((await SessionPrincipalAsync(alice)).IsAdministrator);
+
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
+            var stored = await users.FindByIdAsync(alice.Id);
+            stored.IsAdministrator = true;
+            Assert.True((await users.UpdateAsync(stored)).Succeeded);
+        }
+
+        var principal = await SessionPrincipalAsync(alice);
+        Assert.True(principal.IsAdministrator);
+        Assert.False(principal.IsSuperuser);
+    }
+
+    [Fact]
+    public async Task AnAnonymousSessionHasNoPrincipal()
     {
         using var scope = _app.Services.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<SessionPrincipalFactory>();
 
-        Assert.Null(factory.Create(new ClaimsPrincipal(new ClaimsIdentity())));
-        Assert.Null(factory.Create(null));
+        Assert.Null(await factory.CreateAsync(new ClaimsPrincipal(new ClaimsIdentity())));
+        Assert.Null(await factory.CreateAsync(null));
     }
 
     [Fact]
@@ -110,9 +129,9 @@ public class SessionPrincipalTests : IDisposable
             .GetRequiredService<IUserClaimsPrincipalFactory<BaGetUser>>()
             .CreateAsync(user);
 
-        var principal = scope.ServiceProvider
+        var principal = await scope.ServiceProvider
             .GetRequiredService<SessionPrincipalFactory>()
-            .Create(claims);
+            .CreateAsync(claims);
 
         Assert.NotNull(principal);
 
