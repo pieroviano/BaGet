@@ -97,18 +97,25 @@ public class StatisticsService
 
     /// <summary>
     /// When each package ID was last published to, for the IDs that have a listed version.
-    /// Empty when <see cref="IsSupported"/> is false.
+    /// Empty when <see cref="IsSupported"/> is false. Only the versions a search with the same
+    /// prerelease and SemVer 2 filters would match are considered, so the date agrees with the
+    /// "last updated" order.
     /// </summary>
     public async Task<IReadOnlyDictionary<string, DateTime>> GetLastUpdatedAsync(
         IReadOnlyCollection<string> packageIds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool includePrerelease = true,
+        bool includeSemVer2 = true)
     {
         var result = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         if (!IsSupported || packageIds == null || packageIds.Count == 0) return result;
 
         var lowered = packageIds.Select(id => id.ToLower()).ToList();
-        var rows = await _context.Packages
-            .AsNoTracking()
+        IQueryable<Package> packages = _context.Packages.AsNoTracking();
+        if (!includePrerelease) packages = packages.Where(p => !p.IsPrerelease);
+        if (!includeSemVer2) packages = packages.Where(p => p.SemVerLevel != SemVerLevel.SemVer2);
+
+        var rows = await packages
             .Where(p => p.Listed && lowered.Contains(p.Id.ToLower()))
             .GroupBy(p => p.Id)
             .Select(g => new { Id = g.Key, Published = g.Max(p => p.Published) })

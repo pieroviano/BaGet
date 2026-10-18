@@ -66,6 +66,19 @@ public class PathBaseIntegrationTests : IDisposable
 
 
     [Fact]
+    public async Task HeaderLinksCarryThePathBase()
+    {
+        using var response = await _client.GetAsync("nuget/stats");
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Contains("class=\"navbar-brand brand\" href=\"/nuget/\"", html);
+        Assert.Contains("<a href=\"/nuget/packages\" role=\"tab\"", html);
+        Assert.DoesNotContain("href=\"/packages\"", html);
+        Assert.Contains("<meta name=\"author\" content=\"Loic Sharma\">", html);
+    }
+
+    [Fact]
     public async Task ADotPathBaseMeansTheRoot()
     {
         // appsettings.json ships "PathBase": ".", which is not a usable PathString.

@@ -78,7 +78,7 @@ public class InstallSnippetsTests
         var template = InstallSnippets.Build("My.Tpl", "1.0.0", isTemplate: true, isTool: false);
         var tool = InstallSnippets.Build("My.Tool", "1.0.0", isTemplate: false, isTool: true);
 
-        Assert.Equal(new[] { "dotnet new --install My.Tpl::1.0.0" }, Assert.Single(template).Lines);
+        Assert.Equal(new[] { "dotnet new install My.Tpl::1.0.0" }, Assert.Single(template).Lines);
         Assert.Equal(new[] { "dotnet tool install --global My.Tool --version 1.0.0" }, Assert.Single(tool).Lines);
     }
 }

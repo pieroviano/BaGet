@@ -67,7 +67,7 @@ else
                                     data-tottle="popover"
                                     data-placement="bottom"
                                     data-content="Copied"
-                                    @@click="window.baget.copyTextToClipboard($el.closest('.install-pane').querySelector('pre.snippet').textContent, $el)">
+                                    @@click="window.baget.copyTextToClipboard($event.currentTarget.closest('.install-pane').querySelector('pre.snippet').textContent, $event.currentTarget)">
                                 <i class="ms-Icon ms-Icon--Copy"></i>
                             </button>
                         </div>
@@ -77,7 +77,8 @@ else
 
             @* Every tab panel is rendered by the server too. Without JavaScript they stack and the tab links jump to them. *@
             <div class="package-tabs"
-                 x-data="{ tab: 'readme', init() { const t = location.hash.replace('#tab-', ''); if (t &amp;&amp; this.$el.querySelector('#tab-' + t)) this.tab = t; } }">
+                 x-data="{ tab: 'readme' }"
+                 x-init="const t = location.hash.replace('#tab-', ''); if (t &amp;&amp; $el.querySelector('#tab-' + t)) tab = t">
                 @{
                     var tabs = new List<(string Key, string Title)>
                     {

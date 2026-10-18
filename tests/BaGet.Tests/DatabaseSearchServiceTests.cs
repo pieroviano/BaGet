@@ -87,22 +87,62 @@ public class DatabaseSearchServiceTests : IDisposable
             Assert.Equal(new[] { "B.Fresh", "C.Mid", "A.Old" }, response.Data.Select(r => r.PackageId));
         }
 
+        [Theory]
+        [InlineData(false, new[] { "B", "A" }, new[] { 2023, 2021 })]
+        [InlineData(true, new[] { "A", "B" }, new[] { 2024, 2023 })]
+        public async Task TheLastUpdatedDateOfAResultAgreesWithTheOrderUnderTheSameFilters(
+            bool prerelease, string[] expectedOrder, int[] expectedYears)
+        {
+            await AddPackageAsync("A", "1.0.0", published: new DateTime(2021, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddPackageAsync("A", "2.0.0-beta", published: new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddPackageAsync("B", "1.0.0", published: new DateTime(2023, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var request = Sorted(SearchSort.LastUpdated);
+            request.IncludePrerelease = prerelease;
+            request.IncludeSemVer2 = true;
+            var response = await _target.SearchAsync(request, _cancellationToken);
+            var ids = response.Data.Select(r => r.PackageId).ToList();
+
+            var dates = await new StatisticsService(_context).GetLastUpdatedAsync(
+                ids, _cancellationToken, includePrerelease: prerelease, includeSemVer2: true);
+
+            Assert.Equal(expectedOrder, ids);
+            Assert.Equal(expectedYears, ids.Select(id => dates[id].Year));
+        }
+
         [Fact]
         public async Task TiesAreBrokenByIdSoPagesNeverOverlapOrSkip()
         {
-            foreach (var id in new[] { "E", "B", "D", "A", "C" })
+            // Inserted in reverse key order, all tied, so neither insertion order nor row order
+            // happens to equal key order, and paged so the database must apply a limit and offset.
+            var ids = Enumerable.Range(0, 30).Select(i => "P" + i.ToString("00")).ToList();
+            foreach (var id in Enumerable.Reverse(ids))
             {
                 await AddPackageAsync(id, "1.0.0", downloads: 7);
             }
 
-            var first = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip: 0, take: 2), _cancellationToken);
-            var second = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip: 2, take: 2), _cancellationToken);
-            var third = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip: 4, take: 2), _cancellationToken);
+            var paged = new List<string>();
+            for (var skip = 0; skip < ids.Count; skip += 7)
+            {
+                var page = await _target.SearchAsync(Sorted(SearchSort.TotalDownloads, skip, take: 7), _cancellationToken);
+                paged.AddRange(page.Data.Select(r => r.PackageId));
+                Assert.Equal(ids.Count, page.TotalHits);
+            }
 
-            Assert.Equal(
-                new[] { "A", "B", "C", "D", "E" },
-                first.Data.Concat(second.Data).Concat(third.Data).Select(r => r.PackageId));
-            Assert.Equal(5, first.TotalHits);
+            Assert.Equal(ids, paged);
+        }
+
+        // SQLite happens to return tied groups in key order, so the paging test above cannot fail
+        // there. Other providers make no such promise, so assert the tie-breaker in the SQL itself.
+        [Theory]
+        [InlineData(SearchSort.TotalDownloads)]
+        [InlineData(SearchSort.LastUpdated)]
+        public void EverySortEndsInThePackageIdInTheGeneratedQuery(SearchSort sort)
+        {
+            var sql = DatabaseSearchService.OrderPackageIds(_context.Packages, sort).ToQueryString();
+
+            var orderBy = sql.Substring(sql.IndexOf("ORDER BY", StringComparison.Ordinal));
+            Assert.Matches(@"ORDER BY .+ DESC, ""p""\.""Id""", orderBy);
         }
 
         [Fact]

@@ -297,7 +297,7 @@
                         data-toggle="popover"
                         data-placement="bottom"
                         data-content="Copied"
-                        @@click="window.baget.copyTextToClipboard(active.content.join('\n'), $el)">
+                        @@click="window.baget.copyTextToClipboard(active.content.join('\n'), $event.currentTarget)">
                     <i class="ms-Icon ms-Icon--Copy"></i>
                 </button>
             </div>

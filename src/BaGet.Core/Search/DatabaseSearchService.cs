@@ -192,7 +192,7 @@ public class DatabaseSearchService : ISearchService
         return _searchBuilder.BuildDependents(dependents);
     }
 
-    private static IQueryable<string> OrderPackageIds(IQueryable<Package> search, SearchSort sort)
+    internal static IQueryable<string> OrderPackageIds(IQueryable<Package> search, SearchSort sort)
     {
         // Grouping by id puts the sort key in the projection, which SQL Server requires of
         // an order over a distinct list (see "AutocompleteAsync").

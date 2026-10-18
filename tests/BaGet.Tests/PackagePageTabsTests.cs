@@ -67,6 +67,24 @@ public class PackagePageTabsTests : IDisposable
 
     private static string Text(string html) => WebUtility.HtmlDecode(html);
 
+    /// <summary>
+    /// The site ships Alpine 2, where "$el" is the component root and "init()" is not called. The
+    /// behaviour runs in the browser, so this asserts the markup uses neither.
+    /// </summary>
+    [Fact]
+    public async Task TheMarkupUsesOnlyAlpine2Constructs()
+    {
+        var (app, browser) = Start();
+        await AddAsync(app, "Alpine.Pkg", "1.0.0", new[] { "net8.0" });
+
+        var html = Text(await browser.GetPageAsync("packages/Alpine.Pkg"));
+
+        Assert.DoesNotContain("$el.closest", html);
+        Assert.Contains("$event.currentTarget.closest('.install-pane')", html);
+        Assert.DoesNotContain("init()", html);
+        Assert.Contains("x-init=\"const t = location.hash", html);
+    }
+
     [Fact]
     public async Task TheSixTabsAppearInNugetOrgOrder()
     {

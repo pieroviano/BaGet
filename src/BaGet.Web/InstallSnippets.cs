@@ -23,7 +23,7 @@ internal static class InstallSnippets
         {
             return new[]
             {
-                new InstallSnippet { Name = ".NET CLI", Prefix = ">", Lines = new[] { $"dotnet new --install {id}::{version}" } },
+                new InstallSnippet { Name = ".NET CLI", Prefix = ">", Lines = new[] { $"dotnet new install {id}::{version}" } },
             };
         }
 

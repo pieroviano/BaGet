@@ -22,6 +22,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="BaGet">
+    <meta name="author" content="Loic Sharma">
     
     <link rel="shortcut icon" href="~/_content/BaGet.Web/favicon.ico">
 
@@ -42,7 +43,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand brand" href="@Url.Page("/Index")" title="BaGet">
+                    <a class="navbar-brand brand" href="@Url.Content("~/")" title="BaGet">
                         <svg class="brand-logo" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
                             <rect x="2" y="12" width="28" height="9" rx="4.5" transform="rotate(-30 16 16)" fill="#f5a623" />
                             <path d="M9 19l4-7M14 16l4-7M19 13l4-7" stroke="#004880" stroke-width="1.6" stroke-linecap="round" fill="none" />
@@ -52,7 +53,7 @@
                 </div>
                 <div id="navbar" class="collapse navbar-collapse">
                     <ul class="nav navbar-nav" role="tablist">
-                        <li role="presentation"><a href="/packages" role="tab" nav-link><span>Packages</span></a></li>
+                        <li role="presentation"><a href="@Url.Content("~/packages")" role="tab" nav-link><span>Packages</span></a></li>
                         <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
                         <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
                         <li role="presentation">

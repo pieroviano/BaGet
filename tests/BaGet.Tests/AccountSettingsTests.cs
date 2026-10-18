@@ -254,11 +254,18 @@ public class AccountSettingsTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, followed.StatusCode);
         Assert.Equal("new@example.com", (await FindAsync(app, "alice")).Email);
 
-        // The link is spent: replaying it after another change does nothing.
+        // Move on to a third address through its own link.
         await browser.PostAsync("account/settings", new Dictionary<string, string> { { "newEmail", "third@example.com" }, { "password", Password } },
             action: "account/settings?handler=ChangeEmail");
+        var thirdMail = sender.Sent.Last();
+        Assert.Equal("third@example.com", thirdMail.To);
+        using var movedOn = await browser.GetAsync(PathOf(thirdMail.Payload));
+        Assert.Equal(HttpStatusCode.OK, movedOn.StatusCode);
+        Assert.Equal("third@example.com", (await FindAsync(app, "alice")).Email);
+
+        // The first link is spent: replaying it must not move the address back to new@example.com.
         using var again = await browser.GetAsync(PathOf(mail.Payload));
-        Assert.Equal("new@example.com", (await FindAsync(app, "alice")).Email);
+        Assert.Equal("third@example.com", (await FindAsync(app, "alice")).Email);
     }
 
     // --- Registration and confirmation --------------------------------------------------
