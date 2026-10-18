@@ -191,6 +191,10 @@ public class EmailLinkTests : IDisposable
         await CreateConfirmedUserAsync(app, "alice", "alice@example.com");
         var browser = NewBrowser(app);
 
+        // Warm the host up first, so the timeout below measures the POST alone and not a
+        // cold start under a loaded test run.
+        using (await browser.GetAsync("account/forgotpassword")) { }
+
         var post = ForgotAsync(browser, "alice");
         var winner = await Task.WhenAny(post, Task.Delay(TimeSpan.FromSeconds(10)));
         release.SetResult();

@@ -220,7 +220,7 @@ Who may change a package:
 * The global `ApiKey` may change any package.
 * Pushing a new package ID makes the pusher its owner.
 * Only an owner, directly or through an [organization](#organizations), may push new versions of an ID or manage it.
-* A package pushed before accounts were enabled has no owner, and only the global `ApiKey` may change it.
+* A package pushed before accounts were enabled has no owner. Only the global `ApiKey` and administrators (see [Administrators](#administrators)) may change it, and pushing to it never makes anyone its owner.
   Add owners from its manage page (`/packages/{id}/manage`) to hand it over.
 
 !!! warning "Upgrade note: keyless pushes are refused"
@@ -270,7 +270,7 @@ account without one). Everyone else, and every request while accounts are off, g
 | Action | Behaviour |
 | --- | --- |
 | Packages | Opens `/admin/users/{name}/packages`. |
-| Reset password, *Generate* | Replaces the password with a generated one, shown **once** on the response (no redirect, `Cache-Control: no-store`, never stored or logged). Two-factor is switched off, a lockout lifted, the user's sessions end. |
+| Reset password, *Generate* | Replaces the password with a generated one, shown **once** on the response (no redirect, `Cache-Control: no-store`, never stored or logged). Two-factor is switched off, a lockout lifted, an unconfirmed email address marked confirmed, the user's sessions end. |
 | Reset password, *Email link* | Mails the user a reset link. Only offered while SMTP is configured and the user has an address; no rate limit. |
 | Delete (`/admin/users/{name}/delete`) | Removes the account, its API keys and its ownerships. The last administrator cannot be deleted. |
 
