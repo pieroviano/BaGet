@@ -6,7 +6,7 @@
     <Copyright>Copyright (c) Piero Viano 2026</Copyright>
     <Product>BaGet Extension</Product>
     <PackageIcon>packageIcon.png</PackageIcon>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageVersion Condition="'$(PackageVersion)' == ''">0.1.0.$([System.DateTime]::Now.ToString("yy"))$([System.DateTime]::Now.DayOfYear.ToString("000"))</PackageVersion>
     <PackageProjectUrl>https://pieroviano.github.io/BaGet/</PackageProjectUrl>
   </PropertyGroup>
@@ -68,6 +68,8 @@
 
   <ItemGroup>
     <None Include="../packageIcon.png" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)../LICENSE" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)../Acknowledgments.md" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -82,7 +84,6 @@
       project name, so it stays the same however the projects are packaged.
     -->
     <StaticWebAssetBasePath>_content/$(MSBuildProjectName)</StaticWebAssetBasePath>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
