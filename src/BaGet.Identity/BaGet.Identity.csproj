@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>BaGet's user accounts, package owners and per-user API keys.</Description>
+    <Description>BaGet Extension's user accounts, package owners and per-user API keys.</Description>
     <RootNamespace>BaGet.Identity</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
   </PropertyGroup>

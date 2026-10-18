@@ -4,9 +4,9 @@
 itself a fork of upstream BaGet (per its README). It is **dormant**: not archived, but the last release is
 1.0.3 (2019-04-29) and the last commit is 2021-01-06.
 
-# BaGet vs LiGet
+# BaGet Extension vs LiGet
 
-| Feature | LiGet | BaGet |
+| Feature | LiGet | BaGet Extension |
 | --- | --- | --- |
 | Maintenance | Dormant (last commit 2021-01) | Maintained fork |
 | Runtime | Kestrel on .NET Core 2.0 (README) | .NET 10 |
@@ -25,9 +25,9 @@ itself a fork of upstream BaGet (per its README). It is **dormant**: not archive
 
 ## When to choose which
 
-* Any new deployment: BaGet (current runtime, active development).
-* Existing LiGet with Paket workflows you cannot change: keep it, test Paket against BaGet first.
-* Need accounts, ownership, symbols, validation or non-SQLite databases: BaGet.
+* Any new deployment: BaGet Extension (current runtime, active development).
+* Existing LiGet with Paket workflows you cannot change: keep it, test Paket against BaGet Extension first.
+* Need accounts, ownership, symbols, validation or non-SQLite databases: BaGet Extension.
 
 ## Sources
 

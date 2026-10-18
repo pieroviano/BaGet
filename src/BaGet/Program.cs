@@ -38,7 +38,7 @@ public partial class Program
         var commands = new CommandLineApplication
         {
             Name = "baget",
-            Description = "A light-weight NuGet service",
+            Description = "BaGet Extension: a light-weight NuGet service",
 
             // The host consumes arguments of its own - "--environment",
             // "--contentRoot", "--applicationName" and the rest - and they reach this
@@ -121,7 +121,7 @@ public partial class Program
             });
         });
 
-        commands.Option("--urls", "The URLs that BaGet should bind to.", CommandOptionType.SingleValue);
+        commands.Option("--urls", "The URLs that BaGet Extension should bind to.", CommandOptionType.SingleValue);
 
         commands.OnExecuteAsync(async cancellationToken =>
         {

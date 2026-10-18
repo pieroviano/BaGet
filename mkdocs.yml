@@ -1,4 +1,4 @@
-site_name: BaGet
+site_name: BaGet Extension
 site_description: A lightweight NuGet and symbol server
 site_author: Loic Sharma
 site_url: https://loic-sharma.github.io/BaGet/
@@ -49,9 +49,9 @@ pages:
     - NuGet.org: import/nugetorg.md
   - Advanced:
     - Debugging: advanced/debugging.md
-    - BaGet SDK: advanced/sdk.md
+    - BaGet Extension SDK: advanced/sdk.md
     - Server API: advanced/api.md
-  - BaGet vs. other:
+  - BaGet Extension vs. other:
     - nuget.org: vs/nugetorg.md
     - NuGet.Server: vs/nugetserver.md
     - Local feeds: vs/local-feeds.md

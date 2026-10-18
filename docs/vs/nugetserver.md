@@ -5,9 +5,9 @@ that serves a folder of packages over HTTP (OData). **It is deprecated**: the re
 2026-05-29 and its README states no further features, bug fixes or security patches. Migrate; see the
 [migration guide](../import/nugetserver.md).
 
-# BaGet vs NuGet.Server
+# BaGet Extension vs NuGet.Server
 
-| Feature | NuGet.Server | BaGet |
+| Feature | NuGet.Server | BaGet Extension |
 | --- | --- | --- |
 | Maintenance | Deprecated, archived 2026-05-29 (last release 3.4.3, same day) | Maintained fork |
 | Platform | ASP.NET Web Application (.NET Framework 4.6) on IIS | .NET 10; Windows/Linux/macOS, Docker, IIS |
@@ -27,9 +27,9 @@ that serves a folder of packages over HTTP (OData). **It is deprecated**: the re
 
 ## When to choose which
 
-* New feed, or any feed that must stay patched: BaGet.
+* New feed, or any feed that must stay patched: BaGet Extension.
 * Existing NuGet.Server that must keep running unchanged on IIS: it works, but gets no fixes; plan the move.
-* Need V3-only clients, symbols, accounts or cross-platform hosting: BaGet.
+* Need V3-only clients, symbols, accounts or cross-platform hosting: BaGet Extension.
 
 ## Sources
 

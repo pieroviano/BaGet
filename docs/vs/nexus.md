@@ -2,7 +2,7 @@
 
 [Sonatype Nexus Repository](https://www.sonatype.com/products/sonatype-nexus-repository) is a multi-format repository manager; NuGet is one of its formats.
 
-| Feature | Nexus Repository | BaGet |
+| Feature | Nexus Repository | BaGet Extension |
 |---|---|---|
 | Formats | 27 formats (Maven, npm, Docker, PyPI, NuGet, ...) | NuGet only (`.nupkg`, `.snupkg`) |
 | NuGet V3 | Yes | Yes: `/v3/index.json`; registration not paged |
@@ -31,9 +31,9 @@ Editions (Sonatype tiers page): Community Edition, Pro, Pro+.
 ## When to choose which
 
 - Nexus: one manager for several formats, group repositories, authenticated reads, per-repository roles, and a free tier that fits small usage.
-- BaGet: a NuGet-only feed with no usage cap, simple self-hosted deployment, and owner-based publishing with scoped API keys.
-- Nexus Community: when private reads or group feeds are required and stay under 40,000 components / 100,000 requests per day; BaGet has neither feature.
-- Nexus Pro: when HA is required; BaGet has no documented HA.
+- BaGet Extension: a NuGet-only feed with no usage cap, simple self-hosted deployment, and owner-based publishing with scoped API keys.
+- Nexus Community: when private reads or group feeds are required and stay under 40,000 components / 100,000 requests per day; BaGet Extension has neither feature.
+- Nexus Pro: when HA is required; BaGet Extension has no documented HA.
 
 ## Sources
 
@@ -47,4 +47,4 @@ Checked 2026-10.
 - <https://help.sonatype.com/en/content-selectors.html>
 - <https://help.sonatype.com/en/blob-stores.html>
 - <https://help.sonatype.com/en/user-tokens.html>
-- BaGet side: this fork's code and docs.
+- BaGet Extension side: this fork's code and docs.

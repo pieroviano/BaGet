@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>BaGet's NuGet V3 catalog: an append-only log of package changes, for mirrors.</Description>
+    <Description>BaGet Extension's NuGet V3 catalog: an append-only log of package changes, for mirrors.</Description>
     <RootNamespace>BaGet.Catalog</RootNamespace>
   </PropertyGroup>
 

@@ -49,7 +49,7 @@ public class ValidateStartupOptions
                 _logger.LogError("{OptionsFailure}", failure);
             }
 
-            _logger.LogError(e, "BaGet configuration is invalid.");
+            _logger.LogError(e, "BaGet Extension configuration is invalid.");
             return false;
         }
     }

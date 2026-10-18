@@ -2,7 +2,7 @@
 
 [MyGet](https://www.myget.org) is a hosted package management service for NuGet and other formats.
 
-| Feature | MyGet | BaGet |
+| Feature | MyGet | BaGet Extension |
 |---|---|---|
 | Package formats | NuGet, symbols, npm, Bower, Maven, PHP Composer, VSIX, Python, RubyGems | NuGet only |
 | NuGet protocol | V3 (`/F/<feed>/api/v3/index.json`), V2 (`/api/v2`), V1 | V3, plus V2 OData `/api/v2` (on by default) |
@@ -22,8 +22,8 @@
 ## When to choose which
 
 - MyGet: hosted feed with no server to run, several formats, build services, license and vulnerability governance (Team and up).
-- BaGet: NuGet only, self-hosted, no plan limits on feeds, storage or contributors.
-- Private reads: MyGet has them, BaGet does not.
+- BaGet Extension: NuGet only, self-hosted, no plan limits on feeds, storage or contributors.
+- Private reads: MyGet has them, BaGet Extension does not.
 
 ## Sources
 

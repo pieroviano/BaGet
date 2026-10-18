@@ -16,7 +16,7 @@ namespace BaGet.Identity.Pages.Account;
 public class TwoFactorModel : AccountPageModel
 {
     private const int RecoveryCodeCount = 10;
-    private const string Issuer = "BaGet";
+    private const string Issuer = "BaGet Extension";
 
     protected override bool RequiresSignIn => true;
 

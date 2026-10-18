@@ -1,9 +1,9 @@
-# Run BaGet on your Computer
+# Run BaGet Extension on your Computer
 
-## Run BaGet
+## Run BaGet Extension
 
 1. Install the [.NET 10 ASP.NET Core Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (or the SDK)
-1. Get BaGet: download the `BaGet` workflow artifact of a release run of this repository, or publish it with `dotnet publish src/BaGet -c Release -o artifacts -p:GeneratePackageOnBuild=false`, and extract it
+1. Get BaGet Extension: download the `BaGet` workflow artifact of a release run of this repository, or publish it with `dotnet publish src/BaGet -c Release -o artifacts -p:GeneratePackageOnBuild=false`, and extract it
 1. Start the service with `dotnet BaGet.dll`
 1. Browse `http://localhost:6060/` in your browser
 
@@ -12,9 +12,9 @@
     `--urls`. Change it there, or override it with the `Kestrel__Endpoints__Http__Url` environment variable
     (for example `http://localhost:8080`).
 
-## Configure BaGet
+## Configure BaGet Extension
 
-You can modify BaGet's configurations by editing the `appsettings.json` file. Database migrations run at startup (`RunMigrationsAtStartup`, on by default). For the full list of configurations, please refer to [BaGet's configuration](../configuration.md) guide.
+You can modify BaGet Extension's configurations by editing the `appsettings.json` file. Database migrations run at startup (`RunMigrationsAtStartup`, on by default). For the full list of configurations, please refer to [BaGet Extension's configuration](../configuration.md) guide.
 
 ## Publish packages
 

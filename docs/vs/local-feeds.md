@@ -7,9 +7,9 @@ Manager UI or `nuget sources`.
 * Hierarchical layout (NuGet 3.3+): `<id>/<version>/<id>.<version>.nupkg`, created by `nuget add` (one package) or `nuget init` (a folder of packages).
 * Older flat layout (single folder) works but is slower.
 
-# BaGet vs local feeds
+# BaGet Extension vs local feeds
 
-| Feature | Local feed | BaGet |
+| Feature | Local feed | BaGet Extension |
 | --- | --- | --- |
 | Server needed | No (file access only) | Yes (HTTP service) |
 | Protocol | File system, no HTTP API | V3, plus V2 at `/api/v2` |
@@ -26,8 +26,8 @@ Manager UI or `nuget sources`.
 ## When to choose which
 
 * One developer, a small team on one LAN, or an offline fallback: a local feed.
-* Remote teams, CI over HTTP, authentication, search or symbols: BaGet.
-* Moving an existing folder feed into BaGet: see [importing local feeds](../import/local-feeds.md).
+* Remote teams, CI over HTTP, authentication, search or symbols: BaGet Extension.
+* Moving an existing folder feed into BaGet Extension: see [importing local feeds](../import/local-feeds.md).
 
 ## Sources
 

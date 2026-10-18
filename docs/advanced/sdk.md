@@ -1,6 +1,6 @@
-# BaGet SDK
+# BaGet Extension SDK
 
-You can use BaGet's [`BaGet.Protocol`](https://www.nuget.org/packages/BaGet.Protocol) package to interact with a NuGet server.
+You can use BaGet Extension's [`BaGet.Protocol`](https://www.nuget.org/packages/BaGet.Protocol) package to interact with a NuGet server.
 
 ## Getting Started
 

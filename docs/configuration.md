@@ -1,6 +1,6 @@
 # Configuration
 
-You can modify BaGet's configurations by editing the `appsettings.json` file.
+You can modify BaGet Extension's configurations by editing the `appsettings.json` file.
 
 ## Top-level keys
 
@@ -8,11 +8,11 @@ You can modify BaGet's configurations by editing the `appsettings.json` file.
 | --- | --- | --- |
 | `ApiKey` | empty | global key to push and change packages; see [Require an API key](#require-an-api-key) |
 | `PathBase` | `.` | path the site is served under (`.` is the root) |
-| `AllowedHosts` | `*` | see [Restrict the host names BaGet serves](#restrict-the-host-names-baget-serves) |
+| `AllowedHosts` | `*` | see [Restrict the host names BaGet Extension serves](#restrict-the-host-names-baget-extension-serves) |
 | `PackageDeletionBehavior` | `Unlist` | `Unlist` or `HardDelete` |
 | `AllowPackageOverwrites` | `false` | accept a push of an existing id and version |
 | `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, deprecation/vulnerability changes, browser uploads and the manage page's POSTs |
-| `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet starts |
+| `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet Extension starts |
 
 ## Listening address
 
@@ -40,10 +40,10 @@ dotnet nuget push -s http://localhost:6060/v3/index.json -k NUGET-SERVER-API-KEY
 
 With [accounts](#accounts-package-owners-and-api-keys) enabled, users can also push with keys of their own.
 
-## Restrict the host names BaGet serves
+## Restrict the host names BaGet Extension serves
 
-The absolute URLs BaGet advertises in its service index, registrations and URI templates are
-built from the incoming request's `Host` header. By default BaGet serves any host, because it
+The absolute URLs BaGet Extension advertises in its service index, registrations and URI templates are
+built from the incoming request's `Host` header. By default BaGet Extension serves any host, because it
 is commonly run behind a reverse proxy on a host name it cannot know. If the host names are
 known, list them in `AllowedHosts`, separated by semicolons; a request with any other host is
 then rejected with a `400` response:
@@ -67,7 +67,7 @@ then rejected with a `400` response:
 
 !!! info
     This is [ASP.NET Core's host filtering](https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/host-filtering)
-    configuration key. If you embed BaGet in your own application, call `UseHostFiltering` in
+    configuration key. If you embed BaGet Extension in your own application, call `UseHostFiltering` in
     its pipeline.
 
 ## Enable read-through caching
@@ -78,7 +78,7 @@ caching to:
 1. Speed up your builds if restores from [nuget.org](https://nuget.org) are slow
 1. Enable package restores in offline scenarios
 
-The following `Mirror` setting configures BaGet to index packages from [nuget.org](https://nuget.org):
+The following `Mirror` setting configures BaGet Extension to index packages from [nuget.org](https://nuget.org):
 
 ```json
 {
@@ -104,7 +104,7 @@ The following `Mirror` setting configures BaGet to index packages from [nuget.or
 ## Enable package hard deletions
 
 To prevent the ["left pad" problem](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm),
-BaGet's default configuration doesn't allow package deletions. Whenever BaGet receives a package deletion
+BaGet Extension's default configuration doesn't allow package deletions. Whenever BaGet Extension receives a package deletion
 request, it will instead "unlist" the package. An unlisted package is undiscoverable but can still be
 downloaded if you know the package's id and version. You can override this behavior by setting the
 `PackageDeletionBehavior`:
@@ -128,7 +128,7 @@ reindexed.
 
 ## Enable package overwrites
 
-Normally, BaGet will reject a package upload if the id and version are already taken. You can configure BaGet
+Normally, BaGet Extension will reject a package upload if the id and version are already taken. You can configure BaGet Extension
 to overwrite the already existing package by setting `AllowPackageOverwrites`:
 
 ```json
@@ -159,7 +159,7 @@ it never creates a package ID and confers no ownership.
 
 ## NuGet V2 feed
 
-BaGet serves a NuGet V2 (OData) feed at `/api/v2` for clients that cannot use V3: `nuget list`,
+BaGet Extension serves a NuGet V2 (OData) feed at `/api/v2` for clients that cannot use V3: `nuget list`,
 older `Install-Package`, and PowerShellGet. It is on by default. To turn it off:
 
 ```json
@@ -180,7 +180,7 @@ older `Install-Package`, and PowerShellGet. It is on by default. To turn it off:
 
 ## Accounts, package owners and API keys
 
-Accounts are **on** in the shipped `appsettings.json` (the code default, for hosts embedding BaGet, is
+Accounts are **on** in the shipped `appsettings.json` (the code default, for hosts embedding BaGet Extension, is
 off). With them off, only the global `ApiKey` authenticates. Set `Accounts:Enabled` to `false` to get
 that behaviour back; otherwise configure them with:
 
@@ -220,7 +220,7 @@ Who may change a package:
 
 !!! warning "Upgrade note: keyless pushes are refused"
     Earlier releases shipped with accounts off, so a default install accepted `dotnet nuget push` with
-    no key. With accounts on and `ApiKey` empty, a push without a key now gets **401**; BaGet logs a
+    no key. With accounts on and `ApiKey` empty, a push without a key now gets **401**; BaGet Extension logs a
     warning at startup. Fix CI by pushing with `-k <key>`, using a user key from `/account/apikeys` (or
     the global `ApiKey`), or restore the old behaviour with `"Accounts": { "Enabled": false }`.
 
@@ -241,7 +241,7 @@ is offered, and sign-in does not require a confirmed address. When it is on, sig
             "UserName": "baget",
             "Password": "...",
             "EnableSsl": true,
-            "From": "BaGet <baget@example.com>"
+            "From": "BaGet Extension <baget@example.com>"
         }
     }
 }
@@ -280,7 +280,7 @@ Other rules with email on:
   sent from a background queue. One reset mail per account per 10 minutes is the real protection; 60 mails per client
   address per 10 minutes is a backstop. There is no site-wide cap, which would let one caller block everyone's
   reset. State is in memory, per process, and bounded by the number of accounts; excess requests are answered the same and mail nothing. Requests for names that do not exist use up
-  nothing. Known limit: the client address comes from `X-Forwarded-For`, which BaGet trusts from any
+  nothing. Known limit: the client address comes from `X-Forwarded-For`, which BaGet Extension trusts from any
   sender, so a caller can spoof it, and behind a proxy that sets no such header all callers share one
   address. Hence the per-client backstop is high and the per-account limit is what holds.
 * OpenID Connect accounts are confirmed only when the provider sends `email_verified=true`; otherwise a
@@ -394,11 +394,11 @@ appears. Until then it cannot be found or downloaded. The checks are:
 
 A package that fails is quarantined and never served. Its owners can see why with
 `GET /v3/package/{id}/{version}/validation`, sending their API key in `X-NuGet-ApiKey`.
-Pending validations resume when BaGet restarts.
+Pending validations resume when BaGet Extension restarts.
 
 ### Repository signing
 
-BaGet can repository-sign every package that passes validation:
+BaGet Extension can repository-sign every package that passes validation:
 
 ```json
 {
@@ -416,12 +416,12 @@ BaGet can repository-sign every package that passes validation:
 ```
 
 The certificate needs the code signing usage. `RepositorySigningServiceIndexUrl` must be your public,
-`https` service index URL: NuGet rejects repository signatures for any other scheme. BaGet then
+`https` service index URL: NuGet rejects repository signatures for any other scheme. BaGet Extension then
 advertises the certificate through the `RepositorySignatures/5.0.0` resource.
 
 ## Catalog
 
-BaGet keeps a [NuGet catalog](https://learn.microsoft.com/nuget/api/catalog-resource), an
+BaGet Extension keeps a [NuGet catalog](https://learn.microsoft.com/nuget/api/catalog-resource), an
 append-only log of package changes that mirrors can follow. It needs no configuration. Packages
 pushed before the catalog existed are added with:
 
@@ -435,7 +435,7 @@ The catalog is not available with Azure Table Storage.
 
 `Site:TermsOfUsePath` and `Site:PrivacyPolicyPath` point at Markdown files (absolute, or relative to the
 content root). They are served at `/terms` and `/privacy`, and the footer links to each only while its
-path is set; BaGet ships no legal text. A page whose path is unset or whose file is missing answers 404.
+path is set; BaGet Extension ships no legal text. A page whose path is unset or whose file is missing answers 404.
 
 ```json
 { "Site": { "TermsOfUsePath": "legal/terms.md", "PrivacyPolicyPath": "legal/privacy.md" } }
@@ -474,7 +474,7 @@ A private feed requires users to authenticate before accessing packages.
 
 ## Database configuration
 
-BaGet supports multiple database engines for storing package information:
+BaGet Extension supports multiple database engines for storing package information:
 
 
 - MySQL: `MySql`
@@ -519,12 +519,12 @@ There are three settings related to the database configuration:
 
 - **Type**: The database engine to use, this should be one of the strings from the above list such as `PostgreSql` or `Sqlite`.
 - **ConnectionString**: The connection string for your database engine.
-- **MySqlServerVersion**: MySQL only, for example `8.0.36`. When empty, BaGet detects the version by connecting to the server; set it to avoid that connection.
+- **MySqlServerVersion**: MySQL only, for example `8.0.36`. When empty, BaGet Extension detects the version by connecting to the server; set it to avoid that connection.
 
 ## IIS server options
 
 IIS Server options can be configured under the `IISServerOptions` key. The available options are detailed at [docs.microsoft.com](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.builder.iisserveroptions)
-Note: If not specified, the MaxRequestBodySize in BaGet defaults to 250MB (262144000 bytes), rather than the ASP.NET Core default of 30MB
+Note: If not specified, the MaxRequestBodySize in BaGet Extension defaults to 250MB (262144000 bytes), rather than the ASP.NET Core default of 30MB
 
 ```json
 {

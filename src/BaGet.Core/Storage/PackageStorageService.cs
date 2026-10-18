@@ -196,7 +196,7 @@ public class PackageStorageService : IPackageStorageService
             // See https://github.com/loic-sharma/BaGet/issues/298
             _logger.LogError(
                 $"Unable to find the '{PackagesPathPrefix}' folder. " +
-                "If you've recently upgraded BaGet, please make sure this folder starts with a lowercased letter. " +
+                "If you've recently upgraded BaGet Extension, please make sure this folder starts with a lowercased letter. " +
                 "For more information, please see https://github.com/loic-sharma/BaGet/issues/298");
             throw;
         }

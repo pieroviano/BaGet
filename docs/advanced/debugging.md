@@ -1,4 +1,4 @@
-# Debugging BaGet
+# Debugging BaGet Extension
 
 ## Run
 
@@ -26,7 +26,7 @@ over HTTP with SQLite in a temporary directory; it supplies settings with `build
 
 ## Port
 
-BaGet listens on `http://localhost:6060`. `Kestrel:Endpoints:Http:Url` in `appsettings.json` outranks
+BaGet Extension listens on `http://localhost:6060`. `Kestrel:Endpoints:Http:Url` in `appsettings.json` outranks
 `--urls` and `ASPNETCORE_URLS`, so those have no effect. Override it with the environment variable
 `Kestrel__Endpoints__Http__Url`.
 

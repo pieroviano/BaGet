@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>BaGet's NuGet server implementation</Description>
+    <Description>BaGet Extension's NuGet server implementation</Description>
     <RootNamespace>BaGet.Web</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
   </PropertyGroup>

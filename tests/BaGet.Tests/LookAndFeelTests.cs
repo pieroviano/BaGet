@@ -174,13 +174,14 @@ public class LookAndFeelTests : IDisposable
     }
 
     [Fact]
-    public async Task TheFooterAlwaysCreditsBaGetAndHidesUnsetLegalLinks()
+    public async Task TheFooterNamesTheProductAndHidesUnsetLegalLinks()
     {
         var (_, browser) = Start();
 
         var html = await browser.GetPageAsync("stats");
 
-        Assert.Contains("Powered by BaGet", html);
+        Assert.Contains("BaGet Extension", html);
+        Assert.DoesNotContain("Powered by", html);
         Assert.Contains("Documentation", html);
         Assert.Contains("GitHub", html);
         Assert.DoesNotContain("footer-terms", html);

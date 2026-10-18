@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet;Google;Cloud</PackageTags>
-    <Description>The libraries to host BaGet on the Google Cloud Platform.</Description>
+    <Description>The libraries to host BaGet Extension on the Google Cloud Platform.</Description>
   </PropertyGroup>
 
   <ItemGroup>

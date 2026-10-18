@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>The libraries to host BaGet on SQL Server.</Description>
+    <Description>The libraries to host BaGet Extension on SQL Server.</Description>
   </PropertyGroup>
 
   <ItemGroup>

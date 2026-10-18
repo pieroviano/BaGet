@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet;Azure;Cloud</PackageTags>
-    <Description>The libraries to host BaGet on Azure.</Description>
+    <Description>The libraries to host BaGet Extension on Azure.</Description>
     
     <!-- Enable the old RID graph to resolve NETSDK1206 warning for Microsoft.Azure.DocumentDB.Core -->
     <!-- This is necessary because Microsoft.Azure.Cosmos.Table has a transitive dependency -->

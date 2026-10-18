@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>BaGet's validation pipeline: pushed packages are validated, and optionally repository signed, before they are served.</Description>
+    <Description>BaGet Extension's validation pipeline: pushed packages are validated, and optionally repository signed, before they are served.</Description>
     <RootNamespace>BaGet.Validation</RootNamespace>
   </PropertyGroup>
 

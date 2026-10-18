@@ -1,8 +1,8 @@
 # Server API
 
-BaGet implements the [NuGet V3 API](https://learn.microsoft.com/nuget/api/overview); clients find
+BaGet Extension implements the [NuGet V3 API](https://learn.microsoft.com/nuget/api/overview); clients find
 every resource through the service index at `/v3/index.json`. This page lists what it serves, and
-the endpoints BaGet adds of its own.
+the endpoints BaGet Extension adds of its own.
 
 ## Service index resources
 
@@ -29,7 +29,7 @@ The V2 (OData) feed is at `/api/v2`; see [NuGet V2 feed](../configuration.md#nug
 | `GET /v3/registration/{id}/index.json`, `/v3/registration/{id}/{version}.json` | registration index and leaf |
 | `GET /v3/package/{id}/index.json`, `/v3/package/{id}/{version}/{id}.{version}.nupkg`, `.../{id}.nuspec` | versions, package, manifest |
 | `GET /v3/package/{id}/{version}/readme`, `.../icon` | the package's readme and icon |
-| `GET /v3/dependents` | packages that depend on a package; BaGet's own, not in the NuGet protocol |
+| `GET /v3/dependents` | packages that depend on a package; BaGet Extension's own, not in the NuGet protocol |
 | `GET /api/download/symbols/{file}/{key}/{file2}`, `/api/download/symbols/{prefix}/{file}/{key}/{file2}` | symbol download (the symbol server URL) |
 | `GET /v3/catalog/index.json`, `/v3/catalog/page{n}.json`, `/v3/catalog/data/{commitId}.json` | catalog index, page, leaf |
 | `GET /v3/repository-signatures/{fingerprint}.crt` | the repository signing certificate |

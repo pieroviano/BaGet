@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>The libraries to host BaGet on MySQL.</Description>
+    <Description>The libraries to host BaGet Extension on MySQL.</Description>
   </PropertyGroup>
 
   <ItemGroup>

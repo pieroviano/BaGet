@@ -1,4 +1,4 @@
-# BaGet :baguette_bread:
+# BaGet Extension :baguette_bread:
 
 ![Build status]
 
@@ -10,7 +10,7 @@ A lightweight [NuGet] and [symbol] server.
 
 ## Getting Started
 
-1. Install the [.NET SDK] (BaGet targets .NET 10)
+1. Install the [.NET SDK] (BaGet Extension targets .NET 10)
 2. Download the `BaGet` artifact of a [Release workflow] run, or build it from source (see [CONTRIBUTING.md](CONTRIBUTING.md))
 3. Start the service with `dotnet BaGet.dll`
 4. Browse `http://localhost:6060/` in your browser (the port is set by `Kestrel:Endpoints` in `appsettings.json`)

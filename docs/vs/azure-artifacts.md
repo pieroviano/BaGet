@@ -2,7 +2,7 @@
 
 [Azure Artifacts](https://learn.microsoft.com/en-us/azure/devops/artifacts/start-using-azure-artifacts) is the package management service of Azure DevOps (cloud service and Azure DevOps Server).
 
-| Feature | Azure Artifacts | BaGet |
+| Feature | Azure Artifacts | BaGet Extension |
 |---|---|---|
 | Package formats | NuGet, npm, Maven (incl. Gradle), Python, Cargo, Universal Packages | NuGet only (`.nupkg`, `.snupkg`) |
 | NuGet protocol | V3 feed URL (`.../nuget/v3/index.json`); legacy V2 (`.../nuget/v2`, PAT; Azure DevOps Services only, "only when you can't move to a newer client") | V3 service index, plus V2 OData feed `/api/v2` (on by default, `Feeds:EnableV2`) |
@@ -22,8 +22,8 @@
 ## When to choose which
 
 - Azure Artifacts: already on Azure DevOps, or you need npm/Maven/Python/Cargo in one feed, views, per-feed roles or authenticated reads.
-- BaGet: NuGet only, self-hosted, no per-GiB billing, V2 and V3 on one server.
-- BaGet cannot restrict who reads packages; use a reverse proxy or network boundary if needed.
+- BaGet Extension: NuGet only, self-hosted, no per-GiB billing, V2 and V3 on one server.
+- BaGet Extension cannot restrict who reads packages; use a reverse proxy or network boundary if needed.
 
 ## Sources
 

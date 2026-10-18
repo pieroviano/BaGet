@@ -2,7 +2,7 @@
 
 [TeamCity](https://www.jetbrains.com/teamcity/) is the JetBrains CI/CD server. Its built-in NuGet feed serves packages produced by its own builds; it is not a general package registry.
 
-| Feature | TeamCity built-in feed | BaGet |
+| Feature | TeamCity built-in feed | BaGet Extension |
 |---|---|---|
 | Package formats | NuGet only | NuGet only |
 | NuGet protocol | V1, V2, V3 (`.../app/nuget/feed/<project>/<feed>/v1`, `/v2`, `/v3/index.json`) | V3, plus V2 OData `/api/v2` |
@@ -24,8 +24,8 @@
 ## When to choose which
 
 - TeamCity feed: packages are CI outputs consumed by other builds, with lifetime tied to the builds.
-- BaGet: a permanent feed that outlives builds, accepts pushes from any client, needs symbols or mirroring.
-- Together: TeamCity builds and pushes to BaGet with the NuGet Publish step.
+- BaGet Extension: a permanent feed that outlives builds, accepts pushes from any client, needs symbols or mirroring.
+- Together: TeamCity builds and pushes to BaGet Extension with the NuGet Publish step.
 
 ## Sources
 

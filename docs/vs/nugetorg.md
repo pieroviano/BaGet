@@ -1,7 +1,7 @@
 # nuget.org
 
 [nuget.org](https://www.nuget.org/), the "Gallery", is the default public NuGet feed. Publish open-source
-packages there; use BaGet for private or mirrored feeds.
+packages there; use BaGet Extension for private or mirrored feeds.
 
 Gallery code (self-hosting is possible but not simple; the
 [hosting wiki](https://github.com/NuGet/NuGetGallery/wiki/Hosting-nuget.org's-v3-services) was last edited in 2018, so verify it before use):
@@ -9,9 +9,9 @@ Gallery code (self-hosting is possible but not simple; the
 * [NuGet/NuGetGallery](https://github.com/NuGet/NuGetGallery) - website, jobs, V3 pipeline and search
 * NuGet.Jobs, NuGet.Services.Metadata and ServerCommon are archived and merged into NuGetGallery
 
-# BaGet vs nuget.org
+# BaGet Extension vs nuget.org
 
-| Feature | nuget.org | BaGet |
+| Feature | nuget.org | BaGet Extension |
 | --- | --- | --- |
 | Visibility | Public; no private packages | Public or internal; reads are never authenticated (no private reads) |
 | V3 (push, restore, search, autocomplete, registration) | Yes | Yes (registration not paged) |
@@ -41,15 +41,15 @@ Gallery code (self-hosting is possible but not simple; the
 
 * nuget.org V3 is static (JSON on blob storage behind a CDN, built by catalog jobs): reads scale
   almost without limit, writes and operation are heavy and tied to Azure.
-* BaGet V3 is dynamic (service plus database): simple to deploy, easy to extend, weaker read
+* BaGet Extension V3 is dynamic (service plus database): simple to deploy, easy to extend, weaker read
   scaling and reliability.
 
 ## When to choose which
 
 * Publish public open-source packages: nuget.org.
-* Internal or private packages, or a cache of nuget.org for CI or offline use: BaGet.
+* Internal or private packages, or a cache of nuget.org for CI or offline use: BaGet Extension.
 * Need CDN-scale reads or prefix reservation: nuget.org.
-* Need your own accounts, ownership and validation on infrastructure you control: BaGet.
+* Need your own accounts, ownership and validation on infrastructure you control: BaGet Extension.
 
 See also [importing from nuget.org](../import/nugetorg.md) and [configuration](../configuration.md).
 

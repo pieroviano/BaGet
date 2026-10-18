@@ -2,7 +2,7 @@
 
 [JFrog Artifactory](https://jfrog.com/artifactory/) is a commercial, multi-format artifact repository manager; NuGet is one of its package types.
 
-| Feature | Artifactory | BaGet |
+| Feature | Artifactory | BaGet Extension |
 |---|---|---|
 | Formats | Multi-format (Maven, npm, Docker, PyPI, NuGet, ...) | NuGet only (`.nupkg`, `.snupkg`) |
 | NuGet V3 | Yes: `/api/nuget/v3/<repo>/index.json`; PackageBaseAddress only on repos with *Enforce Layout* (fixed at creation) | Yes: `/v3/index.json`; registration not paged |
@@ -34,9 +34,9 @@ Artifactory editions and pricing (pricing page):
 ## When to choose which
 
 - Artifactory: one manager for several formats (Maven, npm, Docker, NuGet), virtual repos, authenticated reads, per-repo permissions, vendor-backed HA.
-- BaGet: a NuGet-only feed with no licence cost, a simple self-hosted deployment, and owner-based publishing with scoped API keys.
-- Artifactory: when private reads or several feeds are mandatory; BaGet has neither.
-- BaGet: when a free NuGet feed is the whole requirement; Artifactory NuGet has no free edition found.
+- BaGet Extension: a NuGet-only feed with no licence cost, a simple self-hosted deployment, and owner-based publishing with scoped API keys.
+- Artifactory: when private reads or several feeds are mandatory; BaGet Extension has neither.
+- BaGet Extension: when a free NuGet feed is the whole requirement; Artifactory NuGet has no free edition found.
 
 ## Sources
 
@@ -50,4 +50,4 @@ Checked 2026-10.
 - <https://docs.jfrog.com/installation/docs/artifactory-storage>
 - <https://docs.jfrog.com/installation/docs/database-configuration>
 - <https://docs.conan.io/2/tutorial/conan_repositories/setting_up_conan_remotes/artifactory/artifactory_ce_cpp.html>
-- BaGet side: this fork's code and docs.
+- BaGet Extension side: this fork's code and docs.

@@ -2,9 +2,9 @@
 
 Please read the [code of conduct] before contributing.
 
-If you want to run from BaGet's source code:
+If you want to run from BaGet Extension's source code:
 
-1. Install the [.NET SDK] (BaGet targets .NET 10)
+1. Install the [.NET SDK] (BaGet Extension targets .NET 10)
 2. Run `git clone https://github.com/pieroviano/BaGet.git`
 3. Create the local package source with `mkdir BaGet/Packages` (nuget.config lists the untracked `Packages` folder as a package source; restore fails with NU1301 without it)
 4. Navigate to `./BaGet/src/BaGet`
