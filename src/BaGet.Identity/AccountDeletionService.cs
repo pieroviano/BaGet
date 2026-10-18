@@ -27,7 +27,7 @@ public record DeletionBlockers(IReadOnlyList<string> LastOwnerPackageIds, IReadO
 }
 
 /// <summary>
-/// Deletes a user together with what hangs off them: API keys, organization memberships
+/// Atomically deletes a user together with what hangs off them: API keys, organization memberships
 /// and package ownerships. The ownership rows go too, because they are keyed by name and a
 /// later user registering the same name would otherwise inherit the packages.
 /// </summary>
@@ -104,9 +104,29 @@ public class AccountDeletionService
             }
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        // The cleanup above is only staged. Deleting the user saves it in the same
+        // SaveChanges, so the database applies all of it or none of it: a user that cannot
+        // be deleted keeps its keys, ownerships and memberships.
+        try
+        {
+            var result = await _users.DeleteAsync(user);
+            if (!result.Succeeded) Discard();
 
-        return (blockers, await _users.DeleteAsync(user));
+            return (blockers, result);
+        }
+        catch
+        {
+            Discard();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Forget the staged cleanup, so a later save in the same scope cannot apply it.
+    /// </summary>
+    private void Discard()
+    {
+        if (_context is DbContext context) context.ChangeTracker.Clear();
     }
 
     private sealed record Membership(int Key, string Name, bool IsLastAdmin, int OtherMembers);
