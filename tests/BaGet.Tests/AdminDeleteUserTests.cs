@@ -97,6 +97,10 @@ public class AdminDeleteUserTests : IDisposable
         var users = await admin.GetPageAsync("admin/users");
         Assert.Contains("alice was deleted.", users);
         Assert.Contains("Packages left without owners: Alice.Solo.", users);
+
+        var ownerless = await admin.GetPageAsync("admin/packages");
+        Assert.Contains("Alice.Solo", ownerless);
+        Assert.DoesNotContain("Alice.Shared", ownerless);
     }
 
     [Fact]
