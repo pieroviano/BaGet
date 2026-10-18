@@ -49,4 +49,62 @@ public class ReadmeMarkdownTests
         Assert.Contains("<table", html);
         Assert.Contains("<code", html);
     }
+
+    // --- attribute injection: "{onmouseover=...}" must never become an attribute ----------
+
+    public static TheoryData<string> AttributePayloads => new()
+    {
+        "# Hi {onmouseover=\"alert(1)\"}",
+        "[x](https://a.example){onclick=alert(1)}",
+        "[x](https://a.example){ONCLICK=alert(1)}",
+        "[x](https://a.example){OnClick='alert(1)'}",
+        "# Hi {on&#109;ouseover=\"alert(1)\"}",
+        "# Hi {&#111;nmouseover=alert(1)}",
+        "![x](https://a.example/i.png){onerror=alert(1)}",
+        "text {onfocus=alert(1) autofocus}",
+        "# Hi {style=\"background:url(javascript:alert(1))\"}",
+        "[x](https://a.example){formaction=javascript:alert(1)}",
+        "[x](https://a.example){href=javascript:alert(1)}",
+        "::: {onclick=alert(1)}\ntext\n:::",
+    };
+
+    [Theory]
+    [MemberData(nameof(AttributePayloads))]
+    public void AttributeSyntaxNeverEmitsAnEventHandlerOrStyle(string markdown)
+    {
+        var html = ReadmeMarkdown.ToHtml(markdown).ToString();
+        var legal = ReadmeMarkdown.ToSafeHtml(markdown).ToString();
+
+        foreach (var output in new[] { html, legal })
+        {
+            AssertNoUnsafeAttribute(output);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(AttributePayloads))]
+    public void TheSanitiserHoldsEvenIfGenericAttributesWereEnabled(string markdown)
+    {
+        var html = ReadmeMarkdown.ToHtml(markdown, ReadmeMarkdown.CreatePipeline(genericAttributes: true)).ToString();
+
+        AssertNoUnsafeAttribute(html);
+    }
+
+    [Fact]
+    public void TheSanitiserKeepsHarmlessAttributes()
+    {
+        var html = ReadmeMarkdown.ToHtml("# Hi {#anchor .big}", ReadmeMarkdown.CreatePipeline(genericAttributes: true)).ToString();
+
+        Assert.Contains("id=\"anchor\"", html);
+        Assert.Contains("class=\"big\"", html);
+    }
+
+    private static void AssertNoUnsafeAttribute(string html)
+    {
+        var lowered = html.ToLowerInvariant();
+        Assert.DoesNotMatch(@"<[^>]*\son[a-z]+\s*=", lowered);
+        Assert.DoesNotMatch(@"<[^>]*\sstyle\s*=", lowered);
+        Assert.DoesNotMatch(@"<[^>]*\sformaction\s*=", lowered);
+        Assert.DoesNotMatch(@"<[^>]*javascript:", lowered);
+    }
 }

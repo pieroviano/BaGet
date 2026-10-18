@@ -1,12 +1,13 @@
 using System;
 using System.Text;
+using System.Threading.Tasks;
 using BaGet.Core;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -106,9 +107,8 @@ public abstract class AccountPageModel : PageModel
     }
 
     /// <summary>
-    /// An absolute link to an account page, for an email. Built from <c>Site:PublicUrl</c>
-    /// when set; otherwise from the request only when "AllowedHosts" restricts the host.
-    /// It never trusts an unrestricted Host header: see <see cref="EmailLinkPolicy"/>.
+    /// An absolute link to an account page, for an email. Built only from <c>Site:PublicUrl</c>,
+    /// never from the request's host or scheme: see <see cref="EmailLinkPolicy"/>.
     /// </summary>
     protected string PageLink(string page, object values)
     {
@@ -127,12 +127,43 @@ public abstract class AccountPageModel : PageModel
             return root.GetLeftPart(UriPartial.Path).TrimEnd('/') + path;
         }
 
-        if (!EmailLinkPolicy.HasHostRestriction(services.GetRequiredService<IConfiguration>()["AllowedHosts"]))
+        throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
+    }
+
+    /// <summary>
+    /// How long a sign-in with the external provider counts as proof of presence for a
+    /// sensitive action.
+    /// </summary>
+    public static readonly TimeSpan ReauthenticationWindow = TimeSpan.FromMinutes(5);
+
+    internal const string ReauthenticatedItem = "baget.reauthenticated";
+
+    /// <summary>
+    /// The check behind every sensitive action (change email, set a password, delete the
+    /// account, turn two-factor off or reset it). An account with a password types it again.
+    /// One without (external sign-in only) has nothing it can type that a stolen session
+    /// would not know, so it must have signed in again with its provider a moment ago:
+    /// see <see cref="ReauthenticateModel"/>.
+    /// </summary>
+    protected async Task<bool> IsConfirmedAsync(BaGetUser user, string password)
+        => await UserManager.HasPasswordAsync(user)
+            ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
+            : await HasReauthenticatedRecentlyAsync();
+
+    protected async Task<bool> HasReauthenticatedRecentlyAsync()
+    {
+        var authentication = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        if (authentication?.Properties == null
+            || !authentication.Properties.Items.TryGetValue(ReauthenticatedItem, out var value)
+            || !long.TryParse(value, out var ticks)
+            || ticks < DateTime.MinValue.Ticks || ticks > DateTime.MaxValue.Ticks)
         {
-            throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
+            return false;
         }
 
-        return Url.Page(page, pageHandler: null, values: values, protocol: Request.Scheme);
+        var age = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow - new DateTime(ticks, DateTimeKind.Utc);
+
+        return age >= TimeSpan.Zero && age <= ReauthenticationWindow;
     }
 
     protected static string Describe(IdentityResult result)

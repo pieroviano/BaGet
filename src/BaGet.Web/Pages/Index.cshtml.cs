@@ -110,7 +110,9 @@ public class IndexModel : PageModel
         Packages = search.Data;
         LastUpdated = await _statistics.GetLastUpdatedAsync(
             (Packages ?? Array.Empty<SearchResult>()).Select(p => p.PackageId).ToList(),
-            cancellationToken);
+            cancellationToken,
+            includePrerelease: Prerelease,
+            includeSemVer2: true);
 
         return Page();
     }

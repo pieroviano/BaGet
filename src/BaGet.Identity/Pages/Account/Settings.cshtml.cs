@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +21,13 @@ public class SettingsModel : AccountPageModel
     public bool EmailConfirmed { get; private set; }
 
     public bool HasPassword { get; private set; } = true;
+
+    /// <summary>
+    /// For an account without a password: it signed in again with its provider a moment ago.
+    /// </summary>
+    public bool Reauthenticated { get; private set; }
+
+    public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
 
     public bool CanSendEmail => EmailConfigured;
 
@@ -48,9 +56,15 @@ public class SettingsModel : AccountPageModel
         }
         else
         {
-            var result = await UserManager.HasPasswordAsync(user)
+            var hasPassword = await UserManager.HasPasswordAsync(user);
+
+            // Adding the first password to an external-only account would turn a stolen
+            // session into a password for it, so it needs the same fresh proof.
+            var result = hasPassword
                 ? await UserManager.ChangePasswordAsync(user, currentPassword ?? string.Empty, newPassword)
-                : await UserManager.AddPasswordAsync(user, newPassword);
+                : await HasReauthenticatedRecentlyAsync()
+                    ? await UserManager.AddPasswordAsync(user, newPassword)
+                    : IdentityResult.Failed(new IdentityError { Description = "Sign in again with your provider first, then set the password." });
 
             if (result.Succeeded)
             {
@@ -121,7 +135,7 @@ public class SettingsModel : AccountPageModel
 
     /// <summary>
     /// The password is asked again, so a stolen session cannot delete the account. An
-    /// account without a password (external sign-in only) confirms by typing its user name.
+    /// account without a password (external sign-in only) signs in again with its provider.
     /// </summary>
     public async Task<IActionResult> OnPostDeleteAsync(string password, CancellationToken cancellationToken)
     {
@@ -159,14 +173,6 @@ public class SettingsModel : AccountPageModel
         return Page();
     }
 
-    /// <summary>
-    /// The password, or for an account without one (external sign-in only) its user name.
-    /// </summary>
-    private async Task<bool> IsConfirmedAsync(BaGetUser user, string password)
-        => await UserManager.HasPasswordAsync(user)
-            ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
-            : string.Equals(password, user.UserName, System.StringComparison.Ordinal);
-
     private async Task<bool> LoadAsync()
     {
         var user = await UserManager.GetUserAsync(User);
@@ -175,6 +181,7 @@ public class SettingsModel : AccountPageModel
         Email = user.Email;
         EmailConfirmed = user.EmailConfirmed;
         HasPassword = await UserManager.HasPasswordAsync(user);
+        Reauthenticated = !HasPassword && await HasReauthenticatedRecentlyAsync();
 
         return true;
     }

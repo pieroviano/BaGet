@@ -61,10 +61,17 @@
                 <p class="help-block">We send a link to the new address; it changes when you follow it.</p>
             }
         </div>
-        <div class="form-group">
-            <label for="emailPassword">@(Model.HasPassword ? "Your password" : "Type your user name to confirm")</label>
-            <input id="emailPassword" name="password" type="@(Model.HasPassword ? "password" : "text")" class="form-control" autocomplete="off" />
-        </div>
+        @if (Model.HasPassword)
+        {
+            <div class="form-group">
+                <label for="emailPassword">Your password</label>
+                <input id="emailPassword" name="password" type="password" class="form-control" autocomplete="off" />
+            </div>
+        }
+        else
+        {
+            <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+        }
         <button type="submit" class="btn btn-primary">Change email</button>
     </form>
 
@@ -97,10 +104,17 @@
         You cannot delete it while you are the only owner of a package.
     </p>
     <form method="post" asp-page-handler="Delete">
-        <div class="form-group">
-            <label for="deletePassword">@(Model.HasPassword ? "Your password" : "Type your user name to confirm")</label>
-            <input id="deletePassword" name="password" type="@(Model.HasPassword ? "password" : "text")" class="form-control" autocomplete="off" />
-        </div>
+        @if (Model.HasPassword)
+        {
+            <div class="form-group">
+                <label for="deletePassword">Your password</label>
+                <input id="deletePassword" name="password" type="password" class="form-control" autocomplete="off" />
+            </div>
+        }
+        else
+        {
+            <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+        }
         <button type="submit" class="btn btn-danger">Delete my account</button>
     </form>
 </div>

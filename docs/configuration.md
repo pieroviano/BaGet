@@ -2,6 +2,24 @@
 
 You can modify BaGet's configurations by editing the `appsettings.json` file.
 
+## Top-level keys
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `ApiKey` | empty | global key to push and change packages; see [Require an API key](#require-an-api-key) |
+| `PathBase` | `.` | path the site is served under (`.` is the root) |
+| `AllowedHosts` | `*` | see [Restrict the host names BaGet serves](#restrict-the-host-names-baget-serves) |
+| `PackageDeletionBehavior` | `Unlist` | `Unlist` or `HardDelete` |
+| `AllowPackageOverwrites` | `false` | accept a push of an existing id and version |
+| `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, browser uploads and the manage page's POSTs |
+| `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet starts |
+
+## Listening address
+
+The shipped `appsettings.json` sets `Kestrel:Endpoints:Http:Url` to `http://localhost:6060`. That
+setting outranks `--urls` and `ASPNETCORE_URLS`, which therefore have no effect. Override it with the
+environment variable `Kestrel__Endpoints__Http__Url`, or edit the file.
+
 ## Require an API key
 
 You can require that users provide a password, called an API key, to publish packages.
@@ -77,6 +95,11 @@ The following `Mirror` setting configures BaGet to index packages from [nuget.or
 
 !!! info
     `PackageSource` is the value of the [NuGet service index](https://docs.microsoft.com/en-us/nuget/api/service-index).
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Legacy` | `false` | read the upstream through the NuGet V2 protocol |
+| `PackageDownloadTimeoutSeconds` | `600` | timeout for downloading a package from the upstream |
 
 ## Enable package hard deletions
 
@@ -234,8 +257,10 @@ otherwise put the attacker's address in the victim's mail).
 | Configuration | Links point at |
 |---|---|
 | `Site:PublicUrl` set (absolute http/https, a path is allowed: `https://example.com/feed`) | `Site:PublicUrl` |
-| No `PublicUrl`, `AllowedHosts` is a real list | the request host (host filtering already restricts it) |
-| No `PublicUrl`, `AllowedHosts` unset or `*` (the default) | **email is switched off** and a startup warning says so |
+| No `PublicUrl` (whatever `AllowedHosts` says) | **email is switched off** and a startup warning says so |
+
+`AllowedHosts` does not help: even a restricted host list leaves the scheme to `X-Forwarded-Proto`,
+which a client can spoof to downgrade a link to `http`.
 
 ```json
 { "Site": { "PublicUrl": "https://packages.example.com" } }
@@ -246,10 +271,18 @@ it is offered and sign-in does not require a confirmed address, exactly as with 
 
 Other rules with email on:
 
-* Changing the email address asks for the current password (the user name for an account without one).
+* Changing the email address, setting a first password, deleting the account and turning two-factor
+  off or resetting it ask for the current password. An account without a password (external sign-in
+  only) must instead sign in again with its provider (the provider is asked to prompt for credentials
+  again) within the last 5 minutes; without a configured provider it cannot do these, and an
+  administrator uses `baget account reset-password`.
 * "Forgot password" answers identically, in the same time, for known and unknown accounts: the mail is
-  sent from a background queue. One reset mail per account per 10 minutes and 10 requests per client per
-  10 minutes (in memory, per process); excess requests are answered the same and mail nothing.
+  sent from a background queue. One reset mail per account per 10 minutes is the real protection; 60 mails per client
+  address and 1000 for the whole site per 10 minutes are backstops (in memory, per process, bounded);
+  excess requests are answered the same and mail nothing. Requests for names that do not exist use up
+  nothing. Known limit: the client address comes from `X-Forwarded-For`, which BaGet trusts from any
+  sender, so a caller can spoof it, and behind a proxy that sets no such header all callers share one
+  address. Hence the per-client backstop is high and the per-account limit is what holds.
 * OpenID Connect accounts are confirmed only when the provider sends `email_verified=true`; otherwise a
   confirmation link is mailed and the user signs in again once it is followed. A provider that sends no
   email address cannot create accounts while email is on.
@@ -319,7 +352,7 @@ To let users sign in with an external provider such as Microsoft Entra ID:
 }
 ```
 
-Register `https://<your-host>/signin-oidc` as the redirect URI. The first sign-in creates an account,
+`Authority` and `ClientId` are required: without both, the provider is not offered. `DisplayName` (default `OpenID Connect`) labels the sign-in button. Register `https://<your-host>/signin-oidc` as the redirect URI. The first sign-in creates an account,
 whatever `AllowRegistration` says: the provider decides who may sign in.
 
 ### Verified packages
@@ -398,6 +431,16 @@ dotnet BaGet.dll catalog rebuild
 
 The catalog is not available with Azure Table Storage.
 
+## Legal pages
+
+`Site:TermsOfUsePath` and `Site:PrivacyPolicyPath` point at Markdown files (absolute, or relative to the
+content root). They are served at `/terms` and `/privacy`, and the footer links to each only while its
+path is set; BaGet ships no legal text. A page whose path is unset or whose file is missing answers 404.
+
+```json
+{ "Site": { "TermsOfUsePath": "legal/terms.md", "PrivacyPolicyPath": "legal/privacy.md" } }
+```
+
 ## Private feeds
 
 A private feed requires users to authenticate before accessing packages.
@@ -405,6 +448,29 @@ A private feed requires users to authenticate before accessing packages.
 !!! warning
     Private feeds are not supported at this time: [accounts](#accounts-package-owners-and-api-keys)
     control who may change packages, not who may read them. See [this pull request](https://github.com/loic-sharma/BaGet/pull/69) for more information.
+
+## Storage
+
+`Storage:Type` picks where package and symbol content lives (case-insensitive):
+
+| `Type` | Keys under `Storage` | Guide |
+| --- | --- | --- |
+| `FileSystem` (default) | `Path`; empty means the current working directory | [local](installation/local.md) |
+| `AzureBlobStorage` | `ConnectionString`, or `AccountName` and `AccessKey`; `Container`; `DownloadUriExpiry` (default 10 minutes) | [Azure](installation/azure.md) |
+| `AwsS3` | `Region`, `Bucket`, `Prefix`; `AccessKey` and `SecretKey` (or `UseInstanceProfile`, `AssumeRoleArn`) | [AWS](installation/aws.md) |
+| `GoogleCloud` | `BucketName` | [Google Cloud](installation/gcp.md) |
+| `AliyunOss` | `AccessKey`, `AccessKeySecret`, `Endpoint`, `Bucket`, `Prefix` | [Alibaba Cloud](installation/aliyun.md) |
+| `Null` | none; stores nothing | |
+
+## Search
+
+`Search:Type` picks the search index:
+
+| `Type` | Notes |
+| --- | --- |
+| `Database` (default) | searches the package database |
+| `AzureSearch` | `AccountName` and `ApiKey` under `Search` |
+| `Null` | no search results |
 
 ## Database configuration
 
@@ -449,10 +515,11 @@ The database settings are located under the `Database` key in the `appsettings.j
 }
 ```
 
-There are two settings related to the database configuration:
+There are three settings related to the database configuration:
 
 - **Type**: The database engine to use, this should be one of the strings from the above list such as `PostgreSql` or `Sqlite`.
 - **ConnectionString**: The connection string for your database engine.
+- **MySqlServerVersion**: MySQL only, for example `8.0.36`. When empty, BaGet detects the version by connecting to the server; set it to avoid that connection.
 
 ## IIS server options
 

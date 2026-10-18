@@ -32,6 +32,10 @@ public class TwoFactorModel : AccountPageModel
     /// </summary>
     public string QrCodeSvg { get; private set; }
 
+    public bool Reauthenticated { get; private set; }
+
+    public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
+
     public int RecoveryCodesLeft { get; private set; }
 
     public bool HasPassword { get; private set; } = true;
@@ -83,7 +87,7 @@ public class TwoFactorModel : AccountPageModel
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        if (!await ConfirmedAsync(user, password))
+        if (!await IsConfirmedAsync(user, password))
         {
             Error = "The confirmation is incorrect, so nothing was changed.";
         }
@@ -108,7 +112,7 @@ public class TwoFactorModel : AccountPageModel
         var user = await UserManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        if (!await ConfirmedAsync(user, password))
+        if (!await IsConfirmedAsync(user, password))
         {
             Error = "The confirmation is incorrect, so nothing was changed.";
         }
@@ -125,11 +129,6 @@ public class TwoFactorModel : AccountPageModel
         return Page();
     }
 
-    private async Task<bool> ConfirmedAsync(BaGetUser user, string password)
-        => await UserManager.HasPasswordAsync(user)
-            ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
-            : string.Equals(password, user.UserName, StringComparison.Ordinal);
-
     private async Task<bool> LoadAsync()
     {
         var user = await UserManager.GetUserAsync(User);
@@ -137,6 +136,7 @@ public class TwoFactorModel : AccountPageModel
 
         TwoFactorEnabled = user.TwoFactorEnabled;
         HasPassword = await UserManager.HasPasswordAsync(user);
+        Reauthenticated = !HasPassword && await HasReauthenticatedRecentlyAsync();
         RecoveryCodesLeft = await UserManager.CountRecoveryCodesAsync(user);
 
         if (!TwoFactorEnabled)

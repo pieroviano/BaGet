@@ -82,7 +82,7 @@ public class PackagePageTabsTests : IDisposable
         Assert.DoesNotContain("$el.closest", html);
         Assert.Contains("$event.currentTarget.closest('.install-pane')", html);
         Assert.DoesNotContain("init()", html);
-        Assert.Contains("x-init=\"const t = location.hash", html);
+        Assert.Contains("x-init=\"selectFromHash()\"", html);
     }
 
     [Fact]

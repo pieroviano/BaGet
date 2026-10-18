@@ -56,11 +56,13 @@ public class ForgotPasswordModel : AccountPageModel
         // One link template either way; the user and token are filled in later.
         var template = PageLink("/Account/ResetPassword", new { userId = UserIdPlaceholder, code = CodePlaceholder });
 
-        var limiter = HttpContext.RequestServices.GetRequiredService<PasswordResetRateLimiter>();
+        // Only an account that would be mailed uses up an allowance, so requests for names
+        // that do not exist can neither fill the limiter nor crowd real accounts out of it.
+        // The per-account limit is the protection; the client and site limits are backstops.
         var client = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-        var allowed = limiter.TryAcquire(client, user?.Id ?? "name:" + identifier.ToLowerInvariant());
-
-        if (allowed && user != null && !string.IsNullOrEmpty(user.Email))
+        if (user != null
+            && !string.IsNullOrEmpty(user.Email)
+            && HttpContext.RequestServices.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(client, user.Id))
         {
             var userId = user.Id;
             HttpContext.RequestServices.GetRequiredService<BackgroundEmailQueue>()

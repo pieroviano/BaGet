@@ -16,6 +16,7 @@
     <NewtonsoftJsonPackageVersion>13.0.3</NewtonsoftJsonPackageVersion>
     <NuGetPackageVersion>6.10.0</NuGetPackageVersion>
     <XUnitPackageVersion>2.9.0</XUnitPackageVersion>
+    <JintPackageVersion>4.2.0</JintPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

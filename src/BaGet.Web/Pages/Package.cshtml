@@ -76,20 +76,22 @@ else
             </div>
 
             @* Every tab panel is rendered by the server too. Without JavaScript they stack and the tab links jump to them. *@
+            @{
+                var tabs = new List<(string Key, string Title)>
+                {
+                    ("readme", "README"),
+                    ("frameworks", "Frameworks"),
+                    ("dependencies", "Dependencies"),
+                };
+                if (!Model.IsDotnetTemplate && !Model.IsDotnetTool) tabs.Add(("usedby", "Used By"));
+                tabs.Add(("versions", "Versions"));
+                tabs.Add(("releasenotes", "Release Notes"));
+            }
+
+            @* Alpine 2 evaluates x-init as one expression, so the logic is a method of x-data. *@
             <div class="package-tabs"
-                 x-data="{ tab: 'readme' }"
-                 x-init="const t = location.hash.replace('#tab-', ''); if (t &amp;&amp; $el.querySelector('#tab-' + t)) tab = t">
-                @{
-                    var tabs = new List<(string Key, string Title)>
-                    {
-                        ("readme", "README"),
-                        ("frameworks", "Frameworks"),
-                        ("dependencies", "Dependencies"),
-                    };
-                    if (!Model.IsDotnetTemplate && !Model.IsDotnetTool) tabs.Add(("usedby", "Used By"));
-                    tabs.Add(("versions", "Versions"));
-                    tabs.Add(("releasenotes", "Release Notes"));
-                }
+                 x-data="{ tab: 'readme', keys: [@Html.Raw(string.Join(", ", tabs.Select(t => "'" + t.Key + "'")))], selectFromHash() { var key = location.hash.replace('#tab-', ''); if (this.keys.indexOf(key) >= 0) this.tab = key; } }"
+                 x-init="selectFromHash()">
 
                 <ul class="nav package-tab-list">
                     @foreach (var tab in tabs)

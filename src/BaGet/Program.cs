@@ -302,7 +302,7 @@ public partial class Program
         if (accounts?.Enabled != true || email?.IsConfigured != true) return;
 
         var site = app.Configuration.GetSection(nameof(BaGetOptions.Site)).Get<SiteOptions>();
-        if (!EmailLinkPolicy.CanBuildLinks(site?.PublicUrl, app.Configuration["AllowedHosts"]))
+        if (!EmailLinkPolicy.CanBuildLinks(site?.PublicUrl))
         {
             app.Logger.LogWarning(EmailLinkPolicy.UnavailableWarning);
         }

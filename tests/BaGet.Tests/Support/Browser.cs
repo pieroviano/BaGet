@@ -27,6 +27,8 @@ internal sealed class Browser : System.IDisposable
 
     public Task<HttpResponseMessage> GetAsync(string url) => _client.GetAsync(url);
 
+    public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request) => _client.SendAsync(request);
+
     public async Task<string> GetPageAsync(string url)
     {
         using var response = await _client.GetAsync(url);

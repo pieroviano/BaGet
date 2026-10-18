@@ -180,42 +180,4 @@ public class ExternalLoginTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, callback.StatusCode);
         Assert.Empty(await UsersAsync(app));
     }
-
-    /// <summary>
-    /// Stands in for the provider's callback: fills the external cookie.
-    /// </summary>
-    private sealed class ExternalCookieFilter : IStartupFilter
-    {
-        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
-        {
-            app.Use(async (context, continuation) =>
-            {
-                if (context.Request.Path != "/test/external")
-                {
-                    await continuation();
-                    return;
-                }
-
-                var query = context.Request.Query;
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, query["sub"]),
-                    new Claim("preferred_username", query["name"]),
-                };
-                if (!string.IsNullOrEmpty(query["email"])) claims.Add(new Claim(ClaimTypes.Email, query["email"]));
-                if (!string.IsNullOrEmpty(query["verified"])) claims.Add(new Claim("email_verified", query["verified"]));
-
-                var properties = new AuthenticationProperties();
-                properties.Items["LoginProvider"] = "oidc";
-                await context.SignInAsync(
-                    IdentityConstants.ExternalScheme,
-                    new ClaimsPrincipal(new ClaimsIdentity(claims, "test")),
-                    properties);
-
-                context.Response.StatusCode = StatusCodes.Status204NoContent;
-            });
-
-            next(app);
-        };
-    }
 }

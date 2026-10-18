@@ -121,16 +121,38 @@ public class EmailLinkTests : IDisposable
     }
 
     [Fact]
-    public async Task WithRestrictedHostsAndNoPublicUrlLinksUseTheRequestHost()
+    public async Task WithRestrictedHostsButNoPublicUrlEmailIsStillSwitchedOff()
     {
         var app = Start(new() { { "AllowedHosts", "baget.example.com" } });
         await CreateConfirmedUserAsync(app, "alice", "alice@example.com");
         var browser = NewBrowser(app, host: "baget.example.com");
 
-        using (await ForgotAsync(browser, "alice")) { }
+        using var forgot = await browser.GetAsync("account/forgotpassword");
+
+        Assert.Equal(HttpStatusCode.NotFound, forgot.StatusCode);
+        Assert.False(app.Services.GetRequiredService<IOptions<EmailOptions>>().Value.IsConfigured);
+    }
+
+    [Fact]
+    public async Task ASpoofedForwardedProtoCannotDowngradeALink()
+    {
+        var app = Start(new() { { "Site:PublicUrl", "https://baget.example.com" }, { "AllowedHosts", "baget.example.com" } });
+        await CreateConfirmedUserAsync(app, "alice", "alice@example.com");
+        var browser = NewBrowser(app, host: "baget.example.com");
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "account/forgotpassword")
+        {
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "Identifier", "alice" },
+                { "__RequestVerificationToken", await browser.TokenAsync("account/forgotpassword") },
+            }),
+        };
+        request.Headers.Add("X-Forwarded-Proto", "http");
+        using (await browser.SendAsync(request)) { }
 
         var mail = Assert.Single(await ResetMailsAsync(app, 1));
-        Assert.StartsWith("http://baget.example.com/account/resetpassword?", mail.Payload);
+        Assert.StartsWith("https://baget.example.com/account/resetpassword?", mail.Payload);
     }
 
     [Theory]
@@ -146,17 +168,12 @@ public class EmailLinkTests : IDisposable
     }
 
     [Theory]
-    [InlineData("https://baget.example.com", null, true)]
-    [InlineData(null, "baget.example.com", true)]
-    [InlineData(null, "a.example.com; b.example.com", true)]
-    [InlineData(null, null, false)]
-    [InlineData(null, "", false)]
-    [InlineData(null, "*", false)]
-    [InlineData(null, "a.example.com;*", false)]
-    [InlineData("ftp://x", "*", false)]
-    [InlineData("ftp://x", "a.example.com", true)]
-    public void LinksCanBeBuiltOnlyFromAPublicUrlOrRestrictedHosts(string publicUrl, string allowedHosts, bool expected)
-        => Assert.Equal(expected, BaGet.Identity.EmailLinkPolicy.CanBuildLinks(publicUrl, allowedHosts));
+    [InlineData("https://baget.example.com", true)]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("ftp://x", false)]
+    public void LinksCanBeBuiltOnlyFromAPublicUrl(string publicUrl, bool expected)
+        => Assert.Equal(expected, BaGet.Identity.EmailLinkPolicy.CanBuildLinks(publicUrl));
 
     // --- S5: forgot password ------------------------------------------------------------
 
@@ -200,7 +217,7 @@ public class EmailLinkTests : IDisposable
     }
 
     [Fact]
-    public void TheLimiterAllowsOneMailPerTargetPerWindowAndTenRequestsPerClient()
+    public void TheLimiterAllowsOneMailPerTargetPerWindowAndSixtyRequestsPerClient()
     {
         var time = new MutableTime();
         var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
@@ -222,6 +239,63 @@ public class EmailLinkTests : IDisposable
 
         time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
         Assert.True(limiter.TryAcquire("client", "one-too-many"));
+    }
+
+    [Fact]
+    public void ASharedOrSpoofedClientAddressNeverBlocksTheFirstResetOfAnAccountSiteWide()
+    {
+        var time = new MutableTime();
+        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+
+        // Every request behind a proxy that sets no forwarded header shares one address.
+        for (var i = 0; i < BaGet.Identity.PasswordResetRateLimiter.MaxPerClient; i++)
+        {
+            Assert.True(limiter.TryAcquire("", "account" + i));
+        }
+
+        // The shared address is spent; an account that comes from a different address still gets its mail.
+        Assert.True(limiter.TryAcquire("203.0.113.9", "someone-else"));
+    }
+
+    [Fact]
+    public void TheStateIsHardBoundedAndTheSiteWideCapDoesNotStopAnAccountAfterTheWindow()
+    {
+        var time = new MutableTime();
+        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+        var total = BaGet.Identity.PasswordResetRateLimiter.MaxTotal;
+
+        // A flood from distinct addresses: accepted up to the site-wide cap, then refused.
+        for (var i = 0; i < total; i++) Assert.True(limiter.TryAcquire("ip" + i, "account" + i));
+        Assert.False(limiter.TryAcquire("fresh-ip", "victim"));
+        Assert.Equal(total, StateSize(limiter));
+
+        // Refused requests recorded nothing, however many arrive.
+        for (var i = 0; i < 50_000; i++) limiter.TryAcquire("spam" + i, "spam-account" + i);
+        Assert.Equal(total, StateSize(limiter));
+
+        // The window passes and everything is forgotten: the account is mailed.
+        time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
+        Assert.True(limiter.TryAcquire("fresh-ip", "victim"));
+        Assert.Equal(1, StateSize(limiter));
+    }
+
+    private static int StateSize(BaGet.Identity.PasswordResetRateLimiter limiter) => limiter.TrackedCount;
+
+    [Fact]
+    public async Task RequestsForUnknownNamesUseUpNoAllowance()
+    {
+        var app = Start(new() { { "Site:PublicUrl", "https://baget.example.com" } });
+        await CreateConfirmedUserAsync(app, "alice", "alice@example.com");
+        var browser = NewBrowser(app);
+
+        for (var i = 0; i < BaGet.Identity.PasswordResetRateLimiter.MaxPerClient + 5; i++)
+        {
+            using (await ForgotAsync(browser, "nobody" + i)) { }
+        }
+
+        using (await ForgotAsync(browser, "alice")) { }
+
+        Assert.Single(await ResetMailsAsync(app, 1));
     }
 
     private sealed class MutableTime : SystemTime

@@ -49,7 +49,7 @@ public static class AccountsServiceCollectionExtensions
                     ?? new EmailOptions();
         // Links in emails need a trustworthy address for this server. Without one, email is
         // switched off rather than built from the request's Host header.
-        var linksAvailable = EmailLinkPolicy.CanBuildLinks(site.PublicUrl, configuration["AllowedHosts"]);
+        var linksAvailable = EmailLinkPolicy.CanBuildLinks(site.PublicUrl);
         if (email.IsConfigured && !linksAvailable) email.Suppressed = true;
         services.PostConfigure<EmailOptions>(configured => configured.Suppressed = email.Suppressed);
 

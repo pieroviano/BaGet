@@ -64,6 +64,31 @@ public class SearchSortWebTests : IDisposable
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
+    private static async Task AddVersionAsync(BaGetApplication app, string id, string version, int year)
+    {
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<IContext>();
+        var parsed = NuGetVersion.Parse(version);
+
+        context.Packages.Add(new Package
+        {
+            Id = id,
+            Version = parsed,
+            Authors = new[] { "An Author" },
+            Description = "Description",
+            Listed = true,
+            IsPrerelease = parsed.IsPrerelease,
+            SemVerLevel = SemVerLevel.Unknown,
+            Published = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Summary = "Summary",
+            Tags = Array.Empty<string>(),
+            Dependencies = new List<PackageDependency>(),
+            PackageTypes = new List<PackageType>(),
+            TargetFrameworks = new List<TargetFramework>(),
+        });
+        await context.SaveChangesAsync(CancellationToken.None);
+    }
+
     private static async Task SeedAsync(BaGetApplication app)
     {
         await AddAsync(app, "Sortable.Alpha", downloads: 10, year: 2023);
@@ -107,6 +132,29 @@ public class SearchSortWebTests : IDisposable
         var html = await browser.GetPageAsync("?q=Sortable&sortBy=LastUpdated");
 
         Assert.Equal(new[] { "Sortable.Alpha", "Sortable.Gamma", "Sortable.Beta" }, OrderOf(html));
+    }
+
+    [Theory]
+    [InlineData(false, "Stale.B", "Stale.A", "2021-01-01", "2024-01-01")]
+    [InlineData(true, "Stale.A", "Stale.B", "2024-01-01", "2021-01-01")]
+    public async Task TheCardAndTheOrderAgreeWithThePrereleaseFilter(bool prerelease, string first, string second, string aShows, string aHides)
+    {
+        var (app, browser) = Start();
+        await AddVersionAsync(app, "Stale.A", "1.0.0", 2021);
+        await AddVersionAsync(app, "Stale.A", "2.0.0-beta", 2024);
+        await AddVersionAsync(app, "Stale.B", "1.0.0", 2023);
+
+        var html = await browser.GetPageAsync($"?q=Stale&prerelease={prerelease.ToString().ToLowerInvariant()}&sortBy=LastUpdated");
+
+        Assert.True(
+            html.IndexOf($"/packages/{first}\"", StringComparison.OrdinalIgnoreCase)
+            < html.IndexOf($"/packages/{second}\"", StringComparison.OrdinalIgnoreCase));
+
+        var cardOfA = html.Substring(html.IndexOf("/packages/Stale.A\"", StringComparison.OrdinalIgnoreCase));
+        var next = cardOfA.IndexOf("/packages/Stale.B\"", StringComparison.OrdinalIgnoreCase);
+        if (next > 0) cardOfA = cardOfA.Substring(0, next);
+        Assert.Contains($"title=\"{aShows} ", cardOfA);
+        Assert.DoesNotContain($"title=\"{aHides} ", cardOfA);
     }
 
     [Fact]

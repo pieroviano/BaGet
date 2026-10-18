@@ -34,20 +34,34 @@
 
         <h2>Turn off</h2>
         <form method="post" asp-page-handler="Disable">
-            <div class="form-group">
-                <label for="disablePassword">@(Model.HasPassword ? "Your password" : "Type your user name to confirm")</label>
-                <input id="disablePassword" name="password" type="@(Model.HasPassword ? "password" : "text")" class="form-control" autocomplete="off" />
-            </div>
+            @if (Model.HasPassword)
+            {
+                <div class="form-group">
+                    <label for="disablePassword">Your password</label>
+                    <input id="disablePassword" name="password" type="password" class="form-control" autocomplete="off" />
+                </div>
+            }
+            else
+            {
+                <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/TwoFactor"))" />
+            }
             <button type="submit" class="btn btn-default">Turn off two-factor authentication</button>
         </form>
 
         <h2>Reset the authenticator</h2>
         <p>Use this if you lost the device. It turns two-factor authentication off and gives you a new key to set up again.</p>
         <form method="post" asp-page-handler="Reset">
-            <div class="form-group">
-                <label for="resetPassword">@(Model.HasPassword ? "Your password" : "Type your user name to confirm")</label>
-                <input id="resetPassword" name="password" type="@(Model.HasPassword ? "password" : "text")" class="form-control" autocomplete="off" />
-            </div>
+            @if (Model.HasPassword)
+            {
+                <div class="form-group">
+                    <label for="resetPassword">Your password</label>
+                    <input id="resetPassword" name="password" type="password" class="form-control" autocomplete="off" />
+                </div>
+            }
+            else
+            {
+                <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/TwoFactor"))" />
+            }
             <button type="submit" class="btn btn-danger">Reset authenticator</button>
         </form>
     }

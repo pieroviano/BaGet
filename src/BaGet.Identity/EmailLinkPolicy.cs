@@ -43,27 +43,15 @@ public static class EmailLinkPolicy
     }
 
     /// <summary>
-    /// Links can be built from the configured public URL, or, failing that, from the request
-    /// host when host filtering restricts it to a list of hosts. With neither (an unset or
-    /// "*" <c>AllowedHosts</c>, the default) the request host is attacker-controlled.
+    /// Links can be built only from the configured public URL. The request's host and scheme
+    /// are attacker-influenced (a forged Host, a spoofed X-Forwarded-Proto) even when
+    /// "AllowedHosts" restricts the host, so they are never used.
     /// </summary>
-    public static bool CanBuildLinks(string publicUrl, string allowedHosts)
-        => TryParsePublicUrl(publicUrl, out _) || HasHostRestriction(allowedHosts);
-
-    public static bool HasHostRestriction(string allowedHosts)
-    {
-        var hosts = (allowedHosts ?? string.Empty)
-            .Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .Select(host => host.Trim())
-            .Where(host => host.Length > 0)
-            .ToList();
-
-        return hosts.Count > 0 && !hosts.Contains("*");
-    }
+    public static bool CanBuildLinks(string publicUrl) => TryParsePublicUrl(publicUrl, out _);
 
     public const string UnavailableWarning =
-        "Email is configured, but neither \"Site:PublicUrl\" is set nor does \"AllowedHosts\" restrict the host, "
-        + "so links in emails cannot be trusted to point at this server. Email, and everything that needs it "
-        + "(password recovery, email confirmation, contact owners), is switched off. Set \"Site:PublicUrl\" "
-        + "(for example \"https://packages.example.com\") to enable it.";
+        "Email is configured, but \"Site:PublicUrl\" is not set, so links in emails cannot be trusted to point "
+        + "at this server. Email, and everything that needs it (password recovery, email confirmation, "
+        + "contact owners), is switched off. Set \"Site:PublicUrl\" (for example "
+        + "\"https://packages.example.com\") to enable it.";
 }
