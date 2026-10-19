@@ -78,7 +78,7 @@ source and before environment variables and the command line. `SettingsService` 
 `[AllowedSettingValues(...)]` (string settings; `Database/Storage/Search:Type`) makes the catalog emit an `Enum`
 choice with those values and is also what `ConfigureBaGetOptions` validates against (one list);
 `[SettingExample(dependsOn, whenValue, example)]` gives a setting per-value examples (`SettingDescriptor.Examples`),
-rendered by `_SettingField` as a placeholder/help line (never the value) via `SettingPresentation`. Tests
+rendered by `_SettingField` as a placeholder/help line (never the value) via `SettingPresentation`. Examples travel in one `data-examples` JSON attribute (no per-value attribute names); the catalog throws `InvalidOperationException` for duplicate `whenValue`s (case-insensitive) or mixed `dependsOn` on one property. Tests
 set `SettingsOverridesPath` to the temp directory; `UseSetting` values arrive through the *last* (chained host)
 provider, so they shadow saved overrides — integration tests that save a setting must use keys the harness does
 not set.

@@ -67,7 +67,8 @@
     @if (hasExamples)
     {
         @* The example is only a hint: a placeholder (when nothing is stored) and this line, never the value.
-           Settings.cshtml's script rewrites them when the selector changes, reading the data-example-* attributes.
+           Settings.cshtml's script rewrites them when the selector changes, reading the data-examples JSON attribute (keyed by the lower-cased value, so no value can collide
+           with the data-example-source/-target/-stored control attributes).
            A TagBuilder encodes every attribute value and text. *@
         var line = new TagBuilder("p");
         line.AddCssClass("help-block");
@@ -77,7 +78,7 @@
         line.Attributes["data-example-target"] = id;
         line.Attributes["data-example-stored"] = Model.HasValue ? "true" : "false";
         if (example == null) line.Attributes["hidden"] = "hidden";
-        foreach (var pair in d.Examples!) line.Attributes[SettingPresentation.ExampleAttribute(pair.Key)] = pair.Value;
+        line.Attributes["data-examples"] = SettingPresentation.ExamplesJson(d.Examples!);
 
         var type = new TagBuilder("span");
         type.Attributes["data-example-type"] = string.Empty;

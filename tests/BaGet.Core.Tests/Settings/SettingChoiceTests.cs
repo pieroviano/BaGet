@@ -197,10 +197,52 @@ public class SettingChoiceTests
         Assert.Null(SettingPresentation.ExampleFor(State("x").Descriptor, "Sqlite"));
     }
 
+    [Fact]
+    public void TheExamplesJsonKeysAreLowerCasedValuesOfAnyCharacters()
+    {
+        var json = SettingPresentation.ExamplesJson(new Dictionary<string, string>
+        {
+            ["Source"] = "a",
+            ["Target"] = "b",
+            ["a b\"<"] = "<c>",
+        });
+
+        var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json)!;
+        Assert.Equal("a", parsed["source"]);
+        Assert.Equal("b", parsed["target"]);
+        Assert.Equal("<c>", parsed["a b\"<"]);
+        Assert.DoesNotContain("<", json);
+    }
+
+    public class DuplicateExampleOptions
+    {
+        public string? Color { get; set; }
+
+        [SettingExample(nameof(Color), "Red", "r")]
+        [SettingExample(nameof(Color), "RED", "R")]
+        public string? Value { get; set; }
+    }
+
+    public class MixedDependsOnOptions
+    {
+        public string? Color { get; set; }
+
+        public string? Size { get; set; }
+
+        [SettingExample(nameof(Color), "Red", "r")]
+        [SettingExample(nameof(Size), "Big", "b")]
+        public string? Value { get; set; }
+    }
+
     [Theory]
-    [InlineData("Sqlite", "data-example-sqlite")]
-    [InlineData("SqlServer", "data-example-sqlserver")]
-    [InlineData("a b\"<", "data-example-a-b--")]
-    public void TheExampleAttributeNameIsSafe(string value, string expected)
-        => Assert.Equal(expected, SettingPresentation.ExampleAttribute(value));
+    [InlineData(typeof(DuplicateExampleOptions), "Value", "RED")]
+    [InlineData(typeof(MixedDependsOnOptions), "Value", "Size")]
+    public void InvalidExamplesFailTheCatalogNamingTheProperty(Type type, string property, string mention)
+    {
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => Catalog(new SettingsSchemaRegistration(type, "Test")));
+
+        Assert.Contains("Test:" + property, ex.Message);
+        Assert.Contains(mention, ex.Message);
+    }
 }

@@ -67,7 +67,7 @@ public sealed class AllowedSettingValuesAttribute : Attribute
 /// Gives a setting an example value that depends on another setting of the same options
 /// type, such as a connection string per database type. The Settings page shows it as a
 /// placeholder and a help line, and updates both when the other setting's drop-down changes.
-/// The example is never written into the field's value. Repeat the attribute once per value.
+/// The example is never written into the field's value. Repeat the attribute once per value; every one on a property must depend on the same property and name each value once, or the catalog throws <see cref="InvalidOperationException"/>.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
 public sealed class SettingExampleAttribute : Attribute

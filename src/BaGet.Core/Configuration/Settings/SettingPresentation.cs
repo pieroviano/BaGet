@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Text.Json;
 
 namespace BaGet.Core;
 
@@ -98,17 +98,17 @@ public static class SettingPresentation
     }
 
     /// <summary>
-    /// The name of the data attribute that carries one example: "data-example-" plus the value
-    /// lower-cased, with anything but letters and digits as "-". The page script derives the same name.
+    /// The value of the <c>data-examples</c> attribute: a JSON object of the examples keyed by the
+    /// lower-cased dependsOn value (any characters, so no value can collide with another data attribute).
+    /// The page script lower-cases the selected value to look it up. Encode it as an attribute value.
     /// </summary>
-    public static string ExampleAttribute(string value)
+    public static string ExamplesJson(IReadOnlyDictionary<string, string> examples)
     {
-        var builder = new StringBuilder("data-example-");
-        foreach (var c in value ?? string.Empty)
-        {
-            builder.Append(c < 128 && char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-');
-        }
+        if (examples == null) throw new ArgumentNullException(nameof(examples));
 
-        return builder.ToString();
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var pair in examples) map[(pair.Key ?? string.Empty).ToLowerInvariant()] = pair.Value;
+
+        return JsonSerializer.Serialize(map);
     }
 }

@@ -82,8 +82,8 @@
         // changes. Text only (textContent / setAttribute): nothing is parsed as markup, no request is sent,
         // and no field value is touched.
         (function () {
-            function attributeName(value) {
-                return 'data-example-' + String(value).toLowerCase().replace(/[^a-z0-9]/g, '-');
+            function parse(text) {
+                try { return JSON.parse(text || '{}') || {}; } catch (e) { return {}; }
             }
 
             document.querySelectorAll('[data-example-source]').forEach(function (line) {
@@ -91,12 +91,14 @@
                 var input = document.getElementById(line.getAttribute('data-example-target'));
                 if (!source) return;
 
+                var examples = parse(line.getAttribute('data-examples'));
                 var stored = line.getAttribute('data-example-stored') === 'true';
 
                 function update() {
                     var value = source.value;
-                    var example = line.getAttribute(attributeName(value));
-                    var hasExample = example !== null;
+                    var key = String(value).toLowerCase();
+                    var hasExample = Object.prototype.hasOwnProperty.call(examples, key);
+                    var example = hasExample ? String(examples[key]) : null;
 
                     line.querySelector('[data-example-type]').textContent = value;
                     line.querySelector('[data-example-text]').textContent = hasExample ? example : '';

@@ -102,11 +102,14 @@ public class SettingsChoicePageTests : IDisposable
         Assert.Contains("data-example-source=\"Database_Type\"", line);
         Assert.Contains("data-example-target=\"Database_ConnectionString\"", line);
         Assert.Contains("data-example-stored=\"true\"", line);
-        Assert.Contains("data-example-sqlite=\"Data Source=baget.db\"", line);
-        Assert.Contains("data-example-sqlserver=\"Server=localhost;Database=BaGet;Trusted_Connection=True;TrustServerCertificate=True\"", line);
-        Assert.Contains("data-example-postgresql=\"Host=localhost;Port=5432;Database=baget;Username=baget;Password=&lt;password&gt;\"", line);
-        Assert.Contains("data-example-mysql=\"Server=localhost;Port=3306;Database=baget;User=baget;Password=&lt;password&gt;\"", line);
-        Assert.Contains("data-example-azuretable=\"DefaultEndpointsProtocol=https;AccountName=&lt;account&gt;;AccountKey=&lt;key&gt;;EndpointSuffix=core.windows.net\"", line);
+        var json = System.Net.WebUtility.HtmlDecode(
+            System.Text.RegularExpressions.Regex.Match(line, "data-examples=\"([^\"]*)\"").Groups[1].Value);
+        var examples = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json)!;
+        Assert.Equal("Data Source=baget.db", examples["sqlite"]);
+        Assert.Equal("Server=localhost;Database=BaGet;Trusted_Connection=True;TrustServerCertificate=True", examples["sqlserver"]);
+        Assert.Equal("Host=localhost;Port=5432;Database=baget;Username=baget;Password=<password>", examples["postgresql"]);
+        Assert.Equal("Server=localhost;Port=3306;Database=baget;User=baget;Password=<password>", examples["mysql"]);
+        Assert.Equal("DefaultEndpointsProtocol=https;AccountName=<account>;AccountKey=<key>;EndpointSuffix=core.windows.net", examples["azuretable"]);
         Assert.DoesNotContain("hidden", line); // the test host uses Sqlite, which has an example
     }
 
@@ -126,7 +129,7 @@ public class SettingsChoicePageTests : IDisposable
     {
         var html = await SettingsPageAsync();
 
-        var script = html.Substring(html.IndexOf("function attributeName", StringComparison.Ordinal));
+        var script = html.Substring(html.IndexOf("function parse", StringComparison.Ordinal));
         script = script.Substring(0, script.IndexOf("</script>", StringComparison.Ordinal));
         Assert.Contains("textContent", script);
         Assert.Contains("setAttribute('placeholder'", script);

@@ -212,10 +212,7 @@ public class SettingsCatalog
                 ExampleDependsOnKey: examples.Count == 0
                     ? null
                     : string.IsNullOrEmpty(prefix) ? examples[0].DependsOn : prefix + ":" + examples[0].DependsOn,
-                Examples: examples.Count == 0
-                    ? null
-                    : examples.GroupBy(e => e.DependsOn, StringComparer.Ordinal).First()
-                        .ToDictionary(e => e.WhenValue, e => e.Example, StringComparer.OrdinalIgnoreCase));
+                Examples: ExamplesOf(property, key, examples));
 
             if (byKey.TryGetValue(key, out var existing))
             {
@@ -242,6 +239,37 @@ public class SettingsCatalog
                 order.Add(key);
             }
         }
+    }
+
+    private static Dictionary<string, string>? ExamplesOf(
+        PropertyInfo property,
+        string key,
+        List<SettingExampleAttribute> examples)
+    {
+        if (examples.Count == 0) return null;
+
+        // The settings page selects an example by one other setting, so every example of a property
+        // must depend on the same one and name each value once (case-insensitively).
+        var dependsOn = examples[0].DependsOn;
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var example in examples)
+        {
+            if (!string.Equals(example.DependsOn, dependsOn, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Setting '{key}' ({property.DeclaringType?.Name}.{property.Name}) has [SettingExample] attributes " +
+                    $"that depend on different properties ('{dependsOn}' and '{example.DependsOn}'); only one is supported.");
+            }
+
+            if (!result.TryAdd(example.WhenValue, example.Example))
+            {
+                throw new InvalidOperationException(
+                    $"Setting '{key}' ({property.DeclaringType?.Name}.{property.Name}) has more than one [SettingExample] " +
+                    $"for the value '{example.WhenValue}' of '{dependsOn}' (values are compared ignoring case).");
+            }
+        }
+
+        return result;
     }
 
     private static string GroupOf(PropertyInfo property)
