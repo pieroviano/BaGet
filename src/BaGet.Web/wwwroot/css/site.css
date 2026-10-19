@@ -1,10 +1,17 @@
 /* BaGet site styles. Written for BaGet; the layout follows the conventions of nuget.org
-   (dark blue header band, Segoe UI, result cards, footer) without using any of its assets. */
+   (golden header band with dark text, Segoe UI, result cards, footer) without using any of its assets.
+   Palette: golden baguette. Text/background pairs are >= 4.5:1 (WCAG AA). */
 
 :root {
-    --brand: #004880;
-    --brand-dark: #002b4d;
-    --brand-light: #e3ebf1;
+    --brand: #8A5A12;
+    --brand-dark: #5C3A0A;
+    --brand-light: #FBF1DF;
+    --header-bg: #D99A32;
+    --header-fg: #2B1A0A;
+    --header-border: #B07A22;
+    --header-hover: rgba(43, 26, 10, 0.10);
+    --header-line: rgba(43, 26, 10, 0.25);
+    --footer-bg: #3B2508;
     --accent: #f5a623;
     --text: #333;
     --muted: #666;
@@ -36,7 +43,13 @@ body {
 }
 
 a {
-    color: #0066cc;
+    color: var(--brand);
+}
+
+a:hover,
+a:focus {
+    color: var(--brand-dark);
+    text-decoration: underline;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -109,12 +122,12 @@ h4 {
     margin-bottom: 0;
     border-radius: 0;
     border: 0;
-    border-bottom: 1px solid var(--brand-dark);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .navbar-inverse {
-    background-color: var(--brand);
-    border-color: var(--brand-dark);
+    background-color: var(--header-bg);
+    border-color: var(--header-border);
 }
 
 .navbar-brand.brand {
@@ -123,14 +136,14 @@ h4 {
     height: auto;
     padding-top: 11px;
     padding-bottom: 11px;
-    color: #fff;
+    color: var(--header-fg);
     font-size: 22px;
     font-weight: 600;
 }
 
 .navbar-brand.brand:hover,
 .navbar-brand.brand:focus {
-    color: #fff;
+    color: var(--header-fg);
     text-decoration: none;
 }
 
@@ -139,8 +152,8 @@ h4 {
 }
 
 .navbar-inverse .navbar-nav > li > a {
-    font-weight: 300;
-    color: var(--brand-light);
+    font-weight: 400;
+    color: var(--header-fg);
 }
 
 .navbar-nav > li > a {
@@ -152,28 +165,46 @@ h4 {
 .navbar-inverse .navbar-nav .open > a,
 .navbar-inverse .navbar-nav .open > a:hover,
 .navbar-inverse .navbar-nav .open > a:focus {
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--header-fg);
+    background-color: var(--header-hover);
 }
 
 .navbar-inverse .navbar-nav a.active,
 .navbar-inverse .navbar-nav a.active:hover,
 .navbar-inverse .navbar-nav a.active:focus {
-    color: #fff;
+    color: var(--header-fg);
     background-color: transparent;
 }
 
 .navbar-inverse .navbar-nav a.active span {
     padding: 5px 0;
-    border-bottom: 2px solid var(--accent);
+    border-bottom: 2px solid var(--header-fg);
 }
 
 .navbar-inverse .navbar-toggle {
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: var(--header-line);
+}
+
+.navbar-inverse .navbar-toggle:hover,
+.navbar-inverse .navbar-toggle:focus {
+    background-color: var(--header-hover);
+}
+
+.navbar-inverse .navbar-toggle .icon-bar {
+    background-color: var(--header-fg);
 }
 
 .navbar-inverse .navbar-collapse {
-    border-color: var(--brand-dark);
+    border-color: var(--header-line);
+}
+
+/* Focus ring: dark, visible on the gold band (and on white). */
+.site-header a:focus,
+.site-header button:focus,
+.site-header a:focus-visible,
+.site-header button:focus-visible {
+    outline: 2px solid var(--header-fg);
+    outline-offset: -2px;
 }
 
 .account-area .dropdown-menu {
@@ -230,7 +261,7 @@ h4 {
 .home-search button:focus {
     color: #fff;
     background-color: var(--brand-dark);
-    border-color: #001a2e;
+    border-color: var(--brand-dark);
 }
 
 .link-button {
@@ -241,14 +272,14 @@ h4 {
     display: inline;
     margin: 0;
     padding: 0;
-    color: #337ab7;
+    color: var(--brand);
 }
 
 .link-button:hover,
 .link-button:focus {
     outline: none;
     text-decoration: underline;
-    color: #23527c;
+    color: var(--brand-dark);
 }
 
 /* Footer
@@ -258,7 +289,7 @@ h4 {
     margin-top: 40px;
     padding: 20px 0 8px;
     color: var(--brand-light);
-    background-color: var(--brand);
+    background-color: var(--footer-bg);
 }
 
 .site-footer a {
@@ -360,7 +391,7 @@ h4 {
 }
 
 .package-card:hover {
-    border-color: #a8b8c6;
+    border-color: var(--brand);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
@@ -473,7 +504,7 @@ h4 {
     font-weight: 600;
     color: #fff;
     text-decoration: underline;
-    background-color: #002440;
+    background-color: var(--footer-bg);
 }
 
 .tabbed-info .content {
@@ -489,8 +520,8 @@ h4 {
     font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
     line-height: 1.5;
     color: #fff;
-    background-color: #002440;
-    border-color: #002440;
+    background-color: var(--footer-bg);
+    border-color: var(--footer-bg);
     border-style: solid;
     border-width: 1px 0 1px 1px;
 }
@@ -659,7 +690,7 @@ h4 {
 .package-tabs .package-tab-list li a {
     display: block;
     padding: 8px 14px;
-    color: #004880;
+    color: var(--brand);
     text-decoration: none;
     border-bottom: 3px solid transparent;
 }
@@ -667,7 +698,7 @@ h4 {
 .package-tabs .package-tab-list li.active a {
     font-weight: 600;
     color: #000;
-    border-bottom-color: #004880;
+    border-bottom-color: var(--brand);
 }
 
 .package-tabs .tab-panel {
@@ -709,7 +740,7 @@ h4 {
     text-align: center;
     font-weight: 600;
     color: #fff;
-    background-color: #004880;
+    background-color: var(--brand);
     border-radius: 50%;
 }
 
