@@ -1,8 +1,25 @@
-# BaGet's PostgreSQL Database Provider
+# Extension.BaGet.Database.PostgreSql
 
-This project contains BaGet's PostgreSQL database provider.
+The PostgreSQL database provider of [BaGet Extension](https://pieroviano.github.io/BaGet/), built on `Npgsql.EntityFrameworkCore.PostgreSQL`.
 
-## Migrations
+```powershell
+dotnet add package Extension.BaGet.Database.PostgreSql
+```
+
+## Usage
+
+Register it in the `BaGetApplication` callback; it activates when `Database:Type` is `PostgreSql`:
+
+```csharp
+services.AddBaGetWebApplication(app => app.AddPostgreSqlDatabase());
+```
+
+| Setting | Value |
+|---|---|
+| `Database:Type` | `PostgreSql` |
+| `Database:ConnectionString` | e.g. `Host=localhost;Database=baget;Username=baget;Password=...` |
+
+## Migrations (contributors)
 
 The project has its own design-time context factory, so `dotnet ef` needs no startup project and no
 running database. The tool version is pinned by `.config/dotnet-tools.json`; run `dotnet tool restore` once.

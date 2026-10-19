@@ -1,17 +1,16 @@
-# BaGet.Protocol
+# Extension.BaGet.Protocol
 
-[![Nuget](https://img.shields.io/nuget/dt/BaGet.Protocol)](https://www.nuget.org/packages/BaGet.Protocol)
+BaGet Extension's SDK to interact with the [NuGet protocol](https://learn.microsoft.com/nuget/api/overview).
+Standalone: it does not depend on the rest of BaGet.
 
-BaGet's SDK to interact with the [NuGet protocol](https://docs.microsoft.com/en-us/nuget/api/overview).
-
-[Package (NuGet)](https://www.nuget.org/packages/BaGet.Protocol) | [Documentation](../../docs/advanced/sdk.md) | [Samples](../../samples)
+[Documentation](https://pieroviano.github.io/BaGet/advanced/sdk/) | [Samples](https://github.com/pieroviano/BaGet/tree/main/samples) | [Source](https://github.com/pieroviano/BaGet)
 
 ## Getting started
 
 ### Install the package
 
 ```powershell
-dotnet add package BaGet.Protocol
+dotnet add package Extension.BaGet.Protocol
 ```
 
 ## Examples

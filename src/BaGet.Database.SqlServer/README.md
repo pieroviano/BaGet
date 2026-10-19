@@ -1,8 +1,25 @@
-# BaGet's SQL Server Database Provider
+# Extension.BaGet.Database.SqlServer
 
-This project contains BaGet's SQL Server database provider.
+The SQL Server database provider of [BaGet Extension](https://pieroviano.github.io/BaGet/), built on `Microsoft.EntityFrameworkCore.SqlServer`.
 
-## Migrations
+```powershell
+dotnet add package Extension.BaGet.Database.SqlServer
+```
+
+## Usage
+
+Register it in the `BaGetApplication` callback; it activates when `Database:Type` is `SqlServer`:
+
+```csharp
+services.AddBaGetWebApplication(app => app.AddSqlServerDatabase());
+```
+
+| Setting | Value |
+|---|---|
+| `Database:Type` | `SqlServer` |
+| `Database:ConnectionString` | e.g. `Server=.;Database=BaGet;Trusted_Connection=True;TrustServerCertificate=True` |
+
+## Migrations (contributors)
 
 The project has its own design-time context factory, so `dotnet ef` needs no startup project and no
 running database. The tool version is pinned by `.config/dotnet-tools.json`; run `dotnet tool restore` once.

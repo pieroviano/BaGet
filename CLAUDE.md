@@ -106,6 +106,9 @@ Unit tests reach internals through `InternalsVisibleTo`, declared in each **proj
 
 ## Packaging
 
+Every packable project's `README.md` is its package readme (`PackageReadmeFile`, set in `src/Directory.Build.props`
+when the file exists). It renders on nuget.org, so links must be absolute.
+
 `Extension.BaGet` (the `BaGet` host) also packs `BaGet.Web/wwwroot` at `wwwroot/` (a `None` item in
 `src/BaGet/BaGet.csproj`), for hosts that embed BaGet without the Web SDK's static web assets and serve those
 files from `wwwroot/_content/BaGet.Web` (e.g. BaGet.Service).

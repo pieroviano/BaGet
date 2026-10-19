@@ -1,5 +1,7 @@
 # BaGet Source Code
 
+Each project is packed as `Extension.<project>`; its `README.md` is the package readme.
+
 These folders contain the core components of BaGet:
 
 * `BaGet` - The app's entry point and command line (`import downloads`, `catalog rebuild`).

@@ -70,7 +70,13 @@
     <None Include="../packageIcon.png" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(MSBuildThisFileDirectory)../LICENSE" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(MSBuildThisFileDirectory)../Acknowledgments.md" Pack="true" PackagePath="" Visible="false" />
+    <!-- Each project's README.md is its package's readme on nuget.org. -->
+    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="" Condition="Exists('$(MSBuildProjectDirectory)/README.md')" />
   </ItemGroup>
+
+  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)/README.md')">
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
 
   <PropertyGroup>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
