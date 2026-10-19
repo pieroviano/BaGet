@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1430 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (695),
+Baseline: **1437 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (702),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
@@ -105,6 +105,19 @@ Routes are named constants in `src/BaGet.Web/Routes.cs`, mapped in `BaGetEndpoin
 and absolute URLs are built only via `IUrlGenerator` — add a member there rather than assembling URLs
 in a page or controller.
 
+### Second databases: `IDatabaseContextFactory`
+
+Each relational provider registers an `IDatabaseContextFactory` (`BaGet.Core`; `Add{Sqlite,SqlServer,PostgreSql,MySql}Database`,
+none for AzureTable) that opens an `IContext` on an *arbitrary* connection string, configured through the same
+`Configure` method as the application's own context (`Database:MySqlServerVersion` honoured, else `AutoDetect`
+against the target). Resolve `IEnumerable<IDatabaseContextFactory>` and match `DatabaseType`; `Create(..., configure)`
+takes an `Action<DbContextOptionsBuilder>` hook. The caller owns and disposes the context.
+
+`IContext.BeginKeyedInsertAsync` / `EndKeyedInsertAsync(IEntityType)` bracket inserts with explicit generated keys:
+SQL Server runs `SET IDENTITY_INSERT` and keeps the connection open between the calls (the setting is per session);
+PostgreSQL `setval`s the serial/identity sequence past the max key in `End`; SQLite and MySQL need nothing (explicit
+keys advance their counters).
+
 ### Tests
 
 `BaGetApplication : WebApplicationFactory<Program>` is the integration harness: real HTTP against the
@@ -114,7 +127,7 @@ client (e.g. the V2 feed's XML declaration).
 
 Unit tests reach internals through `InternalsVisibleTo`, declared in each **project file** (not
 `AssemblyInfo.cs`) — already present in `BaGet.Core`, `BaGet`, `BaGet.Azure`, `BaGet.Protocol`,
-`BaGet.Identity`, `BaGet.Catalog`, `BaGet.Validation`, `BaGet.Web.V2`.
+`BaGet.Identity`, `BaGet.Catalog`, `BaGet.Validation`, `BaGet.Web.V2`, and the four `BaGet.Database.*` projects (for `BaGet.Tests` only).
 
 ## Packaging
 

@@ -3,6 +3,7 @@ using BaGet.Core;
 using BaGet.Database.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace BaGet;
@@ -15,8 +16,14 @@ public static class SqlServerApplicationExtensions
         {
             var databaseOptions = provider.GetRequiredService<IOptionsSnapshot<DatabaseOptions>>();
 
-            options.UseSqlServer(databaseOptions.Value.ConnectionString);
+            SqlServerDatabaseContextFactory.Configure(
+                options,
+                databaseOptions.Value.ConnectionString,
+                databaseOptions.Value.MySqlServerVersion);
         });
+
+        app.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IDatabaseContextFactory, SqlServerDatabaseContextFactory>());
 
         return app;
     }

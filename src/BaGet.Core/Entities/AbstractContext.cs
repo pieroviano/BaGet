@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BaGet.Core;
@@ -61,6 +62,16 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
     public virtual async Task RunMigrationsAsync(CancellationToken cancellationToken)
         => await Database.MigrateAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    /// <remarks>Does nothing by default: SQLite and MySQL advance their auto-increment counter from explicit keys.</remarks>
+    public virtual Task BeginKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken)
+        => Task.CompletedTask;
+
+    /// <inheritdoc/>
+    /// <remarks>Does nothing by default: SQLite and MySQL advance their auto-increment counter from explicit keys.</remarks>
+    public virtual Task EndKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken)
+        => Task.CompletedTask;
 
     public abstract bool IsUniqueConstraintViolationException(DbUpdateException exception);
 

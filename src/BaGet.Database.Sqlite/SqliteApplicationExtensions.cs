@@ -3,6 +3,7 @@ using BaGet.Core;
 using BaGet.Database.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace BaGet;
@@ -15,8 +16,14 @@ public static class SqliteApplicationExtensions
         {
             var databaseOptions = provider.GetRequiredService<IOptionsSnapshot<DatabaseOptions>>();
 
-            options.UseSqlite(databaseOptions.Value.ConnectionString);
+            SqliteDatabaseContextFactory.Configure(
+                options,
+                databaseOptions.Value.ConnectionString,
+                databaseOptions.Value.MySqlServerVersion);
         });
+
+        app.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IDatabaseContextFactory, SqliteDatabaseContextFactory>());
 
         return app;
     }

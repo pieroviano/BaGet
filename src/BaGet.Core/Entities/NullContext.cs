@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BaGet.Core;
 
@@ -49,5 +50,15 @@ public class NullContext : IContext
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
+    }
+
+    public Task BeginKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task EndKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 }

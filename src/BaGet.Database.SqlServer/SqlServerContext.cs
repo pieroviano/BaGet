@@ -1,7 +1,10 @@
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BaGet.Database.SqlServer;
 
@@ -32,4 +35,83 @@ public class SqlServerContext : AbstractContext<SqlServerContext>
 
         return false;
     }
+
+    /// <summary>
+    /// Turns <c>IDENTITY_INSERT</c> on for the table, so explicit key values can be inserted.
+    /// </summary>
+    /// <remarks>
+    /// The setting belongs to the connection, so this opens the context's connection and keeps it open
+    /// (EF reference-counts it, so <c>SaveChanges</c> reuses the same session) until
+    /// <see cref="EndKeyedInsertAsync"/>. Only one table per session can have it on. Tables without an
+    /// identity column (such as Identity's string-keyed ones) are left alone.
+    /// </remarks>
+    public override async Task BeginKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken)
+    {
+        var sql = BuildIdentityInsertSql(table, on: true);
+        if (sql == null)
+        {
+            return;
+        }
+
+        await Database.OpenConnectionAsync(cancellationToken);
+        try
+        {
+            await Database.ExecuteSqlRawAsync(sql, cancellationToken);
+        }
+        catch
+        {
+            await Database.CloseConnectionAsync();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Turns <c>IDENTITY_INSERT</c> off again and releases the connection opened by
+    /// <see cref="BeginKeyedInsertAsync"/>. SQL Server continues the identity after the highest inserted value itself.
+    /// </summary>
+    public override async Task EndKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken)
+    {
+        var sql = BuildIdentityInsertSql(table, on: false);
+        if (sql == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await Database.ExecuteSqlRawAsync(sql, cancellationToken);
+        }
+        finally
+        {
+            await Database.CloseConnectionAsync();
+        }
+    }
+
+    /// <summary>
+    /// The <c>SET IDENTITY_INSERT</c> statement for the table, or <see langword="null"/> when none of its
+    /// columns is an identity column.
+    /// </summary>
+    internal static string? BuildIdentityInsertSql(IEntityType table, bool on)
+    {
+        var name = table.GetTableName();
+        if (name == null)
+        {
+            return null;
+        }
+
+        var schema = table.GetSchema();
+        var store = StoreObjectIdentifier.Table(name, schema);
+        var hasIdentity = table.GetProperties().Any(p =>
+            p.GetValueGenerationStrategy(store) == SqlServerValueGenerationStrategy.IdentityColumn);
+
+        if (!hasIdentity)
+        {
+            return null;
+        }
+
+        var qualified = schema == null ? Quote(name) : $"{Quote(schema)}.{Quote(name)}";
+        return $"SET IDENTITY_INSERT {qualified} {(on ? "ON" : "OFF")}";
+    }
+
+    private static string Quote(string identifier) => "[" + identifier.Replace("]", "]]") + "]";
 }

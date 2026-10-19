@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BaGet.Core;
 
@@ -69,4 +70,26 @@ public interface IContext
     /// <param name="cancellationToken">A token to cancel the task.</param>
     /// <returns>A task that completes once migrations are applied.</returns>
     Task RunMigrationsAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Prepares the database for inserting rows of <paramref name="table"/> with explicit values for
+    /// their generated (identity/serial/auto-increment) key, as a data copy does. Call it before the
+    /// inserts and <see cref="EndKeyedInsertAsync"/> after them, for one table at a time.
+    /// </summary>
+    /// <remarks>
+    /// Providers that need it (SQL Server) hold the context's connection open between the two calls,
+    /// because the setting is per connection; the caller must therefore call both, on the same context.
+    /// Providers whose engine needs nothing (SQLite, MySQL) do nothing.
+    /// </remarks>
+    /// <param name="table">The EF entity type about to receive explicit keys.</param>
+    /// <param name="cancellationToken">A token to cancel the task.</param>
+    Task BeginKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Completes the explicit-key inserts started by <see cref="BeginKeyedInsertAsync"/>, so that keys
+    /// generated afterwards continue after the highest copied key (PostgreSQL resets its sequence here).
+    /// </summary>
+    /// <param name="table">The EF entity type whose rows were inserted.</param>
+    /// <param name="cancellationToken">A token to cancel the task.</param>
+    Task EndKeyedInsertAsync(IEntityType table, CancellationToken cancellationToken);
 }
