@@ -7,7 +7,8 @@
     <Product>BaGet Extension</Product>
     <PackageIcon>packageIcon.png</PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">0.1.0.$([System.DateTime]::Now.ToString("yy"))$([System.DateTime]::Now.DayOfYear.ToString("000"))</PackageVersion>
+    <Version>1.0.0.$([System.DateTime]::Now.ToString("yy"))$([System.DateTime]::Now.DayOfYear.ToString("000"))</Version>
+    <PackageVersion>1.0.0.$([System.DateTime]::Now.ToString("yy"))$([System.DateTime]::Now.DayOfYear.ToString("000"))</PackageVersion>
     <PackageProjectUrl>https://pieroviano.github.io/BaGet/</PackageProjectUrl>
   </PropertyGroup>
 
