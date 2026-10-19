@@ -20,6 +20,7 @@
     <NuGetPackageVersion>6.10.0</NuGetPackageVersion>
     <XUnitPackageVersion>4.0.2</XUnitPackageVersion>
     <JintPackageVersion>4.2.0</JintPackageVersion>
+    <TestcontainersPackageVersion>4.16.0</TestcontainersPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

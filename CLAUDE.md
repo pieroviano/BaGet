@@ -21,10 +21,15 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1453 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (718),
+Baseline: **1465 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (718),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
-`BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
-temporary directory.
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
+use SQLite and a temporary directory.
+
+`BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
+`DatabaseCopyService` on Testcontainers servers (`TestcontainersPackageVersion` in `tests/Directory.Build.props`;
+images `mssql/server:2022-latest`, `postgres:17`, `mysql:8.4`, pulled on first run). Without a Docker daemon the 12
+tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 minutes.
 
 Tests are **xUnit v3** (`xunit.v3`, version lever `XUnitPackageVersion` in `tests/Directory.Build.props`), so test
 projects are executables (`OutputType=Exe`) running on **Microsoft.Testing.Platform**: `global.json`

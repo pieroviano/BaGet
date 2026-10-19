@@ -32,6 +32,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Core.Tests" />
     <InternalsVisibleTo Include="BaGet.Tests" />
+    <InternalsVisibleTo Include="BaGet.Database.Tests" />
     <InternalsVisibleTo Include="BaGet.Catalog" />
     <InternalsVisibleTo Include="BaGet.Identity" />
   </ItemGroup>

@@ -362,12 +362,17 @@ public class DatabaseCopyService
                     var entry = targetDb.Add(row.Entity);
                     foreach (var shadow in row.Shadow) entry.Property(shadow.Key).CurrentValue = shadow.Value;
 
-                    // SQLite and MySQL return dates of unspecified kind; BaGet stores UTC, and PostgreSQL accepts nothing else.
+                    // SQLite, SQL Server and MySQL return dates of unspecified kind; BaGet stores UTC, and PostgreSQL accepts
+                    // nothing else. EF compares DateTimes without their kind, so assigning the same instant with another kind
+                    // is ignored as "no change": move off it first. The entry reads the mapped field, so a property whose
+                    // getter already forces UTC (Package.Published) is fixed too.
                     foreach (var property in dateProperties)
                     {
-                        if (entry.Property(property.Name).CurrentValue is DateTime { Kind: DateTimeKind.Unspecified } date)
+                        var member = entry.Property(property.Name);
+                        if (member.CurrentValue is DateTime { Kind: DateTimeKind.Unspecified } date)
                         {
-                            entry.Property(property.Name).CurrentValue = DateTime.SpecifyKind(date, DateTimeKind.Utc);
+                            member.CurrentValue = DateTime.MinValue;
+                            member.CurrentValue = DateTime.SpecifyKind(date, DateTimeKind.Utc);
                         }
                     }
 

@@ -40,7 +40,13 @@ public class PostgreSqlContext : AbstractContext<PostgreSqlContext>
         // See: https://github.com/npgsql/efcore.pg/issues/170#issuecomment-303417225
         if (Database.GetDbConnection() is NpgsqlConnection connection)
         {
-            await connection.OpenAsync(cancellationToken);
+            // Migrations may run more than once on one context (a data copy checks the target, then migrates
+            // it), and the first run can leave the connection open: open it only when it is closed.
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await connection.OpenAsync(cancellationToken);
+            }
+
             connection.ReloadTypes();
         }
     }
