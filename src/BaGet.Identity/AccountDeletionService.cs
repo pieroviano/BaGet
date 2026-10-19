@@ -197,7 +197,7 @@ public class AccountDeletionService
                     (failed ? failures : deleted).Add(id);
                     #pragma warning restore CS8604, CS8619
                 }
-                catch (Exception e) when (e is not OperationCanceledException)
+                catch (Exception e) when (e is not OperationCanceledException and not MaintenanceException)
                 {
                     _logger.LogError(e, "Could not delete package {Id} of deleted user {User}", id, userName);
                     failures.Add(id);

@@ -99,7 +99,7 @@ public class PackageValidationRunner
                     package.Position = 0;
                     result = await validator.ValidateAsync(context, cancellationToken);
                 }
-                catch (Exception e) when (!(e is OperationCanceledException))
+                catch (Exception e) when (!(e is OperationCanceledException) && !(e is MaintenanceException))
                 {
                     _logger.LogError(e, "Validator {Validator} failed on submission {SubmissionId}", validator.Name, submissionId);
                     result = PackageValidatorResult.Invalid($"The {validator.Name} validator failed: {e.Message}");
@@ -169,8 +169,10 @@ public class PackageValidationRunner
 
             return result == PackageIndexingResult.Success ? null : $"Indexing failed: {result}.";
         }
-        catch (Exception e) when (!(e is OperationCanceledException))
+        catch (Exception e) when (!(e is OperationCanceledException) && !(e is MaintenanceException))
         {
+            // A closed maintenance gate is not the package's fault: let it reach the worker, which
+            // retries later, instead of quarantining the submission.
             _logger.LogError(e, "Failed to index a validated package");
             return $"Indexing failed: {e.Message}";
         }

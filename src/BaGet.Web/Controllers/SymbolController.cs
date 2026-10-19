@@ -81,8 +81,9 @@ public class SymbolController : Controller
                 }
             }
         }
-        catch (Exception e)
+        catch (Exception e) when (!(e is MaintenanceException))
         {
+            // A refused write (read-only maintenance) is not a server fault: MaintenanceMiddleware answers 503.
             _logger.LogError(e, "Exception thrown during symbol upload");
 
             HttpContext.Response.StatusCode = 500;

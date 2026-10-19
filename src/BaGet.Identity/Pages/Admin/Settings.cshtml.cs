@@ -56,10 +56,18 @@ public class SettingsModel : AdminPageModel
         return Page();
     }
 
-    /// <summary>Saves the settings of one section after the administrator confirms.</summary>
+    /// <summary>
+    /// Saves the settings of one section after the administrator confirms. Refused with HTTP 503 while the
+    /// <see cref="MaintenanceGate"/> is closed.
+    /// </summary>
     public async Task<IActionResult> OnPostAsync(string section, string? password)
     {
         if (!Settings.IsAvailable) return NotFound();
+
+        // Saving writes a file, not the database, so the SaveChanges gate would not stop it; but a save
+        // while the database is read-only for maintenance (a copy, or the wait for a restart) could
+        // change the very settings the job depends on. The job itself saves through SettingsService.
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
 
         section ??= string.Empty;
         var user = await UserManager.GetUserAsync(User);

@@ -21,8 +21,8 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1423 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (690),
-`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (39),
+Baseline: **1430 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (695),
+`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
 
@@ -88,6 +88,14 @@ not set.
 `BuildApplication` runs. This is why `tests/BaGet.Tests/Support/BaGetApplication.cs` supplies settings
 with `builder.UseSetting(...)` and **not** `ConfigureAppConfiguration`, which is merged too late.
 Anything read through `IOptions`/`IOptionsSnapshot` is unaffected.
+
+**Read-only gate.** `MaintenanceGate` (`BaGet.Core`, singleton, in memory) closes every database write:
+`MaintenanceSaveChangesInterceptor`, added in `AddBaGetDbContextProvider`, throws `MaintenanceException` from
+`SaveChanges` while it is closed; `MaintenanceMiddleware` (`BaGet.Web`) maps that to 503 + `Retry-After`; the layout
+shows a banner. `CloseUntilRestart` cannot be reopened. A context built with `MaintenanceGate.AllowWrites(builder)` is
+exempt (the copy's target). Code that catches broad `Exception` around a write must not swallow `MaintenanceException`
+(controllers, `PackageValidationRunner`); `ValidationWorker` retries after it, `PackageDatabase.AddDownloadAsync` ignores it.
+Raw SQL would bypass the gate: there is none outside migrations, keep it so.
 
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host

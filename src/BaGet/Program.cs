@@ -415,6 +415,7 @@ public partial class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseOperationCancelledMiddleware();
+        app.UseMaintenanceMiddleware();
 
         // WebApplication is itself an endpoint route builder, so the endpoints are mapped
         // onto it directly rather than inside a UseEndpoints callback.

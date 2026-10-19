@@ -46,11 +46,34 @@ public class ValidationWorker : BackgroundService
             {
                 return;
             }
+            catch (MaintenanceException e)
+            {
+                // The database is read-only for now. The submission is still pending, so try it again
+                // once the gate may have reopened rather than leaving it until the next start.
+                _logger.LogWarning("Validation of submission {SubmissionId} postponed: {Reason}", submissionId, e.Reason);
+                await RetryLaterAsync(submissionId, stoppingToken);
+            }
             catch (Exception e)
             {
                 // Left pending, so the next start retries it.
                 _logger.LogError(e, "Validation of submission {SubmissionId} failed", submissionId);
             }
+        }
+    }
+
+    /// <summary>How long a submission waits after a maintenance refusal before it is queued again.</summary>
+    internal static TimeSpan MaintenanceRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
+
+    private async Task RetryLaterAsync(string submissionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(MaintenanceRetryDelay, cancellationToken);
+            await _queue.EnqueueAsync(submissionId, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutting down: the submission stays pending and is re-queued at the next start.
         }
     }
 

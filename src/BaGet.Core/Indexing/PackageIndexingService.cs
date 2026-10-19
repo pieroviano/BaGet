@@ -17,6 +17,7 @@ public class PackageIndexingService : IPackageIndexingService
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly ILogger<PackageIndexingService> _logger;
     private readonly PackageChangeNotifier _notifier;
+    private readonly MaintenanceGate? _gate;
 
     public PackageIndexingService(
         IPackageDatabase packages,
@@ -37,7 +38,25 @@ public class PackageIndexingService : IPackageIndexingService
         IOptionsSnapshot<BaGetOptions> options,
         ILogger<PackageIndexingService> logger,
         PackageChangeNotifier notifier)
+        : this(packages, storage, search, time, options, logger, notifier, gate: null)
     {
+    }
+
+    /// <param name="gate">
+    /// When closed, indexing is refused up front with <see cref="MaintenanceException"/>, before any
+    /// content reaches storage, so a refused push leaves no orphan files behind.
+    /// </param>
+    public PackageIndexingService(
+        IPackageDatabase packages,
+        IPackageStorageService storage,
+        ISearchIndexer search,
+        SystemTime time,
+        IOptionsSnapshot<BaGetOptions> options,
+        ILogger<PackageIndexingService> logger,
+        PackageChangeNotifier notifier,
+        MaintenanceGate? gate)
+    {
+        _gate = gate;
         _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -49,6 +68,8 @@ public class PackageIndexingService : IPackageIndexingService
 
     public async Task<PackageIndexingResult> IndexAsync(Stream? packageStream, CancellationToken cancellationToken)
     {
+        _gate?.ThrowIfClosed();
+
         // Try to extract all the necessary information from the package.
         Package package;
         Stream nuspecStream;

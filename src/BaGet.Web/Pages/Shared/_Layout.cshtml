@@ -146,6 +146,22 @@
         }
     </header>
 
+    @{
+        var maintenanceGate = Context.RequestServices.GetService<BaGet.Core.MaintenanceGate>();
+    }
+    @if (maintenanceGate != null && maintenanceGate.IsClosed)
+    {
+        <div class="container">
+            <div class="alert alert-warning maintenance-banner" role="status" id="maintenance-banner">
+                <strong>Read-only.</strong> Changes are refused for now: @maintenanceGate.Reason.
+                @if (maintenanceGate.IsClosedUntilRestart)
+                {
+                    <span>Restart the server to finish.</span>
+                }
+            </div>
+        </div>
+    }
+
     <section role="main" class="container main-container">
         @RenderBody()
     </section>

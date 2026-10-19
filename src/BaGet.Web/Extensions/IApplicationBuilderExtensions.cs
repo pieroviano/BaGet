@@ -11,4 +11,14 @@ public static class IApplicationBuilderExtensions
 
         return app.UseMiddleware<OperationCancelledMiddleware>();
     }
+
+    /// <summary>
+    /// Map writes refused by a closed <see cref="BaGet.Core.MaintenanceGate"/> to HTTP 503 with <c>Retry-After</c>.
+    /// </summary>
+    public static IApplicationBuilder UseMaintenanceMiddleware(this IApplicationBuilder app)
+    {
+        if (app == null) throw new ArgumentNullException(nameof(app));
+
+        return app.UseMiddleware<MaintenanceMiddleware>();
+    }
 }

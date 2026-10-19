@@ -338,7 +338,7 @@ public class UploadModel : PageModel
         {
             result = await _submissions.SubmitAsync(content, cancellationToken);
         }
-        catch (Exception e) when (!(e is OperationCanceledException))
+        catch (Exception e) when (!(e is OperationCanceledException) && !(e is MaintenanceException))
         {
             // A failure the server owns: said in a sentence rather than as a stack trace,
             // and the upload is kept so it can be submitted again.

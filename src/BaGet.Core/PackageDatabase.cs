@@ -113,7 +113,14 @@ public class PackageDatabase : IPackageDatabase
 
     public async Task AddDownloadAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
-        await TryUpdatePackageAsync(id, version, p => p.Downloads += 1, cancellationToken);
+        try
+        {
+            await TryUpdatePackageAsync(id, version, p => p.Downloads += 1, cancellationToken);
+        }
+        catch (MaintenanceException)
+        {
+            // The counter is best effort: a read-only database must not stop a package from being served.
+        }
     }
 
     public async Task<bool> HardDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)

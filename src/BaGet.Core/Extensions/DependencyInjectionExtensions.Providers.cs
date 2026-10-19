@@ -81,7 +81,14 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IContext>(provider => provider.GetRequiredService<TContext>());
         services.TryAddTransient<IPackageDatabase>(provider => provider.GetRequiredService<PackageDatabase>());
 
-        services.AddDbContext<TContext>(configureContext);
+        services.TryAddSingleton<MaintenanceGate>();
+        services.TryAddSingleton<MaintenanceSaveChangesInterceptor>();
+
+        services.AddDbContext<TContext>((provider, options) =>
+        {
+            configureContext(provider, options);
+            options.AddInterceptors(provider.GetRequiredService<MaintenanceSaveChangesInterceptor>());
+        });
 
         services.AddProvider<IContext>((provider, config) =>
         {

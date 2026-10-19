@@ -650,3 +650,21 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 - A setting no file sets shows the built-in default (for example `Feeds:EnableV2` is ticked) and can be changed from it.
 - If the overrides file cannot be written (a read-only content root) or is not valid JSON, the page shows the error,
   naming the path, instead of failing; point `SettingsOverridesPath` at a writable file.
+
+## Read-only maintenance gate
+
+While a maintenance job (such as a database copy) runs, BaGet Extension makes the database read-only with an
+in-memory gate (`MaintenanceGate`). It is not a setting and is never saved: a restart opens it.
+
+| While the gate is closed | Behaviour |
+| --- | --- |
+| Any database write (push, delete, unlist, sign-up, sign-in changes, API keys, owners, abuse reports, Settings page save) | refused with **HTTP 503** and `Retry-After: 60` |
+| Reads: feeds, search, downloads, pages | work; a download is served but not counted |
+| Pushes | refused before any file reaches storage, so a retry after the gate opens is clean |
+| Validation worker | logs a warning, keeps the submission pending and retries every 30 s |
+| Pages | show a "Read-only" banner with the reason |
+
+- After a job that needs a restart (a successful database copy) the gate is closed **until restart**: writes accepted
+  before the restart would land in the old database and be lost.
+- Every write goes through EF `SaveChanges`, which an interceptor checks; a context built with
+  `MaintenanceGate.AllowWrites(optionsBuilder)` is exempt, so the job holding the gate can write to its own target.
