@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1437 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (702),
+Baseline: **1453 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (718),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
@@ -95,7 +95,8 @@ Anything read through `IOptions`/`IOptionsSnapshot` is unaffected.
 shows a banner. `CloseUntilRestart` cannot be reopened. A context built with `MaintenanceGate.AllowWrites(builder)` is
 exempt (the copy's target). Code that catches broad `Exception` around a write must not swallow `MaintenanceException`
 (controllers, `PackageValidationRunner`); `ValidationWorker` retries after it, `PackageDatabase.AddDownloadAsync` ignores it.
-Raw SQL would bypass the gate: there is none outside migrations, keep it so.
+Raw SQL would bypass the gate: there is none outside migrations, keep it so (the one exception, the database copy's
+rollback `ExecuteDelete`, runs on the copy's own target context, never on the application's).
 
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host
@@ -117,6 +118,19 @@ takes an `Action<DbContextOptionsBuilder>` hook. The caller owns and disposes th
 SQL Server runs `SET IDENTITY_INSERT` and keeps the connection open between the calls (the setting is per session);
 PostgreSQL `setval`s the serial/identity sequence past the max key in `End`; SQLite and MySQL need nothing (explicit
 keys advance their counters).
+
+### Database copy (`DatabaseCopyService`, `BaGet.Core/Entities/Copy`)
+
+The Settings page's "Copy all data" option queues a `DatabaseCopyRequest` (`TryQueue` closes the gate and refuses a
+second copy); `DatabaseCopyWorker` (single-slot channel) runs it; progress is in memory (`Status`), polled via
+`?handler=CopyStatus` (admin only). `DatabaseTable.InDependencyOrder` topologically sorts `Model.GetEntityTypes()` by
+foreign keys (Identity's tables included), so a new table is covered with no list to keep. Rows are read in batches of
+1000 ordered by primary key; they are loaded **tracked** only to capture **shadow properties** (the FK of a package's
+types/frameworks/dependencies is shadow) into `CopyRow.Shadow`, then the tracker is cleared. Pre-flight
+(`DatabaseCopyPreflight`) reports over-length strings, case-only duplicates on unique indexes (not for PostgreSQL) and
+local dates (PostgreSQL) before the target changes; `Unspecified` dates are stored as UTC. Test seam
+`DatabaseCopyService.AfterBatch` injects mid-copy failures. Errors are scrubbed of the connection string
+(`DatabaseCopyService.Scrub`); never log it.
 
 ### Tests
 

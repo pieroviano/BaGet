@@ -87,6 +87,8 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton<ISearchResponseBuilder, SearchResponseBuilder>();
         services.TryAddSingleton<NuGetClient>();
         services.TryAddSingleton<MaintenanceGate>();
+        services.TryAddSingleton<DatabaseCopyService>();
+        services.AddHostedService<DatabaseCopyWorker>();
         services.TryAddSingleton<NullSearchIndexer>();
         services.TryAddSingleton<NullSearchService>();
         services.TryAddSingleton<RegistrationBuilder>();

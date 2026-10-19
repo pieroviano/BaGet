@@ -668,3 +668,29 @@ in-memory gate (`MaintenanceGate`). It is not a setting and is never saved: a re
   before the restart would land in the old database and be lost.
 - Every write goes through EF `SaveChanges`, which an interceptor checks; a context built with
   `MaintenanceGate.AllowWrites(optionsBuilder)` is exempt, so the job holding the gate can write to its own target.
+
+## Moving to another database
+
+On the Settings page, changing `Database:Type` or `Database:ConnectionString` between two **relational** databases
+(SQLite, SQL Server, PostgreSQL, MySQL, in any direction, also the same engine on another server) shows
+**Copy all data to the new database** (ticked). With it ticked, Save does not save: it queues a copy, and the settings
+are saved only after the copy is verified. Unticked, or with AzureTable on either side (no option shown), Save behaves
+as before.
+
+| Step | Detail |
+| --- | --- |
+| 1. Read-only | The [gate](#read-only-maintenance-gate) closes when the copy is accepted (pushes etc. get 503). |
+| 2. Target | Must be reachable (a new SQLite file or a database the login may create is created) and, after its schema is migrated, **every table empty**; otherwise the copy is refused and nothing is changed. |
+| 3. Source | Refused if it has pending migrations or holds what the target cannot: strings longer than the model's maximum length, values of a unique index differing only by case (not checked for PostgreSQL), local-time dates (PostgreSQL). All problems are listed at once, before anything is copied. |
+| 4. Copy | Tables in foreign-key order (Identity's included), 1000 rows per batch, original keys kept; SQL Server `IDENTITY_INSERT` and PostgreSQL sequences are handled, so keys generated later continue after the highest copied one. |
+| 5. Verify | Row counts and a checksum of the keys must match per table. |
+| 6. Save | `Database:Type`, `Database:ConnectionString` (and `MySqlServerVersion` if changed) are saved. The gate **stays closed until you restart** BaGet: writes accepted before the restart would land in the old database. |
+
+- On any failure the rows copied are deleted from the target (never from the source), the gate reopens, no setting is
+  saved and the page lists the errors; fix the cause and retry. A crash mid-copy leaves a partly filled target that must
+  be emptied before a retry (a non-empty target is refused).
+- The source is never modified or deleted: to roll back, restore the old `Database` settings.
+- Package files are not copied: they live in `Storage`, which is unchanged.
+- One copy at a time; while it runs, every Settings save is refused with 503. Progress shows on the Settings page
+  (also as JSON at `/admin/settings?handler=CopyStatus`, administrators only).
+- Connection strings are never logged or shown in errors.

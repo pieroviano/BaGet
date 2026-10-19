@@ -1,0 +1,575 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using BaGet.Database.Sqlite;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Xunit;
+
+namespace BaGet.Tests;
+
+/// <summary>
+/// Copying the database from the Settings page, SQLite to SQLite, through the real page and worker:
+/// every table is equal afterwards, a failure leaves the source intact and the target empty, and the
+/// settings are saved only after a verified copy.
+/// </summary>
+public class DatabaseCopyTests : IDisposable
+{
+    private readonly ITestOutputHelper _output;
+    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly string _directory = Path.Combine(Path.GetTempPath(), "baget-copy-" + Guid.NewGuid().ToString("N"));
+
+    public DatabaseCopyTests(ITestOutputHelper output)
+    {
+        _output = output;
+        Directory.CreateDirectory(_directory);
+    }
+
+    public void Dispose()
+    {
+        foreach (var disposable in Enumerable.Reverse(_disposables)) disposable.Dispose();
+        SqliteConnection.ClearAllPools();
+        try { Directory.Delete(_directory, recursive: true); } catch (IOException) { }
+    }
+
+    /// <summary>An existing, empty SQLite database (a zero-length file is one) to copy into.</summary>
+    private string NewTarget()
+    {
+        var path = Path.Combine(_directory, Guid.NewGuid().ToString("N") + ".db");
+        File.WriteAllBytes(path, Array.Empty<byte>());
+        return $"Data Source={path}";
+    }
+
+    private async Task<(BaGetApplication App, Browser Admin)> StartAsync(Action<IServiceCollection>? configureServices = null)
+    {
+        var app = new BaGetApplication(
+            _output,
+            configOverrides: new Dictionary<string, string> { { "Accounts:Enabled", "true" } },
+            configureServices: configureServices);
+        _disposables.Add(app);
+
+        await AdminTestSupport.CreateUserAsync(app, "root", administrator: true);
+        await AdminTestSupport.CreateUserAsync(app, "alice");
+        await AdminTestSupport.PushAsync(app, "root", "Copy.One");
+        await AdminTestSupport.PushAsync(app, "root", "Copy.One", "2.0.0");
+        await AdminTestSupport.PushAsync(app, "alice", "Copy.Two");
+        await AdminTestSupport.AddOrganizationAsync(app, "Acme", ("alice", true));
+        await AdminTestSupport.AddOwnerAsync(app, "Copy.One", "Acme");
+
+        var admin = new Browser(app);
+        _disposables.Add(admin);
+        await AdminTestSupport.SignInAsync(admin, "root");
+        return (App: app, Admin: admin);
+    }
+
+    private static Task<HttpResponseMessage> PostDatabaseAsync(
+        Browser admin, string type, string connectionString, bool copyData = true, string? password = null)
+    {
+        var fields = new Dictionary<string, string>
+        {
+            { "section", "Database" },
+            { "password", password ?? AdminTestSupport.Password },
+            { "v:Database:Type", type },
+            { "v:Database:ConnectionString", connectionString },
+        };
+        if (copyData) fields["copyData"] = "true";
+
+        return admin.PostAsync("admin/settings", fields);
+    }
+
+    private static async Task<DatabaseCopyStatus> WaitAsync(BaGetApplication app)
+    {
+        var copy = app.Services.GetRequiredService<DatabaseCopyService>();
+        var deadline = DateTime.UtcNow.AddSeconds(90);
+        while (!copy.Status.IsFinished)
+        {
+            if (DateTime.UtcNow > deadline) throw new TimeoutException("The copy did not finish: " + copy.Status.Phase);
+            await Task.Delay(50);
+        }
+
+        return copy.Status;
+    }
+
+    private static IReadOnlyDictionary<string, string> SavedSettings(BaGetApplication app)
+        => app.Services.GetRequiredService<SettingsOverridesStore>().Read();
+
+    private static DbContext OpenTarget(string connectionString)
+        => (DbContext)new SqliteDatabaseContextFactory().Create(connectionString);
+
+    private static DbContext OpenSource(BaGetApplication app, out IServiceScope scope)
+    {
+        scope = app.Services.CreateScope();
+        return (DbContext)scope.ServiceProvider.GetRequiredService<IContext>();
+    }
+
+    private static async Task<Dictionary<string, long>> CountsAsync(DbContext context)
+    {
+        var counts = new Dictionary<string, long>();
+        foreach (var table in DatabaseTable.InDependencyOrder(context.Model))
+        {
+            counts[table.Name] = await table.CountAsync(context, CancellationToken.None);
+        }
+
+        return counts;
+    }
+
+    private static async Task AssertTablesEqualAsync(DbContext expected, DbContext actual)
+    {
+        foreach (var table in DatabaseTable.InDependencyOrder(actual.Model))
+        {
+            var left = await table.ReadBatchAsync(expected, 0, int.MaxValue, CancellationToken.None);
+            var right = await table.ReadBatchAsync(actual, 0, int.MaxValue, CancellationToken.None);
+            Assert.Equal(left.Count, right.Count);
+
+            var compared = table.EntityType.GetProperties()
+                .Where(p => p.ValueGenerated != Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.OnAddOrUpdate)
+                .ToList();
+            for (var i = 0; i < left.Count; i++)
+            {
+                foreach (var property in compared)
+                {
+                    Assert.Equal(
+                        DatabaseTable.Format(DatabaseTable.ValueOf(property, left[i].Entity)),
+                        DatabaseTable.Format(DatabaseTable.ValueOf(property, right[i].Entity)));
+                }
+
+                // Shadow properties (the foreign key of a package's types, frameworks and dependencies) too.
+                Assert.Equal(
+                    left[i].Shadow.OrderBy(p => p.Key).Select(p => p.Key + "=" + DatabaseTable.Format(p.Value)),
+                    right[i].Shadow.OrderBy(p => p.Key).Select(p => p.Key + "=" + DatabaseTable.Format(p.Value)));
+            }
+        }
+    }
+
+    private static async Task<string> CreateKeyAsync(BaGetApplication app, string userName)
+    {
+        var user = await AdminTestSupport.FindAsync(app, userName);
+        using var scope = app.Services.CreateScope();
+        #pragma warning disable CS8602
+        return await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>().CreateAsync(
+            user.Id, "test", new[] { ApiKeyScopes.Push }, "*", null, CancellationToken.None);
+        #pragma warning restore CS8602
+    }
+
+    [Fact]
+    public async Task CopiesEveryTableSavesTheSettingsAndStaysReadOnlyUntilRestart()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+        var gate = app.Services.GetRequiredService<MaintenanceGate>();
+        var key = await CreateKeyAsync(app, "root");
+
+        using (var response = await PostDatabaseAsync(admin, "Sqlite", target))
+        {
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        }
+
+        var status = await WaitAsync(app);
+        Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
+        Assert.True(status.RestartRequired);
+        Assert.Equal(status.RowsTotal, status.RowsCopied);
+
+        using (var targetDb = OpenTarget(target))
+        {
+            var sourceDb = OpenSource(app, out var scope);
+            using (scope)
+            {
+                await AssertTablesEqualAsync(sourceDb, targetDb);
+
+                var counts = await CountsAsync(targetDb);
+                Assert.Equal(await CountsAsync(sourceDb), counts);
+                Assert.True(counts["Packages"] >= 3);
+                Assert.True(counts["AspNetUsers"] >= 2);
+                Assert.True(counts["Organizations"] >= 1);
+
+                // A key generated after the copy continues after the highest copied one.
+                var highest = await targetDb.Set<Organization>().MaxAsync(o => o.Key);
+                var later = new Organization { Name = "Later", Created = DateTime.UtcNow };
+                targetDb.Set<Organization>().Add(later);
+                await targetDb.SaveChangesAsync();
+                Assert.Equal(highest + 1, later.Key);
+            }
+        }
+
+        Assert.Equal(target, SavedSettings(app)["Database:ConnectionString"]);
+
+        // Closed until the restart: a write on the old database would be lost.
+        Assert.True(gate.IsClosedUntilRestart);
+        Assert.False(gate.Open());
+        using var client = app.CreateClient();
+        using var package = TestPackages.Build("After.Copy", "1.0.0");
+        using var push = TestPackages.PushRequest(package, key);
+        using var refused = await client.SendAsync(push);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, refused.StatusCode);
+
+        var html = await admin.GetPageAsync("admin/settings");
+        Assert.Contains("Restart BaGet now", html);
+    }
+
+    [Fact]
+    public async Task ANonEmptyTargetIsRefusedAndNotTouched()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+        using (var targetDb = OpenTarget(target))
+        {
+            await ((IContext)targetDb).RunMigrationsAsync(CancellationToken.None);
+            targetDb.Set<Organization>().Add(new Organization { Name = "Existing", Created = DateTime.UtcNow });
+            await targetDb.SaveChangesAsync();
+        }
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("not empty") && e.Contains("Organizations"));
+        Assert.DoesNotContain("Database:ConnectionString", SavedSettings(app).Keys);
+        Assert.False(app.Services.GetRequiredService<MaintenanceGate>().IsClosed);
+
+        using var after = OpenTarget(target);
+        Assert.Equal(1, await after.Set<Organization>().CountAsync());
+        Assert.Equal("Existing", (await after.Set<Organization>().SingleAsync()).Name);
+        Assert.Equal(0, await after.Set<Package>().CountAsync());
+    }
+
+    [Fact]
+    public async Task AnUnreachableTargetReportsAnErrorWithoutTheConnectionStringAndChangesNothing()
+    {
+        var (app, admin) = await StartAsync();
+        var target = $"Data Source={Path.Combine(_directory, "missing", "folder", "x.db")};Password=s3cret-value";
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("Cannot connect"));
+        foreach (var error in status.Errors)
+        {
+            Assert.DoesNotContain("missing", error);
+            Assert.DoesNotContain("s3cret-value", error);
+        }
+
+        Assert.DoesNotContain("Database:ConnectionString", SavedSettings(app).Keys);
+        Assert.False(app.Services.GetRequiredService<MaintenanceGate>().IsClosed);
+
+        var json = await admin.GetPageAsync("admin/settings?handler=CopyStatus");
+        Assert.DoesNotContain("s3cret-value", json);
+    }
+
+    [Fact]
+    public async Task AFailureMidCopyLeavesTheSourceIntactTheTargetEmptyAndTheSettingsUnchanged()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+        var copy = app.Services.GetRequiredService<DatabaseCopyService>();
+        var gate = app.Services.GetRequiredService<MaintenanceGate>();
+
+        var sourceDb = OpenSource(app, out var scope);
+        Dictionary<string, long> before;
+        using (scope) before = await CountsAsync(sourceDb);
+
+        var batches = 0;
+        copy.AfterBatch = (table, rows, token) =>
+        {
+            // Fail after a few tables are already in the target.
+            if (table == "Packages" && ++batches >= 1) throw new InvalidOperationException("injected failure");
+            return Task.CompletedTask;
+        };
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("injected failure"));
+        Assert.False(gate.IsClosed);
+        Assert.DoesNotContain("Database:ConnectionString", SavedSettings(app).Keys);
+
+        using (var targetDb = OpenTarget(target))
+        {
+            Assert.All(await CountsAsync(targetDb), pair => Assert.Equal(0, pair.Value));
+        }
+
+        var sourceAfter = OpenSource(app, out var scopeAfter);
+        using (scopeAfter) Assert.Equal(before, await CountsAsync(sourceAfter));
+
+        // The server is writable again and the copy can be retried.
+        copy.AfterBatch = null;
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        Assert.Equal(DatabaseCopyPhase.Succeeded, (await WaitAsync(app)).Phase);
+    }
+
+    [Fact]
+    public async Task APushOrSettingsSaveDuringTheCopyIsRefusedWith503AndASecondCopyIsRefused()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+        var copy = app.Services.GetRequiredService<DatabaseCopyService>();
+        var key = await CreateKeyAsync(app, "root");
+
+        var reached = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        copy.AfterBatch = async (table, rows, token) =>
+        {
+            reached.TrySetResult(true);
+            await release.Task;
+        };
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        await reached.Task.WaitAsync(TimeSpan.FromSeconds(60));
+
+        using var client = app.CreateClient();
+        using (var package = TestPackages.Build("During.Copy", "1.0.0"))
+        using (var push = TestPackages.PushRequest(package, key))
+        using (var refused = await client.SendAsync(push))
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, refused.StatusCode);
+            Assert.True(refused.Headers.RetryAfter != null);
+        }
+
+        using (var second = await PostDatabaseAsync(admin, "Sqlite", NewTarget()))
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, second.StatusCode);
+        }
+
+        using (var save = await admin.PostAsync("admin/settings", new Dictionary<string, string>
+               {
+                   { "section", "Database" },
+                   { "password", AdminTestSupport.Password },
+                   { "v:Database:MySqlServerVersion", "8.0.0-mysql" },
+               }))
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, save.StatusCode);
+        }
+
+        Assert.True(copy.Status.IsActive);
+        Assert.Equal(DatabaseCopyPhase.Copying, copy.Status.Phase);
+
+        release.SetResult(true);
+        var status = await WaitAsync(app);
+        Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
+
+        // Nothing the refused push wrote: the target has only the packages that existed.
+        using var targetDb = OpenTarget(target);
+        Assert.False(await targetDb.Set<Package>().AnyAsync(p => p.Id == "During.Copy"));
+    }
+
+    [Fact]
+    public async Task ATargetThatDoesNotExistYetIsCreatedAndFilled()
+    {
+        var (app, admin) = await StartAsync();
+        var target = $"Data Source={Path.Combine(_directory, "brand-new.db")}";
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
+        using var targetDb = OpenTarget(target);
+        Assert.Equal(3, await targetDb.Set<Package>().CountAsync());
+    }
+
+    [Fact]
+    public async Task StatusEndpointIsForAdministratorsOnly()
+    {
+        var (app, admin) = await StartAsync();
+
+        using (var anonymous = new Browser(app))
+        using (var response = await anonymous.GetAsync("admin/settings?handler=CopyStatus"))
+        {
+            Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        using (var alice = new Browser(app))
+        {
+            await AdminTestSupport.SignInAsync(alice, "alice");
+            using var response = await alice.GetAsync("admin/settings?handler=CopyStatus");
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        using var ok = await admin.GetAsync("admin/settings?handler=CopyStatus");
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        using var json = JsonDocument.Parse(await ok.Content.ReadAsStringAsync());
+        Assert.Equal("Idle", json.RootElement.GetProperty("phase").GetString());
+        Assert.False(json.RootElement.GetProperty("active").GetBoolean());
+    }
+
+    [Fact]
+    public async Task PreflightListsOverLongValuesAndCaseOnlyDuplicatesBeforeCopyingAnything()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+
+        var sourceDb = OpenSource(app, out var scope);
+        using (scope)
+        {
+            // SQLite stores what the model's maximum length would refuse elsewhere, and is case-sensitive here.
+            sourceDb.Set<AbuseReport>().Add(new AbuseReport
+            {
+                PackageId = "Copy.One", PackageVersion = "1.0.0", Reason = new string('x', 200), Details = "d", Created = DateTime.UtcNow,
+            });
+            sourceDb.Set<Organization>().Add(new Organization { Name = "ACME", Created = DateTime.UtcNow });
+            await sourceDb.SaveChangesAsync();
+        }
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("AbuseReports.Reason") && e.Contains("200 characters") && e.Contains("128"));
+        Assert.Contains(status.Errors, e => e.Contains("Organizations") && e.Contains("differ only by case"));
+        Assert.DoesNotContain("Database:ConnectionString", SavedSettings(app).Keys);
+
+        // Refused before the target was migrated or touched.
+        using var targetDb = OpenTarget(target);
+        Assert.False(await targetDb.Database.GetAppliedMigrationsAsync().ContinueWith(t => t.Result.Any()));
+    }
+
+    [Fact]
+    public async Task ASourceWithPendingMigrationsIsRefused()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+
+        var sourceDb = OpenSource(app, out var scope);
+        using (scope)
+        {
+            await sourceDb.Database.ExecuteSqlRawAsync(
+                "DELETE FROM __EFMigrationsHistory WHERE MigrationId = (SELECT MAX(MigrationId) FROM __EFMigrationsHistory)");
+        }
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("pending migration"));
+        Assert.False(app.Services.GetRequiredService<MaintenanceGate>().IsClosed);
+    }
+
+    [Fact]
+    public async Task AzureTableTargetOffersNoCopyAndSavesAsBefore()
+    {
+        var (app, admin) = await StartAsync();
+
+        using var response = await PostDatabaseAsync(admin, "AzureTable", "UseDevelopmentStorage=true");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(DatabaseCopyPhase.Idle, app.Services.GetRequiredService<DatabaseCopyService>().Status.Phase);
+        Assert.Equal("AzureTable", SavedSettings(app)["Database:Type"]);
+        Assert.False(app.Services.GetRequiredService<MaintenanceGate>().IsClosed);
+    }
+
+    [Fact]
+    public async Task TheOptionIsOfferedForARelationalSourceAndHiddenOtherwise()
+    {
+        var (_, admin) = await StartAsync();
+        var html = await admin.GetPageAsync("admin/settings");
+
+        Assert.Contains("id=\"copy-option\"", html);
+        Assert.Contains("name=\"copyData\"", html);
+        Assert.Contains("data-target-types=\"MySql,PostgreSql,Sqlite,SqlServer\"", html, StringComparison.OrdinalIgnoreCase);
+
+        // A running database that is not relational (AzureTable registers no factory) has nothing to copy from.
+        var (nonRelational, nonRelationalAdmin) = await StartAsync(services =>
+            services.RemoveAll<IDatabaseContextFactory>());
+        var plain = await nonRelationalAdmin.GetPageAsync("admin/settings");
+        Assert.DoesNotContain("id=\"copy-option\"", plain);
+
+        using var response = await PostDatabaseAsync(nonRelationalAdmin, "Sqlite", NewTarget());
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(DatabaseCopyPhase.Idle, nonRelational.Services.GetRequiredService<DatabaseCopyService>().Status.Phase);
+    }
+
+    [Fact]
+    public async Task WithoutTheOptionTheSettingsAreSavedAtOnceWithoutCopying()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+
+        using var response = await PostDatabaseAsync(admin, "Sqlite", target, copyData: false);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(DatabaseCopyPhase.Idle, app.Services.GetRequiredService<DatabaseCopyService>().Status.Phase);
+        Assert.Equal(target, SavedSettings(app)["Database:ConnectionString"]);
+    }
+
+    [Fact]
+    public void TablesAreOrderedAfterTheOnesTheyReference()
+    {
+        using var context = OpenTarget("Data Source=:memory:");
+        var tables = DatabaseTable.InDependencyOrder(context.Model);
+        var names = tables.Select(t => t.EntityType.Name).ToList();
+
+        Assert.Contains("BaGet.Core.Package", names);
+        Assert.Contains("BaGet.Core.BaGetUser", names);
+        Assert.Contains(names, n => n.Contains("IdentityUserRole"));
+        Assert.Equal(names.Count, names.Distinct().Count());
+
+        foreach (var table in tables)
+        {
+            foreach (var foreignKey in table.EntityType.GetForeignKeys().Where(f => f.PrincipalEntityType != table.EntityType))
+            {
+                Assert.True(
+                    names.IndexOf(foreignKey.PrincipalEntityType.Name) < names.IndexOf(table.EntityType.Name),
+                    $"{table.EntityType.Name} comes before {foreignKey.PrincipalEntityType.Name}");
+            }
+        }
+    }
+
+    [Fact]
+    public void PreflightRefusesLocalDatesOnlyForPostgreSql()
+    {
+        using var context = OpenTarget("Data Source=:memory:");
+        var table = DatabaseTable.InDependencyOrder(context.Model).Single(t => t.EntityType.ClrType == typeof(Organization));
+        var rows = new object[] { new Organization { Key = 1, Name = "a", Created = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Local) } };
+
+        var postgres = new DatabaseCopyPreflight("PostgreSql");
+        postgres.Inspect(table, rows);
+        Assert.Contains(postgres.Problems, p => p.Contains("local time"));
+
+        var other = new DatabaseCopyPreflight("SqlServer");
+        other.Inspect(table, rows);
+        Assert.Empty(other.Problems);
+    }
+
+    [Fact]
+    public void PreflightCasesAreNotCheckedForPostgreSqlWhichIsCaseSensitive()
+    {
+        using var context = OpenTarget("Data Source=:memory:");
+        var table = DatabaseTable.InDependencyOrder(context.Model).Single(t => t.EntityType.ClrType == typeof(Organization));
+        var rows = new object[]
+        {
+            new Organization { Key = 1, Name = "Acme" },
+            new Organization { Key = 2, Name = "acme" },
+        };
+
+        var postgres = new DatabaseCopyPreflight("PostgreSql");
+        postgres.Inspect(table, rows);
+        Assert.Empty(postgres.Problems);
+
+        var mysql = new DatabaseCopyPreflight("MySql");
+        mysql.Inspect(table, rows);
+        Assert.Single(mysql.Problems);
+    }
+
+    [Fact]
+    public void ErrorTextIsScrubbedOfTheConnectionStringAndItsCredentials()
+    {
+        const string connection = "Server=db.internal;Database=baget;User Id=svc;Password=hunter2;";
+
+        var scrubbed = DatabaseCopyService.Scrub($"Login failed for hunter2 using {connection}", connection);
+        Assert.DoesNotContain("hunter2", scrubbed);
+        Assert.DoesNotContain("db.internal", scrubbed);
+
+        var partial = DatabaseCopyService.Scrub("Access denied for user 'svc' (password hunter2)", connection);
+        Assert.DoesNotContain("hunter2", partial);
+        Assert.DoesNotContain("svc", partial);
+    }
+}
