@@ -82,6 +82,13 @@ internal static class SettingsForm
 
             if (!fields.TryGetValue(ValuePrefix + key, out var raw)) continue;
 
+            // A drop-down that listed a current value outside its list posts it back: not a change.
+            if (descriptor.Kind == SettingKind.Enum
+                && string.Equals(RawText(raw), state.EffectiveValue ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             try
             {
                 var parsed = ParseValue(descriptor, raw);
@@ -98,6 +105,9 @@ internal static class SettingsForm
 
         return (changes, errors);
     }
+
+    private static string RawText(StringValues raw)
+        => (raw.Count == 0 ? string.Empty : raw[raw.Count - 1] ?? string.Empty).Trim();
 
     private static (bool HasValue, object Value) ParseValue(SettingDescriptor descriptor, StringValues raw)
     {

@@ -23,7 +23,10 @@ public enum SettingKind
     /// <summary>Free text.</summary>
     String,
 
-    /// <summary>One of a fixed set of names, see <see cref="SettingDescriptor.EnumValues"/>.</summary>
+    /// <summary>
+    /// One of a fixed set of names, see <see cref="SettingDescriptor.EnumValues"/>: an enum, or a
+    /// string property carrying <see cref="AllowedSettingValuesAttribute"/>.
+    /// </summary>
     Enum,
 
     /// <summary>A duration such as "00:10:00".</summary>
@@ -48,6 +51,13 @@ public enum SettingKind
 /// <param name="IsSensitive">The value is a credential: masked and write-only.</param>
 /// <param name="RequiresRestart">A change applies after a restart.</param>
 /// <param name="Description">The property's XML documentation summary, or an empty string.</param>
+/// <param name="ExampleDependsOnKey">
+/// The full key of the setting that selects <paramref name="Examples"/> (see
+/// <see cref="SettingExampleAttribute"/>), or null.
+/// </param>
+/// <param name="Examples">
+/// Example values by the value of <paramref name="ExampleDependsOnKey"/> (case-insensitive), or null.
+/// </param>
 public sealed record SettingDescriptor(
     string Key,
     string Section,
@@ -57,7 +67,9 @@ public sealed record SettingDescriptor(
     string[] EnumValues,
     bool IsSensitive,
     bool RequiresRestart,
-    string Description);
+    string Description,
+    string? ExampleDependsOnKey = null,
+    IReadOnlyDictionary<string, string>? Examples = null);
 
 /// <summary>
 /// Every setting of every registered options type, found by reflection over the types
@@ -184,23 +196,41 @@ public class SettingsCatalog
                 continue;
             }
 
-            var kind = KindOf(propertyType);
+            var allowed = property.GetCustomAttribute<AllowedSettingValuesAttribute>()?.Values;
+            var kind = allowed != null && propertyType == typeof(string) ? SettingKind.Enum : KindOf(propertyType);
+            var examples = property.GetCustomAttributes<SettingExampleAttribute>().ToList();
             var descriptor = new SettingDescriptor(
                 Key: key,
                 Section: key.Contains(':') ? key.Substring(0, key.IndexOf(':')) : (scalarsOnly ? string.Empty : key),
                 Group: scalarsOnly ? "BaGet" : GroupOf(property),
                 Kind: kind,
                 ClrType: propertyType,
-                EnumValues: kind == SettingKind.Enum ? Enum.GetNames(propertyType) : Array.Empty<string>(),
+                EnumValues: kind != SettingKind.Enum ? Array.Empty<string>() : allowed ?? Enum.GetNames(propertyType),
                 IsSensitive: property.GetCustomAttribute<SensitiveSettingAttribute>() != null,
                 RequiresRestart: restart,
-                Description: XmlDocumentation.GetSummary(property));
+                Description: XmlDocumentation.GetSummary(property),
+                ExampleDependsOnKey: examples.Count == 0
+                    ? null
+                    : string.IsNullOrEmpty(prefix) ? examples[0].DependsOn : prefix + ":" + examples[0].DependsOn,
+                Examples: examples.Count == 0
+                    ? null
+                    : examples.GroupBy(e => e.DependsOn, StringComparer.Ordinal).First()
+                        .ToDictionary(e => e.WhenValue, e => e.Example, StringComparer.OrdinalIgnoreCase));
 
             if (byKey.TryGetValue(key, out var existing))
             {
                 // Two options types sharing a key (such as "Storage:Type") are one setting.
+                // The choices and examples of whichever type declares them survive the merge.
+                var choice = existing.Kind == SettingKind.Enum && existing.ClrType == typeof(string)
+                             || descriptor.Kind != SettingKind.Enum || descriptor.ClrType != typeof(string)
+                    ? existing
+                    : descriptor;
                 byKey[key] = existing with
                 {
+                    Kind = choice.Kind,
+                    EnumValues = choice.EnumValues,
+                    ExampleDependsOnKey = existing.ExampleDependsOnKey ?? descriptor.ExampleDependsOnKey,
+                    Examples = existing.Examples ?? descriptor.Examples,
                     IsSensitive = existing.IsSensitive || descriptor.IsSensitive,
                     RequiresRestart = existing.RequiresRestart || descriptor.RequiresRestart,
                     Description = existing.Description.Length > 0 ? existing.Description : descriptor.Description,

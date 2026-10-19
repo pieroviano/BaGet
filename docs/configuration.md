@@ -577,7 +577,16 @@ The database settings are located under the `Database` key in the `appsettings.j
 There are three settings related to the database configuration:
 
 - **Type**: The database engine to use, this should be one of the strings from the above list such as `PostgreSql` or `Sqlite`.
-- **ConnectionString**: The connection string for your database engine.
+- **ConnectionString**: The connection string for your database engine. Examples:
+
+    | `Type` | Example |
+    | --- | --- |
+    | `Sqlite` | `Data Source=baget.db` |
+    | `SqlServer` | `Server=localhost;Database=BaGet;Trusted_Connection=True;TrustServerCertificate=True` |
+    | `PostgreSql` | `Host=localhost;Port=5432;Database=baget;Username=baget;Password=<password>` |
+    | `MySql` | `Server=localhost;Port=3306;Database=baget;User=baget;Password=<password>` |
+    | `AzureTable` | `DefaultEndpointsProtocol=https;AccountName=<account>;AccountKey=<key>;EndpointSuffix=core.windows.net` |
+
 - **MySqlServerVersion**: MySQL only, for example `8.0.36`. When empty, BaGet Extension detects the version by connecting to the server; set it to avoid that connection.
 
 ## IIS server options
@@ -632,6 +641,12 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 - A secret field is blank: leave it empty to keep the value, type to replace it, tick *Clear* to empty it.
 - Only changed values are saved. A value that fails to parse or validate is listed above its section and nothing in
   that section is saved. Settings of other kinds (maps) are shown read-only.
+- `Database:Type`, `Storage:Type` and `Search:Type` are drop-downs of the allowed values (matched ignoring case; a
+  current value that is empty or not in the list is kept as the selected entry, so saving never changes it). A value
+  outside the list is refused when saved, and at startup.
+- `Database:ConnectionString` shows an example for the selected `Database:Type` as a placeholder (only while no value
+  is stored) and as an "Example for ..." line; both change when you pick another type. The example is never put in
+  the field's value.
 - A setting no file sets shows the built-in default (for example `Feeds:EnableV2` is ticked) and can be changed from it.
 - If the overrides file cannot be written (a read-only content root) or is not valid JSON, the page shows the error,
   naming the path, instead of failing; point `SettingsOverridesPath` at a writable file.

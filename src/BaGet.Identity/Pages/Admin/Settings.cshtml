@@ -51,7 +51,8 @@
                                 <legend>@g.Key</legend>
                                 @foreach (var f in g)
                                 {
-                                    <partial name="_SettingField" model="f" />
+                                    ViewData["Siblings"] = s;
+                                    <partial name="_SettingField" model="f" view-data="ViewData" />
                                 }
                             </fieldset>
                         }
@@ -74,3 +75,40 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Rewrites the example of a setting (placeholder and help line) when the setting that selects it
+        // changes. Text only (textContent / setAttribute): nothing is parsed as markup, no request is sent,
+        // and no field value is touched.
+        (function () {
+            function attributeName(value) {
+                return 'data-example-' + String(value).toLowerCase().replace(/[^a-z0-9]/g, '-');
+            }
+
+            document.querySelectorAll('[data-example-source]').forEach(function (line) {
+                var source = document.getElementById(line.getAttribute('data-example-source'));
+                var input = document.getElementById(line.getAttribute('data-example-target'));
+                if (!source) return;
+
+                var stored = line.getAttribute('data-example-stored') === 'true';
+
+                function update() {
+                    var value = source.value;
+                    var example = line.getAttribute(attributeName(value));
+                    var hasExample = example !== null;
+
+                    line.querySelector('[data-example-type]').textContent = value;
+                    line.querySelector('[data-example-text]').textContent = hasExample ? example : '';
+                    if (hasExample) line.removeAttribute('hidden'); else line.setAttribute('hidden', 'hidden');
+
+                    if (input && !stored) {
+                        input.setAttribute('placeholder', hasExample ? 'e.g. ' + example : 'not set');
+                    }
+                }
+
+                source.addEventListener('change', update);
+            });
+        })();
+    </script>
+}

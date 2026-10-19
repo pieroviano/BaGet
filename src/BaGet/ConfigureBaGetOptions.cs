@@ -38,34 +38,18 @@ public class ConfigureBaGetOptions
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    private static readonly HashSet<string?> ValidDatabaseTypes
-        = new HashSet<string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            "AzureTable",
-            "MySql",
-            "PostgreSql",
-            "Sqlite",
-            "SqlServer",
-        };
+    // One source of truth: the lists the Settings page offers, declared by [AllowedSettingValues].
+    private static readonly string[] ValidDatabaseTypes
+        = AllowedSettingValuesAttribute.ValuesOf<DatabaseOptions>(nameof(DatabaseOptions.Type));
 
-    private static readonly HashSet<string?> ValidStorageTypes
-        = new HashSet<string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            "AliyunOss",
-            "AwsS3",
-            "AzureBlobStorage",
-            "Filesystem",
-            "GoogleCloud",
-            "Null",
-        };
+    private static readonly string[] ValidStorageTypes
+        = AllowedSettingValuesAttribute.ValuesOf<StorageOptions>(nameof(StorageOptions.Type));
 
-    private static readonly HashSet<string?> ValidSearchTypes
-        = new HashSet<string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            "AzureSearch",
-            "Database",
-            "Null",
-        };
+    private static readonly string[] ValidSearchTypes
+        = AllowedSettingValuesAttribute.ValuesOf<SearchOptions>(nameof(SearchOptions.Type));
+
+    private static bool IsValid(string[] allowed, string? value)
+        => allowed.Contains(value, StringComparer.OrdinalIgnoreCase);
 
     public void Configure(CorsOptions options)
     {
@@ -142,21 +126,21 @@ public class ConfigureBaGetOptions
         if (options.Search == null) failures.Add($"The '{nameof(BaGetOptions.Search)}' config is required");
         if (options.Storage == null) failures.Add($"The '{nameof(BaGetOptions.Storage)}' config is required");
 
-        if (!ValidDatabaseTypes.Contains(options.Database?.Type))
+        if (!IsValid(ValidDatabaseTypes, options.Database?.Type))
         {
             failures.Add(
                 $"The '{nameof(BaGetOptions.Database)}:{nameof(DatabaseOptions.Type)}' config is invalid. " +
                 $"Allowed values: {string.Join(", ", ValidDatabaseTypes)}");
         }
 
-        if (!ValidStorageTypes.Contains(options.Storage?.Type))
+        if (!IsValid(ValidStorageTypes, options.Storage?.Type))
         {
             failures.Add(
                 $"The '{nameof(BaGetOptions.Storage)}:{nameof(StorageOptions.Type)}' config is invalid. " +
                 $"Allowed values: {string.Join(", ", ValidStorageTypes)}");
         }
 
-        if (!ValidSearchTypes.Contains(options.Search?.Type))
+        if (!IsValid(ValidSearchTypes, options.Search?.Type))
         {
             failures.Add(
                 $"The '{nameof(BaGetOptions.Search)}:{nameof(SearchOptions.Type)}' config is invalid. " +

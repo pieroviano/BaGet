@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1387 tests, all green** across `BaGet.Core.Tests` (443), `BaGet.Tests` (677),
+Baseline: **1423 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (690),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (39),
 `BaGet.Protocol.Samples.Tests` (8). No external services needed; integration tests use SQLite and a
 temporary directory.
@@ -74,7 +74,11 @@ through.
 `SettingsOverridesPath`, default in the content root / `BAGET_CONFIG_ROOT`) after the last `appsettings*.json`
 source and before environment variables and the command line. `SettingsService` /
 `SettingsOverridesStore` (`BaGet.Core`) write it; `AddBaGetOptions` records every options type as a
-`SettingsSchemaRegistration`, and `[RestartRequired]` / `[SensitiveSetting]` on options classify them. Tests
+`SettingsSchemaRegistration`, and `[RestartRequired]` / `[SensitiveSetting]` on options classify them.
+`[AllowedSettingValues(...)]` (string settings; `Database/Storage/Search:Type`) makes the catalog emit an `Enum`
+choice with those values and is also what `ConfigureBaGetOptions` validates against (one list);
+`[SettingExample(dependsOn, whenValue, example)]` gives a setting per-value examples (`SettingDescriptor.Examples`),
+rendered by `_SettingField` as a placeholder/help line (never the value) via `SettingPresentation`. Tests
 set `SettingsOverridesPath` to the temp directory; `UseSetting` values arrive through the *last* (chained host)
 provider, so they shadow saved overrides — integration tests that save a setting must use keys the harness does
 not set.
