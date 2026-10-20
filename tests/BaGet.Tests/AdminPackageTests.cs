@@ -426,7 +426,8 @@ public class AdminPackageAuditTests : IDisposable
         }, action: "packages/Alice.Package/manage?handler=Unlist");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains(_logs.Messages, m => m.Contains("Administrator root ran Unlist on Alice.Package"));
+        // Serilog renders string values quoted when it feeds an ILoggerProvider.
+        Assert.Contains(_logs.Messages, m => m.Contains("Administrator \"root\" ran \"Unlist\" on \"Alice.Package\""));
     }
 
     private sealed class CapturingLoggerProvider : ILoggerProvider

@@ -630,6 +630,30 @@ Note: If not specified, the MaxRequestBodySize in BaGet Extension defaults to 25
 }
 ```
 
+## Logging
+
+The host logs with [Serilog](https://serilog.net), configured only from the `Serilog` section (levels, sinks,
+retention); libraries log through `Microsoft.Extensions.Logging` and need no change. The old `Logging` section is
+no longer read. Changes need a restart.
+
+| Where | What |
+| --- | --- |
+| Console | `[HH:mm:ss LVL] SourceContext: message`, Information and up |
+| `logs/baget-YYYYMMDD.log` | same events, daily files, 14 kept, rolls at 50 MB (`baget-YYYYMMDD_001.log`) |
+
+- A relative file `path` resolves against the content root (or `BAGET_CONFIG_ROOT`), not the working directory.
+  An absolute path is used as is. In Docker point it into the volume: `Serilog__WriteTo__File__Args__path=/var/baget/logs/baget-.log`.
+- Levels: `Serilog:MinimumLevel:Default` is `Information`; `Override` lowers or raises a namespace
+  (`Microsoft`, `System`, `Microsoft.EntityFrameworkCore`: `Warning`; `Microsoft.Hosting.Lifetime`: `Information`).
+  Quieter, like the previous default: `Serilog__MinimumLevel__Default=Warning`. `appsettings.Development.json` uses `Debug`.
+- Sinks are named under `WriteTo` (`Console`, `File`), so one can be tuned with an environment variable such as
+  `Serilog__WriteTo__File__Args__retainedFileCountLimit=30`. Disable one with an empty name (`Serilog__WriteTo__File__Name=`).
+  Other sinks need their package referenced by the host.
+- Request logging: one line per request, `HTTP GET /v3/index.json from <client> responded 200 in 12.3 ms`, after
+  forwarded headers so the client is the real one. Level: Warning for 5xx or an exception, Debug for static files,
+  Information otherwise. The line has the path only: no query string, headers or body, so API keys never reach the log. Keep `Microsoft.AspNetCore.Hosting.Diagnostics` at `Warning`: at Information it logs every full URL, query string included.
+- The Settings page does not list `Serilog` (it is not an options type); edit the file or the environment.
+
 ## Settings page
 
 Settings changed on the server's Settings page are saved to a JSON file, so `appsettings.json` and its

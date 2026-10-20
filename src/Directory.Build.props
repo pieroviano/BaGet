@@ -61,6 +61,11 @@
     <MailKitPackageVersion>4.18.1</MailKitPackageVersion>
     <!-- Renders the two-factor setup QR code as SVG on the server; MIT. -->
     <QRCoderPackageVersion>1.6.0</QRCoderPackageVersion>
+    <!-- Logging of the host (src/BaGet) only; libraries log through Microsoft.Extensions.Logging. -->
+    <SerilogAspNetCorePackageVersion>10.0.0</SerilogAspNetCorePackageVersion>
+    <SerilogSettingsConfigurationPackageVersion>10.0.1</SerilogSettingsConfigurationPackageVersion>
+    <SerilogSinksConsolePackageVersion>6.1.1</SerilogSinksConsolePackageVersion>
+    <SerilogSinksFilePackageVersion>7.0.0</SerilogSinksFilePackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == ''">

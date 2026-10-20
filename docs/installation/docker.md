@@ -21,6 +21,10 @@ Search__Type=Database
 # Where the server's Settings page saves the settings it changes. Keep it in the mounted volume,
 # otherwise a recreated container loses them.
 SettingsOverridesPath=/var/baget/appsettings.Overrides.json
+
+# Logs go to the console (docker logs) and to a rolling file; the default, /app/logs, is lost with the
+# container, so keep the files in the volume.
+Serilog__WriteTo__File__Args__path=/var/baget/logs/baget-.log
 ```
 
 For a full list of configurations, please refer to [BaGet Extension's configuration](../configuration.md) guide.

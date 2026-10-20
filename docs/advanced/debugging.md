@@ -34,12 +34,14 @@ BaGet Extension listens on `http://localhost:6060`. `Kestrel:Endpoints:Http:Url`
 
 ## Logging
 
-The `Logging` section of `appsettings.json` sets levels; the shipped `Default` is `Warning` for the
-console and debug providers. Raise it for a namespace, for example:
+Serilog, configured by the `Serilog` section of `appsettings.json` (see [Logging](../configuration.md#logging)).
+Development already logs at `Debug`. Raise a namespace, for example:
 
 ```json
-{ "Logging": { "Console": { "LogLevel": { "BaGet": "Debug" } } } }
+{ "Serilog": { "MinimumLevel": { "Override": { "BaGet": "Debug" } } } }
 ```
+
+Logs also go to `logs/baget-YYYYMMDD.log` under the content root.
 
 ## Command line
 

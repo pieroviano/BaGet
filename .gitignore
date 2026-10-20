@@ -275,3 +275,6 @@ __pycache__/
 **/baget.db
 **/baget.db-shm
 **/baget.db-wal
+
+# BaGet host logs (Serilog file sink)
+logs/

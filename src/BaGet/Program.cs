@@ -23,6 +23,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Serilog;
 #pragma warning disable ASPDEPR003
 
 namespace BaGet;
@@ -227,6 +228,7 @@ public partial class Program
         var builder = WebApplication.CreateBuilder(args);
 
         var overridesPath = ConfigureConfiguration(builder.Configuration, builder.Environment);
+        ConfigureLogging(builder);
         ConfigureWebHost(builder.WebHost);
         ConfigureServices(builder.Services, builder.Configuration, overridesPath);
 
@@ -285,6 +287,51 @@ public partial class Program
         configuration.Sources.Insert(index, source);
 
         return path;
+    }
+
+    /// <summary>
+    /// Replace the default Microsoft logging providers with Serilog, configured entirely from the
+    /// "Serilog" configuration section (levels, sinks, retention). Libraries keep logging through
+    /// <see cref="Microsoft.Extensions.Logging.ILogger"/>; only the host knows about Serilog.
+    /// </summary>
+    /// <remarks>
+    /// There is deliberately no static <c>Log.Logger</c> or bootstrap logger (<c>preserveStaticLogger</c>; the default would assign it per host): WebApplicationFactory builds
+    /// several hosts in one process, and a frozen static logger would throw on the second. Each host gets
+    /// its own logger, disposed with it. <c>writeToProviders</c> keeps any <c>ILoggerProvider</c> a
+    /// host registers explicitly (the tests' capturing providers) fed as well.
+    /// </remarks>
+    private static void ConfigureLogging(WebApplicationBuilder builder)
+    {
+        var root = Environment.GetEnvironmentVariable("BAGET_CONFIG_ROOT");
+        ResolveLogFilePath(
+            builder.Configuration,
+            string.IsNullOrEmpty(root) ? builder.Environment.ContentRootPath : root);
+
+        builder.Logging.ClearProviders();
+        builder.Services.AddSerilog(
+            (services, loggerConfiguration) => loggerConfiguration
+                .ReadFrom.Configuration(builder.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext(),
+            preserveStaticLogger: true,
+            writeToProviders: true);
+    }
+
+    /// <summary>
+    /// The File sink resolves a relative path against the process working directory, which for a
+    /// service is System32 or wherever it was launched from. Make a relative
+    /// "Serilog:WriteTo:File:Args:path" absolute against the content root (or BAGET_CONFIG_ROOT).
+    /// An absolute path, from any configuration source, is left alone.
+    /// </summary>
+    internal static void ResolveLogFilePath(IConfigurationManager configuration, string root)
+    {
+        const string key = "Serilog:WriteTo:File:Args:path";
+        var path = configuration[key];
+
+        if (!string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path))
+        {
+            configuration[key] = Path.GetFullPath(Path.Combine(root, path));
+        }
     }
 
     private static void ConfigureWebHost(IWebHostBuilder web)
@@ -355,6 +402,22 @@ public partial class Program
         app.AddAzureSearch();
     }
 
+    /// <summary>
+    /// Warning for a server error or an unhandled exception, Debug for static files (no endpoint matched,
+    /// not an error) so they stay out of the default log, Information for everything else.
+    /// </summary>
+    internal static Serilog.Events.LogEventLevel GetRequestLogLevel(HttpContext context, double elapsed, Exception? exception)
+    {
+        if (exception != null || context.Response.StatusCode >= 500)
+        {
+            return Serilog.Events.LogEventLevel.Warning;
+        }
+
+        return context.GetEndpoint() == null && context.Response.StatusCode < 400
+            ? Serilog.Events.LogEventLevel.Debug
+            : Serilog.Events.LogEventLevel.Information;
+    }
+
     private static void ConfigurePipeline(WebApplication app)
     {
         var options = app.Configuration.Get<BaGetOptions>();
@@ -408,6 +471,22 @@ public partial class Program
                 return next();
             });
         }
+
+        // After forwarded headers (so the client address is the real one) and the path base, before
+        // anything that answers: it logs the final status of every request, one line each. The default
+        // message template carries the method, path and status, never the query string or headers, so
+        // "?apikey=" values and X-NuGet-ApiKey cannot reach the log; keep it that way.
+        app.UseSerilogRequestLogging(requestLogging =>
+        {
+            requestLogging.MessageTemplate =
+                "HTTP {RequestMethod} {RequestPath} from {ClientIp} responded {StatusCode} in {Elapsed:0.0} ms";
+            // Without this the middleware writes to the static Log.Logger, which several hosts in one
+            // process (the integration tests) would share and cross-feed.
+            requestLogging.Logger = app.Services.GetRequiredService<Serilog.ILogger>();
+            requestLogging.GetLevel = GetRequestLogLevel;
+            requestLogging.EnrichDiagnosticContext = (diagnostics, context) =>
+                diagnostics.Set("ClientIp", context.Connection.RemoteIpAddress?.ToString());
+        });
 
         app.UseStaticFiles();
         app.UseRouting();

@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1476 tests, all green** across `BaGet.Core.Tests` (468), `BaGet.Tests` (727),
+Baseline: **1481 tests** across `BaGet.Core.Tests` (468), `BaGet.Tests` (732),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -139,6 +139,17 @@ duplicates in unique indexes and keys (columns `NOCASE`/`citext`/`*_ci`, else th
 (PostgreSQL); a non-empty target needing migration is refused with "schema was updated"; `Unspecified` dates are stored as UTC. Verification uses an order-independent key checksum (`DatabaseTable.Checksum`; engines collate differently). Once settings saving starts, a failure keeps the target and closes the gate until restart (`FailAfterSaveAsync`). A cancellation inside `SettingsService.SaveAsync` happens before the file rename, so it rolls back. Test seams
 `DatabaseCopyService.AfterBatch` / `BeforeSettingsSaved` / `AfterSettingsSaved` inject failures. Errors are scrubbed of the connection string
 (`DatabaseCopyService.Scrub`); never log it.
+
+### Logging
+
+The host (and only the host) uses Serilog: `Program.ConfigureLogging` clears the Microsoft providers and calls
+`AddSerilog(... ReadFrom.Configuration ... , writeToProviders: true)`, so the `Serilog` section of `appsettings.json`
+is the one source of truth for levels and sinks (Console, File `logs/baget-.log`, resolved against the content
+root / `BAGET_CONFIG_ROOT` by `ResolveLogFilePath`). Libraries keep `Microsoft.Extensions.Logging.ILogger`. There is
+**no static/bootstrap logger** (it would throw "already frozen" when `WebApplicationFactory` builds a second host).
+`app.UseSerilogRequestLogging()` sits after forwarded headers/path base; its template has the path only, never the
+query or headers (API keys). `writeToProviders` delivers each event twice to a registered `ILoggerProvider`;
+tests that count lines use `Distinct()`. The harness switches both sinks off with empty `Serilog:WriteTo:*:Name`.
 
 ### Tests
 

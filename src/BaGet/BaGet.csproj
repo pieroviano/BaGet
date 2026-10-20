@@ -31,6 +31,10 @@
     -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
+    <PackageReference Include="Serilog.AspNetCore" Version="$(SerilogAspNetCorePackageVersion)" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="$(SerilogSettingsConfigurationPackageVersion)" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="$(SerilogSinksConsolePackageVersion)" />
+    <PackageReference Include="Serilog.Sinks.File" Version="$(SerilogSinksFilePackageVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
