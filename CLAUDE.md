@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1491 tests** across `BaGet.Core.Tests` (468), `BaGet.Tests` (742),
+Baseline: **1523 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (749),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -156,6 +156,18 @@ query or headers (API keys). `writeToProviders` delivers each event twice to a r
 tests that count lines use `Distinct()`. The harness switches the sinks off with `Enabled=false`.
 `WebApplicationFactory` `UseSetting` gives every parent key of a setting an empty value, which Serilog reads as a sink
 name, so a test that needs a working File sink runs `Program.BuildApplication` with command-line args instead.
+
+### Telemetry
+
+Libraries emit through `BaGetDiagnostics` (`BaGet.Core/Telemetry`): `Source` (`ActivitySource`) and `Meter`, both named
+`BaGet`, plain `System.Diagnostics` (no OpenTelemetry package outside the host). `StartActivity` returns null without a
+listener, so spans cost nothing. Spans: `package.index` (`PackageIndexingService`), `package.validate`
+(`PackageValidationRunner`), `mirror.fetch` (`PackageService`), `database.copy` + `database.copy.table`
+(`DatabaseCopyService`); counters `baget.packages.pushed`, `baget.downloads`, `baget.validation.results`. Tags are
+`BaGetDiagnostics.Tags` (id, version, result, table, counts); never keys, connection strings or user data, and a failure
+records the exception type only (`Fail`). `TelemetryOptions` (`Telemetry:*`, not `[RestartRequired]`) validates itself
+(`Validate()`, called from `ConfigureBaGetOptions`). Tests listen with `DiagnosticsCapture` (linked into `BaGet.Tests`);
+the sources are process-wide, so tests that count measurements join its `Diagnostics` collection (runs alone).
 
 ### Tests
 

@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Core.Tests.Support;
 using BaGet.Database.Sqlite;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -301,6 +302,57 @@ public class DatabaseCopyTests : IDisposable
 
         var json = await admin.GetPageAsync("admin/settings?handler=CopyStatus");
         Assert.DoesNotContain("s3cret-value", json);
+    }
+
+    [Fact]
+    public async Task ACopyEmitsADatabaseCopySpanWithOneChildSpanPerTableAndNoConnectionString()
+    {
+        using var capture = new DiagnosticsCapture();
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        Assert.Equal(DatabaseCopyPhase.Succeeded, (await WaitAsync(app)).Phase);
+
+        var root = Assert.Single(capture.Spans("database.copy"));
+        Assert.Equal("Succeeded", DiagnosticsCapture.Tag(root, BaGetDiagnostics.Tags.Result));
+        Assert.Equal("Sqlite", DiagnosticsCapture.Tag(root, BaGetDiagnostics.Tags.TargetType));
+        Assert.Equal("Sqlite", DiagnosticsCapture.Tag(root, BaGetDiagnostics.Tags.SourceType));
+
+        var tables = capture.Spans("database.copy.table");
+        Assert.NotEmpty(tables);
+        Assert.Equal(DiagnosticsCapture.Tag(root, BaGetDiagnostics.Tags.Tables), tables.Count);
+        Assert.All(tables, t =>
+        {
+            Assert.Equal(root.Id, t.ParentId);
+            Assert.Equal(root.TraceId, t.TraceId);
+            Assert.Equal("Succeeded", DiagnosticsCapture.Tag(t, BaGetDiagnostics.Tags.Result));
+        });
+        Assert.Contains(tables, t => (string?)DiagnosticsCapture.Tag(t, BaGetDiagnostics.Tags.Table) == "Packages"
+                                     && (long)DiagnosticsCapture.Tag(t, BaGetDiagnostics.Tags.Rows)! >= 3);
+
+        var everyTag = capture.Stopped.SelectMany(a => a.TagObjects).Select(t => t.Value?.ToString() ?? string.Empty);
+        Assert.DoesNotContain(everyTag, v => v.Contains(target) || v.Contains("Data Source"));
+    }
+
+    [Fact]
+    public async Task AFailedCopyMarksTheSpansAsErrors()
+    {
+        using var capture = new DiagnosticsCapture();
+        var (app, admin) = await StartAsync();
+        var copy = app.Services.GetRequiredService<DatabaseCopyService>();
+        copy.AfterBatch = (table, rows, token) =>
+            table == "Packages" ? throw new InvalidOperationException("injected failure") : Task.CompletedTask;
+
+        using (await PostDatabaseAsync(admin, "Sqlite", NewTarget())) { }
+        Assert.Equal(DatabaseCopyPhase.Failed, (await WaitAsync(app)).Phase);
+
+        var root = Assert.Single(capture.Spans("database.copy"));
+        Assert.Equal(System.Diagnostics.ActivityStatusCode.Error, root.Status);
+        Assert.Equal("Failed", DiagnosticsCapture.Tag(root, BaGetDiagnostics.Tags.Result));
+        var failed = Assert.Single(capture.Spans("database.copy.table"), t => (string?)DiagnosticsCapture.Tag(t, BaGetDiagnostics.Tags.Result) == "Failed");
+        Assert.Equal("Packages", DiagnosticsCapture.Tag(failed, BaGetDiagnostics.Tags.Table));
+        Assert.DoesNotContain("injected failure", failed.StatusDescription ?? string.Empty);
     }
 
     [Fact]

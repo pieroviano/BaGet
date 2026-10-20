@@ -670,6 +670,30 @@ no longer read.
   Quiet only that line: `Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware=Warning`.
 - The Settings page does not list `Serilog` (it is not an options type); edit the file or the environment.
 
+## Telemetry
+
+Off by default. The server emits traces and metrics with `System.Diagnostics` (`ActivitySource` / `Meter` named `BaGet`);
+nothing is exported until `Telemetry:Enabled` is true and an endpoint is set. Keys (all apply without a restart):
+
+| Key | Default | Meaning |
+|---|---|---|
+| `Telemetry:Enabled` | `false` | Master switch |
+| `Telemetry:ServiceName` | `baget` | `service.name` of every signal |
+| `Telemetry:Otlp:Endpoint` | empty | Absolute http(s) collector URL, for example `http://jaeger:4317`; empty = no traces |
+| `Telemetry:Otlp:Protocol` | `Grpc` | `Grpc` (4317) or `HttpProtobuf` (4318) |
+| `Telemetry:Otlp:Headers` | empty | `key=value,...` request headers (sensitive: masked on the Settings page) |
+| `Telemetry:Otlp:Timeout` | `00:00:10` | Per-export timeout |
+| `Telemetry:Traces:Enabled` / `SamplingRatio` / `Database` | `true` / `1.0` (0 to 1) / `true` | Trace export, share of new traces kept, database command spans |
+| `Telemetry:Metrics:Endpoint` / `ExportInterval` | empty / `00:01:00` | Metrics collector (empty = not exported) and period |
+| `Telemetry:Logs:Endpoint` / `MinimumLevel` | empty / `Information` | Logs collector (empty = not exported) and lowest Serilog level |
+
+An invalid endpoint (not absolute http or https), protocol, level, a sampling ratio outside 0 to 1 or a non-positive
+duration stops the server at startup.
+
+Spans: `package.index`, `package.validate`, `mirror.fetch`, `database.copy` (one `database.copy.table` child per table).
+Counters: `baget.packages.pushed`, `baget.downloads`, `baget.validation.results`. Tags hold package id and version,
+result, table names and row counts, never API keys, connection strings, user names or email addresses.
+
 ## Settings page
 
 Settings changed on the server's Settings page are saved to a JSON file, so `appsettings.json` and its

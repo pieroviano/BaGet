@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -63,6 +64,33 @@ public class PackageValidationRunner
 
     public async Task RunAsync(string submissionId, CancellationToken cancellationToken)
     {
+        // Costs nothing without a listener. A submission with nothing pending (already finished) is not a validation.
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.PackageValidate);
+
+        try
+        {
+            var result = await RunCoreAsync(submissionId, activity, cancellationToken);
+            if (result == null)
+            {
+                activity?.SetTag(BaGetDiagnostics.Tags.Result, "Skipped");
+                return;
+            }
+
+            activity?.SetTag(BaGetDiagnostics.Tags.Result, result);
+            BaGetDiagnostics.ValidationResults.Add(1, new KeyValuePair<string, object?>(BaGetDiagnostics.Tags.Result, result));
+        }
+        catch (Exception e)
+        {
+            BaGetDiagnostics.Fail(activity, e);
+            BaGetDiagnostics.ValidationResults.Add(1, new KeyValuePair<string, object?>(BaGetDiagnostics.Tags.Result, "error"));
+
+            throw;
+        }
+    }
+
+    /// <returns>"Succeeded" or "Failed" (quarantined), or null when there was nothing to run.</returns>
+    private async Task<string?> RunCoreAsync(string submissionId, Activity? activity, CancellationToken cancellationToken)
+    {
         #pragma warning disable CS8604
         var steps = await _context.PackageValidations
             .Where(v => v.SubmissionId == submissionId)
@@ -72,8 +100,11 @@ public class PackageValidationRunner
         var index = steps.SingleOrDefault(s => s.Type == PackageValidation.IndexType);
         if (index == null || index.State != PackageValidationState.Pending)
         {
-            return;
+            return null;
         }
+
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageId, index.PackageId);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, index.PackageVersion);
 
         using var package = new MemoryStream();
         using (var staged = await _storage.GetAsync(ValidatingPackageSubmissionService.StagedPath(submissionId), cancellationToken))
@@ -121,7 +152,7 @@ public class PackageValidationRunner
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogWarning("Submission {SubmissionId} failed validation and is quarantined", submissionId);
-            return;
+            return "Failed";
         }
 
         var indexError = await IndexAsync(package, _options.Value.RepositorySigningServiceIndexUrl, cancellationToken);
@@ -145,6 +176,8 @@ public class PackageValidationRunner
         {
             await _storage.DeleteAsync(ValidatingPackageSubmissionService.StagedPath(submissionId), cancellationToken);
         }
+
+        return indexError == null ? "Succeeded" : "Failed";
     }
 
     /// <returns>Null on success, otherwise why indexing failed.</returns>

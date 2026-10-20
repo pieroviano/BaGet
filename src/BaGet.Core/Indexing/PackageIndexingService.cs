@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -75,6 +77,32 @@ public class PackageIndexingService : IPackageIndexingService
 
     public async Task<PackageIndexingResult> IndexAsync(Stream? packageStream, CancellationToken cancellationToken)
     {
+        // Costs nothing without a listener: StartActivity returns null.
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.PackageIndex);
+
+        try
+        {
+            var result = await IndexCoreAsync(packageStream, activity, cancellationToken);
+
+            activity?.SetTag(BaGetDiagnostics.Tags.Result, result.ToString());
+            BaGetDiagnostics.PackagesPushed.Add(1, new KeyValuePair<string, object?>(BaGetDiagnostics.Tags.Result, result.ToString()));
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            BaGetDiagnostics.Fail(activity, e);
+            BaGetDiagnostics.PackagesPushed.Add(1, new KeyValuePair<string, object?>(BaGetDiagnostics.Tags.Result, "error"));
+
+            throw;
+        }
+    }
+
+    private async Task<PackageIndexingResult> IndexCoreAsync(
+        Stream? packageStream,
+        Activity? activity,
+        CancellationToken cancellationToken)
+    {
         _gate?.ThrowIfClosed();
 
         // Try to extract all the necessary information from the package.
@@ -124,6 +152,9 @@ public class PackageIndexingService : IPackageIndexingService
 
             return PackageIndexingResult.InvalidPackage;
         }
+
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageId, package.Id);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, package.NormalizedVersionString);
 
         // The package is well-formed. Ensure this is a new package.
         if (await _packages.ExistsAsync(package.Id, package.Version, cancellationToken))

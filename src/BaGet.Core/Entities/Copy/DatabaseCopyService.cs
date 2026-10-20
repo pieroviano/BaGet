@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -160,6 +161,10 @@ public class DatabaseCopyService
         var pastPointOfNoReturn = false;
         IReadOnlyList<string> errors;
 
+        // Costs nothing without a listener. Tags: engine names only, never the connection string.
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.DatabaseCopy);
+        activity?.SetTag(BaGetDiagnostics.Tags.TargetType, request.TargetType);
+
         try
         {
             Update(s => s with { Phase = DatabaseCopyPhase.Checking, Message = "Connecting to the target." });
@@ -168,6 +173,7 @@ public class DatabaseCopyService
             var source = AsDbContext(scope.ServiceProvider.GetRequiredService<IContext>());
             var sourceFactory = FactoryFor(_current.CurrentValue.Type)
                 ?? throw new CopyRefusedException("The running database is not relational, so it cannot be copied.");
+            activity?.SetTag(BaGetDiagnostics.Tags.SourceType, sourceFactory.DatabaseType);
             var factory = FactoryFor(request.TargetType)
                 ?? throw new CopyRefusedException($"\"{request.TargetType}\" is not a relational database type, so it cannot be a copy's target.");
             if (IsCurrentDatabase(request.TargetType, request.TargetConnectionString))
@@ -286,6 +292,10 @@ public class DatabaseCopyService
 
             if (AfterSettingsSaved != null) await AfterSettingsSaved().ConfigureAwait(false);
 
+            activity?.SetTag(BaGetDiagnostics.Tags.Result, "Succeeded");
+            activity?.SetTag(BaGetDiagnostics.Tags.Tables, tables.Count);
+            activity?.SetTag(BaGetDiagnostics.Tags.Rows, totals.Values.Sum());
+
             _gate.CloseUntilRestart("The database was copied; restart BaGet to use the new database");
             Update(s => s with
             {
@@ -316,6 +326,9 @@ public class DatabaseCopyService
         {
             errors = new[] { Describe(e, request) };
         }
+
+        activity?.SetTag(BaGetDiagnostics.Tags.Result, "Failed");
+        activity?.SetStatus(ActivityStatusCode.Error);
 
         if (pastPointOfNoReturn)
         {
@@ -423,6 +436,9 @@ public class DatabaseCopyService
 
         long copied = 0;
         using var checksum = new DatabaseTable.Checksum();
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.DatabaseCopyTable);
+        activity?.SetTag(BaGetDiagnostics.Tags.Table, table.Name);
+        activity?.SetTag(BaGetDiagnostics.Tags.Rows, total);
 
         Update(s => s with { Table = table.Name, TableRowsCopied = 0, TableRowsTotal = total, Message = $"Copying {table.Name}." });
         var rowsBefore = Status.RowsCopied;
@@ -482,6 +498,9 @@ public class DatabaseCopyService
         }
         catch
         {
+            activity?.SetTag(BaGetDiagnostics.Tags.Result, "Failed");
+            activity?.SetStatus(ActivityStatusCode.Error);
+
             try
             {
                 await target.EndKeyedInsertAsync(table.EntityType, CancellationToken.None).ConfigureAwait(false);
@@ -495,6 +514,7 @@ public class DatabaseCopyService
         }
 
         await target.EndKeyedInsertAsync(table.EntityType, cancellationToken).ConfigureAwait(false);
+        activity?.SetTag(BaGetDiagnostics.Tags.Result, "Succeeded");
         return checksum.Finish();
     }
 

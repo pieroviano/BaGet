@@ -84,6 +84,8 @@ public class PackageService : IPackageService
     public async Task AddDownloadAsync(string packageId, NuGetVersion version, CancellationToken cancellationToken)
     {
         await _db.AddDownloadAsync(packageId, version, cancellationToken);
+
+        BaGetDiagnostics.Downloads.Add(1);
     }
 
     /// <summary>
@@ -105,12 +107,17 @@ public class PackageService : IPackageService
             id,
             version);
 
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.MirrorFetch);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageId, id);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, version.ToNormalizedString());
+
         try
         {
             using (var packageStream = await _upstream.DownloadPackageOrNullAsync(id, version, cancellationToken))
             {
                 if (packageStream == null)
                 {
+                    activity?.SetTag(BaGetDiagnostics.Tags.Result, "NotFound");
                     _logger.LogWarning(
                         "Upstream feed does not have package {PackageId} {PackageVersion}",
                         id,
@@ -131,11 +138,15 @@ public class PackageService : IPackageService
                     version,
                     result);
 
+                activity?.SetTag(BaGetDiagnostics.Tags.Result, result.ToString());
+
                 return result == PackageIndexingResult.Success;
             }
         }
         catch (Exception e)
         {
+            BaGetDiagnostics.Fail(activity, e);
+
             _logger.LogError(
                 e,
                 "Failed to index package {PackageId} {PackageVersion} from upstream",

@@ -81,4 +81,6 @@ public class BaGetOptions
     public SiteOptions? Site { get; set; }
 
     public ValidationOptions? Validation { get; set; }
+
+    public TelemetryOptions? Telemetry { get; set; }
 }

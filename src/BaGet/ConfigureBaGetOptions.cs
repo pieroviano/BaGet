@@ -148,6 +148,8 @@ public class ConfigureBaGetOptions
                 $"Allowed values: {string.Join(", ", ValidSearchTypes)}");
         }
 
+        if (options.Telemetry != null) failures.AddRange(options.Telemetry.Validate());
+
         if (failures.Any()) return ValidateOptionsResult.Fail(failures);
 
         return ValidateOptionsResult.Success;

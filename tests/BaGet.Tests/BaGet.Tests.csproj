@@ -29,6 +29,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The listener for the "BaGet" ActivitySource/Meter, shared with BaGet.Core.Tests. -->
+    <Compile Include="..\BaGet.Core.Tests\Support\DiagnosticsCapture.cs" Link="Support\DiagnosticsCapture.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="TestData\TestData.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
