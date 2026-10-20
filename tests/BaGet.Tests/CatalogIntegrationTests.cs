@@ -22,19 +22,34 @@ namespace BaGet.Tests;
 /// The catalog, read back both raw and through BaGet.Protocol's own catalog processor,
 /// which is how a mirror consumes it.
 /// </summary>
-public class CatalogIntegrationTests : IDisposable
+/// <remarks>
+/// Abstract: runs against the default repository at <c>/</c> (<see cref="CatalogIntegrationTests"/>) and a second one at
+/// <c>/r/second/</c> (<see cref="CatalogIntegrationSecondRepositoryTests"/>); each repository has its own catalog.
+/// </remarks>
+public abstract class CatalogIntegrationTestsBase : IDisposable
 {
+    private readonly string? _repository;
+    private readonly string _origin;
+
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
     private readonly Stream? _packageStream;
 
-    public CatalogIntegrationTests(ITestOutputHelper output)
+    protected CatalogIntegrationTestsBase(ITestOutputHelper output, string? repository)
     {
+        _repository = repository;
+        _origin = repository == null ? "http://localhost/" : $"http://localhost/r/{repository}/";
         _app = new BaGetApplication(output, configOverrides: new Dictionary<string, string>
         {
             { "PackageDeletionBehavior", "HardDelete" },
         });
         _client = _app.CreateClient();
+        if (repository != null)
+        {
+            _app.CreateRepositoryAsync(repository).GetAwaiter().GetResult();
+            _client.BaseAddress = new Uri(_origin);
+        }
+
         _packageStream = TestResources.GetResourceStream(TestResources.Package);
     }
 
@@ -42,13 +57,13 @@ public class CatalogIntegrationTests : IDisposable
     public async Task TheServiceIndexAdvertisesTheCatalog()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        var index = await new NuGetClientFactory(_client, "http://localhost/v3/index.json")
+        var index = await new NuGetClientFactory(_client, _origin + "v3/index.json")
             .CreateServiceIndexClient()
             .GetAsync(cancellationToken);
 
         #pragma warning disable CS8602, CS8604
         Assert.Equal(
-            "http://localhost/v3/catalog/index.json",
+            _origin + "v3/catalog/index.json",
             index.Resources.Single(r => r.Type == "Catalog/3.0.0").ResourceUrl);
         #pragma warning restore CS8602, CS8604
     }
@@ -66,7 +81,7 @@ public class CatalogIntegrationTests : IDisposable
     public async Task APushAppendsADetailsLeaf()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         var leaves = await ProcessCatalogAsync();
 
@@ -77,14 +92,14 @@ public class CatalogIntegrationTests : IDisposable
         Assert.Equal("SHA512", leaf.PackageHashAlgorithm);
         Assert.False(string.IsNullOrEmpty(leaf.PackageHash));
         Assert.True(leaf.PackageSize > 0);
-        Assert.StartsWith("http://localhost/v3/catalog/data/", leaf.CatalogLeafUrl);
+        Assert.StartsWith(_origin + "v3/catalog/data/", leaf.CatalogLeafUrl);
     }
 
     [Fact]
     public async Task ADeleteAppendsADeleteLeafAfterTheDetails()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using (var delete = await _client.DeleteAsync("api/v2/package/TestData/1.2.3", cancellationToken))
         {
@@ -104,7 +119,7 @@ public class CatalogIntegrationTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         // The test host's clock is frozen, which is the worst case for a cursor.
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
         using (var relist = await _client.PostAsync("api/v2/package/TestData/1.2.3", content: null, cancellationToken))
         {
             Assert.Equal(HttpStatusCode.OK, relist.StatusCode);
@@ -126,9 +141,9 @@ public class CatalogIntegrationTests : IDisposable
     public async Task RebuildBackfillsAPackageWithNoEntry()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
-        using (var scope = _app.Services.CreateScope())
+        using (var scope = await _app.CreateRepositoryScopeAsync(_repository))
         {
             var context = scope.ServiceProvider.GetRequiredService<IContext>();
             #pragma warning disable CS8602
@@ -138,7 +153,7 @@ public class CatalogIntegrationTests : IDisposable
         }
 
         (int Added, int Deleted) result;
-        using (var scope = _app.Services.CreateScope())
+        using (var scope = await _app.CreateRepositoryScopeAsync(_repository))
         {
             result = await scope.ServiceProvider.GetRequiredService<CatalogRebuilder>().RebuildAsync(CancellationToken.None);
         }
@@ -151,9 +166,9 @@ public class CatalogIntegrationTests : IDisposable
     public async Task RebuildIsANoOpWhenTheCatalogIsComplete()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
-        using var scope = _app.Services.CreateScope();
+        using var scope = await _app.CreateRepositoryScopeAsync(_repository);
         var result = await scope.ServiceProvider.GetRequiredService<CatalogRebuilder>().RebuildAsync(CancellationToken.None);
 
         Assert.Equal((0, 0), result);
@@ -173,7 +188,7 @@ public class CatalogIntegrationTests : IDisposable
 
     private async Task<List<CatalogLeaf>> ProcessCatalogAsync()
     {
-        var factory = new NuGetClientFactory(_client, "http://localhost/v3/index.json");
+        var factory = new NuGetClientFactory(_client, _origin + "v3/index.json");
         var processor = new RecordingLeafProcessor();
 
         var catalog = new CatalogProcessor(
@@ -226,3 +241,7 @@ public class CatalogIntegrationTests : IDisposable
         }
     }
 }
+
+public class CatalogIntegrationTests(ITestOutputHelper output) : CatalogIntegrationTestsBase(output, null);
+
+public class CatalogIntegrationSecondRepositoryTests(ITestOutputHelper output) : CatalogIntegrationTestsBase(output, "second");

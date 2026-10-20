@@ -192,6 +192,34 @@ public abstract class RepositoryLifecycleIsolationTestsBase : IDisposable
 
         await PushAsync(_other, "Dup.Package", "1.0.0");
     }
+
+    [Fact]
+    public async Task SymbolsPushedToOneRepositoryAreServedOnlyThere()
+    {
+        var token = TestContext.Current.CancellationToken;
+        const string download = "api/download/symbols/testdata.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/testdata.pdb";
+
+        using (var package = TestResources.GetResourceStream(TestResources.Package)!)
+        using (var push = TestPackages.PushRequest(package, ApiKey))
+        {
+            push.RequestUri = new Uri(Url(_acting, "api/v2/package"), UriKind.Relative);
+            using var pushed = await _client.SendAsync(push, token);
+            Assert.Equal(HttpStatusCode.Created, pushed.StatusCode);
+        }
+
+        using (var symbols = TestResources.GetResourceStream(TestResources.SymbolPackage)!)
+        using (var push = TestPackages.PushRequest(symbols, ApiKey))
+        {
+            push.RequestUri = new Uri(Url(_acting, "api/v2/symbol"), UriKind.Relative);
+            using var pushed = await _client.SendAsync(push, token);
+            Assert.Equal(HttpStatusCode.Created, pushed.StatusCode);
+        }
+
+        using var here = await _client.GetAsync(Url(_acting, download), token);
+        using var there = await _client.GetAsync(Url(_other, download), token);
+        Assert.Equal(HttpStatusCode.OK, here.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, there.StatusCode);
+    }
 }
 
 public class DefaultRepositoryLifecycleIsolationTests(ITestOutputHelper output)
