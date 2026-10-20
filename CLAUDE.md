@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1678 tests** across `BaGet.Core.Tests` (522), `BaGet.Tests` (866),
+Baseline: **1696 tests** across `BaGet.Core.Tests` (535), `BaGet.Tests` (871),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -141,6 +141,7 @@ after the `PathBase`. The V2 feed's base is `IUrlGenerator.GetV2FeedUrl`. Razor 
 default repository, so only the default's service index advertises `PackageDetailsUriTemplate` /
 `ReportAbuseUriTemplate` (the generator returns null elsewhere). Do not give a page a second route
 (`AddPageRoute`): `asp-page`/`Url.Page` then produce empty `href`s.
+
 **Storage layout** (`RepositoryStorage`, `BaGet.Core/Repositories`): `default` keeps `packages/…`, `symbols/…`, `catalog/…`,
 `validation/…`, `staging/…` byte for byte (existing stores need no migration); every other repository nests the same
 layout under `repos/{name}/` (`repos` is no default prefix, so no collision). `PackageStorageService`,
