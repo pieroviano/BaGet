@@ -30,6 +30,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseOperationCancelledMiddleware();
+app.UseMaintenanceMiddleware();   // 503 + Retry-After for writes refused by a closed MaintenanceGate
 new BaGetEndpointBuilder().MapEndpoints(app);
 ```
 
@@ -41,6 +42,7 @@ Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup
 |---|---|
 | `AddBaGetWebApplication` | MVC, Razor Pages, `IUrlGenerator`, core services, catalog, validation; registers every BaGet controller assembly as an application part, so hosts without the Web SDK work |
 | `BaGetEndpointBuilder.MapEndpoints` | Maps the V3, V2, catalog and validation routes |
+| `MaintenanceMiddleware` | Maps `MaintenanceException` (a write refused while `MaintenanceGate` in `Extension.BaGet.Core` is closed, e.g. during a database copy) to `503` + `Retry-After` |
 | `IUrlGenerator` | Builds every absolute URL the server returns |
 | `wwwroot` | Static files, served at `_content/BaGet.Web` |
 

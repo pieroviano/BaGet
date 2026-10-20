@@ -9,13 +9,15 @@ dotnet add package Extension.BaGet.Web.V2
 
 ## Usage
 
-`AddBaGetWebApplication` and `BaGetEndpointBuilder` (`Extension.BaGet.Web`) register the controller and map its
-routes under `api/v2` (`$metadata`, `Packages()`, `FindPackagesById()`, `Search()`, `package` push/download/delete,
-`symbol`).
+`AddBaGetWebApplication` (`Extension.BaGet.Web`) registers `V2FeedController` as an application part and
+`BaGetEndpointBuilder` maps its read-only `GET` routes under `api/v2`: the root, `$metadata`, `Packages()`,
+`Packages(Id=..,Version=..)`, `FindPackagesById()` and `Search()`. Push, delete and symbol upload (`PUT`/`DELETE`
+on `api/v2/package` and `api/v2/symbol`) are in `Extension.BaGet.Web`. The routes are always mapped; with the feed
+off every action answers 404.
 
 | Setting | Value |
 |---|---|
-| `Feeds:EnableV2` | Default `true`; `false` turns the feed off |
+| `Feeds:EnableV2` | Default `true`; `false` turns the feed off (404) |
 
 Client source: `https://<server>/api/v2`.
 

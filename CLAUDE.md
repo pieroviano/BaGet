@@ -11,7 +11,7 @@ catalog). Some work here is upstreamed as PRs against `loic-sharma/BaGet`.
 **Always pass `-p:GeneratePackageOnBuild=false`.** `src/Directory.Build.props` sets
 `GeneratePackageOnBuild=true` with `PackageOutputPath=$(SolutionDir)Packages\`, and `Packages` is a
 **symlink to `D:\Starb\Packages`**, a shared NuGet feed. A plain build publishes packages into it, and
-an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>`.
+an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension.<project>` (when `...\Packages\<project>` exists).
 
 | Task | Command |
 |---|---|
@@ -39,8 +39,9 @@ projects are executables (`OutputType=Exe`) running on **Microsoft.Testing.Platf
 `build.ps1` wraps clean/restore/build, with `-Run` and `-Publish`.
 
 Two gotchas when running locally:
-- It listens on **6060**, not the 5000 the readme claims — `Kestrel:Endpoints` in `appsettings.json`
-  outranks `--urls`, so `--urls` is silently ineffective.
+- It listens on **6060**: `Kestrel:Endpoints:Http:Url` in `appsettings.json` outranks `--urls` and
+  `ASPNETCORE_URLS`, so they are silently ineffective (override with `Kestrel__Endpoints__Http__Url`).
+- `nuget.config` lists an untracked `Packages` folder as a source; create it (`mkdir Packages`) on a clean checkout or restore fails with NU1301.
 - `dotnet run` makes the SDK rewrite `src/BaGet/Properties/launchSettings.json` (it drops the IIS
   Express profile). Revert it rather than committing it.
 
@@ -71,7 +72,7 @@ the first non-null, each provider deciding from configuration (`Database:Type`, 
 
 `src/BaGet/Program.cs` holds everything (there is no `Startup`): `BuildApplication` runs
 `ConfigureConfiguration` / `ConfigureWebHost` / `ConfigureServices`, then `ConfigurePipeline`.
-`Main` wraps it in a McMaster `CommandLineApplication` (`import downloads`, `catalog rebuild`), which
+`Main` wraps it in a McMaster `CommandLineApplication` (`import downloads`, `catalog rebuild`, `account reset-password|promote|demote <user>`), which
 is configured to **collect unrecognised arguments** so host arguments like `--environment` pass
 through.
 
@@ -147,8 +148,16 @@ when the behaviour is observable over HTTP; several real defects here were only 
 client (e.g. the V2 feed's XML declaration).
 
 Unit tests reach internals through `InternalsVisibleTo`, declared in each **project file** (not
-`AssemblyInfo.cs`) — already present in `BaGet.Core`, `BaGet`, `BaGet.Azure`, `BaGet.Protocol`,
-`BaGet.Identity`, `BaGet.Catalog`, `BaGet.Validation`, `BaGet.Web.V2`, and the four `BaGet.Database.*` projects (for `BaGet.Tests` only).
+`AssemblyInfo.cs`):
+
+| Project | Visible to |
+|---|---|
+| `BaGet.Core` | `BaGet.Core.Tests`, `BaGet.Tests`, `BaGet.Database.Tests`, `BaGet.Catalog`, `BaGet.Identity` |
+| `BaGet`, `BaGet.Catalog`, `BaGet.Identity`, `BaGet.Validation`, `BaGet.Database.*` | `BaGet.Tests` |
+| `BaGet.Web` | `BaGet.Tests`, `BaGet.Web.Tests` |
+| `BaGet.Azure`, `BaGet.Protocol` | `BaGet.Azure.Tests`, `BaGet.Protocol.Tests` |
+| `BaGet.Web.V2` | `BaGet.Web.V2.Tests` (no such project; `BaGet.Tests` has no access) |
+| `BaGet.Aws`, `BaGet.Gcp`, `BaGet.Aliyun` | none |
 
 ## Packaging
 

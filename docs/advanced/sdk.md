@@ -12,7 +12,7 @@ dotnet add package BaGet.Protocol
 
 ## List Package Versions
 
-Find all versions of the `Newtonsoft.Json` package:
+Find the listed versions of the `Newtonsoft.Json` package:
 
 ```csharp
 NuGetClient client = new NuGetClient("https://api.nuget.org/v3/index.json");
@@ -56,19 +56,19 @@ foreach (var metadata in items)
 {
     Console.WriteLine($"Version: {metadata.Version}");
     Console.WriteLine($"Listed: {metadata.Listed}");
-    Console.WriteLine($"Tags: {metadata.Tags}");
+    Console.WriteLine($"Tags: {string.Join(", ", metadata.Tags ?? Array.Empty<string>())}");
     Console.WriteLine($"Description: {metadata.Description}");
 }
 
-// Or, find the metadata for a single version of a package.
+// Or, find the metadata for a single version of a package
+// (throws PackageNotFoundException when the package does not exist).
 string packageId = "Newtonsoft.Json";
 NuGetVersion packageVersion = new NuGetVersion("12.0.1");
 
-PackageMetadata metadata = await client.GetPackageMetadataAsync(packageId, packageVersion);
+PackageMetadata? single = await client.GetPackageMetadataAsync(packageId, packageVersion);
 
-Console.WriteLine($"Listed: {metadata.Listed}");
-Console.WriteLine($"Tags: {metadata.Tags}");
-Console.WriteLine($"Description: {metadata.Description}");
+Console.WriteLine($"Listed: {single?.Listed}");
+Console.WriteLine($"Description: {single?.Description}");
 ```
 
 ## Search for packages
@@ -87,7 +87,7 @@ foreach (SearchResult result in results)
 
 ## Read a catalog
 
-A mirror follows a server's [catalog](https://learn.microsoft.com/nuget/api/catalog-resource) with
+Types are in `BaGet.Protocol.Catalog`. A mirror follows a server's [catalog](https://learn.microsoft.com/nuget/api/catalog-resource) with
 `CatalogProcessor`, which hands each new leaf to an `ICatalogLeafProcessor` you implement and
 remembers how far it got in an `ICursor`:
 
@@ -115,6 +115,7 @@ await processor.ProcessAsync();
 
 * `ExistsAsync(packageId)` and `ExistsAsync(packageId, version)`: whether a package or version exists
 * `DownloadPackageManifestAsync(packageId, version)`: the `.nuspec`
+* `ListPackageVersionsAsync(packageId, includeUnlisted)`: with `true`, also unlisted versions (from the package content resource)
 * `AutocompleteAsync(...)`: package id suggestions (for version suggestions use `clientFactory.CreateAutocompleteClient().ListPackageVersionsAsync`)
 
 `NuGetClientFactoryExtensions.CreateCatalogProcessor` is a shortcut for the wiring in

@@ -19,6 +19,8 @@ services.AddBaGetWebApplication(app => app.AddSqlServerDatabase());
 | `Database:Type` | `SqlServer` |
 | `Database:ConnectionString` | e.g. `Server=.;Database=BaGet;Trusted_Connection=True;TrustServerCertificate=True` |
 
+`AddSqlServerDatabase` also registers `SqlServerDatabaseContextFactory` (`IDatabaseContextFactory`), which opens a `SqlServerContext` on any connection string for the Settings page's database copy. SQL Server wraps explicit-key inserts in `SET IDENTITY_INSERT` (connection kept open).
+
 ## Migrations (contributors)
 
 The project has its own design-time context factory, so `dotnet ef` needs no startup project and no

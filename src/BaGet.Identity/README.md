@@ -17,6 +17,9 @@ services.AddBaGetAccounts(configuration);
 `AddBaGetAccounts` reads `Accounts:Enabled` **while registering**, so the configuration must be complete before it
 runs. Disabled, it adds an empty authentication setup and only the global `ApiKey` authenticates.
 
+`MaintenanceAwareSignInManager` lets a sign-in complete while the read-only `MaintenanceGate` is closed (it skips the
+failed-attempt counter reset; a wrong password is still refused), so administrators can reach the Settings page.
+
 | Setting | Value |
 |---|---|
 | `Accounts:Enabled` | Off by default. On: callers authenticate with the global `ApiKey` if set, otherwise their own key |

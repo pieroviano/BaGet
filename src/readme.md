@@ -4,7 +4,7 @@ Each project is packed as `Extension.<project>`; its `README.md` is the package 
 
 These folders contain the core components of BaGet:
 
-* `BaGet` - The app's entry point and command line (`import downloads`, `catalog rebuild`).
+* `BaGet` - The app's entry point and command line (`import downloads`, `catalog rebuild`, `account reset-password|promote|demote <user>`).
 * `BaGet.Core` - BaGet's core logic and services.
 * `BaGet.Web` - The [NuGet server APIs](https://docs.microsoft.com/en-us/nuget/api/overview) and web UI.
 * `BaGet.Web.V2` - The NuGet V2 (OData) feed, under `/api/v2`.

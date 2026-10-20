@@ -16,11 +16,26 @@ the endpoints BaGet Extension adds of its own.
 | `PackageBaseAddress/3.0.0` | `/v3/package` | |
 | `PackageDetailsUriTemplate/5.1.0` | `/packages/{id}/{version}` | |
 | `ReportAbuseUriTemplate/3.0.0-beta`, `-rc` | `/packages/{id}/{version}/report-abuse` | |
-| `VulnerabilityInfo/6.7.0` | `/v3/vulnerabilities/index.json` | one page, `base` |
-| `Catalog/3.0.0` | `/v3/catalog/index.json` | not with Azure Table Storage |
+| `VulnerabilityInfo/6.7.0` | `/v3/vulnerabilities/index.json` | one page, `/v3/vulnerabilities/base.json` |
+| `Catalog/3.0.0` | `/v3/catalog/index.json` | not with Azure Table Storage (the `Catalog` resource is not advertised and its routes answer `404`) |
 | `RepositorySignatures/5.0.0` | `/v3/repository-signatures/index.json` | only while [repository signing](../configuration.md#repository-signing) is configured |
 
 The V2 (OData) feed is at `/api/v2`; see [NuGet V2 feed](../configuration.md#nuget-v2-feed).
+
+## Authentication
+
+Send the key in the `X-NuGet-ApiKey` header: the global `ApiKey`, or with accounts a per-user key.
+
+| Request | Needs |
+| --- | --- |
+| `PUT /api/v2/package`, `PUT /api/v2/symbol` | a key allowed to push the package id |
+| `DELETE`/`POST /api/v2/package/{id}/{version}`, deprecation and vulnerability writes | a key with the `package:unlist` scope that may manage the package |
+| `GET /v3/package/{id}/{version}/validation` | a key that may push or manage the package |
+| every other `GET` in this page | none |
+
+`401` without a valid key, `403` for a key that may not act on the package. With `IsReadOnlyMode` on, push,
+delete, relist and the metadata writes answer `401`. While the [maintenance gate](../configuration.md#read-only-maintenance-gate) is closed (a database copy),
+any database write answers `503` with `Retry-After`.
 
 ## Other routes
 
@@ -31,9 +46,10 @@ The V2 (OData) feed is at `/api/v2`; see [NuGet V2 feed](../configuration.md#nug
 | `GET /v3/package/{id}/{version}/readme`, `.../icon` | the package's readme and icon |
 | `GET /v3/dependents` | packages that depend on a package; BaGet Extension's own, not in the NuGet protocol |
 | `GET /api/download/symbols/{file}/{key}/{file2}`, `/api/download/symbols/{prefix}/{file}/{key}/{file2}` | symbol download (the symbol server URL) |
+| `GET /v3/vulnerabilities/index.json`, `/v3/vulnerabilities/base.json` | vulnerability index and its only page |
 | `GET /v3/catalog/index.json`, `/v3/catalog/page{n}.json`, `/v3/catalog/data/{commitId}.json` | catalog index, page, leaf |
 | `GET /v3/repository-signatures/{fingerprint}.crt` | the repository signing certificate |
-| `GET /api/v2`, `/api/v2/$metadata`, `/api/v2/Packages()`, `/api/v2/Packages(Id='..',Version='..')`, `/api/v2/FindPackagesById()`, `/api/v2/Search()` | V2 feed; `404` when `Feeds:EnableV2` is `false`, while push and delete under `/api/v2/package` are unaffected |
+| `GET /api/v2`, `/api/v2/$metadata`, `/api/v2/Packages()`, `/api/v2/Packages(Id='..',Version='..')`, `/api/v2/FindPackagesById()`, `/api/v2/Search()` | V2 feed; `404` when `Feeds:EnableV2` is `false`, while push, delete and relist under `/api/v2/package` and `/api/v2/symbol` are unaffected |
 
 ## Deprecation and vulnerabilities
 
@@ -49,13 +65,14 @@ These change a package version, so they are authorised like a delete: the global
 
 * `reasons`: one or more of `Legacy`, `CriticalBugs`, `Other`.
 * `severity`: `0` low, `1` moderate, `2` high, `3` critical.
+* `alternateVersionRange` is kept only with `alternatePackageId`.
 * An omitted `versionRange` means the version itself.
 
 | Response | Meaning |
 | --- | --- |
 | `204` | changed |
 | `400` | invalid body; the response says why |
-| `401` / `403` | not authenticated / not allowed for this package |
+| `401` / `403` | not authenticated (or read-only mode) / not allowed for this package |
 | `404` | no such package version |
 | `501` | the database cannot store this metadata (Azure Table Storage) |
 
@@ -65,7 +82,7 @@ Owners can do the same from the package's manage page.
 
 With the [validation pipeline](../configuration.md#validate-packages-before-serving-them) on:
 
-`GET /v3/package/{id}/{version}/validation`, with an owner's key or the global `ApiKey`:
+`GET /v3/package/{id}/{version}/validation`, with an owner's key or the global `ApiKey` (`401`, `403`, and `404` when the version has no validation record):
 
 ```json
 {
@@ -83,13 +100,27 @@ With the [validation pipeline](../configuration.md#validate-packages-before-serv
 
 ## Web pages
 
+Pages marked "accounts" answer `404` while `Accounts:Enabled` is `false`; "sign-in" pages redirect to `/account/login` when anonymous.
+
 | Page | |
 | --- | --- |
-| `/packages`, `/packages/{id}/{version}` | search and package details |
-| `/upload` | browser upload (two steps, with a metadata preview) and push instructions for each client |
+| `/`, `/packages` | search (same page) |
+| `/packages/{id}`, `/packages/{id}/{version}` | package details |
+| `/upload` | browser upload (stage, then confirm or cancel, with a metadata preview) and push instructions; needs an API key, or a sign-in with accounts |
 | `/stats` | totals, most downloaded packages, latest versions |
 | `/terms`, `/privacy` | the operator's Markdown files from `Site:TermsOfUsePath` / `Site:PrivacyPolicyPath`; linked from the footer only when set |
 | `/packages/{id}/{version}/report-abuse` | records a report for the package's owners |
-| `/account/login`, `/account/register`, `/account/apikeys`, `/account/organizations`, `/account/packages`, `/account/settings`, `/account/twofactor` | with accounts on |
-| `/profiles/{name}` | a user's or organization's packages, with accounts on |
-| `/packages/{id}/manage` | owners: owners, unlist/relist, delete (per `PackageDeletionBehavior`), deprecation, abuse reports |
+| `/account/login`, `/account/logout`, `/account/register` (needs `Accounts:AllowRegistration`), `/account/loginwith2fa`, `/account/loginwithrecoverycode` | accounts |
+| `/account/forgotpassword`, `/account/resetpassword`, `/account/confirmemail` | accounts; `404` unless email (SMTP) is configured |
+| `/account/apikeys`, `/account/organizations`, `/account/packages`, `/account/settings`, `/account/twofactor`, `/account/reauthenticate` | accounts, sign-in |
+| `/account/profile` | accounts, sign-in; redirects to `/profiles/{name}` |
+| `/profiles/{name}` | a user's or organization's packages; accounts |
+| `/packages/{id}/manage` | accounts, sign-in; owners: owners, unlist/relist, delete (per `PackageDeletionBehavior`), deprecation, abuse reports |
+| `/packages/{id}/contact-owners` | accounts, sign-in; `404` unless email is configured |
+| `/admin/users` | administrators: promote, demote, reset password, send reset link |
+| `/admin/users/{name}/packages`, `/admin/users/{name}/delete` | administrators |
+| `/admin/packages` | administrators: packages without owners |
+| `/admin/settings` | administrators: edit settings (saved to `appsettings.Overrides.json`), see the [Settings page](../configuration.md#settings-page) and [moving to another database](../configuration.md#moving-to-another-database); `404` if the overrides store is unavailable |
+| `/admin/settings?handler=CopyStatus` | administrators: JSON progress of the database copy (`phase`, `active`, `finished`, `succeeded`, `restartRequired`, table and row counters, `message`, `errors`) |
+
+Admin pages answer `404` to everyone else, so their existence is not disclosed. Paths are lowercase.

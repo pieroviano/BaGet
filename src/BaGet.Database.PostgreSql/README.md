@@ -19,6 +19,8 @@ services.AddBaGetWebApplication(app => app.AddPostgreSqlDatabase());
 | `Database:Type` | `PostgreSql` |
 | `Database:ConnectionString` | e.g. `Host=localhost;Database=baget;Username=baget;Password=...` |
 
+`AddPostgreSqlDatabase` also registers `PostgreSqlDatabaseContextFactory` (`IDatabaseContextFactory`), which opens a `PostgreSqlContext` on any connection string for the Settings page's database copy. PostgreSQL `End` `setval`s the serial/identity sequence past the highest key.
+
 ## Migrations (contributors)
 
 The project has its own design-time context factory, so `dotnet ef` needs no startup project and no

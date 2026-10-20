@@ -19,6 +19,8 @@ services.AddBaGetWebApplication(app => app.AddSqliteDatabase());
 | `Database:Type` | `Sqlite` |
 | `Database:ConnectionString` | e.g. `Data Source=baget.db` |
 
+`AddSqliteDatabase` also registers `SqliteDatabaseContextFactory` (`IDatabaseContextFactory`), which opens a `SqliteContext` on any connection string for the Settings page's database copy.
+
 ## Migrations (contributors)
 
 The project has its own design-time context factory, so `dotnet ef` needs no startup project and no

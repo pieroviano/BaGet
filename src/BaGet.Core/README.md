@@ -15,6 +15,8 @@ dotnet add package Extension.BaGet.Core
 | `AddFileStorage()`, `AddNullStorage()`, `AddNullSearch()` | Built-in storage and search providers |
 | `IStorageService`, `IPackageDatabase`, `ISearchService`, `ISearchIndexer` | Subsystems resolved at runtime through `IProvider<T>` chains, chosen by `Storage:Type`, `Database:Type`, `Search:Type` |
 | `IPackageAuthorizationService` | Push/delete authorization; accounts plug in here |
+| `IDatabaseContextFactory` | Opens an `IContext` on any connection string; each relational provider registers one (none for Azure Table). Used by the Settings page's database copy |
+| `MaintenanceGate` | In-memory read-only switch: while closed, `MaintenanceSaveChangesInterceptor` makes `SaveChanges` throw `MaintenanceException`. `AllowWrites(builder)` exempts a context |
 | `IPackageChangeHandler` | Told about every package change (catalog, validation) |
 | `IServiceIndexResourceProvider` | Adds resources to the service index |
 | `AddBaGetOptions<T>(section)` | Binds an options type and records it in the settings schema |
@@ -26,7 +28,7 @@ dotnet add package Extension.BaGet.Core
 | Authentication | API key authentication, `IPackageAuthorizationService` |
 | Configuration | Options (`BaGetOptions`, `AccountsOptions`, `ValidationOptions`, ...) |
 | Content | Serves package content |
-| Entities | Database model, shared by every database provider |
+| Entities | Database model shared by every database provider; `IContext` (incl. `BeginKeyedInsertAsync`/`EndKeyedInsertAsync` for explicit-key inserts), the read-only gate, and `Entities/Copy` (`DatabaseCopyService`: dependency-ordered, batched, verified copy to another database) |
 | Indexing | Package and symbol upload, `IPackageChangeHandler` |
 | Metadata | Registration (package metadata) responses |
 | Search | Package search |

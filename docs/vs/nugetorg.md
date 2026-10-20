@@ -31,6 +31,7 @@ Gallery code (self-hosting is possible but not simple; the
 | Mirroring | n/a | Optional read-through from one upstream; search does not query it |
 | Download statistics | Not re-verified | Totals plus `/stats` page; no per-day |
 | Search | Full index | Package ID substring only (`Database`), or Azure Search |
+| Administration | Admin-only Settings page (edits settings, marks restart-required ones); copy of all data between SQLite, SQL Server, PostgreSQL and MySQL behind a read-only gate; optional SMTP email |
 | Web UI | Full Gallery | Search, details, upload, manage, stats, account |
 | Storage / DB | Azure (Blob, SQL, Search, CDN) | FileSystem, Azure Blob, S3, GCS, Aliyun OSS; SQLite, SQL Server, PostgreSQL, MySQL, Azure Table |
 | Platform | Azure-hosted service | .NET 10, Windows/Linux/macOS, Docker, IIS |

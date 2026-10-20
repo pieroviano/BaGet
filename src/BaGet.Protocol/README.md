@@ -69,7 +69,8 @@ foreach (var metadata in items)
 string packageId = "Newtonsoft.Json";
 NuGetVersion packageVersion = new NuGetVersion("12.0.1");
 
-PackageMetadata metadata = await client.GetPackageMetadataAsync(packageId, packageVersion);
+PackageMetadata? metadata = await client.GetPackageMetadataAsync(packageId, packageVersion);
+if (metadata == null) return; // the version does not exist
 
 Console.WriteLine($"Listed: {metadata.Listed}");
 Console.WriteLine($"Tags: {metadata.Tags}");
@@ -82,9 +83,9 @@ Search for "json" packages:
 
 ```csharp
 NuGetClient client = new NuGetClient("https://api.nuget.org/v3/index.json");
-IReadOnlyList<SearchResult> results = await client.SearchAsync("json");
+IReadOnlyList<SearchResult>? results = await client.SearchAsync("json");
 
-foreach (SearchResult result in results)
+foreach (SearchResult result in results ?? [])
 {
     Console.WriteLine($"Found package {result.PackageId} {result.Version}");
 }

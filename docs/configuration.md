@@ -11,9 +11,10 @@ You can modify BaGet Extension's configurations by editing the `appsettings.json
 | `AllowedHosts` | `*` | see [Restrict the host names BaGet Extension serves](#restrict-the-host-names-baget-extension-serves) |
 | `PackageDeletionBehavior` | `Unlist` | `Unlist` or `HardDelete` |
 | `AllowPackageOverwrites` | `false` | accept a push of an existing id and version |
-| `IsReadOnlyMode` | `false` | refuses pushes, deletes, relists, deprecation/vulnerability changes, browser uploads, the manage page's POSTs and an administrator's permanent deletion of a deleted user's packages |
+| `IsReadOnlyMode` | `false` | refuses pushes (packages and symbols), deletes, relists, deprecation/vulnerability changes, browser uploads, the manage page's POSTs and an administrator's permanent deletion of a deleted user's packages |
 | `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet Extension starts |
-| `SettingsOverridesPath` | `appsettings.Overrides.json` | the file the [Settings page](#settings-page) saves to; relative paths start at the content root (or `BAGET_CONFIG_ROOT`) |
+| `SettingsOverridesPath` | empty (= `appsettings.Overrides.json`) | the file the [Settings page](#settings-page) saves to; relative paths start at the content root (or `BAGET_CONFIG_ROOT`) |
+| `Urls` | none | the ASP.NET Core listening-address key; ineffective while `Kestrel:Endpoints` is set, see [Listening address](#listening-address) |
 
 ## Listening address
 
@@ -99,6 +100,8 @@ The following `Mirror` setting configures BaGet Extension to index packages from
 
 | Key | Default | Meaning |
 | --- | --- | --- |
+| `Enabled` | `false` | index packages from the upstream |
+| `PackageSource` | none | the upstream service index URL; required while `Enabled` (startup fails otherwise) |
 | `Legacy` | `false` | read the upstream through the NuGet V2 protocol |
 | `PackageDownloadTimeoutSeconds` | `600` | timeout of every HTTP request to the upstream (and of `import downloads`) |
 
@@ -204,6 +207,13 @@ that behaviour back; otherwise configure them with:
 }
 ```
 
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Enabled` | `false` in code, `true` in the shipped file | turns accounts on |
+| `AllowRegistration` | `true` | whether `/account/register` creates accounts |
+| `InitialAdministrators`, `CreateDefaultAdministrator` | none, `true` | see [Administrators](#administrators) |
+| `OpenIdConnect:*` | none | see [Sign in with OpenID Connect](#sign-in-with-openid-connect) |
+
 Users then sign in at `/account/login`, create an account at `/account/register` (unless
 `AllowRegistration` is `false`), and create API keys at `/account/apikeys`. `/account/packages`
 lists the IDs they own, directly or through an organization, and links to each one's
@@ -304,7 +314,14 @@ is offered, and sign-in does not require a confirmed address. When it is on, sig
 }
 ```
 
-`EnableSsl` uses implicit TLS on port 465 and STARTTLS otherwise. A send failure is logged and
+| Key | Default |
+| --- | --- |
+| `Host`, `From` | none; both required to switch email on |
+| `Port` | `587` |
+| `EnableSsl` | `true` |
+| `UserName`, `Password` | none |
+
+`EnableSsl` uses implicit TLS on port 465 and STARTTLS otherwise; `false` sends in the clear. A send failure is logged and
 reported to the user as a failure.
 
 **Links in emails need `Site:PublicUrl`.** Confirmation and password-reset links are never built from
@@ -381,6 +398,8 @@ turn them off, which shows initial-letter placeholders instead:
 { "Site": { "UseGravatar": false } }
 ```
 
+`Site:UseGravatar` defaults to `true`.
+
 ### Organizations
 
 Signed-in users create organizations at `/account/organizations`. An organization can own packages
@@ -426,7 +445,7 @@ storage cannot order), so the control is hidden there.
 
 ## Validate packages before serving them
 
-The validation pipeline is **off** by default; with it off a push is indexed at once. Turn it on with:
+The validation pipeline is **off** by default (`Validation:Enabled` and `RequireSignedPackages` default to `false`); with it off a push is indexed at once. Turn it on with:
 
 ```json
 {
@@ -474,7 +493,9 @@ BaGet Extension can repository-sign every package that passes validation:
 
 The certificate needs the code signing usage. `RepositorySigningServiceIndexUrl` must be your public,
 `https` service index URL: NuGet rejects repository signatures for any other scheme. BaGet Extension then
-advertises the certificate through the `RepositorySignatures/5.0.0` resource.
+advertises the certificate through the `RepositorySignatures/5.0.0` resource. Signing is on while
+`RepositorySigningCertificatePath` is set; if `RepositorySigningServiceIndexUrl` is not an absolute `https` URL,
+the package fails the final indexing step and is quarantined.
 
 ## Catalog
 
@@ -493,7 +514,7 @@ The catalog is not available with Azure Table Storage.
 `Site:TermsOfUsePath` and `Site:PrivacyPolicyPath` point at Markdown files (absolute, or relative to the
 content root). They are served at `/terms` and `/privacy`, and the footer links to each only while its
 path is set; BaGet Extension ships no legal text. A page whose path is unset or whose file is missing answers 404.
-The path must end in `.md` and contain no `..` segment (the pages are public, so no other file may be served); a
+The path must end in `.md` and contain no `..` segment (the pages are public, so no other file may be served); any
 other value is refused when saved on the Settings page and at startup.
 
 ```json
@@ -512,6 +533,9 @@ A private feed requires users to authenticate before accessing packages.
 
 `Storage:Type` picks where package and symbol content lives (case-insensitive):
 
+Shipped default `FileSystem`; the code has none, and a missing or unknown `Type` fails startup. Cloud
+providers require their identifying keys (bucket or container, region, credentials) and fail startup without them.
+
 | `Type` | Keys under `Storage` | Guide |
 | --- | --- | --- |
 | `FileSystem` (default) | `Path`; empty means the current working directory | [local](installation/local.md) |
@@ -523,7 +547,7 @@ A private feed requires users to authenticate before accessing packages.
 
 ## Search
 
-`Search:Type` picks the search index:
+`Search:Type` picks the search index (shipped default `Database`; a missing or unknown value fails startup):
 
 | `Type` | Notes |
 | --- | --- |
@@ -633,7 +657,7 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 
 ### Using the Settings page
 
-- Open **Server settings** in the account menu (administrators only; anyone else gets a 404). The page has one form per
+- Open **Server settings** in the account menu (needs `Accounts:Enabled`; administrators only, anyone else gets a 404). The page has one form per
   section, each with its own **Save** button; saving asks for your password (an account without one signs in
   again with its provider instead).
 - Each setting shows its key, its description, and badges: **Restart required**, **Saved override** (tick *Reset to

@@ -20,6 +20,8 @@ services.AddBaGetWebApplication(app => app.AddMySqlDatabase());
 | `Database:ConnectionString` | e.g. `Server=localhost;Database=baget;User=root;Password=...` |
 | `Database:MySqlServerVersion` | e.g. `8.0.36-mysql`; empty auto-detects (opens a connection at startup) |
 
+`AddMySqlDatabase` also registers `MySqlDatabaseContextFactory` (`IDatabaseContextFactory`), which opens a `MySqlContext` on any connection string for the Settings page's database copy.
+
 ## Migrations (contributors)
 
 The project has its own design-time context factory, so `dotnet ef` needs no startup project and no

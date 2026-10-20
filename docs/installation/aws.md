@@ -1,10 +1,10 @@
-# Run BaGet on AWS
+# Run BaGet Extension on AWS
 
-Use Amazon Web Services to scale BaGet. You can store metadata on [Amazon RDS](https://aws.amazon.com/rds/postgresql/) and upload packages to [Amazon S3](https://aws.amazon.com/s3/).
+Use Amazon Web Services to scale BaGet Extension. You can store metadata on [Amazon RDS](https://aws.amazon.com/rds/postgresql/) and upload packages to [Amazon S3](https://aws.amazon.com/s3/).
 
-## Configure BaGet
+## Configure BaGet Extension
 
-You can modify BaGet's configurations by editing the `appsettings.json` file. For the full list of configurations, please refer to [BaGet's configuration](../configuration.md) guide.
+You can modify BaGet Extension's configurations by editing the `appsettings.json` file. For the full list of configurations, please refer to [BaGet Extension's configuration](../configuration.md) guide.
 
 ### Amazon S3
 
@@ -26,13 +26,13 @@ Update the `appsettings.json` file:
 }
 ```
 
-Leave `AccessKey` and `SecretKey` empty to use the default AWS credential chain. Optional keys:
+`Region` and `Bucket` are required; set `AccessKey` and `SecretKey` together, or leave both empty to use the default AWS credential chain. Optional keys:
 
 | Key | Meaning |
 | --- | --- |
 | `Prefix` | Key prefix for objects in the bucket |
-| `UseInstanceProfile` | Use the default AWS credential chain (environment, profile, then EC2 instance profile), ignoring `AccessKey`/`SecretKey` |
-| `AssumeRoleArn` | Role to assume for bucket access |
+| `UseInstanceProfile` | Use the default AWS credential chain (environment, profile, then EC2 instance profile), ignoring `AccessKey`/`SecretKey` and `AssumeRoleArn` |
+| `AssumeRoleArn` | Role to assume, using the default credential chain as the caller; `AccessKey`/`SecretKey` are ignored |
 
 ### Amazon RDS
 

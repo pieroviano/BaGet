@@ -1,15 +1,15 @@
-# Run BaGet on Azure
+# Run BaGet Extension on Azure
 
-Use Azure to scale BaGet. You can store metadata on [Azure SQL Database](https://azure.microsoft.com/en-us/services/sql-database/), upload packages to [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/), and provide powerful search using [Azure Search](https://azure.microsoft.com/en-us/services/search/).
+Use Azure to scale BaGet Extension. You can store metadata on [Azure SQL Database](https://azure.microsoft.com/en-us/services/sql-database/), upload packages to [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/), and provide powerful search using [Azure Search](https://azure.microsoft.com/en-us/services/search/).
 
 ## TODO
 
 * App Service
 * High availability setup
 
-## Configure BaGet
+## Configure BaGet Extension
 
-You can modify BaGet's configurations by editing the `appsettings.json` file. For the full list of configurations, please refer to [BaGet's configuration](../configuration.md) guide.
+You can modify BaGet Extension's configurations by editing the `appsettings.json` file. For the full list of configurations, please refer to [BaGet Extension's configuration](../configuration.md) guide.
 
 ### Azure SQL database
 
@@ -71,14 +71,14 @@ such as `"00:30:00"`.
 
 ### Azure Table Storage
 
-Set `"Database": { "Type": "AzureTable", ... }` to store package metadata in Table Storage. It only
+Set `"Database": { "Type": "AzureTable", "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net" }` to store package metadata in Table Storage. It only
 stores packages: accounts, the catalog, validation, statistics, abuse reports, deprecation and
 vulnerabilities need Azure SQL Database or another relational database. With it, `Search:Type` `Database`
 is served by the table provider.
 
 ### Azure Search
 
-The index needs a `normalizedId` field: searchable, filterable, analyzed with BaGet's exact match
+The index needs a `normalizedId` field: searchable, filterable, analyzed with BaGet Extension's exact match
 analyzer (`PackageDocument` declares it). Autocomplete and version listing use it. Documents
 indexed before the field existed keep working through a fallback, and gain the field the next
 time a version of their package is pushed.
