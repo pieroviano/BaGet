@@ -76,13 +76,54 @@ public class SettingsModel : AdminPageModel
     /// <summary>The state of the database copy, if one was requested since startup.</summary>
     public DatabaseCopyStatus CopyStatus => Copier.Status;
 
-    /// <summary>Shows the settings.</summary>
-    public async Task<IActionResult> OnGetAsync()
+    /// <summary>
+    /// The DOM id (slug) of the section shown; every other section is rendered <c>hidden</c>. Chosen by
+    /// <see cref="Select"/>: the failed section, else the Telemetry section after "Test connection", else the
+    /// <c>?section=</c> value, else the first section. The URL fragment is only known to the browser, so the page's
+    /// script applies it on load unless <see cref="SelectionLocked"/>.
+    /// </summary>
+    public string SelectedId { get; private set; } = string.Empty;
+
+    /// <summary>True when the server picked the section for a reason the URL fragment must not override (a failed save, a connection test).</summary>
+    public bool SelectionLocked { get; private set; }
+
+    private IReadOnlyDictionary<string, string> _ids = new Dictionary<string, string>();
+
+    /// <summary>
+    /// The stable DOM id of a section: <c>general</c> for the empty key, else the key with every character other than
+    /// letters, digits, <c>-</c> and <c>_</c> replaced by <c>-</c> (made unique, ignoring case, if two keys collapse to the same id).
+    /// Used by the nav, the form, the fragment and the redirect after a save.
+    /// </summary>
+    public string SectionId(string key) => _ids.TryGetValue(key ?? string.Empty, out var id) ? id : BuildId(key ?? string.Empty);
+
+    internal static string BuildId(string key)
+    {
+        if (key.Length == 0) return "general";
+
+        var chars = key.Select(c => char.IsAsciiLetterOrDigit(c) || c == '-' || c == '_' ? c : '-').ToArray();
+        return new string(chars);
+    }
+
+    /// <summary>Shows the settings. <paramref name="section"/> is the id of the section to show (no JavaScript needed).</summary>
+    public async Task<IActionResult> OnGetAsync(string? section = null)
     {
         if (!Settings.IsAvailable) return NotFound();
 
         await LoadAsync();
+        Select(section);
         return Page();
+    }
+
+    private void Select(string? requested, string? failedSection = null, bool locked = false)
+    {
+        string? Find(string? value) => value == null ? null : _ids.Values.FirstOrDefault(i => string.Equals(i, value, StringComparison.OrdinalIgnoreCase));
+
+        var fromKey = failedSection != null && _ids.TryGetValue(failedSection, out var failed)
+            ? failed
+            : failedSection != null ? Find(failedSection) : null;
+
+        SelectionLocked = locked && fromKey != null;
+        SelectedId = fromKey ?? Find(requested) ?? (Sections.Count > 0 ? SectionId(Sections[0].Key) : string.Empty);
     }
 
     /// <summary>
@@ -150,7 +191,7 @@ public class SettingsModel : AdminPageModel
             if (!Copier.TryQueue(copy, out var refusal)) return await FailAsync(section, new[] { refusal! });
 
             Message = "Copying the data to the new database. The settings are saved when the copy is verified.";
-            return RedirectToPage(null, null, null, section);
+            return RedirectToSection(section);
         }
 
         var result = parseErrors.Count == 0
@@ -159,7 +200,14 @@ public class SettingsModel : AdminPageModel
         if (!result.Succeeded) return await FailAsync(section, result.Errors);
 
         Message = changes.Count == 0 ? "Nothing changed." : $"Saved {changes.Count} setting(s).";
-        return RedirectToPage(null, null, null, section);
+        return RedirectToSection(section);
+    }
+
+    /// <summary>Back to the page showing <paramref name="section"/>: <c>?section=id</c> (the server renders it) and <c>#id</c> (the browser keeps it).</summary>
+    private IActionResult RedirectToSection(string section)
+    {
+        var id = BuildId(section);
+        return RedirectToPage(null, null, new { section = id }, id);
     }
 
     /// <summary>
@@ -193,6 +241,7 @@ public class SettingsModel : AdminPageModel
             HttpContext.RequestAborted);
 
         await LoadAsync();
+        Select(null, "Telemetry", locked: true);
         return Page();
     }
 
@@ -239,6 +288,7 @@ public class SettingsModel : AdminPageModel
         Errors = errors;
         ErrorSection = section;
         await LoadAsync();
+        Select(null, section, locked: true);
         return Page();
     }
 
@@ -252,6 +302,16 @@ public class SettingsModel : AdminPageModel
             .OrderBy(g => g.Key.Length == 0 ? 0 : 1)
             .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
+        var ids = new Dictionary<string, string>(StringComparer.Ordinal);
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var group in Sections)
+        {
+            var id = BuildId(group.Key);
+            var candidate = id;
+            for (var n = 2; !used.Add(candidate); n++) candidate = id + "-" + n;
+            ids[group.Key] = candidate;
+        }
+        _ids = ids;
         TelemetrySignals = Telemetry?.GetStatus();
         PendingRestart = states.Where(s => s.PendingRestart).Select(s => s.Descriptor.Key).ToList();
 

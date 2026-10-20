@@ -128,6 +128,18 @@ public class TelemetrySettingsPageTests : IDisposable
     }
 
     [Fact]
+    public async Task AfterTestConnectionTheTelemetrySectionIsShown()
+    {
+        var (_, admin, _) = await StartAsync();
+
+        var html = await BodyAsync(await PostTestAsync(admin, ClosedPortUrl()));
+
+        Assert.Contains("telemetry-test-result", html);
+        Assert.Equal(new[] { "Telemetry" }, SettingsSectionPageTests.Panels(html).Where(p => !p.Hidden).Select(p => p.Id));
+        Assert.Equal(new[] { "Telemetry" }, SettingsSectionPageTests.NavItems(html).Where(n => n.Active).Select(n => n.Id));
+    }
+
+    [Fact]
     public async Task AWrongPasswordTestsNothing()
     {
         var (_, admin, telemetry) = await StartAsync();

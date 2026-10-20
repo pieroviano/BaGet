@@ -40,15 +40,18 @@
             <ul class="nav nav-pills nav-stacked settings-nav">
                 @foreach (var s in Model.Sections)
                 {
-                    <li><a href="#@s.Key">@(s.Key.Length == 0 ? "General" : s.Key)</a></li>
+                    var navId = Model.SectionId(s.Key);
+                    var current = navId == Model.SelectedId;
+                    <li class="@(current ? "active" : "")" data-section-item="@navId"><a href="?section=@navId#@navId" data-section-link="@navId" aria-controls="@navId" aria-current="@(current ? "page" : "false")">@(s.Key.Length == 0 ? "General" : s.Key)</a></li>
                 }
             </ul>
         </nav>
-        <div class="col-md-9">
+        <div class="col-md-9" id="settings-sections" data-selected="@Model.SelectedId" data-locked="@(Model.SelectionLocked ? "true" : "false")">
             @foreach (var s in Model.Sections)
             {
                 var title = s.Key.Length == 0 ? "General" : s.Key;
-                <form method="post" id="@s.Key" class="panel panel-default">
+                var formId = Model.SectionId(s.Key);
+                <form method="post" id="@formId" class="panel panel-default" data-section-panel="@formId" hidden="@(formId != Model.SelectedId)">
                     <div class="panel-heading">
                         <strong>@title</strong>
                         <a class="pull-right" href="@BaGet.Core.SettingsCatalog.DocsAnchor(s.Key)" target="_blank" rel="noopener">Docs</a>
@@ -147,7 +150,7 @@
                         <button type="submit" class="btn btn-primary">Save @title</button>
                         @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && Model.TelemetrySignals != null)
                         {
-                            <button type="submit" class="btn btn-default" id="telemetry-test" formaction="?handler=TestTelemetry#Telemetry">Test connection</button>
+                            <button type="submit" class="btn btn-default" id="telemetry-test" formaction="?handler=TestTelemetry#@formId">Test connection</button>
                         }
                     </div>
                 </form>
@@ -157,6 +160,54 @@
 </div>
 
 @section Scripts {
+    <script>
+        // Shows one section at a time. The server already rendered the right one (failed save, connection test,
+        // ?section=, else the first); this makes the nav switch without a reload and honours the URL fragment.
+        // Without JavaScript the nav links are plain ?section= links. Attributes only (hidden, class, aria-current).
+        (function () {
+            var host = document.getElementById('settings-sections');
+            if (!host) return;
+
+            var panels = host.querySelectorAll('[data-section-panel]');
+            var items = document.querySelectorAll('.settings-nav [data-section-item]');
+
+            function exists(id) {
+                for (var i = 0; i < panels.length; i++) if (panels[i].getAttribute('data-section-panel') === id) return true;
+                return false;
+            }
+
+            function show(id) {
+                panels.forEach(function (panel) {
+                    if (panel.getAttribute('data-section-panel') === id) panel.removeAttribute('hidden');
+                    else panel.setAttribute('hidden', 'hidden');
+                });
+                items.forEach(function (item) {
+                    var on = item.getAttribute('data-section-item') === id;
+                    item.className = on ? 'active' : '';
+                    item.querySelector('a').setAttribute('aria-current', on ? 'page' : 'false');
+                });
+            }
+
+            function fromHash() {
+                var id = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+                if (id && exists(id)) show(id);
+            }
+
+            items.forEach(function (item) {
+                item.querySelector('a').addEventListener('click', function (event) {
+                    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button) return;
+                    event.preventDefault();
+                    var id = item.getAttribute('data-section-item');
+                    show(id);
+                    history.replaceState(null, '', window.location.pathname + '#' + id);
+                });
+            });
+
+            window.addEventListener('hashchange', fromHash);
+            // A failed save or a connection test is shown where it happened; otherwise the fragment (a saved section) wins.
+            if (host.getAttribute('data-locked') !== 'true') fromHash();
+        })();
+    </script>
     <script>
         // The "Copy all data" option applies only to a relational target; it is hidden (and not posted) for any other type.
         (function () {

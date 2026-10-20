@@ -760,8 +760,12 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 
 ### Using the Settings page
 
-- Open **Server settings** in the account menu (needs `Accounts:Enabled`; administrators only, anyone else gets a 404). The page has one form per
-  section, each with its own **Save** button; saving asks for your password (an account without one signs in
+- Open **Server settings** in the account menu (needs `Accounts:Enabled`; administrators only, anyone else gets a 404). The left list picks the
+  section shown (the first, *General*, on load); the others are hidden. The server renders the chosen section: the one that failed to save, else
+  *Telemetry* after *Test connection*, else `?section=<id>`, else the first. In the browser a click switches without a reload and sets the URL
+  fragment (`#<id>`, kept on reload and back); links work without JavaScript. A section id is its key (`Database`), `general` for the top-level
+  settings. The page has one form per
+  section, each with its own **Save** button (a save returns to `?section=<id>#<id>`); saving asks for your password (an account without one signs in
   again with its provider instead).
 - Each setting shows its key, its description, and badges: **Restart required**, **Saved override** (tick *Reset to
   default* to remove it) and **Overridden by environment variable / command line** (the saved value then has no effect).
