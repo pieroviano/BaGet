@@ -173,7 +173,7 @@ listener, so spans cost nothing. Spans: `package.index` (`PackageIndexingService
 (`PackageValidationRunner`), `mirror.fetch` (`PackageService`), `database.copy` + `database.copy.table`
 (`DatabaseCopyService`); counters `baget.packages.pushed`, `baget.downloads`, `baget.validation.results`. Tags are
 `BaGetDiagnostics.Tags` (id, version, result, table, counts); never keys, connection strings or user data, and a failure
-records the exception type only (`Fail`). `TelemetryOptions` (`Telemetry:*`, not `[RestartRequired]`) validates itself
+records the exception type only (`Fail`). `TelemetryOptions` (`Telemetry:*`, live except `ServiceName` and `Metrics:ExportInterval`, which are `[RestartRequired]`) validates itself
 (`Validate()`, called from `ConfigureBaGetOptions`). Tests listen with `DiagnosticsCapture` (linked into `BaGet.Tests`);
 the sources are process-wide, so tests that count measurements join its `Diagnostics` collection (runs alone).
 
