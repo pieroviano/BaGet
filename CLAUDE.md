@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1465 tests, all green** across `BaGet.Core.Tests` (466), `BaGet.Tests` (718),
+Baseline: **1468 tests, all green** across `BaGet.Core.Tests` (468), `BaGet.Tests` (719),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -133,8 +133,8 @@ foreign keys (Identity's tables included), so a new table is covered with no lis
 1000 ordered by primary key; they are loaded **tracked** only to capture **shadow properties** (the FK of a package's
 types/frameworks/dependencies is shadow) into `CopyRow.Shadow`, then the tracker is cleared. Pre-flight
 (`DatabaseCopyPreflight`) reports over-length strings, case-only duplicates on unique indexes (not for PostgreSQL) and
-local dates (PostgreSQL) before the target changes; `Unspecified` dates are stored as UTC. Test seam
-`DatabaseCopyService.AfterBatch` injects mid-copy failures. Errors are scrubbed of the connection string
+local dates (PostgreSQL) before the target changes; `Unspecified` dates are stored as UTC. Verification uses an order-independent key checksum (`DatabaseTable.Checksum`; engines collate differently). Once settings saving starts, a failure keeps the target and closes the gate until restart (`FailAfterSaveAsync`). Test seams
+`DatabaseCopyService.AfterBatch` / `AfterSettingsSaved` inject failures. Errors are scrubbed of the connection string
 (`DatabaseCopyService.Scrub`); never log it.
 
 ### Tests

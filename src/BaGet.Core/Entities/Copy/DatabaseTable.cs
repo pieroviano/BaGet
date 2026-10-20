@@ -116,15 +116,41 @@ internal sealed class DatabaseTable
         };
 
     /// <summary>Accumulates key texts into a checksum.</summary>
+    /// <summary>
+    /// Checksum of a table's keys that does not depend on the order they are added: each engine reads
+    /// <c>ORDER BY</c> in its own collation, so the same keys arrive in different orders. The SHA-256 of every key is
+    /// summed (mod 2^256); the row count is part of the result.
+    /// </summary>
     public sealed class Checksum : IDisposable
     {
-        private readonly IncrementalHash _hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        private readonly byte[] _sum = new byte[32];
+        private long _count;
 
-        public void Add(string keyText) => _hash.AppendData(Encoding.UTF8.GetBytes(keyText + "\n"));
+        public void Add(string keyText)
+        {
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(keyText));
+            var carry = 0;
+            for (var i = 0; i < _sum.Length; i++)
+            {
+                var value = _sum[i] + hash[i] + carry;
+                _sum[i] = (byte)value;
+                carry = value >> 8;
+            }
 
-        public string Finish() => Convert.ToHexString(_hash.GetHashAndReset());
+            _count++;
+        }
 
-        public void Dispose() => _hash.Dispose();
+        public string Finish()
+        {
+            var result = Convert.ToHexString(_sum) + ":" + _count;
+            Array.Clear(_sum, 0, _sum.Length);
+            _count = 0;
+            return result;
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     private static async Task<long> CountAsync<T>(DbContext context, CancellationToken cancellationToken)

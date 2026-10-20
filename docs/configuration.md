@@ -683,12 +683,13 @@ as before.
 | 2. Target | Must be reachable (a new SQLite file or a database the login may create is created) and, after its schema is migrated, **every table empty**; otherwise the copy is refused and nothing is changed. |
 | 3. Source | Refused if it has pending migrations or holds what the target cannot: strings longer than the model's maximum length, values of a unique index differing only by case (not checked for PostgreSQL), local-time dates (PostgreSQL). All problems are listed at once, before anything is copied. |
 | 4. Copy | Tables in foreign-key order (Identity's included), 1000 rows per batch, original keys kept; SQL Server `IDENTITY_INSERT` and PostgreSQL sequences are handled, so keys generated later continue after the highest copied one. |
-| 5. Verify | Row counts and a checksum of the keys must match per table. |
+| 5. Verify | Row counts and an order-independent checksum of the keys (engines sort text differently) must match per table. |
 | 6. Save | `Database:Type`, `Database:ConnectionString` (and `MySqlServerVersion` if changed) are saved. The gate **stays closed until you restart** BaGet: writes accepted before the restart would land in the old database. |
 
 - On any failure the rows copied are deleted from the target (never from the source), the gate reopens, no setting is
   saved and the page lists the errors; fix the cause and retry. A crash mid-copy leaves a partly filled target that must
   be emptied before a retry (a non-empty target is refused).
+- A failure **after** step 6 began (saving the settings) never deletes the target: the verified copy is kept, the gate stays closed until restart and the page reports the error; check the `Database` settings before restarting.
 - The source is never modified or deleted: to roll back, restore the old `Database` settings.
 - Package files are not copied: they live in `Storage`, which is unchanged.
 - One copy at a time; while it runs, every Settings save is refused with 503. Progress shows on the Settings page

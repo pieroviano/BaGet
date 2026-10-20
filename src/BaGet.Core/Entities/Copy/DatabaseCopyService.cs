@@ -132,6 +132,9 @@ public class DatabaseCopyService
         return true;
     }
 
+    /// <summary>Test seam: runs after the settings were saved, before the gate closes until restart.</summary>
+    internal Func<Task>? AfterSettingsSaved { get; set; }
+
     /// <summary>The queued requests, for the worker.</summary>
     internal IAsyncEnumerable<DatabaseCopyRequest> DequeueAllAsync(CancellationToken cancellationToken)
         => _queue.Reader.ReadAllAsync(cancellationToken);
@@ -145,6 +148,7 @@ public class DatabaseCopyService
         IContext? target = null;
         IReadOnlyList<DatabaseTable> tables = Array.Empty<DatabaseTable>();
         var touchedTarget = false;
+        var pastPointOfNoReturn = false;
         IReadOnlyList<string> errors;
 
         try
@@ -247,11 +251,17 @@ public class DatabaseCopyService
             await VerifyAsync(targetDb, tables, totals, checksums, cancellationToken).ConfigureAwait(false);
 
             Update(s => s with { Phase = DatabaseCopyPhase.SavingSettings, Message = "Saving the database settings." });
+            // From here the settings may be on disk (and the next start use the target): the copy is never undone.
+            pastPointOfNoReturn = true;
             var saved = await _settings.SaveAsync(request.SettingChanges, request.Actor, cancellationToken).ConfigureAwait(false);
             if (!saved.Succeeded)
             {
+                // A refusal means nothing was written, so the copy can still be undone.
+                pastPointOfNoReturn = false;
                 throw new CopyRefusedException(saved.Errors.Select(e => "The settings were not saved: " + e).ToArray());
             }
+
+            if (AfterSettingsSaved != null) await AfterSettingsSaved().ConfigureAwait(false);
 
             _gate.CloseUntilRestart("The database was copied; restart BaGet to use the new database");
             Update(s => s with
@@ -264,7 +274,15 @@ public class DatabaseCopyService
                 "{Actor} copied the {SourceType} database to a {TargetType} database ({Rows} rows in {Tables} tables)",
                 request.Actor, sourceFactory.DatabaseType, request.TargetType, totals.Values.Sum(), tables.Count);
 
-            await AsDbContext(target).DisposeAsync().ConfigureAwait(false);
+            try
+            {
+                await AsDbContext(target).DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, "Disposing the copy's target context failed after a successful copy");
+            }
+
             return;
         }
         catch (CopyRefusedException e)
@@ -276,7 +294,43 @@ public class DatabaseCopyService
             errors = new[] { Describe(e, request) };
         }
 
+        if (pastPointOfNoReturn)
+        {
+            await FailAfterSaveAsync(request, target, errors).ConfigureAwait(false);
+            return;
+        }
+
         await FailAsync(request, target, tables, touchedTarget, errors).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// A failure once the settings were being saved: the target holds the verified copy and the saved settings (if any)
+    /// point at it, so it is kept, the gate stays closed until the restart (writes to the source would be lost) and the
+    /// error is reported.
+    /// </summary>
+    private async Task FailAfterSaveAsync(DatabaseCopyRequest request, IContext? target, IReadOnlyList<string> errors)
+    {
+        if (target != null)
+        {
+            try
+            {
+                await AsDbContext(target).DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                // Nothing left to clean up.
+            }
+        }
+
+        _gate.CloseUntilRestart("The database was copied but the settings may not have been saved; check them and restart BaGet");
+        _logger.LogError("Database copy to {TargetType} failed while saving the settings: {Errors}", request.TargetType, string.Join(" | ", errors));
+        Update(s => s with
+        {
+            Phase = DatabaseCopyPhase.Failed,
+            Table = null,
+            Errors = errors,
+            Message = "The data was copied and verified, but saving the settings failed. The target was kept; check the database settings, then restart BaGet.",
+        });
     }
 
     private async Task FailAsync(

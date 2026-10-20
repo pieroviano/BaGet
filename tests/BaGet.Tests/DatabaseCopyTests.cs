@@ -308,6 +308,29 @@ public class DatabaseCopyTests : IDisposable
     }
 
     [Fact]
+    public async Task AFailureAfterTheSettingsAreSavedKeepsTheCopiedTargetAndStaysReadOnly()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+        var copy = app.Services.GetRequiredService<DatabaseCopyService>();
+        var gate = app.Services.GetRequiredService<MaintenanceGate>();
+        copy.AfterSettingsSaved = () => throw new InvalidOperationException("injected after save");
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("injected after save"));
+        Assert.DoesNotContain("no setting was saved", status.Message);
+        Assert.True(gate.IsClosedUntilRestart);
+        Assert.Equal(target, SavedSettings(app)["Database:ConnectionString"]);
+
+        using var targetDb = OpenTarget(target);
+        var sourceDb = OpenSource(app, out var scope);
+        using (scope) Assert.Equal(await CountsAsync(sourceDb), await CountsAsync(targetDb));
+    }
+
+    [Fact]
     public async Task APushOrSettingsSaveDuringTheCopyIsRefusedWith503AndASecondCopyIsRefused()
     {
         var (app, admin) = await StartAsync();
