@@ -78,6 +78,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" />
+    <InternalsVisibleTo Include="BaGet.Telemetry.Tests" />
   </ItemGroup>
 
 </Project>

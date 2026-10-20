@@ -21,15 +21,23 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1558 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (784),
+Baseline: **1564 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (784),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
-`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). No external services needed; integration tests
 use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
 `DatabaseCopyService` on Testcontainers servers (`TestcontainersPackageVersion` in `tests/Directory.Build.props`;
 images `mssql/server:2022-latest`, `postgres:17`, `mysql:8.4`, pulled on first run). Without a Docker daemon the 12
 tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 minutes.
+
+`BaGet.Telemetry.Tests` (shares `BaGetApplication` etc. from `BaGet.Tests` as linked files; `Containers.cs`) runs a real host against
+`jaegertracing/all-in-one:1.76.0` (traces; query API read back) and `otel/opentelemetry-collector:0.140.0` (debug exporter, read back
+from the container log) and skips without Docker (~1 minute with). It turns telemetry on through `SettingsService` (no restart) and
+covers: trace visible in Jaeger within 10 s (Grpc and HttpProtobuf; ~1-2 s measured), a dead endpoint (requests unaffected, status
+failing, restore resumes), Jaeger rejecting metrics/logs (`Unimplemented`; status fails, never silent), metrics/logs only while their
+own endpoint is set, and a stalled collector (bounded queue drops spans, memory flat, median push latency within 5 %, off/on blocks
+interleaved). `Otlp:Protocol` applies to **every** signal, so a logs endpoint must match it (gRPC port with `Grpc`).
 
 Tests are **xUnit v3** (`xunit.v3`, version lever `XUnitPackageVersion` in `tests/Directory.Build.props`), so test
 projects are executables (`OutputType=Exe`) running on **Microsoft.Testing.Platform**: `global.json`
@@ -209,7 +217,7 @@ Unit tests reach internals through `InternalsVisibleTo`, declared in each **proj
 | Project | Visible to |
 |---|---|
 | `BaGet.Core` | `BaGet.Core.Tests`, `BaGet.Tests`, `BaGet.Database.Tests`, `BaGet.Catalog`, `BaGet.Identity` |
-| `BaGet`, `BaGet.Catalog`, `BaGet.Identity`, `BaGet.Validation`, `BaGet.Database.*` | `BaGet.Tests` |
+| `BaGet`, `BaGet.Catalog`, `BaGet.Identity`, `BaGet.Validation`, `BaGet.Database.*` | `BaGet.Tests` (`BaGet` also `BaGet.Telemetry.Tests`) |
 | `BaGet.Web` | `BaGet.Tests`, `BaGet.Web.Tests` |
 | `BaGet.Azure`, `BaGet.Protocol` | `BaGet.Azure.Tests`, `BaGet.Protocol.Tests` |
 | `BaGet.Web.V2` | `BaGet.Web.V2.Tests` (no such project; `BaGet.Tests` has no access) |

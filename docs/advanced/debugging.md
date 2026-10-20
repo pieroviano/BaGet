@@ -21,7 +21,7 @@ dotnet test BaGet.sln -p:GeneratePackageOnBuild=false
 dotnet test tests/BaGet.Tests/BaGet.Tests.csproj -p:GeneratePackageOnBuild=false --filter-class "*UploadPageTests"
 ```
 
-Tests need no external services (`BaGet.Database.Tests` uses Docker via Testcontainers and skips its 12 tests without a daemon). `tests/BaGet.Tests/Support/BaGetApplication.cs` runs the real pipeline
+Tests need no external services (`BaGet.Database.Tests` uses Docker via Testcontainers and skips its 12 tests without a daemon; `BaGet.Telemetry.Tests` does the same with Jaeger and an OpenTelemetry Collector). `tests/BaGet.Tests/Support/BaGetApplication.cs` runs the real pipeline
 over HTTP with SQLite in a temporary directory; it supplies settings with `builder.UseSetting(...)`.
 Tests are xUnit v3 on Microsoft.Testing.Platform (opted in by `global.json`); filter with `--filter-class` /
 `--filter-method`, which take `*` wildcards.

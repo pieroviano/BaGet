@@ -179,6 +179,7 @@ what startup validation checks (`Database/Storage/Search:Type`).
 | `BaGet.Tests` | Integration: `BaGetApplication : WebApplicationFactory<Program>` — real pipeline over HTTP, SQLite in a temp directory, `SystemTime` fixed to 2020-01-01Z |
 | `BaGet.Protocol.Tests`, `BaGet.Protocol.Samples.Tests` | Client library |
 | `BaGet.Web.Tests`, `BaGet.Azure.Tests` | Web helpers, Azure providers |
+| `BaGet.Telemetry.Tests` | Telemetry export against Jaeger and an OpenTelemetry Collector containers (traces, metrics, logs, dead and stalled endpoints); skipped without Docker |
 | `BaGet.Database.Tests` | Database copy between every pair of SQLite / SQL Server / PostgreSQL / MySQL on Testcontainers servers; skipped without Docker |
 
 xUnit v3 on Microsoft.Testing.Platform; see [Debugging](debugging.md) for commands.
