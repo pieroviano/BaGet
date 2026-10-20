@@ -7,7 +7,12 @@ using Xunit;
 
 namespace BaGet.Tests;
 
-public class ApiIntegrationTests : IDisposable
+/// <summary>
+/// The V3 protocol contract. Abstract: it runs once against the default repository at <c>/</c>
+/// (<see cref="ApiIntegrationTests"/>) and once against a second repository at <c>/r/second/</c>
+/// (<see cref="ApiIntegrationSecondRepositoryTests"/>); every expectation is identical except the advertised base URL.
+/// </summary>
+public abstract class ApiIntegrationTestsBase : IDisposable
 {
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
@@ -15,14 +20,33 @@ public class ApiIntegrationTests : IDisposable
     private readonly Stream? _packageStream;
     private readonly Stream? _symbolPackageStream;
 
-    public ApiIntegrationTests(ITestOutputHelper output)
+    private readonly string? _repository;
+    private readonly string _origin;
+
+    protected ApiIntegrationTestsBase(ITestOutputHelper output, string? repository)
     {
+        _repository = repository;
+        _origin = repository == null ? "http://localhost/" : $"http://localhost/r/{repository}/";
         _app = new BaGetApplication(output);
         _client = _app.CreateClient();
+        if (repository != null)
+        {
+            _app.CreateRepositoryAsync(repository).GetAwaiter().GetResult();
+        }
+
+        // Relative request URIs resolve against the repository's root.
+        _client.BaseAddress = new Uri(_origin);
 
         _packageStream = TestResources.GetResourceStream(TestResources.Package);
         _symbolPackageStream = TestResources.GetResourceStream(TestResources.SymbolPackage);
     }
+
+    /// <summary>Rewrites the expected absolute URLs (written for <c>/</c>) to this repository's root.</summary>
+    private string Expect(string expected) => expected.Replace("http://localhost/", _origin).ReplaceLineEndings();
+
+    /// <summary>The package-page URI templates point at the web UI, which only the default repository has.</summary>
+    private static string WithoutPackagePageTemplates(string serviceIndex)
+        => System.Text.RegularExpressions.Regex.Replace(serviceIndex, @"{""@id"":""http://localhost/packages/[^""]*"",""@type"":""[^""]*""},", "");
 
     [Fact]
     public async Task IndexReturnsOk()
@@ -32,21 +56,21 @@ public class ApiIntegrationTests : IDisposable
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(TestData.ServiceIndex, content);
+        Assert.Equal(Expect(_repository == null ? TestData.ServiceIndex : WithoutPackagePageTemplates(TestData.ServiceIndex)), content);
     }
 
     [Fact]
     public async Task SearchReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("v3/search", cancellationToken);
         var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@context"": {
     ""@vocab"": ""http://schema.nuget.org/schema#"",
     ""@base"": ""http://localhost/v3/registration""
@@ -77,7 +101,7 @@ public class ApiIntegrationTests : IDisposable
       ]
     }
   ]
-}", json);
+}"), json);
     }
 
     [Fact]
@@ -89,28 +113,28 @@ public class ApiIntegrationTests : IDisposable
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@context"": {
     ""@vocab"": ""http://schema.nuget.org/schema#"",
     ""@base"": ""http://localhost/v3/registration""
   },
   ""totalHits"": 0,
   ""data"": []
-}", json);
+}"), json);
     }
 
     [Fact]
     public async Task AutocompleteReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("v3/autocomplete", cancellationToken);
         var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@context"": {
     ""@vocab"": ""http://schema.nuget.org/schema#""
   },
@@ -118,7 +142,7 @@ public class ApiIntegrationTests : IDisposable
   ""data"": [
     ""TestData""
   ]
-}", json);
+}"), json);
     }
 
     [Fact]
@@ -130,27 +154,27 @@ public class ApiIntegrationTests : IDisposable
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@context"": {
     ""@vocab"": ""http://schema.nuget.org/schema#""
   },
   ""totalHits"": 0,
   ""data"": []
-}", json);
+}"), json);
     }
 
     [Fact]
     public async Task AutocompleteVersionsReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("v3/autocomplete?id=TestData", cancellationToken);
         var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@context"": {
     ""@vocab"": ""http://schema.nuget.org/schema#""
   },
@@ -158,7 +182,7 @@ public class ApiIntegrationTests : IDisposable
   ""data"": [
     ""1.2.3""
   ]
-}", json);
+}"), json);
     }
 
     [Fact]
@@ -170,20 +194,20 @@ public class ApiIntegrationTests : IDisposable
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@context"": {
     ""@vocab"": ""http://schema.nuget.org/schema#""
   },
   ""totalHits"": 0,
   ""data"": []
-}", json);
+}"), json);
     }
 
     [Fact]
     public async Task VersionListReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         var response = await _client.GetAsync("v3/package/TestData/index.json", cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -205,7 +229,7 @@ public class ApiIntegrationTests : IDisposable
     public async Task PackageDownloadReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("v3/package/TestData/1.2.3/TestData.1.2.3.nupkg", cancellationToken);
 
@@ -226,7 +250,7 @@ public class ApiIntegrationTests : IDisposable
     public async Task NuspecDownloadReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync(
             "v3/package/TestData/1.2.3/TestData.1.2.3.nuspec", cancellationToken);
@@ -248,14 +272,14 @@ public class ApiIntegrationTests : IDisposable
     public async Task PackageMetadataReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("v3/registration/TestData/index.json", cancellationToken);
         var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@id"": ""http://localhost/v3/registration/testdata/index.json"",
   ""@type"": [
     ""catalog:CatalogRoot"",
@@ -309,7 +333,7 @@ public class ApiIntegrationTests : IDisposable
     }
   ],
   ""totalDownloads"": 0
-}", json);
+}"), json);
     }
 
     [Fact]
@@ -325,14 +349,14 @@ public class ApiIntegrationTests : IDisposable
     public async Task PackageMetadataLeafReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("v3/registration/TestData/1.2.3.json", cancellationToken);
         var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""@id"": ""http://localhost/v3/registration/testdata/1.2.3.json"",
   ""@type"": [
     ""Package"",
@@ -342,7 +366,7 @@ public class ApiIntegrationTests : IDisposable
   ""packageContent"": ""http://localhost/v3/package/testdata/1.2.3/testdata.1.2.3.nupkg"",
   ""published"": ""2020-01-01T00:00:00Z"",
   ""registration"": ""http://localhost/v3/registration/testdata/index.json""
-}", json);
+}"), json);
     }
 
     [Fact]
@@ -364,10 +388,10 @@ public class ApiIntegrationTests : IDisposable
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(@"{
+        Assert.Equal(Expect(@"{
   ""totalHits"": 0,
   ""data"": []
-}", json);
+}"), json);
     }
 
     [Fact]
@@ -383,8 +407,8 @@ public class ApiIntegrationTests : IDisposable
     public async Task SymbolDownloadReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
-        await _app.AddSymbolPackageAsync(_symbolPackageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
+        await _app.AddSymbolPackageAsync(_symbolPackageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync(
             "api/download/symbols/testdata.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/testdata.pdb", cancellationToken);
@@ -399,8 +423,8 @@ public class ApiIntegrationTests : IDisposable
     public async Task MalformedSymbolDownloadReturnsOk(string uri)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
-        await _app.AddSymbolPackageAsync(_symbolPackageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
+        await _app.AddSymbolPackageAsync(_symbolPackageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync(uri, cancellationToken);
 
@@ -423,3 +447,7 @@ public class ApiIntegrationTests : IDisposable
         _client.Dispose();
     }
 }
+
+public class ApiIntegrationTests(ITestOutputHelper output) : ApiIntegrationTestsBase(output, null);
+
+public class ApiIntegrationSecondRepositoryTests(ITestOutputHelper output) : ApiIntegrationTestsBase(output, "second");

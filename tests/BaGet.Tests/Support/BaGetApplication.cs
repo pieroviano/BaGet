@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -156,14 +156,42 @@ public class BaGetApplication : WebApplicationFactory<Program>
 
 internal static class BaGetWebApplicationFactoryExtensions
 {
+    /// <summary>Creates a local NuGet repository with the given name.</summary>
+    public static async Task CreateRepositoryAsync(
+        this WebApplicationFactory<Program> factory,
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.NuGet, RepositoryKind.Local, cancellationToken);
+    }
+
+    /// <summary>A DI scope whose current repository is the named one (null = default), as routing sets it.</summary>
+    public static async Task<IServiceScope> CreateRepositoryScopeAsync(
+        this WebApplicationFactory<Program> factory,
+        string? repository,
+        CancellationToken cancellationToken = default)
+    {
+        var scope = factory.Services.CreateScope();
+        if (repository != null)
+        {
+            var found = await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+                .FindAsync(repository, cancellationToken);
+            scope.ServiceProvider.GetRequiredService<IRepositoryContext>().Use(found
+                ?? throw new InvalidOperationException($"Repository '{repository}' does not exist."));
+        }
+
+        return scope;
+    }
+
     public static async Task AddPackageAsync(
         this WebApplicationFactory<Program> factory,
         Stream? package,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? repository = null)
     {
-        var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
-
-        using var scope = scopeFactory.CreateScope();
+        using var scope = await factory.CreateRepositoryScopeAsync(repository, cancellationToken);
         var indexer = scope.ServiceProvider.GetRequiredService<IPackageIndexingService>();
 
         var result = await indexer.IndexAsync(package, cancellationToken);
@@ -176,11 +204,10 @@ internal static class BaGetWebApplicationFactoryExtensions
     public static async Task AddSymbolPackageAsync(
         this WebApplicationFactory<Program> factory,
         Stream? symbolPackage,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? repository = null)
     {
-        var scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
-
-        using var scope = scopeFactory.CreateScope();
+        using var scope = await factory.CreateRepositoryScopeAsync(repository, cancellationToken);
         var indexer = scope.ServiceProvider.GetRequiredService<ISymbolIndexingService>();
 
         var result = await indexer.IndexAsync(symbolPackage, cancellationToken);
