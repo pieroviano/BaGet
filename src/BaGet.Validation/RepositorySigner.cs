@@ -43,10 +43,12 @@ public class RepositorySigner
     /// Sign a package, returning the signed copy. A package that already has a
     /// repository signature is returned as it is.
     /// </summary>
+    /// <param name="package">The package to sign. It is read, not modified.</param>
     /// <param name="serviceIndexUrl">
     /// This server's service index. The signature records it, and a client checks that
     /// it matches the source the package came from.
     /// </param>
+    /// <param name="cancellationToken">Cancels signing.</param>
     public async Task<Stream> SignAsync(Stream package, string serviceIndexUrl, CancellationToken cancellationToken)
     {
         var directory = Path.Combine(Path.GetTempPath(), "BaGetSigning", Guid.NewGuid().ToString("N"));

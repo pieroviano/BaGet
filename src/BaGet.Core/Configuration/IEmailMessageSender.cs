@@ -15,6 +15,7 @@ public interface IEmailMessageSender
     /// <param name="replyToName">The reply-to's display name, or null.</param>
     /// <param name="subject">Fixed text chosen by the server.</param>
     /// <param name="textBody">The message.</param>
+    /// <param name="cancellationToken">Cancels sending.</param>
     Task SendAsync(
         string to,
         string? replyTo,

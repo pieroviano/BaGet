@@ -42,6 +42,13 @@ public class PackageIndexingService : IPackageIndexingService
     {
     }
 
+    /// <param name="packages">The package database.</param>
+    /// <param name="storage">Where package content is stored.</param>
+    /// <param name="search">Indexes the package for search.</param>
+    /// <param name="time">The current time.</param>
+    /// <param name="options">The server's options.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="notifier">Told when a package changes, once it is indexed.</param>
     /// <param name="gate">
     /// When closed, indexing is refused up front with <see cref="MaintenanceException"/>, before any
     /// content reaches storage, so a refused push leaves no orphan files behind.

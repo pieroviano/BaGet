@@ -42,7 +42,7 @@ public class OrganizationMember
     public Organization? Organization { get; set; }
 
     /// <summary>
-    /// The member's <see cref="IdentityUser.Id"/>.
+    /// The member's <see cref="IdentityUser{TKey}.Id"/>.
     /// </summary>
     public string? UserId { get; set; }
 
