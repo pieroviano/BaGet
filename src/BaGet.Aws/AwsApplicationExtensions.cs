@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
+using Amazon.Runtime.Credentials;
 using Amazon.S3;
 using BaGet.Aws;
 using BaGet.Core;
@@ -40,13 +41,13 @@ public static class AwsApplicationExtensions
 
             if (options.UseInstanceProfile)
             {
-                var credentials = FallbackCredentialsFactory.GetCredentials();
+                var credentials = DefaultAWSCredentialsIdentityResolver.GetCredentials(config);
                 return new AmazonS3Client(credentials, config);
             }
 
             if (!string.IsNullOrEmpty(options.AssumeRoleArn))
             {
-                var credentials = FallbackCredentialsFactory.GetCredentials();
+                var credentials = DefaultAWSCredentialsIdentityResolver.GetCredentials(config);
                 var assumedCredentials = AssumeRoleAsync(
                         credentials,
                         options.AssumeRoleArn,
