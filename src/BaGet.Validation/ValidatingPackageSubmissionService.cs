@@ -30,6 +30,7 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
     private readonly IOptionsSnapshot<ValidationOptions> _validation;
     private readonly ILogger<ValidatingPackageSubmissionService> _logger;
     private readonly MaintenanceGate? _gate;
+    private readonly IRepositoryContext? _repository;
 
     public ValidatingPackageSubmissionService(
         IPackageIndexingService indexer,
@@ -42,9 +43,11 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
         IOptionsSnapshot<BaGetOptions> options,
         IOptionsSnapshot<ValidationOptions> validation,
         ILogger<ValidatingPackageSubmissionService> logger,
-        MaintenanceGate? gate = null)
+        MaintenanceGate? gate = null,
+        IRepositoryContext? repository = null)
     {
         _gate = gate;
+        _repository = repository;
         _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -57,7 +60,12 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    internal static string StagedPath(string submissionId) => $"validation/{submissionId}.nupkg";
+    /// <summary>
+    /// Where a submission is staged: <c>validation/{id}.nupkg</c> for the default repository,
+    /// <c>repos/{name}/validation/{id}.nupkg</c> for any other (see <see cref="RepositoryStorage"/>).
+    /// </summary>
+    internal static string StagedPath(RepositoryInfo repository, string submissionId)
+        => RepositoryStorage.Scope(repository, $"validation/{submissionId}.nupkg");
 
     public async Task<PackageIndexingResult> SubmitAsync(Stream package, CancellationToken cancellationToken)
     {
@@ -110,7 +118,7 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
         var submissionId = Guid.NewGuid().ToString("D");
 
         package.Position = 0;
-        await _storage.PutAsync(StagedPath(submissionId), package, "application/octet-stream", cancellationToken);
+        await _storage.PutAsync(StagedPath(_repository?.Current ?? RepositoryInfo.Default, submissionId), package, "application/octet-stream", cancellationToken);
 
         var now = _time.UtcNow;
         var steps = _validators.Select(v => v.Name).Append(PackageValidation.IndexType);

@@ -36,6 +36,7 @@ public class CatalogWriter : IPackageChangeHandler
     private readonly SystemTime _time;
     private readonly ILogger<CatalogWriter> _logger;
     private readonly MaintenanceGate? _gate;
+    private readonly IRepositoryContext? _repository;
 
     public CatalogWriter(
         ICatalogDatabase catalog,
@@ -44,9 +45,11 @@ public class CatalogWriter : IPackageChangeHandler
         IStorageService storage,
         SystemTime time,
         ILogger<CatalogWriter> logger,
-        MaintenanceGate? gate = null)
+        MaintenanceGate? gate = null,
+        IRepositoryContext? repository = null)
     {
         _gate = gate;
+        _repository = repository;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _packageStorage = packageStorage ?? throw new ArgumentNullException(nameof(packageStorage));
@@ -55,7 +58,12 @@ public class CatalogWriter : IPackageChangeHandler
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    internal static string LeafPath(string? commitId) => $"catalog/{commitId}.json";
+    /// <summary>
+    /// Where a leaf document is stored: <c>catalog/{commit}.json</c> for the default repository,
+    /// <c>repos/{name}/catalog/{commit}.json</c> for any other (see <see cref="RepositoryStorage"/>).
+    /// </summary>
+    internal static string LeafPath(RepositoryInfo repository, string? commitId)
+        => RepositoryStorage.Scope(repository, $"catalog/{commitId}.json");
 
     public async Task OnPackageChangedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
@@ -183,7 +191,7 @@ public class CatalogWriter : IPackageChangeHandler
                 await JsonSerializer.SerializeAsync(content, leaf, leaf.GetType(), LeafSerializerOptions, cancellationToken);
                 content.Position = 0;
 
-                var result = await _storage.PutAsync(LeafPath(commitId), content, "application/json", cancellationToken);
+                var result = await _storage.PutAsync(LeafPath(_repository?.Current ?? RepositoryInfo.Default, commitId), content, "application/json", cancellationToken);
                 if (result == StoragePutResult.Conflict)
                 {
                     throw new InvalidOperationException($"Catalog leaf {commitId} already exists with different content");

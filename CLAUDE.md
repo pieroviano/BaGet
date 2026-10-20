@@ -128,7 +128,6 @@ submission's repository itself. `IRepositoryService` finds/lists/creates (`Repos
 `EnsureDefaultAsync` creates the `default` row after migrations at startup and the copy carries it (so it must not be
 seeded by a migration: the copy target must be empty). Azure Table (`NullContext`) has the default repository only:
 `CreateAsync` and `TablePackageDatabase` refuse others. The mirror serves `default` only (`UpstreamClientFactory`).
-Storage paths are not repository-aware yet.
 
 **Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,
 deprecation/vulnerability, repository signatures) twice: plain (the `default` repository) and as `r:<name>` under
@@ -142,6 +141,13 @@ after the `PathBase`. The V2 feed's base is `IUrlGenerator.GetV2FeedUrl`. Razor 
 default repository, so only the default's service index advertises `PackageDetailsUriTemplate` /
 `ReportAbuseUriTemplate` (the generator returns null elsewhere). Do not give a page a second route
 (`AddPageRoute`): `asp-page`/`Url.Page` then produce empty `href`s.
+**Storage layout** (`RepositoryStorage`, `BaGet.Core/Repositories`): `default` keeps `packages/…`, `symbols/…`, `catalog/…`,
+`validation/…`, `staging/…` byte for byte (existing stores need no migration); every other repository nests the same
+layout under `repos/{name}/` (`repos` is no default prefix, so no collision). `PackageStorageService`,
+`SymbolStorageService`, `StoragePackageStagingService`, `CatalogWriter`/`CatalogReader` and the validation staging
+(`ValidatingPackageSubmissionService.StagedPath(repo, id)`, used by the runner after it switches repository) take an
+optional `IRepositoryContext` (null = default). Never build a path from a name without `RepositoryStorage.Prefix`, which
+re-validates it. `StagingSweepWorker` sweeps each repository in its own scope.
 
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -19,11 +20,18 @@ public class PackageStorageService : IPackageStorageService
 
     private readonly IStorageService _storage;
     private readonly ILogger<PackageStorageService> _logger;
+    private readonly IRepositoryContext? _repository;
 
+    /// <summary>
+    /// The repository whose files are read and written: the default one keeps <c>packages/…</c>, any other
+    /// <c>repos/{name}/packages/…</c> (see <see cref="RepositoryStorage"/>). Null means the default repository.
+    /// </summary>
     public PackageStorageService(
         IStorageService storage,
-        ILogger<PackageStorageService> logger)
+        ILogger<PackageStorageService> logger,
+        IRepositoryContext? repository = null)
     {
+        _repository = repository;
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -214,45 +222,33 @@ public class PackageStorageService : IPackageStorageService
 
     private string PackagePath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
-        #pragma warning disable CS8604
-        return Path.Combine(
-            PackagesPathPrefix,
-            lowercasedId,
-            lowercasedNormalizedVersion,
-            $"{lowercasedId}.{lowercasedNormalizedVersion}.nupkg");
-        #pragma warning restore CS8604
+        return PathFor(lowercasedId, lowercasedNormalizedVersion, $"{lowercasedId}.{lowercasedNormalizedVersion}.nupkg");
     }
 
     private string NuspecPath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
-        #pragma warning disable CS8604
-        return Path.Combine(
-            PackagesPathPrefix,
-            lowercasedId,
-            lowercasedNormalizedVersion,
-            $"{lowercasedId}.nuspec");
-        #pragma warning restore CS8604
+        return PathFor(lowercasedId, lowercasedNormalizedVersion, $"{lowercasedId}.nuspec");
     }
 
     private string ReadmePath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
-        #pragma warning disable CS8604
-        return Path.Combine(
-            PackagesPathPrefix,
-            lowercasedId,
-            lowercasedNormalizedVersion,
-            "readme");
-        #pragma warning restore CS8604
+        return PathFor(lowercasedId, lowercasedNormalizedVersion, "readme");
     }
 
     private string IconPath(string? lowercasedId, string? lowercasedNormalizedVersion)
     {
+        return PathFor(lowercasedId, lowercasedNormalizedVersion, "icon");
+    }
+
+    private string PathFor(string? lowercasedId, string? lowercasedNormalizedVersion, string fileName)
+    {
+        var repository = _repository?.Current ?? RepositoryInfo.Default;
+
         #pragma warning disable CS8604
         return Path.Combine(
-            PackagesPathPrefix,
-            lowercasedId,
-            lowercasedNormalizedVersion,
-            "icon");
+            RepositoryStorage.Segments(repository)
+                .Concat(new string[] { PackagesPathPrefix, lowercasedId!, lowercasedNormalizedVersion!, fileName })
+                .ToArray());
         #pragma warning restore CS8604
     }
 }

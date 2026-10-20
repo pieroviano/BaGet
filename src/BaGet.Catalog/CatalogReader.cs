@@ -25,9 +25,11 @@ public class CatalogReader
     private readonly ICatalogDatabase _catalog;
     private readonly IStorageService _storage;
     private readonly IUrlGenerator _url;
+    private readonly IRepositoryContext? _repository;
 
-    public CatalogReader(ICatalogDatabase catalog, IStorageService storage, IUrlGenerator url)
+    public CatalogReader(ICatalogDatabase catalog, IStorageService storage, IUrlGenerator url, IRepositoryContext? repository = null)
     {
+        _repository = repository;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _url = url ?? throw new ArgumentNullException(nameof(url));
@@ -98,7 +100,7 @@ public class CatalogReader
         if (entry == null) return null;
 
         JsonNode? leaf;
-        using (var stream = await _storage.GetAsync(CatalogWriter.LeafPath(entry.CommitId), cancellationToken))
+        using (var stream = await _storage.GetAsync(CatalogWriter.LeafPath(_repository?.Current ?? RepositoryInfo.Default, entry.CommitId), cancellationToken))
         {
             leaf = await JsonNode.ParseAsync(stream, cancellationToken: cancellationToken);
         }

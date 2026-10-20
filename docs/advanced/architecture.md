@@ -92,7 +92,7 @@ PUT api/v2/package
 
 1. Read the `.nupkg`; reject unsafe entries; extract nuspec, readme and icon.
 2. Existing version → `PackageAlreadyExists`, or replace it when `AllowPackageOverwrites` is on.
-3. Save files: `packages/{id}/{version}/{id}.{version}.nupkg`, `{id}.nuspec`, `readme`, `icon` (lowercased).
+3. Save files: `packages/{id}/{version}/{id}.{version}.nupkg`, `{id}.nuspec`, `readme`, `icon` (lowercased). Repositories other than `default` store under `repos/{name}/` (e.g. `repos/{name}/packages/…`; symbols, catalog, validation and staging likewise).
 4. Add the database row (`IPackageDatabase.AddAsync`).
 5. `ISearchIndexer.IndexAsync`.
 6. `PackageChangeNotifier` → every `IPackageChangeHandler` (e.g. `CatalogWriter`). Runs after the commit; a

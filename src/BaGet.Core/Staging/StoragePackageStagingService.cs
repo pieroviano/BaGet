@@ -39,20 +39,41 @@ public class StoragePackageStagingService : IPackageStagingService
     private readonly IStorageService _storage;
     private readonly SystemTime _time;
     private readonly ILogger<StoragePackageStagingService> _logger;
+    private readonly IRepositoryContext? _repository;
 
+    /// <summary>
+    /// The repository uploads are staged for: the default one stages under <c>staging/</c>, any other under
+    /// <c>repos/{name}/staging/</c>, so a token staged for one repository cannot be opened from another and
+    /// <see cref="SweepAsync"/> collects the current repository's uploads only. Null means the default repository.
+    /// </summary>
     public StoragePackageStagingService(
         IStorageService storage,
         SystemTime time,
-        ILogger<StoragePackageStagingService> logger)
+        ILogger<StoragePackageStagingService> logger,
+        IRepositoryContext? repository = null)
     {
+        _repository = repository;
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _time = time ?? throw new ArgumentNullException(nameof(time));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    internal static string StagedPath(string? token) => $"{StagingPathPrefix}/{token}.nupkg";
+    private RepositoryInfo Repository => _repository?.Current ?? RepositoryInfo.Default;
 
-    internal static string MetadataPath(string? token) => $"{StagingPathPrefix}/{token}.json";
+    /// <summary>
+    /// The staging prefix of the current repository: <c>staging</c>, or <c>repos/{name}/staging</c>.
+    /// </summary>
+    private string Prefix => RepositoryStorage.Scope(Repository, StagingPathPrefix);
+
+    internal static string StagedPath(string? token) => StagedPath(RepositoryInfo.Default, token);
+
+    internal static string StagedPath(RepositoryInfo repository, string? token)
+        => RepositoryStorage.Scope(repository, $"{StagingPathPrefix}/{token}.nupkg");
+
+    internal static string MetadataPath(string? token) => MetadataPath(RepositoryInfo.Default, token);
+
+    internal static string MetadataPath(RepositoryInfo repository, string? token)
+        => RepositoryStorage.Scope(repository, $"{StagingPathPrefix}/{token}.json");
 
     public async Task<string> StageAsync(Stream? package, string? ownerId, CancellationToken cancellationToken = default)
     {
@@ -70,12 +91,12 @@ public class StoragePackageStagingService : IPackageStagingService
         // collected by nothing.
         using (var json = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(metadata)))
         {
-            await StoreAsync(MetadataPath(token), json, "application/json", cancellationToken);
+            await StoreAsync(MetadataPath(Repository, token), json, "application/json", cancellationToken);
         }
 
         try
         {
-            await StoreAsync(StagedPath(token), package, "application/octet-stream", cancellationToken);
+            await StoreAsync(StagedPath(Repository, token), package, "application/octet-stream", cancellationToken);
         }
         catch
         {
@@ -113,7 +134,7 @@ public class StoragePackageStagingService : IPackageStagingService
             return null;
         }
 
-        return await OpenOrNullAsync(StagedPath(token), cancellationToken);
+        return await OpenOrNullAsync(StagedPath(Repository, token), cancellationToken);
     }
 
     public async Task<bool> RemoveAsync(string? token, string? ownerId, CancellationToken cancellationToken = default)
@@ -147,7 +168,7 @@ public class StoragePackageStagingService : IPackageStagingService
             return 0;
         }
 
-        var paths = await listable.ListAsync(StagingPathPrefix, cancellationToken);
+        var paths = await listable.ListAsync(Prefix, cancellationToken);
         var stored = new HashSet<string>(paths, StringComparer.Ordinal);
 
         var tokens = new HashSet<string>(StringComparer.Ordinal);
@@ -200,7 +221,7 @@ public class StoragePackageStagingService : IPackageStagingService
                 return true;
 
             default:
-                if (!stored.Contains(MetadataPath(token))) return true;
+                if (!stored.Contains(MetadataPath(Repository, token))) return true;
 
                 _logger.LogWarning(
                     "Keeping staged upload {Correlation}: its metadata could not be read this time",
@@ -226,13 +247,13 @@ public class StoragePackageStagingService : IPackageStagingService
     /// </summary>
     private async Task ForgetAsync(string? token, CancellationToken cancellationToken)
     {
-        await DeleteAsync(StagedPath(token), cancellationToken);
-        await DeleteAsync(MetadataPath(token), cancellationToken);
+        await DeleteAsync(StagedPath(Repository, token), cancellationToken);
+        await DeleteAsync(MetadataPath(Repository, token), cancellationToken);
     }
 
     private async Task<StagedMetadataRead> ReadMetadataAsync(string? token, CancellationToken cancellationToken)
     {
-        using var stream = await OpenOrNullAsync(MetadataPath(token), cancellationToken);
+        using var stream = await OpenOrNullAsync(MetadataPath(Repository, token), cancellationToken);
         if (stream == null) return new StagedMetadataRead(StagedMetadataStatus.Unavailable, null);
 
         try
@@ -318,10 +339,10 @@ public class StoragePackageStagingService : IPackageStagingService
     /// <summary>
     /// The token a staged path belongs to, or null if the path is not one of ours.
     /// </summary>
-    private static string? TokenOrNull(string? path)
+    private string? TokenOrNull(string? path)
     {
         if (path == null) return null;
-        if (!path.StartsWith(StagingPathPrefix + "/", StringComparison.Ordinal)) return null;
+        if (!path.StartsWith(Prefix + "/", StringComparison.Ordinal)) return null;
 
         var extension = Path.GetExtension(path);
         if (extension != ".json" && extension != ".nupkg") return null;

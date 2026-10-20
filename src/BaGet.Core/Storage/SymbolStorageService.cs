@@ -12,9 +12,16 @@ public class SymbolStorageService : ISymbolStorageService
     private const string PdbContentType = "binary/octet-stream";
 
     private readonly IStorageService _storage;
+    private readonly IRepositoryContext? _repository;
 
-    public SymbolStorageService(IStorageService storage)
+    /// <summary>
+    /// The repository whose symbols are stored and served: the default one keeps <c>symbols/…</c>, any other
+    /// <c>repos/{name}/symbols/…</c>, so symbols pushed to one repository are not served from another. Null means
+    /// the default repository.
+    /// </summary>
+    public SymbolStorageService(IStorageService storage, IRepositoryContext? repository = null)
     {
+        _repository = repository;
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
     }
 
@@ -72,8 +79,8 @@ public class SymbolStorageService : ISymbolStorageService
         key = key.Substring(0, 32) + "ffffffff";
 
         return Path.Combine(
-            SymbolsPathPrefix,
-            filename.ToLowerInvariant(),
-            key.ToLowerInvariant());
+            RepositoryStorage.Segments(_repository?.Current ?? RepositoryInfo.Default)
+                .Concat(new[] { SymbolsPathPrefix, filename.ToLowerInvariant(), key.ToLowerInvariant() })
+                .ToArray());
     }
 }

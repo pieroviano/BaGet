@@ -130,7 +130,7 @@ public class PackageValidationRunner
         activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, index.PackageVersion);
 
         using var package = new MemoryStream();
-        using (var staged = await _storage.GetAsync(ValidatingPackageSubmissionService.StagedPath(submissionId), cancellationToken))
+        using (var staged = await _storage.GetAsync(ValidatingPackageSubmissionService.StagedPath(_repository.Current, submissionId), cancellationToken))
         {
             await staged.CopyToAsync(package, cancellationToken);
         }
@@ -197,7 +197,7 @@ public class PackageValidationRunner
 
         if (indexError == null)
         {
-            await _storage.DeleteAsync(ValidatingPackageSubmissionService.StagedPath(submissionId), cancellationToken);
+            await _storage.DeleteAsync(ValidatingPackageSubmissionService.StagedPath(_repository.Current, submissionId), cancellationToken);
         }
 
         return indexError == null ? "Succeeded" : "Failed";

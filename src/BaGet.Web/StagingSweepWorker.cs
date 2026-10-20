@@ -1,4 +1,6 @@
+
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -51,11 +53,23 @@ public class StagingSweepWorker : BackgroundService
 
             try
             {
-                using var scope = _scopes.CreateScope();
-                var staging = scope.ServiceProvider.GetRequiredService<IPackageStagingService>();
-                var time = scope.ServiceProvider.GetRequiredService<SystemTime>();
+                // Each repository stages under a prefix of its own, so each is swept in a scope pinned to it.
+                IReadOnlyList<RepositoryInfo> repositories;
+                using (var listing = _scopes.CreateScope())
+                {
+                    repositories = await listing.ServiceProvider
+                        .GetRequiredService<IRepositoryService>()
+                        .ListAsync(stoppingToken);
+                }
 
-                await staging.SweepAsync(time.UtcNow - MaxStagingAge, stoppingToken);
+                foreach (var repository in repositories)
+                {
+                    using var scope = _scopes.CreateRepositoryScope(repository);
+                    var staging = scope.ServiceProvider.GetRequiredService<IPackageStagingService>();
+                    var time = scope.ServiceProvider.GetRequiredService<SystemTime>();
+
+                    await staging.SweepAsync(time.UtcNow - MaxStagingAge, stoppingToken);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
