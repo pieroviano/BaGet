@@ -1,0 +1,37 @@
+@page "/admin/repositories/{name}"
+@model BaGet.Identity.Pages.Admin.RepositoryEditModel
+@{
+    ViewData["Title"] = "Repository " + Model.Name;
+}
+
+<div class="col-sm-12">
+    <h1>Repository @Model.Name</h1>
+    <hr class="breadcrumb-divider" />
+
+    <dl>
+        <dt>Type</dt>
+        <dd>@Model.Repository?.Format / @Model.Repository?.Kind</dd>
+        <dt>Feed</dt>
+        <dd>
+            <code id="repository-feed">@Model.FeedUrl</code>
+            <button type="button" class="btn btn-default btn-xs" id="copy-repository-feed"
+                    onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('repository-feed').textContent)">
+                Copy
+            </button>
+        </dd>
+        <dt>Packages</dt>
+        <dd>@Model.Repository?.PackageCount</dd>
+    </dl>
+
+    <form method="post">
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" name="anonymousRead" value="true" checked="@Model.AnonymousRead" />
+                Anonymous read: requests without credentials may read this repository
+            </label>
+            <input type="hidden" name="anonymousRead" value="false" />
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
+    </form>
+</div>

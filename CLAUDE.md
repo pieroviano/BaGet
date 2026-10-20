@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1696 tests** across `BaGet.Core.Tests` (535), `BaGet.Tests` (871),
+Baseline: **1713 tests** across `BaGet.Core.Tests` (535), `BaGet.Tests` (888),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -128,6 +128,9 @@ submission's repository itself. `IRepositoryService` finds/lists/creates (`Repos
 `EnsureDefaultAsync` creates the `default` row after migrations at startup and the copy carries it (so it must not be
 seeded by a migration: the copy target must be empty). Azure Table (`NullContext`) has the default repository only:
 `CreateAsync` and `TablePackageDatabase` refuse others. The mirror serves `default` only (`UpstreamClientFactory`).
+`IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with rows, so
+deleting content is not available) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
+(names are immutable; only `AnonymousRead` is editable; writes call `MaintenanceGate.ThrowIfClosed`; feed URLs derive from `IUrlGenerator`).
 
 **Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,
 deprecation/vulnerability, repository signatures) twice: plain (the `default` repository) and as `r:<name>` under

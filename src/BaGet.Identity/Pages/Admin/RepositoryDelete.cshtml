@@ -1,0 +1,36 @@
+@page "/admin/repositories/{name}/delete"
+@model BaGet.Identity.Pages.Admin.RepositoryDeleteModel
+@{
+    ViewData["Title"] = "Delete " + Model.Name;
+}
+
+<div class="col-sm-12">
+    <h1>Delete @Model.Name</h1>
+    <hr class="breadcrumb-divider" />
+
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger" role="alert" id="delete-repository-error">@Model.Error</div>
+    }
+
+    @if (Model.Repository?.IsDefault == true)
+    {
+        <div class="alert alert-warning" role="alert" id="delete-repository-default">
+            The <code>default</code> repository is served at the root and cannot be deleted.
+        </div>
+    }
+    else if (Model.Repository?.PackageCount > 0)
+    {
+        <div class="alert alert-warning" role="alert" id="delete-repository-not-empty">
+            @Model.Name holds @Model.Repository.PackageCount package version(s). Delete them first: deleting a repository with content is not supported yet.
+        </div>
+    }
+    else
+    {
+        <p>@Model.Name is empty. Deleting it removes the repository and its feed address; this cannot be undone.</p>
+        <form method="post">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this repository? This cannot be undone.');">Delete @Model.Name</button>
+            <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
+        </form>
+    }
+</div>

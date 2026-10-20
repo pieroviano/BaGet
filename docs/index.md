@@ -18,6 +18,10 @@ You can run BaGet Extension on your preferred platform:
 * [Alibaba Cloud (Aliyun)](installation/aliyun.md)
 * [Windows, behind an IIS proxy](installation/iis-proxy.md)
 
+## Repositories
+
+One server can hold several [repositories](repositories.md), each with its own feed at `/r/{name}/v3/index.json`; `default` stays at `/`.
+
 ## What BaGet Extension serves
 
 BaGet Extension speaks the NuGet V3 protocol, with a V2 feed for older clients (on by default), and serves

@@ -73,6 +73,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 	ProjectSection(SolutionItems) = preProject
 		docs\configuration.md = docs\configuration.md
 		docs\index.md = docs\index.md
+		docs\repositories.md = docs\repositories.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "advanced", "advanced", "{4974D3C8-A572-426F-84A0-7EA7D087EADD}"

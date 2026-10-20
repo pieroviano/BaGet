@@ -120,6 +120,7 @@ Pages marked "accounts" answer `404` while `Accounts:Enabled` is `false`; "sign-
 | `/admin/users` | administrators: promote, demote, reset password, send reset link |
 | `/admin/users/{name}/packages`, `/admin/users/{name}/delete` | administrators |
 | `/admin/packages` | administrators: packages without owners |
+| `/admin/repositories`, `/admin/repositories/{name}`, `/admin/repositories/{name}/delete` | administrators: list, create, edit and delete repositories, see [Repositories](../repositories.md) |
 | `/admin/settings` | administrators: edit settings (saved to `appsettings.Overrides.json`), see the [Settings page](../configuration.md#settings-page) and [moving to another database](../configuration.md#moving-to-another-database); `404` if the overrides store is unavailable |
 | `/admin/settings?handler=CopyStatus` | administrators: JSON progress of the database copy (`phase`, `active`, `finished`, `succeeded`, `restartRequired`, table and row counters, `message`, `errors`) |
 

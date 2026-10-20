@@ -43,6 +43,7 @@ nav:
     - Alibaba cloud: installation/aliyun.md
     - Windows IIS proxy: installation/iis-proxy.md
   - Configuration: configuration.md
+  - Repositories: repositories.md
   - Import:
     - Local feeds: import/local-feeds.md
     - NuGet.Server: import/nugetserver.md

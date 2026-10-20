@@ -1,0 +1,76 @@
+@page "/admin/repositories"
+@model BaGet.Identity.Pages.Admin.RepositoriesModel
+@{
+    ViewData["Title"] = "Repositories";
+}
+
+<div class="col-sm-12">
+    <h1>Repositories</h1>
+    <hr class="breadcrumb-divider" />
+
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-success" role="alert" id="repositories-message">@Model.Message</div>
+    }
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger" role="alert" id="repositories-error">@Model.Error</div>
+    }
+
+    <table class="table" id="repositories-table">
+        <thead>
+            <tr><th>Name</th><th>Type</th><th>Packages</th><th>Feed</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var repository in Model.Repositories)
+            {
+                var feed = Model.FeedUrl(repository);
+                <tr data-repository="@repository.Name">
+                    <td>
+                        @repository.Name
+                        @if (repository.IsDefault)
+                        {
+                            <span class="label label-info">Default</span>
+                        }
+                    </td>
+                    <td>@repository.Format / @repository.Kind</td>
+                    <td>@repository.PackageCount</td>
+                    <td>
+                        <code class="repository-feed">@feed</code>
+                        <button type="button" class="btn btn-default btn-xs" data-copy="@feed"
+                                onclick="navigator.clipboard && navigator.clipboard.writeText(this.getAttribute('data-copy'))">
+                            Copy
+                        </button>
+                    </td>
+                    <td>
+                        <a href="@Url.Page("/Admin/RepositoryEdit", new { name = repository.Name })">Edit</a>
+                        @if (!repository.IsDefault)
+                        {
+                            <span> | </span>
+                            <a href="@Url.Page("/Admin/RepositoryDelete", new { name = repository.Name })">Delete</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>New repository</h2>
+    @if (!Model.CanCreate)
+    {
+        <div class="alert alert-warning" role="alert" id="repositories-unsupported">
+            The configured database supports only the <code>default</code> repository. Use SQLite, SQL Server, PostgreSQL or MySQL to create more.
+        </div>
+    }
+    else
+    {
+        <form method="post" class="form-inline" id="repository-create-form">
+            <div class="form-group">
+                <label for="repository-name">Name</label>
+                <input id="repository-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <p class="help-block">Local NuGet repository. Lowercase letters, digits, <code>-</code>, <code>.</code> and <code>_</code>; it cannot be renamed later.</p>
+        </form>
+    }
+</div>
