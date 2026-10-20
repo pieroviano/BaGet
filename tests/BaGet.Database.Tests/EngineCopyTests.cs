@@ -28,6 +28,7 @@ public class EngineCopyTests
     [MemberData(nameof(Pairs))]
     public async Task CopiesEveryTableKeepingKeysAndContinuingTheKeySequence(string sourceType, string targetType)
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var source = await Engines.GetOrSkipAsync(sourceType);
         var target = await Engines.GetOrSkipAsync(targetType);
 
@@ -76,9 +77,9 @@ public class EngineCopyTests
         }
 
         // The seeded data really is there, with its original (gapped) keys.
-        Assert.Equal(seeded.PackageKeys, await targetDb.Set<Package>().OrderBy(p => p.Key).Select(p => p.Key).ToListAsync());
-        Assert.Equal(seeded.OrganizationKeys, await targetDb.Set<Organization>().OrderBy(o => o.Key).Select(o => o.Key).ToListAsync());
-        Assert.Equal(2, await targetDb.Set<PackageDependency>().CountAsync());
+        Assert.Equal(seeded.PackageKeys, await targetDb.Set<Package>().OrderBy(p => p.Key).Select(p => p.Key).ToListAsync(cancellationToken));
+        Assert.Equal(seeded.OrganizationKeys, await targetDb.Set<Organization>().OrderBy(o => o.Key).Select(o => o.Key).ToListAsync(cancellationToken));
+        Assert.Equal(2, await targetDb.Set<PackageDependency>().CountAsync(cancellationToken));
 
         // A key generated after the copy continues after the highest copied one.
         var later = new Organization { Name = "Later", Created = DateTime.UtcNow };
@@ -91,7 +92,7 @@ public class EngineCopyTests
             Listed = true,
         };
         targetDb.Set<Package>().Add(laterPackage);
-        await targetDb.SaveChangesAsync();
+        await targetDb.SaveChangesAsync(cancellationToken);
 
         Assert.True(later.Key > seeded.OrganizationKeys.Max(), $"Organization key {later.Key}");
         Assert.True(laterPackage.Key > seeded.PackageKeys.Max(), $"Package key {laterPackage.Key}");
