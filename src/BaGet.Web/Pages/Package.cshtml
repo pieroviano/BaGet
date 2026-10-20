@@ -354,7 +354,7 @@ else
                         @foreach (var owner in Model.Owners)
                         {
                             <li class="owner">
-                                <partial name="_Avatar" model="new AvatarModel(owner ?? string.Empty, Model.OwnerAvatars?.GetValueOrDefault(owner) ?? string.Empty, 32)" />
+                                <partial name="_Avatar" model="new AvatarModel(owner ?? string.Empty, Model.OwnerAvatars?.GetValueOrDefault(owner), 32)" />
                                 <a href="@Url.Page("/Profiles/Profile", new { name = owner })">@owner</a>
                             </li>
                         }
