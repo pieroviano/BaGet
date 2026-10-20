@@ -36,7 +36,7 @@ public class AzureSearchFilterTests
 
         // Four documents are indexed for this registration, one per search filter.
         Assert.Equal(4, documents.Count);
-        Assert.Single(documents.Where(d => $"searchFilters eq '{d.SearchFilters}'" == filter));
+        Assert.Single(documents, d => $"searchFilters eq '{d.SearchFilters}'" == filter);
     }
 
     private static List<PackageDocument> IndexedDocuments()
