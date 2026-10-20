@@ -507,6 +507,8 @@ pushed before the catalog existed are added with:
 dotnet BaGet.dll catalog rebuild
 ```
 
+Each repository has its own catalog; `catalog rebuild --repository <name>` rebuilds a repository other than `default`.
+
 The catalog is not available with Azure Table Storage.
 
 ## Legal pages

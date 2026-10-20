@@ -154,16 +154,17 @@ internal sealed class DatabaseTable
 
     private static async Task<long> CountAsync<T>(DbContext context, CancellationToken cancellationToken)
         where T : class
-        => await context.Set<T>().LongCountAsync(cancellationToken).ConfigureAwait(false);
+        => await context.Set<T>().IgnoreQueryFilters().LongCountAsync(cancellationToken).ConfigureAwait(false);
 
     private static async Task<int> DeleteAllAsync<T>(DbContext context, CancellationToken cancellationToken)
         where T : class
-        => await context.Set<T>().ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        => await context.Set<T>().IgnoreQueryFilters().ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
 
     private static async Task<List<CopyRow>> ReadBatchAsync<T>(DbContext context, IKey key, int skip, int take, CancellationToken cancellationToken)
         where T : class
     {
-        IQueryable<T> query = context.Set<T>().AsTracking();
+        // A copy takes every repository's rows, not just the context's current one.
+        IQueryable<T> query = context.Set<T>().IgnoreQueryFilters().AsTracking();
         query = Order(query, key).Skip(skip).Take(take);
 
         var rows = await query.ToListAsync(cancellationToken).ConfigureAwait(false);

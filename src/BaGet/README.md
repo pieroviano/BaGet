@@ -22,8 +22,8 @@ Without arguments it applies database migrations and starts the server on `http:
 
 | Command | Does |
 |---|---|
-| `import downloads` | Imports nuget.org's download counts for the packages in the database |
-| `catalog rebuild` | Appends the catalog entries missing for the packages in the database, for example packages pushed before the catalog existed |
+| `import downloads [-r <repo>]` | Imports nuget.org's download counts for the packages of a repository (default `default`) |
+| `catalog rebuild [-r <repo>]` | Appends the catalog entries missing for the packages of a repository (default `default`), for example packages pushed before the catalog existed |
 | `account reset-password <user> [--email <address>]` | Sets a generated password, switches off two-factor and lifts lockout; `--email` sets and confirms an address. Needs `Accounts:Enabled` |
 
 Settings saved from the UI go to `appsettings.Overrides.json` (path: `SettingsOverridesPath`), applied after

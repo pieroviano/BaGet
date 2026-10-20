@@ -21,9 +21,11 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1566 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (786),
-`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
-`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). No external services needed; integration tests
+Baseline: **1616 tests** across `BaGet.Core.Tests` (521), `BaGet.Tests` (805),
+`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
+(see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
+`TelemetryE2ETests`) fail on a clean checkout too; not investigated. No external services needed; integration tests
 use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
@@ -57,7 +59,7 @@ Two gotchas when running locally:
 
 | Project | Role |
 |---|---|
-| `BaGet.Core` | Domain: entities, `IPackageDatabase`, `IStorageService`, `ISearchService`, indexing, mirroring, options |
+| `BaGet.Core` | Domain: entities, repositories, `IPackageDatabase`, `IStorageService`, `ISearchService`, indexing, mirroring, options |
 | `BaGet.Web` | V3 endpoints, Razor Pages, `BaGetEndpointBuilder`, `IUrlGenerator` |
 | `BaGet.Web.V2` | Legacy V2 OData/Atom feed, gated by `Feeds:EnableV2` |
 | `BaGet.Protocol` | Standalone **client** for NuGet V3 (also shipped as a package) |
@@ -80,7 +82,7 @@ the first non-null, each provider deciding from configuration (`Database:Type`, 
 
 `src/BaGet/Program.cs` holds everything (there is no `Startup`): `BuildApplication` runs
 `ConfigureConfiguration` / `ConfigureWebHost` / `ConfigureServices`, then `ConfigurePipeline`.
-`Main` wraps it in a McMaster `CommandLineApplication` (`import downloads`, `catalog rebuild`, `account reset-password|promote|demote <user>`), which
+`Main` wraps it in a McMaster `CommandLineApplication` (`import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password|promote|demote <user>`), which
 is configured to **collect unrecognised arguments** so host arguments like `--environment` pass
 through.
 
@@ -111,6 +113,22 @@ exempt (the copy's target). Code that catches broad `Exception` around a write m
 (controllers, `PackageValidationRunner`); `ValidationWorker` retries after it, `PackageDatabase.AddDownloadAsync` ignores it.
 Raw SQL would bypass the gate: there is none outside migrations, keep it so (the one exception, the database copy's
 rollback `ExecuteDelete`, runs on the copy's own target context, never on the application's).
+
+**Repositories.** `Repository`/`Project` (`BaGet.Core/Repositories`); `default` (key `Repository.DefaultKey` = 1) is the
+repository at `/`. `Package`, `PackageOwner`, `CatalogEntry`, `PackageValidation`, `AbuseReport` are `IRepositoryScoped`
+(`RepositoryKey`, column default 1 = how the `AddRepositories` migration assigns pre-existing rows; no foreign key, so
+the migration needs no seed row). `AbstractContext` filters those five on `IRepositoryContext.Current.Key` with global
+query filters evaluated per query (the scope is found through EF's `ApplicationServiceProvider`, so a hand-built
+context works in `default`) and stamps new rows on save; anything that must see every repository calls
+`IgnoreQueryFilters()` (`DatabaseTable` copy/count/delete, `AccountDeletionService`, `PackageValidationRunner` pending list
+and submission lookup). A new per-package table must implement `IRepositoryScoped` and get the filter in
+`OnModelCreating`. Whoever picks the repository (routing, a worker, a command) calls `IRepositoryContext.Use(info)` before
+querying, or uses `IServiceScopeFactory.CreateRepositoryScope(info)`; the validation runner switches to the queued
+submission's repository itself. `IRepositoryService` finds/lists/creates (`RepositoryNames` holds the one name rule);
+`EnsureDefaultAsync` creates the `default` row after migrations at startup and the copy carries it (so it must not be
+seeded by a migration: the copy target must be empty). Azure Table (`NullContext`) has the default repository only:
+`CreateAsync` and `TablePackageDatabase` refuse others. The mirror serves `default` only (`UpstreamClientFactory`).
+Storage paths and URLs are not repository-aware yet.
 
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host

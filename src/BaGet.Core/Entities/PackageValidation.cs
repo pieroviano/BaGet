@@ -18,7 +18,7 @@ public enum PackageValidationState
 /// indexed once every validator succeeds. So nothing that serves packages needs to
 /// know about validation, and a package being validated cannot be downloaded.
 /// </remarks>
-public class PackageValidation
+public class PackageValidation : IRepositoryScoped
 {
     /// <summary>
     /// The <see cref="Type"/> of the step that indexes the package once it is valid.
@@ -26,6 +26,11 @@ public class PackageValidation
     public const string IndexType = "Index";
 
     public int Key { get; set; }
+
+    /// <summary>
+    /// The owning repository; see <see cref="IRepositoryScoped"/>.
+    /// </summary>
+    public int RepositoryKey { get; set; }
 
     public string? SubmissionId { get; set; }
 

@@ -6,7 +6,7 @@ namespace BaGet.Core;
 /// A report that a package version is abusive, for its owners and the server's
 /// administrator to act on.
 /// </summary>
-public class AbuseReport
+public class AbuseReport : IRepositoryScoped
 {
     /// <summary>
     /// The reasons a report may give, as nuget.org offers them.
@@ -20,6 +20,11 @@ public class AbuseReport
     };
 
     public int Key { get; set; }
+
+    /// <summary>
+    /// The owning repository; see <see cref="IRepositoryScoped"/>.
+    /// </summary>
+    public int RepositoryKey { get; set; }
 
     public string? PackageId { get; set; }
 

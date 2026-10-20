@@ -57,12 +57,17 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<DateTime?>("Resolved")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Key");
 
-                    b.HasIndex("PackageId");
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("AbuseReports");
                 });
@@ -210,6 +215,11 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -219,6 +229,8 @@ namespace BaGet.Database.SqlServer.Migrations
 
                     b.HasIndex("CommitId")
                         .IsUnique();
+
+                    b.HasIndex("RepositoryKey");
 
                     b.ToTable("CatalogLeafs");
                 });
@@ -349,6 +361,11 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ReleaseNotes");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("RepositoryType")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -384,7 +401,7 @@ namespace BaGet.Database.SqlServer.Migrations
 
                     b.HasIndex("Id");
 
-                    b.HasIndex("Id", "NormalizedVersionString")
+                    b.HasIndex("RepositoryKey", "Id", "NormalizedVersionString")
                         .IsUnique();
 
                     b.ToTable("Packages");
@@ -479,11 +496,16 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.HasKey("Key");
 
                     b.HasIndex("OwnerName");
 
-                    b.HasIndex("PackageId");
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("PackageOwners");
                 });
@@ -547,6 +569,11 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<int>("State")
                         .HasColumnType("int");
 
@@ -562,11 +589,11 @@ namespace BaGet.Database.SqlServer.Migrations
 
                     b.HasKey("Key");
 
-                    b.HasIndex("PackageId");
-
                     b.HasIndex("PackageKey");
 
                     b.HasIndex("SubmissionId");
+
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("PackageValidations");
                 });
@@ -598,6 +625,77 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.HasIndex("PackageKey");
 
                     b.ToTable("PackageVulnerabilities");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Project", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Repository", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<bool>("AnonymousRead")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Settings")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Repositories");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

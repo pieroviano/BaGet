@@ -28,6 +28,8 @@ public class PackageValidationRunner
     private readonly SystemTime _time;
     private readonly IOptionsSnapshot<ValidationOptions> _options;
     private readonly ILogger<PackageValidationRunner> _logger;
+    private readonly IRepositoryContext _repository;
+    private readonly IRepositoryService _repositories;
 
     public PackageValidationRunner(
         IContext context,
@@ -38,8 +40,12 @@ public class PackageValidationRunner
         RepositorySigner signer,
         SystemTime time,
         IOptionsSnapshot<ValidationOptions> options,
-        ILogger<PackageValidationRunner> logger)
+        ILogger<PackageValidationRunner> logger,
+        IRepositoryContext repository,
+        IRepositoryService repositories)
     {
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
@@ -54,7 +60,9 @@ public class PackageValidationRunner
     public async Task<IReadOnlyList<string>?> GetPendingSubmissionIdsAsync(CancellationToken cancellationToken)
     {
         #pragma warning disable CS8604, CS8619
+        // Every repository's: the worker is not tied to one, RunAsync switches to the submission's.
         return await _context.PackageValidations
+            .IgnoreQueryFilters()
             .Where(v => v.State == PackageValidationState.Pending)
             .Select(v => v.SubmissionId)
             .Distinct()
@@ -92,10 +100,25 @@ public class PackageValidationRunner
     private async Task<string?> RunCoreAsync(string submissionId, Activity? activity, CancellationToken cancellationToken)
     {
         #pragma warning disable CS8604
+        // A queued submission names no repository: find it in whichever one it belongs to, then work there, so
+        // the indexing below lands in that repository.
         var steps = await _context.PackageValidations
+            .IgnoreQueryFilters()
             .Where(v => v.SubmissionId == submissionId)
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8604
+
+        if (steps.Count > 0 && steps[0].RepositoryKey != _repository.Current.Key)
+        {
+            var target = await _repositories.FindAsync(steps[0].RepositoryKey, cancellationToken);
+            if (target == null)
+            {
+                _logger.LogWarning("Submission {SubmissionId} belongs to unknown repository {Key}", submissionId, steps[0].RepositoryKey);
+                return null;
+            }
+
+            _repository.Use(target);
+        }
 
         var index = steps.SingleOrDefault(s => s.Type == PackageValidation.IndexType);
         if (index == null || index.State != PackageValidationState.Pending)

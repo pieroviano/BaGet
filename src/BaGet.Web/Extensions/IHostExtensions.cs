@@ -33,6 +33,14 @@ public static class IHostExtensions
                 if (ctx != null)
                 {
                     await ctx.RunMigrationsAsync(cancellationToken);
+
+                    // The upgrade migration assigns every existing row to repository key 1; this creates the
+                    // row that key refers to (a no-op when it exists, or when the database is not relational).
+                    var repositories = scope.ServiceProvider.GetService<IRepositoryService>();
+                    if (repositories != null)
+                    {
+                        await repositories.EnsureDefaultAsync(cancellationToken);
+                    }
                 }
             }
         }

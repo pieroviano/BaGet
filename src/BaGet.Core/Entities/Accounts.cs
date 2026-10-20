@@ -59,9 +59,14 @@ public class OrganizationMember
 /// A package ID with no owners predates accounts, and only the server's global API key
 /// may change it.
 /// </remarks>
-public class PackageOwner
+public class PackageOwner : IRepositoryScoped
 {
     public int Key { get; set; }
+
+    /// <summary>
+    /// The owning repository; see <see cref="IRepositoryScoped"/>.
+    /// </summary>
+    public int RepositoryKey { get; set; }
 
     public string? PackageId { get; set; }
 

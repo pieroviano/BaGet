@@ -33,6 +33,10 @@ public class NullContext : IContext
 
     public DbSet<AbuseReport>? AbuseReports { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<Project>? Projects { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<BaGetUser> Users { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public bool SupportsLimitInSubqueries => throw new NotImplementedException();

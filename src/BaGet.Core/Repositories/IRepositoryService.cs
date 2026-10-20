@@ -1,0 +1,63 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace BaGet.Core;
+
+/// <summary>
+/// Looks up and creates repositories. What routing uses to turn <c>/r/{name}</c> into the
+/// <see cref="RepositoryInfo"/> it passes to <see cref="IRepositoryContext.Use"/>.
+/// </summary>
+public interface IRepositoryService
+{
+    /// <summary>
+    /// Whether the database can hold repositories beyond <see cref="Repository.DefaultName"/>. False for a
+    /// non-relational database (Azure Table): there only the default repository exists.
+    /// </summary>
+    bool SupportsMultipleRepositories { get; }
+
+    /// <summary>
+    /// Finds a repository by name (exact, as names are lowercase).
+    /// </summary>
+    /// <returns>The repository, or null. The default repository is always found.</returns>
+    Task<RepositoryInfo?> FindAsync(string? name, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Finds a repository by key; for code that holds a row's <see cref="IRepositoryScoped.RepositoryKey"/> and must
+    /// work in that repository (a queued validation, for one).
+    /// </summary>
+    /// <returns>The repository, or null. The default repository is always found.</returns>
+    Task<RepositoryInfo?> FindAsync(int key, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Every repository, ordered by name; the default one included.
+    /// </summary>
+    Task<IReadOnlyList<RepositoryInfo>> ListAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Creates a repository.
+    /// </summary>
+    /// <exception cref="System.ArgumentException">The name is invalid per <see cref="RepositoryNames"/>.</exception>
+    /// <exception cref="System.NotSupportedException">The database cannot hold repositories, or the format/kind is not available yet.</exception>
+    /// <exception cref="RepositoryExistsException">The name is taken.</exception>
+    Task<RepositoryInfo> CreateAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Creates the default repository if the database has none. Idempotent; called at startup, after migrations.
+    /// </summary>
+    Task EnsureDefaultAsync(CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// A repository with that name exists.
+/// </summary>
+public sealed class RepositoryExistsException : System.InvalidOperationException
+{
+    public RepositoryExistsException(string name)
+        : base($"A repository named '{name}' already exists.")
+    { }
+}

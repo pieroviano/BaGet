@@ -62,9 +62,11 @@ public partial class Program
         {
             import.Command("downloads", downloads =>
             {
+                downloads.Description = "Import the download counts into a repository's packages.";
+                var repository = downloads.Option("-r|--repository <name>", "The repository to import into (default: 'default').", CommandOptionType.SingleValue);
                 downloads.OnExecuteAsync(async cancellationToken =>
                 {
-                    using (var scope = app.Services.CreateScope())
+                    using (var scope = await CreateRepositoryScopeAsync(app, repository.Value(), cancellationToken))
                     {
                         var importer = scope.ServiceProvider.GetRequiredService<DownloadsImporter>();
 
@@ -78,10 +80,11 @@ public partial class Program
         {
             catalog.Command("rebuild", rebuild =>
             {
-                rebuild.Description = "Append the catalog entries missing for the packages in the database.";
+                rebuild.Description = "Append the catalog entries missing for the packages in a repository.";
+                var repository = rebuild.Option("-r|--repository <name>", "The repository whose catalog to rebuild (default: 'default').", CommandOptionType.SingleValue);
                 rebuild.OnExecuteAsync(async cancellationToken =>
                 {
-                    using (var scope = app.Services.CreateScope())
+                    using (var scope = await CreateRepositoryScopeAsync(app, repository.Value(), cancellationToken))
                     {
                         var rebuilder = scope.ServiceProvider.GetRequiredService<CatalogRebuilder>();
 
@@ -187,6 +190,28 @@ public partial class Program
         });
 
         await commands.ExecuteAsync(args);
+    }
+
+    /// <summary>
+    /// A DI scope for a command, pinned to the named repository (the default one when <paramref name="name"/> is null).
+    /// </summary>
+    private static async Task<IServiceScope> CreateRepositoryScopeAsync(
+        WebApplication app,
+        string? name,
+        CancellationToken cancellationToken)
+    {
+        if (name == null) return app.Services.CreateScope();
+
+        var scope = app.Services.CreateScope();
+        var found = await scope.ServiceProvider.GetRequiredService<IRepositoryService>().FindAsync(name, cancellationToken);
+        if (found == null)
+        {
+            scope.Dispose();
+            throw new InvalidOperationException($"There is no repository named '{name}'.");
+        }
+
+        scope.ServiceProvider.GetRequiredService<IRepositoryContext>().Use(found);
+        return scope;
     }
 
     /// <summary>

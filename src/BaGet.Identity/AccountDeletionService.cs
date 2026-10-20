@@ -14,7 +14,8 @@ namespace BaGet.Identity;
 /// What stops a user from deleting their account.
 /// </summary>
 /// <param name="LastOwnerPackageIds">
-/// Package IDs the user is the only direct owner of. Same rule as
+/// Package IDs the user is the only direct owner of, in any repository (ownership is per repository, so the same
+/// ID in two repositories counts once each). Same rule as
 /// <see cref="PackageOwnershipService.RemoveOwnerAsync"/>: an owned ID keeps an owner.
 /// </param>
 /// <param name="Organizations">
@@ -22,11 +23,19 @@ namespace BaGet.Identity;
 /// that own packages and so cannot be left without anyone to run them. Same rule as
 /// <see cref="PackageOwnershipService.RemoveMemberAsync"/>.
 /// </param>
+/// <param name="CurrentRepositoryPackageIds">
+/// The subset of <paramref name="LastOwnerPackageIds"/> in the repository the request works in: the only ones an
+/// administrator's deletion can remove. Null means all of them.
+/// </param>
 /// <param name="LastAdministrator">
 /// The user is the server's only administrator, so deleting them would leave nobody able to
 /// change the settings.
 /// </param>
-public record DeletionBlockers(IReadOnlyList<string?> LastOwnerPackageIds, IReadOnlyList<string?> Organizations, bool LastAdministrator = false)
+public record DeletionBlockers(
+    IReadOnlyList<string?> LastOwnerPackageIds,
+    IReadOnlyList<string?> Organizations,
+    bool LastAdministrator = false,
+    IReadOnlyList<string?>? CurrentRepositoryPackageIds = null)
 {
     /// <summary>Whether anything blocks the deletion.</summary>
     public bool Any => LastOwnerPackageIds.Count > 0 || Organizations.Count > 0 || LastAdministrator;
@@ -67,6 +76,7 @@ public record AdminDeletionPreview(
 public class AccountDeletionService
 {
     private readonly IContext _context;
+    private readonly IRepositoryContext _repository;
     private readonly UserManager<BaGetUser> _users;
     private readonly IPackageDatabase _packages;
     private readonly IPackageDeletionService _packageDeletion;
@@ -74,12 +84,14 @@ public class AccountDeletionService
 
     public AccountDeletionService(
         IContext context,
+        IRepositoryContext repository,
         UserManager<BaGetUser> users,
         IPackageDatabase packages,
         IPackageDeletionService packageDeletion,
         ILogger<AccountDeletionService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _packageDeletion = packageDeletion ?? throw new ArgumentNullException(nameof(packageDeletion));
@@ -93,22 +105,30 @@ public class AccountDeletionService
         #pragma warning restore CS8602
 
         #pragma warning disable CS8602, CS8604
+        // Ownership is per repository, and an account belongs to the whole server: look in every repository.
         var owned = await _context.PackageOwners
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(o => o.OwnerName.ToLower() == name)
-            .Select(o => o.PackageId)
+            .Select(o => new { o.RepositoryKey, o.PackageId })
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8602, CS8604
 
-        var lastOwner = new List<string?>();
-        foreach (var packageId in owned.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(i => i, StringComparer.OrdinalIgnoreCase))
+        var lastOwner = new List<(int RepositoryKey, string? PackageId)>();
+        foreach (var entry in owned
+            .GroupBy(o => (o.RepositoryKey, Id: o.PackageId?.ToLowerInvariant()))
+            .Select(g => g.First())
+            .OrderBy(o => o.PackageId, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(o => o.RepositoryKey))
         {
-            var id = packageId?.ToLowerInvariant();
+            var id = entry.PackageId?.ToLowerInvariant();
+            var repositoryKey = entry.RepositoryKey;
             #pragma warning disable CS8602
-            if (await _context.PackageOwners.CountAsync(o => o.PackageId.ToLower() == id, cancellationToken) == 1)
+            if (await _context.PackageOwners.IgnoreQueryFilters().CountAsync(
+                    o => o.RepositoryKey == repositoryKey && o.PackageId.ToLower() == id, cancellationToken) == 1)
             #pragma warning restore CS8602
             {
-                lastOwner.Add(packageId);
+                lastOwner.Add((repositoryKey, entry.PackageId));
             }
         }
 
@@ -128,7 +148,11 @@ public class AccountDeletionService
         var lastAdministrator = user.IsAdministrator
             && await _context.Users.CountAsync(u => u.IsAdministrator, cancellationToken) <= 1;
 
-        return new DeletionBlockers(lastOwner, blocking, lastAdministrator);
+        return new DeletionBlockers(
+            lastOwner.Select(o => o.PackageId).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+            blocking,
+            lastAdministrator,
+            lastOwner.Where(o => o.RepositoryKey == _repository.Current.Key).Select(o => o.PackageId).ToList());
     }
 
     /// <summary>
@@ -171,7 +195,9 @@ public class AccountDeletionService
                 none, none, none);
         }
 
+        // Only the packages of the repository this runs in can be removed; the others stay, ownerless.
         var soleOwned = blockers.LastOwnerPackageIds;
+        var removable = blockers.CurrentRepositoryPackageIds ?? soleOwned;
         var userName = user?.UserName;
 
         await StageCleanupAsync(user, administrator: true, cancellationToken);
@@ -182,7 +208,7 @@ public class AccountDeletionService
         var failures = new List<string?>();
         if (deleteSoleOwnedPackages)
         {
-            foreach (var id in soleOwned)
+            foreach (var id in removable)
             {
                 try
                 {
@@ -205,7 +231,9 @@ public class AccountDeletionService
             }
         }
 
-        var kept = deleteSoleOwnedPackages ? none : soleOwned;
+        var kept = deleteSoleOwnedPackages
+            ? soleOwned.Except(removable, StringComparer.OrdinalIgnoreCase).ToList()
+            : soleOwned;
         _logger.LogWarning(
             "{Admin} deleted user {User}; sole-owned IDs {Ids} {Outcome}",
             actor, userName, string.Join(", ", soleOwned), deleteSoleOwnedPackages ? "deleted" : "kept without owners");
@@ -221,6 +249,7 @@ public class AccountDeletionService
 
         #pragma warning disable CS8602, CS8604
         var direct = (await _context.PackageOwners
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(o => o.OwnerName.ToLower() == name)
                 .Select(o => o.PackageId)
@@ -291,7 +320,7 @@ public class AccountDeletionService
 
         var name = user?.UserName?.ToLowerInvariant();
         #pragma warning disable CS8602
-        var ownerships = await _context.PackageOwners?.Where(o => o.OwnerName.ToLower() == name).ToListAsync(cancellationToken);
+        var ownerships = await _context.PackageOwners?.IgnoreQueryFilters().Where(o => o.OwnerName.ToLower() == name).ToListAsync(cancellationToken);
         #pragma warning restore CS8602
         _context.PackageOwners?.RemoveRange(ownerships);
 
@@ -391,7 +420,7 @@ public class AccountDeletionService
         var name = organization?.ToLowerInvariant();
 
         #pragma warning disable CS8602
-        return _context.PackageOwners?.AnyAsync(o => o.OwnerName.ToLower() == name, cancellationToken);
+        return _context.PackageOwners?.IgnoreQueryFilters().AnyAsync(o => o.OwnerName.ToLower() == name, cancellationToken);
         #pragma warning restore CS8602
     }
 }

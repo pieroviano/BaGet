@@ -11,12 +11,17 @@ namespace BaGet.Core;
 /// There is deliberately no foreign key to <see cref="Package"/>: the log outlives the
 /// packages it records, and a delete entry refers to a package that no longer exists.
 /// </remarks>
-public class CatalogEntry
+public class CatalogEntry : IRepositoryScoped
 {
     public const string PackageDetailsType = "PackageDetails";
     public const string PackageDeleteType = "PackageDelete";
 
     public int Key { get; set; }
+
+    /// <summary>
+    /// The owning repository; see <see cref="IRepositoryScoped"/>.
+    /// </summary>
+    public int RepositoryKey { get; set; }
 
     /// <summary>
     /// The commit's unique ID. It also names the leaf document in storage.

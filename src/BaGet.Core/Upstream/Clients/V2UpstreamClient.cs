@@ -46,7 +46,7 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
 
         _ngLogger = NullLogger.Instance;
         _cache = new SourceCacheContext();
-        _repository = Repository.Factory.GetCoreV2(new PackageSource(options.Value.PackageSource.AbsoluteUri));
+        _repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV2(new PackageSource(options.Value.PackageSource.AbsoluteUri));
     }
 
     public async Task<IReadOnlyList<NuGetVersion>> ListPackageVersionsAsync(string id, CancellationToken cancellationToken)

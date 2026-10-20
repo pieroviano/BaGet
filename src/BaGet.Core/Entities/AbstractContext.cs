@@ -1,7 +1,10 @@
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -35,14 +38,44 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxApiKeyDescriptionLength = 256;
     public const int MaxApiKeyHashLength = 64;
 
+    public const int MaxRepositoryNameLength = RepositoryNames.MaxLength;
+    public const int MaxRepositoryFormatLength = 32;
+    public const int MaxProjectNameLength = 64;
+    public const int MaxProjectDisplayNameLength = 256;
+
     public const int MaxValidationTypeLength = 64;
 
     public const int MaxAbuseReasonLength = 128;
     public const int MaxEmailLength = 256;
 
+    private IRepositoryContext? _repository;
+
     public AbstractContext(DbContextOptions<TContext> options)
         : base(options)
     { }
+
+    /// <summary>
+    /// The repository this context reads and writes: every <see cref="IRepositoryScoped"/> query is filtered on it
+    /// and new rows are stamped with it. Resolved from the application's DI scope on first use when the context
+    /// was created by DI; a context built by hand (a database copy's target, design time) works in the default
+    /// repository unless this is set. Not a security boundary on its own: <c>IgnoreQueryFilters()</c> sees all.
+    /// </summary>
+    public IRepositoryContext RepositoryScope
+    {
+        get => _repository ??= ResolveRepositoryScope() ?? DefaultRepositoryContext.Instance;
+        set => _repository = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    // AddDbContext hands the context the application's provider (the request scope); a hand-built context has none.
+    private IRepositoryContext? ResolveRepositoryScope()
+        => this.GetService<IDbContextOptions>().FindExtension<CoreOptionsExtension>()
+            ?.ApplicationServiceProvider?.GetService(typeof(IRepositoryContext)) as IRepositoryContext;
+
+    /// <summary>
+    /// The key the query filters compare against. Evaluated per query, so it follows
+    /// <see cref="IRepositoryContext.Use"/> called after the context was created.
+    /// </summary>
+    protected int CurrentRepositoryKey => RepositoryScope.Current.Key;
 
     public DbSet<Package>? Packages { get; set; }
     public DbSet<PackageDependency>? PackageDependencies { get; set; }
@@ -57,8 +90,32 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<ApiKey>? ApiKeys { get; set; }
     public DbSet<PackageValidation>? PackageValidations { get; set; }
     public DbSet<AbuseReport>? AbuseReports { get; set; }
+    public DbSet<Repository>? Repositories { get; set; }
+    public DbSet<Project>? Projects { get; set; }
 
     public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        StampRepository();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        StampRepository();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    // A new row without a repository belongs to the current one. A row that already names one (a database copy,
+    // an explicit move) is left alone.
+    private void StampRepository()
+    {
+        foreach (var entry in ChangeTracker.Entries<IRepositoryScoped>().Where(e => e.State == EntityState.Added))
+        {
+            if (entry.Entity.RepositoryKey == 0) entry.Entity.RepositoryKey = CurrentRepositoryKey;
+        }
+    }
 
     public virtual async Task RunMigrationsAsync(CancellationToken cancellationToken)
         => await Database.MigrateAsync(cancellationToken);
@@ -94,13 +151,50 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<ApiKey>(BuildApiKeyEntity);
         builder.Entity<PackageValidation>(BuildPackageValidationEntity);
         builder.Entity<AbuseReport>(BuildAbuseReportEntity);
+        builder.Entity<Repository>(BuildRepositoryEntity);
+        builder.Entity<Project>(BuildProjectEntity);
+
+        // Repository isolation: a query in one repository never sees another's rows. The filter reads the
+        // context's current repository per query.
+        builder.Entity<Package>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<PackageOwner>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<CatalogEntry>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<PackageValidation>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<AbuseReport>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+
+        // The column default is what the upgrade migration gives every row that predates repositories: they
+        // belong to the default repository.
+        builder.Entity<Package>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<PackageOwner>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<CatalogEntry>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<PackageValidation>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<AbuseReport>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+    }
+
+    private void BuildRepositoryEntity(EntityTypeBuilder<Repository> repository)
+    {
+        repository.HasKey(r => r.Key);
+        repository.HasIndex(r => r.Name).IsUnique();
+
+        repository.Property(r => r.Name).HasMaxLength(MaxRepositoryNameLength).IsRequired();
+        repository.Property(r => r.Format).HasConversion<string>().HasMaxLength(MaxRepositoryFormatLength);
+        repository.Property(r => r.Kind).HasConversion<string>().HasMaxLength(MaxRepositoryFormatLength);
+    }
+
+    private void BuildProjectEntity(EntityTypeBuilder<Project> project)
+    {
+        project.HasKey(p => p.Key);
+        project.HasIndex(p => p.Name).IsUnique();
+
+        project.Property(p => p.Name).HasMaxLength(MaxProjectNameLength).IsRequired();
+        project.Property(p => p.DisplayName).HasMaxLength(MaxProjectDisplayNameLength);
     }
 
     private void BuildPackageEntity(EntityTypeBuilder<Package> package)
     {
         package.HasKey(p => p.Key);
         package.HasIndex(p => p.Id);
-        package.HasIndex(p => new { p.Id, p.NormalizedVersionString })
+        package.HasIndex(p => new { p.RepositoryKey, p.Id, p.NormalizedVersionString })
             .IsUnique();
 
         package.Property(p => p.Id)
@@ -234,6 +328,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     {
         entry.HasKey(e => e.Key);
         entry.HasIndex(e => e.CommitId).IsUnique();
+        entry.HasIndex(e => e.RepositoryKey);
 
         entry.Property(e => e.CommitId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
         entry.Property(e => e.Type).HasMaxLength(MaxCatalogTypeLength).IsRequired();
@@ -266,7 +361,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     private void BuildPackageOwnerEntity(EntityTypeBuilder<PackageOwner> owner)
     {
         owner.HasKey(o => o.Key);
-        owner.HasIndex(o => o.PackageId);
+        owner.HasIndex(o => new { o.RepositoryKey, o.PackageId });
         owner.HasIndex(o => o.OwnerName);
 
         owner.Property(o => o.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
@@ -297,7 +392,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     {
         validation.HasKey(v => v.Key);
         validation.HasIndex(v => v.SubmissionId);
-        validation.HasIndex(v => v.PackageId);
+        validation.HasIndex(v => new { v.RepositoryKey, v.PackageId });
 
         validation.Property(v => v.SubmissionId).HasMaxLength(MaxCatalogCommitIdLength).IsRequired();
         validation.Property(v => v.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
@@ -315,7 +410,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     private void BuildAbuseReportEntity(EntityTypeBuilder<AbuseReport> report)
     {
         report.HasKey(r => r.Key);
-        report.HasIndex(r => r.PackageId);
+        report.HasIndex(r => new { r.RepositoryKey, r.PackageId });
 
         report.Property(r => r.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
         report.Property(r => r.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();

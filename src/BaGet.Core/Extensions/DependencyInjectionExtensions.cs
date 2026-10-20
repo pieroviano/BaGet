@@ -99,6 +99,9 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton(HttpClientFactory);
         services.TryAddSingleton(NuGetClientFactoryFactory);
 
+        services.TryAddScoped<IRepositoryContext, RepositoryContext>();
+        services.TryAddScoped<IRepositoryService, RepositoryService>();
+
         services.TryAddScoped<DownloadsImporter>();
         services.TryAddScoped<StatisticsService>();
 
@@ -223,6 +226,13 @@ public static partial class DependencyInjectionExtensions
     private static IUpstreamClient UpstreamClientFactory(IServiceProvider provider)
     {
         var options = provider.GetRequiredService<IOptionsSnapshot<MirrorOptions>>();
+
+        // The mirror is configured globally and serves the default repository only; other repositories are
+        // local until remote repositories are configured per repository.
+        if (provider.GetService<IRepositoryContext>()?.Current.IsDefault == false)
+        {
+            return provider.GetRequiredService<DisabledUpstreamClient>();
+        }
 
         return options.Value switch
         {

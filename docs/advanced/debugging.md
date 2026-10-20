@@ -47,7 +47,7 @@ Logs also go to `logs/baget-YYYYMMDD.log` under the content root. Level changes 
 
 | Command | Does |
 | --- | --- |
-| `dotnet BaGet.dll import downloads` | imports nuget.org download counts |
-| `dotnet BaGet.dll catalog rebuild` | appends the catalog entries missing for existing packages |
+| `dotnet BaGet.dll import downloads [-r <repo>]` | imports nuget.org download counts (into repository `<repo>`, default `default`) |
+| `dotnet BaGet.dll catalog rebuild [-r <repo>]` | appends the catalog entries missing for existing packages of a repository (default `default`) |
 | `dotnet BaGet.dll account reset-password <user> [--email <address>]` | sets a generated password, switches off two-factor, lifts lockout; needs `Accounts:Enabled` |
 | `dotnet BaGet.dll account promote <user>` / `demote <user>` | sets or clears the administrator flag; needs `Accounts:Enabled`; the last administrator cannot be demoted |

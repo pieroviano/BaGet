@@ -50,12 +50,17 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
                     b.Property<DateTime?>("Resolved")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Key");
 
-                    b.HasIndex("PackageId");
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("AbuseReports");
                 });
@@ -198,6 +203,11 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -207,6 +217,8 @@ namespace BaGet.Database.Sqlite.Migrations
 
                     b.HasIndex("CommitId")
                         .IsUnique();
+
+                    b.HasIndex("RepositoryKey");
 
                     b.ToTable("CatalogLeafs");
                 });
@@ -331,6 +343,11 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("ReleaseNotes");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("RepositoryType")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
@@ -366,7 +383,7 @@ namespace BaGet.Database.Sqlite.Migrations
 
                     b.HasIndex("Id");
 
-                    b.HasIndex("Id", "NormalizedVersionString")
+                    b.HasIndex("RepositoryKey", "Id", "NormalizedVersionString")
                         .IsUnique();
 
                     b.ToTable("Packages");
@@ -454,11 +471,16 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
                     b.HasKey("Key");
 
                     b.HasIndex("OwnerName");
 
-                    b.HasIndex("PackageId");
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("PackageOwners");
                 });
@@ -518,6 +540,11 @@ namespace BaGet.Database.Sqlite.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
                     b.Property<int>("State")
                         .HasColumnType("INTEGER");
 
@@ -533,11 +560,11 @@ namespace BaGet.Database.Sqlite.Migrations
 
                     b.HasKey("Key");
 
-                    b.HasIndex("PackageId");
-
                     b.HasIndex("PackageKey");
 
                     b.HasIndex("SubmissionId");
+
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("PackageValidations");
                 });
@@ -567,6 +594,73 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.HasIndex("PackageKey");
 
                     b.ToTable("PackageVulnerabilities");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Project", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Repository", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AnonymousRead")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Settings")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Repositories");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

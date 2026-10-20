@@ -31,6 +31,7 @@ dotnet add package Extension.BaGet.Core
 | Entities | Database model shared by every database provider; `IContext` (incl. `BeginKeyedInsertAsync`/`EndKeyedInsertAsync` for explicit-key inserts), the read-only gate, and `Entities/Copy` (`DatabaseCopyService`: dependency-ordered, batched, verified copy to another database) |
 | Indexing | Package and symbol upload, `IPackageChangeHandler` |
 | Metadata | Registration (package metadata) responses |
+| Repositories | `Repository`, `Project`, `IRepositoryContext` (the repository in effect, scoped), `IRepositoryService`, `RepositoryNames` |
 | Search | Package search |
 | ServiceIndex | Service index, `IServiceIndexResourceProvider` |
 | Staging | `IPackageStagingService`: holds a browser upload (`/upload`) between preview and confirmation |

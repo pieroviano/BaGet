@@ -57,12 +57,17 @@ namespace BaGet.Database.MySql.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<DateTime?>("Resolved")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Key");
 
-                    b.HasIndex("PackageId");
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("AbuseReports");
                 });
@@ -209,6 +214,11 @@ namespace BaGet.Database.MySql.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -218,6 +228,8 @@ namespace BaGet.Database.MySql.Migrations
 
                     b.HasIndex("CommitId")
                         .IsUnique();
+
+                    b.HasIndex("RepositoryKey");
 
                     b.ToTable("CatalogLeafs");
                 });
@@ -348,6 +360,11 @@ namespace BaGet.Database.MySql.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("ReleaseNotes");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("RepositoryType")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
@@ -383,7 +400,7 @@ namespace BaGet.Database.MySql.Migrations
 
                     b.HasIndex("Id");
 
-                    b.HasIndex("Id", "NormalizedVersionString")
+                    b.HasIndex("RepositoryKey", "Id", "NormalizedVersionString")
                         .IsUnique();
 
                     b.ToTable("Packages");
@@ -477,11 +494,16 @@ namespace BaGet.Database.MySql.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.HasKey("Key");
 
                     b.HasIndex("OwnerName");
 
-                    b.HasIndex("PackageId");
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("PackageOwners");
                 });
@@ -545,6 +567,11 @@ namespace BaGet.Database.MySql.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<int>("State")
                         .HasColumnType("int");
 
@@ -560,11 +587,11 @@ namespace BaGet.Database.MySql.Migrations
 
                     b.HasKey("Key");
 
-                    b.HasIndex("PackageId");
-
                     b.HasIndex("PackageKey");
 
                     b.HasIndex("SubmissionId");
+
+                    b.HasIndex("RepositoryKey", "PackageId");
 
                     b.ToTable("PackageValidations");
                 });
@@ -596,6 +623,77 @@ namespace BaGet.Database.MySql.Migrations
                     b.HasIndex("PackageKey");
 
                     b.ToTable("PackageVulnerabilities");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Project", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Repository", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<bool>("AnonymousRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Settings")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Repositories");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

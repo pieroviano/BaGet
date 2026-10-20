@@ -218,6 +218,45 @@ public class DatabaseCopyTests : IDisposable
     }
 
     [Fact]
+    public async Task EveryRepositoryIsCopiedWithItsRows()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var second = await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+                .CreateAsync("second", RepositoryFormat.NuGet, RepositoryKind.Local, CancellationToken.None);
+            using var inSecond = app.Services.GetRequiredService<IServiceScopeFactory>().CreateRepositoryScope(second);
+            using var package = TestPackages.Build("Copy.Three", "1.0.0");
+            Assert.Equal(
+                PackageIndexingResult.Success,
+                await inSecond.ServiceProvider.GetRequiredService<IPackageIndexingService>().IndexAsync(package, CancellationToken.None));
+        }
+
+        using (var response = await PostDatabaseAsync(admin, "Sqlite", target))
+        {
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        }
+
+        var status = await WaitAsync(app);
+        Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
+
+        using var targetDb = OpenTarget(target);
+        var sourceDb = OpenSource(app, out var sourceScope);
+        using (sourceScope)
+        {
+            await AssertTablesEqualAsync(sourceDb, targetDb);
+
+            Assert.Equal(new[] { "default", "second" }, targetDb.Set<Repository>().OrderBy(r => r.Key).Select(r => r.Name).ToList());
+            Assert.Equal(1, await targetDb.Set<Package>().IgnoreQueryFilters().CountAsync(p => p.RepositoryKey == 2, TestContext.Current.CancellationToken));
+            Assert.Equal(
+                await sourceDb.Set<Package>().IgnoreQueryFilters().CountAsync(TestContext.Current.CancellationToken),
+                await targetDb.Set<Package>().IgnoreQueryFilters().CountAsync(TestContext.Current.CancellationToken));
+        }
+    }
+
+    [Fact]
     public async Task AnAdministratorCanSignInAfterTheCopyWhileTheGateIsClosedAndReachTheStatus()
     {
         var (app, admin) = await StartAsync();

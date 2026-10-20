@@ -5,9 +5,14 @@ using NuGet.Versioning;
 namespace BaGet.Core;
 
 // See NuGetGallery's: https://github.com/NuGet/NuGetGallery/blob/master/src/NuGetGallery.Core/Entities/Package.cs
-public class Package
+public class Package : IRepositoryScoped
 {
     public int Key { get; set; }
+
+    /// <summary>
+    /// The owning repository; see <see cref="IRepositoryScoped"/>.
+    /// </summary>
+    public int RepositoryKey { get; set; }
 
     public string? Id { get; set; }
 

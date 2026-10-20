@@ -77,7 +77,9 @@ public class EngineCopyTests
         }
 
         // The seeded data really is there, with its original (gapped) keys.
-        Assert.Equal(seeded.PackageKeys, await targetDb.Set<Package>().OrderBy(p => p.Key).Select(p => p.Key).ToListAsync(cancellationToken));
+        Assert.Equal(new[] { "default", "second" }, await targetDb.Set<Repository>().OrderBy(r => r.Key).Select(r => r.Name).ToListAsync(cancellationToken));
+        Assert.Equal(1, await targetDb.Set<Package>().IgnoreQueryFilters().CountAsync(p => p.RepositoryKey == 2, cancellationToken));
+        Assert.Equal(seeded.PackageKeys, await targetDb.Set<Package>().IgnoreQueryFilters().OrderBy(p => p.Key).Select(p => p.Key).ToListAsync(cancellationToken));
         Assert.Equal(seeded.OrganizationKeys, await targetDb.Set<Organization>().OrderBy(o => o.Key).Select(o => o.Key).ToListAsync(cancellationToken));
         Assert.Equal(2, await targetDb.Set<PackageDependency>().CountAsync(cancellationToken));
 
@@ -177,6 +179,22 @@ public class EngineCopyTests
 
             packages.Add(package);
         }
+
+        // A second repository holding the same id and version as the default one.
+        packages.Add(new Package
+        {
+            Id = "Seed.Package",
+            Version = NuGetVersion.Parse("1.0.0"),
+            RepositoryKey = 2,
+            Published = published,
+            Listed = true,
+            Dependencies = new List<PackageDependency>(),
+            PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "1.0" } },
+            TargetFrameworks = new List<TargetFramework>(),
+        });
+        context.Set<Repository>().AddRange(
+            new Repository { Name = "default", Created = published },
+            new Repository { Name = "second", Created = published });
 
         context.Set<Package>().AddRange(packages);
         var organizations = new List<Organization>

@@ -21,19 +21,35 @@ public class TablePackageDatabase : IPackageDatabase
     private readonly TableOperationBuilder _operationBuilder;
     private readonly CloudTable _table;
     private readonly ILogger<TablePackageDatabase> _logger;
+    private readonly IRepositoryContext? _repository;
 
     public TablePackageDatabase(
         TableOperationBuilder operationBuilder,
         CloudTableClient? client,
-        ILogger<TablePackageDatabase> logger)
+        ILogger<TablePackageDatabase> logger,
+        IRepositoryContext? repository = null)
     {
+        _repository = repository;
         _operationBuilder = operationBuilder ?? throw new ArgumentNullException(nameof(operationBuilder));
         _table = client?.GetTableReference(TableName) ?? throw new ArgumentNullException(nameof(client));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    // The table has no repository column: it holds the default repository's packages only. Repositories beyond
+    // the default need a relational database (see RepositoryService), so reaching here for another one is a bug in
+    // the caller; refuse rather than serve the default repository's packages under another name.
+    private void RequireDefaultRepository()
+    {
+        if (_repository != null && !_repository.Current.IsDefault)
+        {
+            throw new NotSupportedException(
+                $"Azure Table storage supports only the '{Repository.DefaultName}' repository, not '{_repository.Current.Name}'; use a relational database for more repositories.");
+        }
+    }
+
     public async Task<PackageAddResult> AddAsync(Package package, CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         try
         {
             var operation = _operationBuilder.AddPackage(package);
@@ -53,6 +69,7 @@ public class TablePackageDatabase : IPackageDatabase
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         var attempt = 0;
 
         while (true)
@@ -90,6 +107,7 @@ public class TablePackageDatabase : IPackageDatabase
 
     public async Task<bool> ExistsAsync(string? id, CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         #pragma warning disable CS8602
         var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, id.ToLowerInvariant());
         #pragma warning restore CS8602
@@ -108,6 +126,7 @@ public class TablePackageDatabase : IPackageDatabase
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         #pragma warning disable CS8602
         var operation = TableOperation.Retrieve<PackageEntity>(
             id.ToLowerInvariant(),
@@ -122,6 +141,7 @@ public class TablePackageDatabase : IPackageDatabase
 
     public async Task<IReadOnlyList<Package>> FindAsync(string? id, bool includeUnlisted, CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         #pragma warning disable CS8602
         var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, id.ToLowerInvariant());
         #pragma warning restore CS8602
@@ -160,6 +180,7 @@ public class TablePackageDatabase : IPackageDatabase
         bool includeUnlisted,
         CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         #pragma warning disable CS8602
         var operation = TableOperation.Retrieve<PackageEntity>(
             id.ToLowerInvariant(),
@@ -185,6 +206,7 @@ public class TablePackageDatabase : IPackageDatabase
 
     public async Task<bool> HardDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         return await TryUpdatePackageAsync(
             _operationBuilder.HardDeletePackage(id, version),
             cancellationToken);
@@ -192,6 +214,7 @@ public class TablePackageDatabase : IPackageDatabase
 
     public async Task<bool> RelistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         return await TryUpdatePackageAsync(
             _operationBuilder.RelistPackage(id, version),
             cancellationToken);
@@ -199,6 +222,7 @@ public class TablePackageDatabase : IPackageDatabase
 
     public async Task<bool> UnlistPackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
+        RequireDefaultRepository();
         return await TryUpdatePackageAsync(
             _operationBuilder.UnlistPackage(id, version),
             cancellationToken);

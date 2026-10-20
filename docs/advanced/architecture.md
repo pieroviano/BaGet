@@ -25,7 +25,7 @@ Dependencies point inwards: every project references `BaGet.Core`; only the host
 
 | Step | What happens |
 |---|---|
-| `Main` | McMaster `CommandLineApplication`: `import downloads`, `catalog rebuild`, `account reset-password/promote/demote`; the default command runs migrations (while `RunMigrationsAtStartup` is on), promotes initial administrators and runs the host. Unknown arguments pass through to the host. |
+| `Main` | McMaster `CommandLineApplication`: `import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password/promote/demote`; the default command runs migrations (while `RunMigrationsAtStartup` is on), promotes initial administrators and runs the host. Unknown arguments pass through to the host. |
 | `ConfigureConfiguration` | `BAGET_CONFIG_ROOT` base path; inserts `appsettings.Overrides.json` (written by the Settings page) after `appsettings*.json`, before environment variables and the command line. |
 | `ConfigureServices` | Options binding and validation (`AddBaGetOptions<T>`), web app, accounts, provider registration (`app.AddXyz()` per subsystem). |
 | `AddBaGetWebApplication` | Registers controllers, Razor Pages (`/packages` is also routed to the index page), the catalog and validation services and `StagingSweepWorker`; `AddBaGetApplicationParts` adds every BaGet assembly with controllers or pages (`Web`, `Web.V2`, `Catalog`, `Validation`, `Identity`) as an MVC application part, so a host built without the Web SDK (e.g. a worker service calling `BaGet.Program.Main`) still serves them. A new such assembly must be added there. |
@@ -125,8 +125,25 @@ on every request.
 
 `AbstractContext<T> : IdentityDbContext<BaGetUser>, IContext` holds the model: packages, dependencies,
 target frameworks, package types, deprecations, vulnerabilities, validations, catalog entries, abuse reports,
-users, organizations, owners, API keys. Each provider subclasses it and owns its migrations; a schema change
-needs a migration in all four relational providers.
+users, organizations, owners, API keys, repositories and projects. Each provider subclasses it and owns its
+migrations; a schema change needs a migration in all four relational providers.
+
+### Repositories
+
+Every package, owner, catalog entry, validation and abuse report belongs to a `Repository` (`RepositoryKey`;
+`IRepositoryScoped`). `default` (key 1) is the one served at `/` and holds everything that predates repositories:
+the `AddRepositories` migration gives existing rows `RepositoryKey = 1`, and startup creates the `default` row
+(`IRepositoryService.EnsureDefaultAsync`). Package IDs are unique per repository: `(RepositoryKey, Id, Version)`.
+
+| Piece | Job |
+|---|---|
+| `IRepositoryContext` (scoped) | The repository in effect: `Current { Key, Name, Format, Kind }`, `Use(info)` to select. Defaults to `default`. Routing, workers and commands call `Use` (or `IServiceScopeFactory.CreateRepositoryScope(info)`) before any query |
+| `AbstractContext` query filters | Filter the five tables above on `Current.Key` per query, and stamp new rows with it on save. `IgnoreQueryFilters()` sees every repository (database copy, account deletion, the validation worker's pending list) |
+| `IRepositoryService` | Find / list / create repositories; name rules in one place, `RepositoryNames` (lowercase `[a-z0-9-._]`, 1-64, not a reserved route name) |
+| Azure Table | Holds the `default` repository only: creating another is refused, `TablePackageDatabase` refuses any other |
+
+Mirroring (`Mirror:*`) serves `default` only; other repositories are local. Package and symbol storage paths are
+not repository-aware yet.
 
 ## Background work
 
