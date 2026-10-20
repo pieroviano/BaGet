@@ -704,14 +704,16 @@ A push then shows in Jaeger (UI on 16686) as one trace: the ASP.NET Core request
 See the [Docker example](installation/docker.md#tracing-with-jaeger).
 
 **Traced:** incoming requests (static files excluded), outgoing HTTP calls (mirror, upstream), database commands
-(`Telemetry:Traces:Database`; SQL text is never recorded), the spans `package.index`, `package.validate`, `mirror.fetch`,
+(`Telemetry:Traces:Database`; the SQL text is removed from the spans before export), the spans `package.index`, `package.validate`, `mirror.fetch`,
 `database.copy` (one `database.copy.table` child per table). **Metrics:** `baget.packages.pushed`, `baget.downloads`,
 `baget.validation.results`, plus ASP.NET Core, HTTP client and .NET runtime metrics.
 
 **Never exported:** query-string values (the instrumentation records `apikey=Redacted`), request headers (such as
-`X-NuGet-ApiKey`), connection strings, user names or email addresses; the OTLP `Headers` value. Logs reach the collector
-exactly as Serilog would write them, so the `Microsoft.AspNetCore.Hosting.Diagnostics` Warning floor still keeps request
-URLs out; each log event carries `TraceId` / `SpanId` of the request it was written in.
+`X-NuGet-ApiKey`), SQL text, connection strings; the OTLP `Headers` value. Spans and metrics carry no user names or email addresses. Logs
+reach the collector exactly as Serilog would write them, so they **do** include whatever the application logs, such as the
+audit lines naming the acting administrator and the affected user (settings changes, administrator promotion, password
+resets, account deletion); point `Logs:Endpoint` only at a collector you trust with that. The
+`Microsoft.AspNetCore.Hosting.Diagnostics` Warning floor still keeps request URLs out; each log event carries `TraceId` / `SpanId` of the request it was written in.
 
 **Never blocks, never throws into a request.** Spans wait in a bounded queue (2048) and are dropped when the collector is
 down; export runs on a background thread with the `Otlp:Timeout`. Failures are kept in `TelemetryStatus` (per signal: last

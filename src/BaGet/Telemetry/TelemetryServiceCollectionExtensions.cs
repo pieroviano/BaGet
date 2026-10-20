@@ -72,9 +72,10 @@ internal static class TelemetryServiceCollectionExtensions
                 .ConfigureServices(inner => inner.AddOptions<EntityFrameworkInstrumentationOptions>().Configure<IOptionsMonitor<TelemetryOptions>>(
                     (options, monitor) =>
                     {
-                        // Live: Telemetry:Traces:Database. SQL text is off by default and stays off.
+                        // Live: Telemetry:Traces:Database. The instrumentation always records the SQL text; SqlTextRedactingProcessor removes it.
                         options.Filter = (_, _) => TelemetryEndpoints.Read(monitor)?.Traces?.Database != false;
                     }))
+                .AddProcessor<SqlTextRedactingProcessor>()
                 .AddProcessor(provider =>
                 {
                     var exporter = provider.GetRequiredService<ReloadableTraceExporter>();

@@ -306,6 +306,24 @@ public class ReloadableExporterTests : IDisposable
         Assert.All(factory.Sinks, s => Assert.Equal(1, s.DisposeCount));
     }
 
+    [Fact]
+    public async Task ReplacingALogSinkNeverWaitsForTheRetiredSinkToDrain()
+    {
+        var factory = new RecordingFactory { BlockSinkDispose = true };
+        var monitor = new TestOptionsMonitor(On("http://one:4317"));
+        var sink = new ReloadableOpenTelemetrySink(monitor, new TelemetryStatus(), factory);
+
+        // The old sink's disposal (a drain against a stalled collector) is blocked: the swap, which runs inside the
+        // settings save, must still return at once.
+        var swap = Task.Run(() => monitor.Set(On("http://two:4317")), TestContext.Current.CancellationToken);
+        var finished = await Task.WhenAny(swap, Task.Delay(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken)) == swap;
+        foreach (var created in factory.Sinks) created.ReleaseDispose.Set();
+
+        Assert.True(finished, "the swap waited for the retired sink to be disposed");
+        sink.Dispose();
+        Assert.All(factory.Sinks, s => Assert.Equal(1, s.DisposeCount));
+    }
+
     private static LogEvent Event(LogEventLevel level, string? sourceContext)
     {
         var properties = new List<LogEventProperty>();
@@ -376,6 +394,9 @@ public class ReloadableExporterTests : IDisposable
 
         public Exception? Throw { get; set; }
 
+        /// <summary>Sinks block in Dispose until their <c>ReleaseDispose</c> is set.</summary>
+        public bool BlockSinkDispose { get; set; }
+
         public BaseExporter<Activity> CreateTraceExporter(TelemetryOptions options, Uri endpoint)
         {
             var exporter = new RecordingExporter { Block = BlockFirst && Created.Count == 0, Throw = Throw };
@@ -387,7 +408,7 @@ public class ReloadableExporterTests : IDisposable
 
         public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, TelemetryStatus.Signal status)
         {
-            var sink = new RecordingSink();
+            var sink = new RecordingSink { BlockDispose = BlockSinkDispose };
             lock (Sinks) Sinks.Add(sink);
             return sink;
         }
@@ -403,10 +424,16 @@ public class ReloadableExporterTests : IDisposable
         private int _dispose;
         public ConcurrentQueue<LogEvent> Events { get; } = new ConcurrentQueue<LogEvent>();
         public int DisposeCount => Volatile.Read(ref _dispose);
+        public bool BlockDispose { get; set; }
+        public ManualResetEventSlim ReleaseDispose { get; } = new ManualResetEventSlim();
 
         public void Emit(LogEvent logEvent) => Events.Enqueue(logEvent);
 
-        public void Dispose() => Interlocked.Increment(ref _dispose);
+        public void Dispose()
+        {
+            if (BlockDispose) ReleaseDispose.Wait(TimeSpan.FromSeconds(30));
+            Interlocked.Increment(ref _dispose);
+        }
     }
 
     private sealed class RecordingExporter : BaseExporter<Activity>

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Extensions.Options;
 using Serilog.Core;
@@ -22,6 +24,7 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
     private readonly ITelemetryExporterFactory _factory;
     private readonly SwappableHolder<SinkHandle> _holder = new SwappableHolder<SinkHandle>();
     private readonly object _reloadLock = new object();
+    private readonly List<Task> _retiring = new List<Task>();
     private readonly IDisposable? _subscription;
     private string? _key;
     private bool _initialized;
@@ -62,7 +65,7 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
                         ? level
                         : LogEventLevel.Information;
                     _minimumLevel = (int)minimum;
-                    handle = new SinkHandle(_factory.CreateLogSink(options, TelemetryEndpoints.Resolve(options, TelemetrySignal.Logs)!, _status));
+                    handle = new SinkHandle(_factory.CreateLogSink(options, TelemetryEndpoints.Resolve(options, TelemetrySignal.Logs)!, _status), Retire);
                 }
                 catch (Exception e)
                 {
@@ -106,14 +109,60 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
         lock (_reloadLock) _disposed = true;
         _subscription?.Dispose();
         _holder.Close();
+
+        // Shutdown is the one place that waits: sinks retired earlier are still draining in the background.
+        Task[] pending;
+        lock (_retiring) pending = _retiring.ToArray();
+        try
+        {
+            Task.WaitAll(pending);
+        }
+        catch
+        {
+            // Best effort, as for the exporters.
+        }
+    }
+
+    /// <summary>
+    /// Disposing a Serilog batching sink waits for its run loop and a final drain, each send bounded only by
+    /// <c>Otlp:Timeout</c>. A retired sink is therefore disposed on the thread pool: the thread that swaps it (inside a
+    /// settings save, holding its lock) or that releases its last lease (possibly a request) must not wait for a collector.
+    /// </summary>
+    private void Retire(ILogEventSink sink)
+    {
+        if (sink is not IDisposable disposable) return;
+
+        var task = Task.Run(() =>
+        {
+            try
+            {
+                disposable.Dispose();
+            }
+            catch
+            {
+                // Best effort: a failing sink must not take the host down.
+            }
+        });
+
+        lock (_retiring)
+        {
+            _retiring.RemoveAll(t => t.IsCompleted);
+            _retiring.Add(task);
+        }
     }
 
     private sealed class SinkHandle : IDisposable
     {
-        public SinkHandle(ILogEventSink sink) => Sink = sink;
+        private readonly Action<ILogEventSink> _retire;
+
+        public SinkHandle(ILogEventSink sink, Action<ILogEventSink> retire)
+        {
+            Sink = sink;
+            _retire = retire;
+        }
 
         public ILogEventSink Sink { get; }
 
-        public void Dispose() => (Sink as IDisposable)?.Dispose();
+        public void Dispose() => _retire(Sink);
     }
 }

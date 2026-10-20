@@ -249,6 +249,20 @@ public class TelemetryExportTests : IDisposable
     }
 
     [Fact]
+    public async Task DatabaseSpansNeverCarrySqlText()
+    {
+        var (app, client, telemetry) = Start(On());
+
+        Assert.Equal(HttpStatusCode.Created, await PushAsync(client, "Export.NoSql"));
+        var spans = await SpansWhenAsync(app, telemetry, all => all.Any(s => s.Kind == ActivityKind.Server));
+
+        var databaseSpans = spans.Where(s => s.Source.Contains("EntityFrameworkCore")).ToArray();
+        Assert.NotEmpty(databaseSpans);
+        Assert.DoesNotContain(databaseSpans.SelectMany(s => s.Tags.Keys), key => key is "db.query.text" or "db.statement");
+        Assert.DoesNotContain(databaseSpans, s => s.Tags.Values.Any(v => v != null && v.Contains("SELECT", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [Fact]
     public async Task AnUnreachableEndpointNeverSlowsRequestsAndTheStatusShowsFailingWithoutTheHeaders()
     {
         var (app, client, _) = Start(inMemory: false);

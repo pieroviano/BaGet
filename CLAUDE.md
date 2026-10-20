@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1564 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (784),
+Baseline: **1566 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (786),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -193,7 +193,7 @@ levels let through. Traces use `Otlp:Endpoint`; metrics and logs only their own 
 `TelemetryStatus` (per signal: last attempt/success, failing since, scrubbed error) is fed by the exporters
 (`ExportStatusHandler` for logs); every message goes through `TelemetryStatus.Scrub` (URLs cut to host, header values
 replaced). `TelemetryConnectionTester` exports one synthetic span with explicit settings. The Settings page (BaGet.Identity cannot reference the host) reaches both through `ITelemetryDiagnostics` (`BaGet.Core`, implemented by the host's `TelemetryDiagnostics`; null args = saved values): the Telemetry section's status table, and `SettingsModel.OnPostTestTelemetryAsync` (admin, antiforgery, password-confirmed, posted unsaved `v:Telemetry:Otlp:*` fields, blank sensitive Headers = saved, nothing saved; `TelemetrySettingsPageTests`). **Privacy:** the ASP.NET Core
-instrumentation redacts `url.query` values and records no headers, EF records no SQL text; never add an `Enrich` copying
+instrumentation redacts `url.query` values and records no headers, `SqlTextRedactingProcessor` strips the SQL text the EF instrumentation always records (`db.query.text`/`db.statement`; `TelemetryExportTests.DatabaseSpansNeverCarrySqlText`); logs are exported as written, audit lines with user names included (documented); never add an `Enrich` copying
 either (`TelemetryExportTests.NeitherQueryValuesNorHeadersReach...`). **SDK quirks:** `BaseExporter.ParentProvider` (the
 resource) has an internal setter, so `ReloadableExporter.Adopt` sets it by reflection on the inner exporter, and the batch
 processor's `DroppedCount` is read by reflection; both degrade (empty resource, 0) if the SDK changes. Versions are levers in
