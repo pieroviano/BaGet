@@ -31,6 +31,8 @@
   <ItemGroup>
     <!-- The listener for the "BaGet" ActivitySource/Meter, shared with BaGet.Core.Tests. -->
     <Compile Include="..\BaGet.Core.Tests\Support\DiagnosticsCapture.cs" Link="Support\DiagnosticsCapture.cs" />
+    <!-- The pre-repository database builder (B7), shared with BaGet.Database.Tests, which runs it on every engine. -->
+    <Compile Include="..\BaGet.Database.Tests\PreRepositoryDatabase.cs" Link="Support\PreRepositoryDatabase.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,9 +11,16 @@ namespace BaGet.Database.SqlServer;
 public class SqlServerContext : AbstractContext<SqlServerContext>
 {
     /// <summary>
-    /// The SQL Server error code for when a unique contraint is violated.
+    /// The SQL Server error code for a violated UNIQUE or PRIMARY KEY constraint.
     /// </summary>
     private const int UniqueConstraintViolationErrorCode = 2627;
+
+    /// <summary>
+    /// The SQL Server error code for a violated unique index. EF Core creates unique indexes (not constraints) for
+    /// <c>HasIndex(...).IsUnique()</c>, such as the one on a package's repository, ID and version, so this is the code a
+    /// duplicate package raises.
+    /// </summary>
+    private const int UniqueIndexViolationErrorCode = 2601;
 
     public SqlServerContext(DbContextOptions<SqlServerContext> options)
         : base(options)
@@ -30,7 +37,7 @@ public class SqlServerContext : AbstractContext<SqlServerContext>
         {
             return sqlException.Errors
                 .OfType<SqlError>()
-                .Any(error => error.Number == UniqueConstraintViolationErrorCode);
+                .Any(error => error.Number == UniqueConstraintViolationErrorCode || error.Number == UniqueIndexViolationErrorCode);
         }
 
         return false;
