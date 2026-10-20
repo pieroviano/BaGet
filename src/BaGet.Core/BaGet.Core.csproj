@@ -6,6 +6,7 @@
     <PackageTags>NuGet</PackageTags>
     <Description>The core libraries that power BaGet Extension.</Description>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

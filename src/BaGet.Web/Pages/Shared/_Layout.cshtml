@@ -5,7 +5,7 @@
     var hideSearchBar = ViewData["HideSearchBar"] is true;
 
     // The signed-in user's avatar, for the account menu. The service exists only while accounts are enabled.
-    string headerAvatar = null;
+    string? headerAvatar = null;
     var isAdministrator = false;
     if (Accounts.Value.Enabled && User.Identity?.IsAuthenticated == true)
     {
@@ -19,7 +19,9 @@
         var avatars = Context.RequestServices.GetService<BaGet.Identity.AvatarService>();
         if (avatars != null)
         {
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
             headerAvatar = (await avatars.GetUrlsAsync(new[] { User.Identity.Name }, 24, Context.RequestAborted))
+#pragma warning restore CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
                 .GetValueOrDefault(User.Identity.Name);
         }
     }
@@ -77,7 +79,7 @@
                             {
                                 <li role="presentation" class="dropdown account-menu">
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                        <partial name="_Avatar" model="new BaGet.Core.AvatarModel(User.Identity.Name, headerAvatar, 24)" />
+                                        <partial name="_Avatar" model="new BaGet.Core.AvatarModel(User.Identity.Name ?? string.Empty, headerAvatar ?? string.Empty, 24)" />
                                         <span>@User.Identity.Name</span> <span class="caret"></span>
                                     </a>
                                     <ul class="dropdown-menu">

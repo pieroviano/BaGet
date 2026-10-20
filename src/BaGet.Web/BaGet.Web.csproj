@@ -8,6 +8,7 @@
     <RootNamespace>BaGet.Web</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS8620</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

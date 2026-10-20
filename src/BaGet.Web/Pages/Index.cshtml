@@ -1,5 +1,4 @@
 @page
-@using BaGet.Protocol.Models
 @model IndexModel
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 
@@ -155,7 +154,7 @@
     </div>
 </div>
 
-@if (Model.Packages.Count == 0)
+@if ((Model.Packages?.Count ?? 0) == 0)
 {
     <div>
         <h2>Oops, nothing here...</h2>
@@ -170,7 +169,7 @@
 else
 {
     <div class="search-results">
-    @foreach (var package in Model.Packages)
+    @foreach (var package in Model.Packages??[])
     {
         var owners = Accounts.Value.Enabled && package.Owners != null && package.Owners.Count > 0
             ? package.Owners
@@ -219,7 +218,7 @@ else
                             @package.TotalDownloads.ToMetric() total downloads
                         </span>
                     </li>
-                    @if (Model.LastUpdated.TryGetValue(package.PackageId, out var updated))
+                        @if (Model.LastUpdated.TryGetValue(package.PackageId ?? string.Empty, out var updated))
                     {
                         <li>
                             <span class="last-updated" title="@updated.ToString("u")">
@@ -253,7 +252,7 @@ else
     </div>
 
     var showPreviousLink = Model.PageIndex > 1;
-    var showNextLink = Model.Packages.Count >= IndexModel.ResultsPerPage;
+    var showNextLink = Model.Packages?.Count >= IndexModel.ResultsPerPage;
 
     if (showPreviousLink || showNextLink)
     {
@@ -346,10 +345,10 @@ else
         { SearchSort.LastUpdated, "Recently updated" },
     };
 
-    private string SearchLink(
+    private string? SearchLink(
         SearchSort? sortBy = null,
-        string packageType = null,
-        string framework = null,
+        string? packageType = null,
+        string? framework = null,
         bool? prerelease = null,
         int? page = null)
     {

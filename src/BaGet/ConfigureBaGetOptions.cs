@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+#pragma warning disable ASPDEPR005
 
 namespace BaGet;
 

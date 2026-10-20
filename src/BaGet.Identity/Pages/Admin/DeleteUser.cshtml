@@ -15,9 +15,9 @@
 
     <h2>What goes</h2>
     <ul id="delete-user-summary">
-        <li>@Model.Preview.ApiKeys API key(s).</li>
-        <li>Ownership of @Model.Preview.DirectPackageIds.Count package ID(s)@(Model.Preview.DirectPackageIds.Count > 0 ? ": " + string.Join(", ", Model.Preview.DirectPackageIds) : "").</li>
-        @foreach (var organization in Model.Preview.Organizations)
+        <li>@Model.Preview?.ApiKeys API key(s).</li>
+        <li>Ownership of @Model.Preview?.DirectPackageIds.Count package ID(s)@(Model.Preview?.DirectPackageIds.Count > 0 ? ": " + string.Join(", ", Model.Preview.DirectPackageIds) : "").</li>
+        @foreach (var organization in Model.Preview?.Organizations ?? [])
         {
             <li>Organization <strong>@organization.Name</strong>: @organization.Outcome</li>
         }
@@ -32,17 +32,21 @@
     else
     {
         <form method="post">
-            @if (Model.Preview.SoleOwnedPackageIds.Count > 0)
+            @if (Model.Preview?.SoleOwnedPackageIds.Count > 0)
             {
                 <h2>Packages only @Model.Name owns</h2>
                 <p>@string.Join(", ", Model.Preview.SoleOwnedPackageIds)</p>
                 <div class="radio">
-                    <label><input type="radio" name="soleOwned" value="keep" checked="@(Model.SoleOwned != "delete")" />
-                        Leave them without owners. Only administrators and the global API key can manage them, like packages that predate accounts.</label>
+                    <label>
+                        <input type="radio" name="soleOwned" value="keep" checked="@(Model.SoleOwned != "delete")" />
+                        Leave them without owners. Only administrators and the global API key can manage them, like packages that predate accounts.
+                    </label>
                 </div>
                 <div class="radio">
-                    <label><input type="radio" name="soleOwned" value="delete" checked="@(Model.SoleOwned == "delete")" disabled="@Model.IsReadOnlyMode" />
-                        Delete them permanently, with all their versions.</label>
+                    <label>
+                        <input type="radio" name="soleOwned" value="delete" checked="@(Model.SoleOwned == "delete")" disabled="@Model.IsReadOnlyMode" />
+                        Delete them permanently, with all their versions.
+                    </label>
                 </div>
             }
 
@@ -56,7 +60,8 @@
             }
             else
             {
-                <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/admin/users/" + Uri.EscapeDataString(Model.Name) + "/delete"))" />
+                <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/admin/users/" + Uri.EscapeDataString(Model.Name??string.Empty
+                    ) + "/delete"))" />
             }
 
             <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this account? This cannot be undone.');">Delete @Model.Name</button>

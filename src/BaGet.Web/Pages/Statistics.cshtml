@@ -27,7 +27,7 @@
                 <table class="table">
                     <thead><tr><th>Package</th><th>Downloads</th></tr></thead>
                     <tbody>
-                        @foreach (var package in Model.Statistics.TopPackages)
+                        @foreach (var package in Model.Statistics.TopPackages??[])
                         {
                             <tr>
                                 <td><a asp-page="/Package" asp-route-id="@package.Id">@package.Id</a></td>
@@ -42,7 +42,7 @@
                 <table class="table">
                     <thead><tr><th>Package</th><th>Published</th></tr></thead>
                     <tbody>
-                        @foreach (var package in Model.Statistics.RecentVersions)
+                        @foreach (var package in Model.Statistics.RecentVersions??[])
                         {
                             <tr>
                                 <td><a asp-page="/Package" asp-route-id="@package.Id" asp-route-version="@package.Version">@package.Id @package.Version</a></td>

@@ -13,6 +13,7 @@
          deployable. Without this, "dotnet publish" copies nothing and then fails writing web.config. -->
     <IsPublishable>true</IsPublishable>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);NU5119</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

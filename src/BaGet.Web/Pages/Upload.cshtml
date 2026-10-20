@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BaGet.Web.UploadModel
 @using Microsoft.Extensions.Options
 @inject IUrlGenerator _url
@@ -56,7 +56,7 @@
     else if (Model.AccountsEnabled && !Model.SignedIn)
     {
         <p id="upload-sign-in">
-            <a href="~/account/login?returnUrl=@Uri.EscapeDataString(Url.Page("/Upload"))">Sign in</a>
+            <a href="~/account/login?returnUrl=@Uri.EscapeDataString(Url.Page("/Upload") ?? string.Empty)">Sign in</a>
             to upload a package through the browser. You can push with the commands below at
             any time, with an API key.
         </p>
@@ -152,14 +152,14 @@
                 foreach (var group in staged.DependencyGroups)
                 {
                     <h4>@group.Name</h4>
-                    @if (group.Dependencies.Count == 0)
+                    @if ((group.Dependencies?.Count ?? 0) == 0)
                     {
                         <p>No dependencies.</p>
                     }
                     else
                     {
                         <ul>
-                            @foreach (var dependency in group.Dependencies)
+                            @foreach (var dependency in group.Dependencies ?? [])
                             {
                                 <li>@dependency.PackageId @dependency.VersionSpec</li>
                             }
@@ -257,105 +257,105 @@
         </form>
     }
 
-@* The push instructions are only shown where pushing is possible. In read-only mode the
+    @* The push instructions are only shown where pushing is possible. In read-only mode the
    push endpoint answers 401 just as the browser upload is refused, so copy-paste commands
    there would be an invitation to a failure the page has already explained. *@
-@if (!Model.IsReadOnlyMode)
-{
-    <hr class="breadcrumb-divider" />
-
-    <div>You can push packages using the service index <code>@serviceIndexUrl</code>.</div>
-
-    @if (Model.AccountsEnabled)
+    @if (!Model.IsReadOnlyMode)
     {
-        <p id="upload-api-key-note">
-            Accounts are enabled, so a push must carry an API key: add
-            <code>-k &lt;your API key&gt;</code> to the command. Create one on the
-            <a href="@Url.Page("/Account/ApiKeys")">API keys</a> page.
-        </p>
-    }
+        <hr class="breadcrumb-divider" />
 
-    <div class="tabbed-info" x-data="{ tabs: tabs, active: tabs[0] }">
-        <ul class="nav">
-            <template x-for="tab in tabs" :key="tab.name">
-                <li x-bind:class="{ 'active': active.name === tab.name }">
-                    <a href="#" x-text="tab.name" @@click="active = tab"></a>
-                </li>
-            </template>
-        </ul>
+        <div>You can push packages using the service index <code>@serviceIndexUrl</code>.</div>
 
-        <div class="content">
-            <div class="script">
-                <template x-for="line in active.content">
-                    <div class="script-line" x-text="line"></div>
+        @if (Model.AccountsEnabled)
+        {
+            <p id="upload-api-key-note">
+                Accounts are enabled, so a push must carry an API key: add
+                <code>-k &lt;your API key&gt;</code> to the command. Create one on the
+                <a href="@Url.Page("/Account/ApiKeys")">API keys</a> page.
+            </p>
+        }
+
+        <div class="tabbed-info" x-data="{ tabs: tabs, active: tabs[0] }">
+            <ul class="nav">
+                <template x-for="tab in tabs" :key="tab.name">
+                    <li x-bind:class="{ 'active': active.name === tab.name }">
+                        <a href="#" x-text="tab.name" @@click="active = tab"></a>
+                    </li>
                 </template>
-            </div>
+            </ul>
 
-            <div class="copy-button">
-                <button class="btn btn-default btn-warning"
-                        type="button"
-                        data-toggle="popover"
-                        data-placement="bottom"
-                        data-content="Copied"
+            <div class="content">
+                <div class="script">
+                    <template x-for="line in active.content">
+                        <div class="script-line" x-text="line"></div>
+                    </template>
+                </div>
+
+                <div class="copy-button">
+                    <button class="btn btn-default btn-warning"
+                            type="button"
+                            data-toggle="popover"
+                            data-placement="bottom"
+                            data-content="Copied"
                         @@click="window.baget.copyTextToClipboard(active.content.join('\n'), $event.currentTarget)">
-                    <i class="ms-Icon ms-Icon--Copy"></i>
-                </button>
+                        <i class="ms-Icon ms-Icon--Copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="icon-text alert alert-warning">
+                For more information, please refer to
+                <a target="_blank"
+                   rel="noopener noreferrer"
+                   x-bind:href="active.documentation"
+                   x-text="`${active.name}'s documentation`">
+                </a>.
             </div>
         </div>
-
-        <div class="icon-text alert alert-warning">
-            For more information, please refer to
-            <a target="_blank"
-               rel="noopener noreferrer"
-               x-bind:href="active.documentation"
-               x-text="`${active.name}'s documentation`">
-            </a>.
-        </div>
-    </div>
-}
+    }
 </div>
 
 @if (!Model.IsReadOnlyMode)
 {
-<script type="text/javascript">
-    let tabs = [
-        {
-            name: ".NET CLI",
-            content: ["dotnet nuget push -s @serviceIndexUrl @Html.Raw(Model.AccountsEnabled ? "-k <your API key> " : "")package.nupkg"],
-            documentation: "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-push",
-        },
+    <script type="text/javascript">
+         let tabs = [
+             {
+                 name: ".NET CLI",
+                 content: ["dotnet nuget push -s @serviceIndexUrl @Html.Raw(Model.AccountsEnabled ? "-k <your API key> " : "")package.nupkg"],
+                 documentation: "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-push",
+             },
 
-        {
-            name: "NuGet",
-            content: ["nuget push -Source @serviceIndexUrl @Html.Raw(Model.AccountsEnabled ? "-ApiKey <your API key> " : "")package.nupkg"],
-            documentation: "https://docs.microsoft.com/en-us/nuget/tools/cli-ref-push",
-        },
+             {
+                 name: "NuGet",
+                 content: ["nuget push -Source @serviceIndexUrl @Html.Raw(Model.AccountsEnabled ? "-ApiKey <your API key> " : "")package.nupkg"],
+                 documentation: "https://docs.microsoft.com/en-us/nuget/tools/cli-ref-push",
+             },
 
-        {
-            name: "Paket",
-            content: ["paket push --url @baseUrl package.nupkg"],
-            documentation: "https://fsprojects.github.io/Paket/paket-push.html",
-        },
+             {
+                 name: "Paket",
+                 content: ["paket push --url @baseUrl package.nupkg"],
+                 documentation: "https://fsprojects.github.io/Paket/paket-push.html",
+             },
 
-    ];
+         ];
 
-    @* PowerShellGet reads the V2 protocol, not V3: pointing Register-PSRepository at the
-       service index fails, which is what the TODO here used to record. BaGet Extension now serves a
-       V2 feed, so the source location is that feed. The tab is omitted entirely when the
+         @* PowerShellGet reads the V2 protocol, not V3: pointing Register-PSRepository at the
+    service index fails, which is what the TODO here used to record. BaGet Extension now serves a
+    V2 feed, so the source location is that feed. The tab is omitted entirely when the
        V2 feed is switched off, rather than advertising an address that would 404. *@
-    @if (showPowerShellGet)
-    {
-        <text>
-    tabs.push({
-        name: "PowerShellGet",
-        content: [
-            "Register-PSRepository -Name \"BaGet\" -SourceLocation \"@v2FeedUrl\" "
-              + "-PublishLocation \"@publishUrl\" -InstallationPolicy \"Trusted\"",
-            "Publish-Module -Name PS-Module -Repository BaGet"
-        ],
-        documentation: "https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module",
-    });
-        </text>
-    }
-</script>
+         @if (showPowerShellGet)
+         {
+                     <text>
+                         tabs.push({
+                             name: "PowerShellGet",
+                             content: [
+                                 "Register-PSRepository -Name \"BaGet\" -SourceLocation \"@v2FeedUrl\" "
+                                   + "-PublishLocation \"@publishUrl\" -InstallationPolicy \"Trusted\"",
+                                 "Publish-Module -Name PS-Module -Repository BaGet"
+                             ],
+                             documentation: "https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module",
+                         });
+                     </text>
+         }
+    </script>
 }

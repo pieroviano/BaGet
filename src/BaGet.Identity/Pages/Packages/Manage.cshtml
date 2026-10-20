@@ -1,4 +1,4 @@
-﻿@page "/packages/{id}/manage"
+@page "/packages/{id}/manage"
 @model BaGet.Identity.Pages.Packages.ManageModel
 @{
     ViewData["Title"] = $"Manage {Model.Id}";
@@ -179,7 +179,7 @@
                     }
                     else
                     {
-                        <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/Manage", new { id = Model.Id })))" />
+                        <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/Manage", new { id = Model.Id }) ?? string.Empty))" />
                     }
                     <button type="submit" asp-page-handler="HardDeleteAll" class="btn btn-danger"
                             onclick="return confirm('Delete every version of @Model.Id permanently? This cannot be undone.')"

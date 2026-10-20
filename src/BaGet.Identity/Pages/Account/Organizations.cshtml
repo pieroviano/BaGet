@@ -18,12 +18,12 @@
         <h2><a href="~/profiles/@organization.Name">@organization.Name</a></h2>
         <table class="table">
             <tbody>
-                @foreach (var member in organization.Members)
+                @foreach (var member in organization.Members ?? [])
                 {
                     <tr>
                         <td>@member.UserName@(member.IsAdmin ? " (administrator)" : "")</td>
                         <td>
-                            @if (organization.IsAdmin || member.UserName == User.Identity.Name)
+                            @if (organization.IsAdmin || member.UserName == User.Identity?.Name)
                             {
                                 <form method="post" asp-page-handler="RemoveMember">
                                     <input type="hidden" name="organization" value="@organization.Name" />

@@ -25,7 +25,7 @@ public abstract class LegalPageModel : PageModel
         _environment = environment ?? throw new ArgumentNullException(nameof(environment));
     }
 
-    public HtmlString? Content { get; private set; }
+    public new HtmlString? Content { get; private set; }
 
     protected abstract string? ConfiguredPath { get; }
 

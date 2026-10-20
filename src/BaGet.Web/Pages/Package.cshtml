@@ -4,16 +4,16 @@
 
 @{
     ViewData["Title"] = Model.Found
-        ? Model.Package.Id + " " + Model.Package.NormalizedVersionString
-        : Model.Package.Id;
+        ? Model.Package?.Id + " " + Model.Package?.NormalizedVersionString
+        : Model.Package?.Id;
 }
 
 @if (!Model.Found)
 {
     <div>
         <h2>Oops, package not found...</h2>
-        <p>Could not find package '@Model.Package.Id'.</p>
-        <p>You can try searching on <a href="https://www.nuget.org/packages?q=@Uri.EscapeDataString(Model.Package.Id)" target="_blank" rel="noopener noreferrer">nuget.org</a> package.</p>
+        <p>Could not find package '@Model.Package?.Id'.</p>
+        <p>You can try searching on <a href="https://www.nuget.org/packages?q=@Uri.EscapeDataString(Model.Package?.Id ?? string.Empty)" target="_blank" rel="noopener noreferrer">nuget.org</a> package.</p>
         <p>Think there's a problem? Consider taking a look at our <a href="https://pieroviano.github.io/BaGet/" target="_blank" rel="noopener noreferrer">documentation</a> or asking for help on our <a href="https://github.com/loic-sharma/BaGet/issues" target="_blank" rel="noopener noreferrer">GitHub project</a></p>
     </div>
 }
@@ -30,9 +30,9 @@ else
         <article class="col-sm-8 package-details-main">
             <div class="package-title">
                 <h1>
-                    @Model.Package.Id
+                    @Model.Package?.Id
 
-                    <small class="text-nowrap">@Model.Package.NormalizedVersionString</small>
+                    <small class="text-nowrap">@Model.Package?.NormalizedVersionString</small>
                 </h1>
             </div>
 
@@ -57,7 +57,7 @@ else
                             {
                                 <span class="script-prefix" aria-hidden="true">@snippet.Prefix</span>
                             }
-                            <pre class="snippet" data-snippet="@snippet.Name">@string.Join("\n", snippet.Lines)</pre>
+                            <pre class="snippet" data-snippet="@snippet.Name">@string.Join("\n", snippet.Lines ?? [])</pre>
                         </div>
 
                         <div class="copy-button">
@@ -67,7 +67,7 @@ else
                                     data-tottle="popover"
                                     data-placement="bottom"
                                     data-content="Copied"
-                                    @@click="window.baget.copyTextToClipboard($event.currentTarget.closest('.install-pane').querySelector('pre.snippet').textContent, $event.currentTarget)">
+                                @@click="window.baget.copyTextToClipboard($event.currentTarget.closest('.install-pane').querySelector('pre.snippet').textContent, $event.currentTarget)">
                                 <i class="ms-Icon ms-Icon--Copy"></i>
                             </button>
                         </div>
@@ -105,7 +105,7 @@ else
                 <section id="tab-readme" class="tab-panel" x-show="tab === 'readme'">
                     @if (Model.Readme == null)
                     {
-                        <div class="package-description">@Model.Package.Description</div>
+                        <div class="package-description">@Model.Package?.Description</div>
                     }
                     else
                     {
@@ -145,7 +145,7 @@ else
                 </section>
 
                 <section id="tab-dependencies" class="tab-panel dependency-groups" x-show="tab === 'dependencies'">
-                    @if (!Model.DependencyGroups.Any())
+                    @if (!(Model.DependencyGroups?.Any() ?? false))
                     {
                         @:This package has no dependencies.
                     }
@@ -158,7 +158,7 @@ else
                             </h4>
 
                             <ul class="list-unstyled dependency-group">
-                                @if (!group.Dependencies.Any())
+                                @if (!(group.Dependencies?.Any() ?? false))
                                 {
                                     <li>No dependencies.</li>
                                 }
@@ -185,13 +185,13 @@ else
                 @if (!Model.IsDotnetTemplate && !Model.IsDotnetTool)
                 {
                     <section id="tab-usedby" class="tab-panel package-used-by" x-show="tab === 'usedby'">
-                        @if (!Model.UsedBy.Any())
+                        @if (!(Model.UsedBy?.Any() ?? false))
                         {
-                            <p>No packages depend on @Model.Package.Id.</p>
+                            <p>No packages depend on @Model.Package?.Id.</p>
                         }
                         else
                         {
-                            <p>Showing the top 20 packages that depend on @Model.Package.Id.</p>
+                            <p>Showing the top 20 packages that depend on @Model.Package?.Id.</p>
                             <div>
                                 <table>
                                     <thead>
@@ -232,13 +232,13 @@ else
                                 </tr>
                             </thead>
                             <tbody class="no-border">
-                                @for (var i = 0; i < Model.Versions.Count; i++)
+                                @for (var i = 0; i < Model.Versions?.Count; i++)
                                 {
                                     var version = Model.Versions[i];
                                     var alwaysShow = Json.Serialize(i < DefaultVisibleVersions);
 
                                     <tr class="@(version.Selected ? "bg-info" : "")" x-show="showAll || @alwaysShow">
-                                        <td><a asp-page="Package" asp-route-id="@Model.Package.Id" asp-route-version="@version.Version">@version.Version.ToNormalizedString()</a></td>
+                                        <td><a asp-page="Package" asp-route-id="@Model.Package?.Id" asp-route-version="@version.Version">@version.Version?.ToNormalizedString()</a></td>
                                         <td>@version.Downloads.ToString("N0")</td>
                                         <td>@version.LastUpdated.ToShortDateString()</td>
                                     </tr>
@@ -246,7 +246,7 @@ else
                             </tbody>
                         </table>
 
-                        @if (Model.Versions.Count > DefaultVisibleVersions)
+                        @if (Model.Versions?.Count > DefaultVisibleVersions)
                         {
                             <button type="button" class="link-button" @@click="showAll = !showAll">
                                 <i class="ms-Icon" x-bind:class="{ 'ms-Icon--CalculatorAddition': !showAll, 'ms-Icon--CalculatorSubtract': showAll }"></i>
@@ -257,7 +257,7 @@ else
                 </section>
 
                 <section id="tab-releasenotes" class="tab-panel" x-show="tab === 'releasenotes'">
-                    @if (string.IsNullOrEmpty(Model.Package.ReleaseNotes))
+                    @if (string.IsNullOrEmpty(Model.Package?.ReleaseNotes))
                     {
                         <p>This package has no release notes.</p>
                     }
@@ -279,7 +279,7 @@ else
                         Last updated @Model.LastUpdated.Humanize()
                     </li>
 
-                    @if (!string.IsNullOrEmpty(Model.Package.ProjectUrlString))
+                    @if (!string.IsNullOrEmpty(Model.Package?.ProjectUrlString))
                     {
                         <li>
                             <i class="ms-Icon ms-Icon--Globe" aria-hidden="true"></i>
@@ -287,7 +287,7 @@ else
                         </li>
                     }
 
-                    @if (!string.IsNullOrEmpty(Model.Package.RepositoryUrlString))
+                    @if (!string.IsNullOrEmpty(Model.Package?.RepositoryUrlString))
                     {
                         <li>
                             <img class="icon" aria-hidden="true" alt="" src="@Url.Content("~/_content/BaGet.Web/images/github-32x32.png")" />
@@ -324,7 +324,7 @@ else
 
                     <li>
                         <i class="ms-Icon ms-Icon--Flag" aria-hidden="true"></i>
-                        <a asp-page="/ReportAbuse" asp-route-id="@Model.Package.Id" asp-route-version="@Model.Package.NormalizedVersionString">Report package</a>
+                        <a asp-page="/ReportAbuse" asp-route-id="@Model.Package?.Id" asp-route-version="@Model.Package?.NormalizedVersionString">Report package</a>
                     </li>
                 </ul>
             </div>
@@ -340,7 +340,7 @@ else
 
                     <li>
                         <i class="ms-Icon ms-Icon--Giftbox"></i>
-                        @Model.Package.Downloads.ToString("N0") downloads of current version
+                        @Model.Package?.Downloads.ToString("N0") downloads of current version
                     </li>
                 </ul>
             </div>
@@ -354,7 +354,7 @@ else
                         @foreach (var owner in Model.Owners)
                         {
                             <li class="owner">
-                                <partial name="_Avatar" model="new AvatarModel(owner, Model.OwnerAvatars.GetValueOrDefault(owner), 32)" />
+                                <partial name="_Avatar" model="new AvatarModel(owner ?? string.Empty, Model.OwnerAvatars?.GetValueOrDefault(owner) ?? string.Empty, 32)" />
                                 <a href="@Url.Page("/Profiles/Profile", new { name = owner })">@owner</a>
                             </li>
                         }
@@ -362,13 +362,13 @@ else
                         {
                             <li>
                                 <i class="ms-Icon ms-Icon--Settings" aria-hidden="true"></i>
-                                <a href="~/packages/@Model.Package.Id/manage">Manage package</a>
+                                <a href="~/packages/@Model.Package?.Id/manage">Manage package</a>
                             </li>
                             @if (Model.Owners.Any() && EmailOptions.Value.IsConfigured)
                             {
                                 <li>
                                     <i class="ms-Icon ms-Icon--Mail" aria-hidden="true"></i>
-                                    <a href="~/packages/@Model.Package.Id/contact-owners">Contact owners</a>
+                                    <a href="~/packages/@Model.Package?.Id/contact-owners">Contact owners</a>
                                 </li>
                             }
                         }
@@ -376,7 +376,7 @@ else
                 </div>
             }
 
-            @if (Model.Package.Authors.Any())
+            @if (Model.Package?.Authors?.Any() ?? false)
             {
                 <div>
                     <h2>Authors</h2>
