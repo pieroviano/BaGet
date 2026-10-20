@@ -55,13 +55,15 @@ public interface IRepositoryAdministration
     Task SetAnonymousReadAsync(string name, bool anonymousRead, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Deletes a repository that holds no packages, together with its catalog entries, owner rows, validations and
-    /// abuse reports.
+    /// Deletes a repository that holds no packages and no submission awaiting validation, together with its catalog
+    /// entries, owner rows, validations and abuse reports, and every file it kept in storage (<c>repos/{name}/</c>) when
+    /// the store can list its content.
     /// </summary>
     /// <exception cref="KeyNotFoundException">No such repository.</exception>
     /// <exception cref="RepositoryProtectedException">It is the default repository.</exception>
-    /// <exception cref="RepositoryNotEmptyException">It still holds packages: delete them first. Its catalog entries, owners,
-    /// validations and abuse reports are history and are removed with the repository.</exception>
+    /// <exception cref="RepositoryNotEmptyException">It still holds packages (delete them first) or a submission awaiting
+    /// validation (wait for it or let it fail). Its catalog entries, owners, finished validations and abuse reports are
+    /// history and are removed with the repository.</exception>
     Task DeleteAsync(string name, CancellationToken cancellationToken);
 }
 
@@ -80,7 +82,9 @@ public sealed class RepositoryProtectedException : InvalidOperationException
 /// </summary>
 public sealed class RepositoryNotEmptyException : InvalidOperationException
 {
-    public RepositoryNotEmptyException(string name)
-        : base($"The repository '{name}' still holds packages. Delete them first; its history (catalog entries, owners) is removed with the repository.")
+    public RepositoryNotEmptyException(string name, bool awaitingValidation = false)
+        : base(awaitingValidation
+            ? $"The repository '{name}' still has submissions awaiting validation. Wait for them to finish; its history (catalog entries, owners) is removed with the repository."
+            : $"The repository '{name}' still holds packages. Delete them first; its history (catalog entries, owners) is removed with the repository.")
     { }
 }

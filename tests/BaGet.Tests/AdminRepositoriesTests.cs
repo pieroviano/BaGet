@@ -272,6 +272,71 @@ public class AdminRepositoriesTests : IDisposable
     }
 
     [Fact]
+    public async Task ARepositoryWithASubmissionAwaitingValidationCannotBeDeleted()
+    {
+        (await CreateAsync("second")).Dispose();
+        using (var scope = _app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+        {
+            var info = await scope.ServiceProvider.GetRequiredService<IRepositoryService>().FindAsync("second", CancellationToken.None);
+            scope.ServiceProvider.GetRequiredService<IRepositoryContext>().Use(info!);
+            var context = scope.ServiceProvider.GetRequiredService<IContext>();
+            context.PackageValidations!.Add(new PackageValidation
+            {
+                SubmissionId = Guid.NewGuid().ToString("N"),
+                PackageId = "Pending.Package",
+                PackageVersion = "1.0.0",
+                Type = PackageValidation.IndexType,
+                State = PackageValidationState.Pending,
+                Created = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync(CancellationToken.None);
+        }
+
+        using var response = await _admin.PostAsync("admin/repositories/second/delete", new Dictionary<string, string>(), tokenPage: "admin/repositories");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("awaiting validation", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.NotNull(await FindAsync("second"));
+
+        using var check = _app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        Assert.Equal(1, await check.ServiceProvider.GetRequiredService<IContext>().PackageValidations!.IgnoreQueryFilters().CountAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task DeletingARepositoryRemovesEverythingItKeptInStorageAndNothingElse()
+    {
+        (await CreateAsync("second")).Dispose();
+        (await CreateAsync("second2")).Dispose();
+        var paths = new[]
+        {
+            "repos/second/symbols/foo.pdb/abcdefabcdefabcdefabcdefabcdefabffffffff/foo.pdb",
+            "repos/second/catalog/x.json",
+            "repos/second/validation/y.nupkg",
+            "repos/second2/symbols/foo.pdb/abcdefabcdefabcdefabcdefabcdefabffffffff/foo.pdb",
+            "symbols/foo.pdb/abcdefabcdefabcdefabcdefabcdefabffffffff/foo.pdb",
+        };
+
+        using (var scope = _app.Services.CreateScope())
+        {
+            var storage = scope.ServiceProvider.GetRequiredService<IStorageService>();
+            foreach (var path in paths)
+            {
+                using var content = new System.IO.MemoryStream(new byte[] { 1, 2, 3 });
+                await storage.PutAsync(path, content, "binary/octet-stream", CancellationToken.None);
+            }
+        }
+
+        using var deleted = await _admin.PostAsync("admin/repositories/second/delete", new Dictionary<string, string>(), tokenPage: "admin/repositories");
+        Assert.Equal(HttpStatusCode.Redirect, deleted.StatusCode);
+
+        using var after = _app.Services.CreateScope();
+        var listable = (IListableStorageService)after.ServiceProvider.GetRequiredService<IStorageService>();
+        Assert.Empty(await listable.ListAsync("repos/second/", CancellationToken.None));
+        Assert.Single(await listable.ListAsync("repos/second2/", CancellationToken.None));
+        Assert.Single(await listable.ListAsync("symbols/", CancellationToken.None));
+    }
+
+    [Fact]
     public async Task PostsWithoutAnAntiforgeryTokenAreRefused()
     {
         using var response = await _admin.RawPostAsync("admin/repositories", new Dictionary<string, string> { { "name", "second" } });

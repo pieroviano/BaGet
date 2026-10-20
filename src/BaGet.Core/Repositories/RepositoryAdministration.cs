@@ -18,10 +18,14 @@ namespace BaGet.Core;
 public class RepositoryAdministration : IRepositoryAdministration
 {
     private readonly IContext _context;
+    private readonly IStorageService? _storage;
 
-    public RepositoryAdministration(IContext context)
+    /// <param name="context">The database.</param>
+    /// <param name="storage">The store whose <c>repos/{name}/</c> folder is emptied when a repository is deleted. Null leaves storage alone.</param>
+    public RepositoryAdministration(IContext context, IStorageService? storage = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _storage = storage;
     }
 
     private bool Relational => !(_context is NullContext);
@@ -74,11 +78,16 @@ public class RepositoryAdministration : IRepositoryAdministration
         var key = row.Key;
         if (key == Repository.DefaultKey) throw new RepositoryProtectedException();
 
-        // Empty means no packages. The catalog is an append-only log (deleting a package adds an entry) and owner rows
-        // outlive their package, so those, the validations and the abuse reports are history of a repository that no
-        // longer exists once it is deleted, and go with it. Catalog leaf files in storage are left (inert, named by GUID).
+        // Empty means no packages and no submission awaiting validation (a pushed package the client already got an
+        // accepted response for, staged but not indexed yet; deleting would lose it). The catalog is an append-only log
+        // (deleting a package adds an entry) and owner rows outlive their package, so those, the finished validations
+        // and the abuse reports are history of a repository that no longer exists once it is deleted, and go with it.
         var hasPackages = await _context.Packages!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false);
         if (hasPackages) throw new RepositoryNotEmptyException(name);
+
+        var hasPending = await _context.PackageValidations!.IgnoreQueryFilters()
+            .AnyAsync(e => e.RepositoryKey == key && e.State == PackageValidationState.Pending, cancellationToken).ConfigureAwait(false);
+        if (hasPending) throw new RepositoryNotEmptyException(name, awaitingValidation: true);
 
         _context.CatalogLeafs!.RemoveRange(await _context.CatalogLeafs!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.PackageOwners!.RemoveRange(await _context.PackageOwners!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
@@ -86,6 +95,26 @@ public class RepositoryAdministration : IRepositoryAdministration
         _context.AbuseReports!.RemoveRange(await _context.AbuseReports!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.Repositories!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        await PurgeStorageAsync(key, row.Name ?? name, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Deletes every file under <c>repos/{name}/</c> (symbols, catalog leaves, staged and quarantined uploads, leftovers of
+    /// hard-deleted packages): storage paths are keyed by name, so a repository created later under the same name would
+    /// otherwise inherit them. Runs after the database commit; a failure surfaces and a retry is not possible (the row is
+    /// gone), so the leftovers stay and the administrator is told.
+    /// </summary>
+    private async Task PurgeStorageAsync(int key, string name, CancellationToken cancellationToken)
+    {
+        // A store that cannot list (or no store) cannot be swept; paths are not recorded anywhere else.
+        if (!(_storage is IListableStorageService listable)) return;
+
+        var prefix = RepositoryStorage.Prefix(new RepositoryInfo(key, name, RepositoryFormat.NuGet, RepositoryKind.Local));
+        foreach (var path in await listable.ListAsync(prefix, cancellationToken).ConfigureAwait(false))
+        {
+            await _storage!.DeleteAsync(path, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async Task<Repository> FindRowAsync(string name, CancellationToken cancellationToken)

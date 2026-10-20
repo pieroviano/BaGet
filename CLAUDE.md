@@ -135,8 +135,8 @@ submission's repository itself. `IRepositoryService` finds/lists/creates (`Repos
 `AzureSearch` (one global index, document keys without a repository) have the default repository only:
 `SupportsMultipleRepositories` is false, `CreateAsync` and `TablePackageDatabase` refuse others and
 `RepositoryService.FindAsync` serves `default` only. The mirror serves `default` only (`UpstreamClientFactory`).
-`IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with packages; its
-catalog entries, owners, validations and abuse reports are purged with it, catalog leaf files stay in storage) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
+`IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with packages or a pending validation; its
+catalog entries, owners, validations and abuse reports are purged with it, and so is `repos/{name}/` in storage when the store is `IListableStorageService`) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
 (names are immutable; only `AnonymousRead` is editable; writes call `MaintenanceGate.ThrowIfClosed`; feed URLs derive from `IUrlGenerator`).
 
 **Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,
