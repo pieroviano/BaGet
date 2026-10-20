@@ -235,6 +235,43 @@ public class AdminRepositoriesTests : IDisposable
     }
 
     [Fact]
+    public async Task ARepositoryThatOnlyKeepsHistoryRowsIsDeletedAndTheRowsArePurged()
+    {
+        (await CreateAsync("second")).Dispose();
+        (await CreateAsync("third")).Dispose();
+
+        // What a pushed-then-deleted package leaves behind: its catalog entries and owner row (and a report).
+        foreach (var name in new[] { "second", "third" })
+        {
+            using var scope = _app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            var info = await scope.ServiceProvider.GetRequiredService<IRepositoryService>().FindAsync(name, CancellationToken.None);
+            scope.ServiceProvider.GetRequiredService<IRepositoryContext>().Use(info!);
+            var context = scope.ServiceProvider.GetRequiredService<IContext>();
+            context.CatalogLeafs!.Add(new CatalogEntry
+            {
+                CommitId = Guid.NewGuid().ToString("D"),
+                CommitTimestamp = DateTime.UtcNow,
+                Type = CatalogEntry.PackageDeleteType,
+                PackageId = "Gone.Package",
+                PackageVersion = "1.0.0",
+            });
+            context.PackageOwners!.Add(new PackageOwner { PackageId = "Gone.Package", OwnerName = "root" });
+            await context.SaveChangesAsync(CancellationToken.None);
+        }
+
+        using var deleted = await _admin.PostAsync("admin/repositories/second/delete", new Dictionary<string, string>(), tokenPage: "admin/repositories");
+        Assert.Equal(HttpStatusCode.Redirect, deleted.StatusCode);
+        Assert.Null(await FindAsync("second"));
+
+        using var check = _app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        var db = check.ServiceProvider.GetRequiredService<IContext>();
+        // Only the deleted repository's rows are purged; the other repository's remain.
+        Assert.Equal(1, await db.CatalogLeafs!.IgnoreQueryFilters().CountAsync(e => e.PackageId == "Gone.Package", TestContext.Current.CancellationToken));
+        Assert.Equal(1, await db.PackageOwners!.IgnoreQueryFilters().CountAsync(e => e.PackageId == "Gone.Package", TestContext.Current.CancellationToken));
+        Assert.NotNull(await FindAsync("third"));
+    }
+
+    [Fact]
     public async Task PostsWithoutAnAntiforgeryTokenAreRefused()
     {
         using var response = await _admin.RawPostAsync("admin/repositories", new Dictionary<string, string> { { "name", "second" } });

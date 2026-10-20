@@ -24,7 +24,8 @@ namespace BaGet.Core;
 /// <item>Checks that need no access to the target run first, so a refusal leaves it as it was: the source has no
 /// pending migrations, and nothing in it is something the target cannot hold (<see cref="DatabaseCopyPreflight"/>,
 /// judged on the target's model). Then the target: reachable (a database that does not exist yet is created), its
-/// schema migrated, every mapped table empty. A target that is current and not empty is refused untouched; one
+/// schema migrated, every mapped table empty (the <c>default</c> repository row that the <c>AddRepositories</c> migration
+/// seeds does not count; it is removed, the source's own rows replacing it). A target that is current and not empty is refused untouched; one
 /// that needed migrating and is then found not empty keeps its updated schema, and the refusal says so.</item>
 /// <item>Tables in foreign-key order, in batches of <see cref="BatchSize"/> rows ordered by primary key, with
 /// the provider's explicit-key hooks (<see cref="IContext.BeginKeyedInsertAsync"/>).</item>
@@ -239,6 +240,7 @@ public class DatabaseCopyService
             Update(s => s with { Phase = DatabaseCopyPhase.Migrating, Table = null, Message = "Preparing the target's schema." });
             await target.RunMigrationsAsync(cancellationToken).ConfigureAwait(false);
             await EnsureEmptyAsync(targetDb, tables, schemaUpdated: true, cancellationToken).ConfigureAwait(false);
+            await RemoveSeededDefaultRepositoryAsync(targetDb, cancellationToken).ConfigureAwait(false);
 
             var totals = new Dictionary<DatabaseTable, long>();
             foreach (var table in tables) totals[table] = await table.CountAsync(source, cancellationToken).ConfigureAwait(false);
@@ -551,6 +553,13 @@ public class DatabaseCopyService
         if (problems.Count > 0) throw new CopyRefusedException(problems.ToArray());
     }
 
+    // The row the AddRepositories migration creates: it is what a fresh target holds, so it is not "data".
+    private static readonly System.Linq.Expressions.Expression<Func<Repository, bool>> SeededDefault
+        = r => r.Key == Repository.DefaultKey && r.Name == Repository.DefaultName;
+
+    private static Task RemoveSeededDefaultRepositoryAsync(DbContext target, CancellationToken cancellationToken)
+        => target.Set<Repository>().Where(SeededDefault).ExecuteDeleteAsync(cancellationToken);
+
     private static async Task EnsureEmptyAsync(
         DbContext target,
         IReadOnlyList<DatabaseTable> tables,
@@ -560,7 +569,9 @@ public class DatabaseCopyService
         var problems = new List<string>();
         foreach (var table in tables)
         {
-            var count = await table.CountAsync(target, cancellationToken).ConfigureAwait(false);
+            var count = table.EntityType.ClrType == typeof(Repository)
+                ? await target.Set<Repository>().CountAsync(cancellationToken).ConfigureAwait(false) - await target.Set<Repository>().CountAsync(SeededDefault, cancellationToken).ConfigureAwait(false)
+                : await table.CountAsync(target, cancellationToken).ConfigureAwait(false);
             if (count > 0)
             {
                 problems.Add(schemaUpdated

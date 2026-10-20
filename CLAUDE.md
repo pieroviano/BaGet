@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1817 tests** across `BaGet.Core.Tests` (535), `BaGet.Tests` (988),
+Baseline: **1824 tests** across `BaGet.Core.Tests` (541), `BaGet.Tests` (989),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -119,8 +119,9 @@ rollback `ExecuteDelete`, runs on the copy's own target context, never on the ap
 
 **Repositories.** `Repository`/`Project` (`BaGet.Core/Repositories`); `default` (key `Repository.DefaultKey` = 1) is the
 repository at `/`. `Package`, `PackageOwner`, `CatalogEntry`, `PackageValidation`, `AbuseReport` are `IRepositoryScoped`
-(`RepositoryKey`, column default 1 = how the `AddRepositories` migration assigns pre-existing rows; no foreign key, so
-the migration needs no seed row). `AbstractContext` filters those five on `IRepositoryContext.Current.Key` with global
+(`RepositoryKey`, column default 1 = how the `AddRepositories` migration assigns pre-existing rows; no foreign key).
+The migration (all four providers) also inserts the `default` row with key 1 (PostgreSQL `setval`s the sequence), so
+applying migrations outside the app (`dotnet ef database update`, a script) leaves no gap for a new repository to take key 1. `AbstractContext` filters those five on `IRepositoryContext.Current.Key` with global
 query filters evaluated per query (the scope is found through EF's `ApplicationServiceProvider`, so a hand-built
 context works in `default`) and stamps new rows on save; anything that must see every repository calls
 `IgnoreQueryFilters()` (`DatabaseTable` copy/count/delete, `AccountDeletionService`, `PackageValidationRunner` pending list
@@ -128,11 +129,14 @@ and submission lookup). A new per-package table must implement `IRepositoryScope
 `OnModelCreating`. Whoever picks the repository (routing, a worker, a command) calls `IRepositoryContext.Use(info)` before
 querying, or uses `IServiceScopeFactory.CreateRepositoryScope(info)`; the validation runner switches to the queued
 submission's repository itself. `IRepositoryService` finds/lists/creates (`RepositoryNames` holds the one name rule);
-`EnsureDefaultAsync` creates the `default` row after migrations at startup and the copy carries it (so it must not be
-seeded by a migration: the copy target must be empty). Azure Table (`NullContext`) has the default repository only:
-`CreateAsync` and `TablePackageDatabase` refuse others. The mirror serves `default` only (`UpstreamClientFactory`).
-`IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with rows, so
-deleting content is not available) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
+`EnsureDefaultAsync` restores a missing `default` row (explicit key 1) at startup and before `CreateAsync`
+(which refuses when rows exist but none has key 1). The copy target is "empty" with only that seeded row, which
+`DatabaseCopyService` deletes before copying the source's rows. Azure Table (`NullContext`) and `Search:Type` =
+`AzureSearch` (one global index, document keys without a repository) have the default repository only:
+`SupportsMultipleRepositories` is false, `CreateAsync` and `TablePackageDatabase` refuse others and
+`RepositoryService.FindAsync` serves `default` only. The mirror serves `default` only (`UpstreamClientFactory`).
+`IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with packages; its
+catalog entries, owners, validations and abuse reports are purged with it, catalog leaf files stay in storage) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
 (names are immutable; only `AnonymousRead` is editable; writes call `MaintenanceGate.ThrowIfClosed`; feed URLs derive from `IUrlGenerator`).
 
 **Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,

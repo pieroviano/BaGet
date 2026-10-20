@@ -96,8 +96,8 @@ public class RepositoryMigrationTests : IDisposable
             Assert.Equal(Repository.DefaultKey, (await context.AbuseReports!.IgnoreQueryFilters().SingleAsync(token)).RepositoryKey);
             Assert.Equal(Repository.DefaultKey, (await context.PackageValidations!.IgnoreQueryFilters().SingleAsync(token)).RepositoryKey);
 
-            // The default repository row is created by startup, not by the migration; doing it twice is harmless.
-            Assert.Empty(await context.Repositories!.ToListAsync(token));
+            // The migration itself creates the default repository row (so an operator who applies migrations
+            // without RunMigrationsAtStartup still has it); EnsureDefaultAsync is then a harmless no-op.
             await new RepositoryService(context).EnsureDefaultAsync(token);
             await new RepositoryService(context).EnsureDefaultAsync(token);
             var repository = await context.Repositories!.SingleAsync(token);
@@ -106,6 +106,65 @@ public class RepositoryMigrationTests : IDisposable
 
             // The default repository's scope serves the existing rows.
             Assert.Equal("Old.Package", (await context.Packages!.SingleAsync(token)).Id);
+        }
+    }
+
+    [Fact]
+    public async Task CreatingARepositoryNeverGivesItTheDefaultKeyEvenIfTheDefaultRowIsMissing()
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var context = NewContext();
+        await context.RunMigrationsAsync(token);
+
+        // An older or hand-built database whose Repositories table is empty.
+        context.Repositories!.RemoveRange(await context.Repositories!.ToListAsync(token));
+        await context.SaveChangesAsync(token);
+
+        var created = await new RepositoryService(context).CreateAsync("second", RepositoryFormat.NuGet, RepositoryKind.Local, token);
+
+        Assert.NotEqual(Repository.DefaultKey, created.Key);
+        var rows = await context.Repositories!.AsNoTracking().OrderBy(r => r.Key).ToListAsync(token);
+        Assert.Equal(new[] { Repository.DefaultName, "second" }, rows.Select(r => r.Name));
+        Assert.Equal(Repository.DefaultKey, rows[0].Key);
+    }
+
+    [Fact]
+    public async Task CreatingARepositoryIsRefusedWhenRowsExistButNotTheDefault()
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var context = NewContext();
+        await context.RunMigrationsAsync(token);
+        context.Repositories!.RemoveRange(await context.Repositories!.ToListAsync(token));
+        context.Repositories!.Add(new Repository { Key = 7, Name = "other", Format = RepositoryFormat.NuGet, Kind = RepositoryKind.Local, Created = DateTime.UtcNow });
+        await context.SaveChangesAsync(token);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new RepositoryService(context).CreateAsync("second", RepositoryFormat.NuGet, RepositoryKind.Local, token));
+    }
+
+    [Theory]
+    [InlineData("AzureSearch", false)]
+    [InlineData("azuresearch", false)]
+    [InlineData("Database", true)]
+    [InlineData(null, true)]
+    public async Task OnlyTheDefaultRepositoryExistsWhenTheSearchIndexIsNotRepositoryAware(string? searchType, bool multiple)
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var context = NewContext();
+        await context.RunMigrationsAsync(token);
+        var options = Microsoft.Extensions.Options.Options.Create(new SearchOptions { Type = searchType });
+        var service = new RepositoryService(context, options);
+        context.Repositories!.Add(new Repository { Name = "second", Format = RepositoryFormat.NuGet, Kind = RepositoryKind.Local, Created = DateTime.UtcNow });
+        await context.SaveChangesAsync(token);
+
+        Assert.Equal(multiple, service.SupportsMultipleRepositories);
+        Assert.Equal(multiple, await service.FindAsync("second", token) != null);
+        Assert.NotNull(await service.FindAsync(Repository.DefaultName, token));
+        Assert.Equal(multiple ? 2 : 1, (await service.ListAsync(token)).Count);
+        if (!multiple)
+        {
+            await Assert.ThrowsAsync<NotSupportedException>(
+                () => service.CreateAsync("third", RepositoryFormat.NuGet, RepositoryKind.Local, token));
         }
     }
 

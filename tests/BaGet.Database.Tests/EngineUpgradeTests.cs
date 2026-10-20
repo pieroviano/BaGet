@@ -38,8 +38,12 @@ public class EngineUpgradeTests
 
         Assert.Empty(await context.Database.GetPendingMigrationsAsync(cancellationToken));
 
-        // The migration only assigns rows to key 1; the repository row itself is created at startup (EnsureDefaultAsync).
-        Assert.Empty(await iContext.Repositories!.ToListAsync(cancellationToken));
+        // The migration assigns rows to key 1 and creates that repository itself (no startup step is needed), and the
+        // key sequence continues after it on every engine.
+        var repository = await iContext.Repositories!.SingleAsync(cancellationToken);
+        Assert.Equal((Repository.DefaultKey, Repository.DefaultName), (repository.Key, repository.Name));
+        var created = await new RepositoryService(iContext).CreateAsync("second", RepositoryFormat.NuGet, RepositoryKind.Local, cancellationToken);
+        Assert.Equal(Repository.DefaultKey + 1, created.Key);
 
         var packages = await iContext.Packages!
             .Include(p => p.Dependencies).Include(p => p.TargetFrameworks).Include(p => p.PackageTypes).Include(p => p.Deprecation)

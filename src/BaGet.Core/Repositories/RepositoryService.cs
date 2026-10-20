@@ -4,25 +4,32 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BaGet.Core;
 
 /// <summary>
 /// <see cref="IRepositoryService"/> over the relational database. When the database is not relational
-/// (<see cref="NullContext"/>, as with Azure Table) only the default repository exists and creating another is
-/// refused with a message saying why.
+/// (<see cref="NullContext"/>, as with Azure Table) or the search index is not repository-aware
+/// (<c>Search:Type</c> = <c>AzureSearch</c>: one global index with package-id document keys) only the default
+/// repository exists, others stored in the database are not served, and creating another is refused with a
+/// message saying why.
 /// </summary>
 public class RepositoryService : IRepositoryService
 {
     private readonly IContext _context;
+    private readonly IOptions<SearchOptions>? _search;
 
-    public RepositoryService(IContext context)
+    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _search = search;
     }
 
     /// <inheritdoc/>
-    public bool SupportsMultipleRepositories => !(_context is NullContext);
+    public bool SupportsMultipleRepositories
+        => !(_context is NullContext)
+        && !string.Equals(_search?.Value?.Type, "AzureSearch", StringComparison.OrdinalIgnoreCase);
 
     /// <inheritdoc/>
     public async Task<RepositoryInfo?> FindAsync(string? name, CancellationToken cancellationToken)
@@ -84,13 +91,17 @@ public class RepositoryService : IRepositoryService
         if (!SupportsMultipleRepositories)
         {
             throw new NotSupportedException(
-                "The configured database supports only the 'default' repository; use a relational database (SQLite, SQL Server, PostgreSQL or MySQL) to create more.");
+                "Only the 'default' repository is available with this configuration; use a relational database (SQLite, SQL Server, PostgreSQL or MySQL) and a search type other than AzureSearch (whose index is not repository-aware) to create more.");
         }
 
         if (format != RepositoryFormat.NuGet || kind != RepositoryKind.Local)
         {
             throw new NotSupportedException("Only local NuGet repositories can be created.");
         }
+
+        // Migrations create the default row; restore it if it is missing (key 1 is what every existing row carries, so
+        // a new repository must never take it) and refuse when it cannot be restored.
+        await EnsureDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         if (await _context.Repositories!.AnyAsync(r => r.Name == name, cancellationToken).ConfigureAwait(false))
         {
@@ -130,8 +141,9 @@ public class RepositoryService : IRepositoryService
             return;
         }
 
-        // The default row must get key 1, which rows that predate repositories already carry. Auto-generated keys
-        // start at 1 in an empty table on every provider, but say so explicitly where that is not guaranteed.
+        // The default row must have key 1, which rows that predate repositories already carry. Generated keys only
+        // start at 1 in a table that never held a row (SQLite and MySQL keep counting after a delete), so the key is
+        // given explicitly.
         var anyRow = await _context.Repositories!.AnyAsync(cancellationToken).ConfigureAwait(false);
         if (anyRow)
         {
@@ -141,6 +153,7 @@ public class RepositoryService : IRepositoryService
 
         _context.Repositories!.Add(new Repository
         {
+            Key = Repository.DefaultKey,
             Name = Repository.DefaultName,
             Format = RepositoryFormat.NuGet,
             Kind = RepositoryKind.Local,
@@ -148,6 +161,8 @@ public class RepositoryService : IRepositoryService
             Created = DateTime.UtcNow,
         });
 
+        var entityType = (_context as DbContext)?.Model.FindEntityType(typeof(Repository));
+        if (entityType != null) await _context.BeginKeyedInsertAsync(entityType, cancellationToken).ConfigureAwait(false);
         try
         {
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -155,6 +170,10 @@ public class RepositoryService : IRepositoryService
         catch (DbUpdateException e) when (_context.IsUniqueConstraintViolationException(e))
         {
             // Another node or a concurrent start created it.
+        }
+        finally
+        {
+            if (entityType != null) await _context.EndKeyedInsertAsync(entityType, CancellationToken.None).ConfigureAwait(false);
         }
     }
 }

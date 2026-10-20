@@ -55,12 +55,13 @@ public interface IRepositoryAdministration
     Task SetAnonymousReadAsync(string name, bool anonymousRead, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Deletes an empty repository.
+    /// Deletes a repository that holds no packages, together with its catalog entries, owner rows, validations and
+    /// abuse reports.
     /// </summary>
     /// <exception cref="KeyNotFoundException">No such repository.</exception>
     /// <exception cref="RepositoryProtectedException">It is the default repository.</exception>
-    /// <exception cref="RepositoryNotEmptyException">It still holds packages (or their owners, catalog entries, validations or
-    /// abuse reports). Removing a repository's content is not available yet: delete the packages first.</exception>
+    /// <exception cref="RepositoryNotEmptyException">It still holds packages: delete them first. Its catalog entries, owners,
+    /// validations and abuse reports are history and are removed with the repository.</exception>
     Task DeleteAsync(string name, CancellationToken cancellationToken);
 }
 
@@ -80,6 +81,6 @@ public sealed class RepositoryProtectedException : InvalidOperationException
 public sealed class RepositoryNotEmptyException : InvalidOperationException
 {
     public RepositoryNotEmptyException(string name)
-        : base($"The repository '{name}' still holds packages. Delete them first; deleting a repository with content is not supported yet.")
+        : base($"The repository '{name}' still holds packages. Delete them first; its history (catalog entries, owners) is removed with the repository.")
     { }
 }

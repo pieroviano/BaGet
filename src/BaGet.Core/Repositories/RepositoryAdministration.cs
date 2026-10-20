@@ -74,14 +74,16 @@ public class RepositoryAdministration : IRepositoryAdministration
         var key = row.Key;
         if (key == Repository.DefaultKey) throw new RepositoryProtectedException();
 
-        var hasContent =
-            await _context.Packages!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false)
-            || await _context.PackageOwners!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false)
-            || await _context.CatalogLeafs!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false)
-            || await _context.PackageValidations!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false)
-            || await _context.AbuseReports!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false);
-        if (hasContent) throw new RepositoryNotEmptyException(name);
+        // Empty means no packages. The catalog is an append-only log (deleting a package adds an entry) and owner rows
+        // outlive their package, so those, the validations and the abuse reports are history of a repository that no
+        // longer exists once it is deleted, and go with it. Catalog leaf files in storage are left (inert, named by GUID).
+        var hasPackages = await _context.Packages!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false);
+        if (hasPackages) throw new RepositoryNotEmptyException(name);
 
+        _context.CatalogLeafs!.RemoveRange(await _context.CatalogLeafs!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.PackageOwners!.RemoveRange(await _context.PackageOwners!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.PackageValidations!.RemoveRange(await _context.PackageValidations!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.AbuseReports!.RemoveRange(await _context.AbuseReports!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.Repositories!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

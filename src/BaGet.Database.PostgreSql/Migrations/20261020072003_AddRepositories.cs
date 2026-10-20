@@ -97,6 +97,17 @@ namespace BaGet.Database.PostgreSql.Migrations
                     table.PrimaryKey("PK_Repositories", x => x.Key);
                 });
 
+            // The default repository (key 1 = RepositoryKey's column default, so every existing row already belongs to
+            // it). Created here, not only by startup, so that applying migrations without RunMigrationsAtStartup
+            // (dotnet ef database update, an SQL script) cannot leave a new repository to take key 1.
+            migrationBuilder.InsertData(
+                table: "Repositories",
+                columns: new[] { "Key", "Name", "Format", "Kind", "AnonymousRead", "Created" },
+                values: new object[] { 1, "default", "NuGet", "Local", true, DateTime.UtcNow });
+
+            // An explicit key does not advance an identity sequence: make the next generated key 2.
+            migrationBuilder.Sql("SELECT setval(pg_get_serial_sequence('\"Repositories\"', 'Key'), 1);");
+
             migrationBuilder.CreateIndex(
                 name: "IX_PackageValidations_RepositoryKey_PackageId",
                 table: "PackageValidations",

@@ -17,14 +17,15 @@ Administrators manage them at `/admin/repositories` (menu: *Repositories*). Othe
 |---|---|
 | `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a repository |
 | `/admin/repositories/{name}` | Shows the feed; edits *Anonymous read* |
-| `/admin/repositories/{name}/delete` | Deletes an **empty** repository |
+| `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** |
 
 Rules:
 
 * Names: 1 to 64 lowercase letters, digits, `-`, `.`, `_`; no leading or trailing `.`, no `..`; not a reserved word (`admin`, `api`, `r`, `v3`, ...). Invalid names are refused with the reason.
 * A name is never changed after creation (it is in URLs and storage paths).
 * `default` cannot be deleted.
-* A repository that still holds packages cannot be deleted; delete its packages first. Deleting a repository together with its content is not available yet.
+* A repository that still holds packages cannot be deleted; delete its packages first. Deleting removes its history rows too (catalog entries, owners, validations, abuse reports); its catalog leaf files stay in storage, unused.
 * Writes are refused with `503` while the server is read-only for maintenance (for example during a database copy).
 * *Anonymous read* is stored but not enforced yet.
-* Creating needs a relational database; with Azure Table only `default` exists.
+* Creating needs a relational database and a repository-aware search: with Azure Table, or with `Search:Type` = `AzureSearch` (one global index), only `default` exists and other repositories already in the database are not served.
+* The `AddRepositories` migration creates the `default` row itself, so it exists even when migrations are applied outside the app.

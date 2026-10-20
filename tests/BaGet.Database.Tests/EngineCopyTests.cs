@@ -192,9 +192,8 @@ public class EngineCopyTests
             PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "1.0" } },
             TargetFrameworks = new List<TargetFramework>(),
         });
-        context.Set<Repository>().AddRange(
-            new Repository { Name = "default", Created = published },
-            new Repository { Name = "second", Created = published });
+        // "default" (key 1) is created by the AddRepositories migration; "second" gets key 2.
+        context.Set<Repository>().Add(new Repository { Name = "second", Created = published });
 
         context.Set<Package>().AddRange(packages);
         var organizations = new List<Organization>

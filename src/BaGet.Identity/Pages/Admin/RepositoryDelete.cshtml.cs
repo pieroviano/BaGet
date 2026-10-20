@@ -8,8 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Pages.Admin;
 
 /// <summary>
-/// Deletes an empty repository. The default repository cannot be deleted. A repository that still holds packages is
-/// refused (removing its content is not available yet: delete the packages first). Refused with 503 while the
+/// Deletes a repository with no packages, and its history rows. The default repository cannot be deleted. A repository
+/// that still holds packages is refused (delete the packages first). Refused with 503 while the
 /// <see cref="MaintenanceGate"/> is closed.
 /// </summary>
 public class RepositoryDeleteModel : AdminPageModel
