@@ -1,0 +1,166 @@
+# Artifactory parity: multi-repository, multi-format (NuGet, npm, Maven, Docker), permissions, retention, scanning, HA, API, replication
+
+Turns BaGet Extension from one NuGet feed per instance into a repository manager: many repositories of four
+formats, each local, remote or virtual, with Artifactory's permission model, plus retention, vulnerability scanning,
+an admin REST API, replication and high availability.
+
+**Size.** This is several products' worth of work. Each phase below ships on its own and gets **its own
+implementation run** (worktrees, review). Do not implement the whole plan in one run.
+
+## Blocking — resolve before coding
+
+| # | Check | Why it blocks | How |
+|---|---|---|---|
+| **B1** | Data model for four formats | NuGet's tables (`Package`, dependencies, frameworks; `AbstractContext.cs:102-104` unique `(Id, NormalizedVersionString)`) don't fit npm (scoped names, dist-tags), Maven (GAV, snapshots, `maven-metadata.xml`) or OCI (blobs by digest, manifests, tags). | Spike the schema in D1 on all four relational providers: generate the migration, then confirm `dotnet ef migrations list` and no pending model changes per provider (CLAUDE.md, *Migrations*). |
+| **B2** | Large blobs | Docker layers reach many GB. OCI needs chunked uploads (`PATCH` with `Content-Range`), resumable sessions, digest verification while streaming, and `HEAD`/range `GET`. `IStorageService` does whole-stream `PutAsync`; Kestrel/IIS body limits are ~2 GB (`ConfigureBaGetOptions.cs:82,133`). | Prototype a 5 GB layer through each storage provider (FileSystem, S3 multipart, Azure block blobs, GCS resumable, Aliyun multipart) without buffering in memory. Measure memory. |
+| **B3** | Docker client auth | `docker login` needs the token flow (`WWW-Authenticate: Bearer realm=…/v2/token`), not API keys. npm uses `_authToken`; Maven uses HTTP Basic in `settings.xml`. | Confirm each client's flow against real CLIs (B6) before designing C2's credential types. |
+| **B4** | HA prerequisites | SQLite and the FileSystem store on local disk can't be shared. In-memory state: `MaintenanceGate`, `DatabaseCopyService` (`DependencyInjectionExtensions.cs:90-91`), `ContactRateLimiter`/`PasswordResetRateLimiter` (`AccountsServiceCollectionExtensions.cs:43-44`), `TelemetryStatus`. No `AddDataProtection` anywhere, so each node mints its own cookie keys. | List every singleton holding state (`grep TryAddSingleton`) and classify each as per node or shared. Decide the shared store (D6). |
+| **B5** | Vulnerability data source | Licensing and offline use. | OSV.dev (API free, data CC-BY 4.0 / per-source licences) covers NuGet, npm and Maven. Docker images need image scanning (OS packages), which OSV doesn't do. Decide in D7. |
+| **B6** | Client test rigs | Protocol tests need the real `dotnet nuget`, `npm`, `mvn` and `docker` clients. | Testcontainers images with each CLI (`node`, `maven`, `docker:dind`), skipped without Docker like `BaGet.Database.Tests`. Confirm `docker:dind` runs on the CI and dev machines (privileged). |
+| **B7** | Upgrade path | Existing installs have one feed. URLs, storage paths (`packages/…`, `PackageStorageService.cs:12`), owners and API keys must keep working. | Write the D2 migration plus a storage-layout compatibility test against a copy of a real pre-upgrade database and store before P0 is merged. |
+| **B8** | Azure Table database | Non-relational, packages only (CLAUDE.md). | Decide: Azure Table supports only the `default` NuGet repository, and multi-repo needs a relational database (refuse at startup). |
+
+## Decisions
+
+| # | Decision (taken) | Consequence |
+|---|---|---|
+| D0 | **Formats: NuGet, npm, Maven, Docker (OCI)** | A format layer in Core. Each format is a module with its own protocol, metadata tables and routes. Multi-month scope. |
+| D1 | **Common `Repository`, format-specific metadata.** Tables `Repositories`, `Projects`; NuGet tables gain `RepositoryKey`; new `Npm*`, `Maven*`, `Oci*` tables per format | No lossy "generic artifact" table. Each format keeps native queries. Four migrations per provider per phase. |
+| D2 | **URLs: `/` stays the `default` NuGet repository; others at `/r/{repo}/…`** (`/r/{repo}/v3/index.json`, `/r/{repo}/api/v2`, `/r/{repo}/npm/`, `/r/{repo}/maven/`; Docker at `/v2/{repo}/…` as OCI requires) | Upgrades need no client changes. Existing data moves into `default` with storage paths unchanged (`packages/…` = `default`); new repositories use `repos/{repo}/…`. |
+| D3 | **Repository kinds: local, remote (upstream cache), virtual (ordered members + default deploy target)**, for every format | `MirrorOptions` (`MirrorOptions.cs:8-38`) becomes a remote NuGet repository created by the upgrade when `Mirror:Enabled`. |
+| D4 | **Full Artifactory permission model:** users, **groups**, **permission targets** (repositories by name or pattern + include/exclude path patterns, actions Read / Annotate / Deploy-Cache / Delete-Overwrite / Manage), **projects** (repositories grouped, project admins, project roles), anonymous access per repository, **access tokens** (scoped, expiring) | Package ownership (`PackageOwner`, `Accounts.cs:62`) stays as a NuGet-specific rule *inside* Deploy permission. Private reads become possible: every read route goes through an authorization check. |
+| D5 | **Retention, scanning, REST API, replication, HA all in scope** | P6-P10. |
+| D6 | **HA = shared relational DB + shared object storage + Redis** (distributed locks, rate limits, gate state, data-protection keys in the DB) | SQLite and FileSystem storage remain single node only; HA is refused at startup with them. |
+| D7 | **Scanning: OSV for NuGet/npm/Maven; Docker via optional Trivy** (external binary or server) | Without Trivy, Docker images are not scanned and the UI says so. |
+
+## Phases
+
+Order = dependency. Each phase: blocking checks first, tests first, full suite green, 0 warnings, docs in the same
+commits, Opus review.
+
+### P0 — Repository foundation (NuGet only, no behaviour change)
+
+| Item | Where |
+|---|---|
+| `Repository` (`Key`, `Name` unique, `Format`, `Kind`, `ProjectKey?`, settings JSON, `AnonymousRead`), `Project` entities | `src/BaGet.Core/Entities/` new. Model in `AbstractContext.OnModelCreating` (`AbstractContext.cs:~90`) |
+| `RepositoryKey` on `Package`, `PackageOwner`, `CatalogEntry`, `PackageValidation`, `AbuseReport`; unique index → `(RepositoryKey, Id, NormalizedVersionString)` | `AbstractContext.cs:102-104, 236, 269-270`. 4 migrations; data migration creates `default` and assigns every row |
+| `IRepositoryContext` (scoped): the current repository, resolved from the route (`/r/{repo}`) or `default` | new in Core. Every `IPackageDatabase` / `ISearchService` / storage call takes it, no global feed |
+| Routes: register every existing endpoint twice, at `/` (default) and `/r/{repo}/` | `BaGetEndpointBuilder.cs` (262 lines), `Routes.cs`. `IUrlGenerator` (`IUrlGenerator.cs:8`) builds repo-aware URLs so service indexes advertise the right base |
+| Storage: `default` → `packages/…` (unchanged), others → `repos/{repo}/packages/…`; symbols likewise | `PackageStorageService.cs:12, 218-230`, `SymbolStorageService` |
+| Admin UI: repository list, create/edit/delete (local NuGet only in P0) | `src/BaGet.Identity/Pages/Admin/Repositories*` |
+
+Verification: the existing suite is unchanged against `/`; the same suite parameterised against `/r/second/`; B7 upgrade test.
+
+### P1 — Remote and virtual NuGet repositories
+
+| Item | Note |
+|---|---|
+| Remote: upstream URL (V3 or V2), credentials (sensitive), cache period for metadata, "store artifacts locally" | Generalises `PackageService` mirroring per repository. Upgrade converts `Mirror:*` into a remote repo inside `default`'s virtual (D3) |
+| Virtual: ordered members, default deploy repository, resolution order for search/registration/download (first hit), merged search with paging | Search across members needs a merge with stable ordering. Database search per member, then k-way merge |
+| Caching | Metadata TTL, negative cache for 404s, offline mode |
+
+### P2 — Access control (D4)
+
+| Item | Note |
+|---|---|
+| Groups, memberships; permission targets (repos + patterns, include/exclude path patterns, actions × users/groups); projects (roles: project admin, developer, viewer; repos owned by a project) | New tables, 4 migrations. `BaGetPrincipal` (`BaGetPrincipal.cs:11`) gains the resolved permission set |
+| Authorization on **every** route: read included. Anonymous read per repository | Policy-based (`IAuthorizationService` + requirement per action). NuGet reads accept Basic auth (user + access token or API key as password), as NuGet clients send |
+| Access tokens: scoped to repos/actions, expiring, revocable; existing scoped API keys map onto them | Existing keys keep working (B7) |
+| UI and audit log for every permission change | Admin pages; audit through the existing log + a table |
+
+### P3 — Format layer + npm
+
+| Item | Note |
+|---|---|
+| `IFormatModule` (routes, storage layout, metadata indexing, search provider, retention hooks, scanner adapter); NuGet refactored onto it | Core abstraction; NuGet behaviour unchanged (full suite) |
+| npm registry API: packument `GET /{name}`, scoped `@scope/name`, tarball download, `npm publish` (`PUT`), dist-tags, deprecate, unpublish rules, `npm login` / `_authToken`, `/-/v1/search` | Tables `NpmPackages`, `NpmVersions`, `NpmDistTags`. Remote = registry.npmjs.org proxy; virtual merges packuments |
+| Tests | Real `npm` CLI in a container: publish, install, dist-tag, scoped packages, remote and virtual |
+
+### P4 — Maven
+
+| Item | Note |
+|---|---|
+| Maven 2 layout `GET/PUT/HEAD /{group/path}/{artifact}/{version}/{file}`, checksums (`.sha1`, `.sha256`, `.md5`), `maven-metadata.xml` generation, SNAPSHOT resolution (timestamped), release vs snapshot policy per repo, POM parsing for search | Tables `MavenArtifacts`, `MavenVersions`, `MavenFiles` |
+| Remote = Maven Central proxy; virtual = merged metadata | |
+| Tests | Real `mvn deploy` / `mvn dependency:get`, and Gradle if B6 allows |
+
+### P5 — Docker / OCI distribution
+
+| Item | Note |
+|---|---|
+| OCI Distribution Spec v1.1: `/v2/`, blobs (`HEAD/GET`, monolithic and chunked upload sessions, cross-repo mount), manifests (`PUT/GET/DELETE` by tag and digest, image index), tags list, referrers API, `docker login` token endpoint (B3) | Tables `OciRepositories`, `OciManifests`, `OciTags`, `OciBlobs` (digest, size, refcount). Storage by digest, deduplicated |
+| Streaming storage (B2): `IStorageService` gains a multipart/append API | All storage providers |
+| Garbage collection of unreferenced blobs | Runs under P6's retention engine |
+| Remote = Docker Hub / any registry proxy (with its token auth); virtual = ordered pull-through | |
+| Tests | `docker:dind`: push, pull, multi-arch index, chunked upload, conformance subset (`opencontainers/distribution-spec` conformance tests) |
+
+### P6 — Retention and cleanup
+
+| Item | Note |
+|---|---|
+| Policies per repository or project: keep last N versions, delete older than X, prerelease/snapshot-only, unused for X days (last download), remote cache size cap, untagged Docker manifests | `RetentionPolicies` table; per-format hooks from `IFormatModule` |
+| Dry run report, schedule, audit, respects legal hold | Background worker; write gate aware |
+
+### P7 — Vulnerability scanning (D7)
+
+| Item | Note |
+|---|---|
+| OSV client (online + optional offline mirror), scan on deploy and on schedule, results table, policies per repo/project: warn, block download, block deploy by severity | Reuses the existing `PackageVulnerability` model for NuGet's VulnerabilityInfo resource |
+| Docker: optional Trivy integration (configured path or server URL) | Unscanned images marked |
+| UI: per package/version findings, repository dashboard | |
+
+### P8 — Admin REST API
+
+| Item | Note |
+|---|---|
+| `/api/v1/…` for repositories, projects, users, groups, permission targets, tokens, retention, scans, replication; OpenAPI document | Same authorization as P2 (Manage). Versioned, paged. |
+
+### P9 — Replication
+
+| Item | Note |
+|---|---|
+| Push (on deploy and scheduled) and pull replication between BaGet instances per repository; delete propagation optional; resumable; conflict = target wins unless configured | Uses P8's API + format protocols. Replication log table |
+
+### P10 — High availability (D6)
+
+| Item | Note |
+|---|---|
+| Data protection keys persisted to the DB; Redis (`IDistributedCache`, Redis locks) for rate limiters, the maintenance gate, copy status, telemetry status, retention/replication job leases | Every B4 singleton becomes shared or explicitly per node |
+| Background workers run once cluster-wide (leases) | |
+| Startup refuses HA mode with SQLite or FileSystem storage | |
+| Health endpoints (`/health/live`, `/health/ready`) for load balancers | |
+
+## Verification
+
+| # | Check | Expected |
+|---|---|---|
+| 1 | Upgrade (B7) | A pre-upgrade database and store serve unchanged at `/`. Existing API keys, owners and URLs work. The mirror becomes remote + virtual |
+| 2 | Each phase | Full suite green, 0 warnings, each format's real CLI tests (B6) green |
+| 3 | Multi-repo isolation | Same id/version in two repos are independent: push, delete, search, catalog |
+| 4 | Permissions | Matrix test: every route × action × (anonymous, reader, deployer, project admin, admin) |
+| 5 | Private read | `dotnet restore`, `npm install`, `mvn`, `docker pull` succeed with credentials and get 401 without them |
+| 6 | Remote / virtual | Upstream down: cached artifacts still served; first-hit order respected |
+| 7 | Docker large layer | 5 GB push and pull with bounded memory (B2) |
+| 8 | Retention | Dry run equals actual deletion; nothing outside the policy touched |
+| 9 | Scanning | Known-vulnerable package flagged; blocking policy returns 403 with reason |
+| 10 | Replication | Push/pull converges after interruption |
+| 11 | HA | Two nodes behind a balancer: sign-in, rate limits, gate, jobs run once; kill a node mid-push |
+
+## Risks
+
+| Risk | Handling |
+|---|---|
+| Scope (multi-month) | Phase gating: each phase ships and is reviewed alone; stop after any phase with a working product |
+| Breaking existing installs | D2 + B7 upgrade test is a merge gate for P0 |
+| Permission bypass on a forgotten route | Deny-by-default endpoint filter: a route with no declared action requirement fails a startup check |
+| OCI conformance gaps | Run the official conformance suite in CI (P5) |
+| Storage providers without streaming append | B2. A provider that can't is refused for Docker repositories |
+| Four DB providers × many migrations | Each phase's migrations generated and verified on all four (CLAUDE.md *Migrations*); engine tests (`BaGet.Database.Tests`) extended |
+| Licensing of vulnerability data | B5; attribution in docs/UI |
+| EF 9 pin (Pomelo) | No phase may raise EF; Redis/OCI libraries checked against the `Microsoft.Extensions` 9.0.21 pin like OpenTelemetry was |
+
+## Out of scope
+
+- Other Artifactory formats (PyPI, Go, Helm, Conan, generic, Terraform, …). The format layer (P3) makes them additive later.
+- Xray-grade binary/license analysis beyond OSV and Trivy; JFrog Distribution / release bundles; build info and AQL.
+- Federated (multi-site active-active) repositories: replication (P9) covers push/pull only.
