@@ -16,8 +16,15 @@ namespace BaGet.Tests;
 /// see also <see cref="NuGetV2ClientIntegrationTests"/>, which drives NuGet's own
 /// V2 client against it.
 /// </summary>
-public class V2FeedIntegrationTests : IDisposable
+/// <summary>
+/// Abstract: runs against the default repository at <c>/</c> (<see cref="V2FeedIntegrationTests"/>) and a second one at
+/// <c>/r/second/</c> (<see cref="V2FeedIntegrationTestsSecondRepository"/>); the tests are identical.
+/// </summary>
+public abstract class V2FeedIntegrationTestsBase : IDisposable
 {
+    private readonly string? _repository;
+    private readonly string _prefix;
+
     private static readonly XNamespace Atom = "http://www.w3.org/2005/Atom";
     private static readonly XNamespace DataServices = "http://schemas.microsoft.com/ado/2007/08/dataservices";
 
@@ -25,10 +32,17 @@ public class V2FeedIntegrationTests : IDisposable
     private readonly HttpClient _client;
     private readonly Stream? _packageStream;
 
-    public V2FeedIntegrationTests(ITestOutputHelper output)
+    protected V2FeedIntegrationTestsBase(ITestOutputHelper output, string? repository)
     {
+        _repository = repository;
+        _prefix = repository == null ? "" : $"r/{repository}/";
         _app = new BaGetApplication(output);
+        if (repository != null)
+        {
+            _app.CreateRepositoryAsync(repository).GetAwaiter().GetResult();
+        }
         _client = _app.CreateDefaultClient();
+        _client.BaseAddress = new Uri(_client.BaseAddress!, _prefix);
         _packageStream = TestResources.GetResourceStream(TestResources.Package);
     }
 
@@ -89,7 +103,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task FindPackagesByIdReturnsEveryVersion()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'", cancellationToken);
 
@@ -104,7 +118,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task FindPackagesByIdAcceptsAnUnquotedId()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/FindPackagesById()?id=TestData", cancellationToken);
 
@@ -125,7 +139,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task AnEntryPointsAtADownloadablePackage()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var feed = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'", cancellationToken);
         var entry = Entries(await feed.Content.ReadAsStringAsync(cancellationToken)).Single();
@@ -144,7 +158,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task TheLatestVersionFlagsAreSet()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'", cancellationToken);
         var entry = Entries(await response.Content.ReadAsStringAsync(cancellationToken)).Single();
@@ -159,7 +173,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task PackagesByKeyReturnsOneEntry()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/Packages(Id='TestData',Version='1.2.3')", cancellationToken);
 
@@ -175,7 +189,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task PackagesByKeyIsNotFoundForAnUnknownVersion()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/Packages(Id='TestData',Version='9.9.9')", cancellationToken);
 
@@ -186,7 +200,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task SearchFindsAPushedPackage()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/Search()?searchTerm=''&includePrerelease=false", cancellationToken);
 
@@ -202,7 +216,7 @@ public class V2FeedIntegrationTests : IDisposable
     public async Task PackagesListsWhatTheFeedHolds()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         using var response = await _client.GetAsync("api/v2/Packages()", cancellationToken);
 
@@ -228,6 +242,10 @@ public class V2FeedIntegrationTests : IDisposable
         _app?.Dispose();
     }
 }
+
+public class V2FeedIntegrationTests(ITestOutputHelper output) : V2FeedIntegrationTestsBase(output, null);
+
+public class V2FeedIntegrationTestsSecondRepository(ITestOutputHelper output) : V2FeedIntegrationTestsBase(output, "second");
 
 /// <summary>
 /// The V2 feed with "Feeds:EnableV2" switched off.

@@ -15,8 +15,15 @@ namespace BaGet.Tests;
 /// <summary>
 /// Uses the official NuGet client to interact with the BaGet test host.
 /// </summary>
-public class NuGetClientIntegrationTests : IDisposable
+/// <summary>
+/// Abstract: runs against the default repository at <c>/</c> (<see cref="NuGetClientIntegrationTests"/>) and a second one at
+/// <c>/r/second/</c> (<see cref="NuGetClientIntegrationTestsSecondRepository"/>); the tests are identical.
+/// </summary>
+public abstract class NuGetClientIntegrationTestsBase : IDisposable
 {
+    private readonly string? _repositoryName;
+    private readonly string _prefix;
+
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
 
@@ -27,13 +34,19 @@ public class NuGetClientIntegrationTests : IDisposable
     private readonly NuGet.Common.ILogger _logger;
     private readonly CancellationToken _cancellationToken;
 
-    public NuGetClientIntegrationTests(ITestOutputHelper output)
+    protected NuGetClientIntegrationTestsBase(ITestOutputHelper output, string? repository)
     {
+        _repositoryName = repository;
+        _prefix = repository == null ? "" : $"r/{repository}/";
         _app = new BaGetApplication(output);
+        if (repository != null)
+        {
+            _app.CreateRepositoryAsync(repository).GetAwaiter().GetResult();
+        }
         _client = _app.CreateDefaultClient();
         _packageStream = TestResources.GetResourceStream(TestResources.Package);
 
-        var sourceUri = new Uri(_app.Server.BaseAddress, "v3/index.json");
+        var sourceUri = new Uri(_app.Server.BaseAddress, _prefix + "v3/index.json");
         var packageSource = new PackageSource(sourceUri.AbsoluteUri);
         var providers = new List<Lazy<INuGetResourceProvider>>();
 
@@ -53,7 +66,8 @@ public class NuGetClientIntegrationTests : IDisposable
         var index = await _repository.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken);
 
         #pragma warning disable CS8602
-        Assert.Equal(17, index.Entries.Count);
+        // The package-page templates (3 entries) point at the web UI, which only the default repository has.
+        Assert.Equal(_repositoryName == null ? 17 : 14, index.Entries.Count);
         #pragma warning restore CS8602
 
         Assert.NotEmpty(index.GetServiceEntries("PackageBaseAddress/3.0.0"));
@@ -62,15 +76,15 @@ public class NuGetClientIntegrationTests : IDisposable
         Assert.NotEmpty(index.GetServiceEntries("SearchAutocompleteService"));
         Assert.NotEmpty(index.GetServiceEntries("SearchQueryService"));
         Assert.NotEmpty(index.GetServiceEntries("SymbolPackagePublish/4.9.0"));
-        Assert.NotEmpty(index.GetServiceEntries("PackageDetailsUriTemplate/5.1.0"));
-        Assert.NotEmpty(index.GetServiceEntries("ReportAbuseUriTemplate/3.0.0-rc"));
+        Assert.Equal(_repositoryName == null, index.GetServiceEntries("PackageDetailsUriTemplate/5.1.0").Count > 0);
+        Assert.Equal(_repositoryName == null, index.GetServiceEntries("ReportAbuseUriTemplate/3.0.0-rc").Count > 0);
     }
 
     [Fact]
     public async Task SearchReturnsResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<PackageSearchResource>(cancellationToken);
         var searchFilter = new SearchFilter(includePrerelease: true);
@@ -124,7 +138,7 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task AutocompleteReturnsResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<AutoCompleteResource>(cancellationToken);
         #pragma warning disable CS8602
@@ -160,7 +174,7 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task VersionListReturnsResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
         #pragma warning disable CS8602
@@ -199,7 +213,7 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task PackageExistsWorks(string packageId, string packageVersion, bool exists)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var version = NuGetVersion.Parse(packageVersion);
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
@@ -222,7 +236,7 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task PackageDownloadWorks(string packageId, string packageVersion, bool exists)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         using var packageStream = new MemoryStream();
 
@@ -248,7 +262,7 @@ public class NuGetClientIntegrationTests : IDisposable
     public async Task PackageMetadataReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<PackageMetadataResource>(cancellationToken);
         #pragma warning disable CS8602
@@ -295,3 +309,7 @@ public class NuGetClientIntegrationTests : IDisposable
         _cache.Dispose();
     }
 }
+
+public class NuGetClientIntegrationTests(ITestOutputHelper output) : NuGetClientIntegrationTestsBase(output, null);
+
+public class NuGetClientIntegrationTestsSecondRepository(ITestOutputHelper output) : NuGetClientIntegrationTestsBase(output, "second");

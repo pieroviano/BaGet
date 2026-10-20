@@ -21,8 +21,15 @@ namespace BaGet.Tests;
 /// that the hand-written OData feed is shaped the way a real client expects, rather
 /// than merely being well-formed XML.
 /// </summary>
-public class NuGetV2ClientIntegrationTests : IDisposable
+/// <summary>
+/// Abstract: runs against the default repository at <c>/</c> (<see cref="NuGetV2ClientIntegrationTests"/>) and a second one at
+/// <c>/r/second/</c> (<see cref="NuGetV2ClientIntegrationTestsSecondRepository"/>); the tests are identical.
+/// </summary>
+public abstract class NuGetV2ClientIntegrationTestsBase : IDisposable
 {
+    private readonly string? _repositoryName;
+    private readonly string _prefix;
+
     private readonly BaGetApplication _app;
     private readonly HttpClient _client;
     private readonly Stream? _packageStream;
@@ -32,14 +39,20 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     private readonly NuGet.Common.ILogger _logger;
     private readonly CancellationToken _cancellationToken;
 
-    public NuGetV2ClientIntegrationTests(ITestOutputHelper output)
+    protected NuGetV2ClientIntegrationTestsBase(ITestOutputHelper output, string? repository)
     {
+        _repositoryName = repository;
+        _prefix = repository == null ? "" : $"r/{repository}/";
         _app = new BaGetApplication(output);
+        if (repository != null)
+        {
+            _app.CreateRepositoryAsync(repository).GetAwaiter().GetResult();
+        }
         _client = _app.CreateDefaultClient();
         _packageStream = TestResources.GetResourceStream(TestResources.Package);
 
         // A V2 source is the feed root, not a service index.
-        var sourceUri = new Uri(_app.Server.BaseAddress, "api/v2");
+        var sourceUri = new Uri(_app.Server.BaseAddress, _prefix + "api/v2");
         var packageSource = new PackageSource(sourceUri.AbsoluteUri);
 
         var providers = new List<Lazy<INuGetResourceProvider>>
@@ -58,7 +71,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     public async Task TheClientListsEveryVersionOfAPackage()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
         #pragma warning disable CS8602
@@ -85,7 +98,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     public async Task TheClientReadsADependencyGroup()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
         #pragma warning disable CS8602
@@ -101,7 +114,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     public async Task TheClientDownloadsThePackage()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
 
@@ -124,7 +137,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     public async Task TheClientSearches()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repositoryName);
 
         var resource = await _repository.GetResourceAsync<PackageSearchResource>(_cancellationToken);
         #pragma warning disable CS8602
@@ -147,3 +160,7 @@ public class NuGetV2ClientIntegrationTests : IDisposable
         _app?.Dispose();
     }
 }
+
+public class NuGetV2ClientIntegrationTests(ITestOutputHelper output) : NuGetV2ClientIntegrationTestsBase(output, null);
+
+public class NuGetV2ClientIntegrationTestsSecondRepository(ITestOutputHelper output) : NuGetV2ClientIntegrationTestsBase(output, "second");

@@ -12,8 +12,15 @@ namespace BaGet.Tests;
 /// <summary>
 /// Uses BaGet's client SDK to interact with the BaGet test host.
 /// </summary>
-public class BaGetClientIntegrationTests : IDisposable
+/// <summary>
+/// Abstract: runs against the default repository at <c>/</c> (<see cref="BaGetClientIntegrationTests"/>) and a second one at
+/// <c>/r/second/</c> (<see cref="BaGetClientIntegrationTestsSecondRepository"/>); the tests are identical.
+/// </summary>
+public abstract class BaGetClientIntegrationTestsBase : IDisposable
 {
+    private readonly string? _repository;
+    private readonly string _prefix;
+
     private readonly BaGetApplication _app;
     private readonly HttpClient _httpClient;
     private readonly NuGetClientFactory _clientFactory;
@@ -21,11 +28,17 @@ public class BaGetClientIntegrationTests : IDisposable
 
     private readonly Stream? _packageStream;
 
-    public BaGetClientIntegrationTests(ITestOutputHelper output)
+    protected BaGetClientIntegrationTestsBase(ITestOutputHelper output, string? repository)
     {
+        _repository = repository;
+        _prefix = repository == null ? "" : $"r/{repository}/";
         _app = new BaGetApplication(output);
+        if (repository != null)
+        {
+            _app.CreateRepositoryAsync(repository).GetAwaiter().GetResult();
+        }
 
-        var serviceIndexUrl = new Uri(_app.Server.BaseAddress, "v3/index.json");
+        var serviceIndexUrl = new Uri(_app.Server.BaseAddress, _prefix + "v3/index.json");
 
         _httpClient = _app.CreateClient();
         _clientFactory = new NuGetClientFactory(_httpClient, serviceIndexUrl.AbsoluteUri);
@@ -43,7 +56,8 @@ public class BaGetClientIntegrationTests : IDisposable
 
         #pragma warning disable CS8602
         Assert.Equal("3.0.0", index.Version);
-        Assert.Equal(17, index.Resources.Count);
+        // The package-page templates (3 entries) point at the web UI, which only the default repository has.
+        Assert.Equal(_repository == null ? 17 : 14, index.Resources.Count);
         #pragma warning restore CS8602
 
         #pragma warning disable CS8604
@@ -52,8 +66,8 @@ public class BaGetClientIntegrationTests : IDisposable
         Assert.NotEmpty(index.GetResourceUrl(new[] { "RegistrationsBaseUrl" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SearchAutocompleteService" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SearchQueryService" }));
-        Assert.NotEmpty(index.GetResourceUrl(new[] { "PackageDetailsUriTemplate/5.1.0" }));
-        Assert.NotEmpty(index.GetResourceUrl(new[] { "ReportAbuseUriTemplate/3.0.0-rc" }));
+        Assert.Equal(_repository == null, !string.IsNullOrEmpty(index.GetResourceUrl(new[] { "PackageDetailsUriTemplate/5.1.0" })));
+        Assert.Equal(_repository == null, !string.IsNullOrEmpty(index.GetResourceUrl(new[] { "ReportAbuseUriTemplate/3.0.0-rc" })));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SymbolPackagePublish/4.9.0" }));
         #pragma warning restore CS8604
     }
@@ -62,7 +76,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task SearchReturnsResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         var results = await _client.SearchAsync(cancellationToken: cancellationToken);
 
@@ -97,7 +111,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task AutocompleteReturnsResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         #pragma warning disable CS8602
         var results = await _client.AutocompleteAsync(cancellationToken: cancellationToken);
@@ -127,7 +141,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task AutocompleteVersions()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         var client = _clientFactory.CreateAutocompleteClient();
         var results = await client.ListPackageVersionsAsync("TestData", cancellationToken: cancellationToken);
@@ -157,7 +171,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task VersionListReturnsResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         var versions = await _client.ListPackageVersionsAsync("TestData", cancellationToken);
 
@@ -182,7 +196,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task PackageDownloadWorks(string? packageId, string packageVersion, bool exists)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         try
         {
@@ -210,7 +224,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task ManifestDownloadWorks(string packageId, string packageVersion, bool exists)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         try
         {
@@ -235,7 +249,7 @@ public class BaGetClientIntegrationTests : IDisposable
     public async Task PackageMetadataReturnsOk()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
         var packages = await _client.GetPackageMetadataAsync("TestData", cancellationToken);
 
@@ -263,3 +277,7 @@ public class BaGetClientIntegrationTests : IDisposable
         _httpClient.Dispose();
     }
 }
+
+public class BaGetClientIntegrationTests(ITestOutputHelper output) : BaGetClientIntegrationTestsBase(output, null);
+
+public class BaGetClientIntegrationTestsSecondRepository(ITestOutputHelper output) : BaGetClientIntegrationTestsBase(output, "second");
