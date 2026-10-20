@@ -673,26 +673,54 @@ no longer read.
 ## Telemetry
 
 Off by default. The server emits traces and metrics with `System.Diagnostics` (`ActivitySource` / `Meter` named `BaGet`);
-nothing is exported until `Telemetry:Enabled` is true and an endpoint is set. Keys (all apply without a restart):
+the host exports them over OTLP (OpenTelemetry) only while `Telemetry:Enabled` is true and an endpoint is set. Logs go
+out through a Serilog sink. Keys apply **without a restart**, except `ServiceName` and `Metrics:ExportInterval`
+(read at startup):
 
 | Key | Default | Meaning |
 |---|---|---|
-| `Telemetry:Enabled` | `false` | Master switch |
-| `Telemetry:ServiceName` | `baget` | `service.name` of every signal |
-| `Telemetry:Otlp:Endpoint` | empty | Absolute http(s) collector URL, for example `http://jaeger:4317`; empty = no traces |
-| `Telemetry:Otlp:Protocol` | `Grpc` | `Grpc` (4317) or `HttpProtobuf` (4318) |
-| `Telemetry:Otlp:Headers` | empty | `key=value,...` request headers (sensitive: masked on the Settings page) |
+| `Telemetry:Enabled` | `false` | Master switch. Off: spans are not recorded, nothing is queued, no connection is made |
+| `Telemetry:ServiceName` | `baget` | `service.name` of every signal (restart) |
+| `Telemetry:Otlp:Endpoint` | empty | Traces collector, absolute http(s) URL, for example `http://jaeger:4317`; empty = no traces |
+| `Telemetry:Otlp:Protocol` | `Grpc` | `Grpc` (port 4317) or `HttpProtobuf` (4318; `/v1/traces`, `/v1/metrics`, `/v1/logs` is appended) |
+| `Telemetry:Otlp:Headers` | empty | `key=value,...` request headers, for an API key (sensitive: masked on the Settings page, never logged or shown) |
 | `Telemetry:Otlp:Timeout` | `00:00:10` | Per-export timeout |
-| `Telemetry:Traces:Enabled` / `SamplingRatio` / `Database` | `true` / `1.0` (0 to 1) / `true` | Trace export, share of new traces kept, database command spans |
-| `Telemetry:Metrics:Endpoint` / `ExportInterval` | empty / `00:01:00` | Metrics collector (empty = not exported) and period |
+| `Telemetry:Traces:Enabled` / `SamplingRatio` / `Database` | `true` / `1.0` (0 to 1) / `true` | Trace export, share of new traces kept (a trace sampled upstream is kept), database command spans |
+| `Telemetry:Metrics:Endpoint` / `ExportInterval` | empty / `00:01:00` | Metrics collector (empty = not exported) and period (restart) |
 | `Telemetry:Logs:Endpoint` / `MinimumLevel` | empty / `Information` | Logs collector (empty = not exported) and lowest Serilog level |
 
 An invalid endpoint (not absolute http or https), protocol, level, a sampling ratio outside 0 to 1 or a non-positive
 duration stops the server at startup.
 
-Spans: `package.index`, `package.validate`, `mirror.fetch`, `database.copy` (one `database.copy.table` child per table).
-Counters: `baget.packages.pushed`, `baget.downloads`, `baget.validation.results`. Tags hold package id and version,
-result, table names and row counts, never API keys, connection strings, user names or email addresses.
+**Jaeger** accepts traces only (its OTLP receiver answers `Unimplemented` to metrics and logs), so metrics and logs have
+their own endpoints, for example an OpenTelemetry Collector. A typical setup:
+
+```
+Telemetry__Enabled=true
+Telemetry__Otlp__Endpoint=http://jaeger:4317
+```
+
+A push then shows in Jaeger (UI on 16686) as one trace: the ASP.NET Core request, `package.index`, and the database commands.
+See the [Docker example](installation/docker.md#tracing-with-jaeger).
+
+**Traced:** incoming requests (static files excluded), outgoing HTTP calls (mirror, upstream), database commands
+(`Telemetry:Traces:Database`; SQL text is never recorded), the spans `package.index`, `package.validate`, `mirror.fetch`,
+`database.copy` (one `database.copy.table` child per table). **Metrics:** `baget.packages.pushed`, `baget.downloads`,
+`baget.validation.results`, plus ASP.NET Core, HTTP client and .NET runtime metrics.
+
+**Never exported:** query-string values (the instrumentation records `apikey=Redacted`), request headers (such as
+`X-NuGet-ApiKey`), connection strings, user names or email addresses; the OTLP `Headers` value. Logs reach the collector
+exactly as Serilog would write them, so the `Microsoft.AspNetCore.Hosting.Diagnostics` Warning floor still keeps request
+URLs out; each log event carries `TraceId` / `SpanId` of the request it was written in.
+
+**Never blocks, never throws into a request.** Spans wait in a bounded queue (2048) and are dropped when the collector is
+down; export runs on a background thread with the `Otlp:Timeout`. Failures are kept in `TelemetryStatus` (per signal: last
+attempt, last success, failing since, scrubbed last error without headers or URL paths). `TelemetryConnectionTester`
+sends one test span to the settings given, saving nothing.
+
+Changing the endpoint, protocol, headers or timeout rebuilds the exporter in place; the old one finishes its running export
+first and no queued span is lost. Any configuration reload fires this check, but an exporter whose settings did not change
+is kept.
 
 ## Settings page
 

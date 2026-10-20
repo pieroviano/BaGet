@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1523 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (749),
+Baseline: **1548 tests** across `BaGet.Core.Tests` (493), `BaGet.Tests` (774),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -168,6 +168,33 @@ listener, so spans cost nothing. Spans: `package.index` (`PackageIndexingService
 records the exception type only (`Fail`). `TelemetryOptions` (`Telemetry:*`, not `[RestartRequired]`) validates itself
 (`Validate()`, called from `ConfigureBaGetOptions`). Tests listen with `DiagnosticsCapture` (linked into `BaGet.Tests`);
 the sources are process-wide, so tests that count measurements join its `Diagnostics` collection (runs alone).
+
+**Export (host only, `src/BaGet/Telemetry`).** `AddBaGetTelemetry` (called from `BuildApplication` next to `ConfigureLogging`)
+always builds the providers; whether anything is exported is decided live from `IOptionsMonitor<TelemetryOptions>`
+(`AddBaGetOptions` has no change token, so it registers a `ConfigurationChangeTokenSource` for `Telemetry`):
+`DynamicSampler` drops everything unless `Enabled` and a traces endpoint are set, then `ParentBased(TraceIdRatio)`;
+`ReloadableTraceExporter` / `ReloadableMetricExporter` (`ReloadableExporter<T>`) and `ReloadableOpenTelemetrySink` hold the
+real OTLP exporter in a `SwappableHolder<T>` (lease counted: a swap never waits for or cuts an export, the old exporter is
+disposed once after its last lease, `ForceFlush` / `Shutdown` reach the current one) and rebuild only when
+`TelemetryEndpoints.Key` changes (endpoint, protocol, headers, timeout, level), since every configuration reload fires
+`OnChange`. Off = no inner exporter, no connection. Logs are a Serilog sink (added in `ConfigureLogging`), **not** an
+`ILoggerProvider` (`writeToProviders` would export each event twice); it carries `TraceId`/`SpanId`, applies
+`Logs:MinimumLevel`, ignores `Grpc.Net.Client` / `System.Net.Http` events (feedback loop) and sees only what the Serilog
+levels let through. Traces use `Otlp:Endpoint`; metrics and logs only their own endpoint (Jaeger takes traces only); with
+`HttpProtobuf` `/v1/<signal>` is appended. Queue bounded (2048, `TelemetryServiceCollectionExtensions.MaxTraceQueueSize`).
+`TelemetryStatus` (per signal: last attempt/success, failing since, scrubbed error) is fed by the exporters
+(`ExportStatusHandler` for logs); every message goes through `TelemetryStatus.Scrub` (URLs cut to host, header values
+replaced). `TelemetryConnectionTester` exports one synthetic span with explicit settings. **Privacy:** the ASP.NET Core
+instrumentation redacts `url.query` values and records no headers, EF records no SQL text; never add an `Enrich` copying
+either (`TelemetryExportTests.NeitherQueryValuesNorHeadersReach...`). **SDK quirks:** `BaseExporter.ParentProvider` (the
+resource) has an internal setter, so `ReloadableExporter.Adopt` sets it by reflection on the inner exporter, and the batch
+processor's `DroppedCount` is read by reflection; both degrade (empty resource, 0) if the SDK changes. Versions are levers in
+`src/Directory.Build.props` (`OpenTelemetryPackageVersion` 1.20.0 needs Options/Configuration 10.0.0, which restores cleanly
+beside the 9.0.21 pins because the Web SDK shared framework supplies them; 1.13.x would avoid that but has known
+vulnerabilities; `OpenTelemetry.Instrumentation.EntityFrameworkCore` exists only as prerelease, `1.20.0-beta.1`, and is
+behind the live `Traces:Database`). Tests: `InMemoryTelemetry` (replaces `ITelemetryExporterFactory` through the harness's
+`configureServices`; telemetry is off in the harness unless a test enables it, saving through `SettingsService` so the
+reload path is the Settings page's), `FakeOtlpCollector` (real exporters over HTTP, no Docker), `ReloadableExporterTests`.
 
 ### Tests
 

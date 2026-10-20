@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
 using BaGet.Identity;
+using BaGet.Telemetry;
 using BaGet.Web;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Builder;
@@ -229,6 +230,7 @@ public partial class Program
 
         var overridesPath = ConfigureConfiguration(builder.Configuration, builder.Environment);
         ConfigureLogging(builder);
+        builder.Services.AddBaGetTelemetry(builder.Configuration);
         ConfigureWebHost(builder.WebHost);
         ConfigureServices(builder.Services, builder.Configuration, overridesPath);
 
@@ -299,6 +301,8 @@ public partial class Program
     /// several hosts in one process, and a frozen static logger would throw on the second. Each host gets
     /// its own logger, disposed with it. <c>writeToProviders</c> keeps any <c>ILoggerProvider</c> a
     /// host registers explicitly (the tests' capturing providers) fed as well.
+    /// OpenTelemetry log export is one more Serilog sink (<see cref="BaGet.Telemetry.ReloadableOpenTelemetrySink"/>), not an <c>ILoggerProvider</c>, which
+    /// <c>writeToProviders</c> would feed twice.
     /// </remarks>
     private static void ConfigureLogging(WebApplicationBuilder builder)
     {
@@ -321,6 +325,9 @@ public partial class Program
                     .ReadFrom.Services(services)
                     .Enrich.FromLogContext();
                 AddEventLogSink(loggerConfiguration, configuration);
+                // A Serilog sink, not an ILoggerProvider: writeToProviders would deliver each event to a provider twice.
+                // Idle (returns at once) until Telemetry:Logs:Endpoint is set; carries TraceId/SpanId.
+                loggerConfiguration.WriteTo.Sink(services.GetRequiredService<ReloadableOpenTelemetrySink>());
             },
             preserveStaticLogger: true,
             writeToProviders: true);

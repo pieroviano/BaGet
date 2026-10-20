@@ -69,6 +69,34 @@ dotnet nuget push -s http://localhost:5555/v3/index.json -k NUGET-SERVER-API-KEY
 !!! info
     On a server with no users, the first start creates the administrator `Admin` / `Admin1234!` (`Accounts:CreateDefaultAdministrator`); change that password at once. See [Administrators](../configuration.md#administrators).
 
+## Tracing with Jaeger
+
+To see each request, push and database call as a trace, run [Jaeger](https://www.jaegertracing.io) next to BaGet Extension and
+point it at Jaeger's OTLP port (see [Telemetry](../configuration.md#telemetry)):
+
+```yaml
+services:
+  baget:
+    image: <your BaGet Extension image>
+    ports:
+      - "5555:80"
+    environment:
+      - Telemetry__Enabled=true
+      - Telemetry__Otlp__Endpoint=http://jaeger:4317
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"   # UI: http://localhost:16686
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+```
+
+Jaeger takes traces only: for metrics and logs set `Telemetry__Metrics__Endpoint` / `Telemetry__Logs__Endpoint` to an
+OpenTelemetry Collector instead. The same keys can be changed live on the Settings page.
+
 ## Browse packages
 
 You can browse packages by opening the URL [`http://localhost:5555/`](http://localhost:5555/) in your browser.

@@ -67,6 +67,12 @@
     <SerilogSinksConsolePackageVersion>6.1.1</SerilogSinksConsolePackageVersion>
     <SerilogSinksFilePackageVersion>7.0.0</SerilogSinksFilePackageVersion>
     <SerilogSinksEventLogPackageVersion>4.0.0</SerilogSinksEventLogPackageVersion>
+    <!-- OpenTelemetry export in the host (src/BaGet) only. 1.20.x depends on Microsoft.Extensions.Options/Configuration 10.0.0, which
+         restores cleanly next to the 9.0.21 pins because the Web SDK shared framework supplies them (checked: no NU1605/NU1608/NU1107).
+         The 1.13 line avoids that but carries known vulnerabilities (NU1902). The EF Core instrumentation is prerelease only. -->
+    <OpenTelemetryPackageVersion>1.20.0</OpenTelemetryPackageVersion>
+    <OpenTelemetryEntityFrameworkCorePackageVersion>1.20.0-beta.1</OpenTelemetryEntityFrameworkCorePackageVersion>
+    <SerilogSinksOpenTelemetryPackageVersion>4.2.0</SerilogSinksOpenTelemetryPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == ''">
