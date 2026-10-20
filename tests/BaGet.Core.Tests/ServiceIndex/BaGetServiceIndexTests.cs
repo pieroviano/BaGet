@@ -44,6 +44,19 @@ public class BaGetServiceIndexTests
     }
 
     [Fact]
+    public async Task ATemplateTheRepositoryCannotServeIsLeftOut()
+    {
+        _url.Setup(u => u.GetPackageDetailsUriTemplate()).Returns((string?)null);
+        _url.Setup(u => u.GetReportAbuseUriTemplate()).Returns((string?)null);
+
+        var types = (await Types()!)!;
+
+        Assert.DoesNotContain(types, t => t!.StartsWith("PackageDetailsUriTemplate"));
+        Assert.DoesNotContain(types, t => t!.StartsWith("ReportAbuseUriTemplate"));
+        Assert.Contains("SearchQueryService", types);
+    }
+
+    [Fact]
     public async Task TheVersionIsThree()
     {
         var response = await _target.GetAsync(CancellationToken.None);

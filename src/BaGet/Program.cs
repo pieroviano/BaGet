@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.IO;
 using System.Linq;
@@ -599,6 +599,9 @@ public partial class Program
 
         app.UseStaticFiles();
         app.UseRouting();
+
+        // Before authentication: /r/{repo}/ selects the repository every later query is filtered by.
+        app.UseRepositoryResolution();
 
         app.UseCors(ConfigureBaGetOptions.CorsPolicy);
         app.UseAuthentication();

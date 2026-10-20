@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -6,8 +6,32 @@ using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace BaGet;
 
+/// <summary>
+/// Maps every endpoint. Each protocol route (everything but the Razor Pages) is registered twice: at its plain
+/// path, which serves the <c>default</c> repository, and under <c>r/{repo}/</c>, which serves the named one
+/// (<see cref="Routes.RepositoryPathPrefix"/>). <see cref="RepositoryResolutionMiddleware"/> turns the route value
+/// into <see cref="BaGet.Core.IRepositoryContext"/>, and <see cref="BaGetUrlGenerator"/> picks the matching variant.
+/// </summary>
 public class BaGetEndpointBuilder
 {
+    /// <summary>
+    /// The one place that registers a protocol route, so no endpoint can exist for the default repository only.
+    /// </summary>
+    private static void MapRoute(
+        IEndpointRouteBuilder endpoints,
+        string name,
+        string pattern,
+        object defaults,
+        object? constraints = null)
+    {
+        endpoints.MapControllerRoute(name, pattern, defaults, constraints);
+        endpoints.MapControllerRoute(
+            Routes.RepositoryRouteName(name),
+            Routes.RepositoryPathPrefix + pattern,
+            defaults,
+            constraints);
+    }
+
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         endpoints.MapRazorPages();
@@ -31,19 +55,22 @@ public class BaGetEndpointBuilder
     /// </summary>
     public void MapPackageMetadataAdminRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.SetDeprecationRouteName,
             pattern: "v3/package/{id}/{version}/deprecation",
             defaults: new { controller = "PackageMetadataAdmin", action = "SetDeprecation" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.RemoveDeprecationRouteName,
             pattern: "v3/package/{id}/{version}/deprecation",
             defaults: new { controller = "PackageMetadataAdmin", action = "RemoveDeprecation" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.SetVulnerabilitiesRouteName,
             pattern: "v3/package/{id}/{version}/vulnerabilities",
             defaults: new { controller = "PackageMetadataAdmin", action = "SetVulnerabilities" },
@@ -52,19 +79,22 @@ public class BaGetEndpointBuilder
 
     public void MapValidationRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.RepositorySignaturesRouteName,
             pattern: "v3/repository-signatures/index.json",
             defaults: new { controller = "RepositorySignatures", action = "Index" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.RepositorySigningCertificateRouteName,
             pattern: "v3/repository-signatures/{fingerprint}.crt",
             defaults: new { controller = "RepositorySignatures", action = "Certificate" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.ValidationStatusRouteName,
             pattern: "v3/package/{id}/{version}/validation",
             defaults: new { controller = "ValidationStatus", action = "Get" },
@@ -73,19 +103,22 @@ public class BaGetEndpointBuilder
 
     public void MapCatalogRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.CatalogIndexRouteName,
             pattern: "v3/catalog/index.json",
             defaults: new { controller = "Catalog", action = "Index" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.CatalogPageRouteName,
             pattern: "v3/catalog/page{pageIndex:int}.json",
             defaults: new { controller = "Catalog", action = "Page" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.CatalogLeafRouteName,
             pattern: "v3/catalog/data/{commitId}.json",
             defaults: new { controller = "Catalog", action = "Leaf" },
@@ -94,13 +127,15 @@ public class BaGetEndpointBuilder
 
     public void MapVulnerabilityRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.VulnerabilityIndexRouteName,
             pattern: "v3/vulnerabilities/index.json",
             defaults: new { controller = "Vulnerability", action = "Index" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.VulnerabilityPageRouteName,
             pattern: "v3/vulnerabilities/{pageName}.json",
             defaults: new { controller = "Vulnerability", action = "Page" },
@@ -114,25 +149,29 @@ public class BaGetEndpointBuilder
     /// </summary>
     public void MapV2FeedRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.V2RootRouteName,
             pattern: "api/v2",
             defaults: new { controller = "V2Feed", action = "Root" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.V2MetadataRouteName,
             pattern: "api/v2/$metadata",
             defaults: new { controller = "V2Feed", action = "Metadata" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.V2FindPackagesByIdRouteName,
             pattern: "api/v2/FindPackagesById()",
             defaults: new { controller = "V2Feed", action = "FindPackagesById" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.V2SearchRouteName,
             pattern: "api/v2/Search()",
             defaults: new { controller = "V2Feed", action = "Search" },
@@ -140,13 +179,15 @@ public class BaGetEndpointBuilder
 
         // The keyed form carries its values inside the segment, so it is matched by a
         // literal pattern per argument order rather than by route values.
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.V2PackagesByKeyRouteName,
             pattern: "api/v2/Packages(Id={id},Version={version})",
             defaults: new { controller = "V2Feed", action = "PackagesByKey" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.V2PackagesRouteName,
             pattern: "api/v2/Packages()",
             defaults: new { controller = "V2Feed", action = "Packages" },
@@ -155,7 +196,8 @@ public class BaGetEndpointBuilder
 
     public void MapServiceIndexRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.IndexRouteName,
             pattern: "v3/index.json",
             defaults: new { controller = "ServiceIndex", action = "Get" });
@@ -163,19 +205,22 @@ public class BaGetEndpointBuilder
 
     public void MapPackagePublishRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.UploadPackageRouteName,
             pattern: "api/v2/package",
             defaults: new { controller = "PackagePublish", action = "Upload" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.DeleteRouteName,
             pattern: "api/v2/package/{id}/{version}",
             defaults: new { controller = "PackagePublish", action = "Delete" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.RelistRouteName,
             pattern: "api/v2/package/{id}/{version}",
             defaults: new { controller = "PackagePublish", action = "Relist" },
@@ -184,18 +229,21 @@ public class BaGetEndpointBuilder
 
     public void MapSymbolRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.UploadSymbolRouteName,
             pattern: "api/v2/symbol",
             defaults: new { controller = "Symbol", action = "Upload" },
             constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.SymbolDownloadRouteName,
             pattern: "api/download/symbols/{file}/{key}/{file2}",
             defaults: new { controller = "Symbol", action = "Get" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.PrefixedSymbolDownloadRouteName,
             pattern: "api/download/symbols/{prefix}/{file}/{key}/{file2}",
             defaults: new { controller = "Symbol", action = "Get" });
@@ -203,18 +251,21 @@ public class BaGetEndpointBuilder
 
     public void MapSearchRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.SearchRouteName,
             pattern: "v3/search",
             defaults: new { controller = "Search", action = "Search" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.AutocompleteRouteName,
             pattern: "v3/autocomplete",
             defaults: new { controller = "Search", action = "Autocomplete" });
 
         // This is an unofficial API to find packages that depend on a given package.
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.DependentsRouteName,
             pattern: "v3/dependents",
             defaults: new { controller = "Search", action = "Dependents" });
@@ -222,12 +273,14 @@ public class BaGetEndpointBuilder
 
     public void MapPackageMetadataRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.RegistrationIndexRouteName,
             pattern: "v3/registration/{id}/index.json",
             defaults: new { controller = "PackageMetadata", action = "RegistrationIndex" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.RegistrationLeafRouteName,
             pattern: "v3/registration/{id}/{version}.json",
             defaults: new { controller = "PackageMetadata", action = "RegistrationLeaf" });
@@ -235,27 +288,32 @@ public class BaGetEndpointBuilder
 
     public void MapPackageContentRoutes(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.PackageVersionsRouteName,
             pattern: "v3/package/{id}/index.json",
             defaults: new { controller = "PackageContent", action = "GetPackageVersions" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.PackageDownloadRouteName,
             pattern: "v3/package/{id}/{version}/{idVersion}.nupkg",
             defaults: new { controller = "PackageContent", action = "DownloadPackage" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.PackageDownloadManifestRouteName,
             pattern: "v3/package/{id}/{version}/{id2}.nuspec",
             defaults: new { controller = "PackageContent", action = "DownloadNuspec" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.PackageDownloadReadmeRouteName,
             pattern: "v3/package/{id}/{version}/readme",
             defaults: new { controller = "PackageContent", action = "DownloadReadme" });
 
-        endpoints.MapControllerRoute(
+        MapRoute(
+            endpoints,
             name: Routes.PackageDownloadIconRouteName,
             pattern: "v3/package/{id}/{version}/icon",
             defaults: new { controller = "PackageContent", action = "DownloadIcon" });

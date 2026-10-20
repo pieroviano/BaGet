@@ -21,4 +21,15 @@ public static class IApplicationBuilderExtensions
 
         return app.UseMiddleware<MaintenanceMiddleware>();
     }
+
+    /// <summary>
+    /// Select the repository of <c>/r/{repo}/</c> requests (404 for an unknown one). Call after <c>UseRouting</c> and
+    /// before authentication: see <see cref="RepositoryResolutionMiddleware"/>.
+    /// </summary>
+    public static IApplicationBuilder UseRepositoryResolution(this IApplicationBuilder app)
+    {
+        if (app == null) throw new ArgumentNullException(nameof(app));
+
+        return app.UseMiddleware<RepositoryResolutionMiddleware>();
+    }
 }

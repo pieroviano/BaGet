@@ -27,6 +27,7 @@ builder.Services.AddTransient(DependencyInjectionExtensions.GetServiceFromProvid
 var app = builder.Build();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRepositoryResolution();     // /r/{repo}/ selects the repository (404 if unknown); required, else /r/x would serve the default one
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseOperationCancelledMiddleware();
@@ -41,7 +42,8 @@ Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup
 | Item | Role |
 |---|---|
 | `AddBaGetWebApplication` | MVC, Razor Pages, `IUrlGenerator`, core services, catalog, validation; registers every BaGet controller assembly as an application part, so hosts without the Web SDK work |
-| `BaGetEndpointBuilder.MapEndpoints` | Maps the V3, V2, catalog and validation routes |
+| `BaGetEndpointBuilder.MapEndpoints` | Maps the V3, V2, catalog and validation routes, each at `/` (default repository) and `/r/{repo}/` |
+| `RepositoryResolutionMiddleware` | Turns the `{repo}` route value into `IRepositoryContext`; unknown repository: `404`, never the default |
 | `MaintenanceMiddleware` | Maps `MaintenanceException` (a write refused while `MaintenanceGate` in `Extension.BaGet.Core` is closed, e.g. during a database copy) to `503` + `Retry-After` |
 | `IUrlGenerator` | Builds every absolute URL the server returns |
 | `wwwroot` | Static files, served at `_content/BaGet.Web` |

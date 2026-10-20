@@ -47,8 +47,21 @@ public class BaGetServiceIndex : IServiceIndexService
         resources.AddRange(BuildResource("RegistrationsBaseUrl", _url.GetPackageMetadataResourceUrl(), "", "3.0.0-rc", "3.0.0-beta"));
         resources.AddRange(BuildResource("PackageBaseAddress", _url.GetPackageContentResourceUrl(), "3.0.0"));
         resources.AddRange(BuildResource("SearchAutocompleteService", _url.GetAutocompleteResourceUrl(), "", "3.0.0-rc", "3.0.0-beta"));
-        resources.AddRange(BuildResource("PackageDetailsUriTemplate", _url.GetPackageDetailsUriTemplate(), "5.1.0"));
-        resources.AddRange(BuildResource("ReportAbuseUriTemplate", _url.GetReportAbuseUriTemplate(), "3.0.0-beta", "3.0.0-rc"));
+
+        // The web pages these templates expand to show the default repository only; another repository's index
+        // leaves them out rather than send a client to a page of a different feed.
+        var detailsTemplate = _url.GetPackageDetailsUriTemplate();
+        if (detailsTemplate != null)
+        {
+            resources.AddRange(BuildResource("PackageDetailsUriTemplate", detailsTemplate, "5.1.0"));
+        }
+
+        var abuseTemplate = _url.GetReportAbuseUriTemplate();
+        if (abuseTemplate != null)
+        {
+            resources.AddRange(BuildResource("ReportAbuseUriTemplate", abuseTemplate, "3.0.0-beta", "3.0.0-rc"));
+        }
+
         resources.AddRange(BuildResource("VulnerabilityInfo", _url.GetVulnerabilityIndexUrl(), "6.7.0"));
 
         foreach (var provider in _providers)

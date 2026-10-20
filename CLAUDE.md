@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1616 tests** across `BaGet.Core.Tests` (521), `BaGet.Tests` (805),
+Baseline: **1678 tests** across `BaGet.Core.Tests` (522), `BaGet.Tests` (866),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -128,13 +128,26 @@ submission's repository itself. `IRepositoryService` finds/lists/creates (`Repos
 `EnsureDefaultAsync` creates the `default` row after migrations at startup and the copy carries it (so it must not be
 seeded by a migration: the copy target must be empty). Azure Table (`NullContext`) has the default repository only:
 `CreateAsync` and `TablePackageDatabase` refuse others. The mirror serves `default` only (`UpstreamClientFactory`).
-Storage paths and URLs are not repository-aware yet.
+Storage paths are not repository-aware yet.
+
+**Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,
+deprecation/vulnerability, repository signatures) twice: plain (the `default` repository) and as `r:<name>` under
+`r/{repo}/` (`Routes.RepositoryPathPrefix`, `RepositoryRouteName`); a new route goes through it, never straight to
+`MapControllerRoute`. `RepositoryResolutionMiddleware` (after `UseRouting`, before authentication; a host must call
+`UseRepositoryResolution`) maps the `{repo}` route value to `IRepositoryContext.Use`; an unknown name (or a non-NuGet
+repository) is `404`, never the default. `BaGetUrlGenerator` reads the repository from `HttpContext.RequestServices` on
+each call (the registration/search builders are singletons, so an injected scoped context would pin them to one
+repository), picks the `r:` route variant and prefixes `AbsoluteUrl`, so every advertised URL stays in the repository and
+after the `PathBase`. The V2 feed's base is `IUrlGenerator.GetV2FeedUrl`. Razor Pages stay at `/` and show the
+default repository, so only the default's service index advertises `PackageDetailsUriTemplate` /
+`ReportAbuseUriTemplate` (the generator returns null elsewhere). Do not give a page a second route
+(`AddPageRoute`): `asp-page`/`Url.Page` then produce empty `href`s.
 
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host
 without the Web SDK has no generated `[ApplicationPart]` attributes. A new such assembly must be added there.
 
-Routes are named constants in `src/BaGet.Web/Routes.cs`, mapped in `BaGetEndpointBuilder.MapEndpoints`,
+Routes are named constants in `src/BaGet.Web/Routes.cs`, mapped in `BaGetEndpointBuilder.MapEndpoints` (via `MapRoute`, see *Repository routes*),
 and absolute URLs are built only via `IUrlGenerator` — add a member there rather than assembling URLs
 in a page or controller.
 

@@ -260,15 +260,14 @@ public class V2FeedController : Controller
         return Content(document, "application/atom+xml; type=feed; charset=utf-8");
     }
 
+    /// <summary>
+    /// The feed's own root (<c>.../api/v2</c>), inside the request's repository: <c>IUrlGenerator</c> adds the
+    /// <c>/r/{repo}/</c> prefix and the path base, so every entry link stays in the feed that served it.
+    /// </summary>
     private string FeedBaseUrl()
     {
-        var request = HttpContext.Request;
-
-        return request.Scheme
-               + "://"
-               + request.Host.ToUriComponent()
-               + request.PathBase.ToUriComponent()
-               + "/api/v2";
+        return _url.GetV2FeedUrl()
+            ?? throw new InvalidOperationException("The V2 feed's root URL could not be generated.");
     }
 
     /// <summary>

@@ -38,11 +38,13 @@ so those settings need a restart; options read through `IOptionsSnapshot` apply 
 
 ```
 HostFiltering → (Dev: exception page, status code pages) → ForwardedHeaders → PathBase
-→ StaticFiles → Routing → CORS → Authentication → Authorization → OperationCancelled → Maintenance → endpoints
+→ StaticFiles → Routing → RepositoryResolution → CORS → Authentication → Authorization → OperationCancelled → Maintenance → endpoints
 ```
 
 - `AllowedHosts` drives host filtering: a request with any other `Host` header gets 400.
 - Endpoints are named constants in `Routes.cs`, mapped in `BaGetEndpointBuilder.MapEndpoints`; absolute URLs come only from `IUrlGenerator`.
+- Every protocol route exists at `/` (the `default` repository) and under `/r/{repo}/`; `RepositoryResolutionMiddleware`
+  selects the repository from the route (`404` if unknown) and `IUrlGenerator` keeps advertised URLs inside it.
 - `MaintenanceMiddleware` turns a `MaintenanceException` into `503` + `Retry-After`.
 
 ## Runtime provider selection

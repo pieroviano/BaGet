@@ -1,7 +1,23 @@
-﻿namespace BaGet.Web;
+namespace BaGet.Web;
 
 public class Routes
 {
+    /// <summary>
+    /// The route value that carries the repository name on the <c>/r/{repo}/</c> variant of a protocol route.
+    /// </summary>
+    public const string RepositoryRouteKey = "repo";
+
+    /// <summary>
+    /// The path segments in front of a non-default repository's routes.
+    /// </summary>
+    public const string RepositoryPathPrefix = "r/{" + RepositoryRouteKey + "}/";
+
+    /// <summary>
+    /// The name under which the <c>/r/{repo}/</c> variant of the route <paramref name="routeName"/> is registered;
+    /// the unprefixed route keeps <paramref name="routeName"/> and serves the default repository.
+    /// </summary>
+    public static string RepositoryRouteName(string routeName) => "r:" + routeName;
+
     public const string IndexRouteName = "index";
     public const string UploadPackageRouteName = "upload-package";
     public const string UploadSymbolRouteName = "upload-symbol";

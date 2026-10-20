@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Globalization;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 
 namespace BaGet.Web;
@@ -17,6 +18,11 @@ namespace BaGet.Web;
 // does not serve, and there is no correct URL left to return. Too narrow, because the
 // same header is read by routing, by LinkGenerator below and by anything else holding
 // the HttpContext; only rejecting the request protects all of them at once.
+/// <summary>
+/// Builds the absolute URLs of the NuGet protocol inside the current repository (<see cref="IRepositoryContext"/>):
+/// the default repository's at the root, any other's under <c>/r/{repo}/</c>, both after the path base. A URL never
+/// leaves the repository that advertised it.
+/// </summary>
 public class BaGetUrlGenerator : IUrlGenerator
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -31,10 +37,7 @@ public class BaGetUrlGenerator : IUrlGenerator
     public string? GetServiceIndexUrl()
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.IndexRouteName,
-            values: null);
+        return Link(Routes.IndexRouteName, null);
         #pragma warning restore CS8604
     }
 
@@ -51,50 +54,35 @@ public class BaGetUrlGenerator : IUrlGenerator
     public string? GetPackagePublishResourceUrl()
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.UploadPackageRouteName,
-            values: null);
+        return Link(Routes.UploadPackageRouteName, null);
         #pragma warning restore CS8604
     }
 
     public string? GetSymbolPublishResourceUrl()
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.UploadSymbolRouteName,
-            values: null);
+        return Link(Routes.UploadSymbolRouteName, null);
         #pragma warning restore CS8604
     }
 
     public string? GetSearchResourceUrl()
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.SearchRouteName,
-            values: null);
+        return Link(Routes.SearchRouteName, null);
         #pragma warning restore CS8604
     }
 
     public string? GetAutocompleteResourceUrl()
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.AutocompleteRouteName,
-            values: null);
+        return Link(Routes.AutocompleteRouteName, null);
         #pragma warning restore CS8604
     }
 
     public string? GetRegistrationIndexUrl(string? id)
     {
         #pragma warning disable CS8602, CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.RegistrationIndexRouteName,
-            values: new { Id = id.ToLowerInvariant() });
+        return Link(Routes.RegistrationIndexRouteName, new { Id = id.ToLowerInvariant() });
         #pragma warning restore CS8602, CS8604
     }
 
@@ -107,10 +95,7 @@ public class BaGetUrlGenerator : IUrlGenerator
     public string? GetRegistrationLeafUrl(string? id, NuGetVersion version)
     {
         #pragma warning disable CS8602, CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.RegistrationLeafRouteName,
-            values: new
+        return Link(Routes.RegistrationLeafRouteName, new
             {
                 Id = id.ToLowerInvariant(),
                 Version = version.ToNormalizedString().ToLowerInvariant(),
@@ -121,10 +106,7 @@ public class BaGetUrlGenerator : IUrlGenerator
     public string? GetPackageVersionsUrl(string id)
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.PackageVersionsRouteName,
-            values: new { Id = id.ToLowerInvariant() });
+        return Link(Routes.PackageVersionsRouteName, new { Id = id.ToLowerInvariant() });
         #pragma warning restore CS8604
     }
 
@@ -136,10 +118,7 @@ public class BaGetUrlGenerator : IUrlGenerator
         var versionString = version.ToNormalizedString().ToLowerInvariant();
 
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.PackageDownloadRouteName,
-            values: new
+        return Link(Routes.PackageDownloadRouteName, new
             {
                 Id = id,
                 Version = versionString,
@@ -154,10 +133,7 @@ public class BaGetUrlGenerator : IUrlGenerator
         var versionString = version.ToNormalizedString().ToLowerInvariant();
 
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.PackageDownloadRouteName,
-            values: new
+        return Link(Routes.PackageDownloadRouteName, new
             {
                 Id = id,
                 Version = versionString,
@@ -174,10 +150,7 @@ public class BaGetUrlGenerator : IUrlGenerator
         var versionString = version.ToNormalizedString().ToLowerInvariant();
 
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.PackageDownloadIconRouteName,
-            values: new
+        return Link(Routes.PackageDownloadIconRouteName, new
             {
                 Id = id,
                 Version = versionString
@@ -188,19 +161,18 @@ public class BaGetUrlGenerator : IUrlGenerator
     public string? GetV2FeedUrl()
     {
         #pragma warning disable CS8604
-        return _linkGenerator.GetUriByRouteValues(
-            _httpContextAccessor.HttpContext,
-            Routes.V2RootRouteName,
-            values: null);
+        return Link(Routes.V2RootRouteName, null);
         #pragma warning restore CS8604
     }
 
     // These two are templates for the client to expand, not URLs for a specific
     // package, so the placeholders are returned verbatim. Routing them through
     // LinkGenerator would percent-encode the braces.
-    public string GetPackageDetailsUriTemplate()
+    // The package and report-abuse pages live at "/" and show the default repository, so only that repository
+    // advertises them: another repository's template would send a client to a page of a different feed.
+    public string? GetPackageDetailsUriTemplate()
     {
-        return AbsoluteUrl("packages/{id}/{version}");
+        return CurrentRepository().IsDefault ? AbsoluteUrl("packages/{id}/{version}") : null;
     }
 
     public string GetVulnerabilityIndexUrl()
@@ -240,9 +212,9 @@ public class BaGetUrlGenerator : IUrlGenerator
         return AbsoluteUrl($"v3/repository-signatures/{Uri.EscapeDataString(fingerprint)}.crt");
     }
 
-    public string GetReportAbuseUriTemplate()
+    public string? GetReportAbuseUriTemplate()
     {
-        return AbsoluteUrl("packages/{id}/{version}/report-abuse");
+        return CurrentRepository().IsDefault ? AbsoluteUrl("packages/{id}/{version}/report-abuse") : null;
     }
 
     private string AbsoluteUrl(string relativePath)
@@ -257,6 +229,50 @@ public class BaGetUrlGenerator : IUrlGenerator
             request.Host.ToUriComponent(),
             request.PathBase.ToUriComponent(),
             "/",
+            RepositoryPrefix(),
             relativePath);
+    }
+
+    /// <summary>
+    /// The repository of the request being served. Read from the request's own services on every call, never
+    /// injected: singletons (the registration and search builders) hold this generator for the life of the process,
+    /// and a scoped <see cref="IRepositoryContext"/> captured at construction would pin them to one repository.
+    /// </summary>
+    private RepositoryInfo CurrentRepository()
+        => _httpContextAccessor.HttpContext?.RequestServices.GetService<IRepositoryContext>()?.Current
+           ?? RepositoryInfo.Default;
+
+    /// <summary>
+    /// "r/{name}/" for a non-default repository, else nothing.
+    /// </summary>
+    private string RepositoryPrefix()
+    {
+        var current = CurrentRepository();
+
+        return current.IsDefault ? string.Empty : "r/" + Uri.EscapeDataString(current.Name) + "/";
+    }
+
+    /// <summary>
+    /// The absolute URL of a named protocol route, in the current repository: the route's <c>r/{repo}/</c> variant
+    /// for a non-default one.
+    /// </summary>
+    private string? Link(string routeName, object? values)
+    {
+        var current = CurrentRepository();
+
+        if (!current.IsDefault)
+        {
+            var routeValues = new RouteValueDictionary(values)
+            {
+                [Routes.RepositoryRouteKey] = current.Name,
+            };
+
+            routeName = Routes.RepositoryRouteName(routeName);
+            values = routeValues;
+        }
+
+        #pragma warning disable CS8604
+        return _linkGenerator.GetUriByRouteValues(_httpContextAccessor.HttpContext, routeName, values);
+        #pragma warning restore CS8604
     }
 }
