@@ -19,42 +19,46 @@ public class PackageStorageServiceTests
         [Fact]
         public async Task ThrowsIfPackageIsNull()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             await Assert.ThrowsAsync<ArgumentNullException>(
                 () => _target.SavePackageContentAsync(
                     null,
                     packageStream: Stream.Null,
                     nuspecStream: Stream.Null,
                     readmeStream: Stream.Null,
-                    iconStream: Stream.Null));
+                    iconStream: Stream.Null, cancellationToken));
         }
 
         [Fact]
         public async Task ThrowsIfPackageStreamIsNull()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             await Assert.ThrowsAsync<ArgumentNullException>(
                 () => _target.SavePackageContentAsync(
                     _package,
                     packageStream: null,
                     nuspecStream: Stream.Null,
                     readmeStream: Stream.Null,
-                    iconStream: Stream.Null));
+                    iconStream: Stream.Null, cancellationToken));
         }
 
         [Fact]
         public async Task ThrowsIfNuspecStreamIsNull()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             await Assert.ThrowsAsync<ArgumentNullException>(
                 () => _target.SavePackageContentAsync(
                     _package,
                     packageStream: Stream.Null,
                     nuspecStream: null,
                     readmeStream: Stream.Null,
-                    iconStream: Stream.Null));
+                    iconStream: Stream.Null, cancellationToken));
         }
 
         [Fact]
         public async Task SavesContent()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // Arrange
             SetupPutResult(StoragePutResult.Success);
 
@@ -69,7 +73,7 @@ public class PackageStorageServiceTests
                     packageStream: packageStream,
                     nuspecStream: nuspecStream,
                     readmeStream: readmeStream,
-                    iconStream: iconStream);
+                    iconStream: iconStream, cancellationToken);
 
                 // Assert
                 Assert.True(_puts.ContainsKey(PackagePath));
@@ -93,6 +97,7 @@ public class PackageStorageServiceTests
         [Fact]
         public async Task DoesNotSaveReadmeIfItIsNull()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // Arrange
             SetupPutResult(StoragePutResult.Success);
 
@@ -105,7 +110,7 @@ public class PackageStorageServiceTests
                     packageStream: packageStream,
                     nuspecStream: nuspecStream,
                     readmeStream: null,
-                    iconStream: null);
+                    iconStream: null, cancellationToken);
             }
 
             // Assert
@@ -115,6 +120,7 @@ public class PackageStorageServiceTests
         [Fact]
         public async Task NormalizesVersionWhenContentIsSaved()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // Arrange
             SetupPutResult(StoragePutResult.Success);
 
@@ -130,7 +136,7 @@ public class PackageStorageServiceTests
                     packageStream: packageStream,
                     nuspecStream: nuspecStream,
                     readmeStream: readmeStream,
-                    iconStream: iconStream);
+                    iconStream: iconStream, cancellationToken);
             }
 
             // Assert
@@ -142,6 +148,7 @@ public class PackageStorageServiceTests
         [Fact]
         public async Task DoesNotThrowIfContentAlreadyExistsAndContentsMatch()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // Arrange
             SetupPutResult(StoragePutResult.AlreadyExists);
 
@@ -155,7 +162,7 @@ public class PackageStorageServiceTests
                     packageStream: packageStream,
                     nuspecStream: nuspecStream,
                     readmeStream: readmeStream,
-                    iconStream: iconStream);
+                    iconStream: iconStream, cancellationToken);
 
                 // Assert
                 Assert.Equal(PackageSaveResult.Success, result);
@@ -181,6 +188,7 @@ public class PackageStorageServiceTests
         [Fact]
         public async Task ReturnsConflictIfContentAlreadyExistsButContentsDoNotMatch()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // Arrange
             SetupPutResult(StoragePutResult.Conflict);
 
@@ -195,7 +203,7 @@ public class PackageStorageServiceTests
                     packageStream: packageStream,
                     nuspecStream: nuspecStream,
                     readmeStream: readmeStream,
-                    iconStream: iconStream);
+                    iconStream: iconStream, cancellationToken);
 
                 // Assert
                 Assert.Equal(PackageSaveResult.Conflict, result);

@@ -89,9 +89,10 @@ public class StreamExtensionsTests
         [Fact]
         public async Task CopiesTheContent()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var original = Stream("the content");
 
-            using var result = await original.AsTemporaryFileStreamAsync();
+            using var result = await original.AsTemporaryFileStreamAsync(cancellationToken);
 
             using var reader = new StreamReader(result, Encoding.UTF8, false, 1024, leaveOpen: true);
             Assert.Equal("the content", reader.ReadToEnd());
@@ -100,9 +101,10 @@ public class StreamExtensionsTests
         [Fact]
         public async Task ResetsThePositionToTheBeginning()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var original = Stream("the content");
 
-            using var result = await original.AsTemporaryFileStreamAsync();
+            using var result = await original.AsTemporaryFileStreamAsync(cancellationToken);
 
             Assert.Equal(0, result.Position);
         }
@@ -110,10 +112,11 @@ public class StreamExtensionsTests
         [Fact]
         public async Task CopiesFromTheCurrentPosition()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var original = Stream("SKIPcontent");
             original.Position = 4;
 
-            using var result = await original.AsTemporaryFileStreamAsync();
+            using var result = await original.AsTemporaryFileStreamAsync(cancellationToken);
 
             using var reader = new StreamReader(result, Encoding.UTF8, false, 1024, leaveOpen: true);
             Assert.Equal("content", reader.ReadToEnd());
@@ -122,9 +125,10 @@ public class StreamExtensionsTests
         [Fact]
         public async Task HandlesAnEmptyStream()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var original = Stream("");
 
-            using var result = await original.AsTemporaryFileStreamAsync();
+            using var result = await original.AsTemporaryFileStreamAsync(cancellationToken);
 
             Assert.Equal(0, result.Length);
         }
@@ -132,10 +136,11 @@ public class StreamExtensionsTests
         [Fact]
         public async Task DeletesTheFileWhenDisposed()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             string path;
 
             using (var original = Stream("the content"))
-            using (var result = await original.AsTemporaryFileStreamAsync())
+            using (var result = await original.AsTemporaryFileStreamAsync(cancellationToken))
             {
                 path = result.Name;
                 Assert.True(File.Exists(path));

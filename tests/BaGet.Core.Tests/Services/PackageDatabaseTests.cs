@@ -338,6 +338,7 @@ public class PackageDatabaseTests
         [Fact]
         public async Task DeletesTheDependentRows()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // The rows belong to the package: they must go with it, rather than being
             // left behind with a null package reference.
             await _target.HardDeletePackageAsync("Package", NuGetVersion.Parse("1.0.0"), Cancellation);
@@ -346,11 +347,11 @@ public class PackageDatabaseTests
             var dependencies = await _context.PackageDependencies
                 .AsNoTracking()
                 .Include(d => d.Package)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             var frameworks = await _context.TargetFrameworks
                 .AsNoTracking()
                 .Include(f => f.Package)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             #pragma warning restore CS8604
 
             Assert.DoesNotContain(dependencies, d => d.Package == null || d.Package.Id == "Package");

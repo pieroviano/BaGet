@@ -8,7 +8,7 @@ namespace BaGet.Core.Tests.Authentication;
 
 public class ApiKeyAuthenticationServiceTests
 {
-    private static ApiKeyAuthenticationService Target(string configuredApiKey)
+    private static ApiKeyAuthenticationService Target(string? configuredApiKey)
     {
         var options = new Mock<IOptionsSnapshot<BaGetOptions>>();
         options.Setup(o => o.Value).Returns(new BaGetOptions { ApiKey = configuredApiKey });
@@ -16,7 +16,7 @@ public class ApiKeyAuthenticationServiceTests
         return new ApiKeyAuthenticationService(options.Object);
     }
 
-    private static Task<bool> Authenticate(string configuredApiKey, string? providedApiKey)
+    private static Task<bool> Authenticate(string? configuredApiKey, string? providedApiKey)
         => Target(configuredApiKey).AuthenticateAsync(providedApiKey, CancellationToken.None);
 
     [Fact]
@@ -73,7 +73,7 @@ public class ApiKeyAuthenticationServiceTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public async Task AcceptsAnythingWhenNoApiKeyIsConfigured(string configuredApiKey)
+    public async Task AcceptsAnythingWhenNoApiKeyIsConfigured(string? configuredApiKey)
     {
         // Documented behaviour: an unset API key leaves the server open. This is what
         // makes package deletion succeed without a key on a default install.

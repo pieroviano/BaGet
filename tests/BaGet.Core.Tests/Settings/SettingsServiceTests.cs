@@ -186,8 +186,8 @@ public class SettingsServiceTests : IDisposable
     [InlineData("appsettings.Overrides.json", false)]
     [InlineData("../terms.md", false)]
     [InlineData(@"a\..\terms.md", false)]
-    public void OnlyMarkdownPathsWithoutParentSegmentsAreAllowed(string path, bool allowed)
-        => Assert.Equal(allowed, MarkdownFilePathAttribute.IsAllowed(path));
+    public void OnlyMarkdownPathsWithoutParentSegmentsAreAllowed(string? path, bool allowed)
+        => Assert.Equal(allowed, MarkdownFilePathAttribute.IsAllowed(path!));
 
     [Fact]
     public async Task ASavedValueTakesEffectAtOnceAndIsMarkedOverridden()

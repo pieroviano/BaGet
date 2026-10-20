@@ -73,12 +73,13 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgHasEntryThatExtractsOutsideOfExtractionPath_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // An entry whose path climbs out of the extraction directory would overwrite files
         // elsewhere on the server when extracted.
         using var snupkg = TestPackage.CreateSymbols(
             files: new Dictionary<string, string> { { "../../evil.pdb", "not a pdb" } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -97,6 +98,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgContainsEntryWithInvalidExtension_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // A symbol package may only carry symbols and packaging metadata. An assembly in
         // there would let an upload replace the package's own content.
         GivenPackageExists(TestPackage.CreateMinimal(
@@ -109,7 +111,7 @@ public class SymbolIndexingServiceTests
                 { "lib/net8.0/Library.dll", LibraryDll },
             });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -119,12 +121,13 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgDoesNotHaveCorrespondingNupkg_ReturnsPackageNotFound()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         GivenPackageDoesNotExist();
 
         using var snupkg = TestPackage.CreateSymbols(
             binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", LibraryPdb } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.PackageNotFound, result);
         Assert.Empty(_saved);
@@ -133,6 +136,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgContainsInvalidPortablePdb_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Have two pdb entries, the first of which is valid. Ensure nothing is persisted.
         GivenPackageExists(TestPackage.CreateMinimal(
             binaryFiles: new Dictionary<string, byte[]>
@@ -145,7 +149,7 @@ public class SymbolIndexingServiceTests
             files: new Dictionary<string, string> { { "lib/net8.0/Broken.pdb", "this is not a pdb at all" } },
             binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", LibraryPdb } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -156,6 +160,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgContainsWindowsPdb_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // A Windows PDB is a different format entirely - the symbol server cannot key it -
         // so it must be rejected rather than crash the metadata reader.
         GivenPackageExists(TestPackage.CreateMinimal(
@@ -164,7 +169,7 @@ public class SymbolIndexingServiceTests
         using var snupkg = TestPackage.CreateSymbols(
             binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", WindowsPdbHeader() } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -175,6 +180,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgContainsEmptyPdb_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Shorter than the portable PDB signature: the signature check must not read past
         // the end of the entry.
         GivenPackageExists(TestPackage.CreateMinimal(
@@ -183,7 +189,7 @@ public class SymbolIndexingServiceTests
         using var snupkg = TestPackage.CreateSymbols(
             binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", new byte[0] } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -194,6 +200,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgPdbDoesNotHaveCorrespondingNupkgDll_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The package ships no assembly at the PDB's path, so the symbols describe code
         // that is not in the package.
         GivenPackageExists(TestPackage.CreateMinimal(
@@ -202,7 +209,7 @@ public class SymbolIndexingServiceTests
         using var snupkg = TestPackage.CreateSymbols(
             binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", LibraryPdb } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -212,6 +219,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgPdbDoesNotDescribeCorrespondingNupkgDll_ReturnsInvalidSymbolPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The names line up but the PDB belongs to a different assembly, so it would serve
         // the wrong sources for the package's code.
         GivenPackageExists(TestPackage.CreateMinimal(
@@ -220,7 +228,7 @@ public class SymbolIndexingServiceTests
         using var snupkg = TestPackage.CreateSymbols(
             binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", LibraryPdb } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.InvalidSymbolPackage, result);
         Assert.Empty(_saved);
@@ -230,6 +238,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task SavesPdbs()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         GivenPackageExists(TestPackage.CreateMinimal(
             binaryFiles: new Dictionary<string, byte[]>
             {
@@ -244,7 +253,7 @@ public class SymbolIndexingServiceTests
                 { "lib/net8.0/Other.pdb", OtherPdb },
             });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.Success, result);
         Assert.Equal(2, _saved.Count);
@@ -256,6 +265,7 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfNupkgShipsTheAssemblyAsAnExecutable_SavesPdbs()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // A PDB next to a tool's .exe is just as valid as one next to a library's .dll.
         GivenPackageExists(TestPackage.CreateMinimal(
             binaryFiles: new Dictionary<string, byte[]> { { "tools/Library.exe", LibraryDll } }));
@@ -263,7 +273,7 @@ public class SymbolIndexingServiceTests
         using var snupkg = TestPackage.CreateSymbols(
             binaryFiles: new Dictionary<string, byte[]> { { "tools/Library.pdb", LibraryPdb } });
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.Success, result);
 
@@ -273,11 +283,12 @@ public class SymbolIndexingServiceTests
     [Fact]
     public async Task IfSnupkgHasNoPdbs_ReturnsSuccessWithoutSavingAnything()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         GivenPackageExists(TestPackage.CreateMinimal());
 
         using var snupkg = TestPackage.CreateSymbols();
 
-        var result = await _target.IndexAsync(snupkg, default);
+        var result = await _target.IndexAsync(snupkg, cancellationToken);
 
         Assert.Equal(SymbolIndexingResult.Success, result);
         Assert.Empty(_saved);
@@ -308,7 +319,7 @@ public class SymbolIndexingServiceTests
 
     private void AssertSaved(string fileName, Guid signature, byte[] expectedContent)
     {
-        var saved = Assert.Single(_saved.Where(p => p.File == fileName));
+        var saved = Assert.Single(_saved, p => p.File == fileName);
 
         // The symbol server key is the signature GUID followed by the age, which is always
         // "ffffffff" for a portable PDB.

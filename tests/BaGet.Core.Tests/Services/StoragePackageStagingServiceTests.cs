@@ -64,7 +64,7 @@ public class StoragePackageStagingServiceTests
             await target.OpenAsync(token, "bob", CancellationToken.None);
             await target.SweepAsync(_now.AddDays(1), CancellationToken.None);
 
-            Assert.Empty(logger.Entries.Where(e => e.Level > LogLevel.Debug && e.Message.Contains(token)));
+            Assert.DoesNotContain(logger.Entries, e => e.Level > LogLevel.Debug && e.Message.Contains(token));
         }
     }
 
@@ -91,9 +91,10 @@ public class StoragePackageStagingServiceTests
         [Fact]
         public async Task AMalformedTokenCannotReachOutsideStaging()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             // A token becomes a storage path, so a caller-supplied one that is not a
             // token must be refused before it gets there.
-            await _storage.PutAsync("packages/secret.nupkg", StringStream("not yours"), "application/octet-stream");
+            await _storage.PutAsync("packages/secret.nupkg", StringStream("not yours"), "application/octet-stream", cancellationToken);
 
             var malformed = new[]
             {
@@ -201,7 +202,8 @@ public class StoragePackageStagingServiceTests
         [Fact]
         public async Task TouchesNothingOutsideStaging()
         {
-            await _storage.PutAsync("packages/keep.nupkg", StringStream("keep"), "application/octet-stream");
+            var cancellationToken = TestContext.Current.CancellationToken;
+            await _storage.PutAsync("packages/keep.nupkg", StringStream("keep"), "application/octet-stream", cancellationToken);
             await _target.StageAsync(StringStream("abandoned"), "alice", CancellationToken.None);
 
             await _target.SweepAsync(_now.AddDays(1), CancellationToken.None);
@@ -264,7 +266,7 @@ public class StoragePackageStagingServiceTests
 
             Assert.Equal(0, await target.SweepAsync(_now, CancellationToken.None));
 
-            var warning = Assert.Single(logger.Entries.Where(e => e.Level == LogLevel.Warning));
+            var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
             Assert.Contains("sweep", warning.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
