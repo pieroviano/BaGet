@@ -111,7 +111,7 @@ public class RepositoryStorageTests : IDisposable
                 .TryDeletePackageAsync("Same.Package", version, Ct));
         }
 
-        Assert.Empty(Files("repos/second/packages").Where(f => f.EndsWith(".nupkg", StringComparison.Ordinal)));
+        Assert.DoesNotContain(Files("repos/second/packages"), f => f.EndsWith(".nupkg", StringComparison.Ordinal));
         Assert.Contains("packages/same.package/1.0.0/same.package.1.0.0.nupkg", Files());
 
         using (var scope = Scope())
