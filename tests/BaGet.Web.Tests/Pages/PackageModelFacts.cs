@@ -292,7 +292,7 @@ public class PackageModelFacts
     [InlineData("netstandard2.1", ".NET Standard 2.1")]
     [InlineData("net10.0", ".NET 10.0")]
     [InlineData("net4.8", ".NET Framework 4.8")]
-    public async Task PrettifiesTargetFramework(string targetFramework, string expectedResult)
+    public async Task PrettifiesTargetFramework(string? targetFramework, string expectedResult)
     {
         _packages
             .Setup(m => m.FindPackagesAsync("testpackage", _cancellation))
@@ -341,13 +341,14 @@ public class PackageModelFacts
     [Fact]
     public async Task RendersReadme()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using (var readmeStream = new MemoryStream())
         {
             using (var streamWriter = new StreamWriter(readmeStream, leaveOpen: true))
             {
                 await streamWriter.WriteLineAsync("# My readme");
                 await streamWriter.WriteLineAsync("Hello world!");
-                await streamWriter.FlushAsync();
+                await streamWriter.FlushAsync(cancellationToken);
             }
 
             readmeStream.Position = 0;
