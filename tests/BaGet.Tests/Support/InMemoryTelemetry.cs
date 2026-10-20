@@ -36,10 +36,14 @@ internal sealed class InMemoryTelemetry : ITelemetryExporterFactory
 {
     private readonly ConcurrentQueue<ExportedSpan> _spans = new ConcurrentQueue<ExportedSpan>();
     private readonly ConcurrentQueue<LogEvent> _logs = new ConcurrentQueue<LogEvent>();
+    private readonly ConcurrentQueue<TelemetryOptions> _traceOptions = new ConcurrentQueue<TelemetryOptions>();
     private int _traceExporters;
     private int _logSinks;
 
     public IReadOnlyList<ExportedSpan> Spans => _spans.ToArray();
+
+    /// <summary>The options each trace exporter was built with, in order (a connection test builds one with the posted values).</summary>
+    public IReadOnlyList<TelemetryOptions> TraceOptions => _traceOptions.ToArray();
 
     public IReadOnlyList<LogEvent> Logs => _logs.ToArray();
 
@@ -66,6 +70,7 @@ internal sealed class InMemoryTelemetry : ITelemetryExporterFactory
     public BaseExporter<Activity> CreateTraceExporter(TelemetryOptions options, Uri endpoint)
     {
         Interlocked.Increment(ref _traceExporters);
+        _traceOptions.Enqueue(options);
         return new SpanExporter(_spans);
     }
 

@@ -51,6 +51,7 @@ internal static class TelemetryServiceCollectionExtensions
         services.TryAddSingleton<ReloadableMetricExporter>();
         services.TryAddSingleton<ReloadableOpenTelemetrySink>();
         services.TryAddSingleton(provider => new TelemetryConnectionTester(provider.GetRequiredService<ITelemetryExporterFactory>()));
+        services.TryAddSingleton<ITelemetryDiagnostics, TelemetryDiagnostics>();
 
         var startup = section.Get<TelemetryOptions>() ?? new TelemetryOptions();
         var serviceName = string.IsNullOrWhiteSpace(startup.ServiceName) ? "baget" : startup.ServiceName;

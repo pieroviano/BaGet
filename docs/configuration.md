@@ -718,6 +718,13 @@ down; export runs on a background thread with the `Otlp:Timeout`. Failures are k
 attempt, last success, failing since, scrubbed last error without headers or URL paths). `TelemetryConnectionTester`
 sends one test span to the settings given, saving nothing.
 
+**On the Settings page** the Telemetry section starts with a status table, one row per signal: *Off* (telemetry or the
+signal is disabled), *Not configured* (no endpoint), *Configured, nothing exported yet*, *Last export ok at ...* or
+*Failing since ...* with the scrubbed error (and the spans dropped when the queue was full). **Test connection** sends one
+test span (10 s timeout) to the **endpoint, protocol and headers currently typed in the form**, saved or not, and shows
+*Connection ok* or the scrubbed error; nothing is saved and telemetry is not switched on. It asks for your password like a
+save, is for administrators only, and a blank *Headers* field tests with the saved headers (tick *Clear* to test with none).
+
 Changing the endpoint, protocol, headers or timeout rebuilds the exporter in place; the old one finishes its running export
 first and no queued span is lost. Any configuration reload fires this check, but an exporter whose settings did not change
 is kept.

@@ -58,6 +58,51 @@
                         {
                             <div class="alert alert-danger" role="alert"><ul>@foreach (var e in Model.Errors) { <li>@e</li> }</ul></div>
                         }
+                        @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && Model.TelemetrySignals != null)
+                        {
+                            <table class="table table-condensed" id="telemetry-status">
+                                <thead><tr><th>Signal</th><th>Export status</th></tr></thead>
+                                <tbody>
+                                    @foreach (var signal in Model.TelemetrySignals)
+                                    {
+                                        <tr data-signal="@signal.Signal" data-state="@signal.State">
+                                            <td>@signal.Signal</td>
+                                            <td>
+                                                @switch (signal.State)
+                                                {
+                                                    case BaGet.Core.TelemetrySignalState.Off:
+                                                        <span class="text-muted">Off</span>
+                                                        break;
+                                                    case BaGet.Core.TelemetrySignalState.NotConfigured:
+                                                        <span class="text-muted">Not configured (no endpoint set)</span>
+                                                        break;
+                                                    case BaGet.Core.TelemetrySignalState.Waiting:
+                                                        <span>Configured, nothing exported yet</span>
+                                                        break;
+                                                    case BaGet.Core.TelemetrySignalState.Ok:
+                                                        <span class="text-success">Last export ok at @signal.LastSuccess?.UtcDateTime.ToString("u")</span>
+                                                        break;
+                                                    default:
+                                                        <span class="text-danger">Failing since @signal.FailingSince?.UtcDateTime.ToString("u")</span>
+                                                        @if (!string.IsNullOrEmpty(signal.LastError)) { <div data-error>@signal.LastError</div> }
+                                                        break;
+                                                }
+                                                @if (signal.Dropped > 0) { <div class="text-warning">@signal.Dropped dropped (queue full)</div> }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            @if (Model.TelemetryTest != null)
+                            {
+                                <div class="alert @(Model.TelemetryTest.Ok ? "alert-success" : "alert-danger")" role="status" id="telemetry-test-result">
+                                    <strong>@(Model.TelemetryTest.Ok ? "Connection ok" : "Connection failed")</strong>
+                                    @if (!string.IsNullOrEmpty(Model.TelemetryTest.Target)) { <span>(<code>@Model.TelemetryTest.Target</code>)</span> }
+                                    <div>@Model.TelemetryTest.Message</div>
+                                    <div class="small">Tested with the values in the form. Nothing was saved.</div>
+                                </div>
+                            }
+                        }
                         @foreach (var g in s.GroupBy(x => x.Descriptor.Group))
                         {
                             <fieldset>
@@ -96,6 +141,10 @@
                             <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
                         }
                         <button type="submit" class="btn btn-primary">Save @title</button>
+                        @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && Model.TelemetrySignals != null)
+                        {
+                            <button type="submit" class="btn btn-default" id="telemetry-test" formaction="?handler=TestTelemetry#Telemetry">Test connection</button>
+                        }
                     </div>
                 </form>
             }

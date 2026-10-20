@@ -48,6 +48,14 @@ public class SettingsModel : AdminPageModel
     /// <summary>Why the overrides file could not be read, or null.</summary>
     public string? LoadError { get; private set; }
 
+    private ITelemetryDiagnostics? Telemetry => HttpContext.RequestServices.GetService<ITelemetryDiagnostics>();
+
+    /// <summary>The state of each telemetry signal for the Telemetry section, or null when the host exports no telemetry.</summary>
+    public IReadOnlyList<TelemetrySignalReport>? TelemetrySignals { get; private set; }
+
+    /// <summary>The outcome of the last "Test connection", or null. Shown in the Telemetry section; never saved.</summary>
+    public TelemetryTestOutcome? TelemetryTest { get; private set; }
+
     private DatabaseCopyService Copier => HttpContext.RequestServices.GetRequiredService<DatabaseCopyService>();
 
     /// <summary>
@@ -149,6 +157,40 @@ public class SettingsModel : AdminPageModel
     }
 
     /// <summary>
+    /// Sends one test span to the Telemetry section's <i>posted, unsaved</i> endpoint, protocol and headers and shows the
+    /// outcome; nothing is saved. Confirmed like a save (a test sends the headers, which may hold a credential, to an
+    /// address the administrator chose). A blank headers field keeps the saved headers unless "Clear" is ticked.
+    /// Not refused while the <see cref="MaintenanceGate"/> is closed: it writes nothing.
+    /// </summary>
+    public async Task<IActionResult> OnPostTestTelemetryAsync(string? password)
+    {
+        if (!Settings.IsAvailable || Telemetry == null) return NotFound();
+
+        var user = await UserManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        if (!await IsConfirmedAsync(user, password))
+        {
+            return await FailAsync("Telemetry", new[] { "The confirmation is incorrect, so nothing was tested." });
+        }
+
+        string? Posted(string key) => Request.Form.TryGetValue(SettingsForm.ValuePrefix + key, out var v) ? v.ToString().Trim() : null;
+
+        var headers = Request.Form.ContainsKey(SettingsForm.ClearPrefix + "Telemetry:Otlp:Headers")
+            ? string.Empty
+            : Posted("Telemetry:Otlp:Headers") is { Length: > 0 } typed ? typed : null;
+
+        TelemetryTest = await Telemetry.TestAsync(
+            Posted("Telemetry:Otlp:Endpoint"),
+            Posted("Telemetry:Otlp:Protocol"),
+            headers,
+            HttpContext.RequestAborted);
+
+        await LoadAsync();
+        return Page();
+    }
+
+    /// <summary>
     /// The copy a Database section asks for, or null when it is an ordinary save: neither the type nor the
     /// connection string is set to a new value, either database is not relational (AzureTable), or it is the
     /// database already running.
@@ -204,6 +246,7 @@ public class SettingsModel : AdminPageModel
             .OrderBy(g => g.Key.Length == 0 ? 0 : 1)
             .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
+        TelemetrySignals = Telemetry?.GetStatus();
         PendingRestart = states.Where(s => s.PendingRestart).Select(s => s.Descriptor.Key).ToList();
 
         var current = await UserManager.GetUserAsync(User);
