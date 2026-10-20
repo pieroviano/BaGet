@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.IO;
 using System.Linq;
@@ -303,34 +303,111 @@ public partial class Program
     private static void ConfigureLogging(WebApplicationBuilder builder)
     {
         var root = Environment.GetEnvironmentVariable("BAGET_CONFIG_ROOT");
-        ResolveLogFilePath(
-            builder.Configuration,
-            string.IsNullOrEmpty(root) ? builder.Environment.ContentRootPath : root);
+        var configuration = builder.Configuration;
+        ResolveLogFilePaths(configuration, string.IsNullOrEmpty(root) ? builder.Environment.ContentRootPath : root);
+        DisableSinks(configuration);
 
+        // A failing sink (an unwritable logs folder under IIS) is otherwise silent: Serilog swallows sink errors.
+        Serilog.Debugging.SelfLog.Enable(message => Console.Error.WriteLine(message));
+
+        // Replaces the Microsoft providers, the Windows Event Log one included: see AddEventLogSink.
         builder.Logging.ClearProviders();
         builder.Services.AddSerilog(
-            (services, loggerConfiguration) => loggerConfiguration
-                .ReadFrom.Configuration(builder.Configuration)
-                .ReadFrom.Services(services)
-                .Enrich.FromLogContext(),
+            (services, loggerConfiguration) =>
+            {
+                ApplyDefaultMinimumLevels(loggerConfiguration);
+                loggerConfiguration
+                    .ReadFrom.Configuration(configuration)
+                    .ReadFrom.Services(services)
+                    .Enrich.FromLogContext();
+                AddEventLogSink(loggerConfiguration, configuration);
+            },
             preserveStaticLogger: true,
             writeToProviders: true);
     }
 
     /// <summary>
-    /// The File sink resolves a relative path against the process working directory, which for a
-    /// service is System32 or wherever it was launched from. Make a relative
-    /// "Serilog:WriteTo:File:Args:path" absolute against the content root (or BAGET_CONFIG_ROOT).
-    /// An absolute path, from any configuration source, is left alone.
+    /// The levels in force when the "Serilog" section sets none, so that a host with its own appsettings.json
+    /// (one that embeds <see cref="Main"/>) is still safe. They are applied before
+    /// <c>ReadFrom.Configuration</c>: a configured <c>Default</c> replaces the default here and a configured
+    /// <c>Override</c> replaces the override for the same namespace, but an override the configuration does not
+    /// mention survives. <c>Microsoft.AspNetCore.Hosting.Diagnostics</c> at Information logs every full request
+    /// URL, query string (<c>?apikey=</c>) included, hence the Warning floor; lowering it in configuration is
+    /// the operator's explicit choice.
     /// </summary>
-    internal static void ResolveLogFilePath(IConfigurationManager configuration, string root)
+    internal static void ApplyDefaultMinimumLevels(LoggerConfiguration loggerConfiguration)
     {
-        const string key = "Serilog:WriteTo:File:Args:path";
-        var path = configuration[key];
+        loggerConfiguration.MinimumLevel.Information();
+        loggerConfiguration.MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning);
+        loggerConfiguration.MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information);
+        loggerConfiguration.MinimumLevel.Override("Microsoft.AspNetCore.Hosting.Diagnostics", Serilog.Events.LogEventLevel.Warning);
+    }
 
-        if (!string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path))
+    /// <summary>
+    /// <c>WebApplication.CreateBuilder</c> adds the Microsoft Event Log provider on Windows (Warning and up,
+    /// the place startup errors reach under IIS in-process or as a service); <c>ClearProviders</c> removes it.
+    /// This Serilog sink restores that: Warning and up to the Application log. Unlike a Microsoft provider it
+    /// is not fed twice by <c>writeToProviders</c>. The default source, ".NET Runtime", exists on every
+    /// Windows, so (as before) no administrator right is needed to register one; a custom
+    /// "Serilog:EventLog:Source" must already be registered. "Serilog:EventLog:Enabled=false" turns it off.
+    /// </summary>
+    private static void AddEventLogSink(LoggerConfiguration loggerConfiguration, IConfiguration configuration)
+    {
+        if (!OperatingSystem.IsWindows() || !IsEnabled(configuration.GetSection("Serilog:EventLog")["Enabled"]))
         {
-            configuration[key] = Path.GetFullPath(Path.Combine(root, path));
+            return;
+        }
+
+        var source = configuration["Serilog:EventLog:Source"];
+        loggerConfiguration.WriteTo.EventLog(
+            source: string.IsNullOrWhiteSpace(source) ? ".NET Runtime" : source,
+            logName: "Application",
+            manageEventSource: false,
+            restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning);
+    }
+
+    private static bool IsEnabled(string? value) => !bool.TryParse(value, out var enabled) || enabled;
+
+    /// <summary>
+    /// Make the relative <c>path</c> of every File sink under "Serilog:WriteTo" absolute against the content
+    /// root (or BAGET_CONFIG_ROOT). A relative path would otherwise resolve against the process working
+    /// directory, which for a service is System32 or wherever it was launched from. Sinks are found by
+    /// <c>Name</c> ("File", case-insensitive), whether keyed by name (<c>WriteTo:File</c>) or by array index
+    /// (<c>WriteTo:0</c>). An absolute path, from any configuration source, is left alone.
+    /// </summary>
+    internal static void ResolveLogFilePaths(IConfigurationManager configuration, string root)
+    {
+        foreach (var sink in configuration.GetSection("Serilog:WriteTo").GetChildren())
+        {
+            if (!string.Equals(sink["Name"], "File", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var key = sink.Path + ":Args:path";
+            var path = configuration[key];
+
+            if (!string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path))
+            {
+                configuration[key] = Path.GetFullPath(Path.Combine(root, path));
+            }
+        }
+    }
+
+    /// <summary>
+    /// A sink with <c>Enabled=false</c> is switched off (<c>Serilog__WriteTo__File__Enabled=false</c>). An empty
+    /// <c>Name</c> would too, but an empty environment variable is a deleted one on Windows, so it is no
+    /// portable switch. Works for sinks keyed by name or by array index.
+    /// </summary>
+    internal static void DisableSinks(IConfigurationManager configuration)
+    {
+        foreach (var sink in configuration.GetSection("Serilog:WriteTo").GetChildren())
+        {
+            if (!IsEnabled(sink["Enabled"]))
+            {
+                // Serilog.Settings.Configuration skips a sink whose Name is empty.
+                configuration[sink.Path + ":Name"] = "";
+            }
         }
     }
 

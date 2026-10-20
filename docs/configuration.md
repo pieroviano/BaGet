@@ -1,4 +1,4 @@
-# Configuration
+﻿# Configuration
 
 You can modify BaGet Extension's configurations by editing the `appsettings.json` file.
 
@@ -634,24 +634,40 @@ Note: If not specified, the MaxRequestBodySize in BaGet Extension defaults to 25
 
 The host logs with [Serilog](https://serilog.net), configured only from the `Serilog` section (levels, sinks,
 retention); libraries log through `Microsoft.Extensions.Logging` and need no change. The old `Logging` section is
-no longer read. Changes need a restart.
+no longer read.
 
 | Where | What |
 | --- | --- |
 | Console | `[HH:mm:ss LVL] SourceContext: message`, Information and up |
 | `logs/baget-YYYYMMDD.log` | same events, daily files, 14 kept, rolls at 50 MB (`baget-YYYYMMDD_001.log`) |
+| Windows Application event log | Windows only: Warning and up, source `.NET Runtime` (as before, no administrator right needed) |
 
-- A relative file `path` resolves against the content root (or `BAGET_CONFIG_ROOT`), not the working directory.
-  An absolute path is used as is. In Docker point it into the volume: `Serilog__WriteTo__File__Args__path=/var/baget/logs/baget-.log`.
-- Levels: `Serilog:MinimumLevel:Default` is `Information`; `Override` lowers or raises a namespace
-  (`Microsoft`, `System`, `Microsoft.EntityFrameworkCore`: `Warning`; `Microsoft.Hosting.Lifetime`: `Information`).
-  Quieter, like the previous default: `Serilog__MinimumLevel__Default=Warning`. `appsettings.Development.json` uses `Debug`.
+- **Reload.** `Serilog:MinimumLevel:Default` and `Override` change **live** when a configuration file reloads
+  (`appsettings*.json`, `appsettings.Overrides.json`; environment variables and the command line are read once).
+  Sinks, their arguments, `Enabled` and the `EventLog` keys need a **restart**.
+- A relative file `path` resolves against the content root (or `BAGET_CONFIG_ROOT`), not the working directory, for
+  every `File` sink under `WriteTo` (found by `Name`, keyed by name or by array index). An absolute path is used as is.
+  In Docker point it into the volume: `Serilog__WriteTo__File__Args__path=/var/baget/logs/baget-.log`.
+  A file sink that cannot write (an unwritable folder under IIS) is not silent: Serilog's self-log goes to stderr.
+- **Levels.** Without any configured level the host applies `Default` Information, `Microsoft` Warning,
+  `Microsoft.Hosting.Lifetime` Information and `Microsoft.AspNetCore.Hosting.Diagnostics` Warning; the `Serilog` section
+  then replaces them one by one (a host with its own `appsettings.json` stays safe). `Override` lowers or raises a
+  namespace (`Microsoft.EntityFrameworkCore`, `System`: `Warning`). Quieter, like the previous default:
+  `Serilog__MinimumLevel__Default=Warning`. `appsettings.Development.json` uses `Debug`.
+- `Microsoft.AspNetCore.Hosting.Diagnostics` at Information logs every full request URL, query string (`?apikey=`)
+  included. It stays at Warning unless you lower it explicitly: that is your choice, and then keys reach the log.
 - Sinks are named under `WriteTo` (`Console`, `File`), so one can be tuned with an environment variable such as
-  `Serilog__WriteTo__File__Args__retainedFileCountLimit=30`. Disable one with an empty name (`Serilog__WriteTo__File__Name=`).
-  Other sinks need their package referenced by the host.
+  `Serilog__WriteTo__File__Args__retainedFileCountLimit=30`. Other sinks need their package referenced by the host.
+- **Disable a sink** on any platform with `Enabled=false`: `Serilog__WriteTo__File__Enabled=false` (or
+  `Serilog:WriteTo:0:Enabled` for an array entry). An empty `Name` also works but an empty environment variable is
+  deleted on Windows (and probably in IIS `web.config`), so use `Enabled`.
+- **Windows event log.** The Windows event log gets Warning and up, as `WebApplication.CreateBuilder` did before Serilog.
+  `Serilog:EventLog:Enabled=false` turns it off; `Serilog:EventLog:Source` (default `.NET Runtime`, which exists on every
+  Windows) must already be registered if changed.
 - Request logging: one line per request, `HTTP GET /v3/index.json from <client> responded 200 in 12.3 ms`, after
   forwarded headers so the client is the real one. Level: Warning for 5xx or an exception, Debug for static files,
-  Information otherwise. The line has the path only: no query string, headers or body, so API keys never reach the log. Keep `Microsoft.AspNetCore.Hosting.Diagnostics` at `Warning`: at Information it logs every full URL, query string included.
+  Information otherwise. The line has the path only: no query string, headers or body, so API keys never reach the log.
+  Quiet only that line: `Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware=Warning`.
 - The Settings page does not list `Serilog` (it is not an options type); edit the file or the environment.
 
 ## Settings page

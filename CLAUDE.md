@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1481 tests** across `BaGet.Core.Tests` (468), `BaGet.Tests` (732),
+Baseline: **1491 tests** across `BaGet.Core.Tests` (468), `BaGet.Tests` (742),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -145,11 +145,17 @@ duplicates in unique indexes and keys (columns `NOCASE`/`citext`/`*_ci`, else th
 The host (and only the host) uses Serilog: `Program.ConfigureLogging` clears the Microsoft providers and calls
 `AddSerilog(... ReadFrom.Configuration ... , writeToProviders: true)`, so the `Serilog` section of `appsettings.json`
 is the one source of truth for levels and sinks (Console, File `logs/baget-.log`, resolved against the content
-root / `BAGET_CONFIG_ROOT` by `ResolveLogFilePath`). Libraries keep `Microsoft.Extensions.Logging.ILogger`. There is
+root / `BAGET_CONFIG_ROOT` for every File sink by `ResolveLogFilePaths`). `ApplyDefaultMinimumLevels` sets a code floor
+before `ReadFrom` (Microsoft and `Hosting.Diagnostics` Warning: that logger prints `?apikey=`), so a host with its own
+appsettings is safe. A sink with `Enabled=false` is blanked (`DisableSinks`; an empty env var is deleted on Windows).
+On Windows a Serilog EventLog sink (Warning+, source `.NET Runtime`, `Serilog:EventLog:Enabled`) replaces the Microsoft
+provider that `ClearProviders` removes. SelfLog goes to stderr. MinimumLevel reloads live, sinks need a restart. Libraries keep `Microsoft.Extensions.Logging.ILogger`. There is
 **no static/bootstrap logger** (it would throw "already frozen" when `WebApplicationFactory` builds a second host).
 `app.UseSerilogRequestLogging()` sits after forwarded headers/path base; its template has the path only, never the
 query or headers (API keys). `writeToProviders` delivers each event twice to a registered `ILoggerProvider`;
-tests that count lines use `Distinct()`. The harness switches both sinks off with empty `Serilog:WriteTo:*:Name`.
+tests that count lines use `Distinct()`. The harness switches the sinks off with `Enabled=false`.
+`WebApplicationFactory` `UseSetting` gives every parent key of a setting an empty value, which Serilog reads as a sink
+name, so a test that needs a working File sink runs `Program.BuildApplication` with command-line args instead.
 
 ### Tests
 

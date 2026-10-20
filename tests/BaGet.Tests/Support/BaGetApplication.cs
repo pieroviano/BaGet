@@ -73,11 +73,12 @@ public class BaGetApplication : WebApplicationFactory<Program>
             { SettingsOverridesStore.PathKey, Path.Combine(tempPath, SettingsOverridesStore.DefaultFileName) },
             { "Mirror:Enabled", _upstreamClient != null ? "true": "false" },
             { "Mirror:PackageSource", "http://localhost/v3/index.json" },
-            // The shipped Serilog sinks (console, logs/baget-.log) are switched off: events reach the
-            // xunit output through XunitLoggerProvider instead (Serilog is built with writeToProviders).
-            // An empty sink name is skipped by Serilog.Settings.Configuration.
-            { "Serilog:WriteTo:Console:Name", "" },
-            { "Serilog:WriteTo:File:Name", "" },
+            // The shipped Serilog sinks (console, logs/baget-.log, Windows Event Log) are switched off:
+            // events reach the xunit output through XunitLoggerProvider instead (Serilog is built with
+            // writeToProviders). "Enabled=false" is the documented, cross-platform switch.
+            { "Serilog:WriteTo:Console:Enabled", "false" },
+            { "Serilog:WriteTo:File:Enabled", "false" },
+            { "Serilog:EventLog:Enabled", "false" },
         };
 
         foreach (var pair in _configOverrides ?? new Dictionary<string, string>())

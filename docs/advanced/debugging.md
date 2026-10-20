@@ -41,7 +41,7 @@ Development already logs at `Debug`. Raise a namespace, for example:
 { "Serilog": { "MinimumLevel": { "Override": { "BaGet": "Debug" } } } }
 ```
 
-Logs also go to `logs/baget-YYYYMMDD.log` under the content root.
+Logs also go to `logs/baget-YYYYMMDD.log` under the content root. Level changes in a configuration file apply without a restart.
 
 ## Command line
 

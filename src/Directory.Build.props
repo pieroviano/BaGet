@@ -66,6 +66,7 @@
     <SerilogSettingsConfigurationPackageVersion>10.0.1</SerilogSettingsConfigurationPackageVersion>
     <SerilogSinksConsolePackageVersion>6.1.1</SerilogSinksConsolePackageVersion>
     <SerilogSinksFilePackageVersion>7.0.0</SerilogSinksFilePackageVersion>
+    <SerilogSinksEventLogPackageVersion>4.0.0</SerilogSinksEventLogPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == ''">

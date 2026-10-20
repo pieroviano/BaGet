@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -66,20 +66,35 @@ public class LoggingTests : IDisposable
     }
 
     [Fact]
-    public void TheHarnessHasNoFileSink()
+    public async Task TheHarnessWritesNoLogFileAnywhere()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var app = Start();
-        var configuration = app.Services.GetRequiredService<IConfiguration>();
         var root = app.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
-        _ = app.CreateClient();
+        var temp = Path.GetDirectoryName(
+            app.Services.GetRequiredService<IConfiguration>()["Database:ConnectionString"]!.Replace("Data Source=", ""))!;
+        var configuration = app.Services.GetRequiredService<IConfiguration>();
+        var before = LogFiles(root, temp);
 
-        Assert.True(string.IsNullOrEmpty(configuration["Serilog:WriteTo:File:Name"]));
-        Assert.True(string.IsNullOrEmpty(configuration["Serilog:WriteTo:Console:Name"]));
-        Assert.Empty(Directory.Exists(Path.Combine(root, "logs"))
-            ? Directory.GetFiles(Path.Combine(root, "logs"), "baget-*.log")
-                .Where(f => File.GetLastWriteTimeUtc(f) > DateTime.UtcNow.AddMinutes(-1))
-            : Array.Empty<string>());
+        // The harness only says "Enabled=false"; it is the host that blanks the sinks' names.
+        Assert.Equal("", configuration["Serilog:WriteTo:File:Name"]);
+        Assert.Equal("", configuration["Serilog:WriteTo:Console:Name"]);
+
+        using var client = app.CreateClient();
+        (await client.GetAsync("v3/index.json", cancellationToken)).EnsureSuccessStatusCode();
+        app.Dispose();
+
+        // Whatever the timestamps: no log file was created or grown under the content root or the temp directory.
+        Assert.Equal(before, LogFiles(root, temp));
+        Assert.Empty(LogFiles(temp));
     }
+
+    private static Dictionary<string, long> LogFiles(params string[] directories) =>
+        directories
+            .Where(Directory.Exists)
+            .SelectMany(d => Directory.GetFiles(d, "*.log", SearchOption.AllDirectories))
+            .Distinct()
+            .ToDictionary(f => f, f => new FileInfo(f).Length);
 
     [Fact]
     public async Task ARequestIsLoggedOnceWithoutItsQueryStringOrApiKey()
@@ -94,8 +109,6 @@ public class LoggingTests : IDisposable
         using var response = await client.SendAsync(request, cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        // With writeToProviders Serilog hands each event to a registered ILoggerProvider twice, so count
-        // distinct lines; the sinks (console, file) write it once.
         // With writeToProviders Serilog hands each event to a registered ILoggerProvider twice, so count
         // distinct lines; the sinks (console, file) write it once.
         var lines = logs.Messages.Where(m => m.Contains("responded")).Distinct().ToList();

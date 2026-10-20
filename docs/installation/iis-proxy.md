@@ -47,6 +47,16 @@ Note that you will need to adjust folder permissions if the `Path` is created ou
 
 With an empty `ApiKey` and [accounts](../configuration.md#accounts-package-owners-and-api-keys) on (the default), a push needs a user API key from `/account/apikeys`; or set `ApiKey` and pass it with `-k`. See [Require an API key](../configuration.md#require-an-api-key).
 
+## Logging under IIS
+
+- Logs go to `logs/baget-YYYYMMDD.log` under the site folder; give the application pool identity write access to it (see
+  [folder permissions](#baget-extension-folder-permissions)) or point `Serilog:WriteTo:File:Args:path` at a writable folder.
+  A file that cannot be written is reported on stderr (enable `stdoutLogEnabled` in `web.config` to capture it), not silently dropped.
+- Warnings and errors, startup failures included, also go to the Windows **Application** event log (source `.NET Runtime`),
+  without administrator rights. Turn that off with `Serilog:EventLog:Enabled=false`.
+- To switch a sink off, set `Serilog:WriteTo:File:Enabled` to `false` (do not rely on an empty environment variable).
+  See [Logging](../configuration.md#logging).
+
 ## IIS server options
 
 Settings such as the maximum package size can be configured for IIS in the appsettings.json file - see [IIS Server Options](../configuration.md#iis-server-options).
