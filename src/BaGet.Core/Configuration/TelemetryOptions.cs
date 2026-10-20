@@ -7,7 +7,9 @@ namespace BaGet.Core;
 /// <summary>
 /// OpenTelemetry export (traces, metrics, logs). Off by default. The libraries only emit
 /// <see cref="BaGetDiagnostics"/> spans and metrics; the host exports them over OTLP.
-/// Not <see cref="RestartRequiredAttribute"/>: the host reads these through <c>IOptionsMonitor</c> and applies a change live.
+/// The host reads these through <c>IOptionsMonitor</c> and applies a change live, except <see cref="ServiceName"/> and
+/// <see cref="MetricsOptions.ExportInterval"/>, which are read once when the exporter is built
+/// (<see cref="RestartRequiredAttribute"/>).
 /// </summary>
 public class TelemetryOptions
 {
@@ -15,6 +17,7 @@ public class TelemetryOptions
     public bool Enabled { get; set; }
 
     /// <summary>The <c>service.name</c> resource attribute reported with every signal.</summary>
+    [RestartRequired]
     public string ServiceName { get; set; } = "baget";
 
     /// <summary>Where and how signals are sent (traces use this endpoint; metrics and logs may override it).</summary>
@@ -129,6 +132,7 @@ public class MetricsOptions
     public string? Endpoint { get; set; }
 
     /// <summary>How often metrics are exported.</summary>
+    [RestartRequired]
     public TimeSpan ExportInterval { get; set; } = TimeSpan.FromSeconds(60);
 }
 

@@ -152,8 +152,9 @@ public class TelemetryTests : IDisposable
         Assert.Equal("http://jaeger:4317", endpoint.Examples!["Grpc"]);
         Assert.Equal("http://jaeger:4318", endpoint.Examples["HttpProtobuf"]);
 
-        // Applied live: nothing in the section needs a restart.
-        Assert.All(telemetry.Values, d => Assert.False(d.RequiresRestart, d.Key));
+        // Applied live, except the two read once when the exporter is built.
+        var restart = new[] { "Telemetry:ServiceName", "Telemetry:Metrics:ExportInterval" };
+        Assert.All(telemetry.Values, d => Assert.Equal(restart.Contains(d.Key), d.RequiresRestart));
         Assert.All(telemetry.Values, d => Assert.NotEmpty(d.Description));
     }
 
