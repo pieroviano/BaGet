@@ -43,10 +43,11 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task TheServiceDocumentAdvertisesThePackagesCollection()
     {
-        using var response = await _client.GetAsync("api/v2");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("api/v2", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var document = XDocument.Parse(await response.Content.ReadAsStringAsync());
+        var document = XDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.Contains(
             "Packages",
             document.Descendants()
@@ -57,12 +58,13 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task TheMetadataDocumentParsesAndDescribesTheEntity()
     {
-        using var response = await _client.GetAsync("api/v2/$metadata");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("api/v2/$metadata", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         // Parsing is the assertion: a malformed EDM breaks every V2 client.
-        var document = XDocument.Parse(await response.Content.ReadAsStringAsync());
+        var document = XDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         var entityType = document.Descendants()
             .Single(e => e.Name.LocalName == "EntityType");
@@ -86,12 +88,13 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task FindPackagesByIdReturnsEveryVersion()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'");
+        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var entries = Entries(await response.Content.ReadAsStringAsync()).ToList();
+        var entries = Entries(await response.Content.ReadAsStringAsync(cancellationToken)).ToList();
 
         Assert.Single(entries);
         Assert.Equal("1.2.3", PropertyOf(entries[0], "NormalizedVersion"));
@@ -100,47 +103,51 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task FindPackagesByIdAcceptsAnUnquotedId()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id=TestData");
+        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id=TestData", cancellationToken);
 
-        Assert.Single(Entries(await response.Content.ReadAsStringAsync()));
+        Assert.Single(Entries(await response.Content.ReadAsStringAsync(cancellationToken)));
     }
 
     [Fact]
     public async Task FindPackagesByIdIsEmptyForAnUnknownId()
     {
-        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='No.Such.Package'");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='No.Such.Package'", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty(Entries(await response.Content.ReadAsStringAsync()));
+        Assert.Empty(Entries(await response.Content.ReadAsStringAsync(cancellationToken)));
     }
 
     [Fact]
     public async Task AnEntryPointsAtADownloadablePackage()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var feed = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'");
-        var entry = Entries(await feed.Content.ReadAsStringAsync()).Single();
+        using var feed = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'", cancellationToken);
+        var entry = Entries(await feed.Content.ReadAsStringAsync(cancellationToken)).Single();
 
         #pragma warning disable CS8602
         var source = entry.Element(Atom + "content").Attribute("src").Value;
         #pragma warning restore CS8602
 
         // The advertised content URL has to actually serve the nupkg.
-        using var download = await _client.GetAsync(source);
+        using var download = await _client.GetAsync(source, cancellationToken);
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
-        Assert.NotEqual(0, (await download.Content.ReadAsByteArrayAsync()).Length);
+        Assert.NotEmpty(await download.Content.ReadAsByteArrayAsync(cancellationToken));
     }
 
     [Fact]
     public async Task TheLatestVersionFlagsAreSet()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'");
-        var entry = Entries(await response.Content.ReadAsStringAsync()).Single();
+        using var response = await _client.GetAsync("api/v2/FindPackagesById()?id='TestData'", cancellationToken);
+        var entry = Entries(await response.Content.ReadAsStringAsync(cancellationToken)).Single();
 
         // A single stable version is both the latest and the absolute latest.
         Assert.Equal("true", PropertyOf(entry, "IsLatestVersion"));
@@ -151,12 +158,13 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task PackagesByKeyReturnsOneEntry()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/Packages(Id='TestData',Version='1.2.3')");
+        using var response = await _client.GetAsync("api/v2/Packages(Id='TestData',Version='1.2.3')", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var document = XDocument.Parse(await response.Content.ReadAsStringAsync());
+        var document = XDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
         #pragma warning disable CS8602
         Assert.Equal("entry", document.Root.Name.LocalName);
         #pragma warning restore CS8602
@@ -166,9 +174,10 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task PackagesByKeyIsNotFoundForAnUnknownVersion()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/Packages(Id='TestData',Version='9.9.9')");
+        using var response = await _client.GetAsync("api/v2/Packages(Id='TestData',Version='9.9.9')", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -176,12 +185,13 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task SearchFindsAPushedPackage()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/Search()?searchTerm=''&includePrerelease=false");
+        using var response = await _client.GetAsync("api/v2/Search()?searchTerm=''&includePrerelease=false", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var entries = Entries(await response.Content.ReadAsStringAsync()).ToList();
+        var entries = Entries(await response.Content.ReadAsStringAsync(cancellationToken)).ToList();
 
         #pragma warning disable CS8602
         Assert.Contains("TestData", entries.Select(e => e.Element(Atom + "title").Value));
@@ -191,18 +201,20 @@ public class V2FeedIntegrationTests : IDisposable
     [Fact]
     public async Task PackagesListsWhatTheFeedHolds()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("api/v2/Packages()");
+        using var response = await _client.GetAsync("api/v2/Packages()", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.NotEmpty(Entries(await response.Content.ReadAsStringAsync()));
+        Assert.NotEmpty(Entries(await response.Content.ReadAsStringAsync(cancellationToken)));
     }
 
     [Fact]
     public async Task TheFeedIsAtomEncoded()
     {
-        using var response = await _client.GetAsync("api/v2/Packages()");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("api/v2/Packages()", cancellationToken);
 
         #pragma warning disable CS8602
         Assert.Equal("application/atom+xml", response.Content.Headers.ContentType.MediaType);
@@ -244,7 +256,8 @@ public class V2FeedDisabledTests : IDisposable
     [InlineData("api/v2/FindPackagesById()?id='TestData'")]
     public async Task TheFeedIsNotFound(string path)
     {
-        using var response = await _client.GetAsync(path);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync(path, cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -252,13 +265,14 @@ public class V2FeedDisabledTests : IDisposable
     [Fact]
     public async Task PushingStillWorks()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Turning off the read feed must not turn off the publish endpoint, which
         // shares the "api/v2" prefix.
         using var stream = TestResources.GetResourceStream(TestResources.Package);
 
-        await _app.AddPackageAsync(stream);
+        await _app.AddPackageAsync(stream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/registration/testdata/index.json");
+        using var response = await _client.GetAsync("v3/registration/testdata/index.json", cancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 

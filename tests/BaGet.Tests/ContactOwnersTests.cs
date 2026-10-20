@@ -389,6 +389,7 @@ public class ContactOwnersTests : IDisposable
     [Fact]
     public async Task ASenderWhoseEmailIsNotConfirmedCannotUseItAsReplyToOrForACopy()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Identity re-checks a session only every so often by default, so a session can
         // outlive its user's confirmation; the page must not rely on the cookie alone.
         var (app, browser) = await SeedAsync(services => services.Configure<SecurityStampValidatorOptions>(
@@ -408,7 +409,7 @@ public class ContactOwnersTests : IDisposable
             Url,
             new Dictionary<string, string> { { "Message", "Hello" }, { "CopyToSelf", "true" } },
             tokenPage: "account/settings");
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Empty(Contacts(app));
         Assert.Contains("confirm", body, StringComparison.OrdinalIgnoreCase);

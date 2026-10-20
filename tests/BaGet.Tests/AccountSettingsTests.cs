@@ -346,17 +346,18 @@ public class AccountSettingsTests : IDisposable
     [Fact]
     public async Task ForgotPasswordAnswersTheSameForKnownAndUnknownAccounts()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start(email: true);
         await RegisterConfirmedAsync(app, browser, "alice", "alice@example.com");
         var sender = app.Services.GetRequiredService<CapturingEmailSender>();
         var before = sender.Sent.Count;
 
         using var known = await browser.PostAsync("account/forgotpassword", new Dictionary<string, string> { { "Identifier", "alice@example.com" } });
-        var knownBody = await known.Content.ReadAsStringAsync();
+        var knownBody = await known.Content.ReadAsStringAsync(cancellationToken);
         await WaitForAsync(() => sender.Sent.Count > before);
         var afterKnown = sender.Sent.Count;
         using var unknown = await browser.PostAsync("account/forgotpassword", new Dictionary<string, string> { { "Identifier", "nobody@example.com" } });
-        var unknownBody = await unknown.Content.ReadAsStringAsync();
+        var unknownBody = await unknown.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(known.StatusCode, unknown.StatusCode);
         Assert.Equal(StripToken(knownBody).Replace("alice@example.com", "X"), StripToken(unknownBody).Replace("nobody@example.com", "X"));
@@ -451,6 +452,7 @@ public class AccountSettingsTests : IDisposable
     [Fact]
     public async Task TwoFactorFullLifecycle()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start();
         await browser.RegisterAsync("alice");
         await browser.GetPageAsync("account/twofactor");
@@ -463,7 +465,7 @@ public class AccountSettingsTests : IDisposable
         Assert.True((await FindAsync(app, "alice")).TwoFactorEnabled);
         #pragma warning restore CS8602
         var codes = Regex
-            .Matches(await enabled.Content.ReadAsStringAsync(), "<code class=\"recovery-code\">([^<]+)</code>")
+            .Matches(await enabled.Content.ReadAsStringAsync(cancellationToken), "<code class=\"recovery-code\">([^<]+)</code>")
             .Select(m => m.Groups[1].Value)
             .ToList();
         Assert.Equal(10, codes.Count);
@@ -596,6 +598,7 @@ public class AccountSettingsTests : IDisposable
     [Fact]
     public async Task DeletingIsRefusedWhileTheUserIsTheLastOwnerOfAPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start();
         await browser.RegisterAsync("alice");
         await NewBrowser(app).RegisterAsync("bob");
@@ -606,7 +609,7 @@ public class AccountSettingsTests : IDisposable
         using var response = await browser.PostAsync("account/settings", new Dictionary<string, string> { { "password", Password } },
             action: "account/settings?handler=Delete");
 
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Alice.Only", html);
         Assert.DoesNotContain("Shared.Pkg", html);
@@ -661,6 +664,7 @@ public class AccountSettingsTests : IDisposable
     [Fact]
     public async Task DeletingIsRefusedForTheLastAdminOfAnOrganizationWithOtherMembers()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start();
         await browser.RegisterAsync("alice");
         await NewBrowser(app).RegisterAsync("bob");
@@ -680,7 +684,7 @@ public class AccountSettingsTests : IDisposable
             action: "account/settings?handler=Delete");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Team", await response.Content.ReadAsStringAsync());
+        Assert.Contains("Team", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await FindAsync(app, "alice"));
     }
 

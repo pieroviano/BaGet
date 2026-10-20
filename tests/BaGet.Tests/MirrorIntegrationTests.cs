@@ -26,10 +26,11 @@ public class MirrorIntegrationTests : IDisposable
     [Fact]
     public async Task SearchExcludesUpstream()
     {
-        await _upstream.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _upstream.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var downstreamResponse = await _downstreamClient.GetAsync("v3/search");
-        var downstreamContent = await downstreamResponse.Content.ReadAsStreamAsync();
+        using var downstreamResponse = await _downstreamClient.GetAsync("v3/search", cancellationToken);
+        var downstreamContent = await downstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
         var downstreamJson = downstreamContent.ToPrettifiedJson();
 
         // The downstream package source should not have the package.
@@ -47,10 +48,11 @@ public class MirrorIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListIncludesUpstream()
     {
-        await _upstream.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _upstream.AddPackageAsync(_packageStream, cancellationToken);
 
-        var response = await _downstreamClient.GetAsync("v3/package/TestData/index.json");
-        var content = await response.Content.ReadAsStringAsync();
+        var response = await _downstreamClient.GetAsync("v3/package/TestData/index.json", cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(@"{""versions"":[""1.2.3""]}", content);
@@ -59,9 +61,10 @@ public class MirrorIntegrationTests : IDisposable
     [Fact]
     public async Task PackageDownloadIncludesUpstream()
     {
-        await _upstream.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _upstream.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _downstreamClient.GetAsync("v3/package/TestData/1.2.3/TestData.1.2.3.nupkg");
+        using var response = await _downstreamClient.GetAsync("v3/package/TestData/1.2.3/TestData.1.2.3.nupkg", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -69,10 +72,11 @@ public class MirrorIntegrationTests : IDisposable
     [Fact]
     public async Task NuspecDownloadIncludesUpstream()
     {
-        await _upstream.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _upstream.AddPackageAsync(_packageStream, cancellationToken);
 
         using var response = await _downstreamClient.GetAsync(
-            "v3/package/TestData/1.2.3/TestData.1.2.3.nuspec");
+            "v3/package/TestData/1.2.3/TestData.1.2.3.nuspec", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -80,10 +84,11 @@ public class MirrorIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataIncludesUpstream()
     {
-        await _upstream.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _upstream.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _downstreamClient.GetAsync("v3/registration/TestData/index.json");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _downstreamClient.GetAsync("v3/registration/TestData/index.json", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -144,10 +149,11 @@ public class MirrorIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataLeafIncludesUpstream()
     {
-        await _upstream.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _upstream.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _downstreamClient.GetAsync("v3/registration/TestData/1.2.3.json");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _downstreamClient.GetAsync("v3/registration/TestData/1.2.3.json", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

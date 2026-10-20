@@ -145,6 +145,7 @@ public class LookAndFeelTests : IDisposable
     [Fact]
     public async Task ADeprecatedPackageCarriesABadge()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start(new Dictionary<string, string> { { "ApiKey", "secret" } });
         await AddTestPackageAsync(app);
         using var client = app.CreateClient();
@@ -153,7 +154,7 @@ public class LookAndFeelTests : IDisposable
             Content = new StringContent(@"{""reasons"":[""Legacy""],""message"":""Use Other""}", Encoding.UTF8, "application/json"),
         };
         request.Headers.Add("X-NuGet-ApiKey", "secret");
-        using (var put = await client.SendAsync(request))
+        using (var put = await client.SendAsync(request, cancellationToken))
         {
             Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
         }

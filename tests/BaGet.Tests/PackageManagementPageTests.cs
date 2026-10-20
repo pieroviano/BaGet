@@ -189,6 +189,7 @@ public class PackageManagementPageTests : PackageManagementPageTestBase
     [Fact]
     public async Task DeletingUnlistsAndKeepsTheVersionRestorable()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package");
 
@@ -198,14 +199,14 @@ public class PackageManagementPageTests : PackageManagementPageTestBase
         }, action: "packages/Alice.Package/manage?handler=Delete");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("is unlisted", await response.Content.ReadAsStringAsync());
+        Assert.Contains("is unlisted", await response.Content.ReadAsStringAsync(cancellationToken));
 
         // The row and the file both stay: the version is undiscoverable, not gone.
         var package = await FindAsync("Alice.Package", "1.0.0");
         Assert.NotNull(package);
         Assert.False(package.Listed);
 
-        using var download = await Client.GetAsync("v3/package/alice.package/1.0.0/alice.package.1.0.0.nupkg");
+        using var download = await Client.GetAsync("v3/package/alice.package/1.0.0/alice.package.1.0.0.nupkg", cancellationToken);
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
     }
 
@@ -226,6 +227,7 @@ public class PackageManagementPageTests : PackageManagementPageTestBase
     [Fact]
     public async Task MyPackagesListsIdsOwnedThroughAnOrganization()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
 
         #pragma warning disable CS8602
@@ -244,7 +246,7 @@ public class PackageManagementPageTests : PackageManagementPageTestBase
 
         using (var package = TestPackages.Build("Acme.Package", "1.0.0"))
         {
-            await App.AddPackageAsync(package);
+            await App.AddPackageAsync(package, cancellationToken);
         }
 
         Assert.Equal(
@@ -296,6 +298,7 @@ public class PackageHardDeletePageTests : PackageManagementPageTestBase
     [Fact]
     public async Task DeletingRemovesTheVersionAndItsFiles()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package");
 
@@ -305,17 +308,18 @@ public class PackageHardDeletePageTests : PackageManagementPageTestBase
         }, action: "packages/Alice.Package/manage?handler=Delete");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("is deleted", await response.Content.ReadAsStringAsync());
+        Assert.Contains("is deleted", await response.Content.ReadAsStringAsync(cancellationToken));
 
         Assert.Null(await FindAsync("Alice.Package", "1.0.0"));
 
-        using var download = await Client.GetAsync("v3/package/alice.package/1.0.0/alice.package.1.0.0.nupkg");
+        using var download = await Client.GetAsync("v3/package/alice.package/1.0.0/alice.package.1.0.0.nupkg", cancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, download.StatusCode);
     }
 
     [Fact]
     public async Task DeletingAVersionThatIsNotThereSaysSo()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package");
 
@@ -325,7 +329,7 @@ public class PackageHardDeletePageTests : PackageManagementPageTestBase
         }, action: "packages/Alice.Package/manage?handler=Delete");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("was not in the database", await response.Content.ReadAsStringAsync());
+        Assert.Contains("was not in the database", await response.Content.ReadAsStringAsync(cancellationToken));
 
         // The version that is there is untouched.
         Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
@@ -345,6 +349,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
     [Fact]
     public async Task AReadOnlyServerRefusesToDelete()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
 
         // Seeded rather than pushed: a read-only server refuses the push too.
@@ -356,13 +361,14 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
         }, action: "packages/Alice.Package/manage?handler=Delete");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
     }
 
     [Fact]
     public async Task AReadOnlyServerRefusesToUnlist()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await SeedOwnedPackageAsync("alice", "Alice.Package");
 
@@ -372,7 +378,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync(cancellationToken));
 
         // Unlisting is the very operation the Delete button is said to perform, so a
         // server that refuses one must refuse the other.
@@ -384,6 +390,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
     [Fact]
     public async Task AReadOnlyServerRefusesToRelist()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await SeedOwnedPackageAsync("alice", "Alice.Package");
 
@@ -396,7 +403,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync(cancellationToken));
         #pragma warning disable CS8602
         Assert.False((await FindAsync("Alice.Package", "1.0.0")).Listed);
         #pragma warning restore CS8602
@@ -405,6 +412,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
     [Fact]
     public async Task AReadOnlyServerRefusesToDeprecate()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await SeedOwnedPackageAsync("alice", "Alice.Package");
 
@@ -415,7 +423,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync(cancellationToken));
         #pragma warning disable CS8602
         Assert.Null((await FindAsync("Alice.Package", "1.0.0")).Deprecation);
         #pragma warning restore CS8602
@@ -424,6 +432,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
     [Fact]
     public async Task AReadOnlyServerRefusesToChangeTheOwners()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await Bob.RegisterAsync("bob");
         await SeedOwnedPackageAsync("alice", "Alice.Package");
@@ -434,7 +443,7 @@ public class PackageDeleteReadOnlyTests : PackageManagementPageTestBase
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync());
+        Assert.Contains("read-only mode", await response.Content.ReadAsStringAsync(cancellationToken));
 
         var owners = await WithScopeAsync(s => s.GetRequiredService<PackageOwnershipService>()
             .GetOwnersAsync("Alice.Package", CancellationToken.None));

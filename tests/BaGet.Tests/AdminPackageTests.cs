@@ -215,6 +215,7 @@ public class AdminPackageTests : PackageManagementPageTestBase
     [Fact]
     public async Task AnAdministratorHardDeletesAVersionEvenWhenTheServerUnlists()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package", "1.0.0");
         await PushAsAsync("alice", "Alice.Package", "2.0.0");
@@ -230,7 +231,7 @@ public class AdminPackageTests : PackageManagementPageTestBase
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("deleted permanently", await response.Content.ReadAsStringAsync());
+        Assert.Contains("deleted permanently", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.Null(await FindAsync("Alice.Package", "1.0.0"));
         Assert.Equal(HttpStatusCode.NotFound, await DownloadAsync("Alice.Package", "1.0.0"));
 
@@ -242,6 +243,7 @@ public class AdminPackageTests : PackageManagementPageTestBase
     [Fact]
     public async Task AWrongPasswordDeletesNothing()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package");
         var admin = await StartAdminAsync();
@@ -256,8 +258,8 @@ public class AdminPackageTests : PackageManagementPageTestBase
             { "password", "wrong" },
         });
 
-        Assert.Contains("confirmation is incorrect", await one.Content.ReadAsStringAsync());
-        Assert.Contains("confirmation is incorrect", await all.Content.ReadAsStringAsync());
+        Assert.Contains("confirmation is incorrect", await one.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains("confirmation is incorrect", await all.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
         Assert.Equal(HttpStatusCode.OK, await DownloadAsync("Alice.Package", "1.0.0"));
     }
@@ -354,6 +356,7 @@ public class AdminPackageReadOnlyTests : PackageManagementPageTestBase
     [Fact]
     public async Task ReadOnlyModeRefusesAnAdministratorsHardDelete()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Alice.RegisterAsync("alice");
         await SeedOwnedPackageAsync("alice", "Alice.Package");
         await Bob.RegisterAsync("root");
@@ -370,7 +373,7 @@ public class AdminPackageReadOnlyTests : PackageManagementPageTestBase
             { "password", "Passw0rd!" },
         }, action: "packages/Alice.Package/manage?handler=HardDelete");
 
-        Assert.Contains(BaGet.Identity.Pages.Packages.ManageModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync());
+        Assert.Contains(BaGet.Identity.Pages.Packages.ManageModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
     }
 }
@@ -398,6 +401,7 @@ public class AdminPackageAuditTests : IDisposable
     [Fact]
     public async Task AnAdministratorsWriteToAnotherUsersPackageIsLogged()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = new Browser(_app);
         using var admin = new Browser(_app);
         await alice.RegisterAsync("alice");
@@ -405,7 +409,7 @@ public class AdminPackageAuditTests : IDisposable
 
         using (var package = TestPackages.Build("Alice.Package", "1.0.0"))
         {
-            await _app.AddPackageAsync(package);
+            await _app.AddPackageAsync(package, cancellationToken);
         }
 
         using (var scope = _app.Services.CreateScope())

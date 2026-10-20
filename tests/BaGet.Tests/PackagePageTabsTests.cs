@@ -148,11 +148,12 @@ public class PackagePageTabsTests : IDisposable
     [Fact]
     public async Task FrameworksTabHandlesAPackageWithNoDeclaredFrameworks()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start();
         await AddAsync(app, "Content.Only", "1.0.0", Array.Empty<string>());
 
         using var response = await browser.GetAsync("packages/Content.Only");
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("This package does not target a specific framework.", html);
@@ -276,11 +277,12 @@ public class PackagePageTabsTests : IDisposable
     [Fact]
     public async Task AccountsDisabledStillRendersWithoutOwners()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start();
         await AddAsync(app, "Plain.Pkg", "1.0.0", new[] { "net8.0" });
 
         using var response = await browser.GetAsync("packages/Plain.Pkg");
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.DoesNotContain("owner-avatar", html);

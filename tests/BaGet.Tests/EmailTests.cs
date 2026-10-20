@@ -26,7 +26,7 @@ public class EmailTests
     [InlineData(null, "baget@example.com", false)]
     [InlineData("", "baget@example.com", false)]
     [InlineData("smtp.example.com", "baget@example.com", true)]
-    public void IsConfiguredNeedsAHostAndASender(string host, string from, bool expected)
+    public void IsConfiguredNeedsAHostAndASender(string? host, string? from, bool expected)
     {
         var options = new EmailOptions { Smtp = { Host = host, From = from } };
 

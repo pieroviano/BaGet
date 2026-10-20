@@ -85,6 +85,7 @@ public class DatabaseContextFactoryTests : IDisposable
     [Fact]
     public async Task SqliteFactoryMigratesAndContinuesKeysAfterExplicitInserts()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var path = Path.Combine(_directory, "target.db");
         var factory = new SqliteDatabaseContextFactory();
 
@@ -109,7 +110,7 @@ public class DatabaseContextFactoryTests : IDisposable
 
         // A second context on the same file sees the data: the factory targets the given connection string.
         await using var again = (DbContext)factory.Create("Data Source=" + path);
-        Assert.Equal(3, await ((IContext)again).Organizations!.CountAsync());
+        Assert.Equal(3, await ((IContext)again).Organizations!.CountAsync(cancellationToken));
     }
 
     [Fact]

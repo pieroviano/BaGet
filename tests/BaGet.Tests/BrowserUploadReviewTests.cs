@@ -33,12 +33,13 @@ namespace BaGet.Tests
         [Fact]
         public async Task PublishingRemovesTheStagedPackageBlobAsWellAsItsMetadata()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var browser = new Browser(_app);
             var token = await StageAsync(browser);
 
             using var published = await browser.SubmitAsync(token, apiKey: GlobalKey);
 
-            Assert.Contains("was published", await published.Content.ReadAsStringAsync());
+            Assert.Contains("was published", await published.Content.ReadAsStringAsync(cancellationToken));
             Assert.False(await StoredAsync($"staging/{token}.nupkg"), "The staged package blob was left behind.");
             Assert.False(await StoredAsync($"staging/{token}.json"));
         }
@@ -46,28 +47,30 @@ namespace BaGet.Tests
         [Fact]
         public async Task AWrongKeyOnConfirmKeepsTheUploadAndOffersTheKeyAgain()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var browser = new Browser(_app);
             var token = await StageAsync(browser);
 
             using var wrong = await browser.SubmitAsync(token, apiKey: "nope");
-            var html = await wrong.Content.ReadAsStringAsync();
+            var html = await wrong.Content.ReadAsStringAsync(cancellationToken);
 
             Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
             Assert.Equal(token, BrowserUpload.StagedToken(html));
 
             using var retried = await browser.SubmitAsync(token, apiKey: GlobalKey);
-            Assert.Contains("was published", await retried.Content.ReadAsStringAsync());
+            Assert.Contains("was published", await retried.Content.ReadAsStringAsync(cancellationToken));
         }
 
         [Fact]
         public async Task DiscardingWithoutTheKeyKeepsTheUploadAndTheKeyDiscardsIt()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var browser = new Browser(_app);
             var token = await StageAsync(browser);
 
             using var wrong = await browser.CancelAsync(token);
             Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
-            Assert.Equal(token, BrowserUpload.StagedToken(await wrong.Content.ReadAsStringAsync()));
+            Assert.Equal(token, BrowserUpload.StagedToken(await wrong.Content.ReadAsStringAsync(cancellationToken)));
             Assert.True(await StoredAsync($"staging/{token}.nupkg"));
 
             using var right = await browser.CancelAsync(token, GlobalKey);
@@ -128,15 +131,16 @@ namespace BaGet.Tests
         [Fact]
         public async Task AFailureRecordingOwnershipIsReportedAndTheStagedUploadRemoved()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var browser = new Browser(_app);
             using var staged = await browser.StageAsync(
                 "TestData.1.2.3.nupkg",
                 TestResources.GetResourceStream(TestResources.Package),
                 GlobalKey);
-            var token = BrowserUpload.StagedToken(await staged.Content.ReadAsStringAsync());
+            var token = BrowserUpload.StagedToken(await staged.Content.ReadAsStringAsync(cancellationToken));
 
             using var response = await browser.SubmitAsync(token, apiKey: GlobalKey);
-            var html = await response.Content.ReadAsStringAsync();
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Contains("was published", html);
@@ -180,15 +184,16 @@ namespace BaGet.Tests
         [Fact]
         public async Task AnAcceptedUploadIsNotLinkedToAPageThatDoesNotExistYet()
         {
+            var cancellationToken = TestContext.Current.CancellationToken;
             using var browser = new Browser(_app);
             using var staged = await browser.StageAsync(
                 "TestData.1.2.3.nupkg",
                 TestResources.GetResourceStream(TestResources.Package),
                 GlobalKey);
-            var token = BrowserUpload.StagedToken(await staged.Content.ReadAsStringAsync());
+            var token = BrowserUpload.StagedToken(await staged.Content.ReadAsStringAsync(cancellationToken));
 
             using var response = await browser.SubmitAsync(token, apiKey: GlobalKey);
-            var html = await response.Content.ReadAsStringAsync();
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
             Assert.Contains("is being validated", html);
             Assert.DoesNotContain("View it", html);

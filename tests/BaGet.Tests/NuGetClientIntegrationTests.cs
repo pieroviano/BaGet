@@ -49,7 +49,8 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task ValidIndex()
     {
-        var index = await _repository.GetResourceAsync<ServiceIndexResourceV3>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var index = await _repository.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken);
 
         #pragma warning disable CS8602
         Assert.Equal(17, index.Entries.Count);
@@ -68,9 +69,10 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReturnsResults()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var resource = await _repository.GetResourceAsync<PackageSearchResource>();
+        var resource = await _repository.GetResourceAsync<PackageSearchResource>(cancellationToken);
         var searchFilter = new SearchFilter(includePrerelease: true);
 
         #pragma warning disable CS8602
@@ -101,7 +103,8 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReturnsEmpty()
     {
-        var resource = await _repository.GetResourceAsync<PackageSearchResource>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var resource = await _repository.GetResourceAsync<PackageSearchResource>(cancellationToken);
         var searchFilter = new SearchFilter(includePrerelease: true);
 
         #pragma warning disable CS8602
@@ -120,9 +123,10 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsResults()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var resource = await _repository.GetResourceAsync<AutoCompleteResource>();
+        var resource = await _repository.GetResourceAsync<AutoCompleteResource>(cancellationToken);
         #pragma warning disable CS8602
         var results = await resource.IdStartsWith(
             "",
@@ -139,7 +143,8 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsEmpty()
     {
-        var resource = await _repository.GetResourceAsync<AutoCompleteResource>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var resource = await _repository.GetResourceAsync<AutoCompleteResource>(cancellationToken);
         #pragma warning disable CS8602
         var results = await resource.IdStartsWith(
             "PackageDoesNotExist",
@@ -154,9 +159,10 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListReturnsResults()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
         #pragma warning disable CS8602
         var versions = await resource.GetAllVersionsAsync(
             "TestData",
@@ -173,7 +179,8 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListReturnsEmpty()
     {
-        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
         #pragma warning disable CS8602
         var versions = await resource.GetAllVersionsAsync(
             "PackageDoesNotExist",
@@ -191,10 +198,11 @@ public class NuGetClientIntegrationTests : IDisposable
     [InlineData("PackageDoesNotExists", "1.0.0", false)]
     public async Task PackageExistsWorks(string packageId, string packageVersion, bool exists)
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var version = NuGetVersion.Parse(packageVersion);
-        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
         #pragma warning disable CS8602
         var result = await resource.DoesPackageExistAsync(
             packageId,
@@ -213,12 +221,13 @@ public class NuGetClientIntegrationTests : IDisposable
     [InlineData("PackageDoesNotExists", "1.0.0", false)]
     public async Task PackageDownloadWorks(string packageId, string packageVersion, bool exists)
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var packageStream = new MemoryStream();
 
         var version = NuGetVersion.Parse(packageVersion);
-        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>();
+        var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
         #pragma warning disable CS8602
         var result = await resource.CopyNupkgToStreamAsync(
             packageId,
@@ -238,9 +247,10 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var resource = await _repository.GetResourceAsync<PackageMetadataResource>();
+        var resource = await _repository.GetResourceAsync<PackageMetadataResource>(cancellationToken);
         #pragma warning disable CS8602
         var packages = await resource.GetMetadataAsync(
             "TestData",
@@ -263,7 +273,8 @@ public class NuGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataReturnsEmty()
     {
-        var resource = await _repository.GetResourceAsync<PackageMetadataResource>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var resource = await _repository.GetResourceAsync<PackageMetadataResource>(cancellationToken);
         #pragma warning disable CS8602
         var packages = await resource.GetMetadataAsync(
             "PackageDoesNotExist",

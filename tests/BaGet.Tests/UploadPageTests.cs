@@ -79,11 +79,12 @@ public class UploadPageTests : IDisposable
     [Fact]
     public async Task TheAddressPowerShellGetIsToldToRegisterIsServed()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Whatever the page tells the reader to register has to answer, or the
         // instructions are broken in a different way.
         await GetPageAsync();
 
-        using var response = await _client.GetAsync("api/v2");
+        using var response = await _client.GetAsync("api/v2", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -127,10 +128,11 @@ public class UploadPageWithoutV2Tests : IDisposable
     [Fact]
     public async Task PowerShellGetIsNotOffered()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Its only supported protocol is not being served, so advertising it would send
         // the reader to an address that answers 404.
-        using var response = await _client.GetAsync("upload");
-        var content = await response.Content.ReadAsStringAsync();
+        using var response = await _client.GetAsync("upload", cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.DoesNotContain("Register-PSRepository", content);
@@ -140,8 +142,9 @@ public class UploadPageWithoutV2Tests : IDisposable
     [Fact]
     public async Task TheOtherClientsAreStillOffered()
     {
-        using var response = await _client.GetAsync("upload");
-        var content = await response.Content.ReadAsStringAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("upload", cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Contains("dotnet nuget push", content);
         Assert.Contains("paket push", content);

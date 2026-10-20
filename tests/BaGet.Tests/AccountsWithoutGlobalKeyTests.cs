@@ -79,11 +79,12 @@ public class AccountsWithoutGlobalKeyTests : IDisposable
     [Fact]
     public async Task ADeleteWithNoApiKeyIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var alice = await CreateUserAsync("alice");
         await PushAsync("Alice.Package", "1.0.0", await CreateKeyAsync(alice, ApiKeyScopes.Push));
 
         using var request = new HttpRequestMessage(HttpMethod.Delete, "api/v2/package/Alice.Package/1.0.0");
-        using var response = await _client.SendAsync(request);
+        using var response = await _client.SendAsync(request, cancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

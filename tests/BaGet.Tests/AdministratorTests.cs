@@ -293,6 +293,7 @@ public class AdministratorTests : IDisposable
     [Fact]
     public async Task SavingASettingWritesTheOverridesFileAndAppliesWithoutARestart()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         const string key = "secret-push-key";
         var (app, admin) = Start(apiKey: key);
         await admin.RegisterAsync("root");
@@ -305,7 +306,7 @@ public class AdministratorTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         var file = app.Services.GetRequiredService<SettingsOverridesStore>().FilePath;
-        Assert.Contains("\"AllowPackageOverwrites\": true", await File.ReadAllTextAsync(file));
+        Assert.Contains("\"AllowPackageOverwrites\": true", await File.ReadAllTextAsync(file, cancellationToken));
         Assert.Equal(HttpStatusCode.Created, await PushAsync(app, key));
 
         var html = await admin.GetPageAsync("admin/settings");
@@ -316,9 +317,10 @@ public class AdministratorTests : IDisposable
     [Fact]
     public async Task SavingASettingNeedsThePassword()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartWithAdministratorAsync();
 
-        var html = await (await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:AllowPackageOverwrites", "true" } }, password: "wrong")).Content.ReadAsStringAsync();
+        var html = await (await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:AllowPackageOverwrites", "true" } }, password: "wrong")).Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Contains("confirmation is incorrect", html);
         Assert.False(File.Exists(app.Services.GetRequiredService<SettingsOverridesStore>().FilePath));
@@ -327,9 +329,10 @@ public class AdministratorTests : IDisposable
     [Fact]
     public async Task AnInvalidValueIsReportedInItsSection()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartWithAdministratorAsync();
 
-        var html = await (await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:Mirror:PackageDownloadTimeoutSeconds", "abc" } }, section: "Mirror")).Content.ReadAsStringAsync();
+        var html = await (await PostSettingsAsync(admin, new Dictionary<string, string> { { "v:Mirror:PackageDownloadTimeoutSeconds", "abc" } }, section: "Mirror")).Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Contains("Mirror:PackageDownloadTimeoutSeconds: ", html);
         Assert.Contains("alert-danger", html);
@@ -369,6 +372,7 @@ public class AdministratorTests : IDisposable
     [Fact]
     public async Task ASecretIsClearedExplicitlyAndKeptWhenBlank()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = Start(apiKey: "kept-key");
         await admin.RegisterAsync("root");
         await PromoteAsync(app, "root");
@@ -378,7 +382,7 @@ public class AdministratorTests : IDisposable
         Assert.False(File.Exists(path));
 
         await PostSettingsAsync(admin, new Dictionary<string, string> { { "clear:ApiKey", "true" } });
-        Assert.Contains("\"ApiKey\": \"\"", await File.ReadAllTextAsync(path));
+        Assert.Contains("\"ApiKey\": \"\"", await File.ReadAllTextAsync(path, cancellationToken));
     }
 
     // --- Promote and demote -------------------------------------------------------------
@@ -481,6 +485,7 @@ public class AdministratorTests : IDisposable
     [Fact]
     public async Task TheLastAdministratorCannotDeleteTheirAccount()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartWithAdministratorAsync();
 
         using var response = await admin.PostAsync("account/settings", new Dictionary<string, string>
@@ -489,7 +494,7 @@ public class AdministratorTests : IDisposable
         }, action: "account/settings?handler=Delete");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("You are the last administrator. Promote another user first.", await response.Content.ReadAsStringAsync());
+        Assert.Contains("You are the last administrator. Promote another user first.", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await WithAsync(app, p => p.GetRequiredService<UserManager<BaGetUser>>().FindByNameAsync("root")));
     }
 

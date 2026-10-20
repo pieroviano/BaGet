@@ -99,11 +99,12 @@ public class ExternalLoginTests : IDisposable
     [InlineData("false")]
     public async Task AnUnverifiedProviderEmailIsNotConfirmedAndIsMailedALinkInsteadOfSigningIn(string? verified)
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start(email: true);
         await ProviderAnswersAsync(browser, "sub-1", "alice@example.com", verified);
 
         using var callback = await CallbackAsync(browser);
-        var html = await callback.Content.ReadAsStringAsync();
+        var html = await callback.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, callback.StatusCode);
         Assert.Contains("confirm", html, StringComparison.OrdinalIgnoreCase);
@@ -117,6 +118,7 @@ public class ExternalLoginTests : IDisposable
     [Fact]
     public async Task ComingBackBeforeConfirmingNeverCreatesASecondAccount()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, browser) = Start(email: true);
         await ProviderAnswersAsync(browser, "sub-1", "alice@example.com", "false");
         using (await CallbackAsync(browser)) { }
@@ -125,7 +127,7 @@ public class ExternalLoginTests : IDisposable
         using var again = await CallbackAsync(browser);
 
         Assert.Equal(HttpStatusCode.OK, again.StatusCode);
-        Assert.Contains("confirm", await again.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("confirm", await again.Content.ReadAsStringAsync(cancellationToken), StringComparison.OrdinalIgnoreCase);
         Assert.Equal(new[] { "alice" }, (await UsersAsync(app)).Select(u => u.UserName));
         Assert.False(await IsSignedInAsync(browser));
     }

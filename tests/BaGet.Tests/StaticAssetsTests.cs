@@ -31,7 +31,8 @@ public class StaticAssetsTests : IDisposable
     [InlineData("stats")]
     public async Task EveryAssetThePageReferencesIsServed(string page)
     {
-        var html = await _client.GetStringAsync(page);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var html = await _client.GetStringAsync(page, cancellationToken);
 
         var assets = Regex.Matches(html, "(?:href|src)=\"(/_content/[^\"]+)\"")
             .Select(m => m.Groups[1].Value)
@@ -41,7 +42,7 @@ public class StaticAssetsTests : IDisposable
         Assert.NotEmpty(assets);
         foreach (var asset in assets)
         {
-            using var response = await _client.GetAsync(asset);
+            using var response = await _client.GetAsync(asset, cancellationToken);
 
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"{asset} answered {(int)response.StatusCode}");
         }

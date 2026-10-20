@@ -37,8 +37,9 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task ValidIndex()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _clientFactory.CreateServiceIndexClient();
-        var index = await client.GetAsync();
+        var index = await client.GetAsync(cancellationToken);
 
         #pragma warning disable CS8602
         Assert.Equal("3.0.0", index.Version);
@@ -60,9 +61,10 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReturnsResults()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var results = await _client.SearchAsync();
+        var results = await _client.SearchAsync(cancellationToken: cancellationToken);
 
         #pragma warning disable CS8604
         var result = Assert.Single(results);
@@ -83,7 +85,8 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReturnsEmpty()
     {
-        var results = await _client.SearchAsync("PackageDoesNotExist");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var results = await _client.SearchAsync("PackageDoesNotExist", cancellationToken);
 
         #pragma warning disable CS8604
         Assert.Empty(results);
@@ -93,10 +96,11 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsResults()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         #pragma warning disable CS8602
-        var results = await _client.AutocompleteAsync();
+        var results = await _client.AutocompleteAsync(cancellationToken: cancellationToken);
         #pragma warning restore CS8602
 
         #pragma warning disable CS8604
@@ -109,8 +113,9 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsEmpty()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         #pragma warning disable CS8602
-        var results = await _client.AutocompleteAsync("PackageDoesNotExist");
+        var results = await _client.AutocompleteAsync("PackageDoesNotExist", cancellationToken);
         #pragma warning restore CS8602
 
         #pragma warning disable CS8604
@@ -121,10 +126,11 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteVersions()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var client = _clientFactory.CreateAutocompleteClient();
-        var results = await client.ListPackageVersionsAsync("TestData");
+        var results = await client.ListPackageVersionsAsync("TestData", cancellationToken: cancellationToken);
 
         #pragma warning disable CS8604
         var result = Assert.Single(results.Data);
@@ -137,8 +143,9 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteVersionsReturnsEmpty()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _clientFactory.CreateAutocompleteClient();
-        var results = await client.ListPackageVersionsAsync("PackageDoesNotExist");
+        var results = await client.ListPackageVersionsAsync("PackageDoesNotExist", cancellationToken: cancellationToken);
 
         #pragma warning disable CS8604
         Assert.Empty(results.Data);
@@ -149,9 +156,10 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListReturnsResults()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var versions = await _client.ListPackageVersionsAsync("TestData");
+        var versions = await _client.ListPackageVersionsAsync("TestData", cancellationToken);
 
         var version = Assert.Single(versions);
 
@@ -161,7 +169,8 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListReturnsEmpty()
     {
-        var versions = await _client.ListPackageVersionsAsync("PackageDoesNotExist");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var versions = await _client.ListPackageVersionsAsync("PackageDoesNotExist", cancellationToken);
 
         Assert.Empty(versions);
     }
@@ -172,16 +181,17 @@ public class BaGetClientIntegrationTests : IDisposable
     [InlineData("PackageDoesNotExists", "1.0.0", false)]
     public async Task PackageDownloadWorks(string? packageId, string packageVersion, bool exists)
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         try
         {
             var version = NuGetVersion.Parse(packageVersion);
 
             using var memoryStream = new MemoryStream();
-            using var packageStream = await _client.DownloadPackageAsync(packageId, version);
+            using var packageStream = await _client.DownloadPackageAsync(packageId, version, cancellationToken);
 
-            await packageStream.CopyToAsync(memoryStream);
+            await packageStream.CopyToAsync(memoryStream, cancellationToken);
             memoryStream.Position = 0;
 
             Assert.True(exists);
@@ -199,16 +209,17 @@ public class BaGetClientIntegrationTests : IDisposable
     [InlineData("PackageDoesNotExists", "1.0.0", false)]
     public async Task ManifestDownloadWorks(string packageId, string packageVersion, bool exists)
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         try
         {
             var version = NuGetVersion.Parse(packageVersion);
 
             using var memoryStream = new MemoryStream();
-            using var packageStream = await _client.DownloadPackageManifestAsync(packageId, version);
+            using var packageStream = await _client.DownloadPackageManifestAsync(packageId, version, cancellationToken);
 
-            await packageStream.CopyToAsync(memoryStream);
+            await packageStream.CopyToAsync(memoryStream, cancellationToken);
             memoryStream.Position = 0;
 
             Assert.True(exists);
@@ -223,9 +234,10 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var packages = await _client.GetPackageMetadataAsync("TestData");
+        var packages = await _client.GetPackageMetadataAsync("TestData", cancellationToken);
 
         var package = Assert.Single(packages);
 
@@ -239,7 +251,8 @@ public class BaGetClientIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataReturnsEmty()
     {
-        var packages = await _client.GetPackageMetadataAsync("PackageDoesNotExist");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var packages = await _client.GetPackageMetadataAsync("PackageDoesNotExist", cancellationToken);
 
         Assert.Empty(packages);
     }

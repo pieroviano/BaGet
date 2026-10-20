@@ -57,7 +57,8 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     [Fact]
     public async Task TheClientListsEveryVersionOfAPackage()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
         #pragma warning disable CS8602
@@ -83,7 +84,8 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     [Fact]
     public async Task TheClientReadsADependencyGroup()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
         #pragma warning disable CS8602
@@ -98,7 +100,8 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     [Fact]
     public async Task TheClientDownloadsThePackage()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var resource = await _repository.GetResourceAsync<FindPackageByIdResource>(_cancellationToken);
 
@@ -120,7 +123,8 @@ public class NuGetV2ClientIntegrationTests : IDisposable
     [Fact]
     public async Task TheClientSearches()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var resource = await _repository.GetResourceAsync<PackageSearchResource>(_cancellationToken);
         #pragma warning disable CS8602

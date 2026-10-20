@@ -38,10 +38,11 @@ public class BrowserUploadWithoutAnyApiKeyTests : IDisposable
     [Fact]
     public async Task TheFormIsNotOfferedWhenNothingCanAuthenticateAnUpload()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var response = await browser.GetAsync("upload");
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -54,6 +55,7 @@ public class BrowserUploadWithoutAnyApiKeyTests : IDisposable
     [Fact]
     public async Task AnAnonymousVisitorCannotStageAnything()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var response = await browser.StageAsync(
@@ -63,7 +65,7 @@ public class BrowserUploadWithoutAnyApiKeyTests : IDisposable
             tokenPage: BrowserUpload.TokenPage);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.DoesNotMatch("name=\"token\" value=\"[0-9a-f]{32}\"", await response.Content.ReadAsStringAsync());
+        Assert.DoesNotMatch("name=\"token\" value=\"[0-9a-f]{32}\"", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("TestData", "1.2.3"));
     }
 
@@ -85,11 +87,12 @@ public class BrowserUploadWithoutAnyApiKeyTests : IDisposable
     [Fact]
     public async Task ThePushEndpointIsUnchanged()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Closing the browser form must not close the API an open server already has:
         // the page is a convenience, not the authorization model.
         using var package = TestPackages.Build("Open.Package", "1.0.0");
         using var request = TestPackages.PushRequest(package, apiKey: null);
-        using var response = await _client.SendAsync(request);
+        using var response = await _client.SendAsync(request, cancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -132,13 +135,14 @@ public class BrowserUploadStorageFailureTests : IDisposable
     [Fact]
     public async Task AStoreThatCannotHoldTheUploadIsReportedAsASentence()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var response = await browser.StageAsync(
             "TestData.1.2.3.nupkg",
             TestResources.GetResourceStream(TestResources.Package),
             GlobalKey);
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Contains("could not store", html);
@@ -187,6 +191,7 @@ public class BrowserUploadCancelReadOnlyTests : IDisposable
     [Fact]
     public async Task AReadOnlyServerRefusesToDiscardAStagedUpload()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = new Browser(_app);
         await alice.RegisterAsync("alice");
 
@@ -203,7 +208,7 @@ public class BrowserUploadCancelReadOnlyTests : IDisposable
         using var response = await alice.CancelAsync(token, tokenPage: BrowserUpload.TokenPage);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Contains("read-only", await response.Content.ReadAsStringAsync());
+        Assert.Contains("read-only", await response.Content.ReadAsStringAsync(cancellationToken));
 
         // The upload is still there, so nothing in storage was written.
         using var kept = await staging.OpenAsync(token, aliceId, CancellationToken.None);

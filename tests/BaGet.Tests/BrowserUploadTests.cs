@@ -107,6 +107,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task PublishesAPackageThroughTheTwoSteps()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         var preview = await StageAsync(alice, "TestData.1.2.3.nupkg", TestResources.GetResourceStream(TestResources.Package));
@@ -120,7 +121,7 @@ public class BrowserUploadTests : IDisposable
         var token = BrowserUpload.StagedToken(preview);
 
         using var published = await alice.SubmitAsync(token);
-        var html = await published.Content.ReadAsStringAsync();
+        var html = await published.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, published.StatusCode);
         Assert.Contains("TestData 1.2.3 was published", html);
@@ -133,7 +134,7 @@ public class BrowserUploadTests : IDisposable
         // And the staged copy is gone: the token no longer names anything.
         using var again = await alice.SubmitAsync(token);
         Assert.Equal(HttpStatusCode.NotFound, again.StatusCode);
-        Assert.Contains(UploadModel.UnknownTokenMessage, await again.Content.ReadAsStringAsync());
+        Assert.Contains(UploadModel.UnknownTokenMessage, await again.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
@@ -149,6 +150,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task AnIdOwnedByAnotherUserIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
         using var bob = await SignInAsync("bob");
 
@@ -157,7 +159,7 @@ public class BrowserUploadTests : IDisposable
         using var response = await bob.StageAsync("Alice.Package.2.0.0.nupkg", TestPackages.Build("Alice.Package", "2.0.0"));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.Contains("You may not publish", await response.Content.ReadAsStringAsync());
+        Assert.Contains("You may not publish", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Alice.Package", "2.0.0"));
     }
 
@@ -184,6 +186,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task AnotherUsersTokenIsUnknownAndLeavesTheirUploadAlone()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
         using var bob = await SignInAsync("bob");
 
@@ -193,7 +196,7 @@ public class BrowserUploadTests : IDisposable
         using var stolen = await bob.SubmitAsync(token);
 
         Assert.Equal(HttpStatusCode.NotFound, stolen.StatusCode);
-        Assert.Contains(UploadModel.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync());
+        Assert.Contains(UploadModel.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Alice.Shared", "1.0.0"));
 
         // Alice's own upload is untouched, so Bob's attempt did not consume it.
@@ -206,6 +209,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task CancellingMakesTheTokenUnknown()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         var token = BrowserUpload.StagedToken(
@@ -214,18 +218,19 @@ public class BrowserUploadTests : IDisposable
         using var cancelled = await alice.CancelAsync(token);
 
         Assert.Equal(HttpStatusCode.OK, cancelled.StatusCode);
-        Assert.Contains("The upload was discarded", await cancelled.Content.ReadAsStringAsync());
+        Assert.Contains("The upload was discarded", await cancelled.Content.ReadAsStringAsync(cancellationToken));
 
         using var reused = await alice.SubmitAsync(token);
 
         Assert.Equal(HttpStatusCode.NotFound, reused.StatusCode);
-        Assert.Contains(UploadModel.UnknownTokenMessage, await reused.Content.ReadAsStringAsync());
+        Assert.Contains(UploadModel.UnknownTokenMessage, await reused.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Cancelled", "1.0.0"));
     }
 
     [Fact]
     public async Task TheSameVersionTwiceIsRefusedWithAMessage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         await PublishAsync(alice, "Twice", "1.0.0");
@@ -234,7 +239,7 @@ public class BrowserUploadTests : IDisposable
             await StageAsync(alice, "Twice.1.0.0.nupkg", TestPackages.Build("Twice", "1.0.0")));
 
         using var response = await alice.SubmitAsync(token);
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Contains("Twice 1.0.0 is already on this server", html);
@@ -247,6 +252,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task TheTermsMustBeAcceptedAndTheUploadSurvivesRefusing()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         var token = BrowserUpload.StagedToken(
@@ -255,7 +261,7 @@ public class BrowserUploadTests : IDisposable
         using var refused = await alice.SubmitAsync(token, acceptTerms: false);
 
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
-        Assert.Contains(UploadModel.TermsMessage, await refused.Content.ReadAsStringAsync());
+        Assert.Contains(UploadModel.TermsMessage, await refused.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Terms", "1.0.0"));
 
         // The preview is still there, so ticking the box is all that is needed.
@@ -268,6 +274,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task SymbolsArePublishedForAVersionThatExists()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         var packageToken = BrowserUpload.StagedToken(
@@ -288,12 +295,13 @@ public class BrowserUploadTests : IDisposable
         using var response = await alice.SubmitAsync(BrowserUpload.StagedToken(preview));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("symbols for TestData 1.2.3 were published", await response.Content.ReadAsStringAsync());
+        Assert.Contains("symbols for TestData 1.2.3 were published", await response.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
     public async Task SymbolsForAVersionThatDoesNotExistAreRefusedAndClaimNothing()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         var preview = await StageAsync(
@@ -309,7 +317,7 @@ public class BrowserUploadTests : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Contains(
             "Symbols can only be uploaded for a package version already on this server",
-            await response.Content.ReadAsStringAsync());
+            await response.Content.ReadAsStringAsync(cancellationToken));
 
         // A symbol upload is never a first upload: it creates no package and no owner.
         Assert.False(await ExistsAsync("TestData", "1.2.3"));
@@ -321,6 +329,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task AnotherUsersTokenCannotDiscardTheirUpload()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
         using var bob = await SignInAsync("bob");
 
@@ -331,7 +340,7 @@ public class BrowserUploadTests : IDisposable
         {
             // Indistinguishable from a token that never existed, as submitting is.
             Assert.Equal(HttpStatusCode.NotFound, stolen.StatusCode);
-            Assert.Contains(UploadModel.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync());
+            Assert.Contains(UploadModel.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync(cancellationToken));
         }
 
         // Alice's upload is untouched, so Bob could not make her upload the file again.
@@ -368,6 +377,7 @@ public class BrowserUploadTests : IDisposable
     [Fact]
     public async Task AFileNamedSnupkgThatIsNotASymbolPackageIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var alice = await SignInAsync("alice");
 
         // The content decides the pipeline, so a symbols file name over package content
@@ -376,7 +386,7 @@ public class BrowserUploadTests : IDisposable
         using var response = await alice.StageAsync(
             "NotSymbols.1.0.0.snupkg",
             TestPackages.Build("NotSymbols", "1.0.0"));
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("SymbolsPackage", html);
@@ -470,10 +480,11 @@ public class BrowserUploadWithoutAccountsTests : IDisposable
     [Fact]
     public async Task ThePageOffersTheFormAndNeverAnswersNotFound()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var response = await browser.GetAsync("upload");
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("name=\"package\"", html);
@@ -483,32 +494,34 @@ public class BrowserUploadWithoutAccountsTests : IDisposable
     [Fact]
     public async Task TheRightApiKeyPublishes()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var staged = await browser.StageAsync(
             "TestData.1.2.3.nupkg",
             TestResources.GetResourceStream(TestResources.Package),
             GlobalKey);
-        var preview = await staged.Content.ReadAsStringAsync();
+        var preview = await staged.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, staged.StatusCode);
 
         using var published = await browser.SubmitAsync(BrowserUpload.StagedToken(preview), apiKey: GlobalKey);
 
         Assert.Equal(HttpStatusCode.OK, published.StatusCode);
-        Assert.Contains("TestData 1.2.3 was published", await published.Content.ReadAsStringAsync());
+        Assert.Contains("TestData 1.2.3 was published", await published.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
     public async Task TheWrongApiKeyIsRefusedWithoutStagingAnything()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var response = await browser.StageAsync(
             "TestData.1.2.3.nupkg",
             TestResources.GetResourceStream(TestResources.Package),
             "not-the-key");
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         // 401, and not the 404 an account page would answer with accounts disabled.
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -519,13 +532,14 @@ public class BrowserUploadWithoutAccountsTests : IDisposable
     [Fact]
     public async Task TheApiKeyIsNeverWrittenIntoThePage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var browser = new Browser(_app);
 
         using var staged = await browser.StageAsync(
             "TestData.1.2.3.nupkg",
             TestResources.GetResourceStream(TestResources.Package),
             GlobalKey);
-        var html = await staged.Content.ReadAsStringAsync();
+        var html = await staged.Content.ReadAsStringAsync(cancellationToken);
 
         // Asserted first: a refusal's body carries no API key either, so without this the
         // test would stay green against an upload page that never previewed anything.
@@ -554,6 +568,7 @@ public class BrowserUploadReadOnlyTests
     [Fact]
     public async Task TheApiKeyModeIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var app = Application(accounts: false);
         using var browser = new Browser(app);
 
@@ -564,12 +579,13 @@ public class BrowserUploadReadOnlyTests
             BrowserUpload.TokenPage);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Contains(UploadModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync());
+        Assert.Contains(UploadModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
     public async Task ASignedInSessionIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var app = Application(accounts: true);
         using var browser = new Browser(app);
         await browser.RegisterAsync("alice");
@@ -580,7 +596,7 @@ public class BrowserUploadReadOnlyTests
             tokenPage: BrowserUpload.TokenPage);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Contains(UploadModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync());
+        Assert.Contains(UploadModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]

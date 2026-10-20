@@ -27,8 +27,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task IndexReturnsOk()
     {
-        using var response = await _client.GetAsync("v3/index.json");
-        var content = await response.Content.ReadAsStringAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/index.json", cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(TestData.ServiceIndex, content);
@@ -37,10 +38,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/search");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _client.GetAsync("v3/search", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -81,8 +83,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReturnsEmpty()
     {
-        using var response = await _client.GetAsync("v3/search?q=PackageDoesNotExist");
-        var content = await response.Content.ReadAsStreamAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/search?q=PackageDoesNotExist", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -99,10 +102,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/autocomplete");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _client.GetAsync("v3/autocomplete", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -120,8 +124,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteReturnsEmpty()
     {
-        using var response = await _client.GetAsync("v3/autocomplete?q=PackageDoesNotExist");
-        var content = await response.Content.ReadAsStreamAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/autocomplete?q=PackageDoesNotExist", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -137,10 +142,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteVersionsReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/autocomplete?id=TestData");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _client.GetAsync("v3/autocomplete?id=TestData", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -158,8 +164,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task AutocompleteVersionsReturnsEmpty()
     {
-        using var response = await _client.GetAsync("v3/autocomplete?id=PackageDoesNotExist");
-        var content = await response.Content.ReadAsStreamAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/autocomplete?id=PackageDoesNotExist", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -175,10 +182,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        var response = await _client.GetAsync("v3/package/TestData/index.json");
-        var content = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("v3/package/TestData/index.json", cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(@"{""versions"":[""1.2.3""]}", content);
@@ -187,7 +195,8 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task VersionListReturnsNotFound()
     {
-        using var response = await _client.GetAsync("v3/package/PackageDoesNotExist/index.json");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/package/PackageDoesNotExist/index.json", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -195,9 +204,10 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageDownloadReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/package/TestData/1.2.3/TestData.1.2.3.nupkg");
+        using var response = await _client.GetAsync("v3/package/TestData/1.2.3/TestData.1.2.3.nupkg", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -205,8 +215,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageDownloadReturnsNotFound()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var response = await _client.GetAsync(
-            "v3/package/PackageDoesNotExist/1.0.0/PackageDoesNotExist.1.0.0.nupkg");
+            "v3/package/PackageDoesNotExist/1.0.0/PackageDoesNotExist.1.0.0.nupkg", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -214,10 +225,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task NuspecDownloadReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var response = await _client.GetAsync(
-            "v3/package/TestData/1.2.3/TestData.1.2.3.nuspec");
+            "v3/package/TestData/1.2.3/TestData.1.2.3.nuspec", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -225,8 +237,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task NuspecDownloadReturnsNotFound()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var response = await _client.GetAsync(
-            "v3/package/PackageDoesNotExist/1.0.0/PackageDoesNotExist.1.0.0.nuspec");
+            "v3/package/PackageDoesNotExist/1.0.0/PackageDoesNotExist.1.0.0.nuspec", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -234,10 +247,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/registration/TestData/index.json");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _client.GetAsync("v3/registration/TestData/index.json", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -301,7 +315,8 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataReturnsNotFound()
     {
-        using var response = await _client.GetAsync("v3/registration/PackageDoesNotExist/index.json");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/registration/PackageDoesNotExist/index.json", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -309,10 +324,11 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataLeafReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using var response = await _client.GetAsync("v3/registration/TestData/1.2.3.json");
-        var content = await response.Content.ReadAsStreamAsync();
+        using var response = await _client.GetAsync("v3/registration/TestData/1.2.3.json", cancellationToken);
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -332,7 +348,8 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageMetadataLeafReturnsNotFound()
     {
-        using var response = await _client.GetAsync("v3/registration/PackageDoesNotExist/1.0.0.json");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/registration/PackageDoesNotExist/1.0.0.json", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -340,9 +357,10 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageDependentsReturnsOk()
     {
-        using var response = await _client.GetAsync("v3/dependents?packageId=TestData");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/dependents?packageId=TestData", cancellationToken);
 
-        var content = await response.Content.ReadAsStreamAsync();
+        var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         var json = content.ToPrettifiedJson();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -355,7 +373,8 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task PackageDependentsReturnsBadRequest()
     {
-        using var response = await _client.GetAsync("v3/dependents");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/dependents", cancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -363,11 +382,12 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task SymbolDownloadReturnsOk()
     {
-        await _app.AddPackageAsync(_packageStream);
-        await _app.AddSymbolPackageAsync(_symbolPackageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddSymbolPackageAsync(_symbolPackageStream, cancellationToken);
 
         using var response = await _client.GetAsync(
-            "api/download/symbols/testdata.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/testdata.pdb");
+            "api/download/symbols/testdata.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/testdata.pdb", cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -378,10 +398,11 @@ public class ApiIntegrationTests : IDisposable
     [InlineData("api/download/symbols/testprefix/testdata.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/testdata.pdb")]
     public async Task MalformedSymbolDownloadReturnsOk(string uri)
     {
-        await _app.AddPackageAsync(_packageStream);
-        await _app.AddSymbolPackageAsync(_symbolPackageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        await _app.AddSymbolPackageAsync(_symbolPackageStream, cancellationToken);
 
-        using var response = await _client.GetAsync(uri);
+        using var response = await _client.GetAsync(uri, cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -389,8 +410,9 @@ public class ApiIntegrationTests : IDisposable
     [Fact]
     public async Task SymbolDownloadReturnsNotFound()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var response = await _client.GetAsync(
-            "api/download/symbols/doesnotexist.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/doesnotexist.pdb");
+            "api/download/symbols/doesnotexist.pdb/16F71ED8DD574AA2AD4A22D29E9C981Bffffffff/doesnotexist.pdb", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

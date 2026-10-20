@@ -41,9 +41,10 @@ public class CatalogIntegrationTests : IDisposable
     [Fact]
     public async Task TheServiceIndexAdvertisesTheCatalog()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var index = await new NuGetClientFactory(_client, "http://localhost/v3/index.json")
             .CreateServiceIndexClient()
-            .GetAsync();
+            .GetAsync(cancellationToken);
 
         #pragma warning disable CS8602, CS8604
         Assert.Equal(
@@ -64,7 +65,8 @@ public class CatalogIntegrationTests : IDisposable
     [Fact]
     public async Task APushAppendsADetailsLeaf()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         var leaves = await ProcessCatalogAsync();
 
@@ -81,9 +83,10 @@ public class CatalogIntegrationTests : IDisposable
     [Fact]
     public async Task ADeleteAppendsADeleteLeafAfterTheDetails()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
-        using (var delete = await _client.DeleteAsync("api/v2/package/TestData/1.2.3"))
+        using (var delete = await _client.DeleteAsync("api/v2/package/TestData/1.2.3", cancellationToken))
         {
             Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
         }
@@ -99,9 +102,10 @@ public class CatalogIntegrationTests : IDisposable
     [Fact]
     public async Task CommitTimestampsStrictlyIncreaseEvenWhenTheClockDoesNot()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The test host's clock is frozen, which is the worst case for a cursor.
-        await _app.AddPackageAsync(_packageStream);
-        using (var relist = await _client.PostAsync("api/v2/package/TestData/1.2.3", content: null))
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
+        using (var relist = await _client.PostAsync("api/v2/package/TestData/1.2.3", content: null, cancellationToken))
         {
             Assert.Equal(HttpStatusCode.OK, relist.StatusCode);
         }
@@ -121,7 +125,8 @@ public class CatalogIntegrationTests : IDisposable
     [Fact]
     public async Task RebuildBackfillsAPackageWithNoEntry()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using (var scope = _app.Services.CreateScope())
         {
@@ -145,7 +150,8 @@ public class CatalogIntegrationTests : IDisposable
     [Fact]
     public async Task RebuildIsANoOpWhenTheCatalogIsComplete()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var scope = _app.Services.CreateScope();
         var result = await scope.ServiceProvider.GetRequiredService<CatalogRebuilder>().RebuildAsync(CancellationToken.None);
@@ -159,7 +165,8 @@ public class CatalogIntegrationTests : IDisposable
     [InlineData("v3/catalog/data/00000000-0000-0000-0000-000000000000.json")]
     public async Task AMissingDocumentIsNotFound(string url)
     {
-        using var response = await _client.GetAsync(url);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync(url, cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

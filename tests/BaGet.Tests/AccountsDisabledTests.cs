@@ -27,7 +27,8 @@ public class AccountsDisabledTests : IDisposable
     [InlineData("account/apikeys")]
     public async Task AccountPagesAreNotFound(string url)
     {
-        using var response = await _client.GetAsync(url);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync(url, cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -35,7 +36,8 @@ public class AccountsDisabledTests : IDisposable
     [Fact]
     public async Task TheLayoutHasNoSignInLink()
     {
-        var html = await _client.GetStringAsync("upload");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var html = await _client.GetStringAsync("upload", cancellationToken);
 
         Assert.DoesNotContain("account/login", html);
     }

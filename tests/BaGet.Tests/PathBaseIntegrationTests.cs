@@ -34,11 +34,12 @@ public class PathBaseIntegrationTests : IDisposable
     [Fact]
     public async Task ServiceIndexUsesPathBaseWhenTheProxyStripsIt()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The proxy rewrote "/nuget/v3/index.json" to "/v3/index.json".
-        using var response = await _client.GetAsync("v3/index.json");
+        using var response = await _client.GetAsync("v3/index.json", cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         #pragma warning disable CS8602
         foreach (var resource in content["resources"])
@@ -54,11 +55,12 @@ public class PathBaseIntegrationTests : IDisposable
     [Fact]
     public async Task ServiceIndexUsesPathBaseWhenTheProxyForwardsIt()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The proxy forwarded the path base untouched.
-        using var response = await _client.GetAsync("nuget/v3/index.json");
+        using var response = await _client.GetAsync("nuget/v3/index.json", cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         #pragma warning disable CS8602
         foreach (var resource in content["resources"])
@@ -75,9 +77,10 @@ public class PathBaseIntegrationTests : IDisposable
     [Fact]
     public async Task HeaderLinksCarryThePathBase()
     {
-        using var response = await _client.GetAsync("nuget/stats");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("nuget/stats", cancellationToken);
         response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Contains("class=\"navbar-brand brand\" href=\"/nuget/\"", html);
         Assert.Contains("<a href=\"/nuget/packages\" role=\"tab\"", html);
@@ -88,16 +91,17 @@ public class PathBaseIntegrationTests : IDisposable
     [Fact]
     public async Task ADotPathBaseMeansTheRoot()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // appsettings.json ships "PathBase": ".", which is not a usable PathString.
         using var app = new BaGetApplication(
             _output,
             configOverrides: new Dictionary<string, string> { { "PathBase", "." } });
         using var client = app.CreateDefaultClient();
 
-        using var response = await client.GetAsync("v3/index.json");
+        using var response = await client.GetAsync("v3/index.json", cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         #pragma warning disable CS8602
         foreach (var resource in content["resources"])
@@ -112,15 +116,16 @@ public class PathBaseIntegrationTests : IDisposable
     [Fact]
     public async Task APathBaseMissingItsLeadingSlashStillApplies()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var app = new BaGetApplication(
             _output,
             configOverrides: new Dictionary<string, string> { { "PathBase", "nuget" } });
         using var client = app.CreateDefaultClient();
 
-        using var response = await client.GetAsync("v3/index.json");
+        using var response = await client.GetAsync("v3/index.json", cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         #pragma warning disable CS8602
         foreach (var resource in content["resources"])

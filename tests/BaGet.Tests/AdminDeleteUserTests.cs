@@ -129,11 +129,12 @@ public class AdminDeleteUserTests : IDisposable
     [Fact]
     public async Task ReadOnlyModeRefusesToDeleteTheSoleOwnedPackages()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync(readOnly: true);
         await CreateUserAsync(app, "alice");
         using (var package = TestPackages.Build("Alice.Solo", "1.0.0"))
         {
-            await app.AddPackageAsync(package);
+            await app.AddPackageAsync(package, cancellationToken);
         }
         await AddOwnerAsync(app, "Alice.Solo", "alice");
 
@@ -142,7 +143,7 @@ public class AdminDeleteUserTests : IDisposable
 
         using var response = await DeleteAsync(admin, "alice", soleOwned: "delete");
 
-        Assert.Contains(BaGet.Identity.Pages.Admin.DeleteUserModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync());
+        Assert.Contains(BaGet.Identity.Pages.Admin.DeleteUserModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.True(await ExistsAsync(app, "alice"));
         Assert.Single(await VersionsAsync(app, "Alice.Solo"));
         Assert.Single(await OwnersAsync(app, "Alice.Solo"));
@@ -151,11 +152,12 @@ public class AdminDeleteUserTests : IDisposable
     [Fact]
     public async Task ReadOnlyModeStillDeletesTheAccountAndKeepsItsPackages()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync(readOnly: true);
         await CreateUserAsync(app, "alice");
         using (var package = TestPackages.Build("Alice.Solo", "1.0.0"))
         {
-            await app.AddPackageAsync(package);
+            await app.AddPackageAsync(package, cancellationToken);
         }
         await AddOwnerAsync(app, "Alice.Solo", "alice");
 
@@ -255,13 +257,14 @@ public class AdminDeleteUserTests : IDisposable
     [Fact]
     public async Task AWrongPasswordDeletesNothing()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         await CreateUserAsync(app, "alice");
 
         using var response = await DeleteAsync(admin, "alice", password: "wrong");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("confirmation is incorrect", await response.Content.ReadAsStringAsync());
+        Assert.Contains("confirmation is incorrect", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.True(await ExistsAsync(app, "alice"));
     }
 

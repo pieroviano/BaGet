@@ -163,6 +163,7 @@ public class DatabaseCopyTests : IDisposable
     [Fact]
     public async Task CopiesEveryTableSavesTheSettingsAndStaysReadOnlyUntilRestart()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = NewTarget();
         var gate = app.Services.GetRequiredService<MaintenanceGate>();
@@ -192,10 +193,10 @@ public class DatabaseCopyTests : IDisposable
                 Assert.True(counts["Organizations"] >= 1);
 
                 // A key generated after the copy continues after the highest copied one.
-                var highest = await targetDb.Set<Organization>().MaxAsync(o => o.Key);
+                var highest = await targetDb.Set<Organization>().MaxAsync(o => o.Key, cancellationToken);
                 var later = new Organization { Name = "Later", Created = DateTime.UtcNow };
                 targetDb.Set<Organization>().Add(later);
-                await targetDb.SaveChangesAsync();
+                await targetDb.SaveChangesAsync(cancellationToken);
                 Assert.Equal(highest + 1, later.Key);
             }
         }
@@ -208,7 +209,7 @@ public class DatabaseCopyTests : IDisposable
         using var client = app.CreateClient();
         using var package = TestPackages.Build("After.Copy", "1.0.0");
         using var push = TestPackages.PushRequest(package, key);
-        using var refused = await client.SendAsync(push);
+        using var refused = await client.SendAsync(push, cancellationToken);
         Assert.Equal(HttpStatusCode.ServiceUnavailable, refused.StatusCode);
 
         var html = await admin.GetPageAsync("admin/settings");
@@ -254,13 +255,14 @@ public class DatabaseCopyTests : IDisposable
     [Fact]
     public async Task ANonEmptyTargetIsRefusedAndNotTouched()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = NewTarget();
         using (var targetDb = OpenTarget(target))
         {
             await ((IContext)targetDb).RunMigrationsAsync(CancellationToken.None);
             targetDb.Set<Organization>().Add(new Organization { Name = "Existing", Created = DateTime.UtcNow });
-            await targetDb.SaveChangesAsync();
+            await targetDb.SaveChangesAsync(cancellationToken);
         }
 
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
@@ -272,9 +274,9 @@ public class DatabaseCopyTests : IDisposable
         Assert.False(app.Services.GetRequiredService<MaintenanceGate>().IsClosed);
 
         using var after = OpenTarget(target);
-        Assert.Equal(1, await after.Set<Organization>().CountAsync());
-        Assert.Equal("Existing", (await after.Set<Organization>().SingleAsync()).Name);
-        Assert.Equal(0, await after.Set<Package>().CountAsync());
+        Assert.Equal(1, await after.Set<Organization>().CountAsync(cancellationToken));
+        Assert.Equal("Existing", (await after.Set<Organization>().SingleAsync(cancellationToken)).Name);
+        Assert.Equal(0, await after.Set<Package>().CountAsync(cancellationToken));
     }
 
     [Fact]
@@ -407,6 +409,7 @@ public class DatabaseCopyTests : IDisposable
     [Fact]
     public async Task APushOrSettingsSaveDuringTheCopyIsRefusedWith503AndASecondCopyIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = NewTarget();
         var copy = app.Services.GetRequiredService<DatabaseCopyService>();
@@ -421,12 +424,12 @@ public class DatabaseCopyTests : IDisposable
         };
 
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
-        await reached.Task.WaitAsync(TimeSpan.FromSeconds(60));
+        await reached.Task.WaitAsync(TimeSpan.FromSeconds(60), cancellationToken);
 
         using var client = app.CreateClient();
         using (var package = TestPackages.Build("During.Copy", "1.0.0"))
         using (var push = TestPackages.PushRequest(package, key))
-        using (var refused = await client.SendAsync(push))
+        using (var refused = await client.SendAsync(push, cancellationToken))
         {
             Assert.Equal(HttpStatusCode.ServiceUnavailable, refused.StatusCode);
             Assert.True(refused.Headers.RetryAfter != null);
@@ -456,12 +459,13 @@ public class DatabaseCopyTests : IDisposable
 
         // Nothing the refused push wrote: the target has only the packages that existed.
         using var targetDb = OpenTarget(target);
-        Assert.False(await targetDb.Set<Package>().AnyAsync(p => p.Id == "During.Copy"));
+        Assert.False(await targetDb.Set<Package>().AnyAsync(p => p.Id == "During.Copy", cancellationToken));
     }
 
     [Fact]
     public async Task ATargetThatDoesNotExistYetIsCreatedAndFilled()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = $"Data Source={Path.Combine(_directory, "brand-new.db")}";
 
@@ -470,12 +474,13 @@ public class DatabaseCopyTests : IDisposable
 
         Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
         using var targetDb = OpenTarget(target);
-        Assert.Equal(3, await targetDb.Set<Package>().CountAsync());
+        Assert.Equal(3, await targetDb.Set<Package>().CountAsync(cancellationToken));
     }
 
     [Fact]
     public async Task StatusEndpointIsForAdministratorsOnly()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
 
         using (var anonymous = new Browser(app))
@@ -493,7 +498,7 @@ public class DatabaseCopyTests : IDisposable
 
         using var ok = await admin.GetAsync("admin/settings?handler=CopyStatus");
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
-        using var json = JsonDocument.Parse(await ok.Content.ReadAsStringAsync());
+        using var json = JsonDocument.Parse(await ok.Content.ReadAsStringAsync(cancellationToken));
         Assert.Equal("Idle", json.RootElement.GetProperty("phase").GetString());
         Assert.False(json.RootElement.GetProperty("active").GetBoolean());
     }
@@ -501,6 +506,7 @@ public class DatabaseCopyTests : IDisposable
     [Fact]
     public async Task ASqliteTargetAcceptsOverLongValuesAndCaseOnlyDuplicatesWhichItStores()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = NewTarget();
 
@@ -513,7 +519,7 @@ public class DatabaseCopyTests : IDisposable
                 PackageId = "Copy.One", PackageVersion = "1.0.0", Reason = new string('x', 200), Details = "d", Created = DateTime.UtcNow,
             });
             sourceDb.Set<Organization>().Add(new Organization { Name = "ACME", Created = DateTime.UtcNow });
-            await sourceDb.SaveChangesAsync();
+            await sourceDb.SaveChangesAsync(cancellationToken);
         }
 
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
@@ -521,13 +527,14 @@ public class DatabaseCopyTests : IDisposable
 
         Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
         using var targetDb = OpenTarget(target);
-        Assert.Equal(200, (await targetDb.Set<AbuseReport>().SingleAsync()).Reason!.Length);
-        Assert.Equal(2, await targetDb.Set<Organization>().CountAsync());
+        Assert.Equal(200, (await targetDb.Set<AbuseReport>().SingleAsync(cancellationToken)).Reason!.Length);
+        Assert.Equal(2, await targetDb.Set<Organization>().CountAsync(cancellationToken));
     }
 
     [Fact]
     public async Task ASourceRefusalHappensBeforeTheTargetIsCreatedOrMigrated()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var file = Path.Combine(_directory, "not-yet.db");
         var target = $"Data Source={file}";
@@ -536,7 +543,7 @@ public class DatabaseCopyTests : IDisposable
         using (scope)
         {
             await sourceDb.Database.ExecuteSqlRawAsync(
-                "DELETE FROM __EFMigrationsHistory WHERE MigrationId = (SELECT MAX(MigrationId) FROM __EFMigrationsHistory)");
+                "DELETE FROM __EFMigrationsHistory WHERE MigrationId = (SELECT MAX(MigrationId) FROM __EFMigrationsHistory)", cancellationToken);
         }
 
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
@@ -552,6 +559,7 @@ public class DatabaseCopyTests : IDisposable
     [Fact]
     public async Task ANonEmptyTargetWithAnOlderSchemaSaysItsSchemaWasUpdated()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = NewTarget();
         using (var targetDb = OpenTarget(target))
@@ -559,10 +567,10 @@ public class DatabaseCopyTests : IDisposable
             // An older schema: migrated up to the accounts only, so the target has migrations still to apply.
             await Microsoft.EntityFrameworkCore.Infrastructure.AccessorExtensions
                 .GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>(targetDb)
-                .MigrateAsync("20261017012801_AddAccounts");
+                .MigrateAsync("20261017012801_AddAccounts", cancellationToken);
             targetDb.Set<Organization>().Add(new Organization { Name = "Existing", Created = DateTime.UtcNow });
-            await targetDb.SaveChangesAsync();
-            Assert.NotEmpty(await targetDb.Database.GetPendingMigrationsAsync());
+            await targetDb.SaveChangesAsync(cancellationToken);
+            Assert.NotEmpty(await targetDb.Database.GetPendingMigrationsAsync(cancellationToken));
         }
 
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
@@ -575,6 +583,7 @@ public class DatabaseCopyTests : IDisposable
     [Fact]
     public async Task ASourceWithPendingMigrationsIsRefused()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         var target = NewTarget();
 
@@ -582,7 +591,7 @@ public class DatabaseCopyTests : IDisposable
         using (scope)
         {
             await sourceDb.Database.ExecuteSqlRawAsync(
-                "DELETE FROM __EFMigrationsHistory WHERE MigrationId = (SELECT MAX(MigrationId) FROM __EFMigrationsHistory)");
+                "DELETE FROM __EFMigrationsHistory WHERE MigrationId = (SELECT MAX(MigrationId) FROM __EFMigrationsHistory)", cancellationToken);
         }
 
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }

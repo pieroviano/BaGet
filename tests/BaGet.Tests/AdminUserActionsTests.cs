@@ -83,6 +83,7 @@ public class AdminUserActionsTests : IDisposable
     [Fact]
     public async Task GeneratingAPasswordReplacesItEndsSessionsSwitchesTwoFactorOffAndIsNotCached()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync();
         await CreateUserAsync(app, "alice");
         using var alice = new Browser(app);
@@ -104,7 +105,7 @@ public class AdminUserActionsTests : IDisposable
         #pragma warning disable CS8602
         Assert.Contains("no-store", response.Headers.CacheControl.ToString());
         #pragma warning restore CS8602
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
         var generated = GeneratedPassword(html);
         Assert.NotEmpty(generated);
 
@@ -187,6 +188,7 @@ public class AdminUserActionsTests : IDisposable
     [Fact]
     public async Task TheEmailLinkIsSentThroughTheEmailSenderAndOffersNoPasswordOnScreen()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, admin) = await StartAsync(email: true);
         await CreateUserAsync(app, "alice", email: "alice@example.com");
 
@@ -198,7 +200,7 @@ public class AdminUserActionsTests : IDisposable
         Assert.Contains("Reset link sent to a***@example.com", await admin.GetPageAsync("admin/users"));
 
         var sender = app.Services.GetRequiredService<CapturingEmailSender>();
-        for (var i = 0; i < 100 && !sender.Sent.Any(m => m.Kind == "reset-link"); i++) await Task.Delay(50);
+        for (var i = 0; i < 100 && !sender.Sent.Any(m => m.Kind == "reset-link"); i++) await Task.Delay(50, cancellationToken);
 
         var mail = Assert.Single(sender.Sent, m => m.Kind == "reset-link");
         Assert.Equal("alice@example.com", mail.To);

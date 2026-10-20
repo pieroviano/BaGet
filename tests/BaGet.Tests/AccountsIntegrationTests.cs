@@ -184,13 +184,14 @@ public class AccountsIntegrationTests : IDisposable
     [Fact]
     public async Task SearchReportsOwnersAndVerification()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var alice = await CreateUserAsync("alice");
         await PushAsync("Alice.Package", "1.0.0", await CreateKeyAsync(alice, ApiKeyScopes.Push));
         await PushAsync("Legacy.Package", "1.0.0", GlobalKey);
         await WithServiceAsync<PackageOwnershipService, bool>(
             s => s.SetVerifiedAsync("Alice.Package", verified: true, CancellationToken.None));
 
-        using var search = System.Text.Json.JsonDocument.Parse(await _client.GetStringAsync("v3/search"));
+        using var search = System.Text.Json.JsonDocument.Parse(await _client.GetStringAsync("v3/search", cancellationToken));
         #pragma warning disable CS8621, CS8714
         var results = search.RootElement.GetProperty("data").EnumerateArray()
             .ToDictionary(r => r.GetProperty("id").GetString());
@@ -205,6 +206,7 @@ public class AccountsIntegrationTests : IDisposable
     [Fact]
     public async Task ARegisteredUserCanCreateAKeyThatPushes()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The whole browser flow: register, then create a key on the API keys page.
         var register = await GetFormAsync("account/register");
         using (var response = await PostFormAsync("account/register", register, new Dictionary<string, string>
@@ -227,7 +229,7 @@ public class AccountsIntegrationTests : IDisposable
                    { "ExpiresInDays", "30" },
                }))
         {
-            var html = await response.Content.ReadAsStringAsync();
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
             key = Regex.Match(html, "<pre id=\"created-key\">([^<]+)</pre>").Groups[1].Value;
         }
 
@@ -238,7 +240,8 @@ public class AccountsIntegrationTests : IDisposable
     [Fact]
     public async Task TheApiKeysPageNeedsASignedInUser()
     {
-        using var response = await _browser.GetAsync("account/apikeys");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _browser.GetAsync("account/apikeys", cancellationToken);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         #pragma warning disable CS8602

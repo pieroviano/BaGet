@@ -31,9 +31,10 @@ public class WebUiIntegrationTests : IDisposable
     [Fact]
     public async Task StatisticsCountThePackages()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using (var package = TestResources.GetResourceStream(TestResources.Package))
         {
-            await _app.AddPackageAsync(package);
+            await _app.AddPackageAsync(package, cancellationToken);
         }
 
         var html = await _browser.GetPageAsync("stats");
@@ -46,6 +47,7 @@ public class WebUiIntegrationTests : IDisposable
     [Fact]
     public async Task AnAbuseReportIsRecorded()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var response = await _browser.PostAsync("packages/TestData/1.2.3/report-abuse", new Dictionary<string, string>
         {
             { "Reason", "Contains malicious code" },
@@ -53,7 +55,7 @@ public class WebUiIntegrationTests : IDisposable
             { "ReporterEmail", "reporter@example.test" },
         });
 
-        Assert.Contains("report-submitted", await response.Content.ReadAsStringAsync());
+        Assert.Contains("report-submitted", await response.Content.ReadAsStringAsync(cancellationToken));
 
         var report = Assert.Single(await ReportsAsync());
         Assert.Equal("TestData", report.PackageId);
@@ -65,13 +67,14 @@ public class WebUiIntegrationTests : IDisposable
     [Fact]
     public async Task AReportNeedsAKnownReason()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var response = await _browser.PostAsync("packages/TestData/1.2.3/report-abuse", new Dictionary<string, string>
         {
             { "Reason", "Because" },
             { "Details", "x" },
         });
 
-        Assert.DoesNotContain("report-submitted", await response.Content.ReadAsStringAsync());
+        Assert.DoesNotContain("report-submitted", await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.Empty(await ReportsAsync());
     }
 
@@ -142,6 +145,7 @@ public class AccountsUiIntegrationTests : IDisposable
     [Fact]
     public async Task AnOwnerCanUnlistFromTheManagePage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await _alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package");
 
@@ -150,7 +154,7 @@ public class AccountsUiIntegrationTests : IDisposable
             { "version", "1.0.0" },
         }, action: "packages/Alice.Package/manage?handler=Unlist");
 
-        Assert.Contains("is unlisted", await response.Content.ReadAsStringAsync());
+        Assert.Contains("is unlisted", await response.Content.ReadAsStringAsync(cancellationToken));
         var package = await WithScopeAsync(s => s.GetRequiredService<IPackageDatabase>()
             .FindOrNullAsync("Alice.Package", NuGet.Versioning.NuGetVersion.Parse("1.0.0"), includeUnlisted: true, CancellationToken.None));
         #pragma warning disable CS8602
@@ -161,6 +165,7 @@ public class AccountsUiIntegrationTests : IDisposable
     [Fact]
     public async Task AnOwnerCanDeprecateFromTheManagePage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await _alice.RegisterAsync("alice");
         await PushAsAsync("alice", "Alice.Package");
 
@@ -171,8 +176,8 @@ public class AccountsUiIntegrationTests : IDisposable
             { "message", "Use the new one" },
         }, action: "packages/Alice.Package/manage?handler=Deprecate");
 
-        Assert.Contains("is deprecated", await response.Content.ReadAsStringAsync());
-        var registration = await _client.GetStringAsync("v3/registration/alice.package/index.json");
+        Assert.Contains("is deprecated", await response.Content.ReadAsStringAsync(cancellationToken));
+        var registration = await _client.GetStringAsync("v3/registration/alice.package/index.json", cancellationToken);
         Assert.Contains("Use the new one", registration);
     }
 

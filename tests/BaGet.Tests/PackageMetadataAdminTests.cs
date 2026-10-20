@@ -35,7 +35,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task ADeprecationAppearsInRegistration()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var put = await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/deprecation",
             @"{""reasons"":[""Legacy""],""message"":""Use Other"",""alternatePackageId"":""Other""}");
@@ -53,7 +54,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task RemovingTheDeprecationClearsIt()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         (await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/deprecation", @"{""reasons"":[""Other""]}")).Dispose();
         using var delete = await SendAsync(HttpMethod.Delete, "v3/package/TestData/1.2.3/deprecation");
@@ -65,7 +67,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task AnUnknownReasonIsRejected()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var put = await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/deprecation", @"{""reasons"":[""Bored""]}");
 
@@ -83,7 +86,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task AWrongApiKeyIsUnauthorized()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var request = new HttpRequestMessage(HttpMethod.Put, "v3/package/TestData/1.2.3/deprecation")
         {
@@ -91,7 +95,7 @@ public class PackageMetadataAdminTests : IDisposable
         };
         request.Headers.Add("X-NuGet-ApiKey", "wrong");
 
-        using var response = await _client.SendAsync(request);
+        using var response = await _client.SendAsync(request, cancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -99,7 +103,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task VulnerabilitiesAppearInRegistrationAndTheVulnerabilityPage()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var put = await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/vulnerabilities",
             @"[{""advisoryUrl"":""https://example.test/advisory/1"",""severity"":2}]");
@@ -123,7 +128,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task AnEmptyListClearsTheVulnerabilities()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         (await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/vulnerabilities",
             @"[{""advisoryUrl"":""https://example.test/a"",""severity"":1}]")).Dispose();
@@ -139,7 +145,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task AnOutOfRangeSeverityIsRejected()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         using var put = await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/vulnerabilities",
             @"[{""advisoryUrl"":""https://example.test/a"",""severity"":4}]");
@@ -150,7 +157,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task SearchCarriesTheLatestVersionsMetadata()
     {
-        await _app.AddPackageAsync(_packageStream);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await _app.AddPackageAsync(_packageStream, cancellationToken);
 
         (await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/deprecation", @"{""reasons"":[""CriticalBugs""]}")).Dispose();
         (await SendAsync(HttpMethod.Put, "v3/package/TestData/1.2.3/vulnerabilities",
@@ -166,7 +174,8 @@ public class PackageMetadataAdminTests : IDisposable
     [Fact]
     public async Task AnUnknownVulnerabilityPageIsNotFound()
     {
-        using var response = await _client.GetAsync("v3/vulnerabilities/other.json");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var response = await _client.GetAsync("v3/vulnerabilities/other.json", cancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

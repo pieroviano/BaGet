@@ -46,6 +46,7 @@ public class StagingIntegrationTests : IDisposable
     [Fact]
     public async Task AStagedFileIsNotServedOverHttp()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var token = await Staging().StageAsync(Package(), ownerId: null, CancellationToken.None);
 
         // No route accepts a storage path: every storage read is composed from a
@@ -56,7 +57,7 @@ public class StagingIntegrationTests : IDisposable
                      $"v3/package/staging/{token}/{token}.nupkg",
                  })
         {
-            using var response = await _client.GetAsync(url);
+            using var response = await _client.GetAsync(url, cancellationToken);
 
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }

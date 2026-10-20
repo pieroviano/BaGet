@@ -202,12 +202,13 @@ public class SearchSortWebTests : IDisposable
     [Fact]
     public async Task TheV3SearchApiIgnoresSortAndIsUnchanged()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (app, _) = Start();
         await SeedAsync(app);
         using var client = app.CreateClient();
 
-        var plain = await client.GetStringAsync("v3/search?q=Sortable");
-        var withSort = await client.GetStringAsync("v3/search?q=Sortable&sortBy=TotalDownloads&sort=LastUpdated");
+        var plain = await client.GetStringAsync("v3/search?q=Sortable", cancellationToken);
+        var withSort = await client.GetStringAsync("v3/search?q=Sortable&sortBy=TotalDownloads&sort=LastUpdated", cancellationToken);
 
         Assert.Equal(plain, withSort);
         Assert.True(plain.IndexOf("Sortable.Alpha", StringComparison.Ordinal) < plain.IndexOf("Sortable.Beta", StringComparison.Ordinal));

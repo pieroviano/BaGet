@@ -179,6 +179,7 @@ public class EmailLinkTests : IDisposable
     [Fact]
     public async Task TheResponseDoesNotWaitForTheMailToBeSent()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var release = new TaskCompletionSource();
         var app = Start(
             new() { { "Site:PublicUrl", "https://baget.example.com" } },
@@ -195,7 +196,7 @@ public class EmailLinkTests : IDisposable
         using (await browser.GetAsync("account/forgotpassword")) { }
 
         var post = ForgotAsync(browser, "alice");
-        var winner = await Task.WhenAny(post, Task.Delay(TimeSpan.FromSeconds(10)));
+        var winner = await Task.WhenAny(post, Task.Delay(TimeSpan.FromSeconds(10), cancellationToken));
         release.SetResult();
 
         Assert.Same(post, winner);
@@ -206,6 +207,7 @@ public class EmailLinkTests : IDisposable
     [Fact]
     public async Task ASecondRequestForTheSameAccountIsAnsweredTheSameButNotMailed()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var app = Start(new() { { "Site:PublicUrl", "https://baget.example.com" } });
         await CreateConfirmedUserAsync(app, "alice", "alice@example.com");
         var browser = NewBrowser(app);
@@ -213,7 +215,7 @@ public class EmailLinkTests : IDisposable
         using var first = await ForgotAsync(browser, "alice");
         await ResetMailsAsync(app, 1);
         using var second = await ForgotAsync(browser, "alice@example.com");
-        await Task.Delay(300);
+        await Task.Delay(300, cancellationToken);
 
         Assert.Equal(first.StatusCode, second.StatusCode);
         Assert.Single(await ResetMailsAsync(app, 1));

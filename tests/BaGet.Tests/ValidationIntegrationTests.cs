@@ -34,11 +34,12 @@ public class ValidationIntegrationTests : IDisposable
     [Fact]
     public async Task APackageBeingValidatedIsNotServed()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var gate = new GateValidator();
         var client = CreateClient(configureServices: s => s.AddSingleton<IPackageValidator>(gate));
 
         Assert.Equal(HttpStatusCode.Accepted, await PushAsync(client, "Gated.Package", "1.0.0"));
-        await gate.Entered.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        await gate.Entered.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
 
         Assert.Equal("Validating", await StatusAsync(client, "Gated.Package", "1.0.0"));
         await AssertNotServedAsync(client, "Gated.Package", "1.0.0");
@@ -46,13 +47,14 @@ public class ValidationIntegrationTests : IDisposable
         gate.Release.SetResult(true);
 
         Assert.Equal("Available", await WaitForResultAsync(client, "Gated.Package", "1.0.0"));
-        using var download = await client.GetAsync("v3/package/gated.package/1.0.0/gated.package.1.0.0.nupkg");
+        using var download = await client.GetAsync("v3/package/gated.package/1.0.0/gated.package.1.0.0.nupkg", cancellationToken);
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
     }
 
     [Fact]
     public async Task AFailedPackageIsQuarantinedAndNeverServed()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = CreateClient(configureServices: s => s.AddSingleton<IPackageValidator>(new RejectingValidator()));
 
         Assert.Equal(HttpStatusCode.Accepted, await PushAsync(client, "Rejected.Package", "1.0.0"));
@@ -60,7 +62,7 @@ public class ValidationIntegrationTests : IDisposable
         Assert.Equal("Quarantined", await WaitForResultAsync(client, "Rejected.Package", "1.0.0"));
         await AssertNotServedAsync(client, "Rejected.Package", "1.0.0");
 
-        using var status = JsonDocument.Parse(await client.GetStringAsync("v3/package/Rejected.Package/1.0.0/validation"));
+        using var status = JsonDocument.Parse(await client.GetStringAsync("v3/package/Rejected.Package/1.0.0/validation", cancellationToken));
         var rejection = status.RootElement.GetProperty("steps").EnumerateArray()
             .Single(s => s.GetProperty("type").GetString() == "Rejecting");
         Assert.Equal("Failed", rejection.GetProperty("state").GetString());
@@ -93,6 +95,7 @@ public class ValidationIntegrationTests : IDisposable
     [Fact]
     public async Task AValidatedPackageIsRepositorySigned()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (path, fingerprint) = CreateSigningCertificate();
         var client = CreateClient(new Dictionary<string, string>
         {
@@ -104,8 +107,8 @@ public class ValidationIntegrationTests : IDisposable
         await PushAsync(client, "Signed.Package", "1.0.0");
         Assert.Equal("Available", await WaitForResultAsync(client, "Signed.Package", "1.0.0"));
 
-        using var download = await client.GetAsync("v3/package/signed.package/1.0.0/signed.package.1.0.0.nupkg");
-        using var package = new MemoryStream(await download.Content.ReadAsByteArrayAsync());
+        using var download = await client.GetAsync("v3/package/signed.package/1.0.0/signed.package.1.0.0.nupkg", cancellationToken);
+        using var package = new MemoryStream(await download.Content.ReadAsByteArrayAsync(cancellationToken));
         using var reader = new PackageArchiveReader(package);
 
         Assert.True(await reader.IsSignedAsync(CancellationToken.None));
@@ -115,21 +118,22 @@ public class ValidationIntegrationTests : IDisposable
         #pragma warning restore CS8602
 
         // The resource lists the certificate that signed it, and serves it.
-        using var resource = JsonDocument.Parse(await client.GetStringAsync("v3/repository-signatures/index.json"));
+        using var resource = JsonDocument.Parse(await client.GetStringAsync("v3/repository-signatures/index.json", cancellationToken));
         var certificate = resource.RootElement.GetProperty("signingCertificates")[0];
         Assert.Equal(fingerprint, certificate.GetProperty("fingerprints").GetProperty("2.16.840.1.101.3.4.2.1").GetString());
         Assert.False(resource.RootElement.GetProperty("allRepositorySigned").GetBoolean());
 
-        using var crt = await client.GetAsync(certificate.GetProperty("contentUrl").GetString());
+        using var crt = await client.GetAsync(certificate.GetProperty("contentUrl").GetString(), cancellationToken);
         Assert.Equal(HttpStatusCode.OK, crt.StatusCode);
 
-        var index = await client.GetStringAsync("v3/index.json");
+        var index = await client.GetStringAsync("v3/index.json", cancellationToken);
         Assert.Contains("RepositorySignatures/5.0.0", index);
     }
 
     [Fact]
     public async Task ASignedPackagePassesWhenSignaturesAreRequired()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // Sign a package on one server, then push the signed copy to another that
         // requires signatures: its signature must verify, untrusted root and all.
         var (path, _) = CreateSigningCertificate();
@@ -141,12 +145,12 @@ public class ValidationIntegrationTests : IDisposable
         });
         await PushAsync(signer, "Resigned.Package", "1.0.0");
         Assert.Equal("Available", await WaitForResultAsync(signer, "Resigned.Package", "1.0.0"));
-        var signed = await signer.GetByteArrayAsync("v3/package/resigned.package/1.0.0/resigned.package.1.0.0.nupkg");
+        var signed = await signer.GetByteArrayAsync("v3/package/resigned.package/1.0.0/resigned.package.1.0.0.nupkg", cancellationToken);
 
         var strict = CreateClient(new Dictionary<string, string> { { "Validation:RequireSignedPackages", "true" } });
         using (var package = new MemoryStream(signed))
         using (var request = TestPackages.PushRequest(package, apiKey: null))
-        using (var response = await strict.SendAsync(request))
+        using (var response = await strict.SendAsync(request, cancellationToken))
         {
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
         }
@@ -157,6 +161,7 @@ public class ValidationIntegrationTests : IDisposable
     [Fact]
     public async Task SigningWithAnInsecureSourceUrlQuarantinesWithAReason()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var (path, _) = CreateSigningCertificate();
         var client = CreateClient(new Dictionary<string, string>
         {
@@ -168,7 +173,7 @@ public class ValidationIntegrationTests : IDisposable
         await PushAsync(client, "Insecure.Package", "1.0.0");
 
         Assert.Equal("Quarantined", await WaitForResultAsync(client, "Insecure.Package", "1.0.0"));
-        using var status = JsonDocument.Parse(await client.GetStringAsync("v3/package/Insecure.Package/1.0.0/validation"));
+        using var status = JsonDocument.Parse(await client.GetStringAsync("v3/package/Insecure.Package/1.0.0/validation", cancellationToken));
         var index = status.RootElement.GetProperty("steps").EnumerateArray().Single(s => s.GetProperty("type").GetString() == "Index");
         Assert.Contains("https", index.GetProperty("message").GetString());
     }
@@ -176,10 +181,11 @@ public class ValidationIntegrationTests : IDisposable
     [Fact]
     public async Task WithoutASigningCertificateTheResourceIsAbsent()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = CreateClient();
 
-        Assert.DoesNotContain("RepositorySignatures", await client.GetStringAsync("v3/index.json"));
-        using var response = await client.GetAsync("v3/repository-signatures/index.json");
+        Assert.DoesNotContain("RepositorySignatures", await client.GetStringAsync("v3/index.json", cancellationToken));
+        using var response = await client.GetAsync("v3/repository-signatures/index.json", cancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 

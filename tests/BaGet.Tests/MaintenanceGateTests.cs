@@ -73,6 +73,7 @@ public class MaintenanceGateTests : IDisposable
     [Fact]
     public async Task PushDeleteSignUpAndSettingsSaveAreRefusedWith503WhileClosed()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var app = Start();
         await AdminTestSupport.CreateUserAsync(app, "root", administrator: true);
         await AdminTestSupport.PushAsync(app, "root", "Existing.Package");
@@ -90,7 +91,7 @@ public class MaintenanceGateTests : IDisposable
         using (var delete = new HttpRequestMessage(HttpMethod.Delete, "api/v2/package/Existing.Package/1.0.0"))
         {
             delete.Headers.Add("X-NuGet-ApiKey", key);
-            using var response = await client.SendAsync(delete);
+            using var response = await client.SendAsync(delete, cancellationToken);
             AssertRefused(response);
         }
 
@@ -102,7 +103,7 @@ public class MaintenanceGateTests : IDisposable
                }))
         {
             AssertRefused(signUp);
-            Assert.Contains("Copying the database", await signUp.Content.ReadAsStringAsync());
+            Assert.Contains("Copying the database", await signUp.Content.ReadAsStringAsync(cancellationToken));
         }
 
         using (var settings = await admin.PostAsync("admin/settings", new Dictionary<string, string>
@@ -125,6 +126,7 @@ public class MaintenanceGateTests : IDisposable
     [Fact]
     public async Task ReadsDownloadsAndPagesWorkWhileClosedAndPagesShowABanner()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var app = Start();
         await AdminTestSupport.CreateUserAsync(app, "root", administrator: true);
         await AdminTestSupport.PushAsync(app, "root", "Served.Package");
@@ -133,16 +135,16 @@ public class MaintenanceGateTests : IDisposable
 
         GateOf(app).Close("Copying the database");
 
-        using (var index = await client.GetAsync("v3/index.json")) Assert.Equal(HttpStatusCode.OK, index.StatusCode);
-        using (var search = await client.GetAsync("v3/search?q=Served")) Assert.Equal(HttpStatusCode.OK, search.StatusCode);
-        using (var download = await client.GetAsync("v3/package/served.package/1.0.0/served.package.1.0.0.nupkg"))
+        using (var index = await client.GetAsync("v3/index.json", cancellationToken)) Assert.Equal(HttpStatusCode.OK, index.StatusCode);
+        using (var search = await client.GetAsync("v3/search?q=Served", cancellationToken)) Assert.Equal(HttpStatusCode.OK, search.StatusCode);
+        using (var download = await client.GetAsync("v3/package/served.package/1.0.0/served.package.1.0.0.nupkg", cancellationToken))
         {
             Assert.Equal(HttpStatusCode.OK, download.StatusCode);
         }
 
-        using var home = await client.GetAsync("");
+        using var home = await client.GetAsync("", cancellationToken);
         Assert.Equal(HttpStatusCode.OK, home.StatusCode);
-        var html = await home.Content.ReadAsStringAsync();
+        var html = await home.Content.ReadAsStringAsync(cancellationToken);
         Assert.Contains("id=\"maintenance-banner\"", html);
         Assert.Contains("Copying the database", html);
 
@@ -150,7 +152,7 @@ public class MaintenanceGateTests : IDisposable
         Assert.Equal(0, package.Downloads);
 
         GateOf(app).Open();
-        Assert.DoesNotContain("maintenance-banner", await client.GetStringAsync(""));
+        Assert.DoesNotContain("maintenance-banner", await client.GetStringAsync("", cancellationToken));
     }
 
     [Fact]

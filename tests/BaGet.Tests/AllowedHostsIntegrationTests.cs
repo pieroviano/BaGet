@@ -32,13 +32,14 @@ public class AllowedHostsIntegrationTests
     [Fact]
     public async Task ServesAnAllowedHost()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var app = CreateApplication("baget.example.com");
         using var client = app.CreateDefaultClient();
 
-        using var response = await client.GetAsync("http://baget.example.com/v3/index.json");
+        using var response = await client.GetAsync("http://baget.example.com/v3/index.json", cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         #pragma warning disable CS8602
         foreach (var resource in content["resources"])
@@ -55,10 +56,11 @@ public class AllowedHostsIntegrationTests
     [Fact]
     public async Task RejectsAHostThatIsNotAllowed()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var app = CreateApplication("baget.example.com");
         using var client = app.CreateDefaultClient();
 
-        using var response = await client.GetAsync("http://attacker.example.com/v3/index.json");
+        using var response = await client.GetAsync("http://attacker.example.com/v3/index.json", cancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -66,13 +68,14 @@ public class AllowedHostsIntegrationTests
     [Fact]
     public async Task ServesAnyHostWhenNothingIsConfigured()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using var app = CreateApplication(allowedHosts: null);
         using var client = app.CreateDefaultClient();
 
-        using var response = await client.GetAsync("http://anything.example.com/v3/index.json");
+        using var response = await client.GetAsync("http://anything.example.com/v3/index.json", cancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = JObject.Parse(await response.Content.ReadAsStringAsync());
+        var content = JObject.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
 
         #pragma warning disable CS8602
         foreach (var resource in content["resources"])
@@ -89,13 +92,14 @@ public class AllowedHostsIntegrationTests
     [Fact]
     public async Task ServesEveryHostOfAWhitespaceSeparatedList()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // A semicolon separated list is normally written with spaces after the
         // separators. Those entries must not become unmatchable patterns.
         using var app = CreateApplication("baget.example.com; cdn.example.com");
         using var client = app.CreateDefaultClient();
 
-        using var allowed = await client.GetAsync("http://cdn.example.com/v3/index.json");
-        using var rejected = await client.GetAsync("http://attacker.example.com/v3/index.json");
+        using var allowed = await client.GetAsync("http://cdn.example.com/v3/index.json", cancellationToken);
+        using var rejected = await client.GetAsync("http://attacker.example.com/v3/index.json", cancellationToken);
 
         allowed.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
@@ -104,6 +108,7 @@ public class AllowedHostsIntegrationTests
     [Fact]
     public async Task RejectsAForgedHostWithoutTheHostBuilderDefaults()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         // The default builder happens to add the host filtering middleware, but BaGet
         // must not depend on it: a consumer of AddBaGetWebApplication may build its host
         // with a slim or empty builder, which does not add it. With the builder's own
@@ -113,8 +118,8 @@ public class AllowedHostsIntegrationTests
             new Dictionary<string, string> { { "AllowedHosts", "baget.example.com" } });
         using var client = app.CreateDefaultClient();
 
-        using var allowed = await client.GetAsync("http://baget.example.com/v3/index.json");
-        using var rejected = await client.GetAsync("http://attacker.example.com/v3/index.json");
+        using var allowed = await client.GetAsync("http://baget.example.com/v3/index.json", cancellationToken);
+        using var rejected = await client.GetAsync("http://attacker.example.com/v3/index.json", cancellationToken);
 
         allowed.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
@@ -144,12 +149,12 @@ public class AllowedHostsIntegrationTests
     [InlineData("*", true)]
     [InlineData("baget.example.com", false)]
     public void EmptyHostsAreOnlyToleratedWhileFilteringIsDisabled(
-        string allowedHosts,
+        string? allowedHosts,
         bool expected)
     {
         #pragma warning disable CS8620
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { nameof(BaGetOptions.AllowedHosts), allowedHosts },
             })
