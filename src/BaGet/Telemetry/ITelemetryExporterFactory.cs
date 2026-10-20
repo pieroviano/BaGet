@@ -18,8 +18,11 @@ internal interface ITelemetryExporterFactory
 
     BaseExporter<Metric> CreateMetricExporter(TelemetryOptions options, Uri endpoint);
 
-    /// <summary>The sink (disposed to flush and stop) that sends Serilog events to <paramref name="endpoint"/>.</summary>
-    ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, TelemetryStatus.Signal status);
+    /// <summary>
+    /// The sink (disposed to flush and stop) that sends Serilog events to <paramref name="endpoint"/>, with
+    /// <paramref name="serviceName"/> (the startup name, the same as the trace and metric resource) as <c>service.name</c>.
+    /// </summary>
+    ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, string serviceName, TelemetryStatus.Signal status);
 }
 
 /// <summary>OTLP over gRPC or HTTP/protobuf, as configured.</summary>
@@ -31,8 +34,8 @@ internal sealed class OtlpExporterFactory : ITelemetryExporterFactory
     public BaseExporter<Metric> CreateMetricExporter(TelemetryOptions options, Uri endpoint)
         => new OtlpMetricExporter(CreateOptions(options, endpoint));
 
-    public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, TelemetryStatus.Signal status)
-        => OpenTelemetryLogSink.Create(options, endpoint, status);
+    public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, string serviceName, TelemetryStatus.Signal status)
+        => OpenTelemetryLogSink.Create(options, endpoint, serviceName, status);
 
     internal static OtlpExporterOptions CreateOptions(TelemetryOptions options, Uri endpoint)
     {

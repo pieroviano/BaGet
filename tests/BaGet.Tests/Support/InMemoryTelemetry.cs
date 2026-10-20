@@ -76,7 +76,7 @@ internal sealed class InMemoryTelemetry : ITelemetryExporterFactory
 
     public BaseExporter<Metric> CreateMetricExporter(TelemetryOptions options, Uri endpoint) => new NoMetricExporter();
 
-    public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, TelemetryStatus.Signal status)
+    public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, string serviceName, TelemetryStatus.Signal status)
     {
         Interlocked.Increment(ref _logSinks);
         return new LogSink(_logs);

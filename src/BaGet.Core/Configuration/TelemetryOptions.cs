@@ -20,7 +20,7 @@ public class TelemetryOptions
     [RestartRequired]
     public string ServiceName { get; set; } = "baget";
 
-    /// <summary>Where and how signals are sent (traces use this endpoint; metrics and logs may override it).</summary>
+    /// <summary>Where and how signals are sent (<see cref="OtlpOptions.Endpoint"/> is the traces endpoint; metrics and logs have their own endpoints and never fall back to it).</summary>
     public OtlpOptions Otlp { get; set; } = new OtlpOptions();
 
     /// <summary>Distributed traces.</summary>
@@ -128,7 +128,7 @@ public class TracesOptions
 /// <summary>Metric settings.</summary>
 public class MetricsOptions
 {
-    /// <summary>The collector to send metrics to, overriding the traces endpoint. Empty means metrics are not exported (Jaeger accepts traces only).</summary>
+    /// <summary>The collector to send metrics to. It does not fall back to <c>Otlp:Endpoint</c>: empty means metrics are not exported (Jaeger accepts traces only).</summary>
     public string? Endpoint { get; set; }
 
     /// <summary>How often metrics are exported.</summary>
@@ -139,7 +139,7 @@ public class MetricsOptions
 /// <summary>Log export settings.</summary>
 public class LogsOptions
 {
-    /// <summary>The collector to send logs to, overriding the traces endpoint. Empty means logs are not exported (Jaeger accepts traces only).</summary>
+    /// <summary>The collector to send logs to. It does not fall back to <c>Otlp:Endpoint</c>: empty means logs are not exported (Jaeger accepts traces only).</summary>
     public string? Endpoint { get; set; }
 
     /// <summary>The lowest Serilog level exported.</summary>

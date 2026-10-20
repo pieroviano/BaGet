@@ -19,13 +19,18 @@ namespace BaGet.Telemetry;
 /// </summary>
 internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
 {
+    /// <summary>How long <see cref="Dispose"/> waits for a lease held by a stuck <c>Emit</c> before giving up.</summary>
+    private static readonly TimeSpan MaxShutdownWait = TimeSpan.FromSeconds(30);
+
     private readonly IOptionsMonitor<TelemetryOptions> _options;
     private readonly TelemetryStatus.Signal _status;
     private readonly ITelemetryExporterFactory _factory;
     private readonly SwappableHolder<SinkHandle> _holder = new SwappableHolder<SinkHandle>();
     private readonly object _reloadLock = new object();
     private readonly List<Task> _retiring = new List<Task>();
+    private int _unretired; // sinks built whose retirement has not started yet; guarded by _retiring
     private readonly IDisposable? _subscription;
+    private readonly string _serviceName;
     private string? _key;
     private bool _initialized;
     private bool _disposed;
@@ -36,6 +41,9 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _status = (status ?? throw new ArgumentNullException(nameof(status))).Logs;
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+
+        // Telemetry:ServiceName is read once: the same startup name as the trace and metric resource, whatever is saved later.
+        _serviceName = TelemetryEndpoints.ServiceNameOf(TelemetryEndpoints.Read(options));
 
         Reload();
         _subscription = options.OnChange(_ => Reload());
@@ -65,7 +73,9 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
                         ? level
                         : LogEventLevel.Information;
                     _minimumLevel = (int)minimum;
-                    handle = new SinkHandle(_factory.CreateLogSink(options, TelemetryEndpoints.Resolve(options, TelemetrySignal.Logs)!, _status), Retire);
+                    var sink = _factory.CreateLogSink(options, TelemetryEndpoints.Resolve(options, TelemetrySignal.Logs)!, _serviceName, _status);
+                    lock (_retiring) _unretired++;
+                    handle = new SinkHandle(sink, Retire);
                 }
                 catch (Exception e)
                 {
@@ -110,9 +120,18 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
         _subscription?.Dispose();
         _holder.Close();
 
-        // Shutdown is the one place that waits: sinks retired earlier are still draining in the background.
+        // Shutdown is the one place that waits: sinks retired earlier are still draining in the background, and a sink
+        // an Emit still holds a lease on is retired only when that lease is released, after Close returned. Wait for
+        // every sink to have started its retirement, then for all the disposals.
         Task[] pending;
-        lock (_retiring) pending = _retiring.ToArray();
+        lock (_retiring)
+        {
+            var deadline = DateTime.UtcNow + MaxShutdownWait;
+            while (_unretired > 0 && DateTime.UtcNow < deadline) Monitor.Wait(_retiring, TimeSpan.FromMilliseconds(100));
+
+            pending = _retiring.ToArray();
+        }
+
         try
         {
             Task.WaitAll(pending);
@@ -130,24 +149,28 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
     /// </summary>
     private void Retire(ILogEventSink sink)
     {
-        if (sink is not IDisposable disposable) return;
-
-        var task = Task.Run(() =>
+        Task? task = null;
+        if (sink is IDisposable disposable)
         {
-            try
+            task = Task.Run(() =>
             {
-                disposable.Dispose();
-            }
-            catch
-            {
-                // Best effort: a failing sink must not take the host down.
-            }
-        });
+                try
+                {
+                    disposable.Dispose();
+                }
+                catch
+                {
+                    // Best effort: a failing sink must not take the host down.
+                }
+            });
+        }
 
         lock (_retiring)
         {
             _retiring.RemoveAll(t => t.IsCompleted);
-            _retiring.Add(task);
+            if (task != null) _retiring.Add(task);
+            _unretired--;
+            Monitor.PulseAll(_retiring);
         }
     }
 

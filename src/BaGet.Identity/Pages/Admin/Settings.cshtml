@@ -58,6 +58,10 @@
                         {
                             <div class="alert alert-danger" role="alert"><ul>@foreach (var e in Model.Errors) { <li>@e</li> }</ul></div>
                         }
+                        @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && !Model.HostExportsTelemetry)
+                        {
+                            <div class="alert alert-info" role="note" id="telemetry-no-host">This host doesn't export telemetry; these settings have no effect here (they apply to a host that does and shares this settings file).</div>
+                        }
                         @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && Model.TelemetrySignals != null)
                         {
                             <table class="table table-condensed" id="telemetry-status">

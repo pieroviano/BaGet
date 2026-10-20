@@ -10,6 +10,7 @@ using BaGet.Core;
 using BaGet.Core.Tests.Support;
 using BaGet.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -271,5 +272,42 @@ public class TelemetrySettingsPageTests : IDisposable
         Assert.DoesNotContain("<script>alert", failing);
         Assert.DoesNotContain("u:p@", failing);
         Assert.DoesNotContain("k=v", failing);
+    }
+
+    [Fact]
+    public async Task AHostThatExportsNothingShowsANoteButKeepsTheSectionEditable()
+    {
+        var app = new BaGetApplication(
+            _output,
+            configOverrides: new Dictionary<string, string> { ["Accounts:Enabled"] = "true" },
+            configureServices: services => services.RemoveAll<ITelemetryDiagnostics>());
+        _disposables.Add(app);
+        var admin = new Browser(app);
+        _disposables.Add(admin);
+        await admin.RegisterAsync("root");
+        using (var scope = app.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AdministratorService>()
+                .PromoteAsync("root", "test", System.Threading.CancellationToken.None);
+        }
+
+        var html = await admin.GetPageAsync("admin/settings");
+
+        Assert.Contains("id=\"telemetry-no-host\"", html);
+        Assert.Contains("export telemetry", html);
+        Assert.DoesNotContain("id=\"telemetry-status\"", html);
+        Assert.DoesNotContain("id=\"telemetry-test\"", html);
+        Assert.Contains("v:Telemetry:Otlp:Endpoint", html);
+    }
+
+    [Fact]
+    public async Task AHostThatExportsTelemetryShowsNoNote()
+    {
+        var (_, admin, _) = await StartAsync();
+
+        var html = await admin.GetPageAsync("admin/settings");
+
+        Assert.DoesNotContain("telemetry-no-host", html);
+        Assert.Contains("id=\"telemetry-status\"", html);
     }
 }

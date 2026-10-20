@@ -53,6 +53,12 @@ public class SettingsModel : AdminPageModel
     /// <summary>The state of each telemetry signal for the Telemetry section, or null when the host exports no telemetry.</summary>
     public IReadOnlyList<TelemetrySignalReport>? TelemetrySignals { get; private set; }
 
+    /// <summary>
+    /// True when this host exports telemetry (registers <see cref="ITelemetryDiagnostics"/>). When false the Telemetry
+    /// section stays editable (the settings file may be shared with a host that does export) but a note says it has no effect here.
+    /// </summary>
+    public bool HostExportsTelemetry => TelemetrySignals != null;
+
     /// <summary>The outcome of the last "Test connection", or null. Shown in the Telemetry section; never saved.</summary>
     public TelemetryTestOutcome? TelemetryTest { get; private set; }
 

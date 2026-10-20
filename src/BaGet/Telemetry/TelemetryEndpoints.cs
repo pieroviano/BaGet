@@ -85,13 +85,21 @@ internal static class TelemetryEndpoints
         return result;
     }
 
-    /// <summary>Everything that decides how a signal's exporter is built; equal keys mean no rebuild is needed. Null = off.</summary>
+    /// <summary>
+    /// The <c>service.name</c> for a set of options: the configured name, else <c>baget</c>. <c>Telemetry:ServiceName</c> is
+    /// read once at startup, so every signal (including the log sink, which is rebuilt on other changes) must use the name
+    /// read then; it is deliberately not part of <see cref="Key"/>.
+    /// </summary>
+    public static string ServiceNameOf(TelemetryOptions? options)
+        => string.IsNullOrWhiteSpace(options?.ServiceName) ? "baget" : options!.ServiceName;
+
+    /// <summary>Everything that decides how a signal's exporter is built (not <c>ServiceName</c>, fixed at startup); equal keys mean no rebuild is needed. Null = off.</summary>
     public static string? Key(TelemetryOptions options, TelemetrySignal signal)
     {
         var endpoint = Resolve(options, signal);
         if (endpoint == null) return null;
 
         var level = signal == TelemetrySignal.Logs ? options.Logs?.MinimumLevel : null;
-        return string.Join("|", endpoint, options.Otlp?.Protocol, options.Otlp?.Headers, options.Otlp?.Timeout, options.ServiceName, level);
+        return string.Join("|", endpoint, options.Otlp?.Protocol, options.Otlp?.Headers, options.Otlp?.Timeout, level);
     }
 }

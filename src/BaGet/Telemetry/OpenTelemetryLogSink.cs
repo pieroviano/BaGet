@@ -20,7 +20,7 @@ namespace BaGet.Telemetry;
 /// </summary>
 internal static class OpenTelemetryLogSink
 {
-    public static ILogEventSink Create(TelemetryOptions options, Uri endpoint, TelemetryStatus.Signal status)
+    public static ILogEventSink Create(TelemetryOptions options, Uri endpoint, string serviceName, TelemetryStatus.Signal status)
     {
         var timeout = options.Otlp?.Timeout ?? TimeSpan.FromSeconds(10);
         var handler = new ExportStatusHandler(new SocketsHttpHandler(), status, timeout, options.Otlp?.Headers);
@@ -34,7 +34,7 @@ internal static class OpenTelemetryLogSink
                     sink.Endpoint = endpoint.ToString();
                     sink.Protocol = TelemetryEndpoints.IsGrpc(options) ? OtlpProtocol.Grpc : OtlpProtocol.HttpProtobuf;
                     sink.Headers = TelemetryEndpoints.ParseHeaders(options.Otlp?.Headers);
-                    sink.ResourceAttributes = new Dictionary<string, object> { ["service.name"] = options.ServiceName };
+                    sink.ResourceAttributes = new Dictionary<string, object> { ["service.name"] = serviceName };
                     sink.HttpMessageHandler = handler;
                     sink.IncludedData = IncludedData.TraceIdField | IncludedData.SpanIdField | IncludedData.MessageTemplateTextAttribute
                         | IncludedData.SourceContextAttribute;

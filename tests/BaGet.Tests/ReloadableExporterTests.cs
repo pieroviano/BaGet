@@ -324,6 +324,47 @@ public class ReloadableExporterTests : IDisposable
         Assert.All(factory.Sinks, s => Assert.Equal(1, s.DisposeCount));
     }
 
+    [Fact]
+    public async Task DisposeWaitsForASinkWhoseLeaseAnEmitHoldsAcrossTheClose()
+    {
+        var factory = new RecordingFactory { BlockSinkEmit = true };
+        var sink = new ReloadableOpenTelemetrySink(new TestOptionsMonitor(On()), new TelemetryStatus(), factory);
+        var recording = factory.Sinks.Single();
+
+        var emit = Task.Run(() => sink.Emit(Event(LogEventLevel.Error, null)), TestContext.Current.CancellationToken);
+        Assert.True(recording.EmitEntered.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+        // The close happens while the emit holds the lease: the sink is retired only when the emit returns.
+        var dispose = Task.Run(sink.Dispose, TestContext.Current.CancellationToken);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
+        Assert.False(dispose.IsCompleted, "Dispose returned before the sink in use was drained");
+
+        recording.ReleaseEmit.Set();
+        await emit;
+        Assert.True(await Task.WhenAny(dispose, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken)) == dispose);
+        Assert.Equal(1, recording.DisposeCount);
+    }
+
+    [Fact]
+    public void ChangingTheServiceNameNeitherRebuildsTheLogSinkNorChangesItsResource()
+    {
+        var factory = new RecordingFactory();
+        var first = On("http://one:4317");
+        first.ServiceName = "startup-name";
+        var monitor = new TestOptionsMonitor(first);
+        using var sink = new ReloadableOpenTelemetrySink(monitor, new TelemetryStatus(), factory);
+
+        var renamed = On("http://one:4317");
+        renamed.ServiceName = "renamed";
+        monitor.Set(renamed);
+        var moved = On("http://two:4317");
+        moved.ServiceName = "renamed-again";
+        monitor.Set(moved);
+
+        Assert.Equal(2, factory.Sinks.Count);
+        Assert.All(factory.ServiceNames, name => Assert.Equal("startup-name", name));
+    }
+
     private static LogEvent Event(LogEventLevel level, string? sourceContext)
     {
         var properties = new List<LogEventProperty>();
@@ -389,6 +430,8 @@ public class ReloadableExporterTests : IDisposable
 
         public List<RecordingSink> Sinks { get; } = new List<RecordingSink>();
 
+        public List<string> ServiceNames { get; } = new List<string>();
+
         /// <summary>The first exporter built blocks its first export until released.</summary>
         public bool BlockFirst { get; set; }
 
@@ -396,6 +439,9 @@ public class ReloadableExporterTests : IDisposable
 
         /// <summary>Sinks block in Dispose until their <c>ReleaseDispose</c> is set.</summary>
         public bool BlockSinkDispose { get; set; }
+
+        /// <summary>Sinks block in Emit until their <c>ReleaseEmit</c> is set.</summary>
+        public bool BlockSinkEmit { get; set; }
 
         public BaseExporter<Activity> CreateTraceExporter(TelemetryOptions options, Uri endpoint)
         {
@@ -406,9 +452,10 @@ public class ReloadableExporterTests : IDisposable
 
         public BaseExporter<Metric> CreateMetricExporter(TelemetryOptions options, Uri endpoint) => new NoMetrics();
 
-        public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, TelemetryStatus.Signal status)
+        public ILogEventSink CreateLogSink(TelemetryOptions options, Uri endpoint, string serviceName, TelemetryStatus.Signal status)
         {
-            var sink = new RecordingSink { BlockDispose = BlockSinkDispose };
+            ServiceNames.Add(serviceName);
+            var sink = new RecordingSink { BlockDispose = BlockSinkDispose, BlockEmit = BlockSinkEmit };
             lock (Sinks) Sinks.Add(sink);
             return sink;
         }
@@ -426,8 +473,16 @@ public class ReloadableExporterTests : IDisposable
         public int DisposeCount => Volatile.Read(ref _dispose);
         public bool BlockDispose { get; set; }
         public ManualResetEventSlim ReleaseDispose { get; } = new ManualResetEventSlim();
+        public bool BlockEmit { get; set; }
+        public ManualResetEventSlim EmitEntered { get; } = new ManualResetEventSlim();
+        public ManualResetEventSlim ReleaseEmit { get; } = new ManualResetEventSlim();
 
-        public void Emit(LogEvent logEvent) => Events.Enqueue(logEvent);
+        public void Emit(LogEvent logEvent)
+        {
+            EmitEntered.Set();
+            if (BlockEmit) ReleaseEmit.Wait(TimeSpan.FromSeconds(30));
+            Events.Enqueue(logEvent);
+        }
 
         public void Dispose()
         {

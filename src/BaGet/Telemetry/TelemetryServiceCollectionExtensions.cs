@@ -54,7 +54,7 @@ internal static class TelemetryServiceCollectionExtensions
         services.TryAddSingleton<ITelemetryDiagnostics, TelemetryDiagnostics>();
 
         var startup = section.Get<TelemetryOptions>() ?? new TelemetryOptions();
-        var serviceName = string.IsNullOrWhiteSpace(startup.ServiceName) ? "baget" : startup.ServiceName;
+        var serviceName = TelemetryEndpoints.ServiceNameOf(startup);
         var version = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? typeof(Program).Assembly.GetName().Version?.ToString();
         var interval = startup.Metrics?.ExportInterval > TimeSpan.Zero ? startup.Metrics!.ExportInterval : TimeSpan.FromSeconds(60);

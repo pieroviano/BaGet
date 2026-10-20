@@ -1,4 +1,4 @@
-﻿# Configuration
+# Configuration
 
 You can modify BaGet Extension's configurations by editing the `appsettings.json` file.
 
@@ -680,7 +680,7 @@ out through a Serilog sink. Keys apply **without a restart**, except `ServiceNam
 | Key | Default | Meaning |
 |---|---|---|
 | `Telemetry:Enabled` | `false` | Master switch. Off: spans are not recorded, nothing is queued, no connection is made |
-| `Telemetry:ServiceName` | `baget` | `service.name` of every signal (restart) |
+| `Telemetry:ServiceName` | `baget` | `service.name` of every signal, read once at startup (restart) |
 | `Telemetry:Otlp:Endpoint` | empty | Traces collector, absolute http(s) URL, for example `http://jaeger:4317`; empty = no traces |
 | `Telemetry:Otlp:Protocol` | `Grpc` | `Grpc` (port 4317) or `HttpProtobuf` (4318; `/v1/traces`, `/v1/metrics`, `/v1/logs` is appended) |
 | `Telemetry:Otlp:Headers` | empty | `key=value,...` request headers, for an API key (sensitive: masked on the Settings page, never logged or shown) |
@@ -704,7 +704,7 @@ A push then shows in Jaeger (UI on 16686) as one trace: the ASP.NET Core request
 See the [Docker example](installation/docker.md#tracing-with-jaeger).
 
 **Traced:** incoming requests (static files excluded), outgoing HTTP calls (mirror, upstream), database commands
-(`Telemetry:Traces:Database`; the SQL text is removed from the spans before export), the spans `package.index`, `package.validate`, `mirror.fetch`,
+(`Telemetry:Traces:Database`; the SQL text, also under the newer database semantic conventions, is removed from the spans before export), the spans `package.index`, `package.validate`, `mirror.fetch`,
 `database.copy` (one `database.copy.table` child per table). **Metrics:** `baget.packages.pushed`, `baget.downloads`,
 `baget.validation.results`, plus ASP.NET Core, HTTP client and .NET runtime metrics.
 
@@ -720,7 +720,7 @@ down; export runs on a background thread with the `Otlp:Timeout`. Failures are k
 attempt, last success, failing since, scrubbed last error without headers or URL paths). `TelemetryConnectionTester`
 sends one test span to the settings given, saving nothing.
 
-**On the Settings page** the Telemetry section starts with a status table, one row per signal: *Off* (telemetry or the
+**On the Settings page** (a host that does not export telemetry, such as an embedded one, shows a note that these settings have no effect there; they stay editable for a host sharing the file) the Telemetry section starts with a status table, one row per signal: *Off* (telemetry or the
 signal is disabled), *Not configured* (no endpoint), *Configured, nothing exported yet*, *Last export ok at ...* or
 *Failing since ...* with the scrubbed error (and the spans dropped when the queue was full). **Test connection** sends one
 test span (10 s timeout) to the **endpoint, protocol and headers currently typed in the form**, saved or not, and shows
