@@ -20,7 +20,8 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsPackageVersions()
     {
-        var result = await _target.GetPackageVersionsOrNullAsync("Test.Package");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetPackageVersionsOrNullAsync("Test.Package", cancellationToken);
 
         Assert.NotNull(result);
         #pragma warning disable CS8602
@@ -33,7 +34,8 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ReturnsNullIfPackageDoesNotExist()
     {
-        var result = await _target.GetPackageVersionsOrNullAsync(Guid.NewGuid().ToString());
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetPackageVersionsOrNullAsync(Guid.NewGuid().ToString(), cancellationToken);
 
         Assert.Null(result);
     }
@@ -41,15 +43,16 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task DownloadsPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using (var stream = await _target.DownloadPackageOrNullAsync(
                    "Test.Package",
-                   NuGetVersion.Parse("1.0.0")))
+                   NuGetVersion.Parse("1.0.0"), cancellationToken))
         {
             Assert.NotNull(stream);
 
             using (var reader = new StreamReader(stream))
             {
-                Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
+                Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync(cancellationToken));
             }
         }
     }
@@ -57,12 +60,13 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task DownloadsPackageUsingNormalizedLowercasedUrl()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler();
         var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
 
         using (await target.DownloadPackageOrNullAsync(
                    "Test.Package",
-                   NuGetVersion.Parse("1.0.0.0+Build")))
+                   NuGetVersion.Parse("1.0.0.0+Build"), cancellationToken))
         {
         }
 
@@ -76,9 +80,10 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ReturnsNullIfPackageToDownloadDoesNotExist()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var stream = await _target.DownloadPackageOrNullAsync(
             Guid.NewGuid().ToString(),
-            NuGetVersion.Parse("1.0.0"));
+            NuGetVersion.Parse("1.0.0"), cancellationToken);
 
         Assert.Null(stream);
     }
@@ -86,15 +91,16 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task DownloadsPackageManifest()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         using (var stream = await _target.DownloadPackageManifestOrNullAsync(
                    "Test.Package",
-                   NuGetVersion.Parse("1.0.0")))
+                   NuGetVersion.Parse("1.0.0"), cancellationToken))
         {
             Assert.NotNull(stream);
 
             using (var reader = new StreamReader(stream))
             {
-                Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
+                Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync(cancellationToken));
             }
         }
     }
@@ -102,12 +108,13 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task DownloadsPackageManifestUsingNormalizedLowercasedUrl()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler();
         var target = new RawPackageContentClient(new HttpClient(handler), TestData.PackageContentUrl);
 
         using (await target.DownloadPackageManifestOrNullAsync(
                    "Test.Package",
-                   NuGetVersion.Parse("1.0.0.0+Build")))
+                   NuGetVersion.Parse("1.0.0.0+Build"), cancellationToken))
         {
         }
 
@@ -121,9 +128,10 @@ public class RawPackageContentTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ReturnsNullIfPackageManifestDoesNotExist()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var stream = await _target.DownloadPackageManifestOrNullAsync(
             Guid.NewGuid().ToString(),
-            NuGetVersion.Parse("1.0.0"));
+            NuGetVersion.Parse("1.0.0"), cancellationToken);
 
         Assert.Null(stream);
     }

@@ -44,12 +44,13 @@ public class ServiceIndexRefreshTests
     [Fact]
     public async Task ServiceIndex_BeforeTheCacheExpires_IsNotFetchedAgain()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var factory = CreateFactory();
 
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
         _now += _cacheDuration - TimeSpan.FromSeconds(1);
         _searchUrl = SecondSearchUrl;
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
 
         Assert.Equal(1, _handler.RequestCount(TestData.ServiceIndexUrl));
         Assert.Equal(2, _handler.RequestCount(FirstSearchUrl));
@@ -59,12 +60,13 @@ public class ServiceIndexRefreshTests
     [Fact]
     public async Task ServiceIndex_OnceTheCacheExpires_IsFetchedAgain()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var factory = CreateFactory();
 
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
         _now += _cacheDuration;
         _searchUrl = SecondSearchUrl;
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
 
         // The refreshed index moved the search resource, and the client followed it.
         Assert.Equal(2, _handler.RequestCount(TestData.ServiceIndexUrl));
@@ -75,12 +77,13 @@ public class ServiceIndexRefreshTests
     [Fact]
     public async Task ServiceIndex_AfterRefreshing_IsCachedAgain()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var factory = CreateFactory();
 
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
         _now += _cacheDuration;
-        await factory.CreateSearchClient().SearchAsync();
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
 
         Assert.Equal(2, _handler.RequestCount(TestData.ServiceIndexUrl));
     }
@@ -88,16 +91,17 @@ public class ServiceIndexRefreshTests
     [Fact]
     public async Task ServiceIndex_WhenTheRefreshFails_SurfacesTheFailure()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var factory = CreateFactory();
 
-        await factory.CreateSearchClient().SearchAsync();
+        await factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
         _now += _cacheDuration;
         _handler.Unreachable(TestData.ServiceIndexUrl);
 
         // A stale service index is not served in place of a failed refresh: an index that
         // cannot be read is reported, as its resources may have moved.
         await Assert.ThrowsAsync<HttpRequestException>(
-            () => factory.CreateSearchClient().SearchAsync());
+            () => factory.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken));
     }
 
     [Fact]

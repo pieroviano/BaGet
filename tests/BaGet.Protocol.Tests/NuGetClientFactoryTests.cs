@@ -20,17 +20,18 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task DownloadsPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageContentClient();
 
         using (var stream = await client.DownloadPackageOrNullAsync(
                    "Test.Package",
-                   NuGetVersion.Parse("1.0.0")))
+                   NuGetVersion.Parse("1.0.0"), cancellationToken))
         {
             Assert.NotNull(stream);
 
             using (var reader = new StreamReader(stream))
             {
-                Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync());
+                Assert.Equal(TestData.PackageContentNupkg, await reader.ReadToEndAsync(cancellationToken));
             }
         }
     }
@@ -38,17 +39,18 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task DownloadsPackageManifest()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageContentClient();
 
         using (var stream = await client.DownloadPackageManifestOrNullAsync(
                    "Test.Package",
-                   NuGetVersion.Parse("1.0.0")))
+                   NuGetVersion.Parse("1.0.0"), cancellationToken))
         {
             Assert.NotNull(stream);
 
             using (var reader = new StreamReader(stream))
             {
-                Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync());
+                Assert.Equal(TestData.PackageContentNuspec, await reader.ReadToEndAsync(cancellationToken));
             }
         }
     }
@@ -56,9 +58,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ListsPackageVersions()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageContentClient();
 
-        var response = await client.GetPackageVersionsOrNullAsync("Test.Package");
+        var response = await client.GetPackageVersionsOrNullAsync("Test.Package", cancellationToken);
 
         Assert.NotNull(response);
         #pragma warning disable CS8604
@@ -69,9 +72,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ListsPackageVersionsOfPagedPackage()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageContentClient();
 
-        var response = await client.GetPackageVersionsOrNullAsync("Paged.Package");
+        var response = await client.GetPackageVersionsOrNullAsync("Paged.Package", cancellationToken);
 
         Assert.NotNull(response);
         #pragma warning disable CS8604
@@ -82,9 +86,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ListsAllPackageVersions()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreateAutocompleteClient();
 
-        var response = await client.ListPackageVersionsAsync("Test.Package");
+        var response = await client.ListPackageVersionsAsync("Test.Package", cancellationToken: cancellationToken);
 
         Assert.NotNull(response);
         Assert.Equal(3, response.TotalHits);
@@ -96,9 +101,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsPackageMetadataInlined()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageMetadataClient();
 
-        var response = await client.GetRegistrationIndexOrNullAsync("Test.Package");
+        var response = await client.GetRegistrationIndexOrNullAsync("Test.Package", cancellationToken);
 
         Assert.NotNull(response);
         #pragma warning disable CS8602
@@ -118,9 +124,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsPackageMetadataPaged()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageMetadataClient();
 
-        var response = await client.GetRegistrationIndexOrNullAsync("Paged.Package");
+        var response = await client.GetRegistrationIndexOrNullAsync("Paged.Package", cancellationToken);
 
         Assert.NotNull(response);
         #pragma warning disable CS8602
@@ -135,9 +142,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsSinglePackageMetadataInlined()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageMetadataClient();
 
-        var response = await client.GetRegistrationLeafAsync(TestData.RegistrationLeafListedUrl);
+        var response = await client.GetRegistrationLeafAsync(TestData.RegistrationLeafListedUrl, cancellationToken);
 
         Assert.NotNull(response);
         Assert.True(response.Listed);
@@ -149,9 +157,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsSinglePackageMetadataPaged()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreatePackageMetadataClient();
 
-        var response = await client.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
+        var response = await client.GetRegistrationPageAsync(TestData.RegistrationPageUrl, cancellationToken);
 
         Assert.NotNull(response);
         Assert.NotNull(response.ItemsOrNull);
@@ -167,9 +176,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task Searches()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreateSearchClient();
 
-        var response = await client.SearchAsync();
+        var response = await client.SearchAsync(cancellationToken: cancellationToken);
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
@@ -181,9 +191,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task Autocompletes()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreateAutocompleteClient();
 
-        var response = await client.AutocompleteAsync();
+        var response = await client.AutocompleteAsync(cancellationToken: cancellationToken);
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
@@ -195,9 +206,10 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ResolvesResourcesFromTheServiceIndex()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var client = _target.CreateServiceIndexClient();
 
-        var serviceIndex = await client.GetAsync();
+        var serviceIndex = await client.GetAsync(cancellationToken);
 
         Assert.Equal("https://test.example/v3/content", serviceIndex.GetPackageContentResourceUrl());
         Assert.Equal("https://test.example/v3/metadata", serviceIndex.GetPackageMetadataResourceUrl());
@@ -209,12 +221,13 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task FetchesTheServiceIndexOnce()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new CountingHttpMessageHandler(new TestDataHttpMessageHandler());
         var target = new NuGetClientFactory(new HttpClient(handler), TestData.ServiceIndexUrl);
 
-        await target.CreatePackageContentClient().GetPackageVersionsOrNullAsync("Test.Package");
-        await target.CreateSearchClient().SearchAsync();
-        await target.CreateAutocompleteClient().AutocompleteAsync();
+        await target.CreatePackageContentClient().GetPackageVersionsOrNullAsync("Test.Package", cancellationToken);
+        await target.CreateSearchClient().SearchAsync(cancellationToken: cancellationToken);
+        await target.CreateAutocompleteClient().AutocompleteAsync(cancellationToken: cancellationToken);
 
         Assert.Equal(1, handler.RequestCount(TestData.ServiceIndexUrl));
         Assert.Equal(1, handler.RequestCount(TestData.PackageContentVersionListUrl));
@@ -225,12 +238,13 @@ public class NuGetClientFactoryTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ReturnsNullWhenPackageDoesNotExist()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var contentClient = _target.CreatePackageContentClient();
         var metadataClient = _target.CreatePackageMetadataClient();
         var packageId = Guid.NewGuid().ToString();
 
-        Assert.Null(await contentClient.GetPackageVersionsOrNullAsync(packageId));
-        Assert.Null(await metadataClient.GetRegistrationIndexOrNullAsync(packageId));
+        Assert.Null(await contentClient.GetPackageVersionsOrNullAsync(packageId, cancellationToken));
+        Assert.Null(await metadataClient.GetRegistrationIndexOrNullAsync(packageId, cancellationToken));
     }
 
     [Fact]

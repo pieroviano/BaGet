@@ -18,7 +18,8 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetDefaultAutocompleteResults()
     {
-        var response = await _target.AutocompleteAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var response = await _target.AutocompleteAsync(cancellationToken: cancellationToken);
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
@@ -30,10 +31,11 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task AddsDefaultAutocompleteParameters()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.DefaultAutocomplete);
         var target = new RawAutocompleteClient(new HttpClient(handler), TestData.AutocompleteUrl);
 
-        await target.AutocompleteAsync();
+        await target.AutocompleteAsync(cancellationToken: cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);
@@ -51,6 +53,7 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task AddsAutocompleteParameters()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.DefaultAutocomplete);
         var target = new RawAutocompleteClient(new HttpClient(handler), TestData.AutocompleteUrl);
 
@@ -59,7 +62,7 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
             skip: 2,
             take: 5,
             includePrerelease: false,
-            includeSemVer2: false);
+            includeSemVer2: false, cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);
@@ -76,7 +79,8 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ListsPackageVersions()
     {
-        var response = await _target.ListPackageVersionsAsync("Test.Package");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var response = await _target.ListPackageVersionsAsync("Test.Package", cancellationToken: cancellationToken);
 
         Assert.NotNull(response);
         Assert.Equal(3, response.TotalHits);
@@ -88,10 +92,11 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task AddsDefaultListPackageVersionsParameters()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.AutocompleteVersions);
         var target = new RawAutocompleteClient(new HttpClient(handler), TestData.AutocompleteUrl);
 
-        await target.ListPackageVersionsAsync("Test.Package");
+        await target.ListPackageVersionsAsync("Test.Package", cancellationToken: cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);
@@ -108,13 +113,14 @@ public class RawAutocompleteClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task AddsListPackageVersionsParameters()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.AutocompleteVersions);
         var target = new RawAutocompleteClient(new HttpClient(handler), TestData.AutocompleteUrl);
 
         await target.ListPackageVersionsAsync(
             "query",
             includePrerelease: false,
-            includeSemVer2: false);
+            includeSemVer2: false, cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);

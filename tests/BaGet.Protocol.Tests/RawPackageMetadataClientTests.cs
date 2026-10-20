@@ -19,7 +19,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetRegistrationIndexInlinedItems()
     {
-        var result = await _target.GetRegistrationIndexOrNullAsync("Test.Package");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationIndexOrNullAsync("Test.Package", cancellationToken);
 
         Assert.NotNull(result);
         #pragma warning disable CS8602
@@ -46,7 +47,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetRegistrationIndexPagedItems()
     {
-        var result = await _target.GetRegistrationIndexOrNullAsync("Paged.Package");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationIndexOrNullAsync("Paged.Package", cancellationToken);
 
         Assert.NotNull(result);
         #pragma warning disable CS8602
@@ -67,7 +69,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetRegistrationPage()
     {
-        var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageUrl, cancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
@@ -87,7 +90,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetRegistrationPageDeprecated()
     {
-        var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageDeprecatedUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageDeprecatedUrl, cancellationToken);
 
         Assert.NotNull(result);
         Assert.NotNull(result.ItemsOrNull);
@@ -117,7 +121,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetRegistrationPageWithoutDeprecation()
     {
-        var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationPageAsync(TestData.RegistrationPageUrl, cancellationToken);
 
         Assert.NotNull(result);
         #pragma warning disable CS8602, CS8604
@@ -128,7 +133,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ReturnsNullIfRegistrationIndexDoesNotExist()
     {
-        var result = await _target.GetRegistrationIndexOrNullAsync(Guid.NewGuid().ToString());
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationIndexOrNullAsync(Guid.NewGuid().ToString(), cancellationToken);
 
         Assert.Null(result);
     }
@@ -136,15 +142,17 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ThrowsIfRegistrationPageDoesNotExist()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         await Assert.ThrowsAsync<HttpRequestException>(
             () => _target.GetRegistrationPageAsync(
-                $"https://test.example/v3/metadata/{Guid.NewGuid()}/page/1.0.0/1.0.0.json"));
+                $"https://test.example/v3/metadata/{Guid.NewGuid()}/page/1.0.0/1.0.0.json", cancellationToken));
     }
 
     [Fact]
     public async Task GetsRegistrationLeaf()
     {
-        var result = await _target.GetRegistrationLeafAsync(TestData.RegistrationLeafListedUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationLeafAsync(TestData.RegistrationLeafListedUrl, cancellationToken);
 
         Assert.NotNull(result);
         Assert.True(result.Listed);
@@ -164,7 +172,8 @@ public class RawPackageMetadataClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsRegistrationLeafUnlisted()
     {
-        var result = await _target.GetRegistrationLeafAsync(TestData.RegistrationLeafUnlistedUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetRegistrationLeafAsync(TestData.RegistrationLeafUnlistedUrl, cancellationToken);
 
         Assert.NotNull(result);
         Assert.False(result.Listed);

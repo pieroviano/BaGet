@@ -19,7 +19,8 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetCatalogIndex()
     {
-        var result = await _target.GetIndexAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetIndexAsync(cancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
@@ -32,7 +33,8 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetCatalogPage()
     {
-        var page = await _target.GetPageAsync(TestData.CatalogPageUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var page = await _target.GetPageAsync(TestData.CatalogPageUrl, cancellationToken);
 
         Assert.Equal(2, page.Count);
         #pragma warning disable CS8602
@@ -46,7 +48,8 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetPackageDetailsLeaf()
     {
-        var leaf = await _target.GetPackageDetailsLeafAsync(TestData.PackageDetailsCatalogLeafUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var leaf = await _target.GetPackageDetailsLeafAsync(TestData.PackageDetailsCatalogLeafUrl, cancellationToken);
 
         Assert.Equal(TestData.PackageDetailsCatalogLeafUrl, leaf.CatalogLeafUrl);
         #pragma warning disable CS8602
@@ -61,7 +64,8 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetPackageDeleteLeaf()
     {
-        var leaf = await _target.GetPackageDeleteLeafAsync(TestData.PackageDeleteCatalogLeafUrl);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var leaf = await _target.GetPackageDeleteLeafAsync(TestData.PackageDeleteCatalogLeafUrl, cancellationToken);
 
         Assert.Equal(TestData.PackageDeleteCatalogLeafUrl, leaf.CatalogLeafUrl);
         #pragma warning disable CS8602
@@ -76,7 +80,8 @@ public class RawCatalogClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task ThrowsOnTypeMismatch()
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _target.GetPackageDetailsLeafAsync(TestData.PackageDeleteCatalogLeafUrl));
-        await Assert.ThrowsAsync<ArgumentException>(() => _target.GetPackageDeleteLeafAsync(TestData.PackageDetailsCatalogLeafUrl));
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await Assert.ThrowsAsync<ArgumentException>(() => _target.GetPackageDetailsLeafAsync(TestData.PackageDeleteCatalogLeafUrl, cancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => _target.GetPackageDeleteLeafAsync(TestData.PackageDetailsCatalogLeafUrl, cancellationToken));
     }
 }

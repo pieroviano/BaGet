@@ -18,7 +18,8 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetDefaultSearchResults()
     {
-        var response = await _target.SearchAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var response = await _target.SearchAsync(cancellationToken: cancellationToken);
 
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalHits);
@@ -41,10 +42,11 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task AddsDefaultParameters()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.DefaultSearch);
         var target = new RawSearchClient(new HttpClient(handler), TestData.SearchUrl);
 
-        await target.SearchAsync();
+        await target.SearchAsync(cancellationToken: cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);
@@ -62,6 +64,7 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task AddsParameters()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.DefaultSearch);
         var target = new RawSearchClient(new HttpClient(handler), TestData.SearchUrl);
 
@@ -70,7 +73,7 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
             skip: 2,
             take: 5,
             includePrerelease: false,
-            includeSemVer2: false);
+            includeSemVer2: false, cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);
@@ -87,10 +90,11 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task EscapesTheQuery()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.DefaultSearch);
         var target = new RawSearchClient(new HttpClient(handler), TestData.SearchUrl);
 
-        await target.SearchAsync("packageid:Test.Package Foo&Bar");
+        await target.SearchAsync("packageid:Test.Package Foo&Bar", cancellationToken: cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);
@@ -102,10 +106,11 @@ public class RawSearchClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task SkipIsOmittedWhenZero()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHttpMessageHandler(TestData.DefaultSearch);
         var target = new RawSearchClient(new HttpClient(handler), TestData.SearchUrl);
 
-        await target.SearchAsync("query", skip: 0, take: 5);
+        await target.SearchAsync("query", skip: 0, take: 5, cancellationToken: cancellationToken);
 
         var url = Assert.Single(handler.Requests);
         var query = TestQueryString.Parse(url);

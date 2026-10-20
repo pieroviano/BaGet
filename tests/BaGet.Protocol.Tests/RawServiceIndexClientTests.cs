@@ -16,7 +16,8 @@ public class RawServiceIndexClientTests : IClassFixture<ProtocolFixture>
     [Fact]
     public async Task GetsServiceIndex()
     {
-        var result = await _target.GetAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var result = await _target.GetAsync(cancellationToken);
 
         #pragma warning disable CS8602
         Assert.Equal("3.0.0", result.Version);
