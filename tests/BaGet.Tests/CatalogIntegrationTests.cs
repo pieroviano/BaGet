@@ -143,7 +143,7 @@ public abstract class CatalogIntegrationTestsBase : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
-        using (var scope = await _app.CreateRepositoryScopeAsync(_repository))
+        using (var scope = await _app.CreateRepositoryScopeAsync(_repository, TestContext.Current.CancellationToken))
         {
             var context = scope.ServiceProvider.GetRequiredService<IContext>();
             #pragma warning disable CS8602
@@ -153,7 +153,7 @@ public abstract class CatalogIntegrationTestsBase : IDisposable
         }
 
         (int Added, int Deleted) result;
-        using (var scope = await _app.CreateRepositoryScopeAsync(_repository))
+        using (var scope = await _app.CreateRepositoryScopeAsync(_repository, TestContext.Current.CancellationToken))
         {
             result = await scope.ServiceProvider.GetRequiredService<CatalogRebuilder>().RebuildAsync(CancellationToken.None);
         }
@@ -168,7 +168,7 @@ public abstract class CatalogIntegrationTestsBase : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await _app.AddPackageAsync(_packageStream, cancellationToken, _repository);
 
-        using var scope = await _app.CreateRepositoryScopeAsync(_repository);
+        using var scope = await _app.CreateRepositoryScopeAsync(_repository, TestContext.Current.CancellationToken);
         var result = await scope.ServiceProvider.GetRequiredService<CatalogRebuilder>().RebuildAsync(CancellationToken.None);
 
         Assert.Equal((0, 0), result);

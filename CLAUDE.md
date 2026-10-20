@@ -21,17 +21,20 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1713 tests** across `BaGet.Core.Tests` (535), `BaGet.Tests` (888),
+Baseline: **1817 tests** across `BaGet.Core.Tests` (535), `BaGet.Tests` (988),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
-`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
 `TelemetryE2ETests`) fail on a clean checkout too; not investigated. No external services needed; integration tests
 use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
 `DatabaseCopyService` on Testcontainers servers (`TestcontainersPackageVersion` in `tests/Directory.Build.props`;
-images `mssql/server:2022-latest`, `postgres:17`, `mysql:8.4`, pulled on first run). Without a Docker daemon the 12
-tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 minutes.
+images `mssql/server:2022-latest`, `postgres:17`, `mysql:8.4`, pulled on first run). Without a Docker daemon the 16
+tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 minutes. 4 of them
+(`EngineUpgradeTests`) are the B7 upgrade on each engine: `PreRepositoryDatabase` (also linked into `BaGet.Tests`) migrates
+to the last migration before `AddRepositories` (looked up per provider, timestamps differ), fills the old schema with raw
+parameterised SQL, then the current migrations must put every row in repository key 1 and allow the same ID/version in key 2.
 
 `BaGet.Telemetry.Tests` (shares `BaGetApplication` etc. from `BaGet.Tests` as linked files; `Containers.cs`) runs a real host against
 `jaegertracing/all-in-one:1.76.0` (traces; query API read back) and `otel/opentelemetry-collector:0.140.0` (debug exporter, read back
@@ -251,6 +254,16 @@ reload path is the Settings page's), `FakeOtlpCollector` (real exporters over HT
 real pipeline, SQLite in a temp directory, `SystemTime` mocked to 2020-01-01Z. Prefer it over mocking
 when the behaviour is observable over HTTP; several real defects here were only caught by a real
 client (e.g. the V2 feed's XML declaration).
+
+**Protocol suites run twice.** `ApiIntegrationTests`, `NuGetClientIntegrationTests`, `NuGetV2ClientIntegrationTests`,
+`BaGetClientIntegrationTests`, `V2FeedIntegrationTests` and `CatalogIntegrationTests` are abstract `…Base` classes taking a
+repository name; the plain class runs them at `/`, `…SecondRepository` at `/r/second/` (relative URIs resolve against
+the client's `BaseAddress`; expected absolute URLs go through `Expect`; the second repository's service index has 14
+entries, not 17: the package-page templates are default-only). A new protocol test class should follow the pattern. Helpers:
+`CreateRepositoryAsync`, `CreateRepositoryScopeAsync`, `AddPackageAsync(..., repository)`.
+`RepositoryLifecycleIsolationTests` pushes/unlists/relists/deprecates in one repository and asserts the other's whole read
+surface is unchanged; `UpgradeFromPreRepositoryTests` (B7) starts the real app on a pre-repository SQLite database and
+`packages/…` store and asserts everything is served unchanged at `/`, keys/owners still work and no file moves.
 
 Unit tests reach internals through `InternalsVisibleTo`, declared in each **project file** (not
 `AssemblyInfo.cs`):

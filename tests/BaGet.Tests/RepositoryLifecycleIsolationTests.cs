@@ -354,6 +354,6 @@ public class RepositoryOwnershipIsolationTests : IDisposable
             Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.IgnoreQueryFilters(context.PackageOwners!), TestContext.Current.CancellationToken);
         Assert.Equal(
             new[] { (BaGet.Core.Repository.DefaultKey, "alice"), (2, "bob") },
-            owners.Select(o => (o.RepositoryKey, o.OwnerName)).OrderBy(o => o.Item1));
+            owners.Select(o => (o.RepositoryKey, o.OwnerName!)).OrderBy(o => o.Item1));
     }
 }

@@ -108,7 +108,7 @@ public class UpgradeFromPreRepositoryTests : IDisposable
         Assert.Empty(await context.Database.GetPendingMigrationsAsync(token));
         var repository = await context.Repositories!.SingleAsync(token);
         Assert.Equal((Repository.DefaultKey, Repository.DefaultName), (repository.Key, repository.Name));
-        Assert.All(await context.Packages.ToListAsync(token), p => Assert.Equal(Repository.DefaultKey, p.RepositoryKey));
+        Assert.All(await context.Packages!.ToListAsync(token), p => Assert.Equal(Repository.DefaultKey, p.RepositoryKey));
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public class UpgradeFromPreRepositoryTests : IDisposable
         Assert.Equal("seeded", (await context.AbuseReports!.SingleAsync(token)).Details);
 
         // New rows join the default repository.
-        Assert.All(await context.Packages.ToListAsync(token), p => Assert.Equal(Repository.DefaultKey, p.RepositoryKey));
+        Assert.All(await context.Packages!.ToListAsync(token), p => Assert.Equal(Repository.DefaultKey, p.RepositoryKey));
         using var versions = await JsonAsync("v3/package/legacy.package/index.json");
         Assert.Contains("3.0.0", versions.RootElement.ToString());
     }

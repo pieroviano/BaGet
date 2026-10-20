@@ -41,18 +41,18 @@ public class EngineUpgradeTests
         // The migration only assigns rows to key 1; the repository row itself is created at startup (EnsureDefaultAsync).
         Assert.Empty(await iContext.Repositories!.ToListAsync(cancellationToken));
 
-        var packages = await iContext.Packages
+        var packages = await iContext.Packages!
             .Include(p => p.Dependencies).Include(p => p.TargetFrameworks).Include(p => p.PackageTypes).Include(p => p.Deprecation)
             .OrderBy(p => p.Key).ToListAsync(cancellationToken);
         Assert.Equal(
             PreRepositoryDatabase.Packages.Select(p => (p.Id, p.Version, p.Listed)),
-            packages.Select(p => (p.Id, p.NormalizedVersionString, p.Listed)));
+            packages.Select(p => (p.Id!, p.NormalizedVersionString!, p.Listed)));
         Assert.All(packages, p =>
         {
             Assert.Equal(Repository.DefaultKey, p.RepositoryKey);
-            Assert.Single(p.Dependencies);
-            Assert.Single(p.TargetFrameworks);
-            Assert.Single(p.PackageTypes);
+            Assert.Single(p.Dependencies!);
+            Assert.Single(p.TargetFrameworks!);
+            Assert.Single(p.PackageTypes!);
         });
         Assert.Equal("deprecated before the upgrade", packages.Single(p => p.Id == "Other.Package").Deprecation!.Message);
         Assert.Equal(7, packages.First().Downloads);
@@ -70,10 +70,10 @@ public class EngineUpgradeTests
 
         // The same ID and version may now exist in a second repository, but not twice in one.
         var existing = packages[0];
-        iContext.Packages.Add(Copy(existing, repositoryKey: 2));
+        iContext.Packages!.Add(Copy(existing, repositoryKey: 2));
         await iContext.SaveChangesAsync(cancellationToken);
 
-        iContext.Packages.Add(Copy(existing, repositoryKey: Repository.DefaultKey));
+        iContext.Packages!.Add(Copy(existing, repositoryKey: Repository.DefaultKey));
         var exception = await Assert.ThrowsAsync<DbUpdateException>(() => iContext.SaveChangesAsync(cancellationToken));
         Assert.True(iContext.IsUniqueConstraintViolationException(exception), exception.GetBaseException().Message);
     }
@@ -81,7 +81,7 @@ public class EngineUpgradeTests
     private static Package Copy(Package source, int repositoryKey) => new Package
     {
         Id = source.Id,
-        Version = NuGetVersion.Parse(source.NormalizedVersionString),
+        Version = NuGetVersion.Parse(source.NormalizedVersionString!),
         RepositoryKey = repositoryKey,
         Listed = true,
         Authors = new[] { "author" },
