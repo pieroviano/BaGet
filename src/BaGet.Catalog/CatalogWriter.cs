@@ -35,6 +35,7 @@ public class CatalogWriter : IPackageChangeHandler
     private readonly IStorageService _storage;
     private readonly SystemTime _time;
     private readonly ILogger<CatalogWriter> _logger;
+    private readonly MaintenanceGate? _gate;
 
     public CatalogWriter(
         ICatalogDatabase catalog,
@@ -42,8 +43,10 @@ public class CatalogWriter : IPackageChangeHandler
         IPackageStorageService packageStorage,
         IStorageService storage,
         SystemTime time,
-        ILogger<CatalogWriter> logger)
+        ILogger<CatalogWriter> logger,
+        MaintenanceGate? gate = null)
     {
+        _gate = gate;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _packageStorage = packageStorage ?? throw new ArgumentNullException(nameof(packageStorage));
@@ -166,6 +169,9 @@ public class CatalogWriter : IPackageChangeHandler
         await CommitLock.WaitAsync(cancellationToken);
         try
         {
+            // Before the leaf is written: a closed database would refuse the entry and leave the leaf orphaned.
+            _gate?.ThrowIfClosed();
+
             var last = await _catalog.GetLastCommitTimestampAsync(cancellationToken);
             var timestamp = NextTimestamp(_time.UtcNow, last);
             var commitId = Guid.NewGuid().ToString("D");

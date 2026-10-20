@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\<project>
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1468 tests, all green** across `BaGet.Core.Tests` (468), `BaGet.Tests` (719),
+Baseline: **1476 tests, all green** across `BaGet.Core.Tests` (468), `BaGet.Tests` (727),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (102), `BaGet.Web.Tests` (41),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (12). No external services needed; integration tests
 use SQLite and a temporary directory.
@@ -97,7 +97,7 @@ Anything read through `IOptions`/`IOptionsSnapshot` is unaffected.
 **Read-only gate.** `MaintenanceGate` (`BaGet.Core`, singleton, in memory) closes every database write:
 `MaintenanceSaveChangesInterceptor`, added in `AddBaGetDbContextProvider`, throws `MaintenanceException` from
 `SaveChanges` while it is closed; `MaintenanceMiddleware` (`BaGet.Web`) maps that to 503 + `Retry-After`; the layout
-shows a banner. `CloseUntilRestart` cannot be reopened. A context built with `MaintenanceGate.AllowWrites(builder)` is
+shows a banner. `CloseUntilRestart` cannot be reopened. Code that stores a file and then writes the database must call `MaintenanceGate.ThrowIfClosed` first (`PackageIndexingService`, `ValidatingPackageSubmissionService`, `CatalogWriter`) so a refusal leaves no orphan file. Sign-in must still work (an admin needs the post-copy status): `MaintenanceAwareSignInManager` skips only the lockout-counter reset while closed; a failed attempt is still a refused write. A context built with `MaintenanceGate.AllowWrites(builder)` is
 exempt (the copy's target). Code that catches broad `Exception` around a write must not swallow `MaintenanceException`
 (controllers, `PackageValidationRunner`); `ValidationWorker` retries after it, `PackageDatabase.AddDownloadAsync` ignores it.
 Raw SQL would bypass the gate: there is none outside migrations, keep it so (the one exception, the database copy's
@@ -132,9 +132,11 @@ second copy); `DatabaseCopyWorker` (single-slot channel) runs it; progress is in
 foreign keys (Identity's tables included), so a new table is covered with no list to keep. Rows are read in batches of
 1000 ordered by primary key; they are loaded **tracked** only to capture **shadow properties** (the FK of a package's
 types/frameworks/dependencies is shadow) into `CopyRow.Shadow`, then the tracker is cleared. Pre-flight
-(`DatabaseCopyPreflight`) reports over-length strings, case-only duplicates on unique indexes (not for PostgreSQL) and
-local dates (PostgreSQL) before the target changes; `Unspecified` dates are stored as UTC. Verification uses an order-independent key checksum (`DatabaseTable.Checksum`; engines collate differently). Once settings saving starts, a failure keeps the target and closes the gate until restart (`FailAfterSaveAsync`). Test seams
-`DatabaseCopyService.AfterBatch` / `AfterSettingsSaved` inject failures. Errors are scrubbed of the connection string
+(`DatabaseCopyPreflight`, given the target's **design-time** model for column types/collations) runs before the target is created or
+migrated and reports, only where the target engine enforces it: over-length strings (SQL Server/PostgreSQL/MySQL), case-only
+duplicates in unique indexes and keys (columns `NOCASE`/`citext`/`*_ci`, else the engine default: SQL Server, MySQL) and local dates
+(PostgreSQL); a non-empty target needing migration is refused with "schema was updated"; `Unspecified` dates are stored as UTC. Verification uses an order-independent key checksum (`DatabaseTable.Checksum`; engines collate differently). Once settings saving starts, a failure keeps the target and closes the gate until restart (`FailAfterSaveAsync`). A cancellation inside `SettingsService.SaveAsync` happens before the file rename, so it rolls back. Test seams
+`DatabaseCopyService.AfterBatch` / `BeforeSettingsSaved` / `AfterSettingsSaved` inject failures. Errors are scrubbed of the connection string
 (`DatabaseCopyService.Scrub`); never log it.
 
 ### Tests

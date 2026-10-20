@@ -115,7 +115,6 @@ internal sealed class DatabaseTable
             _ => value.ToString() ?? string.Empty,
         };
 
-    /// <summary>Accumulates key texts into a checksum.</summary>
     /// <summary>
     /// Checksum of a table's keys that does not depend on the order they are added: each engine reads
     /// <c>ORDER BY</c> in its own collation, so the same keys arrive in different orders. The SHA-256 of every key is

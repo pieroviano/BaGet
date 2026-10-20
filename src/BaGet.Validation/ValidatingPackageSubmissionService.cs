@@ -14,7 +14,8 @@ namespace BaGet.Validation;
 
 /// <summary>
 /// With validation on, stages a pushed package and queues it; otherwise indexes it at
-/// once, exactly as before.
+/// once, exactly as before. With the <see cref="MaintenanceGate"/> closed, a staged push is refused with
+/// <see cref="MaintenanceException"/> before anything reaches storage.
 /// </summary>
 public class ValidatingPackageSubmissionService : IPackageSubmissionService
 {
@@ -28,6 +29,7 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly IOptionsSnapshot<ValidationOptions> _validation;
     private readonly ILogger<ValidatingPackageSubmissionService> _logger;
+    private readonly MaintenanceGate? _gate;
 
     public ValidatingPackageSubmissionService(
         IPackageIndexingService indexer,
@@ -39,8 +41,10 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
         SystemTime time,
         IOptionsSnapshot<BaGetOptions> options,
         IOptionsSnapshot<ValidationOptions> validation,
-        ILogger<ValidatingPackageSubmissionService> logger)
+        ILogger<ValidatingPackageSubmissionService> logger,
+        MaintenanceGate? gate = null)
     {
+        _gate = gate;
         _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -61,6 +65,10 @@ public class ValidatingPackageSubmissionService : IPackageSubmissionService
         {
             return await _indexer.IndexAsync(package, cancellationToken);
         }
+
+        // Refused up front, before the package reaches storage: staging it and then failing to record it in the
+        // database (which is closed) would leave an orphan file behind.
+        _gate?.ThrowIfClosed();
 
         string id;
         string version;

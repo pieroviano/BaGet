@@ -81,7 +81,7 @@ public static class AccountsServiceCollectionExtensions
                 identity.Lockout.AllowedForNewUsers = true;
                 identity.SignIn.RequireConfirmedEmail = email.IsConfigured;
             })
-            .AddSignInManager()
+            .AddSignInManager<MaintenanceAwareSignInManager>()
             .AddDefaultTokenProviders();
 
         // Identity re-checks a session against the database only every 30 minutes by default,

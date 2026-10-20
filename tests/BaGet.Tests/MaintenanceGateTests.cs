@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -208,6 +209,66 @@ public class MaintenanceGateTests : IDisposable
             await Assert.ThrowsAsync<MaintenanceException>(() => other.SaveChangesAsync(TestContext.Current.CancellationToken));
             Assert.Throws<MaintenanceException>(() => other.SaveChanges());
             Assert.Equal(2, await other.Organizations.CountAsync(TestContext.Current.CancellationToken));
+        }
+    }
+
+    [Fact]
+    public async Task AValidatedPushRefusedWhileClosedStagesNoFileAndWorksOnceReopened()
+    {
+        var storage = Path.Combine(Path.GetTempPath(), "baget-gate-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var app = Start(new Dictionary<string, string>
+            {
+                { "Validation:Enabled", "true" },
+                { "Accounts:Enabled", "false" },
+                { "Storage:Path", storage },
+            });
+            var client = app.CreateClient();
+            _disposables.Add(client);
+
+            GateOf(app).Close("Copying the database");
+            using (var push = await PushAsync(client, "Staged.Package", "1.0.0", key: null!)) AssertRefused(push);
+
+            // Refused before the staging write: no orphan "validation/{guid}.nupkg" is left behind.
+            Assert.Empty(Directory.Exists(storage) ? Directory.GetFiles(storage, "*", SearchOption.AllDirectories) : Array.Empty<string>());
+
+            Assert.True(GateOf(app).Open());
+            using var retry = await PushAsync(client, "Staged.Package", "1.0.0", key: null!);
+            Assert.Equal(HttpStatusCode.Accepted, retry.StatusCode);
+        }
+        finally
+        {
+            try { Directory.Delete(storage, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    [Fact]
+    public async Task ACatalogEntryRefusedWhileClosedWritesNoLeafFile()
+    {
+        var storage = Path.Combine(Path.GetTempPath(), "baget-gate-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var app = Start(new Dictionary<string, string> { { "Accounts:Enabled", "false" }, { "Storage:Path", storage } });
+            var client = app.CreateClient();
+            _disposables.Add(client);
+            using (var push = await PushAsync(client, "Cataloged.Package", "1.0.0", key: null!)) Assert.Equal(HttpStatusCode.Created, push.StatusCode);
+
+            var before = Directory.GetFiles(storage, "*", SearchOption.AllDirectories).Length;
+            Assert.Contains(Directory.GetFiles(storage, "*.json", SearchOption.AllDirectories), f => f.Contains("catalog"));
+
+            GateOf(app).Close("Copying the database");
+            using var scope = app.Services.CreateScope();
+            var writer = scope.ServiceProvider.GetRequiredService<BaGet.Catalog.CatalogWriter>();
+            await Assert.ThrowsAsync<MaintenanceException>(() => writer.OnPackageChangedAsync(
+                "Cataloged.Package", NuGet.Versioning.NuGetVersion.Parse("1.0.0"), CancellationToken.None));
+
+            // Refused before the leaf was written, so nothing is orphaned.
+            Assert.Equal(before, Directory.GetFiles(storage, "*", SearchOption.AllDirectories).Length);
+        }
+        finally
+        {
+            try { Directory.Delete(storage, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
     }
 

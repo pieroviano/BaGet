@@ -658,9 +658,10 @@ in-memory gate (`MaintenanceGate`). It is not a setting and is never saved: a re
 
 | While the gate is closed | Behaviour |
 | --- | --- |
-| Any database write (push, delete, unlist, sign-up, sign-in changes, API keys, owners, abuse reports, Settings page save) | refused with **HTTP 503** and `Retry-After: 60` |
+| Any other database write (push, delete, unlist, sign-up, failed sign-in, API keys, owners, abuse reports, Settings page save) | refused with **HTTP 503** and `Retry-After: 60` |
 | Reads: feeds, search, downloads, pages | work; a download is served but not counted |
-| Pushes | refused before any file reaches storage, so a retry after the gate opens is clean |
+| Pushes (also with `Validation:Enabled`, which stages the file) and catalog entries | refused before any file reaches storage, so a retry after the gate opens is clean |
+| Sign-in | a correct password completes: the failed-attempt counter reset (an incidental write) is skipped, so an administrator can sign in after a copy to see the status and restart instructions. A wrong password, sign-up and every other write stay refused (counting a failed attempt is a write) |
 | Validation worker | logs a warning, keeps the submission pending and retries every 30 s |
 | Pages | show a "Read-only" banner with the reason |
 
@@ -680,13 +681,13 @@ as before.
 | Step | Detail |
 | --- | --- |
 | 1. Read-only | The [gate](#read-only-maintenance-gate) closes when the copy is accepted (pushes etc. get 503). |
-| 2. Target | Must be reachable (a new SQLite file or a database the login may create is created) and, after its schema is migrated, **every table empty**; otherwise the copy is refused and nothing is changed. |
-| 3. Source | Refused if it has pending migrations or holds what the target cannot: strings longer than the model's maximum length, values of a unique index differing only by case (not checked for PostgreSQL), local-time dates (PostgreSQL). All problems are listed at once, before anything is copied. |
+| 2. Source | Checked first, before the target is created, migrated or changed. Refused if it has pending migrations or holds what the target cannot, judged per target engine and column: strings longer than the model's maximum length (SQL Server, PostgreSQL, MySQL; SQLite does not enforce lengths), values of a unique index or key (primary or alternate) differing only by case where the target column compares case-insensitively (SQL Server and MySQL by default; any `COLLATE NOCASE` / `citext` / `*_ci` column; not SQLite or PostgreSQL by default), local-time dates (PostgreSQL). All problems are listed at once, before anything is copied. |
+| 3. Target | Must be reachable (a new SQLite file or a database the login may create is created) and, after its schema is migrated, **every table empty**. A current target that holds rows is refused and nothing is changed; one that needed migrating and then proves not empty keeps its updated schema, and the refusal says so. |
 | 4. Copy | Tables in foreign-key order (Identity's included), 1000 rows per batch, original keys kept; SQL Server `IDENTITY_INSERT` and PostgreSQL sequences are handled, so keys generated later continue after the highest copied one. |
 | 5. Verify | Row counts and an order-independent checksum of the keys (engines sort text differently) must match per table. |
 | 6. Save | `Database:Type`, `Database:ConnectionString` (and `MySqlServerVersion` if changed) are saved. The gate **stays closed until you restart** BaGet: writes accepted before the restart would land in the old database. |
 
-- On any failure the rows copied are deleted from the target (never from the source), the gate reopens, no setting is
+- On any failure before step 6 (also a shutdown while the settings are being written, before the file is replaced) the rows copied are deleted from the target (never from the source), the gate reopens, no setting is
   saved and the page lists the errors; fix the cause and retry. A crash mid-copy leaves a partly filled target that must
   be emptied before a retry (a non-empty target is refused).
 - A failure **after** step 6 began (saving the settings) never deletes the target: the verified copy is kept, the gate stays closed until restart and the page reports the error; check the `Database` settings before restarting.

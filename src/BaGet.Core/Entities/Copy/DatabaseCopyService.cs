@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,14 +20,19 @@ namespace BaGet.Core;
 /// <remarks>
 /// <list type="number">
 /// <item>The <see cref="MaintenanceGate"/> closes when the request is accepted (<see cref="TryQueue"/>).</item>
-/// <item>Target: reachable, its schema migrated, every mapped table empty (otherwise refused untouched).
-/// Source: no pending migrations, and nothing in it the target cannot hold (<see cref="DatabaseCopyPreflight"/>).</item>
+/// <item>Checks that need no access to the target run first, so a refusal leaves it as it was: the source has no
+/// pending migrations, and nothing in it is something the target cannot hold (<see cref="DatabaseCopyPreflight"/>,
+/// judged on the target's model). Then the target: reachable (a database that does not exist yet is created), its
+/// schema migrated, every mapped table empty. A target that is current and not empty is refused untouched; one
+/// that needed migrating and is then found not empty keeps its updated schema, and the refusal says so.</item>
 /// <item>Tables in foreign-key order, in batches of <see cref="BatchSize"/> rows ordered by primary key, with
 /// the provider's explicit-key hooks (<see cref="IContext.BeginKeyedInsertAsync"/>).</item>
 /// <item>Row counts and a checksum of the keys must match; only then the settings are saved and the gate stays
 /// closed until the restart.</item>
-/// <item>On any failure the rows copied are deleted from the target (never from the source), the gate reopens and no
-/// setting is saved.</item>
+/// <item>On a failure before the settings are written (including a cancellation before the file is replaced) the rows
+/// copied are deleted from the target (never from the source), the gate reopens and no setting is saved. From the
+/// moment the settings are being written the copy is never undone: a failure then (<c>FailAfterSaveAsync</c>) keeps the
+/// verified target, leaves the gate closed until the restart and reports that the settings may need checking.</item>
 /// </list>
 /// Connection strings are never logged or put in the status; error text is scrubbed of them.
 /// </remarks>
@@ -132,6 +138,9 @@ public class DatabaseCopyService
         return true;
     }
 
+    /// <summary>Test seam: runs after the copy is verified, just before the settings are saved.</summary>
+    internal Func<Task>? BeforeSettingsSaved { get; set; }
+
     /// <summary>Test seam: runs after the settings were saved, before the gate closes until restart.</summary>
     internal Func<Task>? AfterSettingsSaved { get; set; }
 
@@ -172,21 +181,6 @@ public class DatabaseCopyService
                 builder => MaintenanceGate.AllowWrites(builder));
             var targetDb = AsDbContext(target);
 
-            // A database that does not exist yet (a new SQLite file, a SQL Server database the login may create) cannot be
-            // connected to, but creating it is what BaGet's own migrations do; an unreachable one fails there.
-            if (!await targetDb.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false))
-            {
-                try
-                {
-                    await target.RunMigrationsAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    throw new CopyRefusedException(
-                        "Cannot connect to the target database; it must be reachable with the given connection string (" + Describe(e, request) + ").");
-                }
-            }
-
             var pendingSource = (await source.Database.GetPendingMigrationsAsync(cancellationToken).ConfigureAwait(false)).ToList();
             if (pendingSource.Count > 0)
             {
@@ -196,8 +190,8 @@ public class DatabaseCopyService
 
             tables = DatabaseTable.InDependencyOrder(targetDb.Model);
 
-            // Everything the target cannot hold is reported at once, before the target is changed.
-            var preflight = new DatabaseCopyPreflight(request.TargetType);
+            // Everything the target cannot hold is reported at once, before the target is created, migrated or changed.
+            var preflight = new DatabaseCopyPreflight(request.TargetType, targetDb.GetService<IDesignTimeModel>().Model);
             foreach (var table in tables)
             {
                 Update(s => s with { Table = table.Name, Message = $"Checking {table.Name}." });
@@ -214,16 +208,31 @@ public class DatabaseCopyService
                 throw new CopyRefusedException(preflight.Problems.ToArray());
             }
 
+            // The first access to the target. A database that does not exist yet (a new SQLite file, a SQL Server database the login may create) cannot be
+            // connected to, but creating it is what BaGet's own migrations do; an unreachable one fails there.
+            if (!await targetDb.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false))
+            {
+                try
+                {
+                    await target.RunMigrationsAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    throw new CopyRefusedException(
+                        "Cannot connect to the target database; it must be reachable with the given connection string (" + Describe(e, request) + ").");
+                }
+            }
+
             // A target that is already current and holds rows is refused before anything, even its schema, changes.
             var pendingTarget = await targetDb.Database.GetPendingMigrationsAsync(cancellationToken).ConfigureAwait(false);
             if (!pendingTarget.Any())
             {
-                await EnsureEmptyAsync(targetDb, tables, cancellationToken).ConfigureAwait(false);
+                await EnsureEmptyAsync(targetDb, tables, schemaUpdated: false, cancellationToken).ConfigureAwait(false);
             }
 
             Update(s => s with { Phase = DatabaseCopyPhase.Migrating, Table = null, Message = "Preparing the target's schema." });
             await target.RunMigrationsAsync(cancellationToken).ConfigureAwait(false);
-            await EnsureEmptyAsync(targetDb, tables, cancellationToken).ConfigureAwait(false);
+            await EnsureEmptyAsync(targetDb, tables, schemaUpdated: true, cancellationToken).ConfigureAwait(false);
 
             var totals = new Dictionary<DatabaseTable, long>();
             foreach (var table in tables) totals[table] = await table.CountAsync(source, cancellationToken).ConfigureAwait(false);
@@ -251,9 +260,23 @@ public class DatabaseCopyService
             await VerifyAsync(targetDb, tables, totals, checksums, cancellationToken).ConfigureAwait(false);
 
             Update(s => s with { Phase = DatabaseCopyPhase.SavingSettings, Message = "Saving the database settings." });
-            // From here the settings may be on disk (and the next start use the target): the copy is never undone.
+            if (BeforeSettingsSaved != null) await BeforeSettingsSaved().ConfigureAwait(false);
+
+            // From here the settings may be on disk (and the next start use the target): the copy is never undone. Except
+            // for a cancellation: the file is replaced by one synchronous rename after the last point that observes the token
+            // (the save lock, the temporary file's write), so a cancelled save never replaced it.
             pastPointOfNoReturn = true;
-            var saved = await _settings.SaveAsync(request.SettingChanges, request.Actor, cancellationToken).ConfigureAwait(false);
+            SettingsSaveResult saved;
+            try
+            {
+                saved = await _settings.SaveAsync(request.SettingChanges, request.Actor, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                pastPointOfNoReturn = false;
+                throw;
+            }
+
             if (!saved.Succeeded)
             {
                 // A refusal means nothing was written, so the copy can still be undone.
@@ -508,13 +531,22 @@ public class DatabaseCopyService
         if (problems.Count > 0) throw new CopyRefusedException(problems.ToArray());
     }
 
-    private static async Task EnsureEmptyAsync(DbContext target, IReadOnlyList<DatabaseTable> tables, CancellationToken cancellationToken)
+    private static async Task EnsureEmptyAsync(
+        DbContext target,
+        IReadOnlyList<DatabaseTable> tables,
+        bool schemaUpdated,
+        CancellationToken cancellationToken)
     {
         var problems = new List<string>();
         foreach (var table in tables)
         {
             var count = await table.CountAsync(target, cancellationToken).ConfigureAwait(false);
-            if (count > 0) problems.Add($"The target is not empty: {table.Name} has {count} row(s). Nothing was changed.");
+            if (count > 0)
+            {
+                problems.Add(schemaUpdated
+                    ? $"The target is not empty: {table.Name} has {count} row(s). The target's schema was updated, but nothing was copied."
+                    : $"The target is not empty: {table.Name} has {count} row(s). Nothing was changed.");
+            }
         }
 
         if (problems.Count > 0) throw new CopyRefusedException(problems.ToArray());

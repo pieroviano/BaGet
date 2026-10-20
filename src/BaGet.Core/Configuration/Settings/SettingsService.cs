@@ -143,6 +143,11 @@ public class SettingsService
     /// Validates and saves changes. Only failures the changes introduce are reported, so an
     /// unused provider's incomplete options cannot block an unrelated save.
     /// </summary>
+    /// <remarks>
+    /// The token is observed only before the overrides file is replaced (the save lock, the write of the temporary file);
+    /// the replacement is one synchronous rename. An <see cref="OperationCanceledException"/> therefore means the file
+    /// was not changed.
+    /// </remarks>
     /// <param name="changes">The new value of each changed setting; null removes the override.</param>
     /// <param name="actor">Who is saving, for the audit log.</param>
     /// <param name="cancellationToken">Cancels the save.</param>

@@ -216,6 +216,42 @@ public class DatabaseCopyTests : IDisposable
     }
 
     [Fact]
+    public async Task AnAdministratorCanSignInAfterTheCopyWhileTheGateIsClosedAndReachTheStatus()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+
+        // A failed attempt earlier: a successful sign-in would normally reset the counter, which is a write.
+        using (var scopeForCounter = app.Services.CreateScope())
+        {
+            var users = scopeForCounter.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGetUser>>();
+            var root = (await users.FindByNameAsync("root"))!;
+            await users.AccessFailedAsync(root);
+            Assert.Equal(1, await users.GetAccessFailedCountAsync(root));
+        }
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        Assert.Equal(DatabaseCopyPhase.Succeeded, (await WaitAsync(app)).Phase);
+        Assert.True(app.Services.GetRequiredService<MaintenanceGate>().IsClosedUntilRestart);
+
+        using var later = new Browser(app);
+        await AdminTestSupport.SignInAsync(later, "root");
+
+        var json = await later.GetPageAsync("admin/settings?handler=CopyStatus");
+        Assert.Contains("\"Succeeded\"", json);
+        Assert.Contains("Restart BaGet now", await later.GetPageAsync("admin/settings"));
+
+        // Everything else stays refused: a wrong password is a failed attempt, which is counted (a write).
+        using var wrong = new Browser(app);
+        using var refused = await wrong.PostAsync("account/login", new Dictionary<string, string>
+        {
+            { "UserName", "root" },
+            { "Password", "not-the-password" },
+        });
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, refused.StatusCode);
+    }
+
+    [Fact]
     public async Task ANonEmptyTargetIsRefusedAndNotTouched()
     {
         var (app, admin) = await StartAsync();
@@ -331,6 +367,44 @@ public class DatabaseCopyTests : IDisposable
     }
 
     [Fact]
+    public async Task ACancellationWhileTheSettingsAreBeingSavedBeforeTheFileIsReplacedRollsTheCopyBack()
+    {
+        var (app, _) = await StartAsync();
+        var target = NewTarget();
+        var copy = app.Services.GetRequiredService<DatabaseCopyService>();
+        var gate = app.Services.GetRequiredService<MaintenanceGate>();
+        var catalog = app.Services.GetRequiredService<SettingsCatalog>();
+        var request = new DatabaseCopyRequest(
+            "Sqlite",
+            target,
+            null,
+            new Dictionary<SettingDescriptor, object>
+            {
+                { catalog.Find("Database:Type")!, "Sqlite" },
+                { catalog.Find("Database:ConnectionString")!, target },
+            },
+            "root");
+
+        using var cancellation = new CancellationTokenSource();
+        copy.BeforeSettingsSaved = () =>
+        {
+            cancellation.Cancel();
+            return Task.CompletedTask;
+        };
+
+        // What the queue does: the gate is closed, then the copy runs.
+        gate.Close(DatabaseCopyService.GateReason);
+        await copy.RunAsync(request, cancellation.Token);
+
+        var status = copy.Status;
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.False(gate.IsClosed);
+        Assert.DoesNotContain("Database:ConnectionString", SavedSettings(app).Keys);
+        using var targetDb = OpenTarget(target);
+        Assert.All(await CountsAsync(targetDb), pair => Assert.Equal(0, pair.Value));
+    }
+
+    [Fact]
     public async Task APushOrSettingsSaveDuringTheCopyIsRefusedWith503AndASecondCopyIsRefused()
     {
         var (app, admin) = await StartAsync();
@@ -425,7 +499,7 @@ public class DatabaseCopyTests : IDisposable
     }
 
     [Fact]
-    public async Task PreflightListsOverLongValuesAndCaseOnlyDuplicatesBeforeCopyingAnything()
+    public async Task ASqliteTargetAcceptsOverLongValuesAndCaseOnlyDuplicatesWhichItStores()
     {
         var (app, admin) = await StartAsync();
         var target = NewTarget();
@@ -445,14 +519,57 @@ public class DatabaseCopyTests : IDisposable
         using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
         var status = await WaitAsync(app);
 
-        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
-        Assert.Contains(status.Errors, e => e.Contains("AbuseReports.Reason") && e.Contains("200 characters") && e.Contains("128"));
-        Assert.Contains(status.Errors, e => e.Contains("Organizations") && e.Contains("differ only by case"));
-        Assert.DoesNotContain("Database:ConnectionString", SavedSettings(app).Keys);
-
-        // Refused before the target was migrated or touched.
+        Assert.True(status.Phase == DatabaseCopyPhase.Succeeded, string.Join(" ", status.Errors));
         using var targetDb = OpenTarget(target);
-        Assert.False(await targetDb.Database.GetAppliedMigrationsAsync().ContinueWith(t => t.Result.Any()));
+        Assert.Equal(200, (await targetDb.Set<AbuseReport>().SingleAsync()).Reason!.Length);
+        Assert.Equal(2, await targetDb.Set<Organization>().CountAsync());
+    }
+
+    [Fact]
+    public async Task ASourceRefusalHappensBeforeTheTargetIsCreatedOrMigrated()
+    {
+        var (app, admin) = await StartAsync();
+        var file = Path.Combine(_directory, "not-yet.db");
+        var target = $"Data Source={file}";
+
+        var sourceDb = OpenSource(app, out var scope);
+        using (scope)
+        {
+            await sourceDb.Database.ExecuteSqlRawAsync(
+                "DELETE FROM __EFMigrationsHistory WHERE MigrationId = (SELECT MAX(MigrationId) FROM __EFMigrationsHistory)");
+        }
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("pending migration"));
+
+        // Not even connected to: a SQLite file is created by the first connection.
+        Assert.False(File.Exists(file));
+    }
+
+    [Fact]
+    public async Task ANonEmptyTargetWithAnOlderSchemaSaysItsSchemaWasUpdated()
+    {
+        var (app, admin) = await StartAsync();
+        var target = NewTarget();
+        using (var targetDb = OpenTarget(target))
+        {
+            // An older schema: migrated up to the accounts only, so the target has migrations still to apply.
+            await Microsoft.EntityFrameworkCore.Infrastructure.AccessorExtensions
+                .GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>(targetDb)
+                .MigrateAsync("20261017012801_AddAccounts");
+            targetDb.Set<Organization>().Add(new Organization { Name = "Existing", Created = DateTime.UtcNow });
+            await targetDb.SaveChangesAsync();
+            Assert.NotEmpty(await targetDb.Database.GetPendingMigrationsAsync());
+        }
+
+        using (await PostDatabaseAsync(admin, "Sqlite", target)) { }
+        var status = await WaitAsync(app);
+
+        Assert.Equal(DatabaseCopyPhase.Failed, status.Phase);
+        Assert.Contains(status.Errors, e => e.Contains("not empty") && e.Contains("schema was updated") && !e.Contains("Nothing was changed"));
     }
 
     [Fact]
@@ -553,33 +670,104 @@ public class DatabaseCopyTests : IDisposable
         var table = DatabaseTable.InDependencyOrder(context.Model).Single(t => t.EntityType.ClrType == typeof(Organization));
         var rows = new object[] { new Organization { Key = 1, Name = "a", Created = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Local) } };
 
-        var postgres = new DatabaseCopyPreflight("PostgreSql");
+        var postgres = new DatabaseCopyPreflight("PostgreSql", DesignModel(context));
         postgres.Inspect(table, rows);
         Assert.Contains(postgres.Problems, p => p.Contains("local time"));
 
-        var other = new DatabaseCopyPreflight("SqlServer");
+        var other = new DatabaseCopyPreflight("SqlServer", DesignModel(context));
         other.Inspect(table, rows);
         Assert.Empty(other.Problems);
     }
 
+    private static Microsoft.EntityFrameworkCore.Metadata.IModel DesignModel(DbContext context)
+        => Microsoft.EntityFrameworkCore.Infrastructure.AccessorExtensions
+            .GetService<Microsoft.EntityFrameworkCore.Metadata.IDesignTimeModel>(context).Model;
+
+    private static DatabaseTable TableOf<T>(DbContext context)
+        => DatabaseTable.InDependencyOrder(context.Model).Single(t => t.EntityType.ClrType == typeof(T));
+
     [Fact]
-    public void PreflightCasesAreNotCheckedForPostgreSqlWhichIsCaseSensitive()
+    public void PreflightCaseDuplicatesAreJudgedOnTheTargetColumnsCollation()
     {
         using var context = OpenTarget("Data Source=:memory:");
-        var table = DatabaseTable.InDependencyOrder(context.Model).Single(t => t.EntityType.ClrType == typeof(Organization));
+        var organizations = TableOf<Organization>(context);
         var rows = new object[]
         {
             new Organization { Key = 1, Name = "Acme" },
             new Organization { Key = 2, Name = "acme" },
         };
 
-        var postgres = new DatabaseCopyPreflight("PostgreSql");
-        postgres.Inspect(table, rows);
-        Assert.Empty(postgres.Problems);
+        // Default collations: PostgreSQL and SQLite compare case-sensitively, SQL Server and MySQL do not.
+        foreach (var type in new[] { "PostgreSql", "Sqlite" })
+        {
+            var sensitive = new DatabaseCopyPreflight(type, DesignModel(context));
+            sensitive.Inspect(organizations, rows);
+            Assert.Empty(sensitive.Problems);
+        }
 
-        var mysql = new DatabaseCopyPreflight("MySql");
-        mysql.Inspect(table, rows);
+        foreach (var type in new[] { "MySql", "SqlServer" })
+        {
+            var insensitive = new DatabaseCopyPreflight(type, DesignModel(context));
+            insensitive.Inspect(organizations, rows);
+            Assert.Single(insensitive.Problems);
+        }
+
+        // A column the model types NOCASE (or citext) is case-insensitive whatever the engine's default.
+        var packages = TableOf<Package>(context);
+        var packageRows = new object[]
+        {
+            new Package { Key = 1, Id = "Foo", NormalizedVersionString = "1.0.0" },
+            new Package { Key = 2, Id = "foo", NormalizedVersionString = "1.0.0" },
+        };
+        foreach (var type in new[] { "Sqlite", "PostgreSql" })
+        {
+            var nocase = new DatabaseCopyPreflight(type, DesignModel(context));
+            nocase.Inspect(packages, packageRows);
+            Assert.Single(nocase.Problems);
+        }
+    }
+
+    [Fact]
+    public void PreflightCaseDuplicatesInAKeyAreFoundNotOnlyInAnIndex()
+    {
+        using var context = OpenTarget("Data Source=:memory:");
+        var logins = DatabaseTable.InDependencyOrder(context.Model).Single(t => t.EntityType.ClrType.Name.StartsWith("IdentityUserLogin"));
+        var rows = new object[]
+        {
+            new Microsoft.AspNetCore.Identity.IdentityUserLogin<string> { LoginProvider = "Google", ProviderKey = "abc", UserId = "u1" },
+            new Microsoft.AspNetCore.Identity.IdentityUserLogin<string> { LoginProvider = "google", ProviderKey = "ABC", UserId = "u2" },
+        };
+
+        var mysql = new DatabaseCopyPreflight("MySql", DesignModel(context));
+        mysql.Inspect(logins, rows);
         Assert.Single(mysql.Problems);
+        Assert.Contains("differ only by case", mysql.Problems[0]);
+
+        var sqlite = new DatabaseCopyPreflight("Sqlite", DesignModel(context));
+        sqlite.Inspect(logins, rows);
+        Assert.Empty(sqlite.Problems);
+    }
+
+    [Fact]
+    public void PreflightMaximumLengthsAreCheckedOnlyForEnginesThatEnforceThem()
+    {
+        using var context = OpenTarget("Data Source=:memory:");
+        var reports = TableOf<AbuseReport>(context);
+        var rows = new object[]
+        {
+            new AbuseReport { Key = 1, PackageId = "a", PackageVersion = "1.0.0", Reason = new string('x', 200), Details = "d" },
+        };
+
+        foreach (var type in new[] { "SqlServer", "PostgreSql", "MySql" })
+        {
+            var enforcing = new DatabaseCopyPreflight(type, DesignModel(context));
+            enforcing.Inspect(reports, rows);
+            Assert.Contains(enforcing.Problems, p => p.Contains("AbuseReports.Reason") && p.Contains("200 characters") && p.Contains("128"));
+        }
+
+        var sqlite = new DatabaseCopyPreflight("Sqlite", DesignModel(context));
+        sqlite.Inspect(reports, rows);
+        Assert.Empty(sqlite.Problems);
     }
 
     [Fact]
