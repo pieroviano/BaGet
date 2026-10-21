@@ -228,7 +228,7 @@ public class HostScopedBasicAuthHandlerTests
         var capture = new Capture();
         var handler = new HostScopedBasicAuthHandler(new Uri("https://feed.example.org/v3/index.json"), "bob", "pw") { InnerHandler = capture };
         using var client = new HttpClient(handler);
-        using var response = await client.GetAsync(url);
+        using var response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
         return capture.Authorization;
     }
@@ -253,7 +253,7 @@ public class HostScopedBasicAuthHandlerTests
         using var client = new HttpClient(handler);
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://feed.example.org/x");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "t");
-        using var response = await client.SendAsync(request);
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal("Bearer t", capture.Authorization);
     }
