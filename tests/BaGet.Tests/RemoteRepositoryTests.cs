@@ -321,6 +321,41 @@ public class RemoteRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task TheStoredPasswordIsDroppedWhenTheUpstreamOriginOrUserNameChangesWithoutANewOne()
+    {
+        await CreateRemoteAsync(s =>
+        {
+            s.Username = "bob";
+            s.Password = "pw";
+        });
+
+        using var scope = _app.Services.CreateScope();
+        var admin = scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>();
+
+        // Same origin (only the path changes): the password stays.
+        var settings = (await admin.FindAsync(Remote, Cancel))!.Settings;
+        settings.Url = settings.Url!.Replace("index.json", "other/index.json");
+        await admin.UpdateAsync(Remote, settings, clearPassword: false, Cancel);
+        Assert.True((await admin.FindAsync(Remote, Cancel))!.HasPassword);
+
+        // Another user name: dropped.
+        settings = (await admin.FindAsync(Remote, Cancel))!.Settings;
+        settings.Username = "mallory";
+        await admin.UpdateAsync(Remote, settings, clearPassword: false, Cancel);
+        Assert.False((await admin.FindAsync(Remote, Cancel))!.HasPassword);
+
+        // Another origin: dropped.
+        settings = (await admin.FindAsync(Remote, Cancel))!.Settings;
+        settings.Password = "pw2";
+        await admin.UpdateAsync(Remote, settings, clearPassword: false, Cancel);
+        Assert.True((await admin.FindAsync(Remote, Cancel))!.HasPassword);
+        settings = (await admin.FindAsync(Remote, Cancel))!.Settings;
+        settings.Url = "https://attacker.example/index.json";
+        await admin.UpdateAsync(Remote, settings, clearPassword: false, Cancel);
+        Assert.False((await admin.FindAsync(Remote, Cancel))!.HasPassword);
+    }
+
+    [Fact]
     public async Task NothingCanBePushedToARemoteRepository()
     {
         await CreateRemoteAsync();

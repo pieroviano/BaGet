@@ -67,7 +67,10 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _propagateErrors = propagateErrors;
         _ngLogger = NullLogger.Instance;
-        _cache = new SourceCacheContext();
+
+        // The remote repository keeps its own cache (with a metadata period and Purge): NuGet's on-disk HTTP cache
+        // must not answer instead.
+        _cache = new SourceCacheContext { NoCache = true, DirectDownload = true };
 
         var packageSource = new PackageSource(source.AbsoluteUri);
         if (!string.IsNullOrEmpty(username) || !string.IsNullOrEmpty(password))

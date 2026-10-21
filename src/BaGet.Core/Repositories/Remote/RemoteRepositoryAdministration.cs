@@ -199,6 +199,16 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             settings.DownloadTimeoutSeconds = stored.DownloadTimeoutSeconds;
         }
 
+        // A stored password belongs to the origin and user name it was stored for: pointing the repository elsewhere
+        // without typing a new one must not send it to the new server (see TestConnectionAsync).
+        if (string.IsNullOrEmpty(settings.Password)
+            && !string.IsNullOrEmpty(settings.ProtectedPassword)
+            && !SameCredentialScope(stored, settings))
+        {
+            settings.ProtectedPassword = null;
+            passwordChanged = true;
+        }
+
         Validate(settings);
 
         row.Settings = _codec.Serialize(settings);
@@ -390,14 +400,33 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         }
         else
         {
+            var moved = !SameCredentialScope(settings, fromOptions);
             settings.Url = fromOptions.Url;
             settings.Protocol = fromOptions.Protocol;
             settings.DownloadTimeoutSeconds = fromOptions.DownloadTimeoutSeconds;
+            if (moved)
+            {
+                // The stored password was for another origin: never hand it to the new one.
+                settings.Password = null;
+                settings.ProtectedPassword = null;
+            }
+
             existing.Settings = _codec.Serialize(settings);
         }
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         _state.InvalidateSettings(existing.Key);
+    }
+
+    // True while the origin (scheme, host, port) and the user name are the ones a stored password was saved for.
+    private static bool SameCredentialScope(RemoteRepositorySettings before, RemoteRepositorySettings after)
+    {
+        var a = before.UrlOrNull;
+        var b = after.UrlOrNull;
+        if (a == null || b == null) return a == b;
+
+        return string.Equals(a.GetLeftPart(UriPartial.Authority), b.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase)
+            && string.Equals(before.Username ?? string.Empty, after.Username ?? string.Empty, StringComparison.Ordinal);
     }
 
     private async Task<int> DeletePackagesAsync(Repository row, string? packageId, NuGetVersion? version, CancellationToken cancellationToken)

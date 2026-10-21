@@ -10,10 +10,10 @@ Administrators: `/admin/repositories` > *New remote repository*; later `/admin/r
 |---|---|---|
 | Upstream URL | required | A V3 `index.json` URL or a V2 feed URL (absolute `http`/`https`, no credentials inside) |
 | Protocol | V3 | `V3` or `V2` |
-| User name / password | none | HTTP Basic, sent to the upstream's own host only, never to hosts a service index or redirect points to. A token goes in the password. Stored protected with ASP.NET Core data protection (the host's key ring; back it up with the host), never shown again, never logged. Blank on save keeps the stored one; *Remove the stored password* clears it. A host without data protection refuses to store a password |
+| User name / password | none | HTTP Basic, sent to the upstream's own host only, never to hosts a service index or redirect points to. A token goes in the password. Stored protected with ASP.NET Core data protection (the host's key ring; back it up with the host), never shown again, never logged. Blank on save keeps the stored one while the URL's scheme/host/port and the user name are unchanged (otherwise it is dropped and a new one must be typed); *Remove the stored password* clears it. A host without data protection refuses to store a password |
 | Metadata cache period | 600 s | How long the upstream's version lists and metadata are reused. `0` asks every time. An expired answer is still served when the upstream cannot be reached |
 | Negative cache period | 60 s | How long a `404` from the upstream is remembered. A failure to reach the upstream (network, 5xx, 401) is never remembered as "not found" |
-| Download timeout | 600 s | Per HTTP request |
+| Download timeout | 600 s | Per HTTP request (V3 only; a V2 upstream is contacted by NuGet's own HTTP stack, with its default timeout) |
 | Store artifacts locally | on | On: packages are stored (database and files) on first request; they and their local metadata are served while the upstream is down. Off: **pass-through**: metadata and downloads come from the upstream each time and nothing is kept, so search and the package pages stay empty |
 | Offline mode | off | The upstream is never contacted: only stored packages and remembered answers are served |
 
@@ -49,7 +49,7 @@ Creating a remote repository, saving its upstream and both purges **ask for your
 `Mirror:Enabled` (see [configuration](configuration.md#enable-read-through-caching)) keeps working unchanged: the default repository fetches from `Mirror:PackageSource`, stores the packages in itself and asks the upstream every time. At startup the **`mirror`** remote repository is created from `Mirror:*` (or its URL, protocol and timeout are brought in line with them) and the default repository fetches **through its settings**, so credentials, an offline switch or cache periods set on `mirror` apply to the default repository too. Its URL, protocol and timeout stay owned by `Mirror:*` (read-only on the page). Packages mirrored into `default` are default packages; `mirror` has its own (initially empty) cache at `/r/mirror/`. If a *local* repository is already named `mirror`, it is left alone and `Mirror:*` is read directly.
 
 !!! note
-    Replace `IRemoteHttpClientFactory` to change how upstreams are contacted (proxy, certificates). Registering your own `HttpClient` no longer affects mirroring.
+    Replace `IRemoteHttpClientFactory` to change how upstreams are contacted (proxy, certificates). Registering your own `HttpClient` no longer affects mirroring. V2 upstreams do not go through the factory: NuGet.Protocol contacts them itself (no proxy/certificate hook, the download timeout does not apply, credentials are given to NuGet's source credential for that host), with NuGet's on-disk HTTP cache switched off so the metadata period and *Purge cache* govern.
 
 ## Not covered yet
 
