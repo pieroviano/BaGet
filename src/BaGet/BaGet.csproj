@@ -81,4 +81,8 @@
     <InternalsVisibleTo Include="BaGet.Telemetry.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
 </Project>
