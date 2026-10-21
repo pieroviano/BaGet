@@ -168,11 +168,11 @@ public class BaGetUrlGenerator : IUrlGenerator
     // These two are templates for the client to expand, not URLs for a specific
     // package, so the placeholders are returned verbatim. Routing them through
     // LinkGenerator would percent-encode the braces.
-    // The package and report-abuse pages live at "/" and show the default repository, so only that repository
-    // advertises them: another repository's template would send a client to a page of a different feed.
+    // The package and report-abuse pages exist under every repository (RepositoryPageRouteConvention), so each
+    // repository advertises its own: AbsoluteUrl adds the "r/{name}/" prefix.
     public string? GetPackageDetailsUriTemplate()
     {
-        return CurrentRepository().IsDefault ? AbsoluteUrl("packages/{id}/{version}") : null;
+        return AbsoluteUrl("packages/{id}/{version}");
     }
 
     public string GetVulnerabilityIndexUrl()
@@ -214,7 +214,7 @@ public class BaGetUrlGenerator : IUrlGenerator
 
     public string? GetReportAbuseUriTemplate()
     {
-        return CurrentRepository().IsDefault ? AbsoluteUrl("packages/{id}/{version}/report-abuse") : null;
+        return AbsoluteUrl("packages/{id}/{version}/report-abuse");
     }
 
     private string AbsoluteUrl(string relativePath)
@@ -247,9 +247,7 @@ public class BaGetUrlGenerator : IUrlGenerator
     /// </summary>
     private string RepositoryPrefix()
     {
-        var current = CurrentRepository();
-
-        return current.IsDefault ? string.Empty : "r/" + Uri.EscapeDataString(current.Name) + "/";
+        return CurrentRepository().PathPrefix;
     }
 
     /// <summary>

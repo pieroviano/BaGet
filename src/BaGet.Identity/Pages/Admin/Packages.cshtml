@@ -27,11 +27,11 @@
                 @foreach (var row in Model.Packages)
                 {
                     <tr>
-                        <td><a href="~/packages/@row.Package.Id">@row.Package.Id</a></td>
+                        <td><a href="@Url.RepositoryContent("packages/" + row.Package.Id)">@row.Package.Id</a></td>
                         <td>@(row.Package.LatestVersion ?? "None")</td>
                         <td>@row.Package.VersionCount</td>
                         <td>@row.Package.Downloads.ToString("N0")</td>
-                        <td><a href="~/packages/@row.Package.Id/manage">Manage</a></td>
+                        <td><a href="@Url.RepositoryContent("packages/" + row.Package.Id + "/manage")">Manage</a></td>
                     </tr>
                 }
             </tbody>

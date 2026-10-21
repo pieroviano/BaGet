@@ -24,6 +24,9 @@ public static class IServiceCollectionExtensions
             .AddRouting(options => options.LowercaseUrls = true)
             .AddControllers(options =>
             {
+                // The one read check of every repository page (404 when the caller may not see the repository).
+                options.Filters.Add<RepositoryPageFilter>();
+
                 // With nullable reference types on, MVC treats every non-nullable reference-type
                 // property or parameter it binds as [Required]. Optional query values such as the
                 // package list's "packageType" and "framework" would then fail validation whenever a
@@ -41,7 +44,13 @@ public static class IServiceCollectionExtensions
         {
             // Add /packages route to the Index page
             options.Conventions.AddPageRoute("/Index", "/packages");
+
+            // Every repository page also at /r/{repo}/… (must come after the alias so it gets a twin as well).
+            options.Conventions.Add(new RepositoryPageRouteConvention());
         });
+
+        // Page links stay inside the repository being browsed (see RepositoryUrlHelper).
+        services.AddSingleton<Microsoft.AspNetCore.Mvc.Routing.IUrlHelperFactory, RepositoryUrlHelperFactory>();
 
         services.AddHttpContextAccessor();
         services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();

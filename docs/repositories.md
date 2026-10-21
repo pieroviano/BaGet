@@ -9,6 +9,18 @@ A server holds one or more named repositories. Each has its own packages, owners
 
 Only **local NuGet** repositories can be created today.
 
+## Web pages
+
+The web pages work in every repository: the package list, package, statistics, report-abuse, manage, contact-owners, profile and upload pages are at their usual address for `default` and under `/r/{name}/` for any other (`/r/{name}/packages`, `/r/{name}/upload`, ...). Links on a page stay in the repository being browsed.
+
+| Where | What |
+|---|---|
+| Header | A *Repository* menu appears on those pages when more than one repository is readable; it goes to the front page of the chosen one. Hidden with a single repository, and always with Azure Table or `Search:Type` = `AzureSearch` (only `default`) |
+| Upload | `/r/{name}/upload` publishes to `{name}`; the page lists the repositories you can publish to and shows the push commands of the one open |
+| My packages | The packages you own, grouped by repository |
+| `/admin/repositories` | *Browse* and *Upload* links per repository |
+| Service index | Each repository advertises its own `PackageDetailsUriTemplate` and `ReportAbuseUriTemplate` |
+
 ## Admin pages
 
 Administrators manage them at `/admin/repositories` (menu: *Repositories*). Other users and anonymous requests get `404` or the sign-in page.

@@ -3,6 +3,8 @@
 @using Microsoft.Extensions.Options
 @inject IUrlGenerator _url
 @inject IOptionsSnapshot<FeedsOptions> _feeds
+@inject IRepositoryAccess _repositoryAccess
+@inject IRepositoryContext _repositoryContext
 
 @{
     ViewData["Title"] = "Upload package";
@@ -17,11 +19,40 @@
     var showPowerShellGet = _feeds.Value.EnableV2;
 
     var staged = Model.Staged;
+
+    // The repository this upload goes to is the one of the page's address (/upload, /r/{name}/upload): staging, the
+    // submission and the commands below all follow it. The picker only moves between those addresses, and is
+    // offered when there is a choice (IRepositoryAccess lists what the caller may publish to).
+    var target = _repositoryContext.Current;
+    IReadOnlyList<RepositoryInfo> writable = Array.Empty<RepositoryInfo>();
+    if (!Model.IsReadOnlyMode && _repositoryAccess.SupportsMultipleRepositories)
+    {
+        writable = await _repositoryAccess.WritableAsync(User, Model.HttpContext.RequestAborted);
+    }
 }
 
 <div class="col-sm-12">
     <h1>Upload</h1>
     <hr class="breadcrumb-divider" />
+
+    @if (writable.Count > 1)
+    {
+        <p id="upload-repository">
+            Repository:
+            @foreach (var option in writable)
+            {
+                @if (option.Key == target.Key)
+                {
+                    <strong data-repository="@option.Name" class="upload-repository-current">@option.Name</strong>
+                }
+                else
+                {
+                    <a href="@Url.Page("/Upload", new { repo = option.IsDefault ? null : option.Name, id = Model.Id })" data-repository="@option.Name">@option.Name</a>
+                }
+                @(option == writable[^1] ? "" : " | ")
+            }
+        </p>
+    }
 
     @if (Model.Message != null)
     {
@@ -221,7 +252,7 @@
         @if (!string.IsNullOrWhiteSpace(Model.Id))
         {
             <p id="upload-for-id">
-                A new version of <a href="~/packages/@Model.Id">@Model.Id</a>. The ID and the
+                A new version of <a href="@Url.RepositoryContent("packages/" + Model.Id)">@Model.Id</a>. The ID and the
                 version come from the file you choose, not from this link.
             </p>
         }

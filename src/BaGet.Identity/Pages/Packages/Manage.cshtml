@@ -36,7 +36,7 @@
             @foreach (var owner in Model.Owners)
             {
                 <tr>
-                    <td><a href="~/profiles/@owner.OwnerName">@owner.OwnerName</a>@(owner.IsVerified ? " (verified)" : "")</td>
+                    <td><a href="@Url.RepositoryContent("profiles/" + owner.OwnerName)">@owner.OwnerName</a>@(owner.IsVerified ? " (verified)" : "")</td>
                     <td>
                         <form method="post" asp-page-handler="RemoveOwner">
                             <input type="hidden" name="ownerName" value="@owner.OwnerName" />
@@ -70,7 +70,7 @@
             {
                 var version = package.NormalizedVersionString;
                 <tr>
-                    <td><a href="~/packages/@Model.Id/@version">@version</a></td>
+                    <td><a href="@Url.RepositoryContent("packages/" + Model.Id + "/" + version)">@version</a></td>
                     <td>@package.Downloads.ToString("N0")</td>
                     <td>
                         @(package.Listed ? "Yes" : "No")

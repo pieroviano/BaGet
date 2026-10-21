@@ -48,8 +48,8 @@ public class BaGetServiceIndex : IServiceIndexService
         resources.AddRange(BuildResource("PackageBaseAddress", _url.GetPackageContentResourceUrl(), "3.0.0"));
         resources.AddRange(BuildResource("SearchAutocompleteService", _url.GetAutocompleteResourceUrl(), "", "3.0.0-rc", "3.0.0-beta"));
 
-        // The web pages these templates expand to show the default repository only; another repository's index
-        // leaves them out rather than send a client to a page of a different feed.
+        // The web pages these templates expand to exist under every repository (/r/{name}/packages/…), so each
+        // repository's index advertises its own; a host without pages returns null and leaves them out.
         var detailsTemplate = _url.GetPackageDetailsUriTemplate();
         if (detailsTemplate != null)
         {

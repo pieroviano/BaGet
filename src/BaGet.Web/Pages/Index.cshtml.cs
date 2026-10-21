@@ -8,6 +8,7 @@ using BaGet.Core;
 using BaGet.Protocol.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Routing;
 
 namespace BaGet.Web;
 
@@ -122,8 +123,10 @@ public class IndexModel : PageModel
         var request = HttpContext?.Request;
         if (request == null) return false;
 
+        // The front page of a repository is its root: "/" for the default, "/r/{name}" for another.
         var path = request.Path.Value?.TrimEnd('/');
-        if (!string.IsNullOrEmpty(path)) return false;
+        var root = request.HttpContext.GetRouteValue(Routes.RepositoryRouteKey) is string repository ? "/r/" + repository : string.Empty;
+        if (!string.Equals(path ?? string.Empty, root, StringComparison.OrdinalIgnoreCase)) return false;
 
         return !request.Query.ContainsKey("q")
             && string.IsNullOrWhiteSpace(Query)

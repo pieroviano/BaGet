@@ -278,7 +278,7 @@ public class RepositoryRoutingTests : IDisposable
     }
 
     [Fact]
-    public async Task OnlyTheDefaultIndexAdvertisesThePackagePagesWhichShowTheDefaultRepository()
+    public async Task EveryIndexAdvertisesThePackagePagesOfItsOwnRepository()
     {
         var token = TestContext.Current.CancellationToken;
 
@@ -287,9 +287,14 @@ public class RepositoryRoutingTests : IDisposable
 
         Assert.Contains(defaultTypes, t => t.StartsWith("PackageDetailsUriTemplate"));
         Assert.Contains(defaultTypes, t => t.StartsWith("ReportAbuseUriTemplate"));
-        Assert.DoesNotContain(secondTypes, t => t.StartsWith("PackageDetailsUriTemplate"));
-        Assert.DoesNotContain(secondTypes, t => t.StartsWith("ReportAbuseUriTemplate"));
+        Assert.Contains(secondTypes, t => t.StartsWith("PackageDetailsUriTemplate"));
+        Assert.Contains(secondTypes, t => t.StartsWith("ReportAbuseUriTemplate"));
         Assert.Contains(secondTypes, t => t.StartsWith("PackageBaseAddress"));
+
+        // The advertised address is a page of the same repository.
+        var secondIds = await ResourceIdsAsync("r/second/v3/index.json", token);
+        Assert.Contains("http://localhost/r/second/packages/{id}/{version}", secondIds);
+        Assert.Contains("http://localhost/r/second/packages/{id}/{version}/report-abuse", secondIds);
     }
 
     [Fact]

@@ -17,12 +17,20 @@ Inventory that motivates it (2026-10-21, HEAD `1433dba`):
 
 | # | Check | Why it blocks | How |
 |---|---|---|---|
-| **B1** | Page routes under `r/{repo}/` without breaking links | CLAUDE.md: a second page route (`AddPageRoute`, `IServiceCollectionExtensions.cs:43`) makes `asp-page`/`Url.Page` emit empty `href`s. U1 needs every page reachable at `/x` and `/r/{repo}/x` | Prototype an `IPageRouteModelConvention` that adds an `r/{repo}/`-prefixed selector to every page, the existing one keeping `Order` 0. Test `Url.Page` with and without an ambient `repo` value, `asp-page` in a layout, `RedirectToPage`, and the existing `/packages` alias. If generation is ambiguous, fall back to an explicit `asp-route-repo` everywhere via one tag helper. Decide before U1 |
+| **B1** (resolved, see below) | Page routes under `r/{repo}/` without breaking links | CLAUDE.md: a second page route (`AddPageRoute`, `IServiceCollectionExtensions.cs:43`) makes `asp-page`/`Url.Page` emit empty `href`s. U1 needs every page reachable at `/x` and `/r/{repo}/x` | Prototype an `IPageRouteModelConvention` that adds an `r/{repo}/`-prefixed selector to every page, the existing one keeping `Order` 0. Test `Url.Page` with and without an ambient `repo` value, `asp-page` in a layout, `RedirectToPage`, and the existing `/packages` alias. If generation is ambiguous, fall back to an explicit `asp-route-repo` everywhere via one tag helper. Decide before U1 |
 | **B2** | Private reads with real NuGet clients | Enforced reads (U2) answer 401; `dotnet`, `nuget.exe`, Visual Studio and PowerShellGet must send credentials | Against a test host: `dotnet nuget add source -u <user> -p <api key>` and `--store-password-in-clear-text`, `nuget.exe sources add`, PowerShellGet `-Credential`. Confirm `401` + `WWW-Authenticate: Basic realm=...` triggers them, and that symbol downloads (Visual Studio) and the V2 feed authenticate the same way |
 | **B3** | Upgrade equivalence | Existing installs must behave exactly as today after U2 (anonymous read everywhere, push and manage by ownership) | U2's migration seeds built-in targets (D3). A test runs the whole current authorization suite (`OwnershipAuthorizationService` cases, push/unlist/delete/deprecate, Manage page) on the seeded model with no edits: identical outcomes |
 | **B4** | Cost of a check per request | Reads are hot (registration, flat container, search) | Measure the evaluator with 50 targets / 20 groups; cache the resolved permission set per principal per request plus a short per-user cache invalidated by an "access model version" bumped on every change |
 | **B5** | Single-repository backends | Azure Table (`NullContext`) and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`) | Switcher, repository pickers and per-repository targets hidden there; permission tables need a relational database. Under Azure Table, keep today's model and say so on the admin pages |
 | B6 | Symbol deletion | No `ISymbolStorageService` delete; symbols are keyed by PDB, not by package (`SymbolStorageService.cs:50-76`) | Find where a `.snupkg` → PDB keys mapping can be recorded at index time. Without it, list/delete per package is impossible for existing symbols; decide (record from now on + document) |
+
+### B1 outcome
+
+| Finding | Decision |
+|---|---|
+| The `IPageRouteModelConvention` twin selector (`r/{repo}/` + each selector, `Order` -1, `/packages` alias included) generates correctly: no `repo` value gives the plain URL, a `repo` value the prefixed one, `repo = null` leaves; `Url.Page`, `asp-page`, forms and `RedirectToPage` agree | Implemented: `RepositoryPageRouteConvention` |
+| **Ambient `repo` is not carried to a different page** (only to the same page): `asp-page="/Upload"` in the layout of `/r/second/…` dropped the prefix | Not a per-link `asp-route-repo` tag helper but one `IUrlHelper` decorator (`RepositoryUrlHelperFactory`): adds `repo` to every link to a repository page; an explicit value wins; other pages untouched |
+| Hard-coded `~/packages/…` hrefs ignore routing | Replaced by `Url.Page` in the repository pages |
 
 ## Decisions
 
@@ -70,6 +78,10 @@ public interface IAccessEvaluator                        // BaGet.Core/Access
 Each phase: blocking checks first, tests first, full suite green, 0 warnings, docs in the same commits, Opus review.
 
 ### U1 — Repository-aware pages (D2)
+
+Status: implemented (B1 above). Access hook: `IRepositoryAccess` (`BaGet.Core`, `OpenRepositoryAccess` = every NuGet repository) is the single place U2's
+`IAccessEvaluator` replaces: switcher, upload picker, My packages and `RepositoryPageFilter` (404) all ask it. No `RepositoryPageModel` base was needed:
+the filter is global and a page model reads `IRepositoryContext`.
 
 | Change | Where |
 |---|---|

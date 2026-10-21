@@ -44,10 +44,6 @@ public abstract class ApiIntegrationTestsBase : IDisposable
     /// <summary>Rewrites the expected absolute URLs (written for <c>/</c>) to this repository's root.</summary>
     private string Expect(string expected) => expected.Replace("http://localhost/", _origin).ReplaceLineEndings();
 
-    /// <summary>The package-page URI templates point at the web UI, which only the default repository has.</summary>
-    private static string WithoutPackagePageTemplates(string serviceIndex)
-        => System.Text.RegularExpressions.Regex.Replace(serviceIndex, @"{""@id"":""http://localhost/packages/[^""]*"",""@type"":""[^""]*""},", "");
-
     [Fact]
     public async Task IndexReturnsOk()
     {
@@ -56,7 +52,7 @@ public abstract class ApiIntegrationTestsBase : IDisposable
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(Expect(_repository == null ? TestData.ServiceIndex : WithoutPackagePageTemplates(TestData.ServiceIndex)), content);
+        Assert.Equal(Expect(TestData.ServiceIndex), content);
     }
 
     [Fact]

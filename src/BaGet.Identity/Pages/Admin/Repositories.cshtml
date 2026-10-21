@@ -43,6 +43,14 @@
                         </button>
                     </td>
                     <td>
+                        @if (repository.Format == BaGet.Core.RepositoryFormat.NuGet)
+                        {
+                            var pageRepository = repository.IsDefault ? null : repository.Name;
+                            <a class="repository-browse" href="@Url.Page("/Index", new { repo = pageRepository })">Browse</a>
+                            <span> | </span>
+                            <a class="repository-upload" href="@Url.Page("/Upload", new { repo = pageRepository })">Upload</a>
+                            <span> | </span>
+                        }
                         <a href="@Url.Page("/Admin/RepositoryEdit", new { name = repository.Name })">Edit</a>
                         @if (!repository.IsDefault)
                         {

@@ -12,32 +12,54 @@ namespace BaGet.Identity.Pages.Account;
 
 /// <summary>
 /// The package IDs the signed-in user owns, directly or through an organization, and the
-/// way into each one's management page.
+/// way into each one's management page. Ownership is per repository, so the IDs are grouped by
+/// the repositories the user may read (<see cref="IRepositoryAccess"/>); a repository where
+/// the user owns nothing is not listed.
 /// </summary>
 public class PackagesModel : AccountPageModel
 {
     protected override bool RequiresSignIn => true;
 
-    public IReadOnlyList<OwnedPackage> Packages { get; private set; } = Array.Empty<OwnedPackage>();
+    /// <summary>The owned packages of each repository that has any, <c>default</c> first.</summary>
+    public IReadOnlyList<RepositoryPackages> Groups { get; private set; } = Array.Empty<RepositoryPackages>();
+
+    /// <summary>Whether the user owns nothing in any repository.</summary>
+    public bool IsEmpty => Groups.Count == 0;
+
+    /// <summary>
+    /// Whether the list needs repository headings: more than the default repository holds packages of the user.
+    /// </summary>
+    public bool ShowRepositoryNames => Groups.Any(g => !g.Repository.IsDefault);
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        // Ownership, not the package table, decides what is listed: an ID whose every
-        // version was deleted is still the user's, and hiding it would hide the page
-        // where its owners are managed.
-        var ids = await Ownership.GetOwnedPackageIdsAsync(
-            UserManager.GetUserId(User),
-            User.Identity?.Name,
-            cancellationToken);
+        var access = HttpContext.RequestServices.GetRequiredService<IRepositoryAccess>();
+        var scopes = HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>();
+        var userId = UserManager.GetUserId(User);
+        var groups = new List<RepositoryPackages>();
 
-        if (ids?.Count == 0)
+        foreach (var repository in await access.ReadableAsync(User, cancellationToken))
         {
-            Packages = Array.Empty<OwnedPackage>();
-            return;
+            // A scope pinned to the repository: ownership and packages are repository-scoped tables.
+            using var scope = scopes.CreateRepositoryScope(repository);
+
+            // Ownership, not the package table, decides what is listed: an ID whose every
+            // version was deleted is still the user's, and hiding it would hide the page
+            // where its owners are managed.
+            var ids = await scope.ServiceProvider.GetRequiredService<PackageOwnershipService>().GetOwnedPackageIdsAsync(
+                userId,
+                User.Identity?.Name,
+                cancellationToken);
+
+            if (ids == null || ids.Count == 0) continue;
+
+            groups.Add(new RepositoryPackages(
+                repository,
+                Summarise(ids, await ListVersionsAsync(
+                    scope.ServiceProvider.GetRequiredService<IContext>(), ids, cancellationToken))));
         }
 
-        Packages = Summarise(ids, await ListVersionsAsync(
-            HttpContext.RequestServices.GetRequiredService<IContext>(), ids, cancellationToken));
+        Groups = groups;
     }
 
     /// <summary>
@@ -138,6 +160,11 @@ public class PackagesModel : AccountPageModel
 
         public long Downloads { get; set; }
     }
+
+    /// <summary>
+    /// The packages the user owns in one repository.
+    /// </summary>
+    public sealed record RepositoryPackages(RepositoryInfo Repository, IReadOnlyList<OwnedPackage> Packages);
 
     /// <summary>
     /// One owned package ID, summarised across its versions.

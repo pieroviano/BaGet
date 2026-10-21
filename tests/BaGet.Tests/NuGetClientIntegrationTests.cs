@@ -66,8 +66,8 @@ public abstract class NuGetClientIntegrationTestsBase : IDisposable
         var index = await _repository.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken);
 
         #pragma warning disable CS8602
-        // The package-page templates (3 entries) point at the web UI, which only the default repository has.
-        Assert.Equal(_repositoryName == null ? 17 : 14, index.Entries.Count);
+        // The package-page templates (3 entries) point at the web UI, which exists in every repository.
+        Assert.Equal(17, index.Entries.Count);
         #pragma warning restore CS8602
 
         Assert.NotEmpty(index.GetServiceEntries("PackageBaseAddress/3.0.0"));
@@ -76,8 +76,8 @@ public abstract class NuGetClientIntegrationTestsBase : IDisposable
         Assert.NotEmpty(index.GetServiceEntries("SearchAutocompleteService"));
         Assert.NotEmpty(index.GetServiceEntries("SearchQueryService"));
         Assert.NotEmpty(index.GetServiceEntries("SymbolPackagePublish/4.9.0"));
-        Assert.Equal(_repositoryName == null, index.GetServiceEntries("PackageDetailsUriTemplate/5.1.0").Count > 0);
-        Assert.Equal(_repositoryName == null, index.GetServiceEntries("ReportAbuseUriTemplate/3.0.0-rc").Count > 0);
+        Assert.NotEmpty(index.GetServiceEntries("PackageDetailsUriTemplate/5.1.0"));
+        Assert.NotEmpty(index.GetServiceEntries("ReportAbuseUriTemplate/3.0.0-rc"));
     }
 
     [Fact]

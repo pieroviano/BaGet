@@ -20,4 +20,10 @@ public sealed record RepositoryInfo(int Key, string Name, RepositoryFormat Forma
     /// Whether this is the <see cref="Repository.DefaultName"/> repository.
     /// </summary>
     public bool IsDefault => Key == Repository.DefaultKey;
+
+    /// <summary>
+    /// The path in front of this repository's routes, feeds and pages, without a leading slash: nothing for the
+    /// default repository (served at <c>/</c>), else <c>r/{name}/</c>.
+    /// </summary>
+    public string PathPrefix => IsDefault ? string.Empty : "r/" + System.Uri.EscapeDataString(Name) + "/";
 }

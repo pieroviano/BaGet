@@ -56,8 +56,8 @@ public abstract class BaGetClientIntegrationTestsBase : IDisposable
 
         #pragma warning disable CS8602
         Assert.Equal("3.0.0", index.Version);
-        // The package-page templates (3 entries) point at the web UI, which only the default repository has.
-        Assert.Equal(_repository == null ? 17 : 14, index.Resources.Count);
+        // The package-page templates (3 entries) point at the web UI, which exists in every repository.
+        Assert.Equal(17, index.Resources.Count);
         #pragma warning restore CS8602
 
         #pragma warning disable CS8604
@@ -66,8 +66,8 @@ public abstract class BaGetClientIntegrationTestsBase : IDisposable
         Assert.NotEmpty(index.GetResourceUrl(new[] { "RegistrationsBaseUrl" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SearchAutocompleteService" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SearchQueryService" }));
-        Assert.Equal(_repository == null, !string.IsNullOrEmpty(index.GetResourceUrl(new[] { "PackageDetailsUriTemplate/5.1.0" })));
-        Assert.Equal(_repository == null, !string.IsNullOrEmpty(index.GetResourceUrl(new[] { "ReportAbuseUriTemplate/3.0.0-rc" })));
+        Assert.NotEmpty(index.GetResourceUrl(new[] { "PackageDetailsUriTemplate/5.1.0" }));
+        Assert.NotEmpty(index.GetResourceUrl(new[] { "ReportAbuseUriTemplate/3.0.0-rc" }));
         Assert.NotEmpty(index.GetResourceUrl(new[] { "SymbolPackagePublish/4.9.0" }));
         #pragma warning restore CS8604
     }

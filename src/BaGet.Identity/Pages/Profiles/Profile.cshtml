@@ -13,7 +13,7 @@
         <p>Organization with @Model.Members.Count member@(Model.Members.Count == 1 ? "" : "s"):
             @foreach (var member in Model.Members)
             {
-                <a href="~/profiles/@member">@member</a>
+                <a href="@Url.RepositoryContent("profiles/" + member)">@member</a>
             }
         </p>
     }
@@ -36,9 +36,9 @@
                 @foreach (var package in Model.Packages)
                 {
                     <tr>
-                        <td><a href="~/packages/@package.Id">@package.Id</a></td>
+                        <td><a href="@Url.RepositoryContent("packages/" + package.Id)">@package.Id</a></td>
                         <td>@package.Downloads.ToString("N0")</td>
-                        <td>@if (Model.IsCurrentUser || Model.IsOrganization) { <a href="~/packages/@package.Id/manage">Manage</a> }</td>
+                        <td>@if (Model.IsCurrentUser || Model.IsOrganization) { <a href="@Url.RepositoryContent("packages/" + package.Id + "/manage")">Manage</a> }</td>
                     </tr>
                 }
             </tbody>

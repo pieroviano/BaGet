@@ -1,8 +1,24 @@
 @using Microsoft.Extensions.DependencyInjection
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> Site
+@inject BaGet.Core.IRepositoryContext RepositoryContext
+@inject BaGet.Core.IRepositoryAccess RepositoryAccess
 @{
     var hideSearchBar = ViewData["HideSearchBar"] is true;
+
+    // The repository this page shows. Links in the header stay inside it ("r/{name}/" in front), and a page that acts
+    // on a repository (RepositoryPageRouteConvention) offers the switcher when more than one is readable. The list
+    // comes from IRepositoryAccess, the one place that decides who sees which repository.
+    var repository = RepositoryContext.Current;
+    var repositoryPrefix = repository.PathPrefix;
+    var isRepositoryPage = ViewContext.ActionDescriptor is Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor pageDescriptor
+        && BaGet.Web.RepositoryPageRouteConvention.RepositoryPages.Contains(pageDescriptor.ViewEnginePath, StringComparer.OrdinalIgnoreCase);
+    IReadOnlyList<BaGet.Core.RepositoryInfo> switchable = Array.Empty<BaGet.Core.RepositoryInfo>();
+    if (isRepositoryPage && RepositoryAccess.SupportsMultipleRepositories)
+    {
+        var readable = await RepositoryAccess.ReadableAsync(User, Context.RequestAborted);
+        if (readable.Count > 1) switchable = readable;
+    }
 
     // The signed-in user's avatar, for the account menu. The service exists only while accounts are enabled.
     string? headerAvatar = null;
@@ -40,7 +56,7 @@
     <link rel="stylesheet" href="~/_content/BaGet.Web/lib/office-ui-fabric-core/dist/css/fabric.min.css" />
     <link rel="stylesheet" href="~/_content/BaGet.Web/css/site.css" />
 
-    <title>@ViewData["Title"] - BaGet Extension</title>
+    <title>@ViewData["Title"]@(repository.IsDefault ? "" : " (" + repository.Name + ")") - BaGet Extension</title>
 </head>
 <body>
     <header class="site-header">
@@ -53,7 +69,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand brand" href="@Url.Content("~/")" title="BaGet Extension">
+                    <a class="navbar-brand brand" href="@Url.Content("~/" + repositoryPrefix)" title="BaGet Extension">
                         <svg class="brand-logo" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
                             <rect x="2" y="12" width="28" height="9" rx="4.5" transform="rotate(-30 16 16)" fill="#744010" />
                             <path d="M9 19l4-7M14 16l4-7M19 13l4-7" stroke="#FBF1DF" stroke-width="1.6" stroke-linecap="round" fill="none" />
@@ -63,7 +79,7 @@
                 </div>
                 <div id="navbar" class="collapse navbar-collapse">
                     <ul class="nav navbar-nav" role="tablist">
-                        <li role="presentation"><a href="@Url.Content("~/packages")" role="tab" nav-link><span>Packages</span></a></li>
+                        <li role="presentation"><a href="@Url.Content("~/" + repositoryPrefix + "packages")" role="tab" nav-link><span>Packages</span></a></li>
                         <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
                         <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
                         <li role="presentation">
@@ -72,6 +88,24 @@
                             </a>
                         </li>
                     </ul>
+                    @if (switchable.Count > 0)
+                    {
+                        <ul class="nav navbar-nav" id="repository-switcher">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" title="Repository">
+                                    <span>Repository: <strong id="current-repository">@repository.Name</strong></span> <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @foreach (var option in switchable)
+                                    {
+                                        <li class="@(option.Key == repository.Key ? "active" : "")">
+                                            <a href="@Url.Content("~/" + option.PathPrefix)" data-repository="@option.Name">@option.Name</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        </ul>
+                    }
                     @if (Accounts.Value.Enabled)
                     {
                         <ul class="nav navbar-nav navbar-right account-area" role="tablist">

@@ -13,7 +13,7 @@
         <div class="alert alert-success" role="alert" id="contact-sent">
             Your message was sent to the owners of @Model.PackageId. They can reply to you by email.
         </div>
-        <p><a href="~/packages/@Model.PackageId">Back to @Model.PackageId</a></p>
+        <p><a href="@Url.RepositoryContent("packages/" + Model.PackageId)">Back to @Model.PackageId</a></p>
     }
     else
     {

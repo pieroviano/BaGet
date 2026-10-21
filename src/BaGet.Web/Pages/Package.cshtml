@@ -362,13 +362,13 @@ else
                         {
                             <li>
                                 <i class="ms-Icon ms-Icon--Settings" aria-hidden="true"></i>
-                                <a href="~/packages/@Model.Package?.Id/manage">Manage package</a>
+                                <a href="@Url.RepositoryContent("packages/" + Model.Package?.Id + "/manage")">Manage package</a>
                             </li>
                             @if (Model.Owners.Any() && EmailOptions.Value.IsConfigured)
                             {
                                 <li>
                                     <i class="ms-Icon ms-Icon--Mail" aria-hidden="true"></i>
-                                    <a href="~/packages/@Model.Package?.Id/contact-owners">Contact owners</a>
+                                    <a href="@Url.RepositoryContent("packages/" + Model.Package?.Id + "/contact-owners")">Contact owners</a>
                                 </li>
                             }
                         }

@@ -127,7 +127,7 @@ public class SettingsSectionPageTests : IDisposable
         var admin = await StartAsync();
 
         using var response = await admin.PostAsync("admin/settings", new Dictionary<string, string> { ["section"] = "Database", ["password"] = "wrong" });
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         AssertOnlyShown(html, "Database");
         Assert.Contains("data-locked=\"true\"", html);
@@ -141,7 +141,7 @@ public class SettingsSectionPageTests : IDisposable
 
         using var response = await admin.PostAsync("admin/settings", new Dictionary<string, string> { ["section"] = "", ["password"] = "wrong" });
 
-        AssertOnlyShown(await response.Content.ReadAsStringAsync(), "general");
+        AssertOnlyShown(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), "general");
     }
 
     [Theory]

@@ -21,8 +21,8 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1836 tests** across `BaGet.Core.Tests` (541), `BaGet.Tests` (1001),
-`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (41),
+Baseline: **1874 tests** across `BaGet.Core.Tests` (545), `BaGet.Tests` (1023),
+`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
 `TelemetryE2ETests`) fail on a clean checkout too; not investigated. No external services needed; integration tests
@@ -147,10 +147,19 @@ deprecation/vulnerability, repository signatures) twice: plain (the `default` re
 repository) is `404`, never the default. `BaGetUrlGenerator` reads the repository from `HttpContext.RequestServices` on
 each call (the registration/search builders are singletons, so an injected scoped context would pin them to one
 repository), picks the `r:` route variant and prefixes `AbsoluteUrl`, so every advertised URL stays in the repository and
-after the `PathBase`. The V2 feed's base is `IUrlGenerator.GetV2FeedUrl`. Razor Pages stay at `/` and show the
-default repository, so only the default's service index advertises `PackageDetailsUriTemplate` /
-`ReportAbuseUriTemplate` (the generator returns null elsewhere). Do not give a page a second route
-(`AddPageRoute`): `asp-page`/`Url.Page` then produce empty `href`s.
+after the `PathBase`. The V2 feed's base is `IUrlGenerator.GetV2FeedUrl`. **Repository pages.** The pages that act on a repository (`RepositoryPageRouteConvention.RepositoryPages`: Index, Package,
+Statistics, ReportAbuse, Upload, Manage, ContactOwners, Profile, Admin Packages/UserPackages) are served at their own route and at
+`/r/{repo}/…`: the convention adds an `r/{repo}/` **twin selector** (`Order` -1) to every selector of the page, `/packages` alias
+included; it must be registered after `AddPageRoute`. Never give a page a second page route (`AddPageRoute`) for this: link
+generation then produces empty `href`s. ASP.NET Core carries an ambient route value only to links to the *same* page, so
+`RepositoryUrlHelper` (an `IUrlHelper` decorator from `RepositoryUrlHelperFactory`) adds the request's `repo` to every
+`Url.Page` / `asp-page` / `RedirectToPage` link to a repository page; an explicit `repo = x` wins and `repo = null` leaves for the
+default repository (a link to any other page is untouched). New repository page: add it to `RepositoryPages`. The request's
+repository is `IRepositoryContext`; `IRepositoryAccess` (`BaGet.Core`, default `OpenRepositoryAccess`: every NuGet repository, default
+only when `SupportsMultipleRepositories` is false) is the one place that decides which repositories the UI offers: the header
+switcher (`_Layout`, only on repository pages, hidden for fewer than two), the Upload picker, My packages (grouped by repository)
+and `RepositoryPageFilter` (404 on a repository the caller cannot read). Every repository advertises its own
+`PackageDetailsUriTemplate` / `ReportAbuseUriTemplate`.
 
 **Storage layout** (`RepositoryStorage`, `BaGet.Core/Repositories`): `default` keeps `packages/…`, `symbols/…`, `catalog/…`,
 `validation/…`, `staging/…` byte for byte (existing stores need no migration); every other repository nests the same
@@ -262,12 +271,14 @@ client (e.g. the V2 feed's XML declaration).
 **Protocol suites run twice.** `ApiIntegrationTests`, `NuGetClientIntegrationTests`, `NuGetV2ClientIntegrationTests`,
 `BaGetClientIntegrationTests`, `V2FeedIntegrationTests` and `CatalogIntegrationTests` are abstract `…Base` classes taking a
 repository name; the plain class runs them at `/`, `…SecondRepository` at `/r/second/` (relative URIs resolve against
-the client's `BaseAddress`; expected absolute URLs go through `Expect`; the second repository's service index has 14
-entries, not 17: the package-page templates are default-only). A new protocol test class should follow the pattern. Helpers:
+the client's `BaseAddress`; expected absolute URLs go through `Expect`; every repository's service index has 17 entries).
+A new protocol test class should follow the pattern. Helpers:
 `CreateRepositoryAsync`, `CreateRepositoryScopeAsync`, `AddPackageAsync(..., repository)`.
 `RepositoryLifecycleIsolationTests` pushes/unlists/relists/deprecates in one repository and asserts the other's whole read
 surface is unchanged; `UpgradeFromPreRepositoryTests` (B7) starts the real app on a pre-repository SQLite database and
 `packages/…` store and asserts everything is served unchanged at `/`, keys/owners still work and no file moves.
+`RepositoryPagesTests` / `RepositoryAccountPagesTests` cover the pages at `/r/second/` (links stay inside, switcher, upload target, My packages grouped,
+admin Browse/Upload links, `IRepositoryAccess` refusal = 404); `RepositoryPageRoutingFacts` (`BaGet.Web.Tests`) the convention and `RepositoryUrlHelper`.
 
 Unit tests reach internals through `InternalsVisibleTo`, declared in each **project file** (not
 `AssemblyInfo.cs`):

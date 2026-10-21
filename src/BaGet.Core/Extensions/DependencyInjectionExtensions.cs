@@ -102,6 +102,7 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IRepositoryContext, RepositoryContext>();
         services.TryAddScoped<IRepositoryService, RepositoryService>();
         services.TryAddScoped<IRepositoryAdministration, RepositoryAdministration>();
+        services.TryAddScoped<IRepositoryAccess, OpenRepositoryAccess>();
 
         services.TryAddScoped<DownloadsImporter>();
         services.TryAddScoped<StatisticsService>();

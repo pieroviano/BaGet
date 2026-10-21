@@ -60,8 +60,9 @@ public interface IUrlGenerator
     /// See: https://learn.microsoft.com/en-us/nuget/api/service-index#resources
     /// </summary>
     /// <returns>
-    /// The template, or null when the current repository has no package pages (the web UI shows the default
-    /// repository only), in which case the service index leaves the resource out rather than link to another feed.
+    /// The template, in the current repository (<c>/r/{name}/packages/…</c> for a non-default one, as the pages exist
+    /// under every repository). Null is reserved for a generator whose host has no package pages, in which case the
+    /// service index leaves the resource out.
     /// </returns>
     string? GetPackageDetailsUriTemplate();
 
@@ -70,7 +71,7 @@ public interface IUrlGenerator
     /// The literal "{id}" and "{version}" placeholders are part of the value.
     /// See: https://learn.microsoft.com/en-us/nuget/api/service-index#resources
     /// </summary>
-    /// <returns>The template, or null when the current repository has no such page; see <see cref="GetPackageDetailsUriTemplate"/>.</returns>
+    /// <returns>The template, or null when the host has no such page; see <see cref="GetPackageDetailsUriTemplate"/>.</returns>
     string? GetReportAbuseUriTemplate();
 
     /// <summary>

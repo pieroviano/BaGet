@@ -8,7 +8,7 @@
     <h1>My packages</h1>
     <hr class="breadcrumb-divider" />
 
-    @if (Model.Packages.Count == 0)
+    @if (Model.IsEmpty)
     {
         <p id="my-packages-empty">
             You do not own any package yet. <a asp-page="/Upload">Upload one</a>, or push with
@@ -17,35 +17,44 @@
     }
     else
     {
-        <table class="table" id="my-packages">
-            <thead>
-                <tr><th>Package</th><th>Latest version</th><th>Versions</th><th>Downloads</th><th></th></tr>
-            </thead>
-            <tbody>
-                @foreach (var package in Model.Packages)
+        @foreach (var group in Model.Groups)
+        {
+            <div data-repository="@group.Repository.Name">
+                @if (Model.ShowRepositoryNames)
                 {
-                    <tr>
-                        <td><a href="~/packages/@package.Id">@package.Id</a></td>
-                        <td>
-                            @if (package.LatestVersion == null)
-                            {
-                                <text>None</text>
-                            }
-                            else
-                            {
-                                <a href="~/packages/@package.Id/@package.LatestVersion">@package.LatestVersion</a>
-                                @(package.LatestVersionIsListed ? "" : " (unlisted)")
-                            }
-                        </td>
-                        <td>@package.VersionCount</td>
-                        <td>@package.Downloads.ToString("N0")</td>
-                        <td>
-                            <a href="~/packages/@package.Id/manage">Manage</a> ·
-                            <a asp-page="/Upload" asp-route-id="@package.Id">Upload new version</a>
-                        </td>
-                    </tr>
+                    <h2>Repository: @group.Repository.Name</h2>
                 }
-            </tbody>
-        </table>
+                <table class="table" id="my-packages@(group.Repository.IsDefault ? "" : "-" + group.Repository.Name)">
+                    <thead>
+                        <tr><th>Package</th><th>Latest version</th><th>Versions</th><th>Downloads</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var package in group.Packages)
+                        {
+                            <tr>
+                                <td><a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id)">@package.Id</a></td>
+                                <td>
+                                    @if (package.LatestVersion == null)
+                                    {
+                                        <text>None</text>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id + "/" + package.LatestVersion)">@package.LatestVersion</a>
+                                        @(package.LatestVersionIsListed ? "" : " (unlisted)")
+                                    }
+                                </td>
+                                <td>@package.VersionCount</td>
+                                <td>@package.Downloads.ToString("N0")</td>
+                                <td>
+                                    <a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id + "/manage")">Manage</a> ·
+                                    <a href="@(Url.RepositoryContent(group.Repository, "upload") + "?id=" + Uri.EscapeDataString(package.Id ?? string.Empty))">Upload new version</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     }
 </div>
