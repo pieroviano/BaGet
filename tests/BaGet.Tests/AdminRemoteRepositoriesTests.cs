@@ -584,6 +584,37 @@ public class MirrorRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task AnNpmRemoteRepositoryNamedMirrorIsNeverTakenForTheMirror()
+    {
+        using var scope = _app.Services.CreateScope();
+        var repositories = scope.ServiceProvider.GetRequiredService<IRepositoryService>();
+        var administration = scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>();
+
+        // Replace the NuGet mirror created at startup by an npm repository of the same name.
+        await administration.DeleteAsync(Repository.MirrorName, CancellationToken.None);
+        await repositories.CreateAsync(
+            Repository.MirrorName,
+            RepositoryFormat.Npm,
+            RepositoryKind.Remote,
+            new RemoteRepositorySettings { Url = "http://registry.test/" },
+            anonymousRead: true,
+            CancellationToken.None);
+
+        var remotes = scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>();
+        await remotes.EnsureMirrorRepositoryAsync(CancellationToken.None);
+
+        var detail = (await remotes.FindAsync(Repository.MirrorName, CancellationToken.None))!;
+        Assert.False(detail.IsMirror);
+        Assert.Equal(RemoteProtocol.Npm, detail.Settings.Protocol);
+        Assert.Equal("http://registry.test/", detail.Settings.Url);
+
+        // The default repository then reads Mirror:* directly rather than through that repository.
+        var upstream = await scope.ServiceProvider.GetRequiredService<IRemoteUpstreamSource>().ResolveAsync(RepositoryInfo.Default, CancellationToken.None);
+        Assert.Equal(0, upstream!.Key);
+        Assert.Equal("http://localhost/v3/index.json", upstream.Settings.Url);
+    }
+
+    [Fact]
     public async Task EnablingTheMirrorCreatesARemoteRepositoryFromTheMirrorSettings()
     {
         using var scope = _app.Services.CreateScope();

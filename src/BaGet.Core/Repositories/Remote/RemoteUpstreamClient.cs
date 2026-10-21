@@ -96,7 +96,7 @@ public sealed class RemoteUpstreamSource : IRemoteUpstreamSource
         if (_context is NullContext) return null;
 
         var key = await _context.Repositories!.AsNoTracking()
-            .Where(r => r.Name == Repository.MirrorName && r.Kind == RepositoryKind.Remote)
+            .Where(r => r.Name == Repository.MirrorName && r.Kind == RepositoryKind.Remote && r.Format == RepositoryFormat.NuGet)
             .Select(r => (int?)r.Key)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);

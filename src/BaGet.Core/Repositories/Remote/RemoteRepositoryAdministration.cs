@@ -166,7 +166,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         settings.Password = null;
         settings.ProtectedPassword = null;
 
-        return new RemoteRepositoryDetail(row.ToInfo(), settings, hasPassword, IsMirror: row.Name == Repository.MirrorName && MirrorActive);
+        return new RemoteRepositoryDetail(row.ToInfo(), settings, hasPassword, IsMirror: row.Name == Repository.MirrorName && row.Format == RepositoryFormat.NuGet && MirrorActive);
     }
 
     /// <inheritdoc/>
@@ -197,7 +197,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         }
 
         // While Mirror:* drives the default repository, where the upstream is stays in the options.
-        if (row.Name == Repository.MirrorName && MirrorActive)
+        if (row.Name == Repository.MirrorName && row.Format == RepositoryFormat.NuGet && MirrorActive)
         {
             settings.Url = stored.Url;
             settings.Protocol = stored.Protocol;
@@ -519,10 +519,10 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             return;
         }
 
-        if (existing.Kind != RepositoryKind.Remote)
+        if (existing.Kind != RepositoryKind.Remote || existing.Format != RepositoryFormat.NuGet)
         {
             _logger.LogWarning(
-                "A repository named {Repository} exists and is not a remote one; the default repository reads the Mirror settings directly. Rename or delete it to manage the mirror as a repository.",
+                "A repository named {Repository} exists and is not a remote NuGet one; the default repository reads the Mirror settings directly. Rename or delete it to manage the mirror as a repository.",
                 Repository.MirrorName);
 
             return;
