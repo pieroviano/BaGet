@@ -21,13 +21,16 @@ public class RepositoryAdministration : IRepositoryAdministration
     private readonly IStorageService? _storage;
     private readonly SystemTime? _time;
     private readonly RemoteRepositoryState? _remoteState;
+    private readonly FormatRegistry _formats;
 
     /// <param name="context">The database.</param>
     /// <param name="storage">The store whose <c>repos/{name}/</c> folder is emptied when a repository is deleted. Null leaves storage alone.</param>
     /// <param name="time">The clock for audit entries and created targets; null uses the system's.</param>
     /// <param name="remoteState">The remote repositories' in-memory state, emptied for a deleted one; null has none.</param>
-    public RepositoryAdministration(IContext context, IStorageService? storage = null, SystemTime? time = null, RemoteRepositoryState? remoteState = null)
+    /// <param name="formats">The format modules, which count a repository's artifacts and purge its rows; null knows NuGet only.</param>
+    public RepositoryAdministration(IContext context, IStorageService? storage = null, SystemTime? time = null, RemoteRepositoryState? remoteState = null, FormatRegistry? formats = null)
     {
+        _formats = formats ?? FormatRegistry.Default;
         _time = time;
         _remoteState = remoteState;
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -47,12 +50,14 @@ public class RepositoryAdministration : IRepositoryAdministration
         if (!Relational) return new[] { DefaultSummary };
 
         var rows = await _context.Repositories!.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
-        var counts = await _context.Packages!
-            .IgnoreQueryFilters()
-            .GroupBy(p => p.RepositoryKey)
-            .Select(g => new { Key = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.Key, g => g.Count, cancellationToken)
-            .ConfigureAwait(false);
+        var counts = new Dictionary<int, int>();
+        foreach (var module in _formats.Modules)
+        {
+            foreach (var pair in await module.CountArtifactsAsync(_context, cancellationToken).ConfigureAwait(false))
+            {
+                counts[pair.Key] = (counts.TryGetValue(pair.Key, out var n) ? n : 0) + pair.Value;
+            }
+        }
 
         var all = rows.Select(r => Summarize(r, counts.TryGetValue(r.Key, out var n) ? n : 0)).ToList();
         if (!all.Any(r => r.IsDefault)) all.Add(DefaultSummary);
@@ -159,22 +164,19 @@ public class RepositoryAdministration : IRepositoryAdministration
             .ToList();
         if (virtuals.Count > 0) throw new RepositoryReferencedException(name, virtuals);
 
-        // Empty means no packages and no submission awaiting validation (a pushed package the client already got an
-        // accepted response for, staged but not indexed yet; deleting would lose it). The catalog is an append-only log
-        // (deleting a package adds an entry) and owner rows outlive their package, so those, the finished validations
-        // and the abuse reports are history of a repository that no longer exists once it is deleted, and go with it.
-        var hasPackages = await _context.Packages!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false);
-        if (hasPackages) throw new RepositoryNotEmptyException(name, remote: row.Kind == RepositoryKind.Remote);
+        // Empty means no artifacts and no submission awaiting validation (a pushed package the client already got an
+        // accepted response for, staged but not indexed yet; deleting would lose it). What the format keeps besides
+        // (NuGet: the catalog, owners, finished validations, abuse reports, symbol records) is history of a repository that
+        // no longer exists once it is deleted, and goes with it. The format module knows both.
+        var module = _formats.Find(row.Format);
+        if (module != null)
+        {
+            var usage = await module.GetUsageAsync(_context, key, cancellationToken).ConfigureAwait(false);
+            if (usage.Artifacts > 0) throw new RepositoryNotEmptyException(name, remote: row.Kind == RepositoryKind.Remote);
+            if (usage.PendingWork) throw new RepositoryNotEmptyException(name, awaitingValidation: true);
 
-        var hasPending = await _context.PackageValidations!.IgnoreQueryFilters()
-            .AnyAsync(e => e.RepositoryKey == key && e.State == PackageValidationState.Pending, cancellationToken).ConfigureAwait(false);
-        if (hasPending) throw new RepositoryNotEmptyException(name, awaitingValidation: true);
-
-        _context.CatalogLeafs!.RemoveRange(await _context.CatalogLeafs!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
-        _context.PackageOwners!.RemoveRange(await _context.PackageOwners!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
-        _context.PackageValidations!.RemoveRange(await _context.PackageValidations!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
-        _context.AbuseReports!.RemoveRange(await _context.AbuseReports!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
-        _context.PackageSymbols!.RemoveRange(await _context.PackageSymbols!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+            await module.StagePurgeAsync(_context, key, cancellationToken).ConfigureAwait(false);
+        }
 
         // A key limited to this repository would otherwise be left with no limit, which means every repository: a key
         // limited to several only loses this one, one limited to this alone has no use left and is deleted.

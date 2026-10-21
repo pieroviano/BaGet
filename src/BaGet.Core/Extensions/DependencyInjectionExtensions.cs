@@ -101,6 +101,10 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton(HttpClientFactory);
         services.TryAddSingleton(NuGetClientFactoryFactory);
 
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, NuGetFormatModule>());
+        services.TryAddSingleton(provider => new FormatRegistry(provider.GetServices<IFormatModule>()));
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatIndexer, NuGetFormatIndexer>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NuGetFormatSearchProvider>());
         services.TryAddScoped<IRepositoryContext, RepositoryContext>();
         services.TryAddScoped<IRepositoryService, RepositoryService>();
         services.TryAddScoped<IRepositoryAdministration, RepositoryAdministration>();

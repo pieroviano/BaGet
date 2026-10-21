@@ -40,6 +40,13 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
     public const int MaxRepositoryNameLength = RepositoryNames.MaxLength;
     public const int MaxRepositoryFormatLength = 32;
+
+    // npm's own limits: a package name (scope included) is at most 214 characters, a version and a dist-tag fit 256.
+    public const int MaxNpmNameLength = 214;
+    public const int MaxNpmVersionLength = 256;
+    public const int MaxNpmTagLength = 128;
+    public const int MaxNpmIntegrityLength = 256;
+    public const int MaxNpmShasumLength = 40;
     public const int MaxProjectNameLength = 64;
     public const int MaxProjectDisplayNameLength = 256;
 
@@ -99,6 +106,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<PackageValidation>? PackageValidations { get; set; }
     public DbSet<AbuseReport>? AbuseReports { get; set; }
     public DbSet<PackageSymbol>? PackageSymbols { get; set; }
+    public DbSet<NpmPackage>? NpmPackages { get; set; }
+    public DbSet<NpmVersion>? NpmVersions { get; set; }
+    public DbSet<NpmDistTag>? NpmDistTags { get; set; }
     public DbSet<Repository>? Repositories { get; set; }
     public DbSet<Project>? Projects { get; set; }
     public DbSet<Group>? Groups { get; set; }
@@ -168,6 +178,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageValidation>(BuildPackageValidationEntity);
         builder.Entity<AbuseReport>(BuildAbuseReportEntity);
         builder.Entity<PackageSymbol>(BuildPackageSymbolEntity);
+        builder.Entity<NpmPackage>(BuildNpmPackageEntity);
+        builder.Entity<NpmVersion>(BuildNpmVersionEntity);
+        builder.Entity<NpmDistTag>(BuildNpmDistTagEntity);
         builder.Entity<Repository>(BuildRepositoryEntity);
         builder.Entity<Project>(BuildProjectEntity);
         builder.Entity<Group>(BuildGroupEntity);
@@ -185,6 +198,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageValidation>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<AbuseReport>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<PackageSymbol>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<NpmPackage>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
 
         // The column default is what the upgrade migration gives every row that predates repositories: they
         // belong to the default repository.
@@ -194,6 +208,40 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageValidation>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<AbuseReport>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<PackageSymbol>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<NpmPackage>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+    }
+
+    private void BuildNpmPackageEntity(EntityTypeBuilder<NpmPackage> package)
+    {
+        package.HasKey(p => p.Key);
+        package.HasIndex(p => new { p.RepositoryKey, p.Name }).IsUnique();
+
+        package.Property(p => p.Name).HasMaxLength(MaxNpmNameLength).IsRequired();
+    }
+
+    private void BuildNpmVersionEntity(EntityTypeBuilder<NpmVersion> version)
+    {
+        version.HasKey(v => v.Key);
+        version.HasIndex(v => new { v.PackageKey, v.Version }).IsUnique();
+
+        version.Property(v => v.Version).HasMaxLength(MaxNpmVersionLength).IsRequired();
+        version.Property(v => v.Integrity).HasMaxLength(MaxNpmIntegrityLength).IsRequired();
+        version.Property(v => v.Shasum).HasMaxLength(MaxNpmShasumLength).IsRequired();
+        version.Property(v => v.Manifest).IsRequired();
+
+        // New tables, so the cascade is safe to declare here (unlike the older optional relationships).
+        version.HasOne<NpmPackage>().WithMany().HasForeignKey(v => v.PackageKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildNpmDistTagEntity(EntityTypeBuilder<NpmDistTag> tag)
+    {
+        tag.HasKey(t => t.Key);
+        tag.HasIndex(t => new { t.PackageKey, t.Tag }).IsUnique();
+
+        tag.Property(t => t.Tag).HasMaxLength(MaxNpmTagLength).IsRequired();
+        tag.Property(t => t.Version).HasMaxLength(MaxNpmVersionLength).IsRequired();
+
+        tag.HasOne<NpmPackage>().WithMany().HasForeignKey(t => t.PackageKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
     }
 
     private void BuildRepositoryEntity(EntityTypeBuilder<Repository> repository)

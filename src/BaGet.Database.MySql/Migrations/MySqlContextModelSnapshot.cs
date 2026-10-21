@@ -350,6 +350,114 @@ namespace BaGet.Database.MySql.Migrations
                     b.ToTable("GroupMembers");
                 });
 
+            modelBuilder.Entity("BaGet.Core.NpmDistTag", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("PackageKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tag")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageKey", "Tag")
+                        .IsUnique();
+
+                    b.ToTable("NpmDistTags");
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmPackage", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(214)
+                        .HasColumnType("varchar(214)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name")
+                        .IsUnique();
+
+                    b.ToTable("NpmPackages");
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmVersion", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("Deprecated")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Integrity")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("Manifest")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("PackageKey")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Published")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Shasum")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<long>("TarballSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageKey", "Version")
+                        .IsUnique();
+
+                    b.ToTable("NpmVersions");
+                });
+
             modelBuilder.Entity("BaGet.Core.Organization", b =>
                 {
                     b.Property<int>("Key")
@@ -1141,6 +1249,24 @@ namespace BaGet.Database.MySql.Migrations
                         .IsRequired();
 
                     b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmDistTag", b =>
+                {
+                    b.HasOne("BaGet.Core.NpmPackage", null)
+                        .WithMany()
+                        .HasForeignKey("PackageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmVersion", b =>
+                {
+                    b.HasOne("BaGet.Core.NpmPackage", null)
+                        .WithMany()
+                        .HasForeignKey("PackageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BaGet.Core.OrganizationMember", b =>

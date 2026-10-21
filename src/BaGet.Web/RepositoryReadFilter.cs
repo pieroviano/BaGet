@@ -16,16 +16,24 @@ namespace BaGet.Web;
 public sealed class RepositoryRouteMetadata
 {
     /// <summary>A read route: checked for every HTTP method, since its action may answer any of them.</summary>
-    public static readonly RepositoryRouteMetadata Instance = new(writesOnly: false, authorizesItself: false);
+    public static readonly RepositoryRouteMetadata Instance = new(writesOnly: false, authorizesItself: false, RepositoryFormat.NuGet);
 
-    private static readonly RepositoryRouteMetadata WriteOnly = new(writesOnly: true, authorizesItself: false);
-    private static readonly RepositoryRouteMetadata SelfAuthorized = new(writesOnly: false, authorizesItself: true);
+    private static readonly RepositoryRouteMetadata WriteOnly = new(writesOnly: true, authorizesItself: false, RepositoryFormat.NuGet);
+    private static readonly RepositoryRouteMetadata SelfAuthorized = new(writesOnly: false, authorizesItself: true, RepositoryFormat.NuGet);
 
-    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself)
+    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself, RepositoryFormat format)
     {
         WritesOnly = writesOnly;
         AuthorizesItself = authorizesItself;
+        Format = format;
     }
+
+    /// <summary>
+    /// The format whose protocol the route speaks (<see cref="IFormatModule"/>). <see cref="RepositoryResolutionMiddleware"/>
+    /// answers 404 when the request's repository has another format, so an npm route never reaches a NuGet repository nor the
+    /// reverse. Endpoints without this marker (the Razor Pages) are NuGet's.
+    /// </summary>
+    public RepositoryFormat Format { get; }
 
     /// <summary>
     /// True for a route constrained to write methods (publish, symbol upload, delete, relist, deprecation and
@@ -43,8 +51,9 @@ public sealed class RepositoryRouteMetadata
     /// </summary>
     public bool AuthorizesItself { get; }
 
-    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false)
-        => authorizesItself ? SelfAuthorized : writesOnly ? WriteOnly : Instance;
+    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false, RepositoryFormat format = RepositoryFormat.NuGet)
+        => format != RepositoryFormat.NuGet ? new RepositoryRouteMetadata(writesOnly, authorizesItself, format)
+        : authorizesItself ? SelfAuthorized : writesOnly ? WriteOnly : Instance;
 }
 
 /// <summary>

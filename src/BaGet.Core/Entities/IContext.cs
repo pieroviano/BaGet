@@ -51,6 +51,15 @@ public interface IContext
     /// </summary>
     DbSet<PackageSymbol>? PackageSymbols { get; set; }
 
+    /// <summary>npm packages (packuments); see <see cref="NpmPackage"/>. Repository-scoped.</summary>
+    DbSet<NpmPackage>? NpmPackages { get; set; }
+
+    /// <summary>The published versions of npm packages; see <see cref="NpmVersion"/>.</summary>
+    DbSet<NpmVersion>? NpmVersions { get; set; }
+
+    /// <summary>The dist-tags of npm packages; see <see cref="NpmDistTag"/>.</summary>
+    DbSet<NpmDistTag>? NpmDistTags { get; set; }
+
     /// <summary>
     /// The repositories. Not repository-scoped: it lists them all.
     /// </summary>

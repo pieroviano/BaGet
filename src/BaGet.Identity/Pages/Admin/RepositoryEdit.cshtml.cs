@@ -87,7 +87,10 @@ public class RepositoryEditModel : RepositoryPageModel
     public RepositoryAccessSummary? Access { get; private set; }
 
     /// <summary>The repository's feed address.</summary>
-    public string FeedUrl => RepositoryFeedUrl.For(HttpContext, Repository?.Name ?? string.Empty);
+    public string FeedUrl => RepositoryFeedUrl.For(
+        HttpContext,
+        Repository?.Name ?? string.Empty,
+        HttpContext.RequestServices.GetRequiredService<FormatRegistry>().Find(Repository?.Format ?? RepositoryFormat.NuGet)?.FeedPath ?? "v3/index.json");
 
     /// <summary>Shows the repository.</summary>
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)

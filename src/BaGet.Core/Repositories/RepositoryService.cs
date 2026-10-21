@@ -21,13 +21,16 @@ public class RepositoryService : IRepositoryService
     private readonly IOptions<SearchOptions>? _search;
     private readonly RemoteSettingsCodec _codec;
     private readonly IOptionsSnapshot<RemoteOptions>? _remoteOptions;
+    private readonly FormatRegistry _formats;
 
     /// <param name="context">The database.</param>
     /// <param name="search">The search options (whether the index is repository-aware).</param>
     /// <param name="codec">Writes a remote repository's settings; null stores them without being able to protect a password.</param>
     /// <param name="remoteOptions">The <c>Remote:*</c> options (whether private upstream addresses are refused).</param>
-    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null, RemoteSettingsCodec? codec = null, IOptionsSnapshot<RemoteOptions>? remoteOptions = null)
+    /// <param name="formats">The format modules (which formats and kinds can be created); null knows NuGet only.</param>
+    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null, RemoteSettingsCodec? codec = null, IOptionsSnapshot<RemoteOptions>? remoteOptions = null, FormatRegistry? formats = null)
     {
+        _formats = formats ?? FormatRegistry.Default;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _search = search;
         _codec = codec ?? new RemoteSettingsCodec();
@@ -102,7 +105,7 @@ public class RepositoryService : IRepositoryService
         RepositoryKind kind,
         RemoteRepositorySettings? remote,
         CancellationToken cancellationToken)
-        => CreateCoreAsync(name, format, kind, remote, anonymousRead: null, cancellationToken);
+        => CreateCoreAsync(name, format, kind, remote, anonymousRead: null, fields: null, cancellationToken);
 
     /// <inheritdoc/>
     public Task<RepositoryInfo> CreateAsync(
@@ -112,7 +115,17 @@ public class RepositoryService : IRepositoryService
         RemoteRepositorySettings? remote,
         bool anonymousRead,
         CancellationToken cancellationToken)
-        => CreateCoreAsync(name, format, kind, remote, anonymousRead, cancellationToken);
+        => CreateCoreAsync(name, format, kind, remote, anonymousRead, fields: null, cancellationToken);
+
+    /// <inheritdoc/>
+    public Task<RepositoryInfo> CreateAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        IReadOnlyDictionary<string, string?> fields,
+        bool anonymousRead,
+        CancellationToken cancellationToken)
+        => CreateCoreAsync(name, format, kind, remote: null, anonymousRead, fields ?? throw new ArgumentNullException(nameof(fields)), cancellationToken);
 
     private async Task<RepositoryInfo> CreateCoreAsync(
         string name,
@@ -120,6 +133,7 @@ public class RepositoryService : IRepositoryService
         RepositoryKind kind,
         RemoteRepositorySettings? remote,
         bool? anonymousRead,
+        IReadOnlyDictionary<string, string?>? fields,
         CancellationToken cancellationToken)
     {
         if (!RepositoryNames.IsValid(name, out var error)) throw new ArgumentException(error, nameof(name));
@@ -130,15 +144,24 @@ public class RepositoryService : IRepositoryService
                 "Only the 'default' repository is available with this configuration; use a relational database (SQLite, SQL Server, PostgreSQL or MySQL) and a search type other than AzureSearch (whose index is not repository-aware) to create more.");
         }
 
-        if (format != RepositoryFormat.NuGet || (kind != RepositoryKind.Local && kind != RepositoryKind.Remote))
+        var module = _formats.Find(format)
+            ?? throw new NotSupportedException($"The {format} format is not available on this server.");
+        if (!module.CreatableKinds.Contains(kind))
         {
             throw new NotSupportedException(
-                kind == RepositoryKind.Virtual && format == RepositoryFormat.NuGet
+                kind == RepositoryKind.Virtual
                     ? "A virtual repository needs its members: create it with IVirtualRepositoryAdministration."
-                    : "Only local and remote NuGet repositories can be created here.");
+                    : $"Only {string.Join(" and ", module.CreatableKinds.Select(k => k.ToString().ToLowerInvariant()))} {module.DisplayName} repositories can be created here.");
         }
 
         string? settings = null;
+        if (fields != null)
+        {
+            if (kind == RepositoryKind.Remote) throw new ArgumentException("A remote repository takes its upstream settings, not form fields.", nameof(fields));
+
+            settings = module.CreateSettings(fields);
+        }
+
         if (kind == RepositoryKind.Remote)
         {
             if (remote == null) throw new ArgumentException("A remote repository needs its upstream settings.", nameof(remote));

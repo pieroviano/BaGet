@@ -36,6 +36,12 @@ public class NullContext : IContext
 
     public DbSet<PackageSymbol>? PackageSymbols { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<NpmPackage>? NpmPackages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<NpmVersion>? NpmVersions { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<NpmDistTag>? NpmDistTags { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Project>? Projects { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

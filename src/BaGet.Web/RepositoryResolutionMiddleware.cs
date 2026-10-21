@@ -12,7 +12,9 @@ namespace BaGet.Web;
 /// Selects the repository of the request: the <c>{repo}</c> route value of an <c>/r/{repo}/</c> route, else the
 /// default repository (the scoped <see cref="IRepositoryContext"/> starts there). A name that matches no repository
 /// is answered 404 right here; it never falls back to the default repository, which would show or modify the wrong
-/// feed. Must run after routing (it reads the matched endpoint's route values) and before anything queries the
+/// feed. A route speaks one format's protocol (<see cref="RepositoryRouteMetadata.Format"/>; Razor Pages and unmarked
+/// endpoints are NuGet's); it is answered 404 when the repository has another format, the <c>default</c> repository (always NuGet)
+/// included. Must run after routing (it reads the matched endpoint's route values) and before anything queries the
 /// database, so authentication follows it.
 /// </summary>
 public class RepositoryResolutionMiddleware
@@ -39,13 +41,16 @@ public class RepositoryResolutionMiddleware
             return resolver == null ? null : await resolver.ResolveAsync(context, cancellationToken);
         });
 
+        // The format the matched route speaks; pages and endpoints a host maps itself are NuGet's.
+        var format = context.GetEndpoint()?.Metadata.GetMetadata<RepositoryRouteMetadata>()?.Format ?? RepositoryFormat.NuGet;
+
         if (context.GetRouteValue(Routes.RepositoryRouteKey) is string name)
         {
             // Names are lowercase (RepositoryNames); URLs are matched case-insensitively like the rest of the feed.
             var found = await repositories.FindAsync(name.ToLowerInvariant(), context.RequestAborted);
 
-            // Only NuGet repositories speak this protocol; a repository of another format has its own routes.
-            if (found == null || found.Format != RepositoryFormat.NuGet)
+            // Only a repository of the route's format speaks this protocol; a repository of another format has its own routes.
+            if (found == null || found.Format != format)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 context.Response.ContentType = "text/plain; charset=utf-8";
@@ -59,6 +64,15 @@ public class RepositoryResolutionMiddleware
             {
                 return;
             }
+        }
+
+        else if (format != repository.Current.Format)
+        {
+            // The plain routes serve the default repository, which is NuGet: another format's routes are not there.
+            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            context.Response.ContentType = "text/plain; charset=utf-8";
+            await context.Response.WriteAsync("There is no such repository.", context.RequestAborted);
+            return;
         }
 
         await _next(context);

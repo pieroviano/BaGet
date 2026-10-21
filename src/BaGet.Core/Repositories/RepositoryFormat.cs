@@ -7,9 +7,15 @@ namespace BaGet.Core;
 public enum RepositoryFormat
 {
     /// <summary>
-    /// NuGet (V3 and V2 feeds, symbols). The only format a repository can have today.
+    /// NuGet (V3 and V2 feeds, symbols).
     /// </summary>
     NuGet = 0,
+
+    /// <summary>
+    /// npm (the registry API under <c>npm/</c>). A repository of this format needs the npm <see cref="IFormatModule"/>, which a
+    /// later phase registers; until then none can be created.
+    /// </summary>
+    Npm = 1,
 }
 
 /// <summary>

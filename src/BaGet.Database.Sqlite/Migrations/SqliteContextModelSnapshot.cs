@@ -331,6 +331,108 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("GroupMembers");
                 });
 
+            modelBuilder.Entity("BaGet.Core.NpmDistTag", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PackageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tag")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageKey", "Tag")
+                        .IsUnique();
+
+                    b.ToTable("NpmDistTags");
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmPackage", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(214)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name")
+                        .IsUnique();
+
+                    b.ToTable("NpmPackages");
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmVersion", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Deprecated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Integrity")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Manifest")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PackageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Published")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Shasum")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TarballSize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("PackageKey", "Version")
+                        .IsUnique();
+
+                    b.ToTable("NpmVersions");
+                });
+
             modelBuilder.Entity("BaGet.Core.Organization", b =>
                 {
                     b.Property<int>("Key")
@@ -1086,6 +1188,24 @@ namespace BaGet.Database.Sqlite.Migrations
                         .IsRequired();
 
                     b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmDistTag", b =>
+                {
+                    b.HasOne("BaGet.Core.NpmPackage", null)
+                        .WithMany()
+                        .HasForeignKey("PackageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.NpmVersion", b =>
+                {
+                    b.HasOne("BaGet.Core.NpmPackage", null)
+                        .WithMany()
+                        .HasForeignKey("PackageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BaGet.Core.OrganizationMember", b =>

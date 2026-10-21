@@ -17,6 +17,8 @@
         <div class="alert alert-danger" role="alert" id="repositories-error">@Model.Error</div>
     }
 
+    <p class="help-block"><a id="formats-link" href="@Url.Page("/Admin/Formats")">Package formats</a> this server can host.</p>
+
     <table class="table" id="repositories-table">
         <thead>
             <tr><th>Name</th><th>Type</th><th>Packages</th><th>Feed</th><th></th></tr>
@@ -43,16 +45,10 @@
                         </button>
                     </td>
                     <td>
-                        @if (repository.Format == BaGet.Core.RepositoryFormat.NuGet)
+                        @foreach (var link in Model.LinksOf(repository))
                         {
-                            var pageRepository = repository.IsDefault ? null : repository.Name;
-                            <a class="repository-browse" href="@Url.Page("/Index", new { repo = pageRepository })">Browse</a>
+                            <a class="repository-@link.Id" href="@Model.LinkUrl(repository, link)">@link.Label</a>
                             <span> | </span>
-                            @if (Model.TakesUploads(repository))
-                            {
-                                <a class="repository-upload" href="@Url.Page("/Upload", new { repo = pageRepository })">Upload</a>
-                                <span> | </span>
-                            }
                         }
                         <a href="@Url.Page("/Admin/RepositoryEdit", new { name = repository.Name })">Edit</a>
                         @if (!repository.IsDefault)
@@ -83,6 +79,49 @@
             <button type="submit" class="btn btn-primary">Create</button>
             <p class="help-block">Local NuGet repository. Lowercase letters, digits, <code>-</code>, <code>.</code> and <code>_</code>; it cannot be renamed later.</p>
         </form>
+
+        @foreach (var module in Model.OtherFormats)
+        {
+            <h2>New @module.DisplayName repository</h2>
+            <form method="post" asp-page-handler="Format" id="format-create-form-@module.Format.ToString().ToLowerInvariant()">
+                <input type="hidden" name="format" value="@module.Format" />
+                <div class="form-group">
+                    <label for="format-name-@module.Format">Name</label>
+                    <input id="format-name-@module.Format" name="name" type="text" class="form-control" value="@(Model.Format == module.Format.ToString() ? Model.Name : null)" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
+                </div>
+                @foreach (var field in module.CreateFields)
+                {
+                    <div class="form-group">
+                        <label for="format-@module.Format-@field.Name">@field.Label</label>
+                        @if (field.Options != null)
+                        {
+                            <select id="format-@module.Format-@field.Name" name="field:@field.Name" class="form-control">
+                                @foreach (var option in field.Options)
+                                {
+                                    <option value="@option">@option</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input id="format-@module.Format-@field.Name" name="field:@field.Name" type="text" class="form-control" required="@field.Required" autocomplete="off" />
+                        }
+                        @if (field.Help != null)
+                        {
+                            <span class="help-block">@field.Help</span>
+                        }
+                    </div>
+                }
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="anonymousRead" value="true" checked="checked" />
+                        Anonymous read: requests without credentials may read it
+                    </label>
+                    <input type="hidden" name="anonymousRead" value="false" />
+                </div>
+                <button type="submit" class="btn btn-primary">Create @module.DisplayName repository</button>
+            </form>
+        }
 
         <h2>New virtual repository</h2>
         <p class="help-block">

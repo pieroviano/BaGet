@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using BaGet.Core;
 using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,18 +19,22 @@ public class BaGetEndpointBuilder
 {
     /// <summary>
     /// The one place that registers a protocol route, so no endpoint can exist for the default repository only.
+    /// <paramref name="format"/> is the format whose protocol the route speaks (its <see cref="IFormatModule"/>;
+    /// the pattern starts with the module's <see cref="IFormatModule.RoutePrefix"/> for a format other than NuGet): a request
+    /// for it in a repository of another format is answered 404.
     /// </summary>
-    private static void MapRoute(
+    public static void MapRoute(
         IEndpointRouteBuilder endpoints,
         string name,
         string pattern,
         object defaults,
         object? constraints = null,
-        bool authorizesItself = false)
+        bool authorizesItself = false,
+        RepositoryFormat format = RepositoryFormat.NuGet)
     {
         // The marker is what RepositoryReadFilter looks for: every route registered here needs Read access, except a
         // route that is constrained to write methods only (and then only for those methods).
-        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself);
+        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself, format);
         endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(metadata);
         endpoints.MapControllerRoute(
             Routes.RepositoryRouteName(name),

@@ -78,6 +78,23 @@ public interface IRepositoryService
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Creates a repository of a format whose <see cref="IFormatModule"/> asks for fields of its own
+    /// (<see cref="IFormatModule.CreateFields"/>): <paramref name="fields"/> are turned into the repository's settings by
+    /// <see cref="IFormatModule.CreateSettings"/>. Not for remote repositories, which take their upstream through
+    /// <see cref="CreateAsync(string, RepositoryFormat, RepositoryKind, RemoteRepositorySettings?, bool, CancellationToken)"/>.
+    /// </summary>
+    /// <exception cref="System.ArgumentException">The name or a field is invalid.</exception>
+    /// <exception cref="System.NotSupportedException">The database cannot hold repositories, or no module of the format offers the kind.</exception>
+    /// <exception cref="RepositoryExistsException">The name is taken.</exception>
+    Task<RepositoryInfo> CreateAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        System.Collections.Generic.IReadOnlyDictionary<string, string?> fields,
+        bool anonymousRead,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Creates the default repository if the database has none. Idempotent; called at startup, after migrations.
     /// </summary>
     Task EnsureDefaultAsync(CancellationToken cancellationToken);
