@@ -140,9 +140,12 @@ public class PackageModel : PageModel
                 .GetUrlsAsync(Owners, 32, cancellationToken);
             #pragma warning restore CS8602
 
-            if (User.Identity?.IsAuthenticated == true && await CanManageAsync(ownership, Package.Id, cancellationToken))
+            // A virtual repository holds no packages to manage: they are managed in the member that stores them.
+            var repository = HttpContext?.RequestServices.GetService<IRepositoryContext>()?.Current;
+            if (User.Identity?.IsAuthenticated == true
+                && repository?.Kind != RepositoryKind.Virtual
+                && await CanManageAsync(ownership, Package.Id, cancellationToken))
             {
-                var repository = HttpContext?.RequestServices.GetService<IRepositoryContext>()?.Current;
                 ManageUrl = Url.Content(RepositoryPageLinks.Manage(repository?.Name, Package.Id));
             }
         }

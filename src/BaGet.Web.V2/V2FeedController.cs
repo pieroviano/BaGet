@@ -30,13 +30,16 @@ public class V2FeedController : Controller
     private readonly ISearchService _search;
     private readonly IUrlGenerator _url;
     private readonly IOptionsSnapshot<FeedsOptions> _feeds;
+    private readonly VirtualRepositoryReader? _virtual;
 
     public V2FeedController(
         IPackageDatabase packages,
         ISearchService search,
         IUrlGenerator url,
-        IOptionsSnapshot<FeedsOptions> feeds)
+        IOptionsSnapshot<FeedsOptions> feeds,
+        VirtualRepositoryReader? virtualReader = null)
     {
+        _virtual = virtualReader;
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _search = search ?? throw new ArgumentNullException(nameof(search));
         _url = url ?? throw new ArgumentNullException(nameof(url));
@@ -96,7 +99,7 @@ public class V2FeedController : Controller
             return Feed(new List<V2FeedPackage>(), "FindPackagesById");
         }
 
-        var packages = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+        var packages = await FindAsync(id, includeUnlisted: true, cancellationToken);
 
         return Feed(Project(packages), "FindPackagesById");
     }
@@ -116,7 +119,7 @@ public class V2FeedController : Controller
         // Packages(Id='X',Version='Y') is routed here with both key values.
         if (!string.IsNullOrWhiteSpace(id))
         {
-            var packages = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+            var packages = await FindAsync(id, includeUnlisted: true, cancellationToken);
 
             return Feed(Project(packages), "Packages");
         }
@@ -147,7 +150,9 @@ public class V2FeedController : Controller
             return NotFound();
         }
 
-        var package = await _packages.FindOrNullAsync(id, parsed, includeUnlisted: true, cancellationToken);
+        var package = _virtual?.IsVirtual == true
+            ? await _virtual.FindPackageAsync(id, parsed, includeUnlisted: true, cancellationToken)
+            : await _packages.FindOrNullAsync(id, parsed, includeUnlisted: true, cancellationToken);
         if (package == null)
         {
             return NotFound();
@@ -155,7 +160,7 @@ public class V2FeedController : Controller
 
         // The latest-version flags are relative to the other versions, so the whole
         // set has to be projected even when only one entry is returned.
-        var siblings = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
+        var siblings = await FindAsync(id, includeUnlisted: true, cancellationToken);
         var projected = Project(siblings)
             .FirstOrDefault(p => p.NormalizedVersion == parsed.ToNormalizedString());
 
@@ -221,13 +226,21 @@ public class V2FeedController : Controller
         foreach (var match in response.Data)
         #pragma warning restore CS8602
         {
-            var packages = await _packages.FindAsync(match.PackageId, includeUnlisted: false, cancellationToken);
+            var packages = await FindAsync(match.PackageId, includeUnlisted: false, cancellationToken);
 
             result.AddRange(Project(packages));
         }
 
         return Feed(result, title);
     }
+
+    // The versions of a package in the repository served. A virtual repository has none of its own: it lists the versions
+    // its readable members store (each from the first member that has it), and never asks an upstream, like the rest of
+    // this feed.
+    private async Task<IReadOnlyList<Package>> FindAsync(string? id, bool includeUnlisted, CancellationToken cancellationToken)
+        => _virtual?.IsVirtual == true
+            ? await _virtual.FindPackagesAsync(id, includeUnlisted, cancellationToken)
+            : await _packages.FindAsync(id, includeUnlisted, cancellationToken);
 
     private List<V2FeedPackage> Project(IEnumerable<Package> packages)
     {

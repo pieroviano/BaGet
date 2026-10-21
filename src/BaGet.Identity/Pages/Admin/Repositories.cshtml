@@ -34,7 +34,7 @@
                         }
                     </td>
                     <td>@repository.Format / @repository.Kind</td>
-                    <td>@repository.PackageCount</td>
+                    <td>@(repository.Kind == BaGet.Core.RepositoryKind.Virtual ? "-" : repository.PackageCount.ToString())</td>
                     <td>
                         <code class="repository-feed">@feed</code>
                         <button type="button" class="btn btn-default btn-xs" data-copy="@feed"
@@ -48,8 +48,11 @@
                             var pageRepository = repository.IsDefault ? null : repository.Name;
                             <a class="repository-browse" href="@Url.Page("/Index", new { repo = pageRepository })">Browse</a>
                             <span> | </span>
-                            <a class="repository-upload" href="@Url.Page("/Upload", new { repo = pageRepository })">Upload</a>
-                            <span> | </span>
+                            @if (Model.TakesUploads(repository))
+                            {
+                                <a class="repository-upload" href="@Url.Page("/Upload", new { repo = pageRepository })">Upload</a>
+                                <span> | </span>
+                            }
                         }
                         <a href="@Url.Page("/Admin/RepositoryEdit", new { name = repository.Name })">Edit</a>
                         @if (!repository.IsDefault)
@@ -79,6 +82,20 @@
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
             <p class="help-block">Local NuGet repository. Lowercase letters, digits, <code>-</code>, <code>.</code> and <code>_</code>; it cannot be renamed later.</p>
+        </form>
+
+        <h2>New virtual repository</h2>
+        <p class="help-block">
+            Presents several repositories (local, remote or other virtual ones) as one feed: the first member that has a package
+            answers, search merges them, and uploads go to the member you pick as the deploy repository. Created empty; you add
+            the members on its page.
+        </p>
+        <form method="post" asp-page-handler="Virtual" class="form-inline" id="virtual-create-form">
+            <div class="form-group">
+                <label for="virtual-name">Name</label>
+                <input id="virtual-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create virtual repository</button>
         </form>
 
         <h2>New remote repository</h2>

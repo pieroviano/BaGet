@@ -27,9 +27,15 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
     private readonly IAccessEvaluator _evaluator;
     private readonly IRepositoryService _repositories;
     private readonly ISessionPrincipalFactory? _sessions;
+    private readonly IVirtualRepositories? _virtuals;
 
-    public AccessRepositoryAccess(IAccessEvaluator evaluator, IRepositoryService repositories, ISessionPrincipalFactory? sessions = null)
+    public AccessRepositoryAccess(
+        IAccessEvaluator evaluator,
+        IRepositoryService repositories,
+        ISessionPrincipalFactory? sessions = null,
+        IVirtualRepositories? virtuals = null)
     {
+        _virtuals = virtuals;
         _evaluator = evaluator ?? throw new ArgumentNullException(nameof(evaluator));
         _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
         _sessions = sessions;
@@ -55,10 +61,28 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
         var principal = await PrincipalAsync(user).ConfigureAwait(false);
 
         // A remote repository takes no uploads, whatever the caller holds.
-        return principal == null
+        var writable = principal == null
             ? (await _evaluator.ReadableRepositoriesAsync(null, cancellationToken).ConfigureAwait(false))
-                .Where(r => r.Kind != RepositoryKind.Remote).ToList()
-            : await _evaluator.RepositoriesWithAsync(principal, AccessAction.Deploy, cancellationToken).ConfigureAwait(false);
+                .Where(r => r.Kind == RepositoryKind.Local).ToList()
+            : (await _evaluator.RepositoriesWithAsync(principal, AccessAction.Deploy, cancellationToken).ConfigureAwait(false)).ToList();
+
+        // A virtual repository takes uploads when the caller can read it and write to the repository it deploys to.
+        if (_virtuals != null)
+        {
+            var targets = writable.Select(r => r.Key).ToHashSet();
+            foreach (var candidate in await _evaluator.ReadableRepositoriesAsync(principal, cancellationToken).ConfigureAwait(false))
+            {
+                if (candidate.Kind != RepositoryKind.Virtual) continue;
+
+                var target = await _virtuals.DeployTargetAsync(candidate, cancellationToken).ConfigureAwait(false);
+                if (target != null && targets.Contains(target.Key)) writable.Add(candidate);
+            }
+        }
+
+        return writable
+            .OrderBy(r => r.IsDefault ? 0 : 1)
+            .ThenBy(r => r.Name, StringComparer.Ordinal)
+            .ToList();
     }
 
     /// <summary>
@@ -68,6 +92,17 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
     public async Task<bool> CanWriteAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
     {
         if (repository.Format != RepositoryFormat.NuGet || repository.Kind == RepositoryKind.Remote) return false;
+
+        // A virtual repository's uploads go to its deploy repository: the caller needs to read the virtual one and to
+        // write to that.
+        if (repository.Kind == RepositoryKind.Virtual)
+        {
+            var target = _virtuals == null ? null : await _virtuals.DeployTargetAsync(repository, cancellationToken).ConfigureAwait(false);
+
+            return target != null
+                && await CanReadAsync(user, repository, cancellationToken).ConfigureAwait(false)
+                && await CanWriteAsync(user, target, cancellationToken).ConfigureAwait(false);
+        }
 
         var principal = await PrincipalAsync(user).ConfigureAwait(false);
 

@@ -486,6 +486,9 @@ public partial class Program
         services.AddTransient(DependencyInjectionExtensions.GetServiceFromProviders<ISearchIndexer>);
         #pragma warning restore CS8634
 
+        // The search service registered just above is the one a virtual repository merges its members' searches through.
+        services.AddRepositoryAwareSearch();
+
         services.AddSingleton<IConfigureOptions<MvcRazorRuntimeCompilationOptions>, ConfigureRazorRuntimeCompilation>();
 
         services.AddCors();

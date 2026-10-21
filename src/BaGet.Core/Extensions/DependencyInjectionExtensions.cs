@@ -130,19 +130,19 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<StatisticsService>();
 
         services.TryAddTransient<IAuthenticationService, ApiKeyAuthenticationService>();
-        services.TryAddTransient<IPackageContentService, DefaultPackageContentService>();
+        services.TryAddTransient<IPackageContentService, VirtualPackageContentService>();
         services.TryAddTransient<IPackageDeletionService, PackageDeletionService>();
         services.TryAddTransient<IPackageIndexingService, PackageIndexingService>();
         services.TryAddTransient<IPackageSubmissionService, DirectPackageSubmissionService>();
         services.TryAddTransient<PackageChangeNotifier>();
         services.TryAddTransient<IPackageAuthorizationService, AllowAuthenticatedAuthorizationService>();
         services.TryAddTransient<IPackageMetadataService, DefaultPackageMetadataService>();
-        services.TryAddTransient<IPackageService, PackageService>();
+        services.TryAddTransient<IPackageService, VirtualPackageService>();
         services.TryAddTransient<IPackageStagingService, StoragePackageStagingService>();
         services.TryAddTransient<IPackageStorageService, PackageStorageService>();
         services.TryAddTransient<IServiceIndexService, BaGetServiceIndex>();
         services.TryAddTransient<ISymbolIndexingService, SymbolIndexingService>();
-        services.TryAddTransient<ISymbolStorageService, SymbolStorageService>();
+        services.TryAddTransient<ISymbolStorageService, VirtualSymbolStorageService>();
         services.TryAddTransient<ISymbolRegistry, SymbolRegistry>();
 
         services.TryAddTransient<DatabaseSearchService>();
@@ -155,6 +155,8 @@ public static partial class DependencyInjectionExtensions
         services.TryAddTransient<PackageDatabase>();
 
         services.TryAddTransient(UpstreamClientFactory);
+
+        services.AddVirtualRepositoryServices();
     }
 
     private static void AddDefaultProviders(this IServiceCollection services)
@@ -217,6 +219,10 @@ public static partial class DependencyInjectionExtensions
         // the database search service's registration until the very end.
         services.TryAddTransient<ISearchIndexer>(provider => provider.GetRequiredService<NullSearchIndexer>());
         services.TryAddTransient<ISearchService>(provider => provider.GetRequiredService<DatabaseSearchService>());
+
+        // A virtual repository is searched through its members; a host that registers its own search service after this
+        // calls AddRepositoryAwareSearch again (Program does).
+        services.AddRepositoryAwareSearch();
     }
 
     private static HttpClient HttpClientFactory(IServiceProvider provider)

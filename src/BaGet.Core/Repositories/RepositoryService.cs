@@ -110,7 +110,10 @@ public class RepositoryService : IRepositoryService
 
         if (format != RepositoryFormat.NuGet || (kind != RepositoryKind.Local && kind != RepositoryKind.Remote))
         {
-            throw new NotSupportedException("Only local and remote NuGet repositories can be created.");
+            throw new NotSupportedException(
+                kind == RepositoryKind.Virtual && format == RepositoryFormat.NuGet
+                    ? "A virtual repository needs its members: create it with IVirtualRepositoryAdministration."
+                    : "Only local and remote NuGet repositories can be created here.");
         }
 
         string? settings = null;

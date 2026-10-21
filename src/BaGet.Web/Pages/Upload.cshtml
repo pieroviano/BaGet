@@ -23,7 +23,10 @@
     // The repository this upload goes to is the one of the page's address (/upload, /r/{name}/upload): staging, the
     // submission and the commands below all follow it. The picker only moves between those addresses, and is
     // offered when there is a choice (IRepositoryAccess lists what the caller may publish to).
+    // For a virtual repository RepositoryPageFilter has already moved the request to its deploy repository: 'target' is
+    // where the package is stored, 'requested' the repository the visitor chose.
     var target = _repositoryContext.Current;
+    var requested = Model.HttpContext.Items[RepositoryPageFilter.RequestedVirtualItemKey] as RepositoryInfo ?? target;
     IReadOnlyList<RepositoryInfo> writable = Array.Empty<RepositoryInfo>();
     if (!Model.IsReadOnlyMode && _repositoryAccess.SupportsMultipleRepositories)
     {
@@ -41,7 +44,7 @@
             Repository:
             @foreach (var option in writable)
             {
-                @if (option.Key == target.Key)
+                @if (option.Key == requested.Key)
                 {
                     <strong data-repository="@option.Name" class="upload-repository-current">@option.Name</strong>
                 }
@@ -51,6 +54,14 @@
                 }
                 @(option == writable[^1] ? "" : " | ")
             }
+        </p>
+    }
+
+    @if (requested.Key != target.Key)
+    {
+        <p class="alert alert-info" id="upload-virtual-note">
+            @requested.Name is a virtual repository: what you upload is stored in <strong>@target.Name</strong>, its deploy repository,
+            and you need permission to deploy there. The commands below address @target.Name directly.
         </p>
     }
 

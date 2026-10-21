@@ -19,6 +19,23 @@ namespace BaGet.Web;
 /// </summary>
 public class RepositoryPageFilter : IAsyncPageFilter
 {
+    /// <summary>
+    /// <see cref="Microsoft.AspNetCore.Http.HttpContext.Items"/> key holding the virtual repository the request asked
+    /// for, when it was redirected to that repository's deploy repository (the Upload page); absent otherwise.
+    /// </summary>
+    public const string RequestedVirtualItemKey = "BaGet.RequestedVirtualRepository";
+
+    // Pages that read or change what one repository owns (owners, abuse reports, per-repository statistics, package
+    // management): a virtual repository has none of its own, so they answer 404 there. Its packages are managed in the
+    // member that holds them.
+    private static readonly string[] NotOnVirtual =
+    {
+        "/Statistics",
+        "/ReportAbuse",
+        "/Packages/Manage",
+        "/Packages/ContactOwners",
+    };
+
     /// <inheritdoc/>
     public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) => Task.CompletedTask;
 
@@ -42,6 +59,31 @@ public class RepositoryPageFilter : IAsyncPageFilter
                 : string.IsNullOrEmpty(packageId)
                 ? await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
                 : await access.CanReadPackageAsync(context.HttpContext.User, repository, packageId, context.HttpContext.RequestAborted);
+
+            if (allowed && repository.Kind == RepositoryKind.Virtual)
+            {
+                if (NotOnVirtual.Contains(page.ViewEnginePath, StringComparer.OrdinalIgnoreCase))
+                {
+                    context.Result = new NotFoundResult();
+                    return;
+                }
+
+                // An upload to a virtual repository is an upload to the repository it deploys to: from here on the request
+                // works in that one (staging, ownership, publishing), exactly as the push endpoint does.
+                if (string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase))
+                {
+                    var target = await services.GetRequiredService<IVirtualRepositories>()
+                        .DeployTargetAsync(repository, context.HttpContext.RequestAborted);
+                    if (target == null)
+                    {
+                        context.Result = new NotFoundResult();
+                        return;
+                    }
+
+                    context.HttpContext.Items[RequestedVirtualItemKey] = repository;
+                    services.GetRequiredService<IRepositoryContext>().Use(target);
+                }
+            }
 
             if (!allowed)
             {

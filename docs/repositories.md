@@ -7,7 +7,7 @@ A server holds one or more named repositories. Each has its own packages, owners
 | `default` | `/v3/index.json` (unchanged; every existing install is this one) |
 | any other | `/r/{name}/v3/index.json` |
 
-Local and [remote](remote-repositories.md) (upstream cache) NuGet repositories can be created; virtual ones come later.
+Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) NuGet repositories can be created.
 
 ## Web pages
 
@@ -27,8 +27,8 @@ Administrators manage them at `/admin/repositories` (menu: *Repositories*). Othe
 
 | Page | Does |
 |---|---|
-| `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a local or a [remote](remote-repositories.md) repository |
-| `/admin/repositories/{name}` | Shows the feed and who effectively holds each action (see [Access control](access-control.md#admin-pages)); edits *Anonymous read*; for a remote repository also its upstream, *Test connection*, the cache and *Purge* ([details](remote-repositories.md)) |
+| `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a local, a [remote](remote-repositories.md) or a [virtual](virtual-repositories.md) repository |
+| `/admin/repositories/{name}` | Shows the feed and who effectively holds each action (see [Access control](access-control.md#admin-pages)); edits *Anonymous read*; for a remote repository also its upstream, *Test connection*, the cache and *Purge* ([details](remote-repositories.md)); for a virtual one its members, deploy repository and *Where would a package come from?* ([details](virtual-repositories.md)); a member lists the virtual repositories it belongs to |
 | `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** (a remote one: purge its cache first) |
 
 Other administrator pages work across all repositories:
@@ -44,6 +44,7 @@ Rules:
 * Names: 1 to 64 lowercase letters, digits, `-`, `.`, `_`; no leading or trailing `.`, no `..`; not a reserved word (`admin`, `api`, `r`, `v3`, ...). Invalid names are refused with the reason.
 * A name is never changed after creation (it is in URLs and storage paths).
 * `default` cannot be deleted.
+* A repository that a virtual repository lists as a member cannot be deleted until it is removed there.
 * A repository that still holds packages, or submissions awaiting validation, cannot be deleted; delete the packages first and wait for the validations. Deleting removes its history rows too (catalog entries, owners, validations, abuse reports, API keys limited to it alone) and every file under `repos/{name}/` in storage (symbols, catalog files, staged uploads), so a repository re-created under the same name starts empty.
 * Writes are refused with `503` while the server is read-only for maintenance (for example during a database copy).
 * *Anonymous read* is enforced: off, anonymous callers get `401` (feeds) or the sign-in page, and others need a Read grant of their own. See [Access control](access-control.md).

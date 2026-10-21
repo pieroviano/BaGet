@@ -1,8 +1,11 @@
 @page "/packages/{id}/{version?}"
 @model PackageModel
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> EmailOptions
+@inject BaGet.Core.IRepositoryContext RepositoryContext
 
 @{
+    // A virtual repository has no abuse reports of its own (the package's page in the member that holds it has the link).
+    var isVirtualRepository = RepositoryContext.Current.Kind == BaGet.Core.RepositoryKind.Virtual;
     ViewData["Title"] = Model.Found
         ? Model.Package?.Id + " " + Model.Package?.NormalizedVersionString
         : Model.Package?.Id;
@@ -322,10 +325,13 @@ else
                            title="Downloads this version's .nupkg. With NuGet Package Explorer installed, opening the file opens it there. Works for packages only on this server.">Open in NuGet Package Explorer (desktop)</a>
                     </li>
 
-                    <li>
-                        <i class="ms-Icon ms-Icon--Flag" aria-hidden="true"></i>
-                        <a asp-page="/ReportAbuse" asp-route-id="@Model.Package?.Id" asp-route-version="@Model.Package?.NormalizedVersionString">Report package</a>
-                    </li>
+                    @if (!isVirtualRepository)
+                    {
+                        <li>
+                            <i class="ms-Icon ms-Icon--Flag" aria-hidden="true"></i>
+                            <a asp-page="/ReportAbuse" asp-route-id="@Model.Package?.Id" asp-route-version="@Model.Package?.NormalizedVersionString">Report package</a>
+                        </li>
+                    }
                 </ul>
             </div>
 

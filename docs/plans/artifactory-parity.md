@@ -12,7 +12,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | Phase | State | Commits / where |
 |---|---|---|
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
-| P1 Remote and virtual NuGet | **Remote + caching done** (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); **virtual not started** (wave 2) | `RepositoryService.CreateAsync` accepts `Remote`; `Virtual` is still refused |
+| P1 Remote and virtual NuGet | **Done**: remote + caching (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); virtual + D3 (track `p1-virtual`, [virtual-repositories.md](../virtual-repositories.md)) | `IVirtualRepositoryAdministration` creates `Virtual`; `RepositoryService.CreateAsync(..., Virtual)` stays refused (no members) |
 | P2 Access control | **Done** (implemented with its UI by the UI-coverage plan, since removed); documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
 | P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
@@ -29,6 +29,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | **B7** | Upgrade path | Existing installs have one feed. URLs, storage paths (`packages/…`, `PackageStorageService.cs:12`), owners and API keys must keep working. | **Done (P0):** `UpgradeFromPreRepositoryTests` (SQLite app level incl. the `packages/…` store) and `EngineUpgradeTests` (all four engines, `82bfe77`). |
 | **B8** | Azure Table database | Non-relational, packages only (CLAUDE.md). | **Decided (P0), applies to P1:** Azure Table and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`; creating another repository, remote ones included, is refused rather than refusing startup). There `Mirror:*` is read directly (no `mirror` row can exist) and works as before. |
 | **B9** | Where a remote's credentials live (P1) | A password must not sit in clear in `Repository.Settings`, logs or a page. | **Done (P1):** protected with ASP.NET Core data protection (`IRemoteCredentialProtector`; `Microsoft.AspNetCore.DataProtection.Abstractions` in Core restores cleanly beside the 9.0.21 pins), stored as `protectedPassword` in the `Settings` JSON, never read back to a page, never logged; a host with no data protection refuses to store one. No schema change: `Settings` is an unbounded string on all four providers, so no migration. The keys live with the host's key ring (P10 moves them into the DB). |
+| **B10** | Virtual repositories: storage, scope, the services to wrap (P1) | A virtual repository must not need a migration, must be refused where only `default` exists, and its reads must reuse the member's real services rather than reimplement them | **Done (P1):** members are names in `Repository.Settings` (an unbounded string on all four providers, snapshots checked: `longtext`/`text`/`nvarchar(max)`/`TEXT`), so no migration and no pending model change. `SupportsMultipleRepositories` (Azure Table, `AzureSearch`) already refuses non-default repositories, virtual included. Every read runs in the member's own `CreateRepositoryScope` (its filter, storage prefix, upstream, access check), so nothing member-specific is reimplemented; the wrappers delegate untouched when the repository is not virtual |
 
 ## Decisions
 
@@ -79,7 +80,7 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 | Item | Note |
 |---|---|
 | Remote: upstream URL (V3 or V2), credentials (sensitive), cache period for metadata, "store artifacts locally" | **Done.** Generalises `PackageService` mirroring per repository. Upgrade converts `Mirror:*` into a remote repo; `default`'s virtual (D3) is wave 2, see *As built* |
-| Virtual: ordered members, default deploy repository, resolution order for search/registration/download (first hit), merged search with paging | Search across members needs a merge with stable ordering. Database search per member, then k-way merge |
+| Virtual: ordered members, default deploy repository, resolution order for search/registration/download (first hit), merged search with paging | **Done**, see *As built: virtual repositories* below |
 | Caching | **Done.** Metadata TTL, negative cache for 404s, offline mode |
 
 #### As built: remote repositories and caching (track `p1-remote`)
@@ -94,6 +95,21 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 | UI | `/admin/repositories` creates remote repositories; `/admin/repositories/{name}`: upstream form, *Test connection* (unsaved values), cache status, *Purge cache*, *Purge package*, browse link; mirror note on `default`. Create, save and purge ask for the password again |
 | Tests | `RemoteRepositoryTests` (service + HTTP, in-memory upstream, fake clock), `AdminRemoteRepositoriesTests`, `MirrorRepositoryTests`, `RemoteRepositorySettingsTests` (Core) |
 | Not done | V2 remotes are not exercised end to end (NuGet.Protocol uses its own HTTP stack, so there is no in-memory upstream); remembered answers and counters are per node (P10 shares them); purge runs inline (a very large cache would deserve an `AdminJobService` job) |
+
+#### As built: virtual repositories and D3 (track `p1-virtual`)
+
+| Item | As built |
+|---|---|
+| Model | `Repository.Kind = Virtual`, `VirtualRepositorySettings` JSON in `Repository.Settings` (member names in order, deploy repository name). No migration (B10). Nested virtuals expanded in place, each repository once, cycles refused on save and cut on read |
+| Reads | `VirtualRepositoryReader` runs each question in the member's own scope, only for members the caller may read (Read on the member and the package). Download/nuspec/readme/icon/symbols: first member that has the version. Version list and registration index: union of versions, each from the first member that has it. Search/autocomplete/dependents: merge ([docs](../virtual-repositories.md#what-a-client-sees)). V2 feed and vulnerability index read the members' stored data. Wrappers: `VirtualPackageService`, `VirtualPackageContentService`, `VirtualSymbolStorageService`, `RepositorySearchService` (`AddRepositoryAwareSearch`) |
+| Writes | Moved to the deploy repository by `RepositoryResolutionMiddleware` (write routes and the validation status) and `RepositoryPageFilter` (Upload page); authorized there. Deploy is never granted on the virtual repository itself. No deploy repository: `403` |
+| Catalog | Not served by a virtual repository (404, and the service index omits it) |
+| Pages | `Statistics`, `ReportAbuse`, `Manage`, `ContactOwners` are 404 on a virtual repository; `Index`, `Package`, `Upload` work |
+| UI | `/admin/repositories`: create virtual; `/admin/repositories/{name}`: members (add, remove, up/down), deploy picker, *Where would a package come from?*, effective access; a member shows where it is used; delete refused for a member; upload link only when a deploy target exists; Upload page names the deploy repository |
+| D3 | `default` + `Mirror:Enabled` is a virtual repository of [its rows, `mirror`] that keeps its URL and stores in its own rows (as before); no stored virtual row stands for it. A virtual repository may list `default` (mirror fall-through included) or `mirror` (its own cache). See [docs](../virtual-repositories.md#default-and-the-mirror) |
+| Tests | `VirtualRepositoryTests`, `VirtualRepositoryAccessTests`, `VirtualRemoteMemberTests`, `VirtualDefaultMirrorTests`, `AdminVirtualRepositoriesTests` (BaGet.Tests); `VirtualRepositorySettingsTests`, `RepositorySearchServiceTests` (Core) |
+| Deviations from the sketch | (1) Registration index and version list **merge versions across members** instead of taking the first member that has the package id: with a local and a nuget.org member, first-hit by id would hide every upstream version of an id the local member also holds (Artifactory merges too); a single version is still first-hit. (2) Search is **drain-and-merge** (each member up to 10,000 results, then one ordered union) rather than a lazy k-way merge: the members' orders (database collation, per-member downloads) are not comparable, so a lazy merge could not give a stable total order or an exact total; past the scan limit the total is an estimate. (3) *Last updated* is not a virtual sort (results carry no date). (4) `ISearchService` is wrapped by `AddRepositoryAwareSearch()` (last registration), not by a new interface, so pages and tests keep injecting `ISearchService`. (5) `RepositoryService.CreateAsync(Virtual)` stays refused; `IVirtualRepositoryAdministration` creates. (6) Member edits need no password confirmation (they expose nothing: reads are filtered per caller) |
+| Not done | No per-member include/exclude path rules; no merged catalog; remote members' health and answers stay per node |
 
 ### P2 — Access control (D4)
 

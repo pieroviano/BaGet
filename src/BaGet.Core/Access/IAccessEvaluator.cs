@@ -90,6 +90,10 @@ public sealed class AccessEvaluator : IAccessEvaluator
         // server itself cached from its upstream. Reading, deleting cached packages and the rest follow the model.
         if (repository.Kind == RepositoryKind.Remote && (action & AccessAction.Deploy) != 0) return false;
 
+        // Nor to a virtual repository: a push to it goes to its deploy repository (the request is redirected there before
+        // anything is authorized), and Deploy is judged on that one.
+        if (repository.Kind == RepositoryKind.Virtual && (action & AccessAction.Deploy) != 0) return false;
+
         // An API key limited to some repositories (ApiKeyRepository) is not a credential in the others: it grants
         // nothing there, and a read is judged as the anonymous caller's, so a key never sees more than no key at all.
         if (principal != null && !principal.AllowsRepository(repository.Key))
@@ -145,8 +149,8 @@ public sealed class AccessEvaluator : IAccessEvaluator
 
         var explanation = await ExplainCoreAsync(principal, repository, packageId, cancellationToken).ConfigureAwait(false);
 
-        // Mirrors IsAllowedAsync: Deploy is never held in a remote repository.
-        return repository.Kind == RepositoryKind.Remote
+        // Mirrors IsAllowedAsync: Deploy is never held in a remote or a virtual repository.
+        return repository.Kind == RepositoryKind.Remote || repository.Kind == RepositoryKind.Virtual
             ? explanation with { Actions = explanation.Actions & ~AccessAction.Deploy }
             : explanation;
     }

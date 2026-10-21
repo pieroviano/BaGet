@@ -28,8 +28,16 @@
                 Copy
             </button>
         </dd>
-        <dt>@(Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote ? "Cached packages" : "Packages")</dt>
-        <dd>@Model.Repository?.PackageCount</dd>
+        @if (Model.Repository?.Kind == BaGet.Core.RepositoryKind.Virtual)
+        {
+            <dt>Members</dt>
+            <dd id="repository-member-count">@(Model.VirtualDetail?.Members.Count ?? 0) (stores no packages of its own)</dd>
+        }
+        else
+        {
+            <dt>@(Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote ? "Cached packages" : "Packages")</dt>
+            <dd>@Model.Repository?.PackageCount</dd>
+        }
     </dl>
 
     @if (Model.MirrorActive)
@@ -37,7 +45,23 @@
         <p class="alert alert-info" id="repository-mirror-note">
             <code>Mirror:Enabled</code> is on: this repository fetches packages it does not hold from the upstream of the remote repository
             <a href="@Url.Page("/Admin/RepositoryEdit", new { name = BaGet.Core.Repository.MirrorName })">@BaGet.Core.Repository.MirrorName</a>
-            (credentials, cache periods and offline mode are set there) and stores them here.
+            (credentials, cache periods and offline mode are set there) and stores them here. In effect <code>default</code> is a
+            virtual repository of two members that keeps its URL: its own packages first, then that remote repository, whose
+            answers are stored in <code>default</code> itself. To put the mirror in a virtual repository of your own instead,
+            add <a href="@Url.Page("/Admin/RepositoryEdit", new { name = BaGet.Core.Repository.MirrorName })">@BaGet.Core.Repository.MirrorName</a>
+            as a member there (that cache is the mirror repository's own).
+        </p>
+    }
+
+    @if (Model.ReferencedBy.Count > 0)
+    {
+        <p class="alert alert-info" id="repository-referenced-by">
+            Member of the virtual repositor@(Model.ReferencedBy.Count == 1 ? "y" : "ies"):
+            @foreach (var referenced in Model.ReferencedBy)
+            {
+                <a href="@Url.Page("/Admin/RepositoryEdit", new { name = referenced })">@referenced</a>@(referenced == Model.ReferencedBy[^1] ? "" : ", ")
+            }
+            It cannot be deleted until it is removed from @(Model.ReferencedBy.Count == 1 ? "it" : "them").
         </p>
     }
 
@@ -79,6 +103,163 @@
         <button type="submit" class="btn btn-primary">Save</button>
         <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
     </form>
+
+    @if (Model.VirtualDetail != null)
+    {
+        var virtualDetail = Model.VirtualDetail;
+        <section id="repository-section-virtual">
+            <h2>Members</h2>
+            <p class="help-block">
+                A request is answered by the first member, in this order, that has the package version; the version lists, the
+                registration index, search and autocomplete merge the members (a package id in several members is one result).
+                Only the members the caller may read are asked. Uploads go to the deploy repository and need Deploy there.
+                The catalog is not served by a virtual repository.
+            </p>
+
+            @if (virtualDetail.Members.Count == 0)
+            {
+                <p id="virtual-no-members">No members yet: the repository is empty. Add one below.</p>
+            }
+            else
+            {
+                <table class="table" id="virtual-members">
+                    <thead><tr><th>#</th><th>Member</th><th>Type</th><th>Deploy</th><th></th></tr></thead>
+                    <tbody>
+                        @for (var i = 0; i < virtualDetail.Members.Count; i++)
+                        {
+                            var member = virtualDetail.Members[i];
+                            <tr data-member="@member.Name">
+                                <td>@(i + 1)</td>
+                                <td>
+                                    @if (member.Exists)
+                                    {
+                                        <a href="@Url.Page("/Admin/RepositoryEdit", new { name = member.Name })">@member.Name</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">@member.Name</span>
+                                        <small>(no longer exists; it is skipped)</small>
+                                    }
+                                </td>
+                                <td>@(member.Repository?.Kind.ToString() ?? "-")</td>
+                                <td>@(virtualDetail.DeployRepository == member.Name ? "deploy repository" : "")</td>
+                                <td>
+                                    <form method="post" asp-page-handler="MoveMember" class="form-inline" style="display:inline">
+                                        <input type="hidden" name="member" value="@member.Name" />
+                                        <button type="submit" name="direction" value="up" class="btn btn-default btn-xs member-up" disabled="@(i == 0)">Up</button>
+                                        <button type="submit" name="direction" value="down" class="btn btn-default btn-xs member-down" disabled="@(i == virtualDetail.Members.Count - 1)">Down</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="RemoveMember" class="form-inline" style="display:inline">
+                                        <input type="hidden" name="member" value="@member.Name" />
+                                        <button type="submit" class="btn btn-default btn-xs member-remove">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            @if (Model.MemberCandidates.Count > 0)
+            {
+                <form method="post" asp-page-handler="AddMember" class="form-inline" id="virtual-add-form">
+                    <div class="form-group">
+                        <label for="virtual-add-member">Add a member</label>
+                        <select id="virtual-add-member" name="member" class="form-control">
+                            @foreach (var candidate in Model.MemberCandidates)
+                            {
+                                <option value="@candidate.Name">@candidate.Name (@candidate.Kind)</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-default">Add at the end</button>
+                </form>
+            }
+            else
+            {
+                <p class="help-block" id="virtual-no-candidates">Every other NuGet repository is already a member (or would make this one contain itself).</p>
+            }
+
+            <h3>Deploy repository</h3>
+            <form method="post" asp-page-handler="Deploy" class="form-inline" id="virtual-deploy-form">
+                <div class="form-group">
+                    <label for="virtual-deploy">Uploads go to</label>
+                    <select id="virtual-deploy" name="deploy" class="form-control">
+                        <option value="" selected="@(virtualDetail.DeployRepository == null)">(none: no uploads)</option>
+                        @foreach (var member in virtualDetail.Members.Where(m => m.Repository != null && m.Repository.Kind != BaGet.Core.RepositoryKind.Remote))
+                        {
+                            <option value="@member.Name" selected="@(virtualDetail.DeployRepository == member.Name)">@member.Name</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-default">Save</button>
+            </form>
+            <p class="help-block" id="virtual-deploy-target">
+                @if (virtualDetail.DeployTarget != null)
+                {
+                    <text>A push to this repository is stored in <strong>@virtualDetail.DeployTarget.Name</strong>; the pusher needs Deploy there.</text>
+                }
+                else
+                {
+                    <text>No uploads: the repository has no local deploy repository. A remote repository cannot be one.</text>
+                }
+            </p>
+
+            <h3>Where would a package come from?</h3>
+            <form method="post" asp-page-handler="Preview" class="form-inline" id="virtual-preview-form">
+                <div class="form-group">
+                    <label for="preview-package-id">Package id</label>
+                    <input id="preview-package-id" name="previewPackageId" type="text" class="form-control" value="@Model.PreviewPackageId" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label for="preview-package-version">Version</label>
+                    <input id="preview-package-version" name="previewVersion" type="text" class="form-control" value="@Model.PreviewVersion" autocomplete="off" />
+                </div>
+                <button type="submit" class="btn btn-default">Resolve</button>
+            </form>
+            <p class="help-block">Asks each member in order, without fetching or storing anything. A remote member that does not hold it yet is asked whether its upstream has it, unless an earlier member answers.</p>
+            @if (Model.Preview != null)
+            {
+                <table class="table" id="virtual-preview">
+                    <thead><tr><th>#</th><th>Member</th><th>Result</th></tr></thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Preview.Steps.Count; i++)
+                        {
+                            var step = Model.Preview.Steps[i];
+                            <tr data-member="@step.Member.Name" data-outcome="@step.Outcome" class="@(Model.Preview.Answers?.Key == step.Member.Key ? "success" : "")">
+                                <td>@(i + 1)</td>
+                                <td>@step.Member.Name (@step.Member.Kind)</td>
+                                <td>
+                                    @(step.Outcome switch
+                                    {
+                                        BaGet.Core.ResolutionOutcome.Stored => "stored here",
+                                        BaGet.Core.ResolutionOutcome.WouldFetch => "not stored yet; its upstream has it and it would be fetched on first request",
+                                        BaGet.Core.ResolutionOutcome.Unavailable => "its upstream could not be asked",
+                                        BaGet.Core.ResolutionOutcome.NotAsked => "not asked: an earlier member answers",
+                                        _ => "not found",
+                                    })
+                                    @if (Model.Preview.Answers?.Key == step.Member.Key)
+                                    {
+                                        <strong> - answers</strong>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <p id="virtual-preview-summary">
+                    @if (Model.Preview.Answers != null)
+                    {
+                        <text>@Model.Preview.PackageId @Model.Preview.Version.ToNormalizedString() comes from <strong>@Model.Preview.Answers.Name</strong>.</text>
+                    }
+                    else
+                    {
+                        <text>No member has @Model.Preview.PackageId @Model.Preview.Version.ToNormalizedString().</text>
+                    }
+                </p>
+            }
+        </section>
+    }
 
     @if (Model.RemoteDetail != null && Model.Cache != null)
     {
@@ -170,9 +351,10 @@
                         {
                             var who = Model.Access.Who(action);
                             var remoteDeploy = action == BaGet.Core.AccessAction.Deploy && Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote;
+                            var virtualDeploy = action == BaGet.Core.AccessAction.Deploy && Model.Repository?.Kind == BaGet.Core.RepositoryKind.Virtual;
                             <tr data-action="@action">
                                 <th>@action</th>
-                                <td>@(remoteDeploy ? "nobody: a remote repository takes no deployments, the server caches what it fetches" : who.Count == 0 ? "nobody but administrators" : string.Join(", ", who))</td>
+                                <td>@(remoteDeploy ? "nobody: a remote repository takes no deployments, the server caches what it fetches" : virtualDeploy ? "decided by the deploy repository (" + (Model.VirtualDetail?.DeployTarget?.Name ?? "none") + "), not here" : who.Count == 0 ? "nobody but administrators" : string.Join(", ", who))</td>
                             </tr>
                         }
                     </tbody>

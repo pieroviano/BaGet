@@ -12,13 +12,13 @@ namespace BaGet.Tests;
 /// </summary>
 internal static class TestPackages
 {
-    public static MemoryStream Build(string id, string version)
+    public static MemoryStream Build(string id, string version, string description = "Test package")
     {
         var builder = new PackageBuilder
         {
             Id = id,
             Version = NuGetVersion.Parse(version),
-            Description = "Test package",
+            Description = description,
         };
         builder.Authors.Add("Test author");
         builder.Files.Add(new InMemoryFile("content/readme.txt", "test"));

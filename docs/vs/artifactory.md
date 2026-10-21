@@ -9,7 +9,7 @@
 | NuGet V2 | Yes: `/api/nuget/<repo>` | Yes: `/api/v2` OData, on by default (`Feeds:EnableV2`); `$filter`/`$orderby`/`$select`/`$expand` ignored |
 | Symbols | Local, remote and virtual symbol repos; `.snupkg`; Microsoft PDB v7 and Portable PDB | Yes: `.snupkg` push, download endpoint; Portable PDB only |
 | Proxy / upstream cache | Remote repos (nuget.org or another Artifactory); cached on demand | [Remote repositories](../remote-repositories.md): per-repository upstream (V3 or V2), Basic credentials, metadata and negative cache periods, offline mode, pass-through or stored copies, test connection, purge; plus the optional `Mirror:Enabled` mirror for the default repository. Stored copies are permanent until purged; search does not query upstream |
-| Virtual / group feeds | Virtual repos combine local and remote behind one URL; push allowed | Not supported |
+| Virtual / group feeds | Virtual repos combine local and remote behind one URL; push allowed | [Virtual repositories](../virtual-repositories.md): ordered members (local, remote, nested virtual), first match answers, versions and search merged, uploads to a default deploy repository, only readable members used; no merged catalog, no per-member path rules |
 | Multiple feeds | Many repositories per instance | One feed per instance |
 | Private (authenticated) reads | Yes: anonymous access configurable (JFrog recommends off; anonymous removed from default permissions since 7.84.3); *Force Authentication* per repo | Not supported: read routes are open |
 | Permissions model | Permission targets (repos + users/groups); Permissions V2 from 7.77.2; project RBAC | Package ownership (first pusher, owners, organizations); no per-feed read permissions |

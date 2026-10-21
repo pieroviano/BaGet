@@ -89,7 +89,10 @@
                         {
                             <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
                         }
-                        <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
+                        @if (RepositoryContext.Current.Kind != BaGet.Core.RepositoryKind.Virtual)
+                        {
+                            <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
+                        }
                         <li role="presentation">
                             <a role="tab" href="https://pieroviano.github.io/BaGet/" target="_blank" rel="noopener noreferrer">
                                 <span>Documentation</span>

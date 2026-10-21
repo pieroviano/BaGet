@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -14,18 +15,21 @@ namespace BaGet.Catalog;
 public class CatalogController : Controller
 {
     private readonly CatalogReader _reader;
+    private readonly IRepositoryContext? _repository;
 
-    public CatalogController(CatalogReader reader)
+    public CatalogController(CatalogReader reader, IRepositoryContext? repository = null)
     {
         _reader = reader ?? throw new ArgumentNullException(nameof(reader));
+        _repository = repository;
     }
 
     /// <summary>
-    /// A database that cannot hold the catalog has none, so the whole surface is absent.
+    /// A database that cannot hold the catalog has none, so the whole surface is absent. So is a virtual repository's: it
+    /// stores nothing, and a merged log of its members would have no commit order a client could resume from.
     /// </summary>
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-        if (!_reader.IsSupported)
+        if (!_reader.IsSupported || _repository?.Current.Kind == RepositoryKind.Virtual)
         {
             context.Result = NotFound();
             return;

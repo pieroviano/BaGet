@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +16,10 @@ namespace BaGet.Identity.Pages.Admin;
 /// edits its upstream (URL, protocol, credentials, cache periods, offline, store locally), tests the connection with
 /// the unsaved values, shows its cache and purges it (whole, or one package). Saving and purging are refused with 503
 /// while the <see cref="MaintenanceGate"/> is closed. Changing or purging a remote repository asks for the
-/// administrator's password again; testing the connection does not (it saves nothing).
+/// administrator's password again; testing the connection does not (it saves nothing). A virtual repository shows and
+/// edits its members (add, remove, move up or down), its deploy repository, and previews where a package version would come
+/// from (<see cref="IVirtualRepositoryAdministration.PreviewAsync"/>); those edits are saved at once, refused with 503 while
+/// the gate is closed.
 /// </summary>
 public class RepositoryEditModel : RepositoryPageModel
 {
@@ -39,6 +43,26 @@ public class RepositoryEditModel : RepositoryPageModel
 
     /// <summary>What a remote repository stores and remembers.</summary>
     public RemoteCacheOverview? Cache { get; private set; }
+
+    /// <summary>The virtual repository's members and deploy repository, null for the other kinds.</summary>
+    public VirtualRepositoryDetail? VirtualDetail { get; private set; }
+
+    /// <summary>The repositories that can still be added to a virtual repository.</summary>
+    public IReadOnlyList<RepositoryInfo> MemberCandidates { get; private set; } = Array.Empty<RepositoryInfo>();
+
+    /// <summary>The virtual repositories that list this repository as a member.</summary>
+    public IReadOnlyList<string> ReferencedBy { get; private set; } = Array.Empty<string>();
+
+    /// <summary>The package id to resolve in the preview.</summary>
+    [BindProperty]
+    public string? PreviewPackageId { get; set; }
+
+    /// <summary>The package version to resolve in the preview.</summary>
+    [BindProperty]
+    public string? PreviewVersion { get; set; }
+
+    /// <summary>Where the previewed package version would come from.</summary>
+    public ResolutionPreview? Preview { get; private set; }
 
     /// <summary>The outcome of "Test connection".</summary>
     public RemoteConnectionResult? TestResult { get; private set; }
@@ -96,7 +120,20 @@ public class RepositoryEditModel : RepositoryPageModel
             RemoteDetail = await remotes.FindAsync(Name, cancellationToken);
             if (RemoteDetail != null) Cache = await remotes.GetCacheAsync(Name!, cancellationToken);
         }
-        else if (Repository.IsDefault)
+        else if (Repository.Kind == RepositoryKind.Virtual)
+        {
+            var virtuals = services.GetRequiredService<IVirtualRepositoryAdministration>();
+            VirtualDetail = await virtuals.FindAsync(Name, cancellationToken);
+            var members = VirtualDetail?.Members.Select(m => m.Name).ToHashSet() ?? new System.Collections.Generic.HashSet<string>();
+            MemberCandidates = (await virtuals.CandidatesAsync(Name, cancellationToken)).Where(c => !members.Contains(c.Name)).ToList();
+        }
+
+        if (Repository.Kind != RepositoryKind.Virtual)
+        {
+            ReferencedBy = await services.GetRequiredService<IVirtualRepositoryAdministration>().ReferencedByAsync(Repository.Name, cancellationToken);
+        }
+
+        if (Repository.IsDefault)
         {
             MirrorRepository = await services.GetRequiredService<IRemoteRepositoryAdministration>().FindAsync(BaGet.Core.Repository.MirrorName, cancellationToken);
             MirrorActive = MirrorRepository?.IsMirror == true;
@@ -206,6 +243,123 @@ public class RepositoryEditModel : RepositoryPageModel
             : $"{id}{(version == null ? string.Empty : " " + version.ToNormalizedString())} was purged: {result.Packages} package version(s) deleted, {result.CachedAnswers} remembered answer(s) dropped.";
 
         return RedirectToPage(new { name = Name });
+    }
+
+    /// <summary>Adds a repository at the end of the virtual repository's members.</summary>
+    public Task<IActionResult> OnPostAddMemberAsync(string? member, CancellationToken cancellationToken)
+        => ChangeMembersAsync(
+            settings =>
+            {
+                if (string.IsNullOrEmpty(member)) return "Choose the repository to add.";
+                if (settings.Members.Contains(member!)) return $"'{member}' is already a member.";
+
+                settings.Members.Add(member!);
+
+                return null;
+            },
+            $"{member} was added.",
+            cancellationToken);
+
+    /// <summary>Removes a member (and the deploy repository too when it was that member).</summary>
+    public Task<IActionResult> OnPostRemoveMemberAsync(string? member, CancellationToken cancellationToken)
+        => ChangeMembersAsync(
+            settings =>
+            {
+                if (!settings.Members.Remove(member ?? string.Empty)) return $"'{member}' is not a member.";
+                if (settings.DeployRepository == member) settings.DeployRepository = null;
+
+                return null;
+            },
+            $"{member} was removed.",
+            cancellationToken);
+
+    /// <summary>Moves a member one place earlier (<c>up</c>) or later (<c>down</c>) in the resolution order.</summary>
+    public Task<IActionResult> OnPostMoveMemberAsync(string? member, string? direction, CancellationToken cancellationToken)
+        => ChangeMembersAsync(
+            settings =>
+            {
+                var index = settings.Members.IndexOf(member ?? string.Empty);
+                if (index < 0) return $"'{member}' is not a member.";
+
+                var target = string.Equals(direction, "up", StringComparison.OrdinalIgnoreCase) ? index - 1 : index + 1;
+                if (target < 0 || target >= settings.Members.Count) return null;
+
+                (settings.Members[index], settings.Members[target]) = (settings.Members[target], settings.Members[index]);
+
+                return null;
+            },
+            $"{member} was moved {(string.Equals(direction, "up", StringComparison.OrdinalIgnoreCase) ? "up" : "down")}.",
+            cancellationToken);
+
+    /// <summary>Sets the member that receives uploads (blank: the virtual repository takes none).</summary>
+    public Task<IActionResult> OnPostDeployAsync(string? deploy, CancellationToken cancellationToken)
+        => ChangeMembersAsync(
+            settings =>
+            {
+                settings.DeployRepository = string.IsNullOrWhiteSpace(deploy) ? null : deploy;
+
+                return null;
+            },
+            string.IsNullOrWhiteSpace(deploy) ? "The virtual repository no longer takes uploads." : $"Uploads now go to {deploy}.",
+            cancellationToken);
+
+    /// <summary>Shows where the package version typed would come from, member by member (nothing is fetched or stored).</summary>
+    public async Task<IActionResult> OnPostPreviewAsync(CancellationToken cancellationToken)
+    {
+        if (!await LoadAsync(cancellationToken) || VirtualDetail == null) return NotFound();
+
+        AnonymousRead = Repository!.AnonymousRead;
+        var id = PreviewPackageId?.Trim();
+        if (string.IsNullOrEmpty(id))
+        {
+            Error = "Enter the id of the package to resolve.";
+
+            return Page();
+        }
+
+        if (!NuGet.Versioning.NuGetVersion.TryParse(PreviewVersion?.Trim(), out var version))
+        {
+            Error = $"'{PreviewVersion}' is not a valid version.";
+
+            return Page();
+        }
+
+        Preview = await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>()
+            .PreviewAsync(Name!, id, version, cancellationToken);
+
+        return Page();
+    }
+
+    // Applies 'change' to a copy of the virtual repository's settings and saves them; 'change' returns a reason to refuse.
+    private async Task<IActionResult> ChangeMembersAsync(Func<VirtualRepositorySettings, string?> change, string done, CancellationToken cancellationToken)
+    {
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var virtuals = HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>();
+        var detail = await virtuals.FindAsync(Name, cancellationToken);
+        if (detail == null) return NotFound();
+
+        var settings = new VirtualRepositorySettings
+        {
+            Members = detail.Members.Select(m => m.Name).ToList(),
+            DeployRepository = detail.DeployRepository,
+        };
+
+        var refusal = change(settings);
+        if (refusal != null) return await RefuseAsync(refusal, cancellationToken);
+
+        try
+        {
+            await virtuals.UpdateAsync(Name!, settings, cancellationToken, User.Identity?.Name);
+        }
+        catch (ArgumentException e)
+        {
+            return await RefuseAsync(e.Message, cancellationToken);
+        }
+
+        TempData["Message"] = done;
+
+        return RedirectToPage(null, null, new { name = Name }, "repository-section-virtual");
     }
 
     // Shows the page again with a reason, keeping what was typed.

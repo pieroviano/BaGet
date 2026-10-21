@@ -9,7 +9,8 @@ namespace BaGet.Identity.Pages.Admin;
 
 /// <summary>
 /// Deletes a repository with no packages, and its history rows. The default repository cannot be deleted. A repository
-/// that still holds packages is refused (delete the packages first). Refused with 503 while the
+/// that still holds packages is refused (delete the packages first), and so is one that a virtual repository lists as a
+/// member (remove it there first). Refused with 503 while the
 /// <see cref="MaintenanceGate"/> is closed.
 /// </summary>
 public class RepositoryDeleteModel : AdminPageModel
@@ -21,6 +22,9 @@ public class RepositoryDeleteModel : AdminPageModel
     /// <summary>The repository.</summary>
     public RepositorySummary? Repository { get; private set; }
 
+    /// <summary>The virtual repositories that list this repository as a member (the deletion is refused while there are any).</summary>
+    public IReadOnlyList<string> ReferencedBy { get; private set; } = new List<string>();
+
     /// <summary>Why the deletion was refused.</summary>
     public string? Error { get; private set; }
 
@@ -28,8 +32,11 @@ public class RepositoryDeleteModel : AdminPageModel
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         Repository = await HttpContext.RequestServices.GetRequiredService<IRepositoryAdministration>().FindAsync(Name, cancellationToken);
+        if (Repository == null) return NotFound();
 
-        return Repository == null ? NotFound() : Page();
+        ReferencedBy = await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>().ReferencedByAsync(Repository.Name, cancellationToken);
+
+        return Page();
     }
 
     /// <summary>Deletes the repository, then returns to the list.</summary>
@@ -49,7 +56,7 @@ public class RepositoryDeleteModel : AdminPageModel
         {
             return NotFound();
         }
-        catch (System.InvalidOperationException e) when (e is RepositoryProtectedException or RepositoryNotEmptyException)
+        catch (System.InvalidOperationException e) when (e is RepositoryProtectedException or RepositoryNotEmptyException or RepositoryReferencedException)
         {
             Error = e.Message;
 

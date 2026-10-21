@@ -151,6 +151,14 @@ public class RepositoryAdministration : IRepositoryAdministration
         var key = row.Key;
         if (key == Repository.DefaultKey) throw new RepositoryProtectedException();
 
+        // A virtual repository that lists it would silently lose a member (and a deploy target): remove it there first.
+        var virtuals = (await _context.Repositories!.AsNoTracking().Where(r => r.Kind == RepositoryKind.Virtual).ToListAsync(cancellationToken).ConfigureAwait(false))
+            .Where(v => VirtualSettingsCodec.Deserialize(v.Settings).Members.Contains(name))
+            .Select(v => v.Name!)
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+        if (virtuals.Count > 0) throw new RepositoryReferencedException(name, virtuals);
+
         // Empty means no packages and no submission awaiting validation (a pushed package the client already got an
         // accepted response for, staged but not indexed yet; deleting would lose it). The catalog is an append-only log
         // (deleting a package adds an entry) and owner rows outlive their package, so those, the finished validations

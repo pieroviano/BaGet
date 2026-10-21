@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Web;
 
@@ -23,8 +24,21 @@ public class RepositoryResolutionMiddleware
         _next = next ?? throw new ArgumentNullException(nameof(next));
     }
 
-    public async Task Invoke(HttpContext context, IRepositoryContext repository, IRepositoryService repositories)
+    public async Task Invoke(
+        HttpContext context,
+        IRepositoryContext repository,
+        IRepositoryService repositories,
+        IRequestCaller caller)
     {
+        // Who is asking, for code in Core that filters by the caller's rights (a virtual repository reads only the members
+        // the caller may read). Credentials are read when something asks, after authentication has run.
+        caller.Use(async cancellationToken =>
+        {
+            var resolver = context.RequestServices.GetService<RequestPrincipalResolver>();
+
+            return resolver == null ? null : await resolver.ResolveAsync(context, cancellationToken);
+        });
+
         if (context.GetRouteValue(Routes.RepositoryRouteKey) is string name)
         {
             // Names are lowercase (RepositoryNames); URLs are matched case-insensitively like the rest of the feed.
@@ -40,8 +54,41 @@ public class RepositoryResolutionMiddleware
             }
 
             repository.Use(found);
+
+            if (found.Kind == RepositoryKind.Virtual && await RedirectWriteAsync(context, repository, found))
+            {
+                return;
+            }
         }
 
         await _next(context);
+    }
+
+    // A write to a virtual repository (a push, an unlist, a deprecation, the status of a submission) goes to its deploy
+    // repository: the request works there from now on, so the access model, ownership and the indexing all apply to that
+    // repository. Returns true when the request was answered here (the virtual repository has no deploy repository).
+    private async Task<bool> RedirectWriteAsync(HttpContext context, IRepositoryContext repository, RepositoryInfo virtualRepository)
+    {
+        var route = context.GetEndpoint()?.Metadata.GetMetadata<RepositoryRouteMetadata>();
+        var isWrite = route != null
+            && (route.AuthorizesItself
+                || (route.WritesOnly && !(HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))));
+        if (!isWrite) return false;
+
+        var target = await context.RequestServices.GetRequiredService<IVirtualRepositories>()
+            .DeployTargetAsync(virtualRepository, context.RequestAborted);
+        if (target == null)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            context.Response.ContentType = "text/plain; charset=utf-8";
+            await context.Response.WriteAsync("This virtual repository has no deploy repository, so it takes no uploads.", context.RequestAborted);
+
+            return true;
+        }
+
+        repository.Use(target);
+        await _next(context);
+
+        return true;
     }
 }

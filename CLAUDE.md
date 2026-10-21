@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2164 tests** across `BaGet.Core.Tests` (584), `BaGet.Tests` (1274),
+Baseline: **2221 tests** across `BaGet.Core.Tests` (597), `BaGet.Tests` (1318),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -154,7 +154,7 @@ is `RemoteRepositorySettings` as JSON in `Repository.Settings` (no extra table; 
 `UpstreamClientFactory` returns a `RemoteUpstreamClient` for every repository: `IRemoteUpstreamSource` resolves the upstream (remote -> its own
 settings; `default` with `Mirror:Enabled` -> the `mirror` remote repository, created/synced at startup by
 `IRemoteRepositoryAdministration.EnsureMirrorRepositoryAsync`, its URL/protocol/timeout owned by `Mirror:*`, the rest editable; else none).
-That is the seam where D3's virtual repositories plug in. The client does offline mode, the metadata TTL, the negative TTL (only a real 404:
+`default` with `Mirror:Enabled` is thereby a two-member virtual repository (its own rows, then `mirror`) that keeps its URL and stores what it fetches in its own rows; no stored virtual row stands for it (see *Virtual repositories*). The client does offline mode, the metadata TTL, the negative TTL (only a real 404:
 `V2/V3UpstreamClient(propagateErrors: true)` throw everything else, which is never cached as "not found" and is served stale if an expired
 answer exists) and records health; `RemoteRepositoryState` (singleton, in memory per node, takes a `TimeProvider`) holds settings (5 s),
 answers, counters and the pooled `HttpClient`/`NuGetClient` (a V3 service index is cached by the latter). Credentials go to the upstream's own origin only
@@ -166,6 +166,30 @@ registering an `HttpClient` no longer affects mirroring). Cached packages are or
 (accounts off too), `AccessRepositoryAccess` hides it from the upload picker. Admin pages: create on `Repositories`, edit/test/cache/purge on
 `RepositoryEdit` (create, save and purge ask for the password: `RepositoryPageModel`; *Test connection* does not, and sends the stored password
 only while URL and user name are unchanged). Purge hard-deletes through `IPackageDeletionService` in a `CreateRepositoryScope`.
+
+**Virtual repositories** (`RepositoryKind.Virtual`; `BaGet.Core/Repositories/Virtual`, docs: `docs/virtual-repositories.md`). `Repository.Settings` is `VirtualRepositorySettings`
+JSON (member names in order, deploy repository name; `VirtualSettingsCodec`; no schema change). `IVirtualRepositories` (scoped) flattens members (`EffectiveMembersAsync`: nested virtuals
+expanded in place, each repository once, cycles cut, missing/non-NuGet members skipped) and finds `DeployTargetAsync` (follows virtual deploy repositories to a local one).
+**Reads:** `VirtualRepositoryReader` (scoped) lists the members the caller may read (`IAccessEvaluator` Read on the member and on the package, caller from `IRequestCaller`, which
+`RepositoryResolutionMiddleware` sets lazily from `RequestPrincipalResolver`) and runs a question in each member's own `CreateRepositoryScope`, so the member's filter, storage path and
+upstream apply; a failing member is logged and skipped. The services that answer for a virtual repository wrap the concrete ones and delegate unchanged when the request's repository is
+not virtual: `VirtualPackageService` (registered as `IPackageService`; versions = union, one version = first member), `VirtualPackageContentService` (`IPackageContentService`; first member
+that has the version, through the member's `DefaultPackageContentService`), `VirtualSymbolStorageService`, `RepositorySearchService` (wraps whatever `ISearchService` is registered last:
+`AddRepositoryAwareSearch()`, called at the end of `AddBaGetApplication` and again by `Program` after it registers the provider-chosen search). `DefaultPackageMetadataService` needs no
+change (it sits on `IPackageService`). Merged search drains each member (500 per page, `MaxScanPerMember` 10,000), keys an id by its first member's entry with versions unioned and downloads
+summed, orders by id or summed downloads (a total order, so paging is stable), and reports distinct ids as `totalHits` (an estimate only past the scan limit); `LastUpdated` is not a virtual
+sort. The V2 controller and `VulnerabilityController` take an optional `VirtualRepositoryReader`. URLs come from the request's repository, so every link stays inside the virtual repository.
+No catalog: `CatalogController` answers 404 and `CatalogServiceIndexProvider` omits the resource when the repository is virtual. `Statistics`, `ReportAbuse`, `Packages/Manage`,
+`Packages/ContactOwners` are 404 on a virtual repository (`RepositoryPageFilter.NotOnVirtual`); the Package page hides their links.
+**Writes:** `RepositoryResolutionMiddleware` moves a write route (`RepositoryRouteMetadata.WritesOnly` with a non-GET method, or `AuthorizesItself`) of a virtual repository to its deploy
+target with `IRepositoryContext.Use(target)` before authentication (403 with no deploy target); the Upload page does the same in `RepositoryPageFilter` (`RequestedVirtualItemKey` in
+`HttpContext.Items` remembers the virtual repository for the view). `AccessEvaluator` never grants Deploy on a virtual repository (like a remote one); `AccessRepositoryAccess` offers a virtual
+repository to `WritableAsync`/`CanWriteAsync` when the caller can read it and write to its deploy target. **Admin:** `IVirtualRepositoryAdministration` (create/update with validation: members exist,
+NuGet, no self/cycle, deploy repository a member that ends in a local one; `CandidatesAsync`, `ReferencedByAsync`, `PreviewAsync` = side-effect-free "where would it come from"); pages are
+`Repositories` (create) and `RepositoryEdit` (members add/remove/up/down, deploy picker, preview; handlers `AddMember`, `RemoveMember`, `MoveMember`, `Deploy`, `Preview`);
+`RepositoryAdministration.DeleteAsync` refuses a member of a virtual repository (`RepositoryReferencedException`). `RepositoryService.CreateAsync(..., Virtual)` stays `NotSupported`
+(it has no members to take). Tests: `VirtualRepositoryTests`, `VirtualRepositoryAccessTests`, `VirtualRemoteMemberTests` (+ `VirtualDefaultMirrorTests`), `AdminVirtualRepositoriesTests`,
+Core `VirtualRepositorySettingsTests`, `RepositorySearchServiceTests`.
 
 **Admin operations** (`BaGet.Core/Operations`). `AdminJobService` (singleton) runs `IAdminOperation`s (`DownloadsImportOperation` in Core,
 `CatalogRebuildOperation` in `BaGet.Catalog`; register more with `TryAddEnumerable`) in the background in a repository scope, one run per

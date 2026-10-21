@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -88,6 +89,21 @@ public sealed class RepositoryProtectedException : InvalidOperationException
 /// <summary>
 /// The repository still has content, so it cannot be deleted.
 /// </summary>
+/// <summary>
+/// Thrown when a repository that virtual repositories list as a member is deleted: they would lose a member.
+/// </summary>
+public sealed class RepositoryReferencedException : InvalidOperationException
+{
+    public RepositoryReferencedException(string name, IReadOnlyList<string> virtualRepositories)
+        : base($"The repository '{name}' is a member of the virtual repositor{(virtualRepositories.Count == 1 ? "y" : "ies")} {string.Join(", ", virtualRepositories.Select(v => "'" + v + "'"))}. Remove it from {(virtualRepositories.Count == 1 ? "it" : "them")} first.")
+    {
+        VirtualRepositories = virtualRepositories;
+    }
+
+    /// <summary>The virtual repositories that list the repository.</summary>
+    public IReadOnlyList<string> VirtualRepositories { get; }
+}
+
 public sealed class RepositoryNotEmptyException : InvalidOperationException
 {
     public RepositoryNotEmptyException(string name, bool awaitingValidation = false, bool remote = false)

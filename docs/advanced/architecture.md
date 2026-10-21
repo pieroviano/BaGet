@@ -152,7 +152,7 @@ the `AddRepositories` migration gives existing rows `RepositoryKey = 1`, and sta
 | `IRepositoryService` | Find / list / create repositories; name rules in one place, `RepositoryNames` (lowercase `[a-z0-9-._]`, 1-64, not a reserved route name) |
 | Azure Table | Holds the `default` repository only: creating another is refused, `TablePackageDatabase` refuses any other |
 
-Other repositories are local or [remote](../remote-repositories.md) (`Repository.Settings` holds the upstream; the password is protected by data protection). Package and symbol storage paths nest
+Other repositories are local, [remote](../remote-repositories.md) (`Repository.Settings` holds the upstream; the password is protected by data protection) or [virtual](../virtual-repositories.md) (`Repository.Settings` holds the member names and the deploy repository; reads run in each member's own scope through `VirtualRepositoryReader`, writes are redirected to the deploy repository). Package and symbol storage paths nest
 under `repos/{name}/` for other repositories.
 
 ## Background work

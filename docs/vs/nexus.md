@@ -9,7 +9,7 @@
 | NuGet V2 | Yes | Yes: `/api/v2` OData, on by default (`Feeds:EnableV2`); `$filter`/`$orderby`/`$select`/`$expand` ignored |
 | Symbols | `.snupkg` and Symbol Server protocol on proxy, hosted, group (new in 3.95.0) | Yes: `.snupkg` push, download endpoint; Portable PDB only |
 | Proxy / upstream cache | Proxy repositories | Optional pull-through mirror (`Mirror:Enabled`, off by default); one upstream; copy is indexed permanently; search does not query upstream |
-| Virtual / group feeds | Group repositories (proxy + hosted + groups) behind one URL | Not supported |
+| Virtual / group feeds | Group repositories (proxy + hosted + groups) behind one URL | [Virtual repositories](../virtual-repositories.md): ordered members (local, remote, nested virtual) behind one URL; uploads go to a chosen member |
 | Multiple feeds | Many repositories per instance | One feed per instance |
 | Private (authenticated) reads | Yes: anonymous access can be disabled (default anonymous role is read-only) | Not supported: read routes are open |
 | Permissions model | Roles and privileges per repository; content selectors (path-based) | Package ownership (first pusher, owners, organizations); no per-feed read permissions |

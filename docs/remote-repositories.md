@@ -53,4 +53,4 @@ Creating a remote repository, saving its upstream and both purges **ask for your
 
 ## Not covered yet
 
-Virtual repositories (an ordered group of members behind one URL) come next; until then `default` uses the `mirror` repository as its upstream. Azure Table and `Search:Type` = `AzureSearch` serve the default repository only, so remote repositories cannot be created there.
+A remote repository can be a member of a [virtual repository](virtual-repositories.md) (an ordered group behind one URL); `default` with the mirror behaves as one, see [`default` and the mirror](virtual-repositories.md#default-and-the-mirror). Azure Table and `Search:Type` = `AzureSearch` serve the default repository only, so remote repositories cannot be created there.
