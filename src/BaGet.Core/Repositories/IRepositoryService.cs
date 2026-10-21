@@ -35,7 +35,8 @@ public interface IRepositoryService
     Task<IReadOnlyList<RepositoryInfo>> ListAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// Creates a repository.
+    /// Creates a repository. A <see cref="RepositoryKind.Remote"/> one needs its upstream: use
+    /// <see cref="CreateAsync(string, RepositoryFormat, RepositoryKind, RemoteRepositorySettings?, CancellationToken)"/>.
     /// </summary>
     /// <exception cref="System.ArgumentException">The name is invalid per <see cref="RepositoryNames"/>.</exception>
     /// <exception cref="System.NotSupportedException">The database cannot hold repositories, or the format/kind is not available yet.</exception>
@@ -44,6 +45,21 @@ public interface IRepositoryService
         string name,
         RepositoryFormat format,
         RepositoryKind kind,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Creates a repository; <paramref name="remote"/> is the upstream of a <see cref="RepositoryKind.Remote"/> one
+    /// (required for it, refused for the other kinds). The password is stored protected.
+    /// </summary>
+    /// <exception cref="System.ArgumentException">The name is invalid, or the upstream settings are missing, unneeded or invalid (the message lists the problems).</exception>
+    /// <exception cref="System.NotSupportedException">The database cannot hold repositories, or the format/kind is not available yet (virtual).</exception>
+    /// <exception cref="System.InvalidOperationException">A password was given and nothing can protect it (no data protection on the host).</exception>
+    /// <exception cref="RepositoryExistsException">The name is taken.</exception>
+    Task<RepositoryInfo> CreateAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        RemoteRepositorySettings? remote,
         CancellationToken cancellationToken);
 
     /// <summary>

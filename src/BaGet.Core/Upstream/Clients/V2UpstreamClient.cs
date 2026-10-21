@@ -27,6 +27,7 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
     private readonly SourceRepository _repository;
     private readonly INuGetLogger _ngLogger;
     private readonly ILogger _logger;
+    private readonly bool _propagateErrors;
 
     public V2UpstreamClient(
         IOptionsSnapshot<MirrorOptions> options,
@@ -49,6 +50,35 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
         _repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV2(new PackageSource(options.Value.PackageSource.AbsoluteUri));
     }
 
+    /// <summary>
+    /// A client of the V2 feed at <paramref name="source"/>, for a remote repository.
+    /// </summary>
+    /// <param name="source">The feed URL.</param>
+    /// <param name="username">The HTTP Basic user name, or null.</param>
+    /// <param name="password">The HTTP Basic password, or null.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="propagateErrors">
+    /// Throw failures other than "not found" instead of answering as if not found (see <see cref="V3UpstreamClient"/>).
+    /// </param>
+    public V2UpstreamClient(Uri source, string? username, string? password, ILogger logger, bool propagateErrors)
+    {
+        if (source is null) throw new ArgumentNullException(nameof(source));
+
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _propagateErrors = propagateErrors;
+        _ngLogger = NullLogger.Instance;
+        _cache = new SourceCacheContext();
+
+        var packageSource = new PackageSource(source.AbsoluteUri);
+        if (!string.IsNullOrEmpty(username) || !string.IsNullOrEmpty(password))
+        {
+            packageSource.Credentials = new PackageSourceCredential(
+                source.Host, username ?? string.Empty, password ?? string.Empty, isPasswordClearText: true, validAuthenticationTypesText: null);
+        }
+
+        _repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV2(packageSource);
+    }
+
     public async Task<IReadOnlyList<NuGetVersion>> ListPackageVersionsAsync(string id, CancellationToken cancellationToken)
     {
         try
@@ -58,7 +88,7 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
 
             return versions.ToList();
         }
-        catch (Exception e)
+        catch (Exception e) when (!_propagateErrors)
         {
             _logger.LogError(e, "Failed to mirror {PackageId}'s upstream versions", id);
             return new List<NuGetVersion>();
@@ -82,7 +112,7 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
 
             return packages.Select(ToPackage).ToList();
         }
-        catch (Exception e)
+        catch (Exception e) when (!_propagateErrors)
         {
             _logger.LogError(e, "Failed to mirror {PackageId}'s upstream versions", id);
             return new List<Package>();
@@ -113,7 +143,7 @@ public class V2UpstreamClient : IUpstreamClient, IDisposable
 
             return packageStream;
         }
-        catch (Exception e)
+        catch (Exception e) when (!_propagateErrors)
         {
             _logger.LogError(
                 e,

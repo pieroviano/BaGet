@@ -105,6 +105,10 @@ The following `Mirror` setting configures BaGet Extension to index packages from
 | `Legacy` | `false` | read the upstream through the NuGet V2 protocol |
 | `PackageDownloadTimeoutSeconds` | `600` | timeout of every HTTP request to the upstream (and of `import downloads`) |
 
+While `Enabled`, a [remote repository](remote-repositories.md#the-mirror) named `mirror` is created from these keys at startup and the
+default repository fetches through its settings: set credentials, cache periods or offline mode for the mirror on
+`/admin/repositories/mirror`. The URL, protocol and timeout stay owned by these keys.
+
 ## Enable package hard deletions
 
 To prevent the ["left pad" problem](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm),

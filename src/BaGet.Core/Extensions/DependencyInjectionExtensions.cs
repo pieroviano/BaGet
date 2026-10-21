@@ -6,6 +6,7 @@ using BaGet.Protocol;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace BaGet.Core;
@@ -102,6 +103,19 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IRepositoryContext, RepositoryContext>();
         services.TryAddScoped<IRepositoryService, RepositoryService>();
         services.TryAddScoped<IRepositoryAdministration, RepositoryAdministration>();
+        services.TryAddSingleton<RemoteRepositoryState>();
+        services.TryAddSingleton<IRemoteHttpClientFactory, RemoteHttpClientFactory>();
+        services.TryAddSingleton(provider =>
+        {
+            // An explicitly registered protector wins; else the host's data protection (ASP.NET Core registers it);
+            // else none, and credentials are refused rather than stored in clear.
+            var protector = provider.GetService<IRemoteCredentialProtector>();
+            var dataProtection = provider.GetService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>();
+
+            return new RemoteSettingsCodec(protector ?? (dataProtection == null ? null : new DataProtectionCredentialProtector(dataProtection)));
+        });
+        services.TryAddScoped<IRemoteUpstreamSource, RemoteUpstreamSource>();
+        services.TryAddScoped<IRemoteRepositoryAdministration, RemoteRepositoryAdministration>();
         services.TryAddScoped<IRepositoryAccess, AccessRepositoryAccess>();
         services.TryAddSingleton<AccessModelVersion>();
         services.TryAddSingleton<AccessModelCache>();
@@ -236,20 +250,13 @@ public static partial class DependencyInjectionExtensions
 
     private static IUpstreamClient UpstreamClientFactory(IServiceProvider provider)
     {
-        var options = provider.GetRequiredService<IOptionsSnapshot<MirrorOptions>>();
-
-        // The mirror is configured globally and serves the default repository only; other repositories are
-        // local until remote repositories are configured per repository.
-        if (provider.GetService<IRepositoryContext>()?.Current.IsDefault == false)
-        {
-            return provider.GetRequiredService<DisabledUpstreamClient>();
-        }
-
-        return options.Value switch
-        {
-            { Enabled: false } => provider.GetRequiredService<DisabledUpstreamClient>(),
-            { Legacy: true } => provider.GetRequiredService<V2UpstreamClient>(),
-            _ => provider.GetRequiredService<V3UpstreamClient>(),
-        };
+        // Every repository has the client of its own upstream: a remote repository's, the default repository's mirror
+        // (Mirror:* through the "mirror" remote repository), or none. See RemoteUpstreamClient.
+        return new RemoteUpstreamClient(
+            provider.GetService<IRepositoryContext>(),
+            provider.GetRequiredService<IRemoteUpstreamSource>(),
+            provider.GetRequiredService<RemoteRepositoryState>(),
+            provider.GetRequiredService<IRemoteHttpClientFactory>(),
+            provider.GetRequiredService<ILoggerFactory>());
     }
 }

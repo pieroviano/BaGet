@@ -18,12 +18,13 @@ public enum RepositoryFormat
 public enum RepositoryKind
 {
     /// <summary>
-    /// Holds what is pushed to it. The only kind a repository can have today.
+    /// Holds what is pushed to it.
     /// </summary>
     Local = 0,
 
     /// <summary>
-    /// Caches an upstream repository.
+    /// Caches an upstream repository (<see cref="RemoteRepositorySettings"/>). Read-only for clients: nothing can be
+    /// deployed to it, the server itself stores what it fetches.
     /// </summary>
     Remote = 1,
 

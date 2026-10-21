@@ -31,7 +31,7 @@ public sealed record RepositorySummary(
 }
 
 /// <summary>
-/// Lists, edits and deletes repositories (creating goes through <see cref="IRepositoryService.CreateAsync"/>). What the
+/// Lists, edits and deletes repositories (creating goes through <see cref="IRepositoryService.CreateAsync(string, RepositoryFormat, RepositoryKind, RemoteRepositorySettings?, CancellationToken)"/>). What the
 /// administrator pages use; writes go through the database context, so they are refused while the
 /// <see cref="MaintenanceGate"/> is closed.
 /// </summary>
@@ -90,9 +90,11 @@ public sealed class RepositoryProtectedException : InvalidOperationException
 /// </summary>
 public sealed class RepositoryNotEmptyException : InvalidOperationException
 {
-    public RepositoryNotEmptyException(string name, bool awaitingValidation = false)
+    public RepositoryNotEmptyException(string name, bool awaitingValidation = false, bool remote = false)
         : base(awaitingValidation
             ? $"The repository '{name}' still has submissions awaiting validation. Wait for them to finish; its history (catalog entries, owners) is removed with the repository."
-            : $"The repository '{name}' still holds packages. Delete them first; its history (catalog entries, owners) is removed with the repository.")
+            : remote
+                ? $"The repository '{name}' still holds cached packages. Purge its cache first; its history (catalog entries) is removed with the repository."
+                : $"The repository '{name}' still holds packages. Delete them first; its history (catalog entries, owners) is removed with the repository.")
     { }
 }

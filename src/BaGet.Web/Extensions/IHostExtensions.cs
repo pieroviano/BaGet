@@ -41,6 +41,13 @@ public static class IHostExtensions
                     {
                         await repositories.EnsureDefaultAsync(cancellationToken);
 
+                        // Mirror:Enabled becomes the "mirror" remote repository the default repository fetches through.
+                        var remotes = scope.ServiceProvider.GetService<IRemoteRepositoryAdministration>();
+                        if (remotes != null)
+                        {
+                            await remotes.EnsureMirrorRepositoryAsync(cancellationToken);
+                        }
+
                         // Repositories made private by AnonymousRead=false from before access control: reported, not changed.
                         var evaluator = scope.ServiceProvider.GetService<IAccessEvaluator>();
                         if (evaluator != null)

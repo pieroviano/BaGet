@@ -24,7 +24,7 @@ reads, any authenticated caller writes subject to ownership, as before.
 |---|---|
 | `Read` | Feed, symbols, catalog, registrations, package pages of the repository |
 | `Annotate` | Deprecation and vulnerabilities |
-| `Deploy` | Push new packages and versions |
+| `Deploy` | Push new packages and versions. Never held on a [remote repository](remote-repositories.md) (not by administrators either): it only holds what the server cached |
 | `Delete` | Unlist, relist, delete |
 | `Manage` | The package's Manage page (owners, unlist, deprecation): an owner needs it as well as ownership; administrators hold it everywhere |
 

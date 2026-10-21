@@ -107,9 +107,14 @@ between "stage" and "confirm"; `StagingSweepWorker` removes abandoned uploads.
 ## Download and mirroring
 
 `PackageContentController` → `IPackageContentService` → `IPackageService` → `IPackageStorageService`.
-With `Mirror:Enabled`, `PackageService` indexes a missing version from the upstream (`IUpstreamClient`, V3
-through `BaGet.Protocol` or V2 legacy) before serving it; mirrored packages go straight to
-`IPackageIndexingService`, never through validation.
+`PackageService` indexes a missing version from the repository's upstream (`IUpstreamClient`, V3
+through `BaGet.Protocol` or V2) before serving it; mirrored packages go straight to
+`IPackageIndexingService`, never through validation. The `IUpstreamClient` of a request is a `RemoteUpstreamClient`:
+`IRemoteUpstreamSource` resolves the upstream of the current repository (a remote repository's own settings; for
+`default`, the `mirror` remote repository while `Mirror:Enabled`; none for local repositories), then the client applies
+offline mode, the metadata and negative cache periods and stale-on-error, and records the upstream's health
+(`RemoteRepositoryState`, in memory). A remote repository that does not store locally is a pass-through
+(`IPassThroughUpstreamClient`, `IPackageService.OpenUncachedAsync`). See [Remote repositories](../remote-repositories.md).
 
 Deletion follows `PackageDeletionBehavior`: `Unlist` (hide) or `HardDelete` (rows and files).
 Administrators can always hard-delete from the UI.
@@ -147,7 +152,7 @@ the `AddRepositories` migration gives existing rows `RepositoryKey = 1`, and sta
 | `IRepositoryService` | Find / list / create repositories; name rules in one place, `RepositoryNames` (lowercase `[a-z0-9-._]`, 1-64, not a reserved route name) |
 | Azure Table | Holds the `default` repository only: creating another is refused, `TablePackageDatabase` refuses any other |
 
-Mirroring (`Mirror:*`) serves `default` only; other repositories are local. Package and symbol storage paths nest
+Other repositories are local or [remote](../remote-repositories.md) (`Repository.Settings` holds the upstream; the password is protected by data protection). Package and symbol storage paths nest
 under `repos/{name}/` for other repositories.
 
 ## Background work

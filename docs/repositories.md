@@ -7,7 +7,7 @@ A server holds one or more named repositories. Each has its own packages, owners
 | `default` | `/v3/index.json` (unchanged; every existing install is this one) |
 | any other | `/r/{name}/v3/index.json` |
 
-Only **local NuGet** repositories can be created today.
+Local and [remote](remote-repositories.md) (upstream cache) NuGet repositories can be created; virtual ones come later.
 
 ## Web pages
 
@@ -27,9 +27,9 @@ Administrators manage them at `/admin/repositories` (menu: *Repositories*). Othe
 
 | Page | Does |
 |---|---|
-| `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a repository |
-| `/admin/repositories/{name}` | Shows the feed and who effectively holds each action (see [Access control](access-control.md#admin-pages)); edits *Anonymous read* |
-| `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** |
+| `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a local or a [remote](remote-repositories.md) repository |
+| `/admin/repositories/{name}` | Shows the feed and who effectively holds each action (see [Access control](access-control.md#admin-pages)); edits *Anonymous read*; for a remote repository also its upstream, *Test connection*, the cache and *Purge* ([details](remote-repositories.md)) |
+| `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** (a remote one: purge its cache first) |
 
 Other administrator pages work across all repositories:
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Versioning;
@@ -66,4 +67,19 @@ public interface IPackageService
     /// <param name="version">The id of the package to update.</param>
     /// <param name="cancellationToken">A token to cancel the task.</param>
     Task AddDownloadAsync(string packageId, NuGetVersion version, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// For a remote repository that does not store what it fetches
+    /// (<see cref="RemoteRepositorySettings.StoreLocally"/> off): downloads the package from the upstream and returns
+    /// it, without indexing or storing it.
+    /// </summary>
+    /// <param name="id">The package id.</param>
+    /// <param name="version">The package version.</param>
+    /// <param name="cancellationToken">A token to cancel the task.</param>
+    /// <returns>
+    /// A seekable stream, or null when the repository stores locally (use the stored package), the package is stored
+    /// already, or the upstream does not have it.
+    /// </returns>
+    Task<Stream?> OpenUncachedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
+        => Task.FromResult<Stream?>(null);
 }

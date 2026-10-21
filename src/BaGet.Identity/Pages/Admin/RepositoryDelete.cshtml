@@ -22,7 +22,14 @@
     else if (Model.Repository?.PackageCount > 0)
     {
         <div class="alert alert-warning" role="alert" id="delete-repository-not-empty">
-            @Model.Name holds @Model.Repository.PackageCount package version(s). Delete them first.
+            @if (Model.Repository.Kind == BaGet.Core.RepositoryKind.Remote)
+            {
+                <text>@Model.Name holds @Model.Repository.PackageCount cached package version(s). Purge its cache first, on <a href="@Url.Page("/Admin/RepositoryEdit", new { name = Model.Name })">its page</a>.</text>
+            }
+            else
+            {
+                <text>@Model.Name holds @Model.Repository.PackageCount package version(s). Delete them first.</text>
+            }
         </div>
     }
     else

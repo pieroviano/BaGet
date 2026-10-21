@@ -20,13 +20,16 @@ public class RepositoryAdministration : IRepositoryAdministration
     private readonly IContext _context;
     private readonly IStorageService? _storage;
     private readonly SystemTime? _time;
+    private readonly RemoteRepositoryState? _remoteState;
 
     /// <param name="context">The database.</param>
     /// <param name="storage">The store whose <c>repos/{name}/</c> folder is emptied when a repository is deleted. Null leaves storage alone.</param>
     /// <param name="time">The clock for audit entries and created targets; null uses the system's.</param>
-    public RepositoryAdministration(IContext context, IStorageService? storage = null, SystemTime? time = null)
+    /// <param name="remoteState">The remote repositories' in-memory state, emptied for a deleted one; null has none.</param>
+    public RepositoryAdministration(IContext context, IStorageService? storage = null, SystemTime? time = null, RemoteRepositoryState? remoteState = null)
     {
         _time = time;
+        _remoteState = remoteState;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage;
     }
@@ -153,7 +156,7 @@ public class RepositoryAdministration : IRepositoryAdministration
         // (deleting a package adds an entry) and owner rows outlive their package, so those, the finished validations
         // and the abuse reports are history of a repository that no longer exists once it is deleted, and go with it.
         var hasPackages = await _context.Packages!.IgnoreQueryFilters().AnyAsync(e => e.RepositoryKey == key, cancellationToken).ConfigureAwait(false);
-        if (hasPackages) throw new RepositoryNotEmptyException(name);
+        if (hasPackages) throw new RepositoryNotEmptyException(name, remote: row.Kind == RepositoryKind.Remote);
 
         var hasPending = await _context.PackageValidations!.IgnoreQueryFilters()
             .AnyAsync(e => e.RepositoryKey == key && e.State == PackageValidationState.Pending, cancellationToken).ConfigureAwait(false);
@@ -184,6 +187,7 @@ public class RepositoryAdministration : IRepositoryAdministration
 
         _context.Repositories!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _remoteState?.Remove(key);
 
         await PurgeStorageAsync(key, row.Name ?? name, cancellationToken).ConfigureAwait(false);
     }

@@ -54,8 +54,10 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
     {
         var principal = await PrincipalAsync(user).ConfigureAwait(false);
 
+        // A remote repository takes no uploads, whatever the caller holds.
         return principal == null
-            ? await _evaluator.ReadableRepositoriesAsync(null, cancellationToken).ConfigureAwait(false)
+            ? (await _evaluator.ReadableRepositoriesAsync(null, cancellationToken).ConfigureAwait(false))
+                .Where(r => r.Kind != RepositoryKind.Remote).ToList()
             : await _evaluator.RepositoriesWithAsync(principal, AccessAction.Deploy, cancellationToken).ConfigureAwait(false);
     }
 
@@ -65,7 +67,7 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
     /// </summary>
     public async Task<bool> CanWriteAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
     {
-        if (repository.Format != RepositoryFormat.NuGet) return false;
+        if (repository.Format != RepositoryFormat.NuGet || repository.Kind == RepositoryKind.Remote) return false;
 
         var principal = await PrincipalAsync(user).ConfigureAwait(false);
 

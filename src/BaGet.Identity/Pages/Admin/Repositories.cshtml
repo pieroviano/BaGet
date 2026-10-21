@@ -80,5 +80,20 @@
             <button type="submit" class="btn btn-primary">Create</button>
             <p class="help-block">Local NuGet repository. Lowercase letters, digits, <code>-</code>, <code>.</code> and <code>_</code>; it cannot be renamed later.</p>
         </form>
+
+        <h2>New remote repository</h2>
+        <p class="help-block">
+            Caches another NuGet feed (nuget.org, another BaGet, Artifactory, Azure Artifacts...): a package not stored here is fetched
+            from the upstream the first time it is requested. Clients cannot push to it.
+        </p>
+        <form method="post" asp-page-handler="Remote" id="remote-create-form">
+            <div class="form-group">
+                <label for="remote-name">Name</label>
+                <input id="remote-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
+            </div>
+            <partial name="~/Pages/Admin/_RemoteFields.cshtml" for="Remote" />
+            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("createRemotePassword")" />
+            <button type="submit" class="btn btn-primary">Create remote repository</button>
+        </form>
     }
 </div>

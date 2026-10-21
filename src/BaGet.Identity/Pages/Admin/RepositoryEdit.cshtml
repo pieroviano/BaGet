@@ -8,6 +8,15 @@
     <h1>Repository @Model.Name</h1>
     <hr class="breadcrumb-divider" />
 
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-success" role="alert" id="repository-message">@Model.Message</div>
+    }
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger" role="alert" id="repository-error">@Model.Error</div>
+    }
+
     <dl>
         <dt>Type</dt>
         <dd>@Model.Repository?.Format / @Model.Repository?.Kind</dd>
@@ -19,9 +28,18 @@
                 Copy
             </button>
         </dd>
-        <dt>Packages</dt>
+        <dt>@(Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote ? "Cached packages" : "Packages")</dt>
         <dd>@Model.Repository?.PackageCount</dd>
     </dl>
+
+    @if (Model.MirrorActive)
+    {
+        <p class="alert alert-info" id="repository-mirror-note">
+            <code>Mirror:Enabled</code> is on: this repository fetches packages it does not hold from the upstream of the remote repository
+            <a href="@Url.Page("/Admin/RepositoryEdit", new { name = BaGet.Core.Repository.MirrorName })">@BaGet.Core.Repository.MirrorName</a>
+            (credentials, cache periods and offline mode are set there) and stores them here.
+        </p>
+    }
 
     <form method="post">
         <div class="checkbox">
@@ -31,9 +49,98 @@
             </label>
             <input type="hidden" name="anonymousRead" value="false" />
         </div>
+
+        @if (Model.RemoteDetail != null)
+        {
+            <section id="repository-section-remote">
+                <h2>Upstream</h2>
+                @if (Model.Remote.Url != null && Model.Remote.Username != null && Model.Remote.Url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="alert alert-warning" role="alert" id="remote-insecure">The upstream URL is not https: the credentials travel unencrypted.</div>
+                }
+                <partial name="~/Pages/Admin/_RemoteFields.cshtml" for="Remote" />
+
+                @if (Model.TestResult != null)
+                {
+                    <div class="alert @(Model.TestResult.Success ? "alert-success" : "alert-danger")" role="status" id="remote-test-result">
+                        @Model.TestResult.Message
+                        <small>(@Model.TestResult.ElapsedMilliseconds ms)</small>
+                    </div>
+                }
+                <button type="submit" class="btn btn-default" id="remote-test" asp-page-handler="Test">Test connection</button>
+                <span class="help-block">Asks the upstream with the values above, saved or not, and saves nothing.</span>
+            </section>
+        }
+
+        @if (Model.RemoteDetail != null)
+        {
+            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("savePassword")" />
+        }
         <button type="submit" class="btn btn-primary">Save</button>
         <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
     </form>
+
+    @if (Model.RemoteDetail != null && Model.Cache != null)
+    {
+        var status = Model.Cache.Status;
+        <section id="repository-section-cache">
+            <h2>Cache</h2>
+            <table class="table" id="remote-cache">
+                <tbody>
+                    <tr><th>Stored packages</th><td id="cache-packages">@Model.Cache.PackageCount version(s) of @Model.Cache.PackageIdCount package(s)</td></tr>
+                    <tr><th>Remembered answers</th><td id="cache-entries">@status.MetadataEntries metadata, @status.NegativeEntries not found (this node, since it started)</td></tr>
+                    <tr><th>Cache hits / upstream requests</th><td id="cache-counters">@status.Hits / @status.Misses (not found from cache: @status.NegativeHits, expired served while the upstream was down: @status.StaleServed)</td></tr>
+                    <tr>
+                        <th>Upstream</th>
+                        <td id="cache-health">
+                            @if (Model.RemoteDetail.Settings.Offline)
+                            {
+                                <text>Offline mode: never contacted.</text>
+                            }
+                            else if (status.FailingSinceUtc != null)
+                            {
+                                <span class="text-danger">Failing since @status.FailingSinceUtc.Value.ToString("u"): @status.LastError</span>
+                            }
+                            else if (status.LastSuccessUtc != null)
+                            {
+                                <text>Answered at @status.LastSuccessUtc.Value.ToString("u").</text>
+                            }
+                            else
+                            {
+                                <text>Not contacted yet.</text>
+                            }
+                            @if (status.Failures > 0)
+                            {
+                                <text> @status.Failures failed attempt(s) so far.</text>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                <a id="remote-browse" href="@Url.Page("/Index", new { repo = Model.Repository?.Name })">Browse the cached packages</a>
+            </p>
+
+            <form method="post" asp-page-handler="Purge" id="remote-purge-form">
+                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePassword")" />
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Delete every cached package of this repository? They are fetched again when requested.');">Purge cache</button>
+                <span class="help-block">Deletes the stored packages and forgets the remembered answers.</span>
+            </form>
+
+            <form method="post" asp-page-handler="PurgePackage" class="form-inline" id="remote-purge-package-form">
+                <div class="form-group">
+                    <label for="purge-package-id">Package id</label>
+                    <input id="purge-package-id" name="packageId" type="text" class="form-control" value="@Model.PackageId" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label for="purge-package-version">Version</label>
+                    <input id="purge-package-version" name="packageVersion" type="text" class="form-control" value="@Model.PackageVersion" placeholder="all versions" autocomplete="off" />
+                </div>
+                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePackagePassword")" />
+                <button type="submit" class="btn btn-default">Purge package</button>
+            </form>
+        </section>
+    }
 
     @if (Model.Access != null)
     {
@@ -62,9 +169,10 @@
                         @foreach (var action in BaGet.Identity.Pages.Admin.AccessPageModel.AllActions)
                         {
                             var who = Model.Access.Who(action);
+                            var remoteDeploy = action == BaGet.Core.AccessAction.Deploy && Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote;
                             <tr data-action="@action">
                                 <th>@action</th>
-                                <td>@(who.Count == 0 ? "nobody but administrators" : string.Join(", ", who))</td>
+                                <td>@(remoteDeploy ? "nobody: a remote repository takes no deployments, the server caches what it fetches" : who.Count == 0 ? "nobody but administrators" : string.Join(", ", who))</td>
                             </tr>
                         }
                     </tbody>

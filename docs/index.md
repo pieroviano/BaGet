@@ -20,7 +20,7 @@ You can run BaGet Extension on your preferred platform:
 
 ## Repositories
 
-One server can hold several [repositories](repositories.md), each with its own feed at `/r/{name}/v3/index.json`; `default` stays at `/`.
+One server can hold several [repositories](repositories.md), each with its own feed at `/r/{name}/v3/index.json`; `default` stays at `/`. A [remote repository](remote-repositories.md) caches another feed (credentials, cache periods, offline mode, purge).
 
 ## Access control
 

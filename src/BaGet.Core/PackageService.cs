@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,6 +69,16 @@ public class PackageService : IPackageService
         NuGetVersion version,
         CancellationToken cancellationToken)
     {
+        if (await IsPassThroughAsync(cancellationToken))
+        {
+            var stored = await _db.FindOrNullAsync(id, version, includeUnlisted: true, cancellationToken);
+            if (stored != null || id == null) return stored;
+
+            var upstream = await _upstream.ListPackagesAsync(id, cancellationToken);
+
+            return upstream.FirstOrDefault(p => p.Version == version);
+        }
+
         if (!await MirrorAsync(id, version, cancellationToken))
         {
             return null;
@@ -78,8 +89,34 @@ public class PackageService : IPackageService
 
     public async Task<bool> ExistsAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
+        if (await IsPassThroughAsync(cancellationToken))
+        {
+            if (await _db.ExistsAsync(id, version, cancellationToken)) return true;
+            if (id == null) return false;
+
+            return (await _upstream.ListPackageVersionsAsync(id, cancellationToken)).Contains(version);
+        }
+
         return await MirrorAsync(id, version, cancellationToken);
     }
+
+    public async Task<Stream?> OpenUncachedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
+    {
+        if (!await IsPassThroughAsync(cancellationToken)) return null;
+        if (await _db.ExistsAsync(id, version, cancellationToken)) return null;
+
+        _logger.LogInformation(
+            "Streaming package {PackageId} {PackageVersion} through from the upstream feed (not stored)",
+            id,
+            version);
+
+        return await _upstream.DownloadPackageOrNullAsync(id, version, cancellationToken);
+    }
+
+    // The repository fetches from an upstream but keeps nothing (RemoteRepositorySettings.StoreLocally off).
+    private async Task<bool> IsPassThroughAsync(CancellationToken cancellationToken)
+        => _upstream is IPassThroughUpstreamClient passThrough
+           && await passThrough.IsPassThroughAsync(cancellationToken);
 
     public async Task AddDownloadAsync(string packageId, NuGetVersion version, CancellationToken cancellationToken)
     {

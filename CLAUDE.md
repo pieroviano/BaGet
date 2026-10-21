@@ -70,7 +70,7 @@ change: a feature is not done while it exists only as REST, CLI or a service met
 
 | Project | Role |
 |---|---|
-| `BaGet.Core` | Domain: entities, repositories, `IPackageDatabase`, `IStorageService`, `ISearchService`, indexing, mirroring, options |
+| `BaGet.Core` | Domain: entities, repositories (local and remote), `IPackageDatabase`, `IStorageService`, `ISearchService`, indexing, mirroring and remote caches, options |
 | `BaGet.Web` | V3 endpoints, Razor Pages, `BaGetEndpointBuilder`, `IUrlGenerator` |
 | `BaGet.Web.V2` | Legacy V2 OData/Atom feed, gated by `Feeds:EnableV2` |
 | `BaGet.Protocol` | Standalone **client** for NuGet V3 (also shipped as a package) |
@@ -142,11 +142,30 @@ submission's repository itself. `IRepositoryService` finds/lists/creates (`Repos
 `DatabaseCopyService` deletes before copying the source's rows. Azure Table (`NullContext`) and `Search:Type` =
 `AzureSearch` (one global index, document keys without a repository) have the default repository only:
 `SupportsMultipleRepositories` is false, `CreateAsync` and `TablePackageDatabase` refuse others and
-`RepositoryService.FindAsync` serves `default` only. The mirror serves `default` only (`UpstreamClientFactory`).
+`RepositoryService.FindAsync` serves `default` only (so remote repositories cannot exist there; `Mirror:*` is read directly).
 API keys can be limited to repositories (`ApiKeyRepository`; none = all): `AccountAuthenticationService` puts them in `BaGetPrincipal.RepositoryKeys`, `AccessEvaluator` refuses every action outside them (administrators too) and judges a Read as anonymous; `RepositoryAdministration.DeleteAsync` drops the rows and the keys left with none (else they would turn unlimited).
 `IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with packages or a pending validation; its
 catalog entries, owners, validations and abuse reports are purged with it, and so is `repos/{name}/` in storage when the store is `IListableStorageService`) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
 (names are immutable; only `AnonymousRead` is editable; writes call `MaintenanceGate.ThrowIfClosed`; feed URLs derive from `IUrlGenerator`).
+
+**Remote repositories** (`RepositoryKind.Remote`; `BaGet.Core/Repositories/Remote`, docs: `docs/remote-repositories.md`). The upstream
+is `RemoteRepositorySettings` as JSON in `Repository.Settings` (no extra table; the password is stored as `protectedPassword` through
+`IRemoteCredentialProtector` = data protection, only `RemoteSettingsCodec` reads/writes it, a page never gets it back, nothing logs it).
+`UpstreamClientFactory` returns a `RemoteUpstreamClient` for every repository: `IRemoteUpstreamSource` resolves the upstream (remote -> its own
+settings; `default` with `Mirror:Enabled` -> the `mirror` remote repository, created/synced at startup by
+`IRemoteRepositoryAdministration.EnsureMirrorRepositoryAsync`, its URL/protocol/timeout owned by `Mirror:*`, the rest editable; else none).
+That is the seam where D3's virtual repositories plug in. The client does offline mode, the metadata TTL, the negative TTL (only a real 404:
+`V2/V3UpstreamClient(propagateErrors: true)` throw everything else, which is never cached as "not found" and is served stale if an expired
+answer exists) and records health; `RemoteRepositoryState` (singleton, in memory per node, takes a `TimeProvider`) holds settings (5 s),
+answers, counters and the pooled `HttpClient`/`NuGetClient` (a V3 service index is cached by the latter). Credentials go to the upstream's own origin only
+(`HostScopedBasicAuthHandler`); replace `IRemoteHttpClientFactory` to change the transport (tests: `ForwardingRemoteHttpClientFactory`;
+registering an `HttpClient` no longer affects mirroring). Cached packages are ordinary rows of the remote repository
+(`PackageService.MirrorAsync` indexes into the current repository). `StoreLocally=false` is a pass-through
+(`IPassThroughUpstreamClient`, `IPackageService.OpenUncachedAsync`): nothing is stored. `Deploy` is never granted on a remote
+(`AccessEvaluator.IsAllowedAsync`/`ExplainAsync`, administrators too), `[RemoteRepositoryReadOnly]` answers `403` on push and symbol push
+(accounts off too), `AccessRepositoryAccess` hides it from the upload picker. Admin pages: create on `Repositories`, edit/test/cache/purge on
+`RepositoryEdit` (create, save and purge ask for the password: `RepositoryPageModel`; *Test connection* does not, and sends the stored password
+only while URL and user name are unchanged). Purge hard-deletes through `IPackageDeletionService` in a `CreateRepositoryScope`.
 
 **Admin operations** (`BaGet.Core/Operations`). `AdminJobService` (singleton) runs `IAdminOperation`s (`DownloadsImportOperation` in Core,
 `CatalogRebuildOperation` in `BaGet.Catalog`; register more with `TryAddEnumerable`) in the background in a repository scope, one run per

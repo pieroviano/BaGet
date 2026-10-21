@@ -41,6 +41,7 @@ public class PackagePublishController : Controller
     }
 
     // See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#push-a-package
+    [RemoteRepositoryReadOnly]
     public async Task Upload(CancellationToken cancellationToken)
     {
         var principal = _options.Value.IsReadOnlyMode

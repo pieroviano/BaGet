@@ -25,6 +25,7 @@
   <ItemGroup>
     <!-- The real-host harness and package builder, shared with BaGet.Tests. -->
     <Compile Include="..\BaGet.Tests\Support\BaGetApplication.cs" Link="Shared\BaGetApplication.cs" />
+    <Compile Include="..\BaGet.Tests\Support\ForwardingRemoteHttpClientFactory.cs" Link="Shared\ForwardingRemoteHttpClientFactory.cs" />
     <Compile Include="..\BaGet.Tests\Support\CapturingEmailSender.cs" Link="Shared\CapturingEmailSender.cs" />
     <Compile Include="..\BaGet.Tests\Support\TestPackages.cs" Link="Shared\TestPackages.cs" />
     <Compile Include="..\BaGet.Tests\Support\XunitLogger.cs" Link="Shared\XunitLogger.cs" />

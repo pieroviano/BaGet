@@ -24,6 +24,12 @@ public class Repository
     /// </summary>
     public const int DefaultKey = 1;
 
+    /// <summary>
+    /// The name of the remote repository created from the <c>Mirror:*</c> options when <c>Mirror:Enabled</c> is set;
+    /// the default repository fetches through it (see <see cref="IRemoteUpstreamSource"/>).
+    /// </summary>
+    public const string MirrorName = "mirror";
+
     public int Key { get; set; }
 
     /// <summary>
@@ -43,8 +49,9 @@ public class Repository
     public int? ProjectKey { get; set; }
 
     /// <summary>
-    /// Format and kind specific settings as JSON (a remote's upstream URL, a virtual's members). Opaque to the
-    /// common code.
+    /// Format and kind specific settings as JSON: a remote's upstream (<see cref="RemoteRepositorySettings"/>, read
+    /// and written by <see cref="RemoteSettingsCodec"/> only, as it holds a protected password), later a virtual's
+    /// members. Opaque to the common code.
     /// </summary>
     public string? Settings { get; set; }
 

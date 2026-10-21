@@ -12,7 +12,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | Phase | State | Commits / where |
 |---|---|---|
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
-| P1 Remote and virtual NuGet | Not started | `RepositoryKind.Remote`/`Virtual` exist as values only; `RepositoryService.CreateAsync` refuses them (`RepositoryService.cs:93-99`) |
+| P1 Remote and virtual NuGet | **Remote + caching done** (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); **virtual not started** (wave 2) | `RepositoryService.CreateAsync` accepts `Remote`; `Virtual` is still refused |
 | P2 Access control | **Done** (implemented with its UI by the UI-coverage plan, since removed); documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
 | P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
@@ -27,7 +27,8 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | **B5** | Vulnerability data source | Licensing and offline use. | OSV.dev (API free, data CC-BY 4.0 / per-source licences) covers NuGet, npm and Maven. Docker images need image scanning (OS packages), which OSV doesn't do. Decide in D7. |
 | **B6** | Client test rigs | Protocol tests need the real `dotnet nuget`, `npm`, `mvn` and `docker` clients. | Testcontainers images with each CLI (`node`, `maven`, `docker:dind`), skipped without Docker like `BaGet.Database.Tests`. Confirm `docker:dind` runs on the CI and dev machines (privileged). |
 | **B7** | Upgrade path | Existing installs have one feed. URLs, storage paths (`packages/…`, `PackageStorageService.cs:12`), owners and API keys must keep working. | **Done (P0):** `UpgradeFromPreRepositoryTests` (SQLite app level incl. the `packages/…` store) and `EngineUpgradeTests` (all four engines, `82bfe77`). |
-| **B8** | Azure Table database | Non-relational, packages only (CLAUDE.md). | **Decided (P0):** Azure Table and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`; creating another repository is refused rather than refusing startup). |
+| **B8** | Azure Table database | Non-relational, packages only (CLAUDE.md). | **Decided (P0), applies to P1:** Azure Table and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`; creating another repository, remote ones included, is refused rather than refusing startup). There `Mirror:*` is read directly (no `mirror` row can exist) and works as before. |
+| **B9** | Where a remote's credentials live (P1) | A password must not sit in clear in `Repository.Settings`, logs or a page. | **Done (P1):** protected with ASP.NET Core data protection (`IRemoteCredentialProtector`; `Microsoft.AspNetCore.DataProtection.Abstractions` in Core restores cleanly beside the 9.0.21 pins), stored as `protectedPassword` in the `Settings` JSON, never read back to a page, never logged; a host with no data protection refuses to store one. No schema change: `Settings` is an unbounded string on all four providers, so no migration. The keys live with the host's key ring (P10 moves them into the DB). |
 
 ## Decisions
 
@@ -77,9 +78,22 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 
 | Item | Note |
 |---|---|
-| Remote: upstream URL (V3 or V2), credentials (sensitive), cache period for metadata, "store artifacts locally" | Generalises `PackageService` mirroring per repository. Upgrade converts `Mirror:*` into a remote repo inside `default`'s virtual (D3) |
+| Remote: upstream URL (V3 or V2), credentials (sensitive), cache period for metadata, "store artifacts locally" | **Done.** Generalises `PackageService` mirroring per repository. Upgrade converts `Mirror:*` into a remote repo; `default`'s virtual (D3) is wave 2, see *As built* |
 | Virtual: ordered members, default deploy repository, resolution order for search/registration/download (first hit), merged search with paging | Search across members needs a merge with stable ordering. Database search per member, then k-way merge |
-| Caching | Metadata TTL, negative cache for 404s, offline mode |
+| Caching | **Done.** Metadata TTL, negative cache for 404s, offline mode |
+
+#### As built: remote repositories and caching (track `p1-remote`)
+
+| Item | As built |
+|---|---|
+| Model | `Repository.Kind = Remote`, upstream in `Repository.Settings` (`RemoteRepositorySettings`: URL, protocol V3/V2, user, protected password, metadata TTL, negative TTL, offline, store locally, timeout). No migration |
+| Fetching | `UpstreamClientFactory` returns `RemoteUpstreamClient` for every repository: `IRemoteUpstreamSource` resolves the upstream of the current repository, the client applies offline, TTLs, stale-on-error and health (`RemoteRepositoryState`, in memory per node). `V2/V3UpstreamClient` gained `propagateErrors` so only a real 404 is cached as "not found" |
+| **Seam for D3 (wave 2)** | `IRemoteUpstreamSource.ResolveAsync(repository)`: remote -> its own settings; `default` with `Mirror:Enabled` -> the `mirror` remote repository (created/synced at startup by `EnsureMirrorRepositoryAsync`; URL/protocol/timeout stay owned by `Mirror:*`); else none. A virtual repository resolves its members here. Until then the default repository stores mirrored packages in its own rows, exactly as before |
+| Pass-through | `StoreLocally=false`: `PackageService` answers from the upstream and `IPackageService.OpenUncachedAsync` streams downloads; nothing is stored |
+| Access | `Deploy` is never granted on a remote (`AccessEvaluator`, administrators too); `[RemoteRepositoryReadOnly]` on push and symbol push (`403`, also without accounts); upload picker and page exclude it. Read, Delete, Annotate follow the model |
+| UI | `/admin/repositories` creates remote repositories; `/admin/repositories/{name}`: upstream form, *Test connection* (unsaved values), cache status, *Purge cache*, *Purge package*, browse link; mirror note on `default`. Create, save and purge ask for the password again |
+| Tests | `RemoteRepositoryTests` (service + HTTP, in-memory upstream, fake clock), `AdminRemoteRepositoriesTests`, `MirrorRepositoryTests`, `RemoteRepositorySettingsTests` (Core) |
+| Not done | V2 remotes are not exercised end to end (NuGet.Protocol uses its own HTTP stack, so there is no in-memory upstream); remembered answers and counters are per node (P10 shares them); purge runs inline (a very large cache would deserve an `AdminJobService` job) |
 
 ### P2 — Access control (D4)
 

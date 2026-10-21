@@ -18,11 +18,25 @@ public class V3UpstreamClient : IUpstreamClient
 {
     private readonly NuGetClient _client;
     private readonly ILogger<V3UpstreamClient> _logger;
+    private readonly bool _propagateErrors;
 
     public V3UpstreamClient(NuGetClient client, ILogger<V3UpstreamClient> logger)
+        : this(client, logger, propagateErrors: false)
+    {
+    }
+
+    /// <param name="client">The client of the upstream.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="propagateErrors">
+    /// When true only "not found" is an empty answer and every other failure (network, 5xx, 401) is thrown, so a caller
+    /// that caches answers (<see cref="RemoteUpstreamClient"/>) can tell "the upstream says no" from "the upstream could
+    /// not be asked". False (the mirror's historic behaviour) logs the failure and answers as if not found.
+    /// </param>
+    public V3UpstreamClient(NuGetClient client, ILogger<V3UpstreamClient> logger, bool propagateErrors)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _propagateErrors = propagateErrors;
     }
 
     public async Task<Stream?> DownloadPackageOrNullAsync(
@@ -41,7 +55,7 @@ public class V3UpstreamClient : IUpstreamClient
         {
             return null;
         }
-        catch (Exception e)
+        catch (Exception e) when (!_propagateErrors)
         {
             _logger.LogError(
                 e,
@@ -62,7 +76,7 @@ public class V3UpstreamClient : IUpstreamClient
 
             return packages.Select(ToPackage).ToList();
         }
-        catch (Exception e)
+        catch (Exception e) when (!_propagateErrors)
         {
             _logger.LogError(e, "Failed to mirror {PackageId}'s upstream metadata", id);
             return new List<Package>();
@@ -77,7 +91,7 @@ public class V3UpstreamClient : IUpstreamClient
         {
             return await _client.ListPackageVersionsAsync(id, includeUnlisted: true, cancellationToken);
         }
-        catch (Exception e)
+        catch (Exception e) when (!_propagateErrors)
         {
             _logger.LogError(e, "Failed to mirror {PackageId}'s upstream versions", id);
             return new List<NuGetVersion>();

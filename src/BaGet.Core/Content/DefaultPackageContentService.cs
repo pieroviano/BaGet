@@ -48,6 +48,10 @@ public class DefaultPackageContentService : IPackageContentService
         NuGetVersion version,
         CancellationToken cancellationToken = default)
     {
+        // A remote repository that stores nothing streams the upstream's file through.
+        var uncached = await _packages.OpenUncachedAsync(id, version, cancellationToken);
+        if (uncached != null) return uncached;
+
         if (!await _packages.ExistsAsync(id, version, cancellationToken))
         {
             return null;
@@ -59,6 +63,11 @@ public class DefaultPackageContentService : IPackageContentService
 
     public async Task<Stream?> GetPackageManifestStreamOrNullAsync(string id, NuGetVersion version, CancellationToken cancellationToken = default)
     {
+        using (var uncached = await _packages.OpenUncachedAsync(id, version, cancellationToken))
+        {
+            if (uncached != null) return ReadNuspec(uncached);
+        }
+
         if (!await _packages.ExistsAsync(id, version, cancellationToken))
         {
             return null;
@@ -87,5 +96,24 @@ public class DefaultPackageContentService : IPackageContentService
         }
 
         return await _storage.GetIconStreamAsync(id, version, cancellationToken);
+    }
+
+    // The .nuspec at the root of a package, copied to memory so the package stream can be disposed.
+    private static Stream? ReadNuspec(Stream package)
+    {
+        using var archive = new System.IO.Compression.ZipArchive(package, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: true);
+        var entry = archive.Entries.FirstOrDefault(e =>
+            e.FullName.IndexOf('/') < 0 && e.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
+        if (entry == null) return null;
+
+        var copy = new MemoryStream();
+        using (var source = entry.Open())
+        {
+            source.CopyTo(copy);
+        }
+
+        copy.Position = 0;
+
+        return copy;
     }
 }

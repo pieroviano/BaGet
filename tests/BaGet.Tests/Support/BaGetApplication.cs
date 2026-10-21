@@ -132,6 +132,7 @@ public class BaGetApplication : WebApplicationFactory<Program>
                 if (_upstreamClient != null)
                 {
                     services.AddSingleton(_upstreamClient);
+                    services.AddSingleton<IRemoteHttpClientFactory>(new ForwardingRemoteHttpClientFactory(_upstreamClient));
                 }
 
                 // Setup the integration test database.

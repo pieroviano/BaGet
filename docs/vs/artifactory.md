@@ -8,7 +8,7 @@
 | NuGet V3 | Yes: `/api/nuget/v3/<repo>/index.json`; PackageBaseAddress only on repos with *Enforce Layout* (fixed at creation) | Yes: `/v3/index.json`; registration not paged |
 | NuGet V2 | Yes: `/api/nuget/<repo>` | Yes: `/api/v2` OData, on by default (`Feeds:EnableV2`); `$filter`/`$orderby`/`$select`/`$expand` ignored |
 | Symbols | Local, remote and virtual symbol repos; `.snupkg`; Microsoft PDB v7 and Portable PDB | Yes: `.snupkg` push, download endpoint; Portable PDB only |
-| Proxy / upstream cache | Remote repos (nuget.org or another Artifactory); cached on demand | Optional pull-through mirror (`Mirror:Enabled`, off by default); one upstream; copy is indexed permanently; search does not query upstream |
+| Proxy / upstream cache | Remote repos (nuget.org or another Artifactory); cached on demand | [Remote repositories](../remote-repositories.md): per-repository upstream (V3 or V2), Basic credentials, metadata and negative cache periods, offline mode, pass-through or stored copies, test connection, purge; plus the optional `Mirror:Enabled` mirror for the default repository. Stored copies are permanent until purged; search does not query upstream |
 | Virtual / group feeds | Virtual repos combine local and remote behind one URL; push allowed | Not supported |
 | Multiple feeds | Many repositories per instance | One feed per instance |
 | Private (authenticated) reads | Yes: anonymous access configurable (JFrog recommends off; anonymous removed from default permissions since 7.84.3); *Force Authentication* per repo | Not supported: read routes are open |
