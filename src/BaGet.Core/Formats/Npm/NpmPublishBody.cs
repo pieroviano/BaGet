@@ -103,6 +103,12 @@ public static class NpmPublishBody
     private const int ChunkSize = 1 << 20;
 
     /// <summary>
+    /// The most the document may hold apart from the tarballs (the manifest, readme and the rest), which is parsed in memory:
+    /// a body that is nearly all JSON text and no tarball would otherwise be held whole.
+    /// </summary>
+    public const long MaxMetadataBytes = 64L * 1024 * 1024;
+
+    /// <summary>
     /// Reads the body.
     /// </summary>
     /// <param name="body">The request body.</param>
@@ -333,6 +339,7 @@ public static class NpmPublishBody
             }
 
             position += read;
+            if (output.Length > MaxMetadataBytes) throw new NpmBodyTooLargeException(MaxMetadataBytes);
         }
 
         if (inString) throw new InvalidDataException("The request ends inside a string.");

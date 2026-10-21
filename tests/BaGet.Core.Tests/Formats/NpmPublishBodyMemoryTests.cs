@@ -62,4 +62,14 @@ public class NpmPublishBodyMemoryTests
             File.Delete(path);
         }
     }
+
+    [Fact]
+    public async Task ABodyThatIsAllMetadataIsRefusedOnceItOutgrowsTheMetadataLimit()
+    {
+        // 70 MB of readme and no tarball: this would be held in memory whole to be parsed.
+        var text = "{\"name\":\"left-pad\",\"readme\":\"" + new string('x', 70 * 1024 * 1024) + "\"}";
+        using var body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
+
+        await Assert.ThrowsAsync<NpmBodyTooLargeException>(() => NpmPublishBody.ParseAsync(body, 0, TestContext.Current.CancellationToken));
+    }
 }

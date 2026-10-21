@@ -477,7 +477,8 @@ public class NpmController : Controller
         JsonObject? root;
         try
         {
-            root = await ReadJsonAsync(_npmOptions.Value.MaxPublishBytes, cancellationToken) as JsonObject;
+            // A packument (no tarball in it): metadata and readmes, so the metadata limit of a publish applies.
+            root = await ReadJsonAsync(NpmPublishBody.MaxMetadataBytes, cancellationToken) as JsonObject;
         }
         catch (Exception e) when (e is JsonException or InvalidDataException)
         {

@@ -21,12 +21,14 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2312 tests** across `BaGet.Core.Tests` (621), `BaGet.Tests` (1374),
+Baseline: **2491 tests** across `BaGet.Core.Tests` (699), `BaGet.Tests` (1466),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (58),
-`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (6, Docker). On a machine with a local Jaeger
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (15, Docker). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
 `TelemetryE2ETests`) fail on a clean checkout too; not investigated. Checked at `e213fe0` without Jaeger: 11 of them (`TelemetryExportTests` x3,
-`TelemetrySettingsPageTests` x8) fail on a clean checkout, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan...` fails in the full run (passes alone). No external services needed; integration tests
+`TelemetrySettingsPageTests` x8) fail on a clean checkout, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan...` fails in the full run (passes alone). With Docker running, the 2
+`TelemetryE2ETests` (Jaeger container) fail at `173c5a3` too (checked in a detached worktree). `AdminOperationsTests.RetryValidatesAgainAndIndexesWhenItNowPasses` failed once in a 14-minute full
+run and passes alone (a timing race in the validation worker, not npm). Only the Docker test projects need services; integration tests
 use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
