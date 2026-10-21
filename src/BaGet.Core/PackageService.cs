@@ -113,6 +113,26 @@ public class PackageService : IPackageService
         return await _upstream.DownloadPackageOrNullAsync(id, version, cancellationToken);
     }
 
+    /// <summary>
+    /// What a request for this version would find in this repository, without fetching or storing anything: stored, or
+    /// held by its upstream (it would be fetched), or neither. The same two steps as <see cref="MirrorAsync"/> (the
+    /// stored copy, then the upstream, whose own rules for offline mode and remembered answers
+    /// <see cref="IUpstreamClient.ProbeAsync"/> applies), so the resolution preview of a virtual repository cannot
+    /// disagree with a real download.
+    /// </summary>
+    public async Task<ResolutionOutcome> ProbeAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    {
+        if (await _db.ExistsAsync(id, version, cancellationToken).ConfigureAwait(false)) return ResolutionOutcome.Stored;
+
+        return await _upstream.ProbeAsync(id, version, cancellationToken).ConfigureAwait(false) switch
+        {
+            UpstreamProbe.Available => ResolutionOutcome.WouldFetch,
+            UpstreamProbe.Offline => ResolutionOutcome.Offline,
+            UpstreamProbe.Unavailable => ResolutionOutcome.Unavailable,
+            _ => ResolutionOutcome.NotFound,
+        };
+    }
+
     // The repository fetches from an upstream but keeps nothing (RemoteRepositorySettings.StoreLocally off).
     private async Task<bool> IsPassThroughAsync(CancellationToken cancellationToken)
         => _upstream is IPassThroughUpstreamClient passThrough

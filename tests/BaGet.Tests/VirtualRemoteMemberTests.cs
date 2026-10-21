@@ -187,6 +187,45 @@ public class VirtualRemoteMemberTests : IDisposable
     }
 
     [Fact]
+    public async Task ThePreviewReportsAnOfflineRemoteMemberAsOfflineAndDoesNotAskIt()
+    {
+        await SeedUpstreamAsync();
+        using var scope = _app.Services.CreateScope();
+        var remotes = scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>();
+        var settings = (await remotes.FindAsync("up", Cancel))!.Settings;
+        settings.Offline = true;
+        await remotes.UpdateAsync("up", settings, clearPassword: false, Cancel);
+        var requestsBefore = _wire.Requests.Length;
+
+        var preview = await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>()
+            .PreviewAsync("v", "TestData", NuGetVersion.Parse("1.2.3"), Cancel);
+
+        Assert.Null(preview.Answers);
+        Assert.Equal(ResolutionOutcome.Offline, preview.Steps.Last().Outcome);
+        Assert.Equal(requestsBefore, _wire.Requests.Length);
+        Assert.Equal(HttpStatusCode.NotFound, await GetAsync("r/v/" + Nupkg));
+    }
+
+    [Fact]
+    public async Task ThePreviewHonoursARememberedNotFoundLikeARealDownload()
+    {
+        // A real request for a version the upstream does not have remembers the 404 for the negative period...
+        Assert.Equal(HttpStatusCode.NotFound, await GetAsync("r/up/" + Nupkg));
+        await SeedUpstreamAsync();
+        var requestsBefore = _wire.Requests.Length;
+
+        // ...and so answers 404 again without asking; the preview must say the same instead of finding it upstream.
+        Assert.Equal(HttpStatusCode.NotFound, await GetAsync("r/up/" + Nupkg));
+        using var scope = _app.Services.CreateScope();
+        var preview = await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>()
+            .PreviewAsync("v", "TestData", NuGetVersion.Parse("1.2.3"), Cancel);
+
+        Assert.Null(preview.Answers);
+        Assert.Equal(ResolutionOutcome.NotFound, preview.Steps.Last().Outcome);
+        Assert.Equal(requestsBefore, _wire.Requests.Length);
+    }
+
+    [Fact]
     public async Task AnUnreachableUpstreamIsReportedByThePreviewAndTheRestStillAnswers()
     {
         _wire.Down = true;
@@ -254,6 +293,26 @@ public class VirtualDefaultMirrorTests : IDisposable
 
         using var direct = await _client.GetAsync(nupkg, Cancel);
         Assert.Equal(HttpStatusCode.OK, direct.StatusCode);
+    }
+
+    [Fact]
+    public async Task ThePreviewAsksDefaultsMirrorLikeARealRequestDoes()
+    {
+        using (var package = TestResources.GetResourceStream(TestResources.Package))
+        {
+            await _upstream.AddPackageAsync(package, Cancel);
+        }
+
+        using var scope = _app.Services.CreateScope();
+        var preview = await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>()
+            .PreviewAsync("v", "TestData", NuGetVersion.Parse("1.2.3"), Cancel);
+
+        // default is a local repository but falls through to the mirror, so a request would fetch it.
+        Assert.Equal("default", preview.Answers!.Name);
+        Assert.Equal(ResolutionOutcome.WouldFetch, preview.Steps.Single().Outcome);
+
+        using var response = await _client.GetAsync("r/v/v3/package/testdata/1.2.3/testdata.1.2.3.nupkg", Cancel);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]

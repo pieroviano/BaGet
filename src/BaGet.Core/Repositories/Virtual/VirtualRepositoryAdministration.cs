@@ -46,8 +46,11 @@ public enum ResolutionOutcome
     /// <summary>A remote member whose upstream could not be asked.</summary>
     Unavailable,
 
-    /// <summary>Not asked: an earlier member already answers (a remote member's upstream is not contacted then).</summary>
+    /// <summary>Not asked: an earlier member already answers (a member's upstream is not contacted then).</summary>
     NotAsked,
+
+    /// <summary>The member does not store it and its upstream is in offline mode, so a request would not ask it.</summary>
+    Offline,
 }
 
 /// <summary>One member's part in <see cref="ResolutionPreview"/>.</summary>
@@ -118,17 +121,14 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     private readonly IServiceScopeFactory _scopes;
     private readonly MaintenanceGate? _gate;
     private readonly SystemTime? _time;
-    private readonly RemoteRepositoryState? _remoteState;
 
     public VirtualRepositoryAdministration(
         IContext context,
         IRepositoryService repositories,
         IServiceScopeFactory scopes,
         MaintenanceGate? gate = null,
-        SystemTime? time = null,
-        RemoteRepositoryState? remoteState = null)
+        SystemTime? time = null)
     {
-        _remoteState = remoteState;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
@@ -260,35 +260,31 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
 
         foreach (var member in detail.EffectiveMembers)
         {
-            using var scope = _scopes.CreateRepositoryScope(member);
-            var provider = scope.ServiceProvider;
-
-            var outcome = ResolutionOutcome.NotFound;
-            if (await provider.GetRequiredService<IPackageDatabase>().ExistsAsync(packageId, version, cancellationToken).ConfigureAwait(false))
+            // Once a member answers the later ones are not asked: a real request stops there, and probing an upstream
+            // is a request to it.
+            var outcome = ResolutionOutcome.NotAsked;
+            if (answers != null)
             {
-                outcome = ResolutionOutcome.Stored;
-            }
-            else if (member.Kind == RepositoryKind.Remote)
-            {
-                if (answers != null)
+                // Only the stored copy is looked at (cheap and local): it shows a member the answering one shadows.
+                using var scope = _scopes.CreateRepositoryScope(member);
+                if (await scope.ServiceProvider.GetRequiredService<IPackageDatabase>().ExistsAsync(packageId, version, cancellationToken).ConfigureAwait(false))
                 {
-                    outcome = ResolutionOutcome.NotAsked;
+                    outcome = ResolutionOutcome.Stored;
                 }
-                else
+            }
+            else
+            {
+                // The member's own package service decides, as it does for a real request: its stored copy first, then
+                // its upstream (any member can have one: a remote repository, or the default repository's mirror).
+                using var scope = _scopes.CreateRepositoryScope(member);
+                try
                 {
-                    // The remote client answers "nothing" when its upstream fails and counts the failure, which is how a
-                    // down upstream is told from one that simply does not have the package.
-                    var failuresBefore = _remoteState?.Status(member.Key).Failures ?? 0;
-                    try
-                    {
-                        var versions = await provider.GetRequiredService<IUpstreamClient>().ListPackageVersionsAsync(packageId, cancellationToken).ConfigureAwait(false);
-                        if (versions.Contains(version)) outcome = ResolutionOutcome.WouldFetch;
-                        else if ((_remoteState?.Status(member.Key).Failures ?? 0) > failuresBefore) outcome = ResolutionOutcome.Unavailable;
-                    }
-                    catch (Exception e) when (e is not OperationCanceledException)
-                    {
-                        outcome = ResolutionOutcome.Unavailable;
-                    }
+                    outcome = await scope.ServiceProvider.GetRequiredService<PackageService>()
+                        .ProbeAsync(packageId, version, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    outcome = ResolutionOutcome.Unavailable;
                 }
             }
 

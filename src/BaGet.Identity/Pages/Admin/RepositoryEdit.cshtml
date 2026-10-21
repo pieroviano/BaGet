@@ -236,6 +236,7 @@
                                         BaGet.Core.ResolutionOutcome.WouldFetch => "not stored yet; its upstream has it and it would be fetched on first request",
                                         BaGet.Core.ResolutionOutcome.Unavailable => "its upstream could not be asked",
                                         BaGet.Core.ResolutionOutcome.NotAsked => "not asked: an earlier member answers",
+                                        BaGet.Core.ResolutionOutcome.Offline => "not stored; its upstream is in offline mode, so it is not asked",
                                         _ => "not found",
                                     })
                                     @if (Model.Preview.Answers?.Key == step.Member.Key)

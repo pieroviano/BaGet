@@ -215,16 +215,11 @@ public sealed class RemoteUpstreamClient : IPassThroughUpstreamClient
     public async Task<Stream?> DownloadPackageOrNullAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
     {
         var upstream = await ResolveAsync(cancellationToken).ConfigureAwait(false);
-        if (upstream == null || upstream.Settings.Offline) return null;
+        if (upstream == null) return null;
 
         var key = upstream.Key;
-        var cacheKey = "d:" + (id ?? string.Empty).ToLowerInvariant() + "/" + version.ToNormalizedString().ToLowerInvariant();
-        if (_state.TryGet(key, cacheKey, out _, out var negative, out var fresh) && negative && fresh)
-        {
-            _state.Count(key, RemoteRepositoryState.CacheEvent.NegativeHit);
-
-            return null;
-        }
+        var cacheKey = DownloadCacheKey(id, version);
+        if (DownloadGate(upstream, cacheKey) != Gate.Ask) return null;
 
         _state.Count(key, RemoteRepositoryState.CacheEvent.Miss);
 
@@ -248,6 +243,54 @@ public sealed class RemoteUpstreamClient : IPassThroughUpstreamClient
 
             return null;
         }
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>Applies the gate a download applies (offline, remembered "not found"), then asks the version list.</remarks>
+    public async Task<UpstreamProbe> ProbeAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
+    {
+        var upstream = await ResolveAsync(cancellationToken).ConfigureAwait(false);
+        if (upstream == null) return UpstreamProbe.Absent;
+
+        switch (DownloadGate(upstream, DownloadCacheKey(id, version)))
+        {
+            case Gate.Offline: return UpstreamProbe.Offline;
+            case Gate.KnownAbsent: return UpstreamProbe.Absent;
+        }
+
+        // The list answers "nothing" when the upstream fails and counts the failure, which is how a down upstream is
+        // told from one that simply does not have the package.
+        var failuresBefore = _state.Status(upstream.Key).Failures;
+        var versions = await ListPackageVersionsAsync(id, cancellationToken).ConfigureAwait(false);
+        if (versions.Contains(version)) return UpstreamProbe.Available;
+
+        return _state.Status(upstream.Key).Failures > failuresBefore ? UpstreamProbe.Unavailable : UpstreamProbe.Absent;
+    }
+
+    private enum Gate
+    {
+        Ask,
+        Offline,
+        KnownAbsent,
+    }
+
+    private static string DownloadCacheKey(string? id, NuGetVersion version)
+        => "d:" + (id ?? string.Empty).ToLowerInvariant() + "/" + version.ToNormalizedString().ToLowerInvariant();
+
+    // Whether a download is asked of the upstream at all: never offline, not while a fresh 404 is remembered. Download and
+    // Probe share it so the preview cannot disagree with a real request.
+    private Gate DownloadGate(ResolvedUpstream upstream, string cacheKey)
+    {
+        if (upstream.Settings.Offline) return Gate.Offline;
+
+        if (_state.TryGet(upstream.Key, cacheKey, out _, out var negative, out var fresh) && negative && fresh)
+        {
+            _state.Count(upstream.Key, RemoteRepositoryState.CacheEvent.NegativeHit);
+
+            return Gate.KnownAbsent;
+        }
+
+        return Gate.Ask;
     }
 
     // The metadata period, the negative period, offline mode and stale-on-error around one question.
