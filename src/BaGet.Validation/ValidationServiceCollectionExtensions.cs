@@ -17,6 +17,7 @@ public static class ValidationServiceCollectionExtensions
         services.TryAddSingleton<IValidationQueue, InMemoryValidationQueue>();
         services.TryAddScoped<PackageValidationRunner>();
         services.TryAddScoped<RepositorySigner>();
+        services.TryAddScoped<IValidationAdministration, ValidationAdministration>();
 
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IPackageValidator, PackageEntriesValidator>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IPackageValidator, PackageSignatureValidator>());

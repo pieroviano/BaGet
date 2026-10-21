@@ -108,16 +108,9 @@ public class PackageValidationRunner
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8604
 
-        if (steps.Count > 0 && steps[0].RepositoryKey != _repository.Current.Key)
+        if (!await UseSubmissionRepositoryAsync(steps, submissionId, cancellationToken))
         {
-            var target = await _repositories.FindAsync(steps[0].RepositoryKey, cancellationToken);
-            if (target == null)
-            {
-                _logger.LogWarning("Submission {SubmissionId} belongs to unknown repository {Key}", submissionId, steps[0].RepositoryKey);
-                return null;
-            }
-
-            _repository.Use(target);
+            return null;
         }
 
         var index = steps.SingleOrDefault(s => s.Type == PackageValidation.IndexType);
@@ -201,6 +194,81 @@ public class PackageValidationRunner
         }
 
         return indexError == null ? "Succeeded" : "Failed";
+    }
+
+    /// <summary>
+    /// Switches the scope to the repository a submission belongs to.
+    /// </summary>
+    /// <returns>False when that repository no longer exists.</returns>
+    internal async Task<bool> UseSubmissionRepositoryAsync(IReadOnlyList<PackageValidation> steps, string submissionId, CancellationToken cancellationToken)
+    {
+        if (steps.Count > 0 && steps[0].RepositoryKey != _repository.Current.Key)
+        {
+            var target = await _repositories.FindAsync(steps[0].RepositoryKey, cancellationToken);
+            if (target == null)
+            {
+                _logger.LogWarning("Submission {SubmissionId} belongs to unknown repository {Key}", submissionId, steps[0].RepositoryKey);
+                return false;
+            }
+
+            _repository.Use(target);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Indexes a quarantined submission although validation failed (an administrator's decision; the caller audits
+    /// it). The validators' failed verdicts stay as they are; only the index step is completed.
+    /// </summary>
+    /// <returns>Null on success, otherwise why it was not released.</returns>
+    /// <exception cref="MaintenanceException">The gate is closed.</exception>
+    internal async Task<string?> ReleaseAsync(string submissionId, string? actor, CancellationToken cancellationToken)
+    {
+        #pragma warning disable CS8604
+        var steps = await _context.PackageValidations
+            .IgnoreQueryFilters()
+            .Where(v => v.SubmissionId == submissionId)
+            .ToListAsync(cancellationToken);
+        #pragma warning restore CS8604
+
+        if (!await UseSubmissionRepositoryAsync(steps, submissionId, cancellationToken)) return "The submission's repository no longer exists.";
+
+        var index = steps.SingleOrDefault(s => s.Type == PackageValidation.IndexType);
+        if (index == null) return "There is no such submission.";
+        if (index.State != PackageValidationState.Failed) return "Only a quarantined submission can be released.";
+
+        using var package = new MemoryStream();
+        try
+        {
+            using var staged = await _storage.GetAsync(ValidatingPackageSubmissionService.StagedPath(_repository.Current, submissionId), cancellationToken);
+            await staged.CopyToAsync(package, cancellationToken);
+        }
+        catch (Exception e) when (!(e is OperationCanceledException))
+        {
+            _logger.LogWarning(e, "The staged package of submission {SubmissionId} could not be read", submissionId);
+            return "The staged package is missing.";
+        }
+
+        package.Position = 0;
+        var indexError = await IndexAsync(package, _options.Value.RepositorySigningServiceIndexUrl, cancellationToken);
+        if (indexError != null) return indexError;
+
+        Complete(index, succeeded: true, $"Released by {actor ?? "an administrator"} although validation failed.");
+
+        #pragma warning disable CS8604
+        var version = NuGet.Versioning.NuGetVersion.Parse(index.PackageVersion);
+        #pragma warning restore CS8604
+        var indexed = await _packages.FindOrNullAsync(index.PackageId, version, includeUnlisted: true, cancellationToken);
+        foreach (var step in steps)
+        {
+            step.PackageKey = indexed?.Key;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await _storage.DeleteAsync(ValidatingPackageSubmissionService.StagedPath(_repository.Current, submissionId), cancellationToken);
+
+        return null;
     }
 
     /// <returns>Null on success, otherwise why indexing failed.</returns>

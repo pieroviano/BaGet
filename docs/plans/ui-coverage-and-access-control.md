@@ -118,7 +118,7 @@ deletions, `MaintenanceGate.ThrowIfClosed`.
 repositories, "all" default); `AccountAuthenticationService.cs:35-64` loads the key's repositories into `BaGetPrincipal`;
 evaluator intersects. Existing keys = all repositories.
 
-### U5 — Admin operations
+### U5 — Admin operations (implemented in track `ops`)
 
 | Feature | Backend | UI |
 |---|---|---|

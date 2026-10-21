@@ -19,6 +19,7 @@ public static class CatalogServiceCollectionExtensions
         services.TryAddTransient<CatalogReader>();
         services.TryAddTransient<CatalogRebuilder>();
 
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, CatalogRebuildOperation>());
         services.TryAddEnumerable(ServiceDescriptor.Transient<IPackageChangeHandler, CatalogWriter>());
         services.TryAddEnumerable(ServiceDescriptor.Transient<IServiceIndexResourceProvider, CatalogServiceIndexProvider>());
 

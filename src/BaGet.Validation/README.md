@@ -12,6 +12,8 @@ dotnet add package Extension.BaGet.Validation
 `AddBaGetWebApplication` (`Extension.BaGet.Web`) registers it; standalone: `services.AddBaGetValidation()`.
 It is always registered; `Validation:Enabled` is read on every push.
 
+Administrators retry, release (index anyway, audited) or reject quarantined submissions of any repository at `/admin/validation` (`ValidationAdministration`).
+
 | Setting | Value |
 |---|---|
 | `Validation:Enabled` | Off by default. On: a push answers `202 Accepted`, the package appears once every validator passes; a failing package is quarantined |

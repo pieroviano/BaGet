@@ -31,6 +31,14 @@ Administrators manage them at `/admin/repositories` (menu: *Repositories*). Othe
 | `/admin/repositories/{name}` | Shows the feed; edits *Anonymous read* |
 | `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** |
 
+Other administrator pages work across all repositories:
+
+| Page | Does |
+|---|---|
+| `/admin/operations` | Runs *Rebuild the catalog* and *Import download counts* for a chosen repository as background jobs; shows each one's last status |
+| `/admin/validation` | Pending and quarantined submissions of every repository: retry, release (index anyway, audited), reject (see [configuration](configuration.md#validation)) |
+| `/admin/abuse` | Abuse reports of every repository (unresolved by default, `?all=true` for all): resolve or reopen; links to Manage for `default` packages (package pages are not repository-aware yet) |
+
 Rules:
 
 * Names: 1 to 64 lowercase letters, digits, `-`, `.`, `_`; no leading or trailing `.`, no `..`; not a reserved word (`admin`, `api`, `r`, `v3`, ...). Invalid names are refused with the reason.

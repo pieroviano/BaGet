@@ -474,6 +474,17 @@ A package that fails is quarantined and never served. Its owners can see why wit
 `GET /v3/package/{id}/{version}/validation`, sending their API key in `X-NuGet-ApiKey`.
 Pending validations resume when BaGet Extension restarts.
 
+Administrators see and decide on stuck submissions of **every repository** at `/admin/validation`
+(menu: *Validation queue*):
+
+| Action | Effect |
+|---|---|
+| Retry | Resets the steps to pending and queues the submission again (needs the staged file) |
+| Release | Indexes the quarantined package although validation failed. Needs the administrator's password; logged as a warning and recorded with `IAdminAudit`; the failed verdicts stay on record |
+| Reject | Deletes the staged file and the submission's rows. Needs the password; audited |
+
+Release and Reject apply to quarantined submissions only; all three are refused with `503` while the server is read-only for maintenance.
+
 ### Repository signing
 
 BaGet Extension can repository-sign every package that passes validation:
@@ -510,6 +521,9 @@ dotnet BaGet.dll catalog rebuild
 ```
 
 Each repository has its own catalog; `catalog rebuild --repository <name>` rebuilds a repository other than `default`.
+Administrators can also start it, and `import downloads`, per repository at `/admin/operations` (menu: *Operations*):
+a background job, one run at a time per operation and repository, with its last status (counts or error) kept in
+memory until the next start. Starting is refused with `503` while the server is read-only for maintenance.
 
 The catalog is not available with Azure Table Storage.
 

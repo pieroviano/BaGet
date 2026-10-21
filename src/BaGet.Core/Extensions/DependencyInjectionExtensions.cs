@@ -105,6 +105,10 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IRepositoryAccess, OpenRepositoryAccess>();
 
         services.TryAddScoped<DownloadsImporter>();
+        services.TryAddSingleton<IAdminAudit, LoggingAdminAudit>();
+        services.TryAddSingleton<AdminJobService>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, DownloadsImportOperation>());
+        services.TryAddScoped<IAbuseReportAdministration, AbuseReportAdministration>();
         services.TryAddScoped<StatisticsService>();
 
         services.TryAddTransient<IAuthenticationService, ApiKeyAuthenticationService>();

@@ -15,7 +15,7 @@ dotnet add package Extension.BaGet.Catalog
 |---|---|
 | `CatalogWriter` | `IPackageChangeHandler`: appends a catalog entry for every package change |
 | `CatalogController`, `CatalogReader` | Serve `v3/catalog/index.json`, `v3/catalog/page{n}.json`, `v3/catalog/data/{commitId}.json` |
-| `CatalogRebuilder` | Appends missing entries; run by the host's `catalog rebuild [-r <repo>]` command; the catalog is per repository |
+| `CatalogRebuilder` | Appends missing entries; run by the host's `catalog rebuild [-r <repo>]` command or from `/admin/operations` (`CatalogRebuildOperation`); the catalog is per repository |
 | `CatalogServiceIndexProvider` | Advertises the `Catalog/3.0.0` resource in the service index |
 
 A database without the catalog table (Azure Table storage) gets `NullCatalogDatabase`: the catalog is off.
