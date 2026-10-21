@@ -59,7 +59,7 @@ An npm repository of kind remote proxies an upstream registry: `npm install` aga
 | `npm search` | Searches the **stored** packages only; a registry's catalogue is not searched through a cache |
 | `npm audit` | "No advisories", as for every repository until vulnerability scanning exists |
 
-What is kept: a stored version is an ordinary npm version row (manifest, checksums, deprecation, upstream publish time) and its tarball under `repos/{name}/npm/`; the packument itself is **remembered in memory only**, per node (at most 1000 answers per repository, 128 MB each), so after a restart with the upstream down the packument lists only the stored versions. The cache table counts stored versions and packages.
+What is kept: a stored version is an ordinary npm version row (manifest, checksums, deprecation, upstream publish time) and its tarball under `repos/{name}/npm/`; the packument itself is **remembered in memory only**, per node (at most 1000 answers per repository, 128 MB each), so after a restart with the upstream down the packument lists only the stored versions. The cache table counts stored versions and packages. Each tarball fetch emits the `mirror.fetch` span (package, version, result; never a URL or credential), as a NuGet mirror fetch does.
 
 ## Upstream addresses (SSRF)
 

@@ -128,57 +128,75 @@ public sealed class RemoteNpmRegistry : INpmRegistry
         var announcedShasum = Text(dist?["shasum"]);
         var url = NpmUpstreamClient.TarballUri(upstream.Settings, name, upstreamVersion!, Text(dist?["tarball"]));
 
-        var download = await _upstream.DownloadAsync(upstream, name, version, url, cancellationToken).ConfigureAwait(false);
-        if (download == null)
-        {
-            _logger.LogWarning("The upstream of repository {Repository} lists {Package}@{Version} but has no tarball for it.", upstream.Name, name, version);
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.MirrorFetch);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageId, name);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, version);
 
-            return null;
+        try
+        {
+            var download = await _upstream.DownloadAsync(upstream, name, version, url, cancellationToken).ConfigureAwait(false);
+            if (download == null)
+            {
+                activity?.SetTag(BaGetDiagnostics.Tags.Result, "NotFound");
+                _logger.LogWarning("The upstream of repository {Repository} lists {Package}@{Version} but has no tarball for it.", upstream.Name, name, version);
+
+                return null;
+            }
+
+            if (!upstream.Settings.StoreLocally)
+            {
+                // Pass-through: the client verifies the integrity it has from the packument.
+                activity?.SetTag(BaGetDiagnostics.Tags.Result, "PassThrough");
+
+                return new NpmTarball(new OwningStream(download), download.Length ?? 0, announcedIntegrity ?? string.Empty);
+            }
+
+            using (download)
+            {
+                await using var temporary = new FileStream(
+                    Path.Combine(Path.GetTempPath(), "baget-npm-" + Guid.NewGuid().ToString("N")),
+                    FileMode.CreateNew,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    81920,
+                    FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+
+                long length;
+                string integrity, shasum;
+                try
+                {
+                    (length, integrity, shasum) = await CopyAndHashAsync(download.Content, temporary, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e) when (e is IOException or System.Net.Http.HttpRequestException)
+                {
+                    throw new NpmUpstreamException(_upstream.Rejected(upstream, "The download from the upstream was cut off."));
+                }
+
+                // What arrived must be what the upstream's own packument promised; a mismatch is never stored or served.
+                if ((announcedIntegrity != null && announcedIntegrity.StartsWith("sha512-", StringComparison.Ordinal) && !string.Equals(announcedIntegrity, integrity, StringComparison.Ordinal))
+                    || (announcedShasum != null && !string.Equals(announcedShasum, shasum, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new NpmUpstreamException(_upstream.Rejected(upstream, $"The tarball of {name}@{version} does not match the integrity its packument announces."));
+                }
+
+                var time = document["time"] as JsonObject;
+                var published = ParseTime(Text(time?[upstreamVersion!])) ?? DateTime.UtcNow;
+                var created = ParseTime(Text(time?["created"])) ?? published;
+                var modified = ParseTime(Text(document["modified"])) ?? ParseTime(Text(time?["modified"])) ?? published;
+
+                await _local.StoreCachedAsync(
+                    new NpmCachedVersion(name, version, manifest, published, created, modified, Text(manifest["deprecated"]), integrity, shasum, length, Tags(document)),
+                    temporary,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            activity?.SetTag(BaGetDiagnostics.Tags.Result, "Success");
         }
-
-        if (!upstream.Settings.StoreLocally)
+        catch (Exception e) when (e is not MaintenanceException and not OperationCanceledException)
         {
-            // Pass-through: the client verifies the integrity it has from the packument.
-            return new NpmTarball(new OwningStream(download), download.Length ?? 0, announcedIntegrity ?? string.Empty);
-        }
+            BaGetDiagnostics.Fail(activity, e);
 
-        using (download)
-        {
-            await using var temporary = new FileStream(
-                Path.Combine(Path.GetTempPath(), "baget-npm-" + Guid.NewGuid().ToString("N")),
-                FileMode.CreateNew,
-                FileAccess.ReadWrite,
-                FileShare.None,
-                81920,
-                FileOptions.DeleteOnClose | FileOptions.Asynchronous);
-
-            long length;
-            string integrity, shasum;
-            try
-            {
-                (length, integrity, shasum) = await CopyAndHashAsync(download.Content, temporary, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e) when (e is IOException or System.Net.Http.HttpRequestException)
-            {
-                throw new NpmUpstreamException(_upstream.Rejected(upstream, "The download from the upstream was cut off."));
-            }
-
-            // What arrived must be what the upstream's own packument promised; a mismatch is never stored or served.
-            if ((announcedIntegrity != null && announcedIntegrity.StartsWith("sha512-", StringComparison.Ordinal) && !string.Equals(announcedIntegrity, integrity, StringComparison.Ordinal))
-                || (announcedShasum != null && !string.Equals(announcedShasum, shasum, StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new NpmUpstreamException(_upstream.Rejected(upstream, $"The tarball of {name}@{version} does not match the integrity its packument announces."));
-            }
-
-            var time = document["time"] as JsonObject;
-            var published = ParseTime(Text(time?[upstreamVersion!])) ?? DateTime.UtcNow;
-            var created = ParseTime(Text(time?["created"])) ?? published;
-            var modified = ParseTime(Text(document["modified"])) ?? ParseTime(Text(time?["modified"])) ?? published;
-
-            await _local.StoreCachedAsync(
-                new NpmCachedVersion(name, version, manifest, published, created, modified, Text(manifest["deprecated"]), integrity, shasum, length, Tags(document)),
-                temporary,
-                cancellationToken).ConfigureAwait(false);
+            throw;
         }
 
         return await _local.OpenTarballAsync(name, file, cancellationToken).ConfigureAwait(false);

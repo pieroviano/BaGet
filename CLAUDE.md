@@ -381,7 +381,7 @@ name, so a test that needs a working File sink runs `Program.BuildApplication` w
 Libraries emit through `BaGetDiagnostics` (`BaGet.Core/Telemetry`): `Source` (`ActivitySource`) and `Meter`, both named
 `BaGet`, plain `System.Diagnostics` (no OpenTelemetry package outside the host). `StartActivity` returns null without a
 listener, so spans cost nothing. Spans: `package.index` (`PackageIndexingService`), `package.validate`
-(`PackageValidationRunner`), `mirror.fetch` (`PackageService`), `database.copy` + `database.copy.table`
+(`PackageValidationRunner`), `mirror.fetch` (`PackageService`, `RemoteNpmRegistry`), `database.copy` + `database.copy.table`
 (`DatabaseCopyService`); counters `baget.packages.pushed`, `baget.downloads`, `baget.validation.results`. Tags are
 `BaGetDiagnostics.Tags` (id, version, result, table, counts); never keys, connection strings or user data, and a failure
 records the exception type only (`Fail`). `TelemetryOptions` (`Telemetry:*`, live except `ServiceName` and `Metrics:ExportInterval`, which are `[RestartRequired]`) validates itself
