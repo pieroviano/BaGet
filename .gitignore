@@ -278,3 +278,10 @@ __pycache__/
 
 # BaGet host logs (Serilog file sink)
 logs/
+
+# BaGet host storage when Storage:Path is empty (the content root, e.g. src/BaGet under dotnet run / Visual Studio)
+src/BaGet/catalog/
+src/BaGet/symbols/
+src/BaGet/staging/
+src/BaGet/validation/
+src/BaGet/repos/
