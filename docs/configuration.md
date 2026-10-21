@@ -225,6 +225,7 @@ lists the IDs they own, directly or through an organization, and links to each o
 | --- | --- |
 | Scopes | `package:push` (new IDs and new versions), `package:pushversion` (new versions of owned IDs only), `package:unlist` (unlist, relist, delete, deprecation and vulnerabilities) |
 | Package glob pattern | the IDs the key applies to, `*` as a wildcard, for example `Contoso.*` |
+| Repositories | optional: the repositories the key may be used in (tick them on `/account/apikeys`; none ticked = every repository, as every key was before). See [Repository-scoped keys](access-control.md#repository-scoped-api-keys) |
 | Expiry | after which the key stops working |
 
 Who may change a package:
@@ -293,7 +294,7 @@ account without one). Everyone else, and every request while accounts are off, g
 | Reset password, *Email link* | Mails the user a reset link. Only offered while SMTP is configured and the user has an address; no rate limit. |
 | Delete (`/admin/users/{name}/delete`) | Removes the account, its API keys and its ownerships. The last administrator cannot be deleted. |
 
-* **API keys of any user** (`/admin/users/{name}`): lists description, scopes, package pattern and dates (never the key or its hash) and revokes one. Needs the administrator's password; logged.
+* **API keys of any user** (`/admin/users/{name}`): lists description, scopes, package pattern, repositories and dates (never the key or its hash) and revokes one. Needs the administrator's password; logged.
 * **Organizations** (`/admin/organizations`, `/admin/organizations/{name}`; every action asks for the password, 503 while the server is read-only for maintenance):
 
   | Action | Behaviour |

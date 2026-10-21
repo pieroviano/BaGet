@@ -95,6 +95,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<OrganizationMember>? OrganizationMembers { get; set; }
     public DbSet<PackageOwner>? PackageOwners { get; set; }
     public DbSet<ApiKey>? ApiKeys { get; set; }
+    public DbSet<ApiKeyRepository>? ApiKeyRepositories { get; set; }
     public DbSet<PackageValidation>? PackageValidations { get; set; }
     public DbSet<AbuseReport>? AbuseReports { get; set; }
     public DbSet<PackageSymbol>? PackageSymbols { get; set; }
@@ -163,6 +164,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<OrganizationMember>(BuildOrganizationMemberEntity);
         builder.Entity<PackageOwner>(BuildPackageOwnerEntity);
         builder.Entity<ApiKey>(BuildApiKeyEntity);
+        builder.Entity<ApiKeyRepository>(BuildApiKeyRepositoryEntity);
         builder.Entity<PackageValidation>(BuildPackageValidationEntity);
         builder.Entity<AbuseReport>(BuildAbuseReportEntity);
         builder.Entity<PackageSymbol>(BuildPackageSymbolEntity);
@@ -482,6 +484,16 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
             .HasConversion(StringArrayToJsonConverter.Instance)
             .Metadata.SetValueComparer(StringArrayComparer.Instance);
         #pragma warning restore CS8620
+    }
+
+    private void BuildApiKeyRepositoryEntity(EntityTypeBuilder<ApiKeyRepository> row)
+    {
+        row.HasKey(r => r.Key);
+        row.HasIndex(r => new { r.ApiKeyKey, r.RepositoryKey }).IsUnique();
+        row.HasIndex(r => r.RepositoryKey);
+
+        // A revoked or deleted key takes its rows with it, in the database too.
+        row.HasOne(r => r.ApiKey).WithMany().HasForeignKey(r => r.ApiKeyKey).OnDelete(DeleteBehavior.Cascade);
     }
 
     private void BuildPackageValidationEntity(EntityTypeBuilder<PackageValidation> validation)

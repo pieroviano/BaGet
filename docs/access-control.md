@@ -89,6 +89,22 @@ Reads accept, in order: `Authorization: Basic` (password = API key), `X-NuGet-Ap
 Credentials that do not authenticate count as none: an open repository stays readable, a private one answers `401`.
 Writes are unchanged: `X-NuGet-ApiKey`, authorized per package (`401` no key, `403` not permitted).
 
+## Repository-scoped API keys
+
+A key can be limited to some repositories (`ApiKeyRepository`, picked on `/account/apikeys` among the repositories the
+user can read; hidden where only `default` exists). Existing and new keys with nothing ticked work in every repository.
+Effective rights = the key's scopes and package pattern, intersected with its repositories and with what its user may
+do there (this model, then ownership).
+
+| Request with a limited key | Outcome |
+|---|---|
+| Write (push, unlist, delete, deprecate) in a repository outside the limit | `403`, also for an administrator's key |
+| Read of a repository outside the limit | judged as an anonymous caller: an open repository is served, a private one answers `404` |
+| Anything inside the limit | the user's own permissions decide |
+
+Deleting a repository removes it from the keys limited to it and deletes keys that were limited to it alone (they would
+otherwise become unlimited). The user list in `/admin/users/{name}` shows each key's repositories.
+
 ## Cost and cache
 
 The model is held in memory as a snapshot, rebuilt after any committed change to it (`AccessModelSaveChangesInterceptor`

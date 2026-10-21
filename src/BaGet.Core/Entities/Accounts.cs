@@ -115,6 +115,26 @@ public class ApiKey
 }
 
 /// <summary>
+/// Limits an <see cref="ApiKey"/> to one repository. A key with no rows may be used in every repository (as every key
+/// could before this table existed); a key with rows only in the listed ones: its effective rights are the key's scopes
+/// and package glob, intersected with these repositories and with what its user may do there
+/// (<see cref="IAccessEvaluator"/>). Rows go with their key (cascade) and with their repository
+/// (<see cref="IRepositoryAdministration"/>, which also deletes a key left scoped to nothing).
+/// </summary>
+public class ApiKeyRepository
+{
+    public int Key { get; set; }
+
+    /// <summary>The <see cref="ApiKey.Key"/> this row limits.</summary>
+    public int ApiKeyKey { get; set; }
+
+    public ApiKey? ApiKey { get; set; }
+
+    /// <summary>The <see cref="Repository.Key"/> the key may be used in. No foreign key, like <see cref="IRepositoryScoped"/>.</summary>
+    public int RepositoryKey { get; set; }
+}
+
+/// <summary>
 /// The scopes an <see cref="ApiKey"/> may hold, named as nuget.org names them.
 /// </summary>
 public static class ApiKeyScopes

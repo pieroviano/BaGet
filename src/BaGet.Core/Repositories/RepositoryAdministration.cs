@@ -164,6 +164,24 @@ public class RepositoryAdministration : IRepositoryAdministration
         _context.PackageValidations!.RemoveRange(await _context.PackageValidations!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.AbuseReports!.RemoveRange(await _context.AbuseReports!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.PackageSymbols!.RemoveRange(await _context.PackageSymbols!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+
+        // A key limited to this repository would otherwise be left with no limit, which means every repository: a key
+        // limited to several only loses this one, one limited to this alone has no use left and is deleted.
+        var limits = await _context.ApiKeyRepositories!.Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (limits.Count > 0)
+        {
+            var keys = limits.Select(l => l.ApiKeyKey).ToList();
+            var others = await _context.ApiKeyRepositories!
+                .Where(e => keys.Contains(e.ApiKeyKey) && e.RepositoryKey != key)
+                .Select(e => e.ApiKeyKey)
+                .Distinct()
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            var useless = keys.Except(others).ToList();
+
+            _context.ApiKeys!.RemoveRange(await _context.ApiKeys!.Where(k => useless.Contains(k.Key)).ToListAsync(cancellationToken).ConfigureAwait(false));
+            _context.ApiKeyRepositories!.RemoveRange(limits);
+        }
+
         _context.Repositories!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

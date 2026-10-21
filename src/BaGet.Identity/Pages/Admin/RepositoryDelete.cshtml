@@ -27,7 +27,7 @@
     }
     else
     {
-        <p>@Model.Name holds no packages. Deleting it removes the repository, its feed address, its history (catalog entries, owners, validations, abuse reports) and its files in storage (symbols, catalog files); this cannot be undone.</p>
+        <p>@Model.Name holds no packages. Deleting it removes the repository, its feed address, its history (catalog entries, owners, validations, abuse reports, API keys limited to it alone) and its files in storage (symbols, catalog files); this cannot be undone.</p>
         <form method="post">
             <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this repository? This cannot be undone.');">Delete @Model.Name</button>
             <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>

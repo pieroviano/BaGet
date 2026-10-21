@@ -155,6 +155,18 @@ deletions, `MaintenanceGate.ThrowIfClosed`.
 
 ### U4 — Repository-scoped API keys (D6)
 
+Status: **implemented** (track `keys`). `ApiKeyRepository` (`ApiKeyKey` FK with cascade, `RepositoryKey` without one, unique pair; migrations `AddApiKeyRepositories` x4);
+`BaGetPrincipal.RepositoryKeys` (null = all); `AccessEvaluator` applies it first: other repository = no action (administrators included), Read judged as anonymous.
+
+| Deviation from the sketch below | Why |
+|---|---|
+| Out-of-limit Read is evaluated as anonymous, not denied | A key must never see less than no key at all (open repositories stay readable), nor more |
+| Deleting a repository deletes keys limited to it alone | No rows would mean "all repositories": silently widening the key |
+| Picker lists repositories the user can **read** and the service rejects unknown keys | A key cannot be limited to a repository the user cannot see; Deploy is not required (the user's permissions still decide at use) |
+| Admin user page shows the repositories column | Requested by the accounts track |
+
+Original sketch:
+
 `ApiKeyRepository` table; API keys page (`Account/ApiKeys.cshtml.cs:45`) gets a repository multi-select (readable
 repositories, "all" default); `AccountAuthenticationService.cs:35-64` loads the key's repositories into `BaGetPrincipal`;
 evaluator intersects. Existing keys = all repositories.

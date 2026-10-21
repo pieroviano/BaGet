@@ -39,6 +39,9 @@ public interface IContext
 
     DbSet<ApiKey>? ApiKeys { get; set; }
 
+    /// <summary>The repositories an API key is limited to; see <see cref="ApiKeyRepository"/>.</summary>
+    DbSet<ApiKeyRepository>? ApiKeyRepositories { get; set; }
+
     DbSet<PackageValidation>? PackageValidations { get; set; }
 
     DbSet<AbuseReport>? AbuseReports { get; set; }

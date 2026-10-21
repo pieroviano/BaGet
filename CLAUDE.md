@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2057 tests** across `BaGet.Core.Tests` (556), `BaGet.Tests` (1195),
+Baseline: **2069 tests** across `BaGet.Core.Tests` (556), `BaGet.Tests` (1207),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -136,6 +136,7 @@ submission's repository itself. `IRepositoryService` finds/lists/creates (`Repos
 `AzureSearch` (one global index, document keys without a repository) have the default repository only:
 `SupportsMultipleRepositories` is false, `CreateAsync` and `TablePackageDatabase` refuse others and
 `RepositoryService.FindAsync` serves `default` only. The mirror serves `default` only (`UpstreamClientFactory`).
+API keys can be limited to repositories (`ApiKeyRepository`; none = all): `AccountAuthenticationService` puts them in `BaGetPrincipal.RepositoryKeys`, `AccessEvaluator` refuses every action outside them (administrators too) and judges a Read as anonymous; `RepositoryAdministration.DeleteAsync` drops the rows and the keys left with none (else they would turn unlimited).
 `IRepositoryAdministration` (list with package counts, `SetAnonymousReadAsync`, `DeleteAsync`: refuses `default` and any repository with packages or a pending validation; its
 catalog entries, owners, validations and abuse reports are purged with it, and so is `repos/{name}/` in storage when the store is `IListableStorageService`) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
 (names are immutable; only `AnonymousRead` is editable; writes call `MaintenanceGate.ThrowIfClosed`; feed URLs derive from `IUrlGenerator`).

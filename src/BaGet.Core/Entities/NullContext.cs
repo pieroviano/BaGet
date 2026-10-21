@@ -28,6 +28,7 @@ public class NullContext : IContext
     public DbSet<PackageOwner>? PackageOwners { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<ApiKey>? ApiKeys { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public DbSet<ApiKeyRepository>? ApiKeyRepositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<PackageValidation>? PackageValidations { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 

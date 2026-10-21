@@ -33,12 +33,27 @@ public class ApiKeyService
     /// <summary>
     /// Create a key and return it in plain text. It cannot be recovered afterwards.
     /// </summary>
+    public Task<string> CreateAsync(
+        string? userId,
+        string? description,
+        IReadOnlyList<string>? scopes,
+        string packageGlobPattern,
+        DateTime? expires,
+        CancellationToken cancellationToken)
+        => CreateAsync(userId, description, scopes, packageGlobPattern, expires, repositoryKeys: null, cancellationToken);
+
+    /// <summary>
+    /// Create a key limited to <paramref name="repositoryKeys"/> (<see cref="ApiKeyRepository"/>), or usable in every
+    /// repository when null or empty, and return it in plain text. It cannot be recovered afterwards.
+    /// </summary>
+    /// <exception cref="ArgumentException">A repository key does not name an existing NuGet repository.</exception>
     public async Task<string> CreateAsync(
         string? userId,
         string? description,
         IReadOnlyList<string>? scopes,
         string packageGlobPattern,
         DateTime? expires,
+        IReadOnlyCollection<int>? repositoryKeys,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(userId)) throw new ArgumentException("A user is required.", nameof(userId));
@@ -49,9 +64,23 @@ public class ApiKeyService
             throw new ArgumentException($"Scopes must be some of: {string.Join(", ", ApiKeyScopes.All)}.", nameof(scopes));
         }
 
+        var limit = repositoryKeys?.Distinct().ToList() ?? new List<int>();
+        if (limit.Count > 0)
+        {
+            var known = await _context.Repositories!
+                .Where(r => limit.Contains(r.Key) && r.Format == RepositoryFormat.NuGet)
+                .Select(r => r.Key)
+                .ToListAsync(cancellationToken);
+
+            if (known.Count != limit.Count)
+            {
+                throw new ArgumentException("A chosen repository does not exist.", nameof(repositoryKeys));
+            }
+        }
+
         var key = KeyPrefix + Base64Url(RandomNumberGenerator.GetBytes(32));
 
-        _context.ApiKeys?.Add(new ApiKey
+        var entity = new ApiKey
         {
             UserId = userId,
             Description = description,
@@ -60,7 +89,14 @@ public class ApiKeyService
             PackageGlobPattern = string.IsNullOrWhiteSpace(packageGlobPattern) ? "*" : packageGlobPattern.Trim(),
             Created = _time.UtcNow,
             Expires = expires?.ToUniversalTime(),
-        });
+        };
+        _context.ApiKeys?.Add(entity);
+
+        // Saved with the key in one transaction: a key never exists half-limited (which would mean unlimited).
+        foreach (var repositoryKey in limit)
+        {
+            _context.ApiKeyRepositories!.Add(new ApiKeyRepository { RepositoryKey = repositoryKey, ApiKey = entity });
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -77,6 +113,52 @@ public class ApiKeyService
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8604
     }
+
+    /// <summary>
+    /// The keys of the repositories <paramref name="apiKey"/> is limited to, or null when it may be used in every one.
+    /// </summary>
+    public async Task<IReadOnlyList<int>?> RepositoryKeysAsync(int apiKey, CancellationToken cancellationToken)
+    {
+        var keys = await _context.ApiKeyRepositories!
+            .AsNoTracking()
+            .Where(r => r.ApiKeyKey == apiKey)
+            .Select(r => r.RepositoryKey)
+            .ToListAsync(cancellationToken);
+
+        return keys.Count == 0 ? null : keys;
+    }
+
+    /// <summary>
+    /// The names of the repositories each of <paramref name="keys"/> is limited to, by key number; a key that may be
+    /// used everywhere has no entry. Names are ordered.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<int, IReadOnlyList<string>>> RepositoryNamesAsync(
+        IEnumerable<ApiKey> keys,
+        CancellationToken cancellationToken)
+    {
+        var numbers = keys.Select(k => k.Key).ToList();
+        if (numbers.Count == 0) return new Dictionary<int, IReadOnlyList<string>>();
+
+        var rows = await (
+            from limit in _context.ApiKeyRepositories!.AsNoTracking()
+            join repository in _context.Repositories!.AsNoTracking() on limit.RepositoryKey equals repository.Key
+            where numbers.Contains(limit.ApiKeyKey)
+            select new { limit.ApiKeyKey, repository.Name })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(r => r.ApiKeyKey)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<string>)g.Select(r => r.Name ?? string.Empty).OrderBy(n => n, StringComparer.Ordinal).ToList());
+    }
+
+    /// <summary>
+    /// Text for a key's repository limit: the names, or "all repositories" when it has none
+    /// (<paramref name="names"/> null or empty).
+    /// </summary>
+    public static string DescribeRepositories(IReadOnlyList<string>? names)
+        => names == null || names.Count == 0 ? "all repositories" : string.Join(", ", names);
 
     /// <summary>
     /// Revoke one of the user's keys. False if the user has no such key.

@@ -30,6 +30,20 @@ public class ApiKeysModel : AccountPageModel
     [Display(Name = "Expires after (days)")]
     public int? ExpiresInDays { get; set; } = 365;
 
+    /// <summary>
+    /// The keys of the repositories the new key is limited to; none (the default) means every repository.
+    /// </summary>
+    [BindProperty]
+    public List<int> RepositoryKeys { get; set; } = new List<int>();
+
+    /// <summary>
+    /// The repositories offered in the picker: those the user can read. Empty (picker hidden) where the server holds
+    /// the default repository only.
+    /// </summary>
+    public IReadOnlyList<RepositoryInfo> Repositories { get; private set; } = Array.Empty<RepositoryInfo>();
+
+    private IReadOnlyDictionary<int, IReadOnlyList<string>> _keyRepositories = new Dictionary<int, IReadOnlyList<string>>();
+
     public IReadOnlyList<ApiKey> Keys { get; private set; } = Array.Empty<ApiKey>();
 
     /// <summary>
@@ -51,6 +65,16 @@ public class ApiKeysModel : AccountPageModel
 
         if (ModelState.IsValid)
         {
+            // Only a repository the user can read may be chosen: a key limited to one nobody can see is a probe.
+            await LoadRepositoriesAsync(cancellationToken);
+            if (RepositoryKeys.Except(Repositories.Select(r => r.Key)).Any())
+            {
+                ModelState.AddModelError(nameof(RepositoryKeys), "Choose only repositories from the list.");
+            }
+        }
+
+        if (ModelState.IsValid)
+        {
             var now = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow;
 
             try
@@ -61,6 +85,7 @@ public class ApiKeysModel : AccountPageModel
                     Scopes,
                     PackageGlobPattern,
                     ExpiresInDays.HasValue ? now.AddDays(ExpiresInDays.Value) : (DateTime?)null,
+                    RepositoryKeys,
                     cancellationToken);
             }
             catch (ArgumentException e)
@@ -84,7 +109,21 @@ public class ApiKeysModel : AccountPageModel
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
         Keys = await ApiKeys.ListAsync(UserManager.GetUserId(User), cancellationToken);
+        _keyRepositories = await ApiKeys.RepositoryNamesAsync(Keys, cancellationToken);
+        await LoadRepositoriesAsync(cancellationToken);
     }
+
+    private async Task LoadRepositoriesAsync(CancellationToken cancellationToken)
+    {
+        var access = HttpContext.RequestServices.GetService<IRepositoryAccess>();
+        Repositories = access == null || !access.SupportsMultipleRepositories
+            ? Array.Empty<RepositoryInfo>()
+            : await access.ReadableAsync(User, cancellationToken);
+    }
+
+    /// <summary>Where the key may be used: the repositories it is limited to, or "all repositories".</summary>
+    public string DescribeRepositories(ApiKey key)
+        => ApiKeyService.DescribeRepositories(_keyRepositories.GetValueOrDefault(key.Key));
 
     public static string Describe(ApiKey key)
         => string.Join(", ", key.Scopes ?? Array.Empty<string>()) + " on " + key.PackageGlobPattern;

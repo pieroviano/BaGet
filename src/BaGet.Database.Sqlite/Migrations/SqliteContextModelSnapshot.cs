@@ -142,6 +142,28 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("ApiKeys");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ApiKeyRepository", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ApiKeyKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RepositoryKey")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.HasIndex("ApiKeyKey", "RepositoryKey")
+                        .IsUnique();
+
+                    b.ToTable("ApiKeyRepositories");
+                });
+
             modelBuilder.Entity("BaGet.Core.BaGetUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1042,6 +1064,17 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("BaGet.Core.ApiKeyRepository", b =>
+                {
+                    b.HasOne("BaGet.Core.ApiKey", "ApiKey")
+                        .WithMany()
+                        .HasForeignKey("ApiKeyKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApiKey");
                 });
 
             modelBuilder.Entity("BaGet.Core.GroupMember", b =>

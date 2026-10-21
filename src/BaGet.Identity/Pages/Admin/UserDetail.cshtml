@@ -59,7 +59,7 @@
             <form method="post" id="keys-form">
                 <table class="table" id="user-keys">
                     <thead>
-                        <tr><th>Description</th><th>Scopes</th><th>Packages</th><th>Created</th><th>Expires</th><th></th></tr>
+                        <tr><th>Description</th><th>Scopes</th><th>Packages</th><th>Repositories</th><th>Created</th><th>Expires</th><th></th></tr>
                     </thead>
                     <tbody>
                         @foreach (var key in Model.Keys)
@@ -68,6 +68,7 @@
                                 <td>@key.Description</td>
                                 <td>@string.Join(", ", key.Scopes ?? Array.Empty<string>())</td>
                                 <td><code>@key.PackageGlobPattern</code></td>
+                                <td>@Model.DescribeRepositories(key)</td>
                                 <td>@key.Created.ToString("yyyy-MM-dd")</td>
                                 <td>@(key.Expires?.ToString("yyyy-MM-dd") ?? "Never")</td>
                                 <td><button type="submit" class="btn btn-danger btn-xs" asp-page-handler="RevokeKey" name="key" value="@key.Key">Revoke</button></td>

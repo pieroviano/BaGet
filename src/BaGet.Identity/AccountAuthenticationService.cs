@@ -60,6 +60,7 @@ public class AccountAuthenticationService : Core.IAuthenticationService
             isSuperuser: false,
             key.Scopes,
             key.PackageGlobPattern,
-            isAdministrator: user.IsAdministrator);
+            isAdministrator: user.IsAdministrator,
+            repositoryKeys: await _apiKeys.RepositoryKeysAsync(key.Key, cancellationToken));
     }
 }

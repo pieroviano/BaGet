@@ -20,6 +20,8 @@ public interface IAccessEvaluator
     /// repository as a whole (some package may match). A null principal is an anonymous caller.
     /// </summary>
     /// <remarks>
+    /// A principal whose API key is limited to other repositories (<see cref="BaGetPrincipal.RepositoryKeys"/>) holds no
+    /// action here, not even as an administrator, and reads as an anonymous caller.
     /// The server's superuser (global API key) and administrators (D5 of the access plan) hold every action. Where the
     /// database is not relational (Azure Table) there is no access model: reading is open and any authenticated caller
     /// holds the write actions, as before the model existed.
@@ -83,6 +85,15 @@ public sealed class AccessEvaluator : IAccessEvaluator
     {
         if (repository == null) throw new ArgumentNullException(nameof(repository));
         if (action == AccessAction.None) return true;
+
+        // An API key limited to some repositories (ApiKeyRepository) is not a credential in the others: it grants
+        // nothing there, and a read is judged as the anonymous caller's, so a key never sees more than no key at all.
+        if (principal != null && !principal.AllowsRepository(repository.Key))
+        {
+            if (action != AccessAction.Read) return false;
+            principal = null;
+        }
+
         if (_context is NullContext) return action == AccessAction.Read || principal != null;
         if (principal != null && (principal.IsSuperuser || principal.IsAdministrator)) return true;
 

@@ -27,8 +27,10 @@ public sealed class BaGetPrincipal
         bool isSuperuser,
         IReadOnlyList<string>? scopes,
         string? packageGlobPattern,
-        bool isAdministrator = false)
+        bool isAdministrator = false,
+        IReadOnlyList<int>? repositoryKeys = null)
     {
+        RepositoryKeys = repositoryKeys;
         UserId = userId;
         UserName = userName;
         IsSuperuser = isSuperuser;
@@ -49,6 +51,18 @@ public sealed class BaGetPrincipal
     public bool IsAdministrator { get; }
 
     public IReadOnlyList<string> Scopes { get; }
+
+    /// <summary>
+    /// The keys of the only repositories the credential may be used in (<see cref="ApiKeyRepository"/>), or null for
+    /// every repository: the global key, a browser session and a key without a repository limit.
+    /// </summary>
+    public IReadOnlyList<int>? RepositoryKeys { get; }
+
+    /// <summary>
+    /// Whether the credential may be used in repository <paramref name="repositoryKey"/>. Only a limit of the
+    /// credential: what the user may do there is still decided by <see cref="IAccessEvaluator"/>.
+    /// </summary>
+    public bool AllowsRepository(int repositoryKey) => RepositoryKeys == null || RepositoryKeys.Contains(repositoryKey);
 
     public string PackageGlobPattern { get; }
 

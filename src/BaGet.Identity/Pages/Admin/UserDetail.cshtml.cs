@@ -46,6 +46,12 @@ public class UserDetailModel : AdminPageModel
     /// <summary>The account's API keys; the hash is never shown.</summary>
     public IReadOnlyList<ApiKey> Keys { get; private set; } = Array.Empty<ApiKey>();
 
+    private IReadOnlyDictionary<int, IReadOnlyList<string>> _keyRepositories = new Dictionary<int, IReadOnlyList<string>>();
+
+    /// <summary>Where the key may be used: the repositories it is limited to, or "all repositories".</summary>
+    public string DescribeRepositories(ApiKey key)
+        => ApiKeyService.DescribeRepositories(_keyRepositories.GetValueOrDefault(key.Key));
+
     /// <summary>The organizations the account belongs to.</summary>
     public IReadOnlyList<Organization> Organizations { get; private set; } = Array.Empty<Organization>();
 
@@ -161,6 +167,7 @@ public class UserDetailModel : AdminPageModel
         await LoadAccessAsync(Account, cancellationToken);
 
         Keys = await ApiKeys.ListAsync(Account.Id, cancellationToken);
+        _keyRepositories = await ApiKeys.RepositoryNamesAsync(Keys, cancellationToken);
         Organizations = await Ownership.GetOrganizationsAsync(Account.Id, cancellationToken) ?? (IReadOnlyList<Organization>)Array.Empty<Organization>();
         OwnedPackageIds = await Ownership.CountOwnedPackageIdsAsync(Account.UserName, cancellationToken);
 
