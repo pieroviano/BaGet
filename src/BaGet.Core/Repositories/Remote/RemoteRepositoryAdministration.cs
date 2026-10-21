@@ -400,7 +400,8 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         }
         else
         {
-            var moved = !SameCredentialScope(settings, fromOptions);
+            // Mirror:* carries no user name (the repository's own is kept), so only the origin can have moved.
+            var moved = !SameOrigin(settings, fromOptions);
             settings.Url = fromOptions.Url;
             settings.Protocol = fromOptions.Protocol;
             settings.DownloadTimeoutSeconds = fromOptions.DownloadTimeoutSeconds;
@@ -418,14 +419,20 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         _state.InvalidateSettings(existing.Key);
     }
 
-    // True while the origin (scheme, host, port) and the user name are the ones a stored password was saved for.
-    private static bool SameCredentialScope(RemoteRepositorySettings before, RemoteRepositorySettings after)
+    // True while the origin (scheme, host, port) is the one a stored password was saved for.
+    private static bool SameOrigin(RemoteRepositorySettings before, RemoteRepositorySettings after)
     {
         var a = before.UrlOrNull;
         var b = after.UrlOrNull;
         if (a == null || b == null) return a == b;
 
-        return string.Equals(a.GetLeftPart(UriPartial.Authority), b.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase)
+        return string.Equals(a.GetLeftPart(UriPartial.Authority), b.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase);
+    }
+
+    // True while the origin and the user name are the ones a stored password was saved for.
+    private static bool SameCredentialScope(RemoteRepositorySettings before, RemoteRepositorySettings after)
+    {
+        return SameOrigin(before, after)
             && string.Equals(before.Username ?? string.Empty, after.Username ?? string.Empty, StringComparison.Ordinal);
     }
 

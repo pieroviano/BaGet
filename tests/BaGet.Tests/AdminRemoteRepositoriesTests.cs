@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
 
@@ -590,5 +591,33 @@ public class MirrorRepositoryTests : IDisposable
 
         Assert.NotEmpty(wire!.Requests);
         Assert.All(wire.Requests, r => Assert.StartsWith("Basic ", r.Authorization));
+    }
+
+    [Fact]
+    public async Task ChangingOnlyAMirrorTimeoutKeepsTheStoredUserNameAndPassword()
+    {
+        using (var scope = _app.Services.CreateScope())
+        {
+            var admin = scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>();
+            var settings = (await admin.FindAsync(Repository.MirrorName, CancellationToken.None))!.Settings;
+            settings.Username = "bob";
+            settings.Password = "pw";
+            await admin.UpdateAsync(Repository.MirrorName, settings, clearPassword: false, CancellationToken.None);
+        }
+
+        // Same origin, only the timeout differs (what a restart with a changed Mirror:* does).
+        using (var scope = _app.Services.CreateScope())
+        {
+            scope.ServiceProvider.GetRequiredService<IOptions<MirrorOptions>>().Value.PackageDownloadTimeoutSeconds = 123;
+            await scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>().EnsureMirrorRepositoryAsync(CancellationToken.None);
+        }
+
+        using (var scope = _app.Services.CreateScope())
+        {
+            var detail = (await scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>().FindAsync(Repository.MirrorName, CancellationToken.None))!;
+            Assert.Equal(123, detail.Settings.DownloadTimeoutSeconds);
+            Assert.Equal("bob", detail.Settings.Username);
+            Assert.True(detail.HasPassword);
+        }
     }
 }
