@@ -129,6 +129,7 @@ public static partial class DependencyInjectionExtensions
         services.TryAddTransient<IServiceIndexService, BaGetServiceIndex>();
         services.TryAddTransient<ISymbolIndexingService, SymbolIndexingService>();
         services.TryAddTransient<ISymbolStorageService, SymbolStorageService>();
+        services.TryAddTransient<ISymbolRegistry, SymbolRegistry>();
 
         services.TryAddTransient<DatabaseSearchService>();
         services.TryAddTransient<FileStorageService>();

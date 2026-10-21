@@ -22,7 +22,7 @@ Inventory that motivates it (2026-10-21, HEAD `1433dba`):
 | **B3** (resolved, see below) | Upgrade equivalence | Existing installs must behave exactly as today after U2 (anonymous read everywhere, push and manage by ownership) | U2's migration seeds built-in targets (D3). A test runs the whole current authorization suite (`OwnershipAuthorizationService` cases, push/unlist/delete/deprecate, Manage page) on the seeded model with no edits: identical outcomes |
 | **B4** (resolved, see below) | Cost of a check per request | Reads are hot (registration, flat container, search) | Measure the evaluator with 50 targets / 20 groups; cache the resolved permission set per principal per request plus a short per-user cache invalidated by an "access model version" bumped on every change |
 | **B5** (resolved, see below) | Single-repository backends | Azure Table (`NullContext`) and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`) | Switcher, repository pickers and per-repository targets hidden there; permission tables need a relational database. Under Azure Table, keep today's model and say so on the admin pages |
-| B6 | Symbol deletion | No `ISymbolStorageService` delete; symbols are keyed by PDB, not by package (`SymbolStorageService.cs:50-76`) | Find where a `.snupkg` → PDB keys mapping can be recorded at index time. Without it, list/delete per package is impossible for existing symbols; decide (record from now on + document) |
+| B6 (resolved, see below) | Symbol deletion | No `ISymbolStorageService` delete; symbols are keyed by PDB, not by package (`SymbolStorageService.cs:50-76`) | Find where a `.snupkg` → PDB keys mapping can be recorded at index time. Without it, list/delete per package is impossible for existing symbols; decide (record from now on + document) |
 
 ### B1 outcome
 
@@ -40,6 +40,15 @@ Inventory that motivates it (2026-10-21, HEAD `1433dba`):
 | B3 | `AccessUpgradeEquivalenceTests` (written first, green on the pre-U2 code except the seed check): a pre-repository database migrated by the current code serves anonymous reads in both repositories, refuses anonymous writes, and keeps ownership/scope/administrator outcomes. The existing authorization suite runs on the same seeded model (the harness migrates a fresh database). **The plan's seed was too narrow:** "Authenticated users deploy" needs Annotate, Delete and Manage as well, or unlisting/deprecating by owners (decided by ownership alone before) would break | Seed: Anyone reads (Read, Everyone); Authenticated users deploy (Annotate, Deploy, Delete, Manage; Authenticated) |
 | B4 | `AccessEvaluatorTests.ACheckAgainstFiftyTargetsAndTwentyGroupsCostsMicroseconds`: 50 targets, 20 groups, 20 000 package-level checks, 6.5 microseconds each in memory (development machine) (the assertion allows 500). Whole model cached as `AccessSnapshot`; invalidated by `AccessModelVersion` (bumped by a SaveChanges interceptor, so no editor forgets) and a 30 s TTL for other instances; memberships per user loaded once per snapshot | `BaGet.Core/Access/AccessSnapshot.cs` |
 | B5 | Azure Table (`NullContext`): the evaluator allows Read to all and writes to any authenticated principal (today's model); the switcher/pickers are already hidden (`SupportsMultipleRepositories`). `Search:Type=AzureSearch` with a relational database keeps the model for the `default` repository. The admin pages of U3 must say so | `AccessEvaluator`, `AccessEvaluatorTests.WithoutARelationalDatabase...` |
+
+### B6 outcome
+
+| Finding | Decision |
+|---|---|
+| `SymbolIndexingService` already holds package ID/version and each PDB's file + key when it stores a PDB | Record there: new `PackageSymbol` table (`IRepositoryScoped`, index on package and on file+key; 4 migrations `AddPackageSymbols`), written through `ISymbolRegistry` after `MaintenanceGate.ThrowIfClosed` |
+| `ISymbolStorageService` had no delete | Added `DeletePortablePdbContentAsync`; registry deletes rows first, then content not referenced by another version (a PDB can be shared) |
+| Symbols indexed before cannot be mapped (the `.snupkg` is not kept; storage is keyed by file and key only) | **No backfill**: still served, not listed per package; documented on the Manage page and in `docs/configuration.md` |
+| Azure Table has no relational tables | `IsSupported` false: nothing recorded, Manage shows a note |
 
 ## Decisions
 
@@ -156,6 +165,10 @@ last-owner rules of `PackageOwnershipService`), manage members. Pages under `/ad
 `/admin/organizations`.
 
 ### U7 — Package metadata
+
+Status: implemented (track `metadata`). Shared rules: `PackageVulnerabilityRules` (`BaGet.Core`), used by `PackageMetadataAdminController` and the page.
+The Manage handlers are `AddVulnerability`, `RemoveVulnerability`, `SetVerified` (administrator only, `PackageOwnershipService.SetVerifiedAsync`), `DeleteSymbols`;
+all work in the page's repository and are refused in read-only mode by the page's existing gate. Tests: `PackageMetadataPageTests`.
 
 | Feature | Where |
 |---|---|

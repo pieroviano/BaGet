@@ -135,7 +135,7 @@ migrations; a schema change needs a migration in all four relational providers.
 
 ### Repositories
 
-Every package, owner, catalog entry, validation and abuse report belongs to a `Repository` (`RepositoryKey`;
+Every package, owner, catalog entry, validation, abuse report and symbol record (`PackageSymbol`: which package version a PDB came from) belongs to a `Repository` (`RepositoryKey`;
 `IRepositoryScoped`). `default` (key 1) is the one served at `/` and holds everything that predates repositories:
 the `AddRepositories` migration gives existing rows `RepositoryKey = 1`, and startup creates the `default` row
 (`IRepositoryService.EnsureDefaultAsync`). Package IDs are unique per repository: `(RepositoryKey, Id, Version)`.
@@ -143,12 +143,12 @@ the `AddRepositories` migration gives existing rows `RepositoryKey = 1`, and sta
 | Piece | Job |
 |---|---|
 | `IRepositoryContext` (scoped) | The repository in effect: `Current { Key, Name, Format, Kind }`, `Use(info)` to select. Defaults to `default`. Routing, workers and commands call `Use` (or `IServiceScopeFactory.CreateRepositoryScope(info)`) before any query |
-| `AbstractContext` query filters | Filter the five tables above on `Current.Key` per query, and stamp new rows with it on save. `IgnoreQueryFilters()` sees every repository (database copy, account deletion, the validation worker's pending list) |
+| `AbstractContext` query filters | Filter the six tables above on `Current.Key` per query, and stamp new rows with it on save. `IgnoreQueryFilters()` sees every repository (database copy, account deletion, the validation worker's pending list) |
 | `IRepositoryService` | Find / list / create repositories; name rules in one place, `RepositoryNames` (lowercase `[a-z0-9-._]`, 1-64, not a reserved route name) |
 | Azure Table | Holds the `default` repository only: creating another is refused, `TablePackageDatabase` refuses any other |
 
-Mirroring (`Mirror:*`) serves `default` only; other repositories are local. Package and symbol storage paths are
-not repository-aware yet.
+Mirroring (`Mirror:*`) serves `default` only; other repositories are local. Package and symbol storage paths nest
+under `repos/{name}/` for other repositories.
 
 ## Background work
 

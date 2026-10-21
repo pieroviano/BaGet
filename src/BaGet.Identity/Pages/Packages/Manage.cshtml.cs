@@ -18,9 +18,10 @@ namespace BaGet.Identity.Pages.Packages;
 
 /// <summary>
 /// The owners' page for a package ID: its owners, its versions' listing and
-/// deprecation, and the abuse reports against it. An administrator may open it for any ID,
-/// ownerless ones included, and alone may delete permanently whatever
-/// <see cref="BaGetOptions.PackageDeletionBehavior"/> says, after confirming their password.
+/// deprecation, vulnerabilities and indexed symbols (PDBs), and the abuse reports against it. An
+/// administrator may open it for any ID, ownerless ones included, and alone may set the ID's verified (reserved)
+/// flag and delete permanently whatever <see cref="BaGetOptions.PackageDeletionBehavior"/> says, after confirming
+/// their password. Everything works in the request's repository.
 /// </summary>
 public class ManageModel : AccountPageModel
 {
@@ -44,6 +45,22 @@ public class ManageModel : AccountPageModel
     public IReadOnlyList<AbuseReport> Reports { get; private set; } = Array.Empty<AbuseReport>();
 
     public string? Message { get; private set; }
+
+    /// <summary>Whether the ID is verified (reserved): an owner row carries the flag.</summary>
+    public bool IsVerified => Owners.Any(o => o.IsVerified);
+
+    /// <summary>
+    /// The PDBs indexed from each version's symbol package, by normalized version (case-insensitive). Empty
+    /// when <see cref="SymbolsSupported"/> is false; PDBs indexed before they were recorded are not listed.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<SymbolReference>> Symbols { get; private set; }
+        = new Dictionary<string, IReadOnlyList<SymbolReference>>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Whether the database records symbols per package version (false for Azure Table).</summary>
+    public bool SymbolsSupported => HttpContext.RequestServices.GetRequiredService<ISymbolRegistry>().IsSupported;
+
+    /// <summary>The severity names a vulnerability can have, by their protocol number.</summary>
+    public IReadOnlyList<string> SeverityNames => PackageVulnerabilityRules.SeverityNames;
 
     /// <summary>Whether the signed in user is an administrator.</summary>
     public bool IsAdministrator { get; private set; }
@@ -319,6 +336,100 @@ public class ManageModel : AccountPageModel
     public async Task<IActionResult> OnPostUndeprecateAsync(string version, CancellationToken cancellationToken)
         => await ChangeVersionAsync(version, v => Packages.RemoveDeprecationAsync(Id, v, cancellationToken), "no longer deprecated", cancellationToken);
 
+    /// <summary>
+    /// Adds one vulnerability to a version, through the rules the metadata API applies
+    /// (<see cref="PackageVulnerabilityRules"/>).
+    /// </summary>
+    public async Task<IActionResult> OnPostAddVulnerabilityAsync(
+        string version,
+        string? advisoryUrl,
+        int severity,
+        string? versionRange,
+        CancellationToken cancellationToken)
+    {
+        var added = new PackageVulnerability
+        {
+            AdvisoryUrl = advisoryUrl?.Trim(),
+            Severity = severity,
+            VersionRange = string.IsNullOrWhiteSpace(versionRange) ? null : versionRange.Trim(),
+        };
+
+        return await ChangeVulnerabilitiesAsync(version, current => current.Append(added).ToList(), "updated (vulnerability added)", cancellationToken);
+    }
+
+    /// <summary>Removes one vulnerability, identified by its key, from a version.</summary>
+    public async Task<IActionResult> OnPostRemoveVulnerabilityAsync(string version, int key, CancellationToken cancellationToken)
+        => await ChangeVulnerabilitiesAsync(version, current => current.Where(v => v.Key != key).ToList(), "updated (vulnerability removed)", cancellationToken);
+
+    private async Task<IActionResult> ChangeVulnerabilitiesAsync(
+        string version,
+        Func<IReadOnlyList<PackageVulnerability>, IReadOnlyList<PackageVulnerability>> change,
+        string done,
+        CancellationToken cancellationToken)
+    {
+        if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
+
+        var package = await Packages.FindOrNullAsync(Id, parsed, includeUnlisted: true, cancellationToken);
+        if (package == null) return NotFound();
+
+        // Fresh copies: the stored rows are replaced as a whole, so the list must not reuse tracked entities.
+        var updated = change(package.Vulnerabilities ?? new List<PackageVulnerability>())
+            .Select(v => new PackageVulnerability
+            {
+                Key = v.Key,
+                AdvisoryUrl = v.AdvisoryUrl,
+                Severity = v.Severity,
+                VersionRange = v.VersionRange,
+            })
+            .ToList();
+
+        var error = PackageVulnerabilityRules.Validate(updated);
+        if (error != null) return await DoneAsync(error, cancellationToken);
+
+        foreach (var vulnerability in updated) vulnerability.Key = 0;
+
+        return await ChangeVersionAsync(
+            version,
+            v => Packages.SetVulnerabilitiesAsync(Id!, v, updated, cancellationToken),
+            done,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Marks or unmarks the ID as verified (reserved for its owners). Administrators only: owners cannot
+    /// grant the flag to themselves.
+    /// </summary>
+    public async Task<IActionResult> OnPostSetVerifiedAsync(bool verified, CancellationToken cancellationToken)
+    {
+        if (!IsAdministrator) return StatusCode(403);
+
+        var changed = await HttpContext.RequestServices.GetRequiredService<PackageOwnershipService>()
+            .SetVerifiedAsync(Id!, verified, cancellationToken);
+        if (!changed) return NotFound();
+
+        Log().LogWarning("Administrator {Admin} {Action} {PackageId}", User.Identity?.Name, verified ? "verified" : "unverified", Id);
+
+        return await DoneAsync(verified ? $"{Id} is verified." : $"{Id} is no longer verified.", cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes the PDBs recorded for a version. They stop being served; PDBs indexed before they were
+    /// recorded cannot be deleted from here.
+    /// </summary>
+    public async Task<IActionResult> OnPostDeleteSymbolsAsync(string version, CancellationToken cancellationToken)
+    {
+        if (!NuGetVersion.TryParse(version, out var parsed)) return NotFound();
+
+        var removed = await HttpContext.RequestServices.GetRequiredService<ISymbolRegistry>()
+            .DeleteAsync(Id!, parsed, cancellationToken);
+
+        return await DoneAsync(
+            removed == 0
+                ? $"{Id} {parsed.ToNormalizedString()} has no recorded symbols to delete."
+                : $"Deleted {removed} symbol file(s) of {Id} {parsed.ToNormalizedString()}.",
+            cancellationToken);
+    }
+
     public async Task<IActionResult> OnPostResolveReportAsync(int key, CancellationToken cancellationToken)
     {
         #pragma warning disable CS8602
@@ -381,6 +492,19 @@ public class ManageModel : AccountPageModel
         Versions = (await Packages.FindAsync(Id, includeUnlisted: true, cancellationToken))
             .OrderByDescending(p => p.Version)
             .ToList();
+
+        var registry = HttpContext.RequestServices.GetRequiredService<ISymbolRegistry>();
+        if (registry.IsSupported)
+        {
+            var symbols = new Dictionary<string, IReadOnlyList<SymbolReference>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var package in Versions)
+            {
+                var listed = await registry.ListAsync(Id!, package.Version, cancellationToken);
+                if (listed.Count > 0) symbols[package.Version.ToNormalizedString()] = listed;
+            }
+
+            Symbols = symbols;
+        }
 
         if (!(Context is NullContext))
         {

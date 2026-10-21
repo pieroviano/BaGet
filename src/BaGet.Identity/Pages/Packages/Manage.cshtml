@@ -52,6 +52,21 @@
         <button type="submit" class="btn btn-primary" disabled="@Model.IsReadOnlyMode">Add owner</button>
     </form>
 
+    <p id="manage-verified">
+        This ID is <strong>@(Model.IsVerified ? "verified" : "not verified")</strong>.
+        @if (Model.IsAdministrator)
+        {
+            <form method="post" asp-page-handler="SetVerified" style="display:inline">
+                <input type="hidden" name="verified" value="@(Model.IsVerified ? "false" : "true")" />
+                <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">@(Model.IsVerified ? "Clear verified flag" : "Mark as verified")</button>
+            </form>
+        }
+        else
+        {
+            <span class="help-block">Only an administrator can change this.</span>
+        }
+    </p>
+
     <h2>Versions</h2>
     <p id="manage-upload">
         <a asp-page="/Upload" asp-route-id="@Model.Id">Upload new version</a>
@@ -129,6 +144,105 @@
             }
         </tbody>
     </table>
+
+    <h2>Vulnerabilities</h2>
+    <p class="help-block">
+        Advisories listed in the registration metadata, which NuGet clients use to warn about a version
+        (low, moderate, high or critical). The version range is optional.
+    </p>
+    <table class="table" id="manage-vulnerabilities">
+        <thead><tr><th>Version</th><th>Advisory</th><th>Severity</th><th>Range</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var package in Model.Versions)
+            {
+                var version = package.NormalizedVersionString;
+                foreach (var vulnerability in package.Vulnerabilities ?? new List<PackageVulnerability>())
+                {
+                    <tr>
+                        <td>@version</td>
+                        <td><a href="@vulnerability.AdvisoryUrl" rel="noopener noreferrer">@vulnerability.AdvisoryUrl</a></td>
+                        <td>@(vulnerability.Severity >= 0 && vulnerability.Severity < Model.SeverityNames.Count ? Model.SeverityNames[vulnerability.Severity] : vulnerability.Severity.ToString())</td>
+                        <td>@vulnerability.VersionRange</td>
+                        <td>
+                            <form method="post" asp-page-handler="RemoveVulnerability">
+                                <input type="hidden" name="version" value="@version" />
+                                <input type="hidden" name="key" value="@vulnerability.Key" />
+                                <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <form method="post" asp-page-handler="AddVulnerability" class="form-inline" id="manage-add-vulnerability">
+        <select name="version" class="form-control input-sm">
+            @foreach (var package in Model.Versions)
+            {
+                <option value="@package.NormalizedVersionString">@package.NormalizedVersionString</option>
+            }
+        </select>
+        <input type="text" name="advisoryUrl" class="form-control input-sm" placeholder="Advisory URL (https://...)" />
+        <select name="severity" class="form-control input-sm">
+            @for (var i = 0; i < Model.SeverityNames.Count; i++)
+            {
+                <option value="@i">@Model.SeverityNames[i]</option>
+            }
+        </select>
+        <input type="text" name="versionRange" class="form-control input-sm" placeholder="Version range (optional)" />
+        <button type="submit" class="btn btn-warning btn-xs" disabled="@Model.IsReadOnlyMode">Add vulnerability</button>
+    </form>
+
+    <h2>Symbols</h2>
+    @if (!Model.SymbolsSupported)
+    {
+        <p class="help-block" id="manage-symbols-unsupported">
+            The configured database cannot record which package version symbols belong to, so they cannot be listed or deleted here.
+        </p>
+    }
+    else
+    {
+        <p class="help-block" id="manage-symbols-note">
+            PDBs from symbol packages (.snupkg) indexed since this list was introduced. Symbols are stored by file
+            and key, not by package, so earlier ones are still served but cannot be listed or deleted here.
+        </p>
+        @if (Model.Symbols.Count == 0)
+        {
+            <p id="manage-symbols-empty">No symbols are recorded for any version.</p>
+        }
+        else
+        {
+            <table class="table" id="manage-symbols">
+                <thead><tr><th>Version</th><th>PDBs</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var package in Model.Versions)
+                    {
+                        var version = package.NormalizedVersionString;
+                        if (!Model.Symbols.TryGetValue(package.Version.ToNormalizedString(), out var pdbs)) continue;
+                        <tr>
+                            <td>@version</td>
+                            <td>
+                                @foreach (var pdb in pdbs)
+                                {
+                                    <div><code>@pdb.FileName</code> <small>@pdb.Key</small></div>
+                                }
+                            </td>
+                            <td>
+                                <form method="post" asp-page-handler="DeleteSymbols">
+                                    <input type="hidden" name="version" value="@version" />
+                                    <button type="submit" class="btn btn-danger btn-xs"
+                                            onclick="return confirm('Delete the symbols of @version? Debuggers can no longer download them.')"
+                                            disabled="@Model.IsReadOnlyMode">
+                                        Delete symbols
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
 
     <h2>Abuse reports</h2>
     @if (Model.Reports.Count == 0)

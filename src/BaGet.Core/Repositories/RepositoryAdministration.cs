@@ -163,6 +163,7 @@ public class RepositoryAdministration : IRepositoryAdministration
         _context.PackageOwners!.RemoveRange(await _context.PackageOwners!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.PackageValidations!.RemoveRange(await _context.PackageValidations!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.AbuseReports!.RemoveRange(await _context.AbuseReports!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.PackageSymbols!.RemoveRange(await _context.PackageSymbols!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.Repositories!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

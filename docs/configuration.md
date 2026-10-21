@@ -126,7 +126,8 @@ downloaded if you know the package's id and version. You can override this behav
 This setting also labels the button on a package's management page: it reads "Unlist this version"
 by default and "Delete this version permanently" with `HardDelete`, so the page never offers a
 deletion the server would only unlist. Two things a hard delete does *not* do: it leaves indexed
-symbols being served from `api/download/symbols/...`, and it does not update an external search
+symbols being served from `api/download/symbols/...` (delete them first from the Manage page's *Symbols* list),
+and it does not update an external search
 index, so with `Search:Type=AzureSearch` the version can still appear in search results until it is
 reindexed.
 
@@ -273,8 +274,11 @@ account without one). Everyone else, and every request while accounts are off, g
   | API | Push a version of, or unlist, any existing ID (needs `PushVersion`/`Push`, or `Unlist`). A new ID still needs `Push` and makes the pusher its owner. |
   | `/packages/{id}/manage` | Opens for any ID, ownerless ones included, with a "managing as an administrator" banner. Writes by a non-owner administrator are logged (`Administrator {Admin} ran {Handler} on {PackageId}`). |
   | Manage, *Delete permanently* | Hard-deletes one version, or every version and the owners (*Danger zone*), whatever `PackageDeletionBehavior` says. Needs the administrator's password (or a fresh provider sign-in); logged. Read-only mode refuses it. |
+  | Manage, *Verified* | Marks or clears the ID as verified (reserved); owners see the state but cannot change it. |
   | `/admin/users/{name}/packages` | The IDs a user owns, with owners and a link to Manage. |
   | `/admin/packages` | IDs with no owner (predating accounts, or left without one) in every repository, 50 per page; a Repository column appears once one is outside `default`, and each link goes to that repository's page. |
+| Manage, *Vulnerabilities* | Owners and administrators add or remove a version's advisories (http/https URL, severity low to critical, optional version range); the same rules as the `PUT .../vulnerabilities` API. |
+| Manage, *Symbols* | Lists the PDBs each version's symbol package contributed and deletes them (database rows and stored content; content another version still lists is kept). Only symbols indexed after this list was introduced are recorded: older ones keep being served but cannot be listed or deleted per package. Not available with Azure Table. |
 | Package page, *Manage package* | Shown only to an owner (directly or through an organization) or an administrator. |
 * The check reads the database on every request, so a demotion applies at once.
 

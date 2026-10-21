@@ -120,7 +120,7 @@ Pages marked "accounts" answer `404` while `Accounts:Enabled` is `false`; "sign-
 | `/account/apikeys`, `/account/organizations`, `/account/packages`, `/account/settings`, `/account/twofactor`, `/account/reauthenticate` | accounts, sign-in |
 | `/account/profile` | accounts, sign-in; redirects to `/profiles/{name}` |
 | `/profiles/{name}` | a user's or organization's packages; accounts |
-| `/packages/{id}/manage` | accounts, sign-in; owners: owners, unlist/relist, delete (per `PackageDeletionBehavior`), deprecation, abuse reports |
+| `/packages/{id}/manage` | accounts, sign-in; owners: owners, unlist/relist, delete (per `PackageDeletionBehavior`), deprecation, vulnerabilities, symbols (list/delete), abuse reports; administrators: verified flag |
 | `/packages/{id}/contact-owners` | accounts, sign-in; `404` unless email is configured |
 | `/admin/users` | administrators: promote, demote, reset password, send reset link |
 | `/admin/users/{name}/packages`, `/admin/users/{name}/delete` | administrators |

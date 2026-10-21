@@ -601,6 +601,51 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.ToTable("PackageOwners");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageSymbol", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("SymbolKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "FileName", "SymbolKey");
+
+                    b.HasIndex("RepositoryKey", "PackageId", "PackageVersion");
+
+                    b.ToTable("PackageSymbols");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
                 {
                     b.Property<int>("Key")

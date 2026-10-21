@@ -54,6 +54,11 @@ public class SymbolStorageService : ISymbolStorageService
         }
     }
 
+    public async Task DeletePortablePdbContentAsync(string filename, string key, CancellationToken cancellationToken)
+    {
+        await _storage.DeleteAsync(GetPathForKey(filename, key), cancellationToken);
+    }
+
     private string GetPathForKey(string filename, string key)
     {
         // Ensure the filename doesn't try to escape out of the current directory.

@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -260,6 +260,53 @@ public class SymbolIndexingServiceTests
 
         AssertSaved("library.pdb", LibrarySignature, LibraryPdb);
         AssertSaved("other.pdb", OtherSignature, OtherPdb);
+    }
+
+    [Fact]
+    public async Task RecordsWhichPackageVersionEachSavedPdbCameFrom()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        GivenPackageExists(TestPackage.CreateMinimal(
+            binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.dll", LibraryDll } }));
+        var registry = new Mock<ISymbolRegistry>();
+        var recorded = new List<SymbolReference>();
+        registry
+            .Setup(r => r.RecordAsync(It.IsAny<string>(), It.IsAny<NuGetVersion>(), It.IsAny<IEnumerable<SymbolReference>>(), It.IsAny<CancellationToken>()))
+            .Callback((string id, NuGetVersion version, IEnumerable<SymbolReference> symbols, CancellationToken _) =>
+            {
+                Assert.Equal(PackageId, id);
+                Assert.Equal(PackageVersion, version.ToNormalizedString());
+                recorded.AddRange(symbols);
+            })
+            .Returns(Task.CompletedTask);
+        var target = new SymbolIndexingService(_packages.Object, _packageStorage.Object, _symbols.Object, _logger, registry.Object);
+
+        using var snupkg = TestPackage.CreateSymbols(
+            binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", LibraryPdb } });
+
+        Assert.Equal(SymbolIndexingResult.Success, await target.IndexAsync(snupkg, cancellationToken));
+
+        var symbol = Assert.Single(recorded);
+        Assert.Equal("library.pdb", symbol.FileName);
+        Assert.Equal($"{LibrarySignature:N}".ToUpperInvariant() + "ffffffff", symbol.Key);
+    }
+
+    [Fact]
+    public async Task AClosedMaintenanceGateRefusesBeforeAnythingIsStored()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        GivenPackageExists(TestPackage.CreateMinimal(
+            binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.dll", LibraryDll } }));
+        var gate = new MaintenanceGate();
+        gate.Close("test");
+        var target = new SymbolIndexingService(_packages.Object, _packageStorage.Object, _symbols.Object, _logger, null, gate);
+
+        using var snupkg = TestPackage.CreateSymbols(
+            binaryFiles: new Dictionary<string, byte[]> { { "lib/net8.0/Library.pdb", LibraryPdb } });
+
+        // A refused write is reported as such, not as an invalid symbol package.
+        await Assert.ThrowsAsync<MaintenanceException>(() => target.IndexAsync(snupkg, cancellationToken));
+        Assert.Empty(_saved);
     }
 
     [Fact]

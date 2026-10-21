@@ -571,6 +571,49 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("PackageOwners");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageSymbol", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("SymbolKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "FileName", "SymbolKey");
+
+                    b.HasIndex("RepositoryKey", "PackageId", "PackageVersion");
+
+                    b.ToTable("PackageSymbols");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
                 {
                     b.Property<int>("Key")

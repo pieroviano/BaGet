@@ -119,10 +119,10 @@ Raw SQL would bypass the gate: there is none outside migrations, keep it so (the
 rollback `ExecuteDelete`, runs on the copy's own target context, never on the application's).
 
 **Repositories.** `Repository`/`Project` (`BaGet.Core/Repositories`); `default` (key `Repository.DefaultKey` = 1) is the
-repository at `/`. `Package`, `PackageOwner`, `CatalogEntry`, `PackageValidation`, `AbuseReport` are `IRepositoryScoped`
+repository at `/`. `Package`, `PackageOwner`, `CatalogEntry`, `PackageValidation`, `AbuseReport`, `PackageSymbol` are `IRepositoryScoped`
 (`RepositoryKey`, column default 1 = how the `AddRepositories` migration assigns pre-existing rows; no foreign key).
 The migration (all four providers) also inserts the `default` row with key 1 (PostgreSQL `setval`s the sequence), so
-applying migrations outside the app (`dotnet ef database update`, a script) leaves no gap for a new repository to take key 1. `AbstractContext` filters those five on `IRepositoryContext.Current.Key` with global
+applying migrations outside the app (`dotnet ef database update`, a script) leaves no gap for a new repository to take key 1. `AbstractContext` filters those six on `IRepositoryContext.Current.Key` with global
 query filters evaluated per query (the scope is found through EF's `ApplicationServiceProvider`, so a hand-built
 context works in `default`) and stamps new rows on save; anything that must see every repository calls
 `IgnoreQueryFilters()` (`DatabaseTable` copy/count/delete, `AccountDeletionService`, `PackageValidationRunner` pending list
@@ -154,6 +154,15 @@ Core interfaces (it cannot reference Validation/Catalog). Tests: `AdminOperation
 `UserDetail` (`/admin/users/{name}`) is a list of `<section id="user-section-*">` blocks (account, organizations, API keys with revoke) that other features extend.
 `Organizations` / `OrganizationDetail` use `PackageOwnershipService`: `RenameOrganizationAsync` rewrites `PackageOwner.OwnerName` in **every repository** (`IgnoreQueryFilters`) in the same save and refuses a name used by a user or organization;
 `DeleteOrganizationAsync` refuses while it owns any package ID in any repository; `SetMemberAdminAsync`/`RemoveMemberAsync` keep one administrator. The `{name}` route segment bars `/ \ ? # %` in names created here.
+
+**Symbols per package.** Symbols are stored by PDB (`symbols/{file}/{key}`), so `ISymbolRegistry` / `SymbolRegistry` (`BaGet.Core/Storage`)
+records a `PackageSymbol` row (lower-cased ID, normalized version, file, key; repository-scoped, no foreign key) when
+`SymbolIndexingService` stores a PDB (after `MaintenanceGate.ThrowIfClosed`; a `MaintenanceException` is rethrown, not turned into
+`InvalidSymbolPackage`). It backs the Manage page's Symbols list/delete: `DeleteAsync` removes the rows first, then each PDB via
+`ISymbolStorageService.DeletePortablePdbContentAsync` unless another version of the repository still records it. PDBs indexed before the
+table existed (migration `AddPackageSymbols`) have no row: still served, not listable (the `.snupkg` is not kept, so no backfill).
+Azure Table (`NullContext`) records nothing (`IsSupported` false). Hard-deleting a package leaves its symbols and rows (they keep being served, as documented).
+Vulnerability input rules live in `PackageVulnerabilityRules` (`BaGet.Core/Metadata`), shared by `PackageMetadataAdminController` and the Manage page.
 
 **Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,
 deprecation/vulnerability, repository signatures) twice: plain (the `default` repository) and as `r:<name>` under

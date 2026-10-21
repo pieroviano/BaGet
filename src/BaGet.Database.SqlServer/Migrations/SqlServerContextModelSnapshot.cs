@@ -602,6 +602,51 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("PackageOwners");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageSymbol", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("SymbolKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "FileName", "SymbolKey");
+
+                    b.HasIndex("RepositoryKey", "PackageId", "PackageVersion");
+
+                    b.ToTable("PackageSymbols");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
                 {
                     b.Property<int>("Key")

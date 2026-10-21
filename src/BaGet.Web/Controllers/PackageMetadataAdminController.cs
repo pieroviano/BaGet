@@ -155,37 +155,12 @@ public class PackageMetadataAdminController : Controller
 
     internal static string? Validate(IReadOnlyList<VulnerabilityRequest>? request)
     {
-        if (request == null)
-        {
-            return "A list of vulnerabilities is required; send an empty list to clear them.";
-        }
-
-        foreach (var vulnerability in request)
-        {
-            if (vulnerability == null)
-            {
-                return "A vulnerability cannot be null.";
-            }
-
-            if (!Uri.TryCreate(vulnerability.AdvisoryUrl, UriKind.Absolute, out var url)
-                || (url.Scheme != Uri.UriSchemeHttps && url.Scheme != Uri.UriSchemeHttp))
-            {
-                return $"'{vulnerability.AdvisoryUrl}' is not an absolute http or https URL.";
-            }
-
-            // The protocol numbers severity 0 low, 1 moderate, 2 high, 3 critical.
-            if (vulnerability.Severity < 0 || vulnerability.Severity > 3)
-            {
-                return $"Severity {vulnerability.Severity} is outside the range 0 to 3.";
-            }
-
-            if (vulnerability.VersionRange != null && !VersionRange.TryParse(vulnerability.VersionRange, out _))
-            {
-                return $"'{vulnerability.VersionRange}' is not a version range.";
-            }
-        }
-
-        return null;
+        // The rules are shared with the Manage page: see PackageVulnerabilityRules.
+        return PackageVulnerabilityRules.Validate(request?
+            .Select(v => v == null
+                ? null
+                : new PackageVulnerability { AdvisoryUrl = v.AdvisoryUrl, Severity = v.Severity, VersionRange = v.VersionRange })
+            .ToList());
     }
 
     private async Task<IActionResult?> AuthorizeAsync(string? id, CancellationToken cancellationToken)

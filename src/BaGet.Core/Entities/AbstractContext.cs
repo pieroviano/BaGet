@@ -51,6 +51,8 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxValidationTypeLength = 64;
 
     public const int MaxAbuseReasonLength = 128;
+    public const int MaxPdbFileNameLength = 255;
+    public const int MaxSymbolKeyLength = 64;
     public const int MaxEmailLength = 256;
 
     private IRepositoryContext? _repository;
@@ -95,6 +97,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<ApiKey>? ApiKeys { get; set; }
     public DbSet<PackageValidation>? PackageValidations { get; set; }
     public DbSet<AbuseReport>? AbuseReports { get; set; }
+    public DbSet<PackageSymbol>? PackageSymbols { get; set; }
     public DbSet<Repository>? Repositories { get; set; }
     public DbSet<Project>? Projects { get; set; }
     public DbSet<Group>? Groups { get; set; }
@@ -162,6 +165,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<ApiKey>(BuildApiKeyEntity);
         builder.Entity<PackageValidation>(BuildPackageValidationEntity);
         builder.Entity<AbuseReport>(BuildAbuseReportEntity);
+        builder.Entity<PackageSymbol>(BuildPackageSymbolEntity);
         builder.Entity<Repository>(BuildRepositoryEntity);
         builder.Entity<Project>(BuildProjectEntity);
         builder.Entity<Group>(BuildGroupEntity);
@@ -178,6 +182,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<CatalogEntry>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<PackageValidation>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<AbuseReport>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<PackageSymbol>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
 
         // The column default is what the upgrade migration gives every row that predates repositories: they
         // belong to the default repository.
@@ -186,6 +191,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<CatalogEntry>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<PackageValidation>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<AbuseReport>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<PackageSymbol>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
     }
 
     private void BuildRepositoryEntity(EntityTypeBuilder<Repository> repository)
@@ -507,6 +513,18 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         report.Property(r => r.Reason).HasMaxLength(MaxAbuseReasonLength).IsRequired();
         report.Property(r => r.Details).HasMaxLength(DefaultMaxStringLength).IsRequired();
         report.Property(r => r.ReporterEmail).HasMaxLength(MaxEmailLength);
+    }
+
+    private void BuildPackageSymbolEntity(EntityTypeBuilder<PackageSymbol> symbol)
+    {
+        symbol.HasKey(s => s.Key);
+        symbol.HasIndex(s => new { s.RepositoryKey, s.PackageId, s.PackageVersion });
+        symbol.HasIndex(s => new { s.RepositoryKey, s.FileName, s.SymbolKey });
+
+        symbol.Property(s => s.PackageId).HasMaxLength(MaxPackageIdLength).IsRequired();
+        symbol.Property(s => s.PackageVersion).HasMaxLength(MaxPackageVersionLength).IsRequired();
+        symbol.Property(s => s.FileName).HasMaxLength(MaxPdbFileNameLength).IsRequired();
+        symbol.Property(s => s.SymbolKey).HasMaxLength(MaxSymbolKeyLength).IsRequired();
     }
 
     private void BuildPackageDependencyEntity(EntityTypeBuilder<PackageDependency> dependency)

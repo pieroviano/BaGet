@@ -600,6 +600,51 @@ namespace BaGet.Database.MySql.Migrations
                     b.ToTable("PackageOwners");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageSymbol", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("PackageId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("PackageVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("SymbolKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "FileName", "SymbolKey");
+
+                    b.HasIndex("RepositoryKey", "PackageId", "PackageVersion");
+
+                    b.ToTable("PackageSymbols");
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
                 {
                     b.Property<int>("Key")

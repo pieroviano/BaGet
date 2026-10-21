@@ -44,6 +44,11 @@ public interface IContext
     DbSet<AbuseReport>? AbuseReports { get; set; }
 
     /// <summary>
+    /// Which package version each indexed PDB came from; see <see cref="PackageSymbol"/>.
+    /// </summary>
+    DbSet<PackageSymbol>? PackageSymbols { get; set; }
+
+    /// <summary>
     /// The repositories. Not repository-scoped: it lists them all.
     /// </summary>
     DbSet<Repository>? Repositories { get; set; }

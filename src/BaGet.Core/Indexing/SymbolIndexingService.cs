@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,13 +44,21 @@ public class SymbolIndexingService : ISymbolIndexingService
     private readonly IPackageStorageService _packageStorage;
     private readonly ISymbolStorageService _storage;
     private readonly ILogger<SymbolIndexingService> _logger;
+    private readonly ISymbolRegistry? _registry;
+    private readonly MaintenanceGate? _gate;
 
+    // registry: records which package version each PDB came from, so they can be listed and deleted per
+    // version (null records nothing). gate: checked before any PDB is stored, so a refused write leaves no file.
     public SymbolIndexingService(
         IPackageDatabase packages,
         IPackageStorageService packageStorage,
         ISymbolStorageService storage,
-        ILogger<SymbolIndexingService> logger)
+        ILogger<SymbolIndexingService> logger,
+        ISymbolRegistry? registry = null,
+        MaintenanceGate? gate = null)
     {
+        _registry = registry;
+        _gate = gate;
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _packageStorage = packageStorage ?? throw new ArgumentNullException(nameof(packageStorage));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -105,6 +113,8 @@ public class SymbolIndexingService : ISymbolIndexingService
                         return SymbolIndexingResult.InvalidSymbolPackage;
                     }
 
+                    _gate?.ThrowIfClosed();
+
                     // Persist the portable PDBs to storage.
                     foreach (var pdb in pdbs)
                     {
@@ -112,9 +122,24 @@ public class SymbolIndexingService : ISymbolIndexingService
                         await _storage.SavePortablePdbContentAsync(pdb.Filename, pdb.Key, pdb.Content, cancellationToken);
                     }
 
+                    // PDBs are stored by file and key, not by package: remember where these came from.
+                    if (_registry != null && pdbs.Count > 0)
+                    {
+                        await _registry.RecordAsync(
+                            packageId,
+                            packageVersion,
+                            pdbs.Select(p => new SymbolReference(p.Filename, p.Key)),
+                            cancellationToken);
+                    }
+
                     return SymbolIndexingResult.Success;
                 }
             }
+        }
+        catch (MaintenanceException)
+        {
+            // A refused write is not a malformed package.
+            throw;
         }
         catch (Exception e)
         {

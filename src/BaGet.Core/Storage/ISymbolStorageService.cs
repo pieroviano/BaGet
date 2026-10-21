@@ -31,4 +31,12 @@ public interface ISymbolStorageService
     /// <param name="key">The portable PDB's Signature GUID followed by its age.</param>
     /// <returns>The portable PDB's stream, or null if it does not exist.</returns>
     Task<Stream?> GetPortablePdbContentStreamOrNullAsync(string file, string key);
+
+    /// <summary>
+    /// Delete a portable PDB's stored content. Deleting content that does not exist is not an error.
+    /// </summary>
+    /// <param name="file">The portable PDB's file name.</param>
+    /// <param name="key">The portable PDB's Signature GUID followed by its age.</param>
+    /// <param name="cancellationToken"></param>
+    Task DeletePortablePdbContentAsync(string file, string key, CancellationToken cancellationToken);
 }
