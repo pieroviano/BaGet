@@ -217,6 +217,19 @@ is challenged (sign-in redirect) when the host has a default challenge scheme, e
 (`SeededCountAsync`, removed from the target before copying). Account/organization deletion removes the identity's memberships, grants and project roles.
 The Manage page and its link need ownership **and** the Manage action (`ManagePermission.HeldAsync`); administrators bypass both. Search/autocomplete/V2 listings are filtered per repository only, not per package pattern.
 
+**Access admin pages (U3, `BaGet.Identity/Pages/Admin`; user docs `docs/access-control.md#admin-pages`).** `AccessPageModel : AdminPageModel` is the base of
+`Groups`, `GroupDetail`, `Permissions`, `PermissionDetail`, `Projects`, `ProjectDetail`, `Audit`: it overrides the admin check with a virtual `AuthorizeAsync` (default
+server administrator; `Projects`/`ProjectDetail`/`PermissionDetail` also admit the project's `Admin` role holders, found by route value), redirects to
+`AccessUnavailable` when `IContext` is `NullContext`, calls `MaintenanceGate.ThrowIfClosed` on every POST, and `ActAsync(password, confirm, change, redirect)` asks for
+the password (`IsConfirmedAsync`, the `_ConfirmPassword` partial) and turns `AccessModelException` into the page's `Error`. Password rule: every change except
+creating an empty group/target/project and renaming a group. Project administrators may not assign repositories or delete the project, and a project target's preview
+is cut to the project's repositories. Reads for the pages are on `IAccessAdministration` (`ListGroups/GetGroup/ListTargets/GetTarget/ListProjects/GetProject/
+ProjectRolesOfUser/IsProjectAdmin/ResolvePrincipal/SearchUsers/Audit(AuditFilter)`, plus `RenameGroup`, `DeleteProject`, `SetRepositoryProject`); the
+evaluator explains (`IAccessEvaluator.ExplainAsync` -> `AccessExplanation`/`AccessReason`, from the same `AccessSnapshot.Granted` walk, so explanation and decision cannot
+diverge) and summarises a repository (`DescribeAsync` -> `RepositoryAccessSummary.Who(action)`). `AccessPatterns` (public wrapper over the internal `GlobSet`) is what
+the pattern preview and test box use. `/admin/users/{name}` got the groups, projects and effective-permission sections, `/admin/repositories/{name}` the effective
+access, `/account/access` (`Account/Access`) lists only repositories where the user holds an action (no existence leak). The partials `_Explanation`, `_PatternFields`.
+
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host
 without the Web SDK has no generated `[ApplicationPart]` attributes. A new such assembly must be added there.
@@ -330,7 +343,8 @@ admin Browse/Upload links, `IRepositoryAccess` refusal = 404); `RepositoryPageRo
 
 **Access tests** (`BaGet.Tests`): `AccessUpgradeEquivalenceTests` (B3 merge gate: a pre-repository database migrated by the current code behaves as before),
 `AccessEvaluatorTests` (decisions, administration, cache, audit, 50-target cost) with `GlobSetTests`, `PrivateRepositoryTests` (401/404/Basic on every protocol route,
-page redirect, push permissions), `ManagePermissionTests`. A test that needs a private repository removes the seeded targets through `IAccessAdministration`.
+page redirect, push permissions), `ManagePermissionTests`, `AccessInspectionTests` (explanations, repository summary, admin reads, rename, project delete, filtered audit, patterns),
+`AccessAdminPagesTests` (the U3 pages end to end: roles, passwords, project administrators, audit entries, 503 while closed). A test that needs a private repository removes the seeded targets through `IAccessAdministration`.
 
 Unit tests reach internals through `InternalsVisibleTo`, declared in each **project file** (not
 `AssemblyInfo.cs`):

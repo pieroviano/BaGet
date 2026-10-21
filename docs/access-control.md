@@ -95,3 +95,33 @@ The model is held in memory as a snapshot, rebuilt after any committed change to
 bumps `AccessModelVersion`) and at most every 30 s (other instances catch up within that time). A check against
 50 targets and 20 groups costs a few microseconds (`AccessEvaluatorTests`); a user's group and organization membership
 is loaded on first use and kept with the snapshot.
+
+## Admin pages
+
+Menu entries *Groups*, *Permission targets*, *Projects*, *Access audit* (administrators) and *My access* (every signed-in
+user). Everything answers `404` to anyone else, and, with Azure Table (no access model), sends administrators to
+`/admin/access-unavailable`, which says so. Every change is audited, takes effect on the next request, asks for **your
+password again** unless it only creates an empty group, target or project (or renames a group), and is refused with `503` while the
+server is read-only for maintenance.
+
+| Page | Does |
+|---|---|
+| `/admin/groups`, `/admin/groups/{name}` | create, rename, delete (not the built-ins); add members through a user-name search, remove them; lists the grants naming the group |
+| `/admin/permissions`, `/admin/permissions/{name}` | create targets and edit their repository / include / exclude patterns; **Preview** shows the repositories the patterns match and a **test box** answers "does `Contoso.Lib` match?" (and which pattern decided), on unsaved edits too; grants per user, group or organization with one box per action; delete; restore the built-in targets |
+| `/admin/projects`, `/admin/projects/{name}` | create; assign repositories (a repository is in one project); members with a role (user or group); the project's own targets; delete (keeps the repositories) |
+| `/admin/users/{name}` | the user's groups (add/remove), project roles and **effective permissions per repository**, each with the targets and roles that grant them; a package ID box applies include/exclude patterns |
+| `/admin/repositories/{name}` | adds who effectively holds Read, Annotate, Deploy, Delete and Manage, the project and the anonymous-read switch |
+| `/admin/audit` | the audit log, newest first (200 at most), filtered by actor, subject and UTC dates (`yyyy-MM-dd`, inclusive) |
+| `/account/access` | your own effective permissions in each repository where you hold something (nothing is shown about repositories you cannot use), with the reasons; a package ID box |
+
+**Project administrators** (role *Admin*) are admitted to their own project's page and to its targets, with the limits
+below; they see nothing of other projects, groups or the global targets.
+
+| Who | May |
+|---|---|
+| Server administrator | everything above |
+| Project administrator | set and remove the project's members, create the project's targets, edit their patterns and grants, delete them |
+| Project administrator may **not** | assign repositories to the project (it would let them take any repository), delete the project, or touch targets of other projects or global ones |
+
+A project target applies only to the project's repositories whatever its patterns say, so a project administrator cannot
+reach beyond them; the previews show only those repositories.

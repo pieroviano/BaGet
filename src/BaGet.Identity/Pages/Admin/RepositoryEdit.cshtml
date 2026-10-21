@@ -34,4 +34,42 @@
         <button type="submit" class="btn btn-primary">Save</button>
         <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
     </form>
+
+    @if (Model.Access != null)
+    {
+        <section id="repository-section-access">
+            <h2>Effective access</h2>
+            @if (!Model.Access.ModelAvailable)
+            {
+                <p id="repository-access-unavailable">
+                    The configured database has no access model: everyone reads and any caller with valid credentials writes, subject
+                    to package ownership.
+                </p>
+            }
+            else
+            {
+                <p class="help-block">
+                    Who holds each action here, from the <a asp-page="/Admin/Permissions">permission targets</a> that match this
+                    repository and its project's roles. Server administrators hold every action. Package ownership still applies inside
+                    Deploy, Delete, Annotate and Manage. Anonymous read is <strong>@(Model.Access.AnonymousRead ? "on" : "off")</strong>@(Model.Access.AnonymousRead ? "" : ": Everyone's Read does not apply here").
+                    @if (Model.Access.Project != null)
+                    {
+                        <text>Project: <a href="@Url.Page("/Admin/ProjectDetail", new { name = Model.Access.Project })">@Model.Access.Project</a>.</text>
+                    }
+                </p>
+                <table class="table" id="repository-access">
+                    <tbody>
+                        @foreach (var action in BaGet.Identity.Pages.Admin.AccessPageModel.AllActions)
+                        {
+                            var who = Model.Access.Who(action);
+                            <tr data-action="@action">
+                                <th>@action</th>
+                                <td>@(who.Count == 0 ? "nobody but administrators" : string.Join(", ", who))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
 </div>

@@ -129,6 +129,17 @@ audit entries; `AnonymousRead` mapping; Azure Table falls back to today's model 
 
 ### U3 — Access control UI (`BaGet.Identity/Pages/Admin`)
 
+Status: **implemented** (track `access-ui`; `AccessAdminPagesTests`, `AccessInspectionTests`; user docs `docs/access-control.md#admin-pages`).
+
+| Deviation from the sketch below | Why |
+|---|---|
+| `/admin/users/{name}` already existed (U6): extended with groups, project roles and effective permissions instead of created | no second page |
+| Password rule: every change except creating an empty group/target/project and renaming a group | "grants and deletions" also covers memberships, project roles and pattern edits, which widen access the same way |
+| Project administrators may not assign repositories or delete the project; a project target's preview shows only the project's repositories | assigning would let them take any repository; the preview would disclose private repository names |
+| Grant editing = a "Set grant" form (prefilled by `?principalType=&principalName=`) plus Remove, not inline checkboxes per row | one password per form instead of per row |
+| Azure Table: pages redirect to `/admin/access-unavailable`; `/account/access` says there is no model | B5: "say so on the admin pages" |
+| `ConfirmPasswordView.ReturnPage` gets the real URL on the new pages | the older pages pass a page name, which the sign-in-again flow cannot return to |
+
 | Page | Actions |
 |---|---|
 | `/admin/groups`, `/admin/groups/{name}` | create, rename, delete (not built-ins), add/remove members (user search), list the group's grants |

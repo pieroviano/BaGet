@@ -28,7 +28,7 @@ Administrators manage them at `/admin/repositories` (menu: *Repositories*). Othe
 | Page | Does |
 |---|---|
 | `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a repository |
-| `/admin/repositories/{name}` | Shows the feed; edits *Anonymous read* |
+| `/admin/repositories/{name}` | Shows the feed and who effectively holds each action (see [Access control](access-control.md#admin-pages)); edits *Anonymous read* |
 | `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** |
 
 Other administrator pages work across all repositories:

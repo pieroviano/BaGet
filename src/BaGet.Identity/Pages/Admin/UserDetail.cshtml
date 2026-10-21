@@ -91,4 +91,80 @@
             </form>
         }
     </section>
+
+    @if (Model.ModelAvailable)
+    {
+        <section id="user-section-groups">
+            <h2>Groups</h2>
+            @if (Model.Groups.Count == 0)
+            {
+                <p>@Model.Account?.UserName is in no group (besides the implicit Everyone and Authenticated).</p>
+            }
+            else
+            {
+                <form method="post" id="groups-form">
+                    <table class="table" id="user-groups">
+                        <tbody>
+                            @foreach (var group in Model.Groups)
+                            {
+                                <tr>
+                                    <td><a href="@Url.Page("/Admin/GroupDetail", new { name = group })">@group</a></td>
+                                    <td><button type="submit" class="btn btn-danger btn-xs" asp-page-handler="RemoveGroup" name="group" value="@group">Remove</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@(new BaGet.Identity.Pages.Admin.ConfirmPasswordView("groupsPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Request.Path.ToString()))" />
+                </form>
+            }
+
+            <form method="post" class="form-inline" id="add-group-form">
+                <input type="text" name="group" class="form-control" placeholder="Group name" autocomplete="off" />
+                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@(new BaGet.Identity.Pages.Admin.ConfirmPasswordView("addGroupPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Request.Path.ToString()))" />
+                <button type="submit" class="btn btn-primary" asp-page-handler="AddGroup">Add to group</button>
+            </form>
+        </section>
+
+        <section id="user-section-projects">
+            <h2>Projects</h2>
+            @if (Model.ProjectRoles.Count == 0)
+            {
+                <p>@Model.Account?.UserName has no role in any project.</p>
+            }
+            else
+            {
+                <table class="table" id="user-projects">
+                    <tbody>
+                        @foreach (var role in Model.ProjectRoles)
+                        {
+                            <tr>
+                                <td><a href="@Url.Page("/Admin/ProjectDetail", new { name = role.Project })">@role.Project</a></td>
+                                <td>@role.Role</td>
+                                <td>@role.Via</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section id="user-section-access">
+            <h2>Effective permissions</h2>
+            <p class="help-block">
+                What @Model.Account?.UserName may do in each repository, and the permission targets or project roles that say so.
+                Changing an existing package ID also needs ownership.
+            </p>
+            <form method="get" class="form-inline" id="access-package-form">
+                <input type="text" name="package" value="@Model.Package" class="form-control" placeholder="Package ID (optional)" autocomplete="off" />
+                <button type="submit" class="btn btn-default">Evaluate</button>
+            </form>
+            @foreach (var row in Model.Access)
+            {
+                <div class="access-repository" data-repository="@row.Repository.Name">
+                    <h3>@row.Repository.Name</h3>
+                    <partial name="~/Pages/Admin/_Explanation.cshtml" model="@row.Explanation" />
+                </div>
+            }
+        </section>
+    }
 </div>

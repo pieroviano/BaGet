@@ -86,7 +86,7 @@ internal sealed record RepositoryRow(int Key, string Name, bool AnonymousRead, i
 
 internal sealed record GrantRow(PrincipalType PrincipalType, string PrincipalId, AccessAction Actions);
 
-internal sealed record TargetRow(int Key, GlobSet Repositories, GlobSet Include, GlobSet Exclude, int? ProjectKey, GrantRow[] Grants);
+internal sealed record TargetRow(int Key, string Name, string? Scope, GlobSet Repositories, GlobSet Include, GlobSet Exclude, int? ProjectKey, GrantRow[] Grants);
 
 internal sealed record ProjectMemberRow(PrincipalType PrincipalType, string PrincipalId, ProjectRole Role);
 
@@ -106,7 +106,10 @@ internal sealed class AccessSnapshot
         int? everyoneKey,
         int? authenticatedKey,
         IReadOnlyList<TargetRow> targets,
-        IReadOnlyDictionary<int, ProjectMemberRow[]> projectMembers)
+        IReadOnlyDictionary<int, ProjectMemberRow[]> projectMembers,
+        IReadOnlyDictionary<int, string> groupNames,
+        IReadOnlyDictionary<int, string> organizationNames,
+        IReadOnlyDictionary<int, string> projectNames)
     {
         Version = version;
         Loaded = loaded;
@@ -115,7 +118,16 @@ internal sealed class AccessSnapshot
         AuthenticatedKey = authenticatedKey;
         Targets = targets;
         ProjectMembers = projectMembers;
+        GroupNames = groupNames;
+        OrganizationNames = organizationNames;
+        ProjectNames = projectNames;
     }
+
+    public IReadOnlyDictionary<int, string> GroupNames { get; }
+
+    public IReadOnlyDictionary<int, string> OrganizationNames { get; }
+
+    public IReadOnlyDictionary<int, string> ProjectNames { get; }
 
     public long Version { get; }
 
@@ -154,7 +166,17 @@ internal sealed class AccessSnapshot
     /// when given. Targets with a package filter apply to a repository-level question (null ID) whatever the filter says,
     /// since some package in the repository may match.
     /// </summary>
-    public AccessAction Granted(BaGetPrincipal? principal, Membership membership, RepositoryInfo repository, string? packageId)
+    /// <param name="principal">Who asks; null is anonymous.</param>
+    /// <param name="membership">The caller's groups and organizations.</param>
+    /// <param name="repository">The repository.</param>
+    /// <param name="packageId">The package ID, or null for the repository as a whole.</param>
+    /// <param name="reasons">When given, receives one entry per grant or project role that applies: the explanation.</param>
+    public AccessAction Granted(
+        BaGetPrincipal? principal,
+        Membership membership,
+        RepositoryInfo repository,
+        string? packageId,
+        List<AccessReason>? reasons = null)
     {
         Repositories.TryGetValue(repository.Key, out var row);
         var anonymousRead = row?.AnonymousRead ?? true;
@@ -177,6 +199,7 @@ internal sealed class AccessSnapshot
                 // not apply there (a user with a Read grant of their own still reads).
                 var actions = viaEveryone && !anonymousRead ? grant.Actions & ~AccessAction.Read : grant.Actions;
                 granted |= actions;
+                reasons?.Add(Reason(target, grant, actions, viaEveryone && !anonymousRead, principal));
             }
         }
 
@@ -187,11 +210,84 @@ internal sealed class AccessSnapshot
                 if (Applies(member.PrincipalType, member.PrincipalId, principal, userId, membership, out _))
                 {
                     granted |= ProjectRoles.ActionsOf(member.Role);
+                    reasons?.Add(ProjectReason(projectKey.Value, member, principal));
                 }
             }
         }
 
         return granted;
+    }
+
+    /// <summary>
+    /// Every grant and project role that applies to <paramref name="repository"/> whoever holds it. Target package
+    /// filters are reported in <see cref="AccessReason.Packages"/>, not applied.
+    /// </summary>
+    public IReadOnlyList<AccessReason> Holders(RepositoryInfo repository)
+    {
+        Repositories.TryGetValue(repository.Key, out var row);
+        var anonymousRead = row?.AnonymousRead ?? true;
+        var projectKey = row?.ProjectKey;
+        var result = new List<AccessReason>();
+
+        foreach (var target in Targets)
+        {
+            if (!target.Repositories.IsMatch(repository.Name)) continue;
+            if (target.ProjectKey != null && target.ProjectKey != projectKey) continue;
+
+            foreach (var grant in target.Grants)
+            {
+                var viaEveryone = grant.PrincipalType == PrincipalType.Group
+                    && int.TryParse(grant.PrincipalId, out var group) && group == EveryoneKey;
+                var blocked = viaEveryone && !anonymousRead;
+                result.Add(Reason(target, grant, blocked ? grant.Actions & ~AccessAction.Read : grant.Actions, blocked, principal: null));
+            }
+        }
+
+        if (projectKey != null && ProjectMembers.TryGetValue(projectKey.Value, out var members))
+        {
+            foreach (var member in members) result.Add(ProjectReason(projectKey.Value, member, principal: null));
+        }
+
+        return result;
+    }
+
+    private AccessReason Reason(TargetRow target, GrantRow grant, AccessAction effective, bool anonymousReadOff, BaGetPrincipal? principal)
+        => new(
+            $"Permission target '{target.Name}'",
+            grant.PrincipalType,
+            grant.PrincipalId,
+            PrincipalText(grant.PrincipalType, grant.PrincipalId, principal),
+            grant.Actions,
+            effective,
+            target.Scope,
+            anonymousReadOff ? "Anonymous read is off for this repository, so Everyone's Read does not apply." : null);
+
+    private AccessReason ProjectReason(int projectKey, ProjectMemberRow member, BaGetPrincipal? principal)
+    {
+        var actions = ProjectRoles.ActionsOf(member.Role);
+        var project = ProjectNames.TryGetValue(projectKey, out var name) ? name : projectKey.ToString();
+
+        return new AccessReason(
+            $"Project '{project}', role {member.Role}",
+            member.PrincipalType,
+            member.PrincipalId,
+            PrincipalText(member.PrincipalType, member.PrincipalId, principal),
+            actions,
+            actions,
+            Packages: null,
+            Note: null);
+    }
+
+    private string PrincipalText(PrincipalType type, string id, BaGetPrincipal? principal)
+    {
+        var parsed = int.TryParse(id, out var key);
+
+        return type switch
+        {
+            PrincipalType.User => "user " + (principal?.UserId == id ? (principal.UserName ?? id) : id),
+            PrincipalType.Group => "group " + (parsed && GroupNames.TryGetValue(key, out var group) ? group : id),
+            _ => "organization " + (parsed && OrganizationNames.TryGetValue(key, out var organization) ? organization : id),
+        };
     }
 
     private bool Applies(
@@ -282,6 +378,8 @@ public sealed class AccessModelCache
 
         var rows = targets.Select(t => new TargetRow(
             t.Key,
+            t.Name ?? string.Empty,
+            AccessPatterns.DescribeScope(t.IncludePatterns, t.ExcludePatterns),
             GlobSet.Parse(t.RepositoryPatterns, emptyMeansAll: false),
             GlobSet.Parse(t.IncludePatterns, emptyMeansAll: true),
             GlobSet.Parse(t.ExcludePatterns, emptyMeansAll: false),
@@ -292,7 +390,14 @@ public sealed class AccessModelCache
             .GroupBy(m => m.ProjectKey)
             .ToDictionary(g => g.Key, g => g.Select(m => new ProjectMemberRow(m.PrincipalType, m.PrincipalId ?? string.Empty, m.Role)).ToArray());
 
-        var loaded = new AccessSnapshot(version, now, repositories, everyone, authenticated, rows, members);
+        var groupNames = (await context.Groups!.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(g => g.Key, g => g.Name ?? string.Empty);
+        var organizationNames = (await context.Organizations!.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(o => o.Key, o => o.Name ?? string.Empty);
+        var projectNames = (await context.Projects!.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(p => p.Key, p => p.Name ?? string.Empty);
+
+        var loaded = new AccessSnapshot(version, now, repositories, everyone, authenticated, rows, members, groupNames, organizationNames, projectNames);
         _snapshot = loaded;
         return loaded;
     }

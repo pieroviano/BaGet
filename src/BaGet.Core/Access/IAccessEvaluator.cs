@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaGet.Core;
 
@@ -40,6 +41,20 @@ public interface IAccessEvaluator
     /// <see cref="ReadableRepositoriesAsync"/>.
     /// </summary>
     Task<IReadOnlyList<RepositoryInfo>> RepositoriesWithAsync(BaGetPrincipal? principal, AccessAction action, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// What <paramref name="principal"/> may do in <paramref name="repository"/> (on <paramref name="packageId"/> when
+    /// given) and which grants and project roles say so: the same decision as <see cref="IsAllowedAsync"/>, with its
+    /// reasons, for the admin and account pages.
+    /// </summary>
+    Task<AccessExplanation> ExplainAsync(
+        BaGetPrincipal? principal,
+        RepositoryInfo repository,
+        string? packageId,
+        CancellationToken cancellationToken);
+
+    /// <summary>Who holds what in <paramref name="repository"/>, whatever the caller (the repository page's view).</summary>
+    Task<RepositoryAccessSummary> DescribeAsync(RepositoryInfo repository, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -102,6 +117,73 @@ public sealed class AccessEvaluator : IAccessEvaluator
             .OrderBy(r => r.IsDefault ? 0 : 1)
             .ThenBy(r => r.Name, StringComparer.Ordinal)
             .ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<AccessExplanation> ExplainAsync(
+        BaGetPrincipal? principal,
+        RepositoryInfo repository,
+        string? packageId,
+        CancellationToken cancellationToken)
+    {
+        if (repository == null) throw new ArgumentNullException(nameof(repository));
+
+        if (_context is NullContext)
+        {
+            return new AccessExplanation(
+                principal != null ? AccessAction.All : AccessAction.Read,
+                "This database has no access model: everyone reads and any authenticated caller writes, subject to package ownership.",
+                Array.Empty<AccessReason>());
+        }
+
+        if (principal != null && principal.IsSuperuser)
+        {
+            return new AccessExplanation(AccessAction.All, "The server's global API key holds every action everywhere.", Array.Empty<AccessReason>());
+        }
+
+        if (principal != null && principal.IsAdministrator)
+        {
+            return new AccessExplanation(AccessAction.All, "Server administrators hold every action everywhere.", Array.Empty<AccessReason>());
+        }
+
+        var snapshot = await _cache.GetAsync(_context, cancellationToken).ConfigureAwait(false);
+        var membership = await MembershipAsync(snapshot, principal, cancellationToken).ConfigureAwait(false);
+        var reasons = new List<AccessReason>();
+        var actions = snapshot.Granted(principal, membership, repository, packageId, reasons);
+
+        return new AccessExplanation(actions, null, reasons);
+    }
+
+    /// <inheritdoc/>
+    public async Task<RepositoryAccessSummary> DescribeAsync(RepositoryInfo repository, CancellationToken cancellationToken)
+    {
+        if (repository == null) throw new ArgumentNullException(nameof(repository));
+        if (_context is NullContext) return new RepositoryAccessSummary(repository, AnonymousRead: true, Project: null, ModelAvailable: false, Array.Empty<AccessReason>());
+
+        var snapshot = await _cache.GetAsync(_context, cancellationToken).ConfigureAwait(false);
+        snapshot.Repositories.TryGetValue(repository.Key, out var row);
+        var holders = snapshot.Holders(repository);
+
+        var userIds = holders.Where(h => h.PrincipalType == PrincipalType.User).Select(h => h.PrincipalId).Distinct().ToList();
+        if (userIds.Count > 0)
+        {
+            var names = await _context.Users.AsNoTracking()
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.UserName })
+                .ToDictionaryAsync(u => u.Id, u => u.UserName, cancellationToken).ConfigureAwait(false);
+            holders = holders
+                .Select(h => h.PrincipalType == PrincipalType.User && names.TryGetValue(h.PrincipalId, out var name)
+                    ? h with { Principal = "user " + name }
+                    : h)
+                .ToList();
+        }
+
+        return new RepositoryAccessSummary(
+            repository,
+            row?.AnonymousRead ?? true,
+            row?.ProjectKey != null && snapshot.ProjectNames.TryGetValue(row.ProjectKey.Value, out var project) ? project : null,
+            ModelAvailable: true,
+            holders);
     }
 
     private Task<Membership> MembershipAsync(AccessSnapshot snapshot, BaGetPrincipal? principal, CancellationToken cancellationToken)
