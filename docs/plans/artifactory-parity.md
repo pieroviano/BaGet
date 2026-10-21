@@ -7,6 +7,15 @@ an admin REST API, replication and high availability.
 **Size.** This is several products' worth of work. Each phase below ships on its own and gets **its own
 implementation run** (worktrees, review). Do not implement the whole plan in one run.
 
+## Status (2026-10-21)
+
+| Phase | State | Commits / where |
+|---|---|---|
+| P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
+| P1 Remote and virtual NuGet | Not started | `RepositoryKind.Remote`/`Virtual` exist as values only; `RepositoryService.CreateAsync` refuses them (`RepositoryService.cs:93-99`) |
+| P2 Access control | **In progress** in [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4) | — |
+| P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
+
 ## Blocking — resolve before coding
 
 | # | Check | Why it blocks | How |
@@ -17,8 +26,8 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | **B4** | HA prerequisites | SQLite and the FileSystem store on local disk can't be shared. In-memory state: `MaintenanceGate`, `DatabaseCopyService` (`DependencyInjectionExtensions.cs:90-91`), `ContactRateLimiter`/`PasswordResetRateLimiter` (`AccountsServiceCollectionExtensions.cs:43-44`), `TelemetryStatus`. No `AddDataProtection` anywhere, so each node mints its own cookie keys. | List every singleton holding state (`grep TryAddSingleton`) and classify each as per node or shared. Decide the shared store (D6). |
 | **B5** | Vulnerability data source | Licensing and offline use. | OSV.dev (API free, data CC-BY 4.0 / per-source licences) covers NuGet, npm and Maven. Docker images need image scanning (OS packages), which OSV doesn't do. Decide in D7. |
 | **B6** | Client test rigs | Protocol tests need the real `dotnet nuget`, `npm`, `mvn` and `docker` clients. | Testcontainers images with each CLI (`node`, `maven`, `docker:dind`), skipped without Docker like `BaGet.Database.Tests`. Confirm `docker:dind` runs on the CI and dev machines (privileged). |
-| **B7** | Upgrade path | Existing installs have one feed. URLs, storage paths (`packages/…`, `PackageStorageService.cs:12`), owners and API keys must keep working. | Write the D2 migration plus a storage-layout compatibility test against a copy of a real pre-upgrade database and store before P0 is merged. |
-| **B8** | Azure Table database | Non-relational, packages only (CLAUDE.md). | Decide: Azure Table supports only the `default` NuGet repository, and multi-repo needs a relational database (refuse at startup). |
+| **B7** | Upgrade path | Existing installs have one feed. URLs, storage paths (`packages/…`, `PackageStorageService.cs:12`), owners and API keys must keep working. | **Done (P0):** `UpgradeFromPreRepositoryTests` (SQLite app level incl. the `packages/…` store) and `EngineUpgradeTests` (all four engines, `82bfe77`). |
+| **B8** | Azure Table database | Non-relational, packages only (CLAUDE.md). | **Decided (P0):** Azure Table and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`; creating another repository is refused rather than refusing startup). |
 
 ## Decisions
 
@@ -38,7 +47,20 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 Order = dependency. Each phase: blocking checks first, tests first, full suite green, 0 warnings, docs in the same
 commits, Opus review.
 
-### P0 — Repository foundation (NuGet only, no behaviour change)
+### P0 — Repository foundation (NuGet only, no behaviour change) — DONE
+
+Implemented 2026-10-20 (`8836612` foundation, `dcc140d` routes, `e033c20` storage layout, `520d8c1` admin UI,
+`8af8352`/`e5ed514`/`1482068`/`23e70df` suites against `/` and `/r/second/`, `82bfe77` B7, `b0f83e1`/`6fc2c2a` hardening).
+Deviations from the table below, as built:
+
+| Item | As built |
+|---|---|
+| `Repository.Settings` (JSON), `ProjectKey`, `Project` entity | Columns/table exist; nothing reads or writes them yet (P1/P2) |
+| `AnonymousRead` | Stored and editable on the admin page, **not enforced** until P2 |
+| Migration | Also seeds the `default` row with key 1 (PostgreSQL `setval`); `EnsureDefaultAsync` restores it at startup |
+| Delete repository | Refused for `default`, for a repository with packages or a pending validation; purges catalog, owners, validations, abuse reports and `repos/{name}/` in storage |
+| Razor Pages | Stay at `/` and show `default` only; repository-aware pages moved to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) U1 |
+| Mirror | Serves `default` only (`UpstreamClientFactory`); conversion into a remote repository is P1 |
 
 | Item | Where |
 |---|---|
@@ -62,6 +84,7 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 ### P2 — Access control (D4)
 
 > Moved: planned in detail, with its UI, in [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4).
+> Status: being implemented by that plan's run (started 2026-10-21); not merged yet.
 
 | Item | Note |
 |---|---|
