@@ -223,3 +223,144 @@ public class UpgradeFromPreRepositoryTests : IDisposable
         Assert.Equal(_storeBefore["packages/legacy.package/1.0.0/legacy.package.1.0.0.nupkg"], Snapshot()["packages/legacy.package/1.0.0/legacy.package.1.0.0.nupkg"]);
     }
 }
+
+/// <summary>
+/// B7 with <c>Mirror:Enabled</c>: an install from before repositories that already mirrored packages into its single
+/// repository is started with the current code, which turns the mirror into the <c>mirror</c> remote repository the
+/// default one fetches through. <c>/</c> serves exactly as before, what was mirrored stays in <c>default</c> (and is not
+/// asked of the upstream again), the <c>mirror</c> repository appears, a new package is still fetched into
+/// <c>default</c>, and no stored file moves.
+/// </summary>
+public class UpgradeFromPreRepositoryMirrorTests : IDisposable
+{
+    private readonly string _directory = Path.Combine(Path.GetTempPath(), "BaGetUpgrade", Guid.NewGuid().ToString("N"));
+    private readonly string _store;
+    private readonly Dictionary<string, string> _storeBefore;
+    private readonly BaGetApplication _upstream;
+    private readonly BaGetApplication _app;
+    private readonly HttpClient _client;
+
+    public UpgradeFromPreRepositoryMirrorTests(ITestOutputHelper output)
+    {
+        Directory.CreateDirectory(_directory);
+        _store = Path.Combine(_directory, "store");
+        var connection = "Data Source=" + Path.Combine(_directory, "old.db");
+
+        PreRepositoryDatabase.CreateAsync(
+            new SqliteDatabaseContextFactory(), connection, new DatabaseOptions { Type = "Sqlite" }, CancellationToken.None)
+            .GetAwaiter().GetResult();
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        foreach (var (id, version, _) in PreRepositoryDatabase.Packages)
+        {
+            var folder = Path.Combine(_store, "packages", id.ToLowerInvariant(), version);
+            Directory.CreateDirectory(folder);
+            using var package = TestPackages.Build(id, version);
+            File.WriteAllBytes(Path.Combine(folder, $"{id.ToLowerInvariant()}.{version}.nupkg"), ((MemoryStream)package).ToArray());
+        }
+
+        _storeBefore = Snapshot();
+
+        // The upstream has the package the old install had already mirrored, and one it never fetched.
+        _upstream = new BaGetApplication(output);
+        using (var mirrored = TestPackages.Build("Legacy.Package", "1.0.0"))
+        {
+            _upstream.AddPackageAsync(mirrored, CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        using (var fresh = TestResources.GetResourceStream(TestResources.Package))
+        {
+            _upstream.AddPackageAsync(fresh, CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        _app = new BaGetApplication(output, _upstream.CreateClient(), new Dictionary<string, string>
+        {
+            { "Database:ConnectionString", connection },
+            { "Storage:Path", _store },
+            { "Accounts:Enabled", "true" },
+            { "ApiKey", "global-key" },
+        });
+        _client = _app.CreateClient();
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
+        _app.Dispose();
+        _upstream.Dispose();
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        try { Directory.Delete(_directory, recursive: true); } catch (IOException) { }
+    }
+
+    private Dictionary<string, string> Snapshot()
+        => Directory.EnumerateFiles(_store, "*", SearchOption.AllDirectories).ToDictionary(
+            f => Path.GetRelativePath(_store, f).Replace('\\', '/'),
+            f => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(f))));
+
+    [Fact]
+    public async Task TheMirrorBecomesARemoteRepositoryAndTheMirroredPackagesStayInDefault()
+    {
+        var token = TestContext.Current.CancellationToken;
+
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<IContext>();
+        var repositories = await context.Repositories!.AsNoTracking().ToListAsync(token);
+
+        Assert.Equal((Repository.DefaultKey, Repository.DefaultName), repositories.Where(r => r.Kind == RepositoryKind.Local).Select(r => (r.Key, r.Name!)).Single());
+        var mirror = repositories.Single(r => r.Name == Repository.MirrorName);
+        Assert.Equal(RepositoryKind.Remote, mirror.Kind);
+        Assert.NotEqual(Repository.DefaultKey, mirror.Key);
+
+        // Every pre-upgrade row is still in default; the mirror repository owns none.
+        Assert.All(await context.Packages!.AsNoTracking().IgnoreQueryFilters().ToListAsync(token), p => Assert.Equal(Repository.DefaultKey, p.RepositoryKey));
+        Assert.Equal(0, await context.Packages!.IgnoreQueryFilters().CountAsync(p => p.RepositoryKey == mirror.Key, token));
+    }
+
+    [Fact]
+    public async Task TheRootServesAsBeforeAndTheMirroredPackageIsNotFetchedAgain()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var wire = (ForwardingRemoteHttpClientFactory)_app.Services.GetRequiredService<IRemoteHttpClientFactory>();
+
+        var expected = await File.ReadAllBytesAsync(Path.Combine(_store, "packages", "legacy.package", "1.0.0", "legacy.package.1.0.0.nupkg"), token);
+        Assert.Equal(expected, await _client.GetByteArrayAsync("v3/package/legacy.package/1.0.0/legacy.package.1.0.0.nupkg", token));
+        Assert.Equal(0, wire.Count(".nupkg"));
+
+        using var response = await _client.GetAsync("v3/package/legacy.package/index.json", token);
+        var versions = JsonDocument.Parse(await response.Content.ReadAsStringAsync(token)).RootElement.GetProperty("versions").EnumerateArray().Select(v => v.GetString()).ToList();
+        Assert.Contains("1.0.0", versions);
+        Assert.Contains("2.0.0", versions);
+
+        using var index = await _client.GetAsync("v3/index.json", token);
+        Assert.DoesNotContain("/r/", await index.Content.ReadAsStringAsync(token));
+    }
+
+    [Fact]
+    public async Task APackageNeverMirroredIsStillFetchedIntoDefaultAndNothingMoves()
+    {
+        var token = TestContext.Current.CancellationToken;
+
+        using (var response = await _client.GetAsync("v3/package/testdata/1.2.3/testdata.1.2.3.nupkg", token))
+        {
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        using var scope = _app.Services.CreateScope();
+        var summaries = await scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>().ListAsync(token);
+        Assert.Equal(1, await CountAsync(scope, "TestData", Repository.DefaultKey));
+        Assert.Equal(0, summaries.Single(s => s.Name == Repository.MirrorName).PackageCount);
+
+        var after = Snapshot();
+        foreach (var (path, hash) in _storeBefore)
+        {
+            Assert.True(after.TryGetValue(path, out var current), $"{path} is gone.");
+            Assert.Equal(hash, current);
+        }
+
+        Assert.Contains("packages/testdata/1.2.3/testdata.1.2.3.nupkg", after.Keys);
+        Assert.DoesNotContain(Directory.EnumerateDirectories(_store).Select(Path.GetFileName), n => n == "repos");
+    }
+
+    private static async Task<int> CountAsync(IServiceScope scope, string id, int repositoryKey)
+        => await scope.ServiceProvider.GetRequiredService<IContext>().Packages!.IgnoreQueryFilters()
+            .CountAsync(p => p.Id == id && p.RepositoryKey == repositoryKey, TestContext.Current.CancellationToken);
+}
