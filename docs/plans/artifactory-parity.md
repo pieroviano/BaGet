@@ -14,7 +14,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
 | P1 Remote and virtual NuGet | **Done**: remote + caching (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); virtual + D3 (track `p1-virtual`, [virtual-repositories.md](../virtual-repositories.md)) | `dc2ef5e`..`53a399a` (remote), `ef4c403` (virtual), review fixes `3e6c8e2`, `b64b039`, `06696f3`, `103489c`, `9636888`, `312b363`; `IVirtualRepositoryAdministration` creates `Virtual`, `RepositoryService.CreateAsync(..., Virtual)` stays refused (no members) |
 | P2 Access control | **Done** (implemented with its UI by the UI-coverage plan, since removed); documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
-| P3 Format layer + npm | **Format layer done** (track `p3-format`, [formats.md](../formats.md)); **local npm registry done** (track `p3-npm`, [npm-registry.md](../npm-registry.md)); **remote and virtual npm done** (track `p3-npm-remote`, see *As built: remote and virtual npm* under P3). P3 is complete | `IFormatModule`, NuGet on it, `Npm` format, npm tables (migration x4), Clients rig; `NpmRegistryService`, `NpmController`, npm pages, real-npm tests |
+| P3 Format layer + npm | **Format layer done** (track `p3-format`, [formats.md](../formats.md)); **local npm registry done** (track `p3-npm`, [npm-registry.md](../npm-registry.md)); **remote and virtual npm done** (track `p3-npm-remote`, see *As built: remote and virtual npm* under P3). P3 is complete | `cf8cd41`..`da27c53` (format `cf8cd41`,`173c5a3`; npm `dd56089`..`62881d0`; remote/virtual `2f2a951`..`da27c53`); `IFormatModule`, NuGet on it, `Npm` format, npm tables (migration x4), Clients rig; `NpmRegistryService`, `NpmController`, npm pages, real-npm tests |
 | P4-P10 | Not started | No Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
@@ -122,7 +122,7 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 | Review fixes (Opus review of P1) | **SSRF:** *Test connection* asks for the password, follows redirects only within the typed origin (5 hops), reads at most 1 MB; `Remote:BlockPrivateAddresses` (default off, documented exposure) refuses loopback/private/link-local upstreams on create, save, test and on every V3 connection (`b64b039`). **Same credential rule:** test and save both use `SameCredentialScope` (origin + user name) (`b64b039`). **Preview:** shares the request rules: each member's `PackageService.ProbeAsync` (stored copy, then `IUpstreamClient.ProbeAsync`, same offline / remembered-404 gate as a download), so the default repository's mirror counts and an offline upstream is `Offline` (`06696f3`). **Gate:** `MirrorAsync` no longer swallows `MaintenanceException` (503 + `Retry-After` for a remote and through a virtual) (`3e6c8e2`). **Anonymous read:** create forms choose it; a remote with credentials starts closed; the auto-created `mirror` stays anonymous like `default` (`9636888`). **Search:** bounded as above (`103489c`). **B7:** `UpgradeFromPreRepositoryMirrorTests` (`312b363`). Rejected: none. Nuance on finding 2: a remembered version list could not reach `WouldFetch` through the page (saving a remote clears its answers), but the preview did ignore offline mode and the mirror fall-through |
 | Not done | No per-member include/exclude path rules; no merged catalog; remote members' health and answers stay per node |
 
-### P2 — Access control (D4)
+### P2 — Access control (D4) — DONE
 
 > Done: implemented with its UI by the UI-coverage plan (since removed); see [access-control.md](../access-control.md).
 
@@ -133,9 +133,9 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 | Access tokens: scoped to repos/actions, expiring, revocable; existing scoped API keys map onto them | Existing keys keep working (B7) |
 | UI and audit log for every permission change | Admin pages; audit through the existing log + a table |
 
-### P3 — Format layer + npm
+### P3 — Format layer + npm — DONE
 
-#### As built: format layer (track `p3-format`; the npm registry is not started)
+#### As built: format layer (track `p3-format`)
 
 | Item | As built |
 |---|---|
