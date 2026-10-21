@@ -239,6 +239,8 @@ public class NpmController : Controller
                 ["keywords"] = new JsonArray(hit.Keywords.Select(k => (JsonNode?)JsonValue.Create(k)).ToArray()),
                 ["date"] = hit.Modified.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture),
                 ["links"] = new JsonObject { ["npm"] = registry + hit.Name },
+                // npm search prints these; this registry keeps no maintainer list apart from the owners of the access model.
+                ["maintainers"] = new JsonArray(),
             };
 
             objects.Add(new JsonObject
