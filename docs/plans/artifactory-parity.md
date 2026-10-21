@@ -61,6 +61,8 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 
 ### P2 — Access control (D4)
 
+> Moved: planned in detail, with its UI, in [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4).
+
 | Item | Note |
 |---|---|
 | Groups, memberships; permission targets (repos + patterns, include/exclude path patterns, actions × users/groups); projects (roles: project admin, developer, viewer; repos owned by a project) | New tables, 4 migrations. `BaGetPrincipal` (`BaGetPrincipal.cs:11`) gains the resolved permission set |
