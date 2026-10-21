@@ -84,7 +84,6 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 ### P2 — Access control (D4)
 
 > Done: implemented with its UI by the UI-coverage plan (since removed); see [access-control.md](../access-control.md).
-> Status: being implemented by that plan's run (started 2026-10-21); not merged yet.
 
 | Item | Note |
 |---|---|
