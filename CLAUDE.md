@@ -21,9 +21,9 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2268 tests** across `BaGet.Core.Tests` (599), `BaGet.Tests` (1363),
-`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
-`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
+Baseline: **2312 tests** across `BaGet.Core.Tests` (621), `BaGet.Tests` (1374),
+`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (58),
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (6, Docker). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
 `TelemetryE2ETests`) fail on a clean checkout too; not investigated. Checked at `e213fe0` without Jaeger: 11 of them (`TelemetryExportTests` x3,
 `TelemetrySettingsPageTests` x8) fail on a clean checkout, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan...` fails in the full run (passes alone). No external services needed; integration tests
@@ -36,6 +36,10 @@ tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 
 (`EngineUpgradeTests`) are the B7 upgrade on each engine: `PreRepositoryDatabase` (also linked into `BaGet.Tests`) migrates
 to the last migration before `AddRepositories` (looked up per provider, timestamps differ), fills the old schema with raw
 parameterised SQL, then the current migrations must put every row in repository key 1 and allow the same ID/version in key 2.
+
+`BaGet.Clients.Tests` (client rigs, B6) runs the real `npm` 10 in `node:22-alpine` (Testcontainers, idle container, scripts `exec`ed with an empty `$HOME`) against
+`HostRegistry`, a recording Kestrel server on `0.0.0.0` reached as `host.docker.internal` (WebApplicationFactory has no socket); skips without Docker. It pins what npm
+sends for a read, `whoami`, `login` (web then CouchDB fallback) and `publish` (`docs/formats.md`). `docker:dind` and `maven` rigs follow with P5/P4.
 
 `BaGet.Telemetry.Tests` (shares `BaGetApplication` etc. from `BaGet.Tests` as linked files; `Containers.cs`) runs a real host against
 `jaegertracing/all-in-one:1.76.0` (traces; query API read back) and `otel/opentelemetry-collector:0.140.0` (debug exporter, read back
@@ -148,6 +152,17 @@ API keys can be limited to repositories (`ApiKeyRepository`; none = all): `Accou
 catalog entries, owners, validations and abuse reports are purged with it, and so is `repos/{name}/` in storage when the store is `IListableStorageService`) backs the admin pages `Repositories`, `RepositoryEdit`, `RepositoryDelete` in `BaGet.Identity/Pages/Admin`
 (names are immutable; only `AnonymousRead` is editable; writes call `MaintenanceGate.ThrowIfClosed`; feed URLs derive from `IUrlGenerator`).
 
+**Format layer** (`BaGet.Core/Formats`, docs `docs/formats.md`). `RepositoryFormat` (`NuGet`, `Npm`; append-only, stored as name). `IFormatModule` (singleton,
+registered with `TryAddEnumerable`, collected by `FormatRegistry`, which refuses a duplicate format / route prefix / storage folder or a claim on `repos`)
+*describes* a format: `RoutePrefix`, `FeedPath`, `CreatableKinds`, `StorageFolders`, `CreateFields` + `CreateSettings`, `RepositoryLinks`, and
+`CountArtifactsAsync` / `GetUsageAsync` / `StagePurgeAsync` (what `RepositoryAdministration` lists and refuses/purges on delete). What it does per request is
+scoped `IFormatService`s (`IFormatIndexer`, `IFormatSearchProvider` implemented by NuGet; `IFormatRetentionHooks`, `IFormatScanner` interfaces only) found with
+`GetFormatService<T>(format)`. `NuGetFormatModule` is the NuGet refactor (no behaviour change). `RepositoryService.CreateAsync` asks the module (unknown format or
+kind -> `NotSupportedException`; a `fields` overload for module-specific create forms). Format routes go through `BaGetEndpointBuilder.MapRoute(..., format:)`.
+No npm module is registered yet, so no `Npm` repository can be created; the tables exist (`NpmPackages` repository-scoped, `NpmVersions`, `NpmDistTags`; migration
+`AddNpmTables` x4). Admin: `/admin/formats` (list), Repositories page (links by module, per-format create form). Still NuGet-only until the npm registry: upload picker,
+header switcher, My packages, the `Format == NuGet` filters in access/API-key code.
+
 **Remote repositories** (`RepositoryKind.Remote`; `BaGet.Core/Repositories/Remote`, docs: `docs/remote-repositories.md`). The upstream
 is `RemoteRepositorySettings` as JSON in `Repository.Settings` (no extra table; the password is stored as `protectedPassword` through
 `IRemoteCredentialProtector` = data protection, only `RemoteSettingsCodec` reads/writes it, a page never gets it back, nothing logs it).
@@ -219,8 +234,8 @@ Vulnerability input rules live in `PackageVulnerabilityRules` (`BaGet.Core/Metad
 deprecation/vulnerability, repository signatures) twice: plain (the `default` repository) and as `r:<name>` under
 `r/{repo}/` (`Routes.RepositoryPathPrefix`, `RepositoryRouteName`); a new route goes through it, never straight to
 `MapControllerRoute`. `RepositoryResolutionMiddleware` (after `UseRouting`, before authentication; a host must call
-`UseRepositoryResolution`) maps the `{repo}` route value to `IRepositoryContext.Use`; an unknown name (or a non-NuGet
-repository) is `404`, never the default. `BaGetUrlGenerator` reads the repository from `HttpContext.RequestServices` on
+`UseRepositoryResolution`) maps the `{repo}` route value to `IRepositoryContext.Use`; an unknown name, or a repository whose format is not the matched route's
+(`RepositoryRouteMetadata.Format`; pages and unmarked endpoints are NuGet's; a plain route of another format meets `default`, which is NuGet) is `404`, never the default. `BaGetUrlGenerator` reads the repository from `HttpContext.RequestServices` on
 each call (the registration/search builders are singletons, so an injected scoped context would pin them to one
 repository), picks the `r:` route variant and prefixes `AbsoluteUrl`, so every advertised URL stays in the repository and
 after the `PathBase`. The V2 feed's base is `IUrlGenerator.GetV2FeedUrl`. **Repository pages.** The pages that act on a repository (`RepositoryPageRouteConvention.RepositoryPages`: Index, Package,
@@ -389,7 +404,7 @@ A new protocol test class should follow the pattern. Helpers:
 `RepositoryLifecycleIsolationTests` pushes/unlists/relists/deprecates in one repository and asserts the other's whole read
 surface is unchanged; `UpgradeFromPreRepositoryTests` (B7) starts the real app on a pre-repository SQLite database and
 `packages/…` store and asserts everything is served unchanged at `/`, keys/owners still work and no file moves.
-`RepositoryPagesTests` / `RepositoryAccountPagesTests` cover the pages at `/r/second/` (links stay inside, switcher, upload target, My packages grouped,
+`AdminFormatsTests` registers a fake npm module (its `FakeNpmModule`) to drive the format pages end to end. `RepositoryPagesTests` / `RepositoryAccountPagesTests` cover the pages at `/r/second/` (links stay inside, switcher, upload target, My packages grouped,
 admin Browse/Upload links, `IRepositoryAccess` refusal = 404); `RepositoryPageRoutingFacts` (`BaGet.Web.Tests`) the convention and `RepositoryUrlHelper`.
 
 **Access tests** (`BaGet.Tests`): `AccessUpgradeEquivalenceTests` (B3 merge gate: a pre-repository database migrated by the current code behaves as before),

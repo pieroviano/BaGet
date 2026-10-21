@@ -7,7 +7,7 @@ A server holds one or more named repositories. Each has its own packages, owners
 | `default` | `/v3/index.json` (unchanged; every existing install is this one) |
 | any other | `/r/{name}/v3/index.json` |
 
-Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) NuGet repositories can be created.
+Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) NuGet repositories can be created; the [format layer](formats.md) is how other formats (npm next) plug in.
 
 ## Web pages
 

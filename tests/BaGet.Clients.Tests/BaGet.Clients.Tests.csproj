@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The real package-manager CLIs (npm now; mvn and docker:dind in later phases) run in containers; the tests skip without a Docker daemon. -->
+    <PackageReference Include="Testcontainers" Version="$(TestcontainersPackageVersion)" />
+  </ItemGroup>
+
+</Project>

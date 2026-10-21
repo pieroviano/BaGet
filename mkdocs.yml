@@ -44,6 +44,7 @@ nav:
     - Windows IIS proxy: installation/iis-proxy.md
   - Configuration: configuration.md
   - Repositories: repositories.md
+  - Package formats: formats.md
   - Remote repositories: remote-repositories.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md
