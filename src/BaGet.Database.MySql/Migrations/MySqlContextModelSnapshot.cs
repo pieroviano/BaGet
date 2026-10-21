@@ -364,7 +364,8 @@ namespace BaGet.Database.MySql.Migrations
                     b.Property<string>("Tag")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
+                        .HasColumnType("varchar(128)")
+                        .UseCollation("utf8mb4_bin");
 
                     b.Property<string>("Version")
                         .IsRequired()
@@ -396,7 +397,8 @@ namespace BaGet.Database.MySql.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(214)
-                        .HasColumnType("varchar(214)");
+                        .HasColumnType("varchar(214)")
+                        .UseCollation("utf8mb4_bin");
 
                     b.Property<int>("RepositoryKey")
                         .ValueGeneratedOnAdd()

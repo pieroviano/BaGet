@@ -365,7 +365,8 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.Property<string>("Tag")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(128)")
+                        .UseCollation("Latin1_General_100_BIN2");
 
                     b.Property<string>("Version")
                         .IsRequired()
@@ -397,7 +398,8 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(214)
-                        .HasColumnType("nvarchar(214)");
+                        .HasColumnType("nvarchar(214)")
+                        .UseCollation("Latin1_General_100_BIN2");
 
                     b.Property<int>("RepositoryKey")
                         .ValueGeneratedOnAdd()

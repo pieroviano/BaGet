@@ -79,7 +79,7 @@ is deleted, as in the NuGet feed). Unpublishing the last version removes the pac
 | `POST -/v1/login` (404), `PUT -/user/org.couchdb.user:{user}`, `DELETE -/user/token/{token}` | login, logout |
 | `POST -/npm/v1/security/advisories/bulk`, `…/audits/quick` | no advisories |
 
-A scoped name is also accepted as two segments (`@scope/name`) on every route that names a package. Every route is a 404 in a
+A scoped name is also accepted as two segments (`@scope/name`) on every route that names a package. Every route is a 404 in a Names are case-sensitive on every database (legacy names such as `JSONStream` differ from `jsonstream`). In a private repository a caller without Read gets `404 Not found` from every change route, whether the package exists or not.
 repository that is not npm.
 
 ## Configuration

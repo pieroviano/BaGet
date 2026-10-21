@@ -145,6 +145,22 @@ public class NpmController : Controller
         }
     }
 
+    /// <summary>
+    /// <see cref="Respond"/> for a change to <paramref name="name"/>: a caller who cannot Read the package is told "not found" for
+    /// a refusal and for a missing package alike (same status, same body), so a write route never reveals whether a package
+    /// exists to someone who may not see it. A caller who can Read gets the precise 403 / 404.
+    /// </summary>
+    private async Task<IActionResult> RespondHidingAsync(NpmResult result, BaGetPrincipal? caller, string name, CancellationToken cancellationToken)
+    {
+        if (result.Status is NpmStatus.Forbidden or NpmStatus.NotFound
+            && !await _access.IsAllowedAsync(caller, _repository.Current, name, AccessAction.Read, cancellationToken))
+        {
+            return Error(404, "Not found");
+        }
+
+        return Respond(result);
+    }
+
     private IActionResult Challenge401(string message)
     {
         Response.Headers.WWWAuthenticate = new Microsoft.Extensions.Primitives.StringValues(new[] { BasicCredentials.BearerChallenge, BasicCredentials.Challenge });
@@ -446,7 +462,7 @@ public class NpmController : Controller
             new NpmPublication(name, version, manifest, tag, tarball, integrity, shasum, attachment.DeclaredLength),
             cancellationToken);
 
-        return Respond(result);
+        return await RespondHidingAsync(result, caller, name, cancellationToken);
     }
 
     private async Task<IActionResult> UpdateMetadataAsync(BaGetPrincipal? caller, string name, JsonObject root, CancellationToken cancellationToken)
@@ -454,6 +470,10 @@ public class NpmController : Controller
         // Without a tarball the only change a packument PUT may make is a version's deprecation (npm deprecate); dist-tags have
         // their own routes and nothing else is taken from the document.
         if (root["versions"] is not JsonObject versions) return Error(400, "The document has no versions.");
+
+        // Authorize (Annotate) before the lookup: an empty change set is the registry's authorization probe.
+        var probe = await _registry.DeprecateAsync(caller, name, new Dictionary<string, string?>(), cancellationToken);
+        if (probe.Status != NpmStatus.Ok) return await RespondHidingAsync(probe, caller, name, cancellationToken);
 
         var package = await _registry.GetPackageAsync(name, cancellationToken);
         if (package == null) return Error(404, "Not found");
@@ -475,7 +495,7 @@ public class NpmController : Controller
             return Json(200, new JsonObject { ["ok"] = true, ["success"] = true });
         }
 
-        return Respond(await _registry.DeprecateAsync(caller, name, changes, cancellationToken));
+        return await RespondHidingAsync(await _registry.DeprecateAsync(caller, name, changes, cancellationToken), caller, name, cancellationToken);
     }
 
     /// <summary>
@@ -503,6 +523,10 @@ public class NpmController : Controller
 
         if (root?["versions"] is not JsonObject kept) return Error(400, "The document has no versions.");
 
+        // Authorize before the lookup: no versions to remove is the registry's authorization probe.
+        var probe = await _registry.UnpublishVersionsAsync(caller, name, Array.Empty<string>(), null, cancellationToken);
+        if (probe.Status != NpmStatus.Ok) return await RespondHidingAsync(probe, caller, name, cancellationToken);
+
         var package = await _registry.GetPackageAsync(name, cancellationToken);
         if (package == null) return Error(404, "Not found");
 
@@ -513,7 +537,7 @@ public class NpmController : Controller
             .Where(t => t.Value is JsonValue)
             .ToDictionary(t => t.Key, t => t.Value!.GetValue<string>(), StringComparer.Ordinal);
 
-        return Respond(await _registry.UnpublishVersionsAsync(caller, name, removed, tags, cancellationToken));
+        return await RespondHidingAsync(await _registry.UnpublishVersionsAsync(caller, name, removed, tags, cancellationToken), caller, name, cancellationToken);
     }
 
     /// <summary><c>DELETE npm/{name}/-rev/{rev}</c>: <c>npm unpublish name --force</c> removes the whole package.</summary>
@@ -524,7 +548,7 @@ public class NpmController : Controller
         if (failure != null) return failure;
         if (!TryName(out var name, out var invalid)) return invalid!;
 
-        return Respond(await _registry.UnpublishPackageAsync(caller, name, cancellationToken));
+        return await RespondHidingAsync(await _registry.UnpublishPackageAsync(caller, name, cancellationToken), caller, name, cancellationToken);
     }
 
     /// <summary><c>DELETE npm/{name}/-/{file}/-rev/{rev}</c>: deletes a tarball (the last step of <c>npm unpublish</c>).</summary>
@@ -535,7 +559,7 @@ public class NpmController : Controller
         if (failure != null) return failure;
         if (!TryName(out var name, out var invalid)) return invalid!;
 
-        return Respond(await _registry.DeleteTarballAsync(caller, name, file, cancellationToken));
+        return await RespondHidingAsync(await _registry.DeleteTarballAsync(caller, name, file, cancellationToken), caller, name, cancellationToken);
     }
 
     // ---- dist-tags ------------------------------------------------------------------------------------------------------
@@ -561,7 +585,7 @@ public class NpmController : Controller
 
         if (string.IsNullOrEmpty(version)) return Error(400, "The body is the version, as a JSON string.");
 
-        return Respond(await _registry.SetDistTagAsync(caller, name, Uri.UnescapeDataString(tag), version, cancellationToken));
+        return await RespondHidingAsync(await _registry.SetDistTagAsync(caller, name, Uri.UnescapeDataString(tag), version, cancellationToken), caller, name, cancellationToken);
     }
 
     /// <summary><c>DELETE npm/-/package/{name}/dist-tags/{tag}</c>.</summary>
@@ -572,7 +596,7 @@ public class NpmController : Controller
         if (failure != null) return failure;
         if (!TryName(out var name, out var invalid)) return invalid!;
 
-        return Respond(await _registry.RemoveDistTagAsync(caller, name, Uri.UnescapeDataString(tag), cancellationToken));
+        return await RespondHidingAsync(await _registry.RemoveDistTagAsync(caller, name, Uri.UnescapeDataString(tag), cancellationToken), caller, name, cancellationToken);
     }
 
     private async Task<JsonNode?> ReadJsonAsync(long limit, CancellationToken cancellationToken)

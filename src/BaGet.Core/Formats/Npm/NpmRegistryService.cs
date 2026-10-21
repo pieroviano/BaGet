@@ -363,6 +363,19 @@ public class NpmRegistryService : INpmRegistry
         return null;
     }
 
+    /// <summary>Null when the caller may do at least one of <paramref name="actions"/>, else the last refusal.</summary>
+    private async Task<NpmResult?> DenyAnyAsync(BaGetPrincipal? caller, string name, CancellationToken cancellationToken, params PackageAction[] actions)
+    {
+        NpmResult? refusal = null;
+        foreach (var action in actions)
+        {
+            refusal = await DenyAsync(caller, action, name, cancellationToken).ConfigureAwait(false);
+            if (refusal == null) return null;
+        }
+
+        return refusal;
+    }
+
     private static string Describe(PackageAction action) => action switch
     {
         PackageAction.Push => "publish to",
@@ -607,48 +620,75 @@ public class NpmRegistryService : INpmRegistry
         }
 
         var now = _time.UtcNow;
-        try
-        {
-            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        var storedByThisCall = stored == StoragePutResult.Success;
 
-            if (package == null)
+        // Two first publishes of different versions of one new package both find no package row; the loser's insert of the
+        // package hits the unique (repository, name) index. It then publishes onto the winner's row: only a clash on the
+        // version itself is a conflict.
+        for (var attempt = 0; ; attempt++)
+        {
+            try
             {
-                package = new NpmPackage { Name = name, Created = now, Modified = now };
-                _context.NpmPackages!.Add(package);
+                await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+                if (package == null)
+                {
+                    package = new NpmPackage { Name = name, Created = now, Modified = now };
+                    _context.NpmPackages!.Add(package);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                _context.NpmVersions!.Add(new NpmVersion
+                {
+                    PackageKey = package.Key,
+                    Version = version,
+                    Integrity = integrity,
+                    Shasum = shasum,
+                    TarballSize = length,
+                    Manifest = BuildStoredManifest(publication.Manifest, name, version, integrity, shasum).ToJsonString(),
+                    Published = now,
+                });
+
+                await SetTagAsync(package.Key, publication.Tag, version, cancellationToken).ConfigureAwait(false);
+
+                // The first version of a package is always "latest", whatever tag it was published with: a package without it
+                // cannot be installed by name.
+                if (isNewPackage && publication.Tag != "latest") await SetTagAsync(package.Key, "latest", version, cancellationToken).ConfigureAwait(false);
+
+                package.Modified = now;
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                break;
             }
-
-            _context.NpmVersions!.Add(new NpmVersion
+            catch (DbUpdateException e) when (_context.IsUniqueConstraintViolationException(e))
             {
-                PackageKey = package.Key,
-                Version = version,
-                Integrity = integrity,
-                Shasum = shasum,
-                TarballSize = length,
-                Manifest = BuildStoredManifest(publication.Manifest, name, version, integrity, shasum).ToJsonString(),
-                Published = now,
-            });
+                // The rolled-back attempt left tracked entities that no longer exist in the database.
+                (_context as DbContext)?.ChangeTracker.Clear();
 
-            await SetTagAsync(package.Key, publication.Tag, version, cancellationToken).ConfigureAwait(false);
+                var winner = isNewPackage && attempt == 0
+                    ? await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false)
+                    : null;
+                if (winner != null)
+                {
+                    package = winner;
+                    isNewPackage = false;
+                    continue;
+                }
 
-            // The first version of a package is always "latest", whatever tag it was published with: a package without it
-            // cannot be installed by name.
-            if (isNewPackage && publication.Tag != "latest") await SetTagAsync(package.Key, "latest", version, cancellationToken).ConfigureAwait(false);
+                // A clash on the version: a concurrent publish of the same version won. Its file is the one at the path while
+                // its row exists; when no row has this version the file is this call's own leftover, and goes.
+                var taken = package != null
+                    && await _context.NpmVersions!.AsNoTracking().AnyAsync(v => v.PackageKey == package.Key && v.Version == version, cancellationToken).ConfigureAwait(false);
+                if (storedByThisCall && !taken) await TryDeleteAsync(path).ConfigureAwait(false);
 
-            package.Modified = now;
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (DbUpdateException e) when (_context.IsUniqueConstraintViolationException(e))
-        {
-            // A concurrent publish of the same version won; its file is the one at the path, so it stays.
-            return NpmResult.Fail(NpmStatus.Conflict, $"You cannot publish over the previously published version {version}.");
-        }
-        catch
-        {
-            if (stored == StoragePutResult.Success) await TryDeleteAsync(path).ConfigureAwait(false);
+                return NpmResult.Fail(NpmStatus.Conflict, $"You cannot publish over the previously published version {version}.");
+            }
+            catch
+            {
+                if (storedByThisCall) await TryDeleteAsync(path).ConfigureAwait(false);
 
-            throw;
+                throw;
+            }
         }
 
         await _authorization.OnPushedAsync(caller!, name, isNewPackage, cancellationToken).ConfigureAwait(false);
@@ -757,11 +797,11 @@ public class NpmRegistryService : INpmRegistry
 
         if (caller == null) return NpmResult.Fail(NpmStatus.Unauthorized, "Authentication is required.");
 
-        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
-        if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
-
         var denied = await DenyAsync(caller, PackageAction.Push, name, cancellationToken).ConfigureAwait(false);
         if (denied != null) return denied;
+
+        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
+        if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
 
         var rows = await _context.NpmVersions!.AsNoTracking().Where(v => v.PackageKey == package.Key).Select(v => v.Version!).ToListAsync(cancellationToken).ConfigureAwait(false);
         var stored = rows.FirstOrDefault(v => v == version) ?? rows.FirstOrDefault(v => NpmNames.Comparable(v) == NpmNames.Comparable(version ?? string.Empty));
@@ -780,11 +820,11 @@ public class NpmRegistryService : INpmRegistry
         if (!TryName(name, out name, out var failure)) return failure!;
         if (caller == null) return NpmResult.Fail(NpmStatus.Unauthorized, "Authentication is required.");
 
-        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
-        if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
-
         var denied = await DenyAsync(caller, PackageAction.Push, name, cancellationToken).ConfigureAwait(false);
         if (denied != null) return denied;
+
+        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
+        if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
 
         var row = await _context.NpmDistTags!.FirstOrDefaultAsync(t => t.PackageKey == package.Key && t.Tag == tag, cancellationToken).ConfigureAwait(false);
         if (row == null) return NpmResult.Fail(NpmStatus.NotFound, $"{name} has no tag {tag}.");
@@ -804,11 +844,11 @@ public class NpmRegistryService : INpmRegistry
         if (!TryName(name, out name, out var failure)) return failure!;
         if (caller == null) return NpmResult.Fail(NpmStatus.Unauthorized, "Authentication is required.");
 
-        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
-        if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
-
         var denied = await DenyAsync(caller, PackageAction.Annotate, name, cancellationToken).ConfigureAwait(false);
         if (denied != null) return denied;
+
+        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
+        if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
 
         var rows = await _context.NpmVersions!.Where(v => v.PackageKey == package.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
         var changed = 0;
@@ -846,8 +886,15 @@ public class NpmRegistryService : INpmRegistry
         if (!TryName(name, out name, out var failure)) return failure!;
         if (caller == null) return NpmResult.Fail(NpmStatus.Unauthorized, "Authentication is required.");
 
+        // Authorize before looking the package up, so a caller who may not change it learns nothing about it.
+        var preliminary = await DenyAnyAsync(caller, name, cancellationToken, PackageAction.Push, PackageAction.Manage).ConfigureAwait(false);
+        if (preliminary != null) return preliminary;
+
         var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
         if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
+
+        // Nothing to remove is an authorization probe: allowed, and nothing happens.
+        if (versions.Count == 0) return NpmResult.Ok();
 
         var rows = await _context.NpmVersions!.Where(v => v.PackageKey == package.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
         var removed = new List<NpmVersion>();
@@ -867,6 +914,9 @@ public class NpmRegistryService : INpmRegistry
     {
         if (!TryName(name, out name, out var failure)) return failure!;
         if (caller == null) return NpmResult.Fail(NpmStatus.Unauthorized, "Authentication is required.");
+
+        var preliminary = await DenyAnyAsync(caller, name, cancellationToken, PackageAction.Push, PackageAction.Manage).ConfigureAwait(false);
+        if (preliminary != null) return preliminary;
 
         var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
         if (package == null) return NpmResult.Fail(NpmStatus.NotFound, $"There is no package {name}.");
@@ -951,6 +1001,9 @@ public class NpmRegistryService : INpmRegistry
         if (!TryName(name, out name, out var failure)) return failure!;
         if (!NpmNames.TryParseTarballFile(name, file, out var version)) return NpmResult.Fail(NpmStatus.NotFound, "There is no such file.");
         if (caller == null) return NpmResult.Fail(NpmStatus.Unauthorized, "Authentication is required.");
+
+        var preliminary = await DenyAnyAsync(caller, name, cancellationToken, PackageAction.Push, PackageAction.Manage).ConfigureAwait(false);
+        if (preliminary != null) return preliminary;
 
         var package = await _context.NpmPackages!.AsNoTracking().FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
         var published = package != null && await _context.NpmVersions!.AnyAsync(v => v.PackageKey == package.Key && v.Version == version, cancellationToken).ConfigureAwait(false);

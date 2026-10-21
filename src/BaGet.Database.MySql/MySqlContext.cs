@@ -11,6 +11,9 @@ public class MySqlContext : AbstractContext<MySqlContext>
     /// </summary>
     private const int UniqueConstraintViolationErrorCode = 1062;
 
+    /// <summary>The binary collation of the npm identifier columns.</summary>
+    internal const string NpmCollation = "utf8mb4_bin";
+
     public MySqlContext(DbContextOptions<MySqlContext> options) : base(options)
     {
     }
@@ -53,5 +56,11 @@ public class MySqlContext : AbstractContext<MySqlContext>
         package.Property(p => p.RepositoryUrl).HasColumnType("longtext");
         package.Property(p => p.Summary).HasColumnType("longtext");
         package.Property(p => p.Tags).HasColumnType("longtext");
+
+        // npm package names and dist-tags are case-sensitive (legacy names such as JSONStream exist): compared by code point,
+        // never by the default case-insensitive collation, so an exact lookup and the unique index behave as on SQLite and
+        // PostgreSQL.
+        builder.Entity<NpmPackage>().Property(p => p.Name).UseCollation(NpmCollation);
+        builder.Entity<NpmDistTag>().Property(t => t.Tag).UseCollation(NpmCollation);
     }
 }

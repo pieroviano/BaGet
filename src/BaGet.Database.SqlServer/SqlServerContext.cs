@@ -27,6 +27,22 @@ public class SqlServerContext : AbstractContext<SqlServerContext>
     { }
 
     /// <summary>
+    /// npm package names and dist-tags are case-sensitive (legacy names such as <c>JSONStream</c> still exist), so they are
+    /// compared by code point, never by the database's default case-insensitive collation: an exact lookup, and the unique
+    /// index, then behave as on SQLite and PostgreSQL.
+    /// </summary>
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.Entity<NpmPackage>().Property(p => p.Name).UseCollation(NpmCollation);
+        builder.Entity<NpmDistTag>().Property(t => t.Tag).UseCollation(NpmCollation);
+    }
+
+    /// <summary>The binary collation of the npm identifier columns.</summary>
+    internal const string NpmCollation = "Latin1_General_100_BIN2";
+
+    /// <summary>
     /// Check whether a <see cref="DbUpdateException"/> is due to a SQL unique constraint violation.
     /// </summary>
     /// <param name="exception">The exception to inspect.</param>

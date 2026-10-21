@@ -321,6 +321,48 @@ public class NpmAccessTests : IDisposable
     }
 
     [Fact]
+    public async Task WritesByACallerWhoCannotReadAnswerTheSameForAnExistingAndAMissingPackage()
+    {
+        var alice = await KeyAsync("alice");
+        var bob = await KeyAsync("bob");
+        await PublishAsync(alice, "left-pad", "1.0.0");
+        using (var scope = _app.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>().SetAnonymousReadAsync("web", false, CancellationToken.None);
+        }
+
+        // bob is authenticated but has no Read here and does not own left-pad: nothing he does may tell the two names apart.
+        var requests = new (HttpMethod Method, string Path, string? Body)[]
+        {
+            (HttpMethod.Put, "-/package/{0}/dist-tags/beta", "\"1.0.0\""),
+            (HttpMethod.Delete, "-/package/{0}/dist-tags/latest", null),
+            (HttpMethod.Put, "{0}", """{"name":"{0}","versions":{"1.0.0":{"deprecated":"nope"}}}"""),
+            (HttpMethod.Put, "{0}/-rev/1-x", """{"name":"{0}","versions":{}}"""),
+            (HttpMethod.Delete, "{0}/-rev/1-x", null),
+        };
+
+        foreach (var (method, path, body) in requests)
+        {
+            using var existing = await SendAsync(method, Registry + string.Format(path.Replace("{0}", "{0}"), "left-pad"), body?.Replace("{0}", "left-pad"), bob);
+            using var missing = await SendAsync(method, Registry + string.Format(path, "nothing-here"), body?.Replace("{0}", "nothing-here"), bob);
+
+            var label = method + " " + path;
+            Assert.True(existing.StatusCode == HttpStatusCode.NotFound, label + " existing: " + existing.StatusCode);
+            Assert.True(missing.StatusCode == HttpStatusCode.NotFound, label + " missing: " + missing.StatusCode);
+            Assert.Equal(await missing.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), await existing.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        }
+
+        // Deleting the tarball of a published version is hidden too. (A tarball of a package that has no version left is an
+        // idempotent 200 for anyone who may deploy that name, as npm's unpublish sequence needs; the name is claimable anyway.)
+        using var tarball = await SendAsync(HttpMethod.Delete, Registry + "left-pad/-/left-pad-1.0.0.tgz/-rev/1-x", token: bob);
+        Assert.Equal(HttpStatusCode.NotFound, tarball.StatusCode);
+
+        // The package is untouched.
+        using var still = await SendAsync(HttpMethod.Get, Registry + "left-pad", token: await KeyAsync("root"));
+        Assert.Equal(HttpStatusCode.OK, still.StatusCode);
+    }
+
+    [Fact]
     public async Task APackagePatternOfAGrantHidesTheOtherPackagesWhateverTheSpellingOfTheName()
     {
         var alice = await KeyAsync("alice");
