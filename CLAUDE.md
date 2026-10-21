@@ -371,7 +371,7 @@ On Windows a Serilog EventLog sink (Warning+, source `.NET Runtime`, `Serilog:Ev
 provider that `ClearProviders` removes. SelfLog goes to stderr. MinimumLevel reloads live, sinks need a restart. Libraries keep `Microsoft.Extensions.Logging.ILogger`. There is
 **no static/bootstrap logger** (it would throw "already frozen" when `WebApplicationFactory` builds a second host).
 `app.UseSerilogRequestLogging()` sits after forwarded headers/path base; its template has the path only, never the
-query or headers (API keys); a credential inside a path (npm logout's `-/user/token/{token}`) is masked by `RequestPathRedaction` in the log (`GetMessageTemplateProperties`) and in traces (`PathRedactingProcessor`, `url.path`/`url.full`). `writeToProviders` delivers each event twice to a registered `ILoggerProvider`;
+query or headers (API keys); a credential inside a path (npm logout's `-/user/token/{token}`) is masked by `RequestPathRedaction` in the log (`GetMessageTemplateProperties`) and, through `RequestPathRedactingEnricher` (after `FromLogContext`, every string property of every event: the hosting scope's raw `RequestPath` rides on each event logged in a request; `LogScopeRedactionTests`), and in traces (`PathRedactingProcessor`, `url.path`/`url.full`). `writeToProviders` delivers each event twice to a registered `ILoggerProvider`;
 tests that count lines use `Distinct()`. The harness switches the sinks off with `Enabled=false`.
 `WebApplicationFactory` `UseSetting` gives every parent key of a setting an empty value, which Serilog reads as a sink
 name, so a test that needs a working File sink runs `Program.BuildApplication` with command-line args instead.

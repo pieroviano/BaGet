@@ -3,7 +3,7 @@ using System;
 namespace BaGet.Web;
 
 /// <summary>
-/// Hides the secrets that a protocol puts in the path of a request, before the path reaches a log line or a trace. The query
+/// Hides the secrets that a protocol puts in the path of a request, before the path reaches a log event (request line or hosting-scope property: <c>RequestPathRedactingEnricher</c>) or a trace. The query
 /// string and headers never reach either (see the request log template and the telemetry setup); a path would, so the one
 /// route that carries a credential in it is masked here: npm's <c>DELETE -/user/token/{token}</c> (<c>npm logout</c>) names
 /// the API key to revoke as its last segment. A route that gets a secret in its path must be added here.

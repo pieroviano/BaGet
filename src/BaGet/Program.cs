@@ -348,7 +348,8 @@ public partial class Program
                 loggerConfiguration
                     .ReadFrom.Configuration(configuration)
                     .ReadFrom.Services(services)
-                    .Enrich.FromLogContext();
+                    .Enrich.FromLogContext()
+                    .Enrich.With<RequestPathRedactingEnricher>();
                 AddEventLogSink(loggerConfiguration, configuration);
                 // A Serilog sink, not an ILoggerProvider: writeToProviders would deliver each event to a provider twice.
                 // Idle (returns at once) until Telemetry:Logs:Endpoint is set; carries TraceId/SpanId.

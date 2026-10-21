@@ -107,6 +107,6 @@ public class NpmVirtualLoginTests : IDisposable
         // The key was issued for the virtual repository (and what it answers with), not for the deploy repository alone.
         Assert.Equal("npm login (all)", key.Description);
         Assert.Contains(all, limit!);
-        Assert.Contains(local, limit);
+        Assert.Contains(local, limit!);
     }
 }
