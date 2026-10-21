@@ -246,6 +246,20 @@ public class NpmPagesTests : IDisposable
         static string asAnonymousOwners(string html) => html.Substring(html.IndexOf("npm-owners", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task AnOwnerLinksToTheServerWideProfileWhichResolves()
+    {
+        await PublishAsync("left-pad", "1.0.0");
+
+        var html = await _anonymous.GetPageAsync("r/web/npm-packages/left-pad");
+        var owners = html.Substring(html.IndexOf("npm-owners", StringComparison.Ordinal));
+        Assert.Contains("href=\"/profiles/alice\"", owners);
+        Assert.DoesNotContain("/r/web/profiles/", owners);
+
+        using var profile = await _anonymous.GetAsync("profiles/alice");
+        Assert.Equal(HttpStatusCode.OK, profile.StatusCode);
+    }
+
     // ---- format separation and the header ----
 
     [Fact]

@@ -190,7 +190,7 @@
                 <ul class="list-unstyled" id="npm-owners">
                     @foreach (var owner in Model.Owners)
                     {
-                        <li><a href="@Url.Page("/Profiles/Profile", new { name = owner })">@owner</a></li>
+                        <li><a href="@Url.Page("/Profiles/Profile", new { name = owner, repo = (string?)null })">@owner</a></li>
                     }
                 </ul>
             </div>
