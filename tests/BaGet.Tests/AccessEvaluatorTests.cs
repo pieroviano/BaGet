@@ -230,6 +230,39 @@ public class AccessEvaluatorTests : IDisposable
     }
 
     [Fact]
+    public async Task TheAnonymousReadFlagAlsoGatesAProjectRoleHeldByEveryone()
+    {
+        await RemoveSeededTargetsAsync();
+        await AdministerAsync(async a =>
+        {
+            await a.CreateProjectAsync("team", "Team", "test", _token);
+            await a.SetProjectMemberAsync("team", PrincipalType.Group, await GroupKeyAsync("Everyone"), ProjectRole.Developer, "test", _token);
+        });
+        await WithAsync<int>(async (_, _, context) =>
+        {
+            var project = await context.Projects!.SingleAsync(p => p.Name == "team");
+            (await context.Repositories!.SingleAsync(r => r.Name == Second)).ProjectKey = project.Key;
+            await context.SaveChangesAsync(_token);
+            return 0;
+        });
+        await SetAnonymousReadAsync(Second, false);
+
+        Assert.False(await AllowedAsync(null, SecondRepo, null, AccessAction.Read));
+        Assert.False(await AllowedAsync(User("alice"), SecondRepo, "X", AccessAction.Read));
+        Assert.Empty(await ReadableAsync(null));
+        // Only Read is gated; the role's other actions still apply to signed-in callers.
+        Assert.True(await AllowedAsync(User("alice"), SecondRepo, "X", AccessAction.Deploy));
+
+        var summary = await WithAsync(async (evaluator, _, _) => await evaluator.DescribeAsync(SecondRepo, _token));
+        var role = Assert.Single(summary.Holders, h => h.Source.StartsWith("Project", StringComparison.Ordinal));
+        Assert.False(role.Effective.HasFlag(AccessAction.Read));
+        Assert.Contains("Anonymous read is off", role.Note);
+
+        await SetAnonymousReadAsync(Second, true);
+        Assert.True(await AllowedAsync(null, SecondRepo, null, AccessAction.Read));
+    }
+
+    [Fact]
     public async Task TurningAnonymousReadOnAgainRestoresAGrantAnAdministratorDeleted()
     {
         await AdministerAsync(a => a.DeleteTargetAsync(BuiltInNames.AnyoneReads, "test", _token));

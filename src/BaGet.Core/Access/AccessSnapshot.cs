@@ -207,10 +207,15 @@ internal sealed class AccessSnapshot
         {
             foreach (var member in members)
             {
-                if (Applies(member.PrincipalType, member.PrincipalId, principal, userId, membership, out _))
+                if (Applies(member.PrincipalType, member.PrincipalId, principal, userId, membership, out var viaEveryone))
                 {
-                    granted |= ProjectRoles.ActionsOf(member.Role);
-                    reasons?.Add(ProjectReason(projectKey.Value, member, principal));
+                    // Same rule as for a permission target: while anonymous read is off, Everyone's Read does not apply,
+                    // whether it comes from a grant or from a project role.
+                    var blocked = viaEveryone && !anonymousRead;
+                    var actions = ProjectRoles.ActionsOf(member.Role);
+                    if (blocked) actions &= ~AccessAction.Read;
+                    granted |= actions;
+                    reasons?.Add(ProjectReason(projectKey.Value, member, actions, blocked, principal));
                 }
             }
         }
@@ -245,7 +250,13 @@ internal sealed class AccessSnapshot
 
         if (projectKey != null && ProjectMembers.TryGetValue(projectKey.Value, out var members))
         {
-            foreach (var member in members) result.Add(ProjectReason(projectKey.Value, member, principal: null));
+            foreach (var member in members)
+            {
+                var blocked = member.PrincipalType == PrincipalType.Group
+                    && int.TryParse(member.PrincipalId, out var group) && group == EveryoneKey && !anonymousRead;
+                var actions = ProjectRoles.ActionsOf(member.Role);
+                result.Add(ProjectReason(projectKey.Value, member, blocked ? actions & ~AccessAction.Read : actions, blocked, principal: null));
+            }
         }
 
         return result;
@@ -262,7 +273,7 @@ internal sealed class AccessSnapshot
             target.Scope,
             anonymousReadOff ? "Anonymous read is off for this repository, so Everyone's Read does not apply." : null);
 
-    private AccessReason ProjectReason(int projectKey, ProjectMemberRow member, BaGetPrincipal? principal)
+    private AccessReason ProjectReason(int projectKey, ProjectMemberRow member, AccessAction effective, bool anonymousReadOff, BaGetPrincipal? principal)
     {
         var actions = ProjectRoles.ActionsOf(member.Role);
         var project = ProjectNames.TryGetValue(projectKey, out var name) ? name : projectKey.ToString();
@@ -273,9 +284,9 @@ internal sealed class AccessSnapshot
             member.PrincipalId,
             PrincipalText(member.PrincipalType, member.PrincipalId, principal),
             actions,
-            actions,
+            effective,
             Packages: null,
-            Note: null);
+            Note: anonymousReadOff ? "Anonymous read is off for this repository, so Everyone's Read does not apply." : null);
     }
 
     private string PrincipalText(PrincipalType type, string id, BaGetPrincipal? principal)

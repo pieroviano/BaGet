@@ -52,17 +52,17 @@ Ownership still applies inside Deploy, Delete, Annotate and Manage. Both targets
 | Switch | Effect |
 |---|---|
 | on (default) | Everyone's Read grants apply. If no target grants Everyone Read on the repository any more, switching on creates the target `Anonymous read {name}` |
-| off | Everyone's Read does not apply there; callers need a Read grant of their own (user, group, organization or project role) |
+| off | Everyone's Read does not apply there, whether it comes from a permission target or from a project role held by Everyone (its other actions still do); callers need a Read grant of their own (user, group, organization or project role) |
 
 ## What a client sees
 
 | Caller | Private repository |
 |---|---|
-| Anonymous | `401` with `WWW-Authenticate: Basic realm="BaGet"` on every protocol route (`/` and `/r/{repo}/`; GET and HEAD) |
+| Anonymous | `401` with `WWW-Authenticate: Basic realm="BaGet"` on every protocol route (`/` and `/r/{repo}/`) whatever the HTTP method; only routes that accept writes alone (push, delete, relist, validation) skip the check and authenticate with an API key |
 | Signed in, no Read | `404`, as for an unknown repository or package |
 | With Read | served |
 
-Pages follow the same check: an anonymous visitor is sent to sign in, a signed-in user without Read gets `404`, and the
+Pages follow the same check, and a page of one package (`/packages/{id}/...`: details, report abuse, manage, contact owners) is also checked against the caller's include/exclude patterns, so a hidden package answers `404` there as on its registration: an anonymous visitor is sent to sign in, a signed-in user without Read gets `404`, and the
 repository switcher and search lists only show readable repositories. Search results are filtered per repository, not
 per package: a Read grant narrowed by include/exclude patterns protects the per-package routes (registration, content),
 but `search`, `autocomplete` and the V2 listings of a repository the caller may read show all its packages.

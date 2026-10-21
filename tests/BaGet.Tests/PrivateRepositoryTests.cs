@@ -134,6 +134,62 @@ public class PrivateRepositoryTests : IDisposable
         Assert.Empty(response.Headers.WwwAuthenticate);
     }
 
+    public static IEnumerable<object[]> ReadRoutesWithOtherMethods()
+    {
+        foreach (var method in new[] { "POST", "PUT", "PATCH", "OPTIONS" })
+        {
+            foreach (var path in new[]
+            {
+                "v3/search?q=",
+                "v3/autocomplete?q=a",
+                "v3/dependents?packageId=x",
+                "v3/package/contoso.lib/index.json",
+                "v3/package/contoso.lib/1.0.0/contoso.lib.1.0.0.nupkg",
+                "api/download/symbols/contoso.pdb/0123456789abcdef0123456789abcdef1/contoso.pdb",
+            })
+            {
+                yield return new object[] { method, path };
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ReadRoutesWithOtherMethods))]
+    public async Task AReadRouteIsProtectedWhateverTheHttpMethod(string method, string path)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), "r/second/" + path);
+        using var anonymous = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+
+        using var signedIn = new HttpRequestMessage(new HttpMethod(method), "r/second/" + path);
+        signedIn.Headers.Authorization = new AuthenticationHeaderValue("Basic", Basic("bob", _bobKey));
+        using var denied = await _client.SendAsync(signedIn, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.NotFound, denied.StatusCode);
+    }
+
+    [Fact]
+    public async Task APackagePageFollowsTheCallersPackagePatterns()
+    {
+        await _app.AddPackageAsync(TestPackages.Build("Contoso.Lib", "1.0.0"), CancellationToken.None, Second);
+        await _app.AddPackageAsync(TestPackages.Build("Secret.Lib", "1.0.0"), CancellationToken.None, Second);
+        var carol = await CreateCarolAsync();
+        using (var scope = _app.Services.CreateScope())
+        {
+            var administration = scope.ServiceProvider.GetRequiredService<IAccessAdministration>();
+            await administration.CreateTargetAsync("carol", new[] { Second }, new[] { "*" }, new[] { "Secret.*" }, null, null, CancellationToken.None);
+            await administration.SetGrantAsync("carol", PrincipalType.User, carol.Id, AccessAction.Read, null, CancellationToken.None);
+        }
+
+        using var browser = new Browser(_app);
+        await SignInAsync(browser, "carol");
+        using var allowed = await browser.GetAsync("r/second/packages/Contoso.Lib");
+        Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+        using var denied = await browser.GetAsync("r/second/packages/Secret.Lib");
+        Assert.Equal(HttpStatusCode.NotFound, denied.StatusCode);
+        using var deniedAbuse = await browser.GetAsync("r/second/packages/Secret.Lib/1.0.0/report-abuse");
+        Assert.Equal(HttpStatusCode.NotFound, deniedAbuse.StatusCode);
+    }
+
     [Fact]
     public async Task APasswordThatIsAnApiKeyOpensTheRepositoryForItsOwner()
     {

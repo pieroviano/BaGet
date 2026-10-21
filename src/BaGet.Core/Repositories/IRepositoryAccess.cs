@@ -29,6 +29,14 @@ public interface IRepositoryAccess
 
     /// <summary>Whether <paramref name="user"/> may read (open pages of) <paramref name="repository"/>.</summary>
     Task<bool> CanReadAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Whether <paramref name="user"/> may read the pages of package <paramref name="packageId"/> in
+    /// <paramref name="repository"/>: <see cref="CanReadAsync"/> plus the include/exclude patterns of the Read grants.
+    /// The default ignores the package, for an implementation without package-level rules.
+    /// </summary>
+    Task<bool> CanReadPackageAsync(ClaimsPrincipal? user, RepositoryInfo repository, string packageId, CancellationToken cancellationToken)
+        => CanReadAsync(user, repository, cancellationToken);
 }
 
 /// <summary>

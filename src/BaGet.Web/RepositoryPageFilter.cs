@@ -14,7 +14,8 @@ namespace BaGet.Web;
 /// caller must be allowed to read the repository the request resolved to (<see cref="IRepositoryAccess"/>), else the
 /// page answers 404 to a signed-in user (the same answer as an unknown repository, so nothing says that a private one
 /// exists) and sends a visitor who is not signed in to sign in, when the host has accounts. <see cref="IRepositoryAccess"/>
-/// is backed by the access model (<see cref="IAccessEvaluator"/>); no page repeats the check.
+/// is backed by the access model (<see cref="IAccessEvaluator"/>); no page repeats the check. A page whose route names a
+/// package (<c>{id}</c>) is checked against that package too (<see cref="IRepositoryAccess.CanReadPackageAsync"/>).
 /// </summary>
 public class RepositoryPageFilter : IAsyncPageFilter
 {
@@ -31,7 +32,14 @@ public class RepositoryPageFilter : IAsyncPageFilter
             var repository = services.GetRequiredService<IRepositoryContext>().Current;
             var access = services.GetRequiredService<IRepositoryAccess>();
 
-            if (!await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted))
+            // A page of one package ({id} in its route) also needs Read on that package, so the include/exclude
+            // patterns of the caller's grants hide it as they hide its registration and content.
+            var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
+            var allowed = string.IsNullOrEmpty(packageId)
+                ? await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
+                : await access.CanReadPackageAsync(context.HttpContext.User, repository, packageId, context.HttpContext.RequestAborted);
+
+            if (!allowed)
             {
                 // A visitor who is not signed in is sent to sign in (when the host has accounts) - they may be allowed
                 // once they are; a signed-in user without Read gets 404, so nothing says the repository exists.

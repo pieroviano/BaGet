@@ -1,6 +1,8 @@
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Constraints;
 
@@ -24,13 +26,31 @@ public class BaGetEndpointBuilder
         object defaults,
         object? constraints = null)
     {
-        // The marker is what RepositoryReadFilter looks for: reads of every route registered here need Read access.
-        endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(RepositoryRouteMetadata.Instance);
+        // The marker is what RepositoryReadFilter looks for: every route registered here needs Read access, except a
+        // route that is constrained to write methods only (and then only for those methods).
+        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints));
+        endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(metadata);
         endpoints.MapControllerRoute(
             Routes.RepositoryRouteName(name),
             Routes.RepositoryPathPrefix + pattern,
             defaults,
-            constraints).WithMetadata(RepositoryRouteMetadata.Instance);
+            constraints).WithMetadata(metadata);
+    }
+
+    /// <summary>
+    /// Whether the <c>httpMethod</c> constraint admits write methods (PUT, POST, PATCH, DELETE) only. An unconstrained
+    /// route, or one that admits GET or HEAD, is a read route whatever method the caller sends.
+    /// </summary>
+    private static bool WritesOnly(object? constraints)
+    {
+        if (constraints == null) return false;
+
+        var values = new RouteValueDictionary(constraints);
+        if (!values.TryGetValue("httpMethod", out var constraint) || constraint is not HttpMethodRouteConstraint method) return false;
+
+        return method.AllowedMethods.Count > 0
+            && method.AllowedMethods.All(m => !HttpMethods.IsGet(m) && !HttpMethods.IsHead(m)
+                && !HttpMethods.IsOptions(m) && !HttpMethods.IsTrace(m));
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

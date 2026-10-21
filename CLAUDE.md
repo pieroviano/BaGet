@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2069 tests** across `BaGet.Core.Tests` (556), `BaGet.Tests` (1207),
+Baseline: **2095 tests** across `BaGet.Core.Tests` (556), `BaGet.Tests` (1233),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -202,7 +202,7 @@ not only Deploy: ownership-based unlist/deprecate/Manage page worked before the 
 the sequences). `IAccessEvaluator` (scoped; `AccessEvaluator`) answers `IsAllowedAsync(principal, repository, packageId?, action)`:
 superuser and `IsAdministrator` always, else the union of grants of targets matching repository (globs) and package (include/exclude; a null id is a
 repository-level question), for the principal's user id, groups (Everyone/Authenticated implicit), organizations, plus project roles on
-`Repository.ProjectKey`. `Repository.AnonymousRead` = false drops *Everyone*'s Read there (`AccessSnapshot.Granted`); `RepositoryAdministration.SetAnonymousReadAsync`
+`Repository.ProjectKey`. `Repository.AnonymousRead` = false drops *Everyone*'s Read there (target grant or project role) (`AccessSnapshot.Granted`); `RepositoryAdministration.SetAnonymousReadAsync`
 re-creates an "Anonymous read {name}" target when turning it on finds none. `NullContext` (Azure Table) has no model: Read open, writes for any authenticated
 principal. State is one `AccessSnapshot` in the singleton `AccessModelCache` (targets, grants, repositories, project members; per-user memberships loaded lazily
 and kept with it), reloaded when `AccessModelVersion` changes or after 30 s; `AccessModelSaveChangesInterceptor` (added next to the maintenance one) bumps the
@@ -210,10 +210,10 @@ version after any committed save touching those tables, `Repository`, `Project`,
 bypass it (none do). Edits go through `IAccessAdministration` (audits in the same save, refused by the maintenance gate). `OwnershipAuthorizationService` asks the
 evaluator first (Push -> Deploy, Manage -> Delete, new `PackageAction.Annotate` -> Annotate; repository = `IRepositoryContext.Current`), then applies ownership.
 **Reads**: `BaGetEndpointBuilder.MapRoute` tags every protocol endpoint with `RepositoryRouteMetadata`; `RepositoryReadFilter` (a global MVC resource filter, so
-every host gets it; `GET`/`HEAD` only) requires Read on the repository and, for a route with `{id}`, on the package: anonymous -> 401 +
+every host gets it; every HTTP method, since an action without `[HttpGet]` answers any; only routes constrained to write methods, `RepositoryRouteMetadata.WritesOnly`, skip it for those) requires Read on the repository and, for a route with `{id}`, on the package: anonymous -> 401 +
 `WWW-Authenticate: Basic realm="BaGet"`, signed in without Read -> 404. Credentials: `RequestPrincipalResolver` (Basic password = API key with the user name
 checked against the key's owner, else `X-NuGet-ApiKey`, else the cookie session through `ISessionPrincipalFactory`, implemented by `SessionPrincipalFactory`);
-bad credentials count as none. Pages: `RepositoryPageFilter` -> `IRepositoryAccess` (`AccessRepositoryAccess`, replaces `OpenRepositoryAccess`): anonymous visitor
+bad credentials count as none. Pages: `RepositoryPageFilter` (a page with `{id}` also needs Read on the package: `CanReadPackageAsync`) -> `IRepositoryAccess` (`AccessRepositoryAccess`, replaces `OpenRepositoryAccess`): anonymous visitor
 is challenged (sign-in redirect) when the host has a default challenge scheme, else 404. Database copy treats the built-in groups/targets/grants as seeded rows
 (`SeededCountAsync`, removed from the target before copying). Account/organization deletion removes the identity's memberships, grants and project roles.
 The Manage page and its link need ownership **and** the Manage action (`ManagePermission.HeldAsync`); administrators bypass both. Search/autocomplete/V2 listings are filtered per repository only, not per package pattern.

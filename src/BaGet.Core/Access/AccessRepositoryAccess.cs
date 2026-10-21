@@ -64,4 +64,15 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
         => repository.Format == RepositoryFormat.NuGet
            && await _evaluator.IsAllowedAsync(
                await PrincipalAsync(user).ConfigureAwait(false), repository, packageId: null, AccessAction.Read, cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public async Task<bool> CanReadPackageAsync(ClaimsPrincipal? user, RepositoryInfo repository, string packageId, CancellationToken cancellationToken)
+    {
+        if (repository.Format != RepositoryFormat.NuGet) return false;
+
+        var principal = await PrincipalAsync(user).ConfigureAwait(false);
+
+        return await _evaluator.IsAllowedAsync(principal, repository, packageId: null, AccessAction.Read, cancellationToken).ConfigureAwait(false)
+            && await _evaluator.IsAllowedAsync(principal, repository, packageId, AccessAction.Read, cancellationToken).ConfigureAwait(false);
+    }
 }
