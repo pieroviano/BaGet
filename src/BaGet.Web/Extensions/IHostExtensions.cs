@@ -40,6 +40,17 @@ public static class IHostExtensions
                     if (repositories != null)
                     {
                         await repositories.EnsureDefaultAsync(cancellationToken);
+
+                        // Repositories made private by AnonymousRead=false from before access control: reported, not changed.
+                        var evaluator = scope.ServiceProvider.GetService<IAccessEvaluator>();
+                        if (evaluator != null)
+                        {
+                            await AccessUpgradeCheck.WarnAsync(
+                                repositories,
+                                evaluator,
+                                scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("BaGet.Access"),
+                                cancellationToken);
+                        }
                     }
                 }
             }

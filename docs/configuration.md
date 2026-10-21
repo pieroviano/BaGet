@@ -564,6 +564,8 @@ NuGet clients answer with an API key as password. See [Access control](access-co
 defaults (nothing changes until you edit them) and the client setup. Needs [accounts](#accounts-package-owners-and-api-keys)
 for per-user keys, and a relational database.
 
+**Upgrading.** A repository whose *Anonymous read* was saved as off before access control existed becomes private on upgrade (the switch did nothing before). The setting is kept, and a startup Warning names every such repository with no Read grant for anyone but administrators, until you switch it on or grant Read.
+
 ## Storage
 
 `Storage:Type` picks where package and symbol content lives (case-insensitive):

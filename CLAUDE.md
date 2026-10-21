@@ -154,7 +154,7 @@ Core interfaces (it cannot reference Validation/Catalog). Tests: `AdminOperation
 `Users` has a separate *Create a user* form (`AdminUserCreationService`: typed, generated-and-shown-once, or invite = unknown password + `PasswordResetLinkSender`).
 `UserDetail` (`/admin/users/{name}`) is a list of `<section id="user-section-*">` blocks (account, organizations, API keys with revoke) that other features extend.
 `Organizations` / `OrganizationDetail` use `PackageOwnershipService`: `RenameOrganizationAsync` rewrites `PackageOwner.OwnerName` in **every repository** (`IgnoreQueryFilters`) in the same save and refuses a name used by a user or organization;
-`DeleteOrganizationAsync` refuses while it owns any package ID in any repository; `SetMemberAdminAsync`/`RemoveMemberAsync` keep one administrator. The `{name}` route segment bars `/ \ ? # %` in names created here.
+`DeleteOrganizationAsync` refuses while it owns any package ID in any repository, and removes its grants and project roles (`AccessAdministration.StageCleanupAsync`, shared with `AccountDeletionService`) in the same save with an `organization.delete` audit entry; `SetMemberAdminAsync`/`RemoveMemberAsync` keep one administrator. The `{name}` route segment bars `/ \ ? # %` in names created here.
 
 **Symbols per package.** Symbols are stored by PDB (`symbols/{file}/{key}`), so `ISymbolRegistry` / `SymbolRegistry` (`BaGet.Core/Storage`)
 records a `PackageSymbol` row (lower-cased ID, normalized version, file, key; repository-scoped, no foreign key) when
@@ -202,7 +202,7 @@ not only Deploy: ownership-based unlist/deprecate/Manage page worked before the 
 the sequences). `IAccessEvaluator` (scoped; `AccessEvaluator`) answers `IsAllowedAsync(principal, repository, packageId?, action)`:
 superuser and `IsAdministrator` always, else the union of grants of targets matching repository (globs) and package (include/exclude; a null id is a
 repository-level question), for the principal's user id, groups (Everyone/Authenticated implicit), organizations, plus project roles on
-`Repository.ProjectKey`. `Repository.AnonymousRead` = false drops *Everyone*'s Read there (target grant or project role) (`AccessSnapshot.Granted`); `RepositoryAdministration.SetAnonymousReadAsync`
+`Repository.ProjectKey`. `RepositoryRouteMetadata.AuthorizesItself` exempts the validation-status route from `RepositoryReadFilter` (its controller authorizes Push/Manage per package), `IRepositoryAccess.CanWriteAsync` (Deploy; Read for anonymous) gates the Upload page in `RepositoryPageFilter`, and `AccessUpgradeCheck.WarnAsync` logs at startup the private repositories nobody can read. `Repository.AnonymousRead` = false drops *Everyone*'s Read there (target grant or project role) (`AccessSnapshot.Granted`); `RepositoryAdministration.SetAnonymousReadAsync`
 re-creates an "Anonymous read {name}" target when turning it on finds none. `NullContext` (Azure Table) has no model: Read open, writes for any authenticated
 principal. State is one `AccessSnapshot` in the singleton `AccessModelCache` (targets, grants, repositories, project members; per-user memberships loaded lazily
 and kept with it), reloaded when `AccessModelVersion` changes or after 30 s; `AccessModelSaveChangesInterceptor` (added next to the maintenance one) bumps the

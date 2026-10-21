@@ -11,7 +11,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The single check every repository page passes (<see cref="RepositoryPageRouteConvention.RepositoryPages"/>): the
-/// caller must be allowed to read the repository the request resolved to (<see cref="IRepositoryAccess"/>), else the
+/// caller must be allowed to read the repository (the upload page: to publish to it) the request resolved to (<see cref="IRepositoryAccess"/>), else the
 /// page answers 404 to a signed-in user (the same answer as an unknown repository, so nothing says that a private one
 /// exists) and sends a visitor who is not signed in to sign in, when the host has accounts. <see cref="IRepositoryAccess"/>
 /// is backed by the access model (<see cref="IAccessEvaluator"/>); no page repeats the check. A page whose route names a
@@ -35,7 +35,11 @@ public class RepositoryPageFilter : IAsyncPageFilter
             // A page of one package ({id} in its route) also needs Read on that package, so the include/exclude
             // patterns of the caller's grants hide it as they hide its registration and content.
             var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
-            var allowed = string.IsNullOrEmpty(packageId)
+            // The upload page shows no package data of the repository, so it needs the right to publish
+            // (IRepositoryAccess.CanWriteAsync), not Read: a Deploy-only drop box is usable.
+            var allowed = string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase)
+                ? await access.CanWriteAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
+                : string.IsNullOrEmpty(packageId)
                 ? await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
                 : await access.CanReadPackageAsync(context.HttpContext.User, repository, packageId, context.HttpContext.RequestAborted);
 

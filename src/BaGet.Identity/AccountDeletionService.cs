@@ -388,20 +388,8 @@ public class AccountDeletionService
     // A deleted user, or organization, leaves the access model with them: group memberships (users only), permission
     // grants and project roles that name them. Orphans would be harmless to a decision (nobody can present that
     // identity again) but would linger in the admin pages. Staged with the rest of the cleanup.
-    private async Task StageAccessCleanupAsync(PrincipalType type, string? id, CancellationToken cancellationToken)
-    {
-        if (id == null || _context.PermissionGrants == null) return;
-
-        if (type == PrincipalType.User)
-        {
-            _context.GroupMembers!.RemoveRange(await _context.GroupMembers.Where(m => m.UserId == id).ToListAsync(cancellationToken));
-        }
-
-        _context.PermissionGrants.RemoveRange(
-            await _context.PermissionGrants.Where(g => g.PrincipalType == type && g.PrincipalId == id).ToListAsync(cancellationToken));
-        _context.ProjectMembers!.RemoveRange(
-            await _context.ProjectMembers.Where(m => m.PrincipalType == type && m.PrincipalId == id).ToListAsync(cancellationToken));
-    }
+    private Task StageAccessCleanupAsync(PrincipalType type, string? id, CancellationToken cancellationToken)
+        => AccessAdministration.StageCleanupAsync(_context, type, id, cancellationToken);
 
     // The cleanup is only staged. Deleting the user saves it in the same SaveChanges, so the
     // database applies all of it or none of it: a user that cannot be deleted keeps its keys,

@@ -24,11 +24,12 @@ public class BaGetEndpointBuilder
         string name,
         string pattern,
         object defaults,
-        object? constraints = null)
+        object? constraints = null,
+        bool authorizesItself = false)
     {
         // The marker is what RepositoryReadFilter looks for: every route registered here needs Read access, except a
         // route that is constrained to write methods only (and then only for those methods).
-        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints));
+        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself);
         endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(metadata);
         endpoints.MapControllerRoute(
             Routes.RepositoryRouteName(name),
@@ -119,7 +120,8 @@ public class BaGetEndpointBuilder
             name: Routes.ValidationStatusRouteName,
             pattern: "v3/package/{id}/{version}/validation",
             defaults: new { controller = "ValidationStatus", action = "Get" },
-            constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") });
+            constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") },
+            authorizesItself: true);
     }
 
     public void MapCatalogRoutes(IEndpointRouteBuilder endpoints)

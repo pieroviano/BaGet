@@ -196,6 +196,33 @@ public class AccessAdministration : IAccessAdministration
         });
     }
 
+    /// <summary>
+    /// Stages (no save) the removal of everything the access model holds for a principal that is going away: its
+    /// group memberships (users only), permission grants and project roles. The caller saves it together with the
+    /// deletion of the principal itself, so the database applies all of it or none of it; the interceptor then
+    /// invalidates the evaluator's cache. Shared by the user and the organization deletion paths.
+    /// </summary>
+    /// <returns>How many rows were staged for removal.</returns>
+    internal static async Task<int> StageCleanupAsync(IContext context, PrincipalType type, string? id, CancellationToken cancellationToken)
+    {
+        if (id == null || context.PermissionGrants == null) return 0;
+
+        var removed = 0;
+        if (type == PrincipalType.User)
+        {
+            var memberships = await context.GroupMembers!.Where(m => m.UserId == id).ToListAsync(cancellationToken).ConfigureAwait(false);
+            context.GroupMembers!.RemoveRange(memberships);
+            removed += memberships.Count;
+        }
+
+        var grants = await context.PermissionGrants.Where(g => g.PrincipalType == type && g.PrincipalId == id).ToListAsync(cancellationToken).ConfigureAwait(false);
+        context.PermissionGrants.RemoveRange(grants);
+        var roles = await context.ProjectMembers!.Where(m => m.PrincipalType == type && m.PrincipalId == id).ToListAsync(cancellationToken).ConfigureAwait(false);
+        context.ProjectMembers!.RemoveRange(roles);
+
+        return removed + grants.Count + roles.Count;
+    }
+
     private void Audit(string? actor, string action, string? subject, object? details = null)
         => Audit(_context, _time.UtcNow, actor, action, subject, details);
 

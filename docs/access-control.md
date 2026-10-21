@@ -58,7 +58,7 @@ Ownership still applies inside Deploy, Delete, Annotate and Manage. Both targets
 
 | Caller | Private repository |
 |---|---|
-| Anonymous | `401` with `WWW-Authenticate: Basic realm="BaGet"` on every protocol route (`/` and `/r/{repo}/`) whatever the HTTP method; only routes that accept writes alone (push, delete, relist, validation) skip the check and authenticate with an API key |
+| Anonymous | `401` with `WWW-Authenticate: Basic realm="BaGet"` on every protocol route (`/` and `/r/{repo}/`) whatever the HTTP method; the routes listed below skip the check and authenticate with an API key |
 | Signed in, no Read | `404`, as for an unknown repository or package |
 | With Read | served |
 
@@ -66,6 +66,19 @@ Pages follow the same check, and a page of one package (`/packages/{id}/...`: de
 repository switcher and search lists only show readable repositories. Search results are filtered per repository, not
 per package: a Read grant narrowed by include/exclude patterns protects the per-package routes (registration, content),
 but `search`, `autocomplete` and the V2 listings of a repository the caller may read show all its packages.
+
+Routes that skip the Read check (they authenticate with an API key and are authorized per repository and package by Deploy, Delete or Annotate, so a Deploy-only *drop box* works):
+
+| Route | Skips |
+|---|---|
+| Push (`PUT`/`POST` `api/v2/package`), symbol upload, delete, relist, deprecation and vulnerability `PUT`/`DELETE` | write methods only; a `GET`, `HEAD` or `OPTIONS` to them is still checked |
+| Validation status (`GET v3/package/{id}/{version}/validation`) | always: the pusher sees what became of its push without Read; the controller itself needs an API key with Push or Manage on that package in that repository (`401` without a key, `403` otherwise) |
+
+The browser upload page follows the same rule: it needs **Deploy** on the repository (not Read) for a signed-in user, so a Deploy-only user can upload, one with Read only gets `404`, and the repository picker lists the same set. Its "View it" link appears only when the user may read the package.
+
+## Upgrading
+
+`Repository.AnonymousRead` could be saved as off before access control existed, when it did nothing; now it makes the repository private. The saved setting is kept. At every startup (migrations enabled) a Warning names each non-default repository with the switch off and no Read grant for anyone but administrators (target grants and project roles counted; the seeded targets give Everyone Read, which the switch gates), so the change is visible. Switch *Anonymous read* on, or grant Read, to silence it.
 
 ## Client setup
 

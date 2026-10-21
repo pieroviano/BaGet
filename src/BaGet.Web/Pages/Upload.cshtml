@@ -59,7 +59,7 @@
         <div class="alert @(Model.Failed ? "alert-danger" : "alert-success")" role="alert" id="upload-message">
             @Model.Message
 
-            @if (Model.Published != null)
+            @if (Model.Published != null && await _repositoryAccess.CanReadPackageAsync(User, target, Model.Published.Id!, Model.HttpContext.RequestAborted))
             {
                 <a asp-page="/Package"
                    asp-route-id="@Model.Published.Id"

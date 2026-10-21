@@ -16,19 +16,35 @@ namespace BaGet.Web;
 public sealed class RepositoryRouteMetadata
 {
     /// <summary>A read route: checked for every HTTP method, since its action may answer any of them.</summary>
-    public static readonly RepositoryRouteMetadata Instance = new(writesOnly: false);
+    public static readonly RepositoryRouteMetadata Instance = new(writesOnly: false, authorizesItself: false);
 
-    private static readonly RepositoryRouteMetadata WriteOnly = new(writesOnly: true);
+    private static readonly RepositoryRouteMetadata WriteOnly = new(writesOnly: true, authorizesItself: false);
+    private static readonly RepositoryRouteMetadata SelfAuthorized = new(writesOnly: false, authorizesItself: true);
 
-    private RepositoryRouteMetadata(bool writesOnly) => WritesOnly = writesOnly;
+    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself)
+    {
+        WritesOnly = writesOnly;
+        AuthorizesItself = authorizesItself;
+    }
 
     /// <summary>
-    /// True for a route constrained to write methods (publish, delete, relist, validation): its callers authenticate with
-    /// an API key and are authorized by <see cref="IPackageAuthorizationService"/>, so the read check skips it.
+    /// True for a route constrained to write methods (publish, symbol upload, delete, relist, deprecation and
+    /// vulnerability PUT/DELETE): its callers authenticate with an API key and are authorized by
+    /// <see cref="IPackageAuthorizationService"/>, so the read check skips it for those methods (a <c>GET</c> or
+    /// <c>HEAD</c> to it is still checked).
     /// </summary>
     public bool WritesOnly { get; }
 
-    internal static RepositoryRouteMetadata For(bool writesOnly) => writesOnly ? WriteOnly : Instance;
+    /// <summary>
+    /// True for a <c>GET</c> route that exists for the pusher and authorizes it itself with an API key per repository
+    /// and package: the validation status of a submission (<c>ValidationStatusController</c>, Push or Manage on the
+    /// package). A pusher holding Deploy without Read (a drop box) must see what became of its push, and the route
+    /// reveals nothing to anyone who may not push that package, so the read check skips it on purpose.
+    /// </summary>
+    public bool AuthorizesItself { get; }
+
+    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false)
+        => authorizesItself ? SelfAuthorized : writesOnly ? WriteOnly : Instance;
 }
 
 /// <summary>
@@ -39,7 +55,7 @@ public sealed class RepositoryRouteMetadata
 /// one. An anonymous caller is answered <c>401</c> with a Basic challenge, which makes NuGet clients send credentials;
 /// an authenticated one without access gets <c>404</c>, the same answer as an unknown repository or package, so nothing
 /// says that a private one exists. Routes that only accept writes (<c>PUT</c>, <c>POST</c>, <c>DELETE</c>; <see cref="RepositoryRouteMetadata.WritesOnly"/>)
-/// authenticate with an API key and are authorized by <see cref="IPackageAuthorizationService"/>. Runs before model binding, as a resource filter, and is
+/// and the validation status (<see cref="RepositoryRouteMetadata.AuthorizesItself"/>) authenticate with an API key and are authorized by <see cref="IPackageAuthorizationService"/>. Runs before model binding, as a resource filter, and is
 /// registered with MVC itself, so a host cannot forget it.
 /// </summary>
 public class RepositoryReadFilter : IAsyncResourceFilter
@@ -50,6 +66,7 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         var http = context.HttpContext;
         var route = http.GetEndpoint()?.Metadata.GetMetadata<RepositoryRouteMetadata>();
         if (route == null
+            || route.AuthorizesItself
             || (route.WritesOnly && !(HttpMethods.IsGet(http.Request.Method) || HttpMethods.IsHead(http.Request.Method))))
         {
             await next();

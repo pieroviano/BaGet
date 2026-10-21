@@ -96,7 +96,7 @@ public class OrganizationDetailModel : AdminPageModel
         var deleted = false;
         var result = await ActAsync(password, async current =>
         {
-            var change = await Ownership.DeleteOrganizationAsync(Name, cancellationToken);
+            var change = await Ownership.DeleteOrganizationAsync(Name, cancellationToken, current.UserName);
             if (change == OrganizationChange.Success)
             {
                 Log(current, "deleted organization {Old}", Name, null);

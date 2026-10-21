@@ -11,7 +11,7 @@ namespace BaGet.Core;
 /// Which repositories a caller may see and publish to in the web UI. The one place the pages ask, so an access model
 /// (groups, permission targets) replaces <see cref="OpenRepositoryAccess"/> without touching a page: the header
 /// switcher lists <see cref="ReadableAsync"/>, a repository page answers 404 unless <see cref="CanReadAsync"/>, and
-/// the upload page offers <see cref="WritableAsync"/>.
+/// the upload page offers <see cref="WritableAsync"/> and opens only for <see cref="CanWriteAsync"/>.
 /// </summary>
 public interface IRepositoryAccess
 {
@@ -26,6 +26,15 @@ public interface IRepositoryAccess
 
     /// <summary>The NuGet repositories <paramref name="user"/> may publish to, ordered like <see cref="ReadableAsync"/>.</summary>
     Task<IReadOnlyList<RepositoryInfo>> WritableAsync(ClaimsPrincipal? user, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Whether <paramref name="user"/> may open the upload page of <paramref name="repository"/>. The page shows no
+    /// package data of the repository (only the file being staged), so it needs the right to publish, not to read: a
+    /// drop box (Deploy without Read) is usable. A visitor who is not signed in pushes with an API key typed into the
+    /// page, authorized per package on submit, so the default is <see cref="CanReadAsync"/>.
+    /// </summary>
+    Task<bool> CanWriteAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
+        => CanReadAsync(user, repository, cancellationToken);
 
     /// <summary>Whether <paramref name="user"/> may read (open pages of) <paramref name="repository"/>.</summary>
     Task<bool> CanReadAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken);

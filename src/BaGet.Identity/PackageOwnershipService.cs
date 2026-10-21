@@ -425,9 +425,11 @@ public class PackageOwnershipService
 
     /// <summary>
     /// Delete an organization and its memberships. Refused while it owns a package ID in any repository: the
-    /// IDs would be left without an owner. (Remove it as an owner first, or hand the IDs over.)
+    /// IDs would be left without an owner. (Remove it as an owner first, or hand the IDs over.) The permission grants and
+    /// project roles that name the organization go with it, in the same save as the deletion, and an access audit entry
+    /// (<c>organization.delete</c>) records it; <paramref name="actor"/> is the user name that did it.
     /// </summary>
-    public async Task<OrganizationChange> DeleteOrganizationAsync(string? name, CancellationToken cancellationToken)
+    public async Task<OrganizationChange> DeleteOrganizationAsync(string? name, CancellationToken cancellationToken, string? actor = null)
     {
         var lower = name?.ToLowerInvariant();
         #pragma warning disable CS8602, CS8604
@@ -441,7 +443,13 @@ public class PackageOwnershipService
         var members = await _context.OrganizationMembers.Where(m => m.OrganizationKey == organization.Key).ToListAsync(cancellationToken);
         #pragma warning restore CS8602, CS8604
         _context.OrganizationMembers.RemoveRange(members);
+        var cleaned = await AccessAdministration.StageCleanupAsync(_context, PrincipalType.Organization, organization.Key.ToString(), cancellationToken);
         _context.Organizations.Remove(organization);
+        if (_context.AccessAuditEntries != null)
+        {
+            AccessAdministration.Audit(_context, _time.UtcNow, actor, "organization.delete", organization.Name, new { members = members.Count, accessRows = cleaned });
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return OrganizationChange.Success;

@@ -59,6 +59,21 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
             : await _evaluator.RepositoriesWithAsync(principal, AccessAction.Deploy, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// A signed-in user needs Deploy on the repository (Read is not required: a drop box can be pushed to); a visitor
+    /// who is not signed in needs Read, as <see cref="WritableAsync"/> lists.
+    /// </summary>
+    public async Task<bool> CanWriteAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
+    {
+        if (repository.Format != RepositoryFormat.NuGet) return false;
+
+        var principal = await PrincipalAsync(user).ConfigureAwait(false);
+
+        return principal == null
+            ? await CanReadAsync(user, repository, cancellationToken).ConfigureAwait(false)
+            : await _evaluator.IsAllowedAsync(principal, repository, packageId: null, AccessAction.Deploy, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <inheritdoc/>
     public async Task<bool> CanReadAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
         => repository.Format == RepositoryFormat.NuGet
