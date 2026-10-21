@@ -12,7 +12,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | Phase | State | Commits / where |
 |---|---|---|
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
-| P1 Remote and virtual NuGet | **Done**: remote + caching (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); virtual + D3 (track `p1-virtual`, [virtual-repositories.md](../virtual-repositories.md)) | `IVirtualRepositoryAdministration` creates `Virtual`; `RepositoryService.CreateAsync(..., Virtual)` stays refused (no members) |
+| P1 Remote and virtual NuGet | **Done**: remote + caching (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); virtual + D3 (track `p1-virtual`, [virtual-repositories.md](../virtual-repositories.md)) | `dc2ef5e`..`53a399a` (remote), `ef4c403` (virtual); `IVirtualRepositoryAdministration` creates `Virtual`, `RepositoryService.CreateAsync(..., Virtual)` stays refused (no members) |
 | P2 Access control | **Done** (implemented with its UI by the UI-coverage plan, since removed); documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
 | P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
@@ -75,7 +75,7 @@ Deviations from the table below, as built:
 
 Verification: the existing suite is unchanged against `/`; the same suite parameterised against `/r/second/`; B7 upgrade test.
 
-### P1 — Remote and virtual NuGet repositories
+### P1 — Remote and virtual NuGet repositories — DONE
 
 | Item | Note |
 |---|---|
