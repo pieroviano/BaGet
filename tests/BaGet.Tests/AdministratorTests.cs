@@ -180,9 +180,9 @@ public class AdministratorTests : IDisposable
         var second = await admin.GetPageAsync("admin/users?p=2");
 
         Assert.Contains("amber000", first);
-        Assert.DoesNotContain("<td>root</td>", first);
+        Assert.DoesNotContain(">root</a></td>", first);
         Assert.Contains("p=2", first);
-        Assert.Contains("<td>root</td>", second);
+        Assert.Contains(">root</a></td>", second);
         Assert.DoesNotContain("amber000", second);
     }
 
