@@ -13,7 +13,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 |---|---|---|
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
 | P1 Remote and virtual NuGet | Not started | `RepositoryKind.Remote`/`Virtual` exist as values only; `RepositoryService.CreateAsync` refuses them (`RepositoryService.cs:93-99`) |
-| P2 Access control | **Moved** to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4); all implemented and documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
+| P2 Access control | **Done** (implemented with its UI by the UI-coverage plan, since removed); documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
 | P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
@@ -59,7 +59,7 @@ Deviations from the table below, as built:
 | `AnonymousRead` | Enforced since P2 U2: gates the Everyone group's Read ([access-control.md](../access-control.md)) |
 | Migration | Also seeds the `default` row with key 1 (PostgreSQL `setval`); `EnsureDefaultAsync` restores it at startup |
 | Delete repository | Refused for `default`, for a repository with packages or a pending validation; purges catalog, owners, validations, abuse reports and `repos/{name}/` in storage |
-| Razor Pages | Stay at `/` and show `default` only; repository-aware pages moved to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) U1 |
+| Razor Pages | Stay at `/` and show `default` only; repository-aware pages (`/r/{repo}/…`, header switcher, upload picker) were added later by the UI-coverage plan |
 | Mirror | Serves `default` only (`UpstreamClientFactory`); conversion into a remote repository is P1 |
 
 | Item | Where |
@@ -83,7 +83,7 @@ Verification: the existing suite is unchanged against `/`; the same suite parame
 
 ### P2 — Access control (D4)
 
-> Moved: planned in detail, with its UI, in [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4).
+> Done: implemented with its UI by the UI-coverage plan (since removed); see [access-control.md](../access-control.md).
 > Status: being implemented by that plan's run (started 2026-10-21); not merged yet.
 
 | Item | Note |

@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2095 tests** across `BaGet.Core.Tests` (556), `BaGet.Tests` (1233),
+Baseline: **2099 tests** across `BaGet.Core.Tests` (556), `BaGet.Tests` (1237),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -58,6 +58,13 @@ Two gotchas when running locally:
 - `nuget.config` lists an untracked `Packages` folder as a source; create it (`mkdir Packages`) on a clean checkout or restore fails with NU1301.
 - `dotnet run` makes the SDK rewrite `src/BaGet/Properties/launchSettings.json` (it drops the IIS
   Express profile). Revert it rather than committing it.
+
+## Every service has a UI counterpart
+
+Every operation a service, REST endpoint or CLI command offers must also be reachable from the web UI, in the same
+change: a feature is not done while it exists only as REST, CLI or a service method. Gate the page like the operation
+(same action/permission, antiforgery, password or re-authentication for destructive or access changes,
+`MaintenanceGate.ThrowIfClosed` on writes) and link it from the navigation or the page it belongs to. Reviews check it.
 
 ## Architecture
 
