@@ -14,7 +14,7 @@ using static BaGet.Tests.AdminTestSupport;
 
 namespace BaGet.Tests;
 
-/// <summary>A second format for the integration tests: an npm-like module without the protocol.</summary>
+/// <summary>A second format for the integration tests: an npm-like module with create fields (it replaces the real npm module).</summary>
 internal sealed class FakeNpmModule : IFormatModule
 {
     public RepositoryFormat Format => RepositoryFormat.Npm;
@@ -66,7 +66,17 @@ public class AdminFormatsTests : IDisposable
         _app = new BaGetApplication(
             output,
             configOverrides: new Dictionary<string, string> { { "Accounts:Enabled", "true" }, { "ApiKey", "" } },
-            configureServices: services => services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, FakeNpmModule>()));
+            configureServices: services =>
+            {
+                // The real npm module is replaced by one with create fields, to drive the generic create form of the format layer.
+                services.RemoveAll<NpmFormatModule>();
+                foreach (var real in services.Where(d => d.ServiceType == typeof(IFormatModule) && d.ImplementationType == typeof(NpmFormatModule)).ToList())
+                {
+                    services.Remove(real);
+                }
+
+                services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, FakeNpmModule>());
+            });
         _admin = new Browser(_app);
         CreateUserAsync(_app, "root", administrator: true).GetAwaiter().GetResult();
         SignInAsync(_admin, "root").GetAwaiter().GetResult();

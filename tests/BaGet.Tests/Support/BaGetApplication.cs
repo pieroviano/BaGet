@@ -168,6 +168,18 @@ internal static class BaGetWebApplicationFactoryExtensions
             .CreateAsync(name, RepositoryFormat.NuGet, RepositoryKind.Local, cancellationToken);
     }
 
+    /// <summary>Creates a local npm repository with the given name (its registry is at <c>/r/{name}/npm/</c>).</summary>
+    public static async Task CreateNpmRepositoryAsync(
+        this WebApplicationFactory<Program> factory,
+        string name,
+        bool anonymousRead = true,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.Npm, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, cancellationToken);
+    }
+
     /// <summary>A DI scope whose current repository is the named one (null = default), as routing sets it.</summary>
     public static async Task<IServiceScope> CreateRepositoryScopeAsync(
         this WebApplicationFactory<Program> factory,

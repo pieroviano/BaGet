@@ -222,10 +222,8 @@ public static class NpmPublishBody
 
                 if (inString && stringIsData)
                 {
-                    // The base64 text: no escapes expected; leave at the closing quote. Everything before it is skipped.
+                    // The base64 text (possibly with escapes, undone when decoding): leave at the closing quote; everything before it is skipped.
                     var end = buffer.AsSpan(i, read - i).IndexOf((byte)'"');
-                    var backslash = buffer.AsSpan(i, end < 0 ? read - i : end).IndexOf((byte)'\\');
-                    if (backslash >= 0) throw new InvalidDataException("An attachment's data holds an escape sequence; base64 does not.");
 
                     if (end < 0)
                     {
@@ -261,7 +259,7 @@ public static class NpmPublishBody
                         if (stringIsKey)
                         {
                             // Drop the closing quote that was collected as part of the key bytes.
-                            var key = System.Text.Encoding.UTF8.GetString(keyBytes.ToArray(), 0, Math.Max(keyBytes.Count - 1, 0));
+                            var key = DecodeKey(keyBytes);
                             var top = stack[^1];
                             top.Key = key;
                             stack[^1] = top;
@@ -342,6 +340,22 @@ public static class NpmPublishBody
         return (output.ToArray(), ranges);
     }
 
+    // The key as the document means it: a JSON encoder may have escaped characters of a name (the + of a build version).
+    private static string DecodeKey(List<byte> collected)
+    {
+        var raw = System.Text.Encoding.UTF8.GetString(collected.ToArray(), 0, Math.Max(collected.Count - 1, 0));
+        if (raw.IndexOf('\\') < 0) return raw;
+
+        try
+        {
+            return JsonSerializer.Deserialize<string>("\"" + raw + "\"") ?? raw;
+        }
+        catch (JsonException)
+        {
+            return raw;
+        }
+    }
+
     private static void Open(List<Container> stack, bool isObject)
     {
         stack.Add(new Container { IsObject = isObject, ExpectKey = isObject });
@@ -353,11 +367,9 @@ public static class NpmPublishBody
         await using var output = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
         input.Seek(start, SeekOrigin.Begin);
 
+        var decoder = new JsonBase64Decoder(output);
         var remaining = end - start;
-        // A whole number of 4-character groups per round, except the last.
-        var buffer = new byte[ChunkSize - (ChunkSize % 4)];
-        var decoded = new byte[buffer.Length / 4 * 3 + 3];
-        long total = 0;
+        var buffer = new byte[ChunkSize];
 
         while (remaining > 0)
         {
@@ -372,16 +384,104 @@ public static class NpmPublishBody
             }
 
             remaining -= want;
-            var status = System.Buffers.Text.Base64.DecodeFromUtf8(buffer.AsSpan(0, want), decoded, out var consumed, out var written, isFinalBlock: remaining == 0);
-            if (status != System.Buffers.OperationStatus.Done || consumed != want)
+            decoder.Feed(buffer.AsSpan(0, want));
+        }
+
+        decoder.Finish();
+
+        return decoder.Total;
+    }
+
+    /// <summary>
+    /// Decodes the content of a JSON string that holds base64. JSON encoders differ in what they escape: JavaScript writes the
+    /// text as it is, but others escape the slash (backslash, slash) or write the plus sign as a Unicode escape, so the escapes are undone before the
+    /// base64 is decoded (whitespace escapes are skipped, as MIME-wrapped base64 may contain them). State survives chunk
+    /// boundaries.
+    /// </summary>
+    private sealed class JsonBase64Decoder
+    {
+        private readonly Stream _output;
+        private readonly byte[] _chars = new byte[1 << 16];
+        private readonly byte[] _decoded = new byte[(1 << 16) / 4 * 3 + 3];
+        private int _count;
+        private int _state;
+        private int _digits;
+        private int _value;
+
+        public JsonBase64Decoder(Stream output)
+        {
+            _output = output;
+        }
+
+        public long Total { get; private set; }
+
+        public void Feed(ReadOnlySpan<byte> input)
+        {
+            foreach (var b in input)
+            {
+                switch (_state)
+                {
+                    case 0:
+                        if (b == (byte)'\\') _state = 1; else Emit(b);
+                        break;
+
+                    case 1:
+                        _state = 0;
+                        if (b == (byte)'/' || b == (byte)'\\' || b == (byte)'"') Emit(b);
+                        else if (b == (byte)'n' || b == (byte)'r' || b == (byte)'t') { }
+                        else if (b == (byte)'u') { _state = 2; _digits = 0; _value = 0; }
+                        else throw new InvalidDataException("An attachment's data holds an escape sequence that base64 does not.");
+                        break;
+
+                    default:
+                        _value = (_value << 4) | HexValue(b);
+                        if (++_digits == 4)
+                        {
+                            _state = 0;
+                            if (_value > 0x7f) throw new InvalidDataException("An attachment's data holds a character that base64 does not.");
+
+                            Emit((byte)_value);
+                        }
+
+                        break;
+                }
+            }
+        }
+
+        public void Finish()
+        {
+            if (_state != 0) throw new InvalidDataException("An attachment's data ends inside an escape sequence.");
+
+            Flush(final: true);
+        }
+
+        private static int HexValue(byte b) => b switch
+        {
+            >= (byte)'0' and <= (byte)'9' => b - '0',
+            >= (byte)'a' and <= (byte)'f' => b - 'a' + 10,
+            >= (byte)'A' and <= (byte)'F' => b - 'A' + 10,
+            _ => throw new InvalidDataException("An attachment's data holds an invalid escape sequence."),
+        };
+
+        private void Emit(byte b)
+        {
+            _chars[_count++] = b;
+            if (_count == _chars.Length) Flush(final: false);
+        }
+
+        private void Flush(bool final)
+        {
+            if (_count == 0) return;
+
+            var status = System.Buffers.Text.Base64.DecodeFromUtf8(_chars.AsSpan(0, _count), _decoded, out var consumed, out var written, isFinalBlock: final);
+            if (status != System.Buffers.OperationStatus.Done || consumed != _count)
             {
                 throw new InvalidDataException("An attachment's data is not valid base64.");
             }
 
-            await output.WriteAsync(decoded.AsMemory(0, written), cancellationToken).ConfigureAwait(false);
-            total += written;
+            _output.Write(_decoded, 0, written);
+            Total += written;
+            _count = 0;
         }
-
-        return total;
     }
 }
