@@ -91,7 +91,7 @@ public interface IVirtualRepositoryAdministration
     /// <exception cref="ArgumentException">The name or the settings are invalid; the message lists the problems.</exception>
     /// <exception cref="RepositoryExistsException">The name is taken.</exception>
     /// <exception cref="NotSupportedException">The configuration holds the default repository only.</exception>
-    Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null);
+    Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null, bool anonymousRead = true);
 
     /// <summary>
     /// Replaces the members and the deploy repository. Refused (nothing changes) for an unknown, remote-only or
@@ -187,7 +187,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     }
 
     /// <inheritdoc/>
-    public async Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null)
+    public async Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null, bool anonymousRead = true)
     {
         if (settings == null) throw new ArgumentNullException(nameof(settings));
         if (!RepositoryNames.IsValid(name, out var error)) throw new ArgumentException(error, nameof(name));
@@ -212,7 +212,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
             Format = RepositoryFormat.NuGet,
             Kind = RepositoryKind.Virtual,
             Settings = VirtualSettingsCodec.Serialize(settings),
-            AnonymousRead = true,
+            AnonymousRead = anonymousRead,
             Created = Now,
         };
         _context.Repositories!.Add(row);

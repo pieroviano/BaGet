@@ -65,6 +65,14 @@
         </p>
     }
 
+    @if (Model.RemoteDetail != null && Model.RemoteDetail.HasPassword && Model.Repository!.AnonymousRead)
+    {
+        <p class="alert alert-warning" role="alert" id="remote-anonymous-credentials">
+            This repository is readable without credentials and uses upstream credentials: anyone can download what they fetch.
+            Untick <em>Anonymous read</em> below unless that is intended.
+        </p>
+    }
+
     <form method="post">
         <div class="checkbox">
             <label>

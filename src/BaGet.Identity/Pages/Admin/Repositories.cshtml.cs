@@ -84,7 +84,7 @@ public class RepositoriesModel : RepositoryPageModel
     }
 
     /// <summary>Creates a virtual NuGet repository with no members; they are added on its page.</summary>
-    public async Task<IActionResult> OnPostVirtualAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostVirtualAsync(bool anonymousRead = true, CancellationToken cancellationToken = default)
     {
         HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
 
@@ -100,7 +100,7 @@ public class RepositoriesModel : RepositoryPageModel
         try
         {
             await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>()
-                .CreateAsync(name!, new VirtualRepositorySettings(), cancellationToken, User.Identity?.Name);
+                .CreateAsync(name!, new VirtualRepositorySettings(), cancellationToken, User.Identity?.Name, anonymousRead);
         }
         catch (Exception e) when (e is NotSupportedException or RepositoryExistsException or ArgumentException)
         {
@@ -116,7 +116,7 @@ public class RepositoriesModel : RepositoryPageModel
     }
 
     /// <summary>Creates a remote NuGet repository from the posted upstream settings.</summary>
-    public async Task<IActionResult> OnPostRemoteAsync(string? password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostRemoteAsync(string? password, string? anonymousRead, CancellationToken cancellationToken)
     {
         HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
 
@@ -139,8 +139,11 @@ public class RepositoriesModel : RepositoryPageModel
 
         try
         {
+            // Absent = the default: readable by anonymous clients only when no credentials are configured.
+            var settings = Remote.ToSettings();
+            var anonymous = string.IsNullOrEmpty(anonymousRead) ? !settings.HasCredentials : string.Equals(anonymousRead, "true", StringComparison.OrdinalIgnoreCase);
             await HttpContext.RequestServices.GetRequiredService<IRepositoryService>()
-                .CreateAsync(name!, RepositoryFormat.NuGet, RepositoryKind.Remote, Remote.ToSettings(), cancellationToken);
+                .CreateAsync(name!, RepositoryFormat.NuGet, RepositoryKind.Remote, settings, anonymous, cancellationToken);
         }
         catch (Exception e) when (e is NotSupportedException or RepositoryExistsException or ArgumentException or InvalidOperationException)
         {

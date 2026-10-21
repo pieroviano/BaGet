@@ -45,8 +45,26 @@ public class AdminVirtualRepositoriesTests : IDisposable
 
     private const string Page = "admin/repositories/v";
 
-    private Task<HttpResponseMessage> CreateAsync(string name)
-        => _admin.PostAsync("admin/repositories", new Dictionary<string, string> { { "name", name } }, action: "admin/repositories?handler=Virtual");
+    private Task<HttpResponseMessage> CreateAsync(string name, bool? anonymousRead = null)
+    {
+        var fields = new Dictionary<string, string> { { "name", name } };
+        if (anonymousRead != null) fields["anonymousRead"] = anonymousRead.Value ? "true" : "false";
+
+        return _admin.PostAsync("admin/repositories", fields, action: "admin/repositories?handler=Virtual");
+    }
+
+    [Fact]
+    public async Task TheCreateFormChoosesWhetherTheVirtualRepositoryIsAnonymouslyReadable()
+    {
+        (await CreateAsync("open")).Dispose();
+        (await CreateAsync("closed", anonymousRead: false)).Dispose();
+
+        using var scope = _app.Services.CreateScope();
+        var administration = scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>();
+        Assert.True((await administration.FindAsync("open", CancellationToken.None))!.AnonymousRead);
+        Assert.False((await administration.FindAsync("closed", CancellationToken.None))!.AnonymousRead);
+        Assert.Contains("id=\"virtual-anonymous-read\"", await _admin.GetPageAsync("admin/repositories"));
+    }
 
     // Posts a handler of the virtual repository's page; a success redirects back to the page.
     private async Task<string> PostAsync(string handler, Dictionary<string, string> fields, bool expectRedirect = true)

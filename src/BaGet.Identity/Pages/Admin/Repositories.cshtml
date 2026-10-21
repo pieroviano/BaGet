@@ -95,6 +95,13 @@
                 <label for="virtual-name">Name</label>
                 <input id="virtual-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
             </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="anonymousRead" value="true" checked="checked" id="virtual-anonymous-read" />
+                    Anonymous read: requests without credentials may read it (a member is still only read when the caller may read that member)
+                </label>
+                <input type="hidden" name="anonymousRead" value="false" />
+            </div>
             <button type="submit" class="btn btn-primary">Create virtual repository</button>
         </form>
 
@@ -109,6 +116,18 @@
                 <input id="remote-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
             </div>
             <partial name="~/Pages/Admin/_RemoteFields.cshtml" for="Remote" />
+            <div class="form-group">
+                <label for="remote-anonymous-read">Who may read it</label>
+                <select id="remote-anonymous-read" name="anonymousRead" class="form-control">
+                    <option value="" selected="selected">Default: anyone, unless a user name or password is set (then signed-in users only)</option>
+                    <option value="true">Anyone, including requests without credentials</option>
+                    <option value="false">Only callers the access model allows</option>
+                </select>
+                <span class="help-block">
+                    Whatever the upstream credentials can fetch is served to the readers: do not make a credentialed upstream
+                    anonymously readable unless that is intended.
+                </span>
+            </div>
             <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("createRemotePassword")" />
             <button type="submit" class="btn btn-primary">Create remote repository</button>
         </form>

@@ -63,6 +63,21 @@ public interface IRepositoryService
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Like <see cref="CreateAsync(string, RepositoryFormat, RepositoryKind, RemoteRepositorySettings?, CancellationToken)"/>
+    /// with <see cref="Repository.AnonymousRead"/> chosen by the caller. The overload without it creates a remote
+    /// repository with credentials (a user name or password) readable only by authenticated callers, since otherwise
+    /// everything its credentials can fetch would be served to anyone; every other repository starts anonymously
+    /// readable, like the default one.
+    /// </summary>
+    Task<RepositoryInfo> CreateAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        RemoteRepositorySettings? remote,
+        bool anonymousRead,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Creates the default repository if the database has none. Idempotent; called at startup, after migrations.
     /// </summary>
     Task EnsureDefaultAsync(CancellationToken cancellationToken);

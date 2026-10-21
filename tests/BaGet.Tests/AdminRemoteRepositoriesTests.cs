@@ -489,6 +489,55 @@ public class AdminRemoteRepositoriesTests : IDisposable
         return fields;
     }
 
+    private async Task<bool> AnonymousReadAsync(string name)
+    {
+        using var scope = _app.Services.CreateScope();
+
+        return (await scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>().FindAsync(name, CancellationToken.None))!.AnonymousRead;
+    }
+
+    [Fact]
+    public async Task ARemoteRepositoryWithCredentialsIsNotAnonymouslyReadableUnlessAskedAndOneWithoutIsByDefault()
+    {
+        (await CreateAsync("plain")).Dispose();
+        (await CreateAsync("secret", change: f =>
+        {
+            f["Remote.Username"] = "bob";
+            f["Remote.Password"] = "pw";
+        })).Dispose();
+        (await CreateAsync("open", change: f =>
+        {
+            f["Remote.Username"] = "bob";
+            f["Remote.Password"] = "pw";
+            f["anonymousRead"] = "true";
+        })).Dispose();
+        (await CreateAsync("closed", change: f => f["anonymousRead"] = "false")).Dispose();
+
+        Assert.True(await AnonymousReadAsync("plain"));
+        Assert.False(await AnonymousReadAsync("secret"));
+        Assert.True(await AnonymousReadAsync("open"));
+        Assert.False(await AnonymousReadAsync("closed"));
+
+        // The create form offers the choice; an anonymously readable repository with a stored password is flagged.
+        var list = await _admin.GetPageAsync("admin/repositories");
+        Assert.Contains("id=\"remote-anonymous-read\"", list);
+        Assert.Contains("id=\"remote-anonymous-credentials\"", await _admin.GetPageAsync("admin/repositories/open"));
+        Assert.DoesNotContain("id=\"remote-anonymous-credentials\"", await _admin.GetPageAsync("admin/repositories/secret"));
+    }
+
+    [Fact]
+    public async Task ThePasswordlessServiceDefaultAlsoKeepsACredentialedRemoteRepositoryClosed()
+    {
+        using var scope = _app.Services.CreateScope();
+        var repositories = scope.ServiceProvider.GetRequiredService<IRepositoryService>();
+
+        await repositories.CreateAsync("svc", RepositoryFormat.NuGet, RepositoryKind.Remote, new RemoteRepositorySettings { Url = Url, Username = "bob" }, CancellationToken.None);
+        await repositories.CreateAsync("svc2", RepositoryFormat.NuGet, RepositoryKind.Remote, new RemoteRepositorySettings { Url = Url }, CancellationToken.None);
+
+        Assert.False(await AnonymousReadAsync("svc"));
+        Assert.True(await AnonymousReadAsync("svc2"));
+    }
+
     [Fact]
     public async Task APassThroughRepositoryAndAnOfflineOneSayWhatTheyDo()
     {
@@ -542,6 +591,9 @@ public class MirrorRepositoryTests : IDisposable
 
         Assert.NotNull(detail);
         Assert.True(detail!.IsMirror);
+
+        // The auto-created mirror is anonymously readable like the default repository it serves (documented).
+        Assert.True((await scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>().FindAsync(Repository.MirrorName, CancellationToken.None))!.AnonymousRead);
         Assert.Equal("http://localhost/v3/index.json", detail.Settings.Url);
         Assert.Equal(RemoteProtocol.V3, detail.Settings.Protocol);
         Assert.Equal(0, detail.Settings.MetadataTtlSeconds);

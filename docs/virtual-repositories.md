@@ -8,6 +8,7 @@ Administrators: `/admin/repositories` > *New virtual repository* (a name; it sta
 
 | Control | Does |
 |---|---|
+| *Anonymous read* (create form, default on) | Whether requests without credentials may read the virtual repository. A member is read only when the caller may read that member, so this never exposes a closed member |
 | Members table | Resolution order, top to bottom. *Up* / *Down* reorder, *Remove* drops a member. Saved at once, audited |
 | *Add a member* | Any other NuGet repository whose own members do not lead back to this one; added at the end |
 | Deploy repository | The member that receives uploads: a local member, or a virtual member that itself deploys to a local one. A remote repository cannot be one. *None* = the repository takes no uploads |

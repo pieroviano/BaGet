@@ -96,11 +96,30 @@ public class RepositoryService : IRepositoryService
         => CreateAsync(name, format, kind, remote: null, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<RepositoryInfo> CreateAsync(
+    public Task<RepositoryInfo> CreateAsync(
         string name,
         RepositoryFormat format,
         RepositoryKind kind,
         RemoteRepositorySettings? remote,
+        CancellationToken cancellationToken)
+        => CreateCoreAsync(name, format, kind, remote, anonymousRead: null, cancellationToken);
+
+    /// <inheritdoc/>
+    public Task<RepositoryInfo> CreateAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        RemoteRepositorySettings? remote,
+        bool anonymousRead,
+        CancellationToken cancellationToken)
+        => CreateCoreAsync(name, format, kind, remote, anonymousRead, cancellationToken);
+
+    private async Task<RepositoryInfo> CreateCoreAsync(
+        string name,
+        RepositoryFormat format,
+        RepositoryKind kind,
+        RemoteRepositorySettings? remote,
+        bool? anonymousRead,
         CancellationToken cancellationToken)
     {
         if (!RepositoryNames.IsValid(name, out var error)) throw new ArgumentException(error, nameof(name));
@@ -149,7 +168,9 @@ public class RepositoryService : IRepositoryService
             Format = format,
             Kind = kind,
             Settings = settings,
-            AnonymousRead = true,
+            // A remote repository with credentials is not readable anonymously unless asked: it would hand whatever those
+            // credentials can fetch to anyone.
+            AnonymousRead = anonymousRead ?? !(remote?.HasCredentials ?? false),
             Created = DateTime.UtcNow,
         };
 
