@@ -326,8 +326,11 @@ public class RepositoryIsolationTests : IDisposable
             () => repositories.CreateAsync("Not Valid", RepositoryFormat.NuGet, RepositoryKind.Local, Cancellation));
         await Assert.ThrowsAsync<ArgumentException>(
             () => repositories.CreateAsync("api", RepositoryFormat.NuGet, RepositoryKind.Local, Cancellation));
-        await Assert.ThrowsAsync<NotSupportedException>(
+        // A remote repository needs its upstream; virtual ones do not exist yet.
+        await Assert.ThrowsAsync<ArgumentException>(
             () => repositories.CreateAsync("remote", RepositoryFormat.NuGet, RepositoryKind.Remote, Cancellation));
+        await Assert.ThrowsAsync<NotSupportedException>(
+            () => repositories.CreateAsync("virtual", RepositoryFormat.NuGet, RepositoryKind.Virtual, Cancellation));
 
         Assert.Equal(new[] { "default", "second" }, (await repositories.ListAsync(Cancellation)).Select(r => r.Name));
         Assert.Equal(_second, await repositories.FindAsync("second", Cancellation));
