@@ -1,11 +1,15 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
 namespace BaGet.Core;
 
@@ -20,6 +24,12 @@ public interface IRemoteHttpClientFactory
     /// HTTP Basic sent to the upstream's own host only (never to a host a redirect or a service index points to).
     /// </summary>
     HttpClient Create(RemoteRepositorySettings settings);
+
+    /// <summary>
+    /// Like <see cref="Create"/> for a one-off probe (Test connection): the client must not follow redirects itself, so
+    /// the caller decides whether to follow one. The default returns <see cref="Create"/>.
+    /// </summary>
+    HttpClient CreateProbe(RemoteRepositorySettings settings) => Create(settings);
 }
 
 /// <summary>
@@ -27,12 +37,31 @@ public interface IRemoteHttpClientFactory
 /// </summary>
 public class RemoteHttpClientFactory : IRemoteHttpClientFactory
 {
+    private readonly IOptionsMonitor<RemoteOptions>? _options;
+
+    /// <summary>A factory that connects to any address.</summary>
+    public RemoteHttpClientFactory()
+    {
+    }
+
+    /// <param name="options">The <c>Remote:*</c> options; with <see cref="RemoteOptions.BlockPrivateAddresses"/> on every connection to a non-public address is refused (read on each connection, so the setting is live).</param>
+    public RemoteHttpClientFactory(IOptionsMonitor<RemoteOptions> options)
+    {
+        _options = options;
+    }
+
     /// <inheritdoc/>
-    public HttpClient Create(RemoteRepositorySettings settings)
+    public HttpClient Create(RemoteRepositorySettings settings) => Build(settings, followRedirects: true);
+
+    /// <inheritdoc/>
+    public HttpClient CreateProbe(RemoteRepositorySettings settings) => Build(settings, followRedirects: false);
+
+    private HttpClient Build(RemoteRepositorySettings settings, bool followRedirects)
     {
         if (settings == null) throw new ArgumentNullException(nameof(settings));
 
         var handler = CreateInnerHandler();
+        if (!followRedirects && handler is SocketsHttpHandler sockets) sockets.AllowAutoRedirect = false;
         if (settings.HasCredentials && settings.UrlOrNull != null)
         {
             handler = new HostScopedBasicAuthHandler(settings.UrlOrNull, settings.Username, settings.Password) { InnerHandler = handler };
@@ -51,10 +80,49 @@ public class RemoteHttpClientFactory : IRemoteHttpClientFactory
     }
 
     /// <summary>The handler that sends the requests; tests replace it with an in-memory one.</summary>
-    protected virtual HttpMessageHandler CreateInnerHandler() => new HttpClientHandler
+    protected virtual HttpMessageHandler CreateInnerHandler()
     {
-        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-    };
+        var handler = new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+        };
+
+        // With a proxy the connection goes to the proxy, whose address is the administrator's own choice.
+        if (_options != null) handler.ConnectCallback = ConnectAsync;
+
+        return handler;
+    }
+
+    // The ordinary TCP connect, refusing a non-public address while Remote:BlockPrivateAddresses is on. It checks the
+    // addresses actually connected to, so a name that resolves differently later, or a redirect, cannot get around it.
+    private async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
+    {
+        var endpoint = context.DnsEndPoint;
+        var addresses = IPAddress.TryParse(endpoint.Host, out var literal)
+            ? new[] { literal }
+            : await Dns.GetHostAddressesAsync(endpoint.Host, cancellationToken).ConfigureAwait(false);
+
+        if (_options!.CurrentValue.BlockPrivateAddresses
+            && (addresses.Any(RemoteAddressPolicy.IsBlocked)
+                || endpoint.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new PrivateAddressException();
+        }
+
+        var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+        try
+        {
+            await socket.ConnectAsync(addresses, endpoint.Port, cancellationToken).ConfigureAwait(false);
+
+            return new NetworkStream(socket, ownsSocket: true);
+        }
+        catch
+        {
+            socket.Dispose();
+
+            throw;
+        }
+    }
 }
 
 /// <summary>

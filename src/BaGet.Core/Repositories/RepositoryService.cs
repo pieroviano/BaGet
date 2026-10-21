@@ -20,15 +20,18 @@ public class RepositoryService : IRepositoryService
     private readonly IContext _context;
     private readonly IOptions<SearchOptions>? _search;
     private readonly RemoteSettingsCodec _codec;
+    private readonly IOptionsSnapshot<RemoteOptions>? _remoteOptions;
 
     /// <param name="context">The database.</param>
     /// <param name="search">The search options (whether the index is repository-aware).</param>
     /// <param name="codec">Writes a remote repository's settings; null stores them without being able to protect a password.</param>
-    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null, RemoteSettingsCodec? codec = null)
+    /// <param name="remoteOptions">The <c>Remote:*</c> options (whether private upstream addresses are refused).</param>
+    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null, RemoteSettingsCodec? codec = null, IOptionsSnapshot<RemoteOptions>? remoteOptions = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _search = search;
         _codec = codec ?? new RemoteSettingsCodec();
+        _remoteOptions = remoteOptions;
     }
 
     /// <inheritdoc/>
@@ -121,7 +124,7 @@ public class RepositoryService : IRepositoryService
         {
             if (remote == null) throw new ArgumentException("A remote repository needs its upstream settings.", nameof(remote));
 
-            var problems = remote.Validate();
+            var problems = remote.Validate(_remoteOptions?.Value?.BlockPrivateAddresses == true);
             if (problems.Count > 0) throw new ArgumentException(string.Join(" ", problems), nameof(remote));
 
             settings = _codec.Serialize(remote);

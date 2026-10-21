@@ -119,6 +119,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
     private readonly ILogger<RemoteRepositoryAdministration> _logger;
     private readonly MaintenanceGate? _gate;
     private readonly SystemTime? _time;
+    private readonly IOptionsSnapshot<RemoteOptions>? _remoteOptions;
 
     public RemoteRepositoryAdministration(
         IContext context,
@@ -130,7 +131,8 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         IOptions<MirrorOptions> mirror,
         ILogger<RemoteRepositoryAdministration> logger,
         MaintenanceGate? gate = null,
-        SystemTime? time = null)
+        SystemTime? time = null,
+        IOptionsSnapshot<RemoteOptions>? remoteOptions = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
@@ -142,7 +144,10 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _gate = gate;
         _time = time;
+        _remoteOptions = remoteOptions;
     }
+
+    private bool BlockPrivate => _remoteOptions?.Value?.BlockPrivateAddresses == true;
 
     private DateTime Now => _time?.UtcNow ?? DateTime.UtcNow;
 
@@ -209,7 +214,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             passwordChanged = true;
         }
 
-        Validate(settings);
+        Validate(settings, BlockPrivate);
 
         row.Settings = _codec.Serialize(settings);
         AccessAdministration.Audit(_context, Now, actor, "repository.remote.update", name, new
@@ -238,13 +243,13 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         var storedPasswordWithheld = false;
         if (string.IsNullOrEmpty(settings.Password) && !string.IsNullOrEmpty(name))
         {
-            // The stored password goes only to the upstream it was stored for: testing another URL or user name with
-            // it would hand it to whoever runs that server.
+            // The stored password goes only to the upstream it was stored for (the rule saving applies): testing another
+            // origin or user name with it would hand it to whoever runs that server.
             var row = await FindRowOrNullAsync(name, cancellationToken).ConfigureAwait(false);
             var stored = _codec.Deserialize(row?.Settings);
             if (stored != null && !string.IsNullOrEmpty(stored.Password))
             {
-                if (stored.UrlOrNull == settings.UrlOrNull && stored.Username == settings.Username)
+                if (SameCredentialScope(stored, settings))
                 {
                     settings.Password = stored.Password;
                 }
@@ -255,7 +260,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             }
         }
 
-        var problems = settings.Validate();
+        var problems = settings.Validate(BlockPrivate);
         if (problems.Count > 0) return new RemoteConnectionResult(false, string.Join(" ", problems), null, 0);
 
         var watch = Stopwatch.StartNew();
@@ -264,51 +269,130 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
 
         try
         {
-            using var client = _http.Create(settings);
-            using var response = await client.GetAsync(settings.UrlOrNull, HttpCompletionOption.ResponseContentRead, timeout.Token).ConfigureAwait(false);
-            var status = (int)response.StatusCode;
-
-            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+            if (BlockPrivate)
             {
-                return new RemoteConnectionResult(
-                    false,
-                    $"The upstream refused the credentials (HTTP {status})."
-                    + (storedPasswordWithheld ? " The stored password is only sent while the URL and user name are unchanged; type the password to test them." : string.Empty),
-                    status,
-                    watch.ElapsedMilliseconds);
+                var refused = await RemoteAddressPolicy.CheckResolvedAsync(settings.UrlOrNull, timeout.Token).ConfigureAwait(false);
+                if (refused != null) return new RemoteConnectionResult(false, refused, null, watch.ElapsedMilliseconds);
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                return new RemoteConnectionResult(false, $"The upstream answered HTTP {status} {response.StatusCode}.", status, watch.ElapsedMilliseconds);
-            }
+            using var client = _http.CreateProbe(settings);
 
-            if (settings.Protocol == RemoteProtocol.V3)
+            // Redirects are followed by hand and only within the origin that was typed: following one to another host
+            // would let a probe be steered at addresses nobody named.
+            var target = settings.UrlOrNull!;
+            HttpResponseMessage response;
+            var hops = 0;
+            while (true)
             {
-                var body = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
-                try
+                response = await client.GetAsync(target, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
+                if (!IsRedirect(response.StatusCode) || response.Headers.Location == null) break;
+
+                var next = new Uri(target, response.Headers.Location);
+                var elapsed = watch.ElapsedMilliseconds;
+                var redirectStatus = (int)response.StatusCode;
+                response.Dispose();
+                if (!SameOrigin(target, next) || ++hops > MaxProbeRedirects)
                 {
-                    using var document = JsonDocument.Parse(body);
-                    if (document.RootElement.ValueKind == JsonValueKind.Object
-                        && document.RootElement.TryGetProperty("resources", out var resources)
-                        && resources.ValueKind == JsonValueKind.Array)
+                    return new RemoteConnectionResult(
+                        false,
+                        $"The upstream answered HTTP {redirectStatus} and redirects to another host (or too many times); Test connection does not follow that. Use the final URL.",
+                        redirectStatus,
+                        elapsed);
+                }
+
+                target = next;
+            }
+
+            using (response)
+            {
+                var status = (int)response.StatusCode;
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    return new RemoteConnectionResult(
+                        false,
+                        $"The upstream refused the credentials (HTTP {status})."
+                        + (storedPasswordWithheld ? " The stored password is only sent while the URL's origin and the user name are unchanged; type the password to test them." : string.Empty),
+                        status,
+                        watch.ElapsedMilliseconds);
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new RemoteConnectionResult(false, $"The upstream answered HTTP {status} {response.StatusCode}.", status, watch.ElapsedMilliseconds);
+                }
+
+                if (settings.Protocol == RemoteProtocol.V3)
+                {
+                    var body = await ReadCappedAsync(response.Content, MaxProbeBodyBytes, timeout.Token).ConfigureAwait(false);
+                    if (body == null)
                     {
-                        return new RemoteConnectionResult(true, $"Connected: V3 service index with {resources.GetArrayLength()} resources.", status, watch.ElapsedMilliseconds);
+                        return new RemoteConnectionResult(false, "The upstream answered, but with far more data than a V3 service index (over 1 MB). Is the protocol right?", status, watch.ElapsedMilliseconds);
                     }
-                }
-                catch (JsonException)
-                {
+
+                    try
+                    {
+                        using var document = JsonDocument.Parse(body);
+                        if (document.RootElement.ValueKind == JsonValueKind.Object
+                            && document.RootElement.TryGetProperty("resources", out var resources)
+                            && resources.ValueKind == JsonValueKind.Array)
+                        {
+                            return new RemoteConnectionResult(true, $"Connected: V3 service index with {resources.GetArrayLength()} resources.", status, watch.ElapsedMilliseconds);
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                    }
+
+                    return new RemoteConnectionResult(false, "The upstream answered, but not with a V3 service index (index.json with a resources list). Is the protocol right?", status, watch.ElapsedMilliseconds);
                 }
 
-                return new RemoteConnectionResult(false, "The upstream answered, but not with a V3 service index (index.json with a resources list). Is the protocol right?", status, watch.ElapsedMilliseconds);
+                return new RemoteConnectionResult(true, "Connected: the V2 feed answered.", status, watch.ElapsedMilliseconds);
             }
-
-            return new RemoteConnectionResult(true, "Connected: the V2 feed answered.", status, watch.ElapsedMilliseconds);
         }
         catch (Exception e) when (!cancellationToken.IsCancellationRequested)
         {
+            if (IsPrivateAddressRefusal(e)) return new RemoteConnectionResult(false, RemoteAddressPolicy.Message, null, watch.ElapsedMilliseconds);
+
             return new RemoteConnectionResult(false, "Could not reach the upstream: " + RemoteUpstreamClient.Describe(e), null, watch.ElapsedMilliseconds);
         }
+    }
+
+    // The most of an answer Test connection reads: a service index is a few KB; anything bigger is not one.
+    private const int MaxProbeBodyBytes = 1024 * 1024;
+    private const int MaxProbeRedirects = 5;
+
+    private static bool IsRedirect(HttpStatusCode status)
+        => status is HttpStatusCode.MovedPermanently or HttpStatusCode.Found or HttpStatusCode.SeeOther
+            or HttpStatusCode.TemporaryRedirect or HttpStatusCode.PermanentRedirect;
+
+    private static bool IsPrivateAddressRefusal(Exception e)
+    {
+        for (var current = e; current != null; current = current.InnerException)
+        {
+            if (current is PrivateAddressException) return true;
+        }
+
+        return false;
+    }
+
+    // At most 'limit' bytes of the body as text, or null when there is more.
+    private static async Task<string?> ReadCappedAsync(HttpContent content, int limit, CancellationToken cancellationToken)
+    {
+        if (content.Headers.ContentLength > limit) return null;
+
+        using var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var buffer = new System.IO.MemoryStream();
+        var chunk = new byte[16 * 1024];
+        int read;
+        while ((read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false)) > 0)
+        {
+            if (buffer.Length + read > limit) return null;
+
+            buffer.Write(chunk, 0, read);
+        }
+
+        return System.Text.Encoding.UTF8.GetString(buffer.GetBuffer(), 0, (int)buffer.Length);
     }
 
     /// <inheritdoc/>
@@ -368,8 +452,20 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         var fromOptions = RemoteRepositorySettings.FromMirror(_mirror.Value);
         if (existing == null)
         {
-            await _repositories.CreateAsync(
-                Repository.MirrorName, RepositoryFormat.NuGet, RepositoryKind.Remote, fromOptions, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await _repositories.CreateAsync(
+                    Repository.MirrorName, RepositoryFormat.NuGet, RepositoryKind.Remote, fromOptions, cancellationToken).ConfigureAwait(false);
+            }
+            catch (ArgumentException e) when (BlockPrivate)
+            {
+                // Mirror:PackageSource is operator configuration; a private one that Remote:BlockPrivateAddresses refuses
+                // must not stop the host from starting (the default repository's fetches are refused at connection time).
+                _logger.LogWarning("The remote repository {Repository} was not created from the Mirror settings: {Reason}", Repository.MirrorName, e.Message);
+
+                return;
+            }
+
             _state.InvalidateSettings(RemoteRepositoryState.MirrorLookupKey);
             _logger.LogInformation(
                 "Created the remote repository {Repository} from the Mirror settings; the default repository fetches through it.",
@@ -429,6 +525,9 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         return string.Equals(a.GetLeftPart(UriPartial.Authority), b.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool SameOrigin(Uri a, Uri b)
+        => string.Equals(a.GetLeftPart(UriPartial.Authority), b.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase);
+
     // True while the origin and the user name are the ones a stored password was saved for.
     private static bool SameCredentialScope(RemoteRepositorySettings before, RemoteRepositorySettings after)
     {
@@ -483,9 +582,9 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static void Validate(RemoteRepositorySettings settings)
+    private static void Validate(RemoteRepositorySettings settings, bool blockPrivateAddresses)
     {
-        var problems = settings.Validate();
+        var problems = settings.Validate(blockPrivateAddresses);
         if (problems.Count > 0) throw new ArgumentException(string.Join(" ", problems));
     }
 

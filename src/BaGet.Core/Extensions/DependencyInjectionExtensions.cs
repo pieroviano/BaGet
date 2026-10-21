@@ -71,6 +71,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<DatabaseOptions>(nameof(BaGetOptions.Database));
         services.AddBaGetOptions<FileSystemStorageOptions>(nameof(BaGetOptions.Storage));
         services.AddBaGetOptions<MirrorOptions>(nameof(BaGetOptions.Mirror));
+        services.AddBaGetOptions<RemoteOptions>(nameof(BaGetOptions.Remote));
         services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
         services.AddBaGetOptions<AccountsOptions>(nameof(BaGetOptions.Accounts));
         services.AddBaGetOptions<EmailOptions>(nameof(BaGetOptions.Email));

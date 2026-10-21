@@ -15,8 +15,9 @@ namespace BaGet.Identity.Pages.Admin;
 /// changes (it is in URLs and storage paths), and neither does the format or kind. A remote repository also shows and
 /// edits its upstream (URL, protocol, credentials, cache periods, offline, store locally), tests the connection with
 /// the unsaved values, shows its cache and purges it (whole, or one package). Saving and purging are refused with 503
-/// while the <see cref="MaintenanceGate"/> is closed. Changing or purging a remote repository asks for the
-/// administrator's password again; testing the connection does not (it saves nothing). A virtual repository shows and
+/// while the <see cref="MaintenanceGate"/> is closed. Changing, purging and testing the connection of a remote
+/// repository ask for the administrator's password again (a test saves nothing, but makes the server send a request to a
+/// typed URL, with the stored password when the origin is unchanged). A virtual repository shows and
 /// edits its members (add, remove, move up or down), its deploy repository, and previews where a package version would come
 /// from (<see cref="IVirtualRepositoryAdministration.PreviewAsync"/>); those edits are saved at once, refused with 503 while
 /// the gate is closed.
@@ -179,10 +180,14 @@ public class RepositoryEditModel : RepositoryPageModel
     }
 
     /// <summary>Asks the upstream with the posted, unsaved values (a blank password means the stored one) and saves nothing.</summary>
-    public async Task<IActionResult> OnPostTestAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostTestAsync(string? password, CancellationToken cancellationToken)
     {
         if (!await LoadAsync(cancellationToken)) return NotFound();
         if (RemoteDetail == null) return NotFound();
+
+        // The probe makes this server send a request to a URL the administrator typed (and the stored password, if the
+        // origin is unchanged): it asks for the password again, like the changes that hand out credentials.
+        if (!await ConfirmedAsync(password)) return await RefuseAsync(NotConfirmed, cancellationToken);
 
         AnonymousRead = Repository!.AnonymousRead;
         var settings = Remote.ToSettings();

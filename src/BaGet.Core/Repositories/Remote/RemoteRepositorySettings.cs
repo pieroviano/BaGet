@@ -106,7 +106,8 @@ public sealed class RemoteRepositorySettings
     }
 
     /// <summary>The problems with these settings, empty when they are usable.</summary>
-    public IReadOnlyList<string> Validate()
+    /// <param name="blockPrivateAddresses">Also refuse <c>localhost</c> and a literal loopback, private or link-local address (<see cref="RemoteOptions.BlockPrivateAddresses"/>).</param>
+    public IReadOnlyList<string> Validate(bool blockPrivateAddresses = false)
     {
         var problems = new List<string>();
 
@@ -125,6 +126,12 @@ public sealed class RemoteRepositorySettings
         else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.V2)
         {
             problems.Add("The V2 feed URL must not have a query string.");
+        }
+
+        if (blockPrivateAddresses)
+        {
+            var refused = RemoteAddressPolicy.CheckLiteral(UrlOrNull);
+            if (refused != null) problems.Add(refused);
         }
 
         if (!Enum.IsDefined(typeof(RemoteProtocol), Protocol)) problems.Add("Unknown protocol.");

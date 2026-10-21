@@ -72,6 +72,8 @@ public class BaGetOptions
 
     public MirrorOptions? Mirror { get; set; }
 
+    public RemoteOptions? Remote { get; set; }
+
     public FeedsOptions? Feeds { get; set; }
 
     public AccountsOptions? Accounts { get; set; }

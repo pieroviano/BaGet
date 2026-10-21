@@ -109,6 +109,22 @@ While `Enabled`, a [remote repository](remote-repositories.md#the-mirror) named 
 default repository fetches through its settings: set credentials, cache periods or offline mode for the mirror on
 `/admin/repositories/mirror`. The URL, protocol and timeout stay owned by these keys.
 
+## Remote repositories: refuse private upstreams
+
+An upstream URL (and *Test connection*) makes this server send requests to whatever address the administrator typed, so
+an administrator who may create remote repositories can reach what the server can reach (internal services, the cloud
+metadata address `169.254.169.254`). Internal feeds are a normal use, hence the default is to allow them.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Remote:BlockPrivateAddresses` | `false` | refuse upstreams that are `localhost`, loopback, private (RFC 1918, `fc00::/7`), link-local, carrier-grade NAT or otherwise non-public. Live (no restart) |
+
+Enforced when a repository is created or saved (the host name or literal address in the URL), when *Test connection* runs
+(also after DNS resolution) and on every connection a V3 upstream client opens (a name that later resolves to a private
+address, or a redirect to one, is refused; with an HTTP proxy configured the proxy's address is what is checked). A V2
+upstream is contacted by NuGet's own HTTP stack: only the URL's host is checked. `Mirror:PackageSource` is operator
+configuration: if it is refused the `mirror` repository is not created (a warning is logged) and fetches fail.
+
 ## Enable package hard deletions
 
 To prevent the ["left pad" problem](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm),

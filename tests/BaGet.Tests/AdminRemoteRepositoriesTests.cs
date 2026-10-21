@@ -260,6 +260,7 @@ public class AdminRemoteRepositoriesTests : IDisposable
 
         var good = await ReadAsync(await _admin.PostAsync("admin/repositories/up", new Dictionary<string, string>
         {
+            { "password", Password },
             { "Remote.Url", Url },
             { "Remote.Protocol", "V3" },
             { "Remote.MetadataTtlSeconds", "600" },
@@ -272,6 +273,7 @@ public class AdminRemoteRepositoriesTests : IDisposable
 
         var bad = await ReadAsync(await _admin.PostAsync("admin/repositories/up", new Dictionary<string, string>
         {
+            { "password", Password },
             { "Remote.Url", "http://localhost/nothing/here" },
             { "Remote.Protocol", "V3" },
             { "Remote.MetadataTtlSeconds", "600" },
@@ -384,7 +386,7 @@ public class AdminRemoteRepositoriesTests : IDisposable
     }
 
     [Fact]
-    public async Task ChangesAndPurgesAskForThePasswordAgainAndTestingDoesNot()
+    public async Task ChangesPurgesAndTestsAskForThePasswordAgain()
     {
         await SeedUpstreamAsync();
         using var wrong = await CreateAsync("up", change: f => f["password"] = "not-my-password");
@@ -417,7 +419,13 @@ public class AdminRemoteRepositoriesTests : IDisposable
             Assert.Equal(1, (await scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>().FindAsync("up", CancellationToken.None))!.PackageCount);
         }
 
-        // Testing saves nothing, so it needs no confirmation.
+        // Testing saves nothing but makes the server send a request to a typed URL, so it asks too.
+        var wireBefore = _wire.Requests.Length;
+        var refusedTest = await ReadAsync(await _admin.PostAsync("admin/repositories/up", EditFields("password", "wrong"), action: "admin/repositories/up?handler=Test"));
+        Assert.Contains("The confirmation is incorrect", refusedTest);
+        Assert.DoesNotContain("id=\"remote-test-result\"", refusedTest);
+        Assert.Equal(wireBefore, _wire.Requests.Length);
+
         var test = EditFields(null, null);
         Assert.Contains("id=\"remote-test-result\"", await ReadAsync(await _admin.PostAsync("admin/repositories/up", test, action: "admin/repositories/up?handler=Test")));
     }
@@ -433,7 +441,7 @@ public class AdminRemoteRepositoriesTests : IDisposable
 
         var fields = EditFields(null, null);
         fields["Remote.Username"] = "bob";
-        fields["Remote.Url"] = "http://localhost/elsewhere/index.json";
+        fields["Remote.Url"] = "http://other.example/elsewhere/index.json";
         var html = await ReadAsync(await _admin.PostAsync("admin/repositories/up", fields, action: "admin/repositories/up?handler=Test"));
 
         var withStored = "Basic " + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("bob:stored-pw"));
@@ -446,11 +454,30 @@ public class AdminRemoteRepositoriesTests : IDisposable
         Assert.Contains(_wire.Requests, r => r.Authorization == withStored);
     }
 
+    [Fact]
+    public async Task TestingWithAnotherPathOnTheSameOriginUsesTheStoredPasswordLikeSaving()
+    {
+        (await CreateAsync("up", change: f =>
+        {
+            f["Remote.Username"] = "bob";
+            f["Remote.Password"] = "stored-pw";
+        })).Dispose();
+
+        var fields = EditFields(null, null);
+        fields["Remote.Username"] = "bob";
+        fields["Remote.Url"] = "http://localhost/other/path/index.json";
+        await ReadAsync(await _admin.PostAsync("admin/repositories/up", fields, action: "admin/repositories/up?handler=Test"));
+
+        var withStored = "Basic " + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("bob:stored-pw"));
+        Assert.Contains(_wire.Requests, r => r.Uri.AbsolutePath == "/other/path/index.json" && r.Authorization == withStored);
+    }
+
     private static Dictionary<string, string> EditFields(string? key, string? value)
     {
         var fields = new Dictionary<string, string>
         {
             { "anonymousRead", "true" },
+            { "password", Password },
             { "Remote.Url", Url },
             { "Remote.Protocol", "V3" },
             { "Remote.MetadataTtlSeconds", "600" },
