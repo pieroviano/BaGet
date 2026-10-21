@@ -32,6 +32,7 @@ public static class AccountsServiceCollectionExtensions
         }
 
         services.TryAddScoped<ApiKeyService>();
+        services.TryAddScoped<INpmTokenService, NpmTokenService>();
         services.TryAddScoped<PackageOwnershipService>();
         services.TryAddScoped<SessionPrincipalFactory>();
         services.TryAddScoped<ISessionPrincipalFactory>(provider => provider.GetRequiredService<SessionPrincipalFactory>());

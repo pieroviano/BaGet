@@ -168,4 +168,10 @@ public interface IUrlGenerator
     /// <param name="id">The package's ID</param>
     /// <param name="version">The package's version</param>
     string? GetPackageIconDownloadUrl(string? id, NuGetVersion version);
+
+    /// <summary>
+    /// Get the address an npm client is configured with for the current repository: <c>npm/</c> below the repository base,
+    /// with a trailing slash (<c>https://host/r/web/npm/</c>). Tarball URLs are this plus <c>{name}/-/{file}</c>.
+    /// </summary>
+    string GetNpmRegistryUrl();
 }

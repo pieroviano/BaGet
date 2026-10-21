@@ -10,12 +10,15 @@ namespace BaGet.Web;
 /// <summary>
 /// Who is calling: the principal behind the request's credentials, for the read checks. Credentials are, in order, the
 /// password of <c>Authorization: Basic</c> (an API key; the user name must be the key owner's when the key belongs to a
-/// user), the <c>X-NuGet-ApiKey</c> header, then the browser session. Credentials that do not authenticate are the same
+/// user), the token of <c>Authorization: Bearer</c> (an API key too: what npm sends), the <c>X-NuGet-ApiKey</c> header,
+/// then the browser session. A write (<see cref="ResolveForWriteAsync"/>) never uses the session: a cookie is sent by a
+/// browser on its own, so accepting it would let any web page make the user's browser publish or delete. Credentials that do not authenticate are the same
 /// as none: a repository that is open to everyone stays readable, one that is not answers 401.
 /// </summary>
 public class RequestPrincipalResolver
 {
     private const string ItemKey = "BaGet.RequestPrincipal";
+    private const string WriteItemKey = "BaGet.RequestWritePrincipal";
 
     private readonly IAuthenticationService _authentication;
     private readonly ISessionPrincipalFactory? _sessions;
@@ -36,24 +39,52 @@ public class RequestPrincipalResolver
         return principal;
     }
 
+    /// <summary>
+    /// The caller of a write (npm publish, tag, deprecate, unpublish), or null when its credentials do not authenticate:
+    /// the API key sent as Basic password, Bearer token or <c>X-NuGet-ApiKey</c>, as for NuGet's write routes, and never the
+    /// browser session. An open server (no global key, accounts off) authenticates a request with no credentials as the
+    /// superuser, as it always did. Resolved once per request.
+    /// </summary>
+    public async Task<BaGetPrincipal?> ResolveForWriteAsync(HttpContext context, CancellationToken cancellationToken)
+    {
+        if (context.Items.TryGetValue(WriteItemKey, out var cached)) return cached as BaGetPrincipal;
+
+        var basic = BasicCredentials.Read(context.Request);
+        var key = KeyOf(context, basic);
+        var principal = await _authentication.AuthenticatePrincipalAsync(key, cancellationToken).ConfigureAwait(false);
+        if (principal != null && UserMismatch(principal, basic)) principal = null;
+
+        context.Items[WriteItemKey] = principal;
+        return principal;
+    }
+
+    private static string? KeyOf(HttpContext context, (string UserName, string Password)? basic)
+    {
+        var key = basic?.Password;
+        if (string.IsNullOrEmpty(key)) key = BasicCredentials.ReadBearer(context.Request);
+        if (string.IsNullOrEmpty(key)) key = context.Request.GetApiKey();
+
+        return key;
+    }
+
+    private static bool UserMismatch(BaGetPrincipal principal, (string UserName, string Password)? basic)
+    {
+        var userName = basic?.UserName;
+
+        return !string.IsNullOrEmpty(userName)
+               && principal.UserName != null
+               && !string.Equals(userName, principal.UserName, StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task<BaGetPrincipal?> ResolveCoreAsync(HttpContext context, CancellationToken cancellationToken)
     {
         var basic = BasicCredentials.Read(context.Request);
-        var key = basic?.Password;
-        if (string.IsNullOrEmpty(key)) key = context.Request.GetApiKey();
+        var key = KeyOf(context, basic);
 
         if (!string.IsNullOrEmpty(key))
         {
             var principal = await _authentication.AuthenticatePrincipalAsync(key, cancellationToken).ConfigureAwait(false);
-            if (principal != null)
-            {
-                var userName = basic?.UserName;
-                var mismatch = !string.IsNullOrEmpty(userName)
-                               && principal.UserName != null
-                               && !string.Equals(userName, principal.UserName, StringComparison.OrdinalIgnoreCase);
-
-                if (!mismatch) return principal;
-            }
+            if (principal != null && !UserMismatch(principal, basic)) return principal;
         }
 
         if (_sessions != null && context.User.Identity?.IsAuthenticated == true)

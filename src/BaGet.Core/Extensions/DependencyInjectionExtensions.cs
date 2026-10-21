@@ -72,6 +72,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<FileSystemStorageOptions>(nameof(BaGetOptions.Storage));
         services.AddBaGetOptions<MirrorOptions>(nameof(BaGetOptions.Mirror));
         services.AddBaGetOptions<RemoteOptions>(nameof(BaGetOptions.Remote));
+        services.AddBaGetOptions<NpmOptions>(nameof(BaGetOptions.Npm));
         services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
         services.AddBaGetOptions<AccountsOptions>(nameof(BaGetOptions.Accounts));
         services.AddBaGetOptions<EmailOptions>(nameof(BaGetOptions.Email));
@@ -102,7 +103,10 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton(NuGetClientFactoryFactory);
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, NuGetFormatModule>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, NpmFormatModule>());
         services.TryAddSingleton(provider => new FormatRegistry(provider.GetServices<IFormatModule>()));
+        services.TryAddScoped<INpmRegistry, NpmRegistryService>();
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NpmFormatSearchProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatIndexer, NuGetFormatIndexer>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NuGetFormatSearchProvider>());
         services.TryAddScoped<IRepositoryContext, RepositoryContext>();

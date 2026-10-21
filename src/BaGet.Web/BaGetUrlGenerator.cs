@@ -175,6 +175,11 @@ public class BaGetUrlGenerator : IUrlGenerator
         return AbsoluteUrl("packages/{id}/{version}");
     }
 
+    public string GetNpmRegistryUrl()
+    {
+        return AbsoluteUrl("npm/");
+    }
+
     public string GetVulnerabilityIndexUrl()
     {
         return AbsoluteUrl("v3/vulnerabilities/index.json");

@@ -156,7 +156,7 @@ public abstract class AccessPageModel : AdminPageModel
     {
         var all = await HttpContext.RequestServices.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken);
         var names = all
-            .Where(r => r.Format == RepositoryFormat.NuGet && AccessPatterns.IsMatch(repositoryPatterns, r.Name))
+            .Where(r => AccessPatterns.IsMatch(repositoryPatterns, r.Name))
             .Select(r => r.Name)
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();

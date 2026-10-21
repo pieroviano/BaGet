@@ -48,8 +48,6 @@ public class AccessModel : AccountPageModel
         var rows = new List<RepositoryAccessRow>();
         foreach (var repository in await services.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken))
         {
-            if (repository.Format != RepositoryFormat.NuGet) continue;
-
             var explanation = await evaluator.ExplainAsync(principal, repository, package, cancellationToken);
             if (explanation.Actions != AccessAction.None) rows.Add(new RepositoryAccessRow(repository, explanation));
         }

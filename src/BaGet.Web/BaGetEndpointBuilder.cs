@@ -74,6 +74,51 @@ public class BaGetEndpointBuilder
         MapVulnerabilityRoutes(endpoints);
         MapCatalogRoutes(endpoints);
         MapValidationRoutes(endpoints);
+        MapNpmRoutes(endpoints);
+    }
+
+    /// <summary>
+    /// The npm registry (<see cref="RepositoryFormat.Npm"/>): everything below <c>npm/</c> of a repository's base, so a repository
+    /// <c>web</c> is a registry at <c>/r/web/npm/</c>. A package name is one segment (<c>{name}</c>: <c>left-pad</c>, or the
+    /// scoped <c>@scope%2fname</c> npm sends) or, for a client that writes the slash, the two segments <c>@{scope}/{pkg}</c>:
+    /// every route that names a package is registered in both shapes. Routes that only accept writes are constrained to their
+    /// methods (they authorize themselves, see <see cref="NpmController"/>); the others pass <see cref="RepositoryReadFilter"/>.
+    /// </summary>
+    public void MapNpmRoutes(IEndpointRouteBuilder endpoints)
+    {
+        void Map(string name, string pattern, string action, string? method, bool perPackage)
+        {
+            object? constraints = method == null ? null : new { httpMethod = new HttpMethodRouteConstraint(method) };
+            var defaults = new { controller = "Npm", action };
+
+            MapRoute(endpoints, name, "npm/" + pattern.Replace("{package}", "{name}"), defaults, constraints, format: RepositoryFormat.Npm);
+            if (perPackage)
+            {
+                MapRoute(endpoints, name + Routes.NpmScopedSuffix, "npm/" + pattern.Replace("{package}", "@{scope}/{pkg}"), defaults, constraints, format: RepositoryFormat.Npm);
+            }
+        }
+
+        Map(Routes.NpmPingRouteName, "-/ping", "Ping", "GET", false);
+        Map(Routes.NpmWhoamiRouteName, "-/whoami", "Whoami", "GET", false);
+        Map(Routes.NpmSearchRouteName, "-/v1/search", "Search", "GET", false);
+        Map(Routes.NpmWebLoginRouteName, "-/v1/login", "WebLogin", "POST", false);
+        Map(Routes.NpmLoginRouteName, "-/user/{userKey}", "Login", "PUT", false);
+        Map(Routes.NpmLogoutRouteName, "-/user/token/{token}", "Logout", "DELETE", false);
+
+        // Not constrained: the audit calls are POSTs that only read, so they pass the read check like a GET.
+        Map(Routes.NpmAuditBulkRouteName, "-/npm/v1/security/advisories/bulk", "AuditBulk", null, false);
+        Map(Routes.NpmAuditQuickRouteName, "-/npm/v1/security/audits/quick", "AuditQuick", null, false);
+
+        Map(Routes.NpmDistTagsRouteName, "-/package/{package}/dist-tags", "DistTags", "GET", true);
+        Map(Routes.NpmSetDistTagRouteName, "-/package/{package}/dist-tags/{tag}", "SetDistTag", "PUT", true);
+        Map(Routes.NpmRemoveDistTagRouteName, "-/package/{package}/dist-tags/{tag}", "RemoveDistTag", "DELETE", true);
+
+        Map(Routes.NpmPackumentRouteName, "{package}", "Packument", "GET", true);
+        Map(Routes.NpmPublishRouteName, "{package}", "Put", "PUT", true);
+        Map(Routes.NpmPutRevisionRouteName, "{package}/-rev/{rev}", "PutRevision", "PUT", true);
+        Map(Routes.NpmDeletePackageRouteName, "{package}/-rev/{rev}", "DeletePackage", "DELETE", true);
+        Map(Routes.NpmTarballRouteName, "{package}/-/{file}", "Tarball", "GET", true);
+        Map(Routes.NpmDeleteTarballRouteName, "{package}/-/{file}/-rev/{rev}", "DeleteTarball", "DELETE", true);
     }
 
     /// <summary>

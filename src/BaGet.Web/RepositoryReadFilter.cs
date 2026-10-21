@@ -86,6 +86,23 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         var evaluator = services.GetRequiredService<IAccessEvaluator>();
         var repository = services.GetRequiredService<IRepositoryContext>().Current;
         var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
+        if (route.Format == RepositoryFormat.Npm)
+        {
+            // npm routes name the package in "name" (possibly @scope%2fname) or "scope" and "pkg"; the access patterns see the
+            // decoded name, so a route cannot reach a package that its pattern would hide by writing the name differently.
+            var raw = NpmRouteNames.FromRouteValues(context.RouteData.Values);
+            if (raw != null)
+            {
+                if (!NpmNames.TryParse(raw, out var normalizedName, out _))
+                {
+                    context.Result = new NotFoundResult();
+                    return;
+                }
+
+                packageId = normalizedName;
+            }
+        }
+
 
         async Task<bool> MayReadAsync(BaGetPrincipal? caller)
             => await evaluator.IsAllowedAsync(caller, repository, packageId: null, AccessAction.Read, http.RequestAborted)
@@ -109,7 +126,10 @@ public class RepositoryReadFilter : IAsyncResourceFilter
 
         if (principal == null)
         {
-            http.Response.Headers.WWWAuthenticate = BasicCredentials.Challenge;
+            // npm answers a 401 with E401 and never retries; its clients send Bearer, NuGet's send Basic.
+            http.Response.Headers.WWWAuthenticate = route.Format == RepositoryFormat.Npm
+                ? new Microsoft.Extensions.Primitives.StringValues(new[] { BasicCredentials.BearerChallenge, BasicCredentials.Challenge })
+                : BasicCredentials.Challenge;
             context.Result = new UnauthorizedResult();
         }
         else

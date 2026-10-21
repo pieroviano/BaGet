@@ -124,7 +124,7 @@ public sealed class AccessEvaluator : IAccessEvaluator
         var all = await _repositories.ListAsync(cancellationToken).ConfigureAwait(false);
         var result = new List<RepositoryInfo>();
 
-        foreach (var repository in all.Where(r => r.Format == RepositoryFormat.NuGet))
+        foreach (var repository in all)
         {
             if (await IsAllowedAsync(principal, repository, packageId: null, action, cancellationToken).ConfigureAwait(false))
             {

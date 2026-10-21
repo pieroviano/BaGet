@@ -13,6 +13,24 @@ public static class BasicCredentials
     /// <summary>The challenge a protected feed answers anonymous callers with.</summary>
     public const string Challenge = "Basic realm=\"BaGet\", charset=\"UTF-8\"";
 
+    /// <summary>The challenge an npm route adds: npm clients send <c>Authorization: Bearer {_authToken}</c>.</summary>
+    public const string BearerChallenge = "Bearer realm=\"BaGet\"";
+
+    /// <summary>
+    /// The token of an <c>Authorization: Bearer</c> header (what npm sends for <c>_authToken</c>), or null. The token is an
+    /// API key, like the password of Basic credentials.
+    /// </summary>
+    public static string? ReadBearer(HttpRequest request)
+    {
+        var header = request.Headers.Authorization.ToString();
+        const string scheme = "Bearer ";
+        if (!header.StartsWith(scheme, StringComparison.OrdinalIgnoreCase)) return null;
+
+        var token = header.Substring(scheme.Length).Trim();
+
+        return token.Length == 0 ? null : token;
+    }
+
     /// <summary>
     /// The user name and password of the request's Basic credentials, or null when it carries none (or malformed ones).
     /// The password is an API key; the user name is the key owner's, or anything for the global key.

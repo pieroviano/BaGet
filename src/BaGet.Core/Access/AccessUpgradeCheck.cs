@@ -16,7 +16,7 @@ namespace BaGet.Core;
 public static class AccessUpgradeCheck
 {
     /// <summary>
-    /// The non-default NuGet repositories with <c>AnonymousRead</c> off in which no grant or project role gives anyone
+    /// The non-default repositories with <c>AnonymousRead</c> off in which no grant or project role gives anyone
     /// Read (administrators and the global API key always can, and are not counted).
     /// </summary>
     public static async Task<IReadOnlyList<string>> FindPrivateWithoutReadersAsync(
@@ -29,7 +29,7 @@ public static class AccessUpgradeCheck
         var result = new List<string>();
         foreach (var repository in await repositories.ListAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (repository.IsDefault || repository.Format != RepositoryFormat.NuGet) continue;
+            if (repository.IsDefault) continue;
 
             var summary = await evaluator.DescribeAsync(repository, cancellationToken).ConfigureAwait(false);
             if (summary.ModelAvailable && !summary.AnonymousRead && !summary.Holders.Any(h => (h.Effective & AccessAction.Read) != 0))

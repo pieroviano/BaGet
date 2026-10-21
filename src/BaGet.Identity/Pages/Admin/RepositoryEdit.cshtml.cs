@@ -82,7 +82,7 @@ public class RepositoryEditModel : RepositoryPageModel
 
     /// <summary>
     /// Who effectively holds Read, Annotate, Deploy, Delete and Manage in the repository, from the access model; null for
-    /// a repository that is not a NuGet one.
+    /// the default repository when the database has no access model.
     /// </summary>
     public RepositoryAccessSummary? Access { get; private set; }
 
@@ -113,7 +113,7 @@ public class RepositoryEditModel : RepositoryPageModel
 
         var info = (await services.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken))
             .FirstOrDefault(r => r.Name == Repository.Name);
-        if (info != null && info.Format == RepositoryFormat.NuGet)
+        if (info != null)
         {
             Access = await services.GetRequiredService<IAccessEvaluator>().DescribeAsync(info, cancellationToken);
         }

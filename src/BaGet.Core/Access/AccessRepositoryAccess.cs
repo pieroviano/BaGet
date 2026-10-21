@@ -91,7 +91,7 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
     /// </summary>
     public async Task<bool> CanWriteAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
     {
-        if (repository.Format != RepositoryFormat.NuGet || repository.Kind == RepositoryKind.Remote) return false;
+        if (repository.Kind == RepositoryKind.Remote) return false;
 
         // A virtual repository's uploads go to its deploy repository: the caller needs to read the virtual one and to
         // write to that.
@@ -113,15 +113,12 @@ public sealed class AccessRepositoryAccess : IRepositoryAccess
 
     /// <inheritdoc/>
     public async Task<bool> CanReadAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
-        => repository.Format == RepositoryFormat.NuGet
-           && await _evaluator.IsAllowedAsync(
+        => await _evaluator.IsAllowedAsync(
                await PrincipalAsync(user).ConfigureAwait(false), repository, packageId: null, AccessAction.Read, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     public async Task<bool> CanReadPackageAsync(ClaimsPrincipal? user, RepositoryInfo repository, string packageId, CancellationToken cancellationToken)
     {
-        if (repository.Format != RepositoryFormat.NuGet) return false;
-
         var principal = await PrincipalAsync(user).ConfigureAwait(false);
 
         return await _evaluator.IsAllowedAsync(principal, repository, packageId: null, AccessAction.Read, cancellationToken).ConfigureAwait(false)

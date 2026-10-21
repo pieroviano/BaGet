@@ -54,4 +54,29 @@ public class Routes
     public const string RepositorySignaturesRouteName = "repository-signatures";
     public const string RepositorySigningCertificateRouteName = "repository-signing-certificate";
     public const string ValidationStatusRouteName = "validation-status";
+
+    /// <summary>
+    /// Route names of the npm registry (<see cref="BaGetEndpointBuilder.MapNpmRoutes"/>); a scoped-name variant (the scope as
+    /// its own path segment) is registered under the same name plus <see cref="NpmScopedSuffix"/>.
+    /// </summary>
+    public const string NpmPingRouteName = "npm-ping";
+    public const string NpmWhoamiRouteName = "npm-whoami";
+    public const string NpmSearchRouteName = "npm-search";
+    public const string NpmWebLoginRouteName = "npm-web-login";
+    public const string NpmLoginRouteName = "npm-login";
+    public const string NpmLogoutRouteName = "npm-logout";
+    public const string NpmAuditBulkRouteName = "npm-audit-bulk";
+    public const string NpmAuditQuickRouteName = "npm-audit-quick";
+    public const string NpmPackumentRouteName = "npm-packument";
+    public const string NpmPublishRouteName = "npm-publish";
+    public const string NpmPutRevisionRouteName = "npm-put-revision";
+    public const string NpmDeletePackageRouteName = "npm-delete-package";
+    public const string NpmTarballRouteName = "npm-tarball";
+    public const string NpmDeleteTarballRouteName = "npm-delete-tarball";
+    public const string NpmDistTagsRouteName = "npm-dist-tags";
+    public const string NpmSetDistTagRouteName = "npm-set-dist-tag";
+    public const string NpmRemoveDistTagRouteName = "npm-remove-dist-tag";
+
+    /// <summary>Appended to the name of the npm route variant whose scope is a path segment of its own (<c>@{scope}/{pkg}</c>).</summary>
+    public const string NpmScopedSuffix = "-scoped";
 }

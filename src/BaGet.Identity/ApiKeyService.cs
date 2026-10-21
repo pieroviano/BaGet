@@ -46,7 +46,7 @@ public class ApiKeyService
     /// Create a key limited to <paramref name="repositoryKeys"/> (<see cref="ApiKeyRepository"/>), or usable in every
     /// repository when null or empty, and return it in plain text. It cannot be recovered afterwards.
     /// </summary>
-    /// <exception cref="ArgumentException">A repository key does not name an existing NuGet repository.</exception>
+    /// <exception cref="ArgumentException">A repository key does not name an existing repository.</exception>
     public async Task<string> CreateAsync(
         string? userId,
         string? description,
@@ -68,7 +68,7 @@ public class ApiKeyService
         if (limit.Count > 0)
         {
             var known = await _context.Repositories!
-                .Where(r => limit.Contains(r.Key) && r.Format == RepositoryFormat.NuGet)
+                .Where(r => limit.Contains(r.Key))
                 .Select(r => r.Key)
                 .ToListAsync(cancellationToken);
 

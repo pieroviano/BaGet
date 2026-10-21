@@ -74,6 +74,8 @@ public class BaGetOptions
 
     public RemoteOptions? Remote { get; set; }
 
+    public NpmOptions? Npm { get; set; }
+
     public FeedsOptions? Feeds { get; set; }
 
     public AccountsOptions? Accounts { get; set; }

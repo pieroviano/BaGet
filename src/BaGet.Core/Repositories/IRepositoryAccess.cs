@@ -21,10 +21,10 @@ public interface IRepositoryAccess
     /// </summary>
     bool SupportsMultipleRepositories { get; }
 
-    /// <summary>The NuGet repositories <paramref name="user"/> may read, ordered by name (<c>default</c> first).</summary>
+    /// <summary>The repositories (of every format) <paramref name="user"/> may read, ordered by name (<c>default</c> first).</summary>
     Task<IReadOnlyList<RepositoryInfo>> ReadableAsync(ClaimsPrincipal? user, CancellationToken cancellationToken);
 
-    /// <summary>The NuGet repositories <paramref name="user"/> may publish to, ordered like <see cref="ReadableAsync"/>.</summary>
+    /// <summary>The repositories <paramref name="user"/> may publish to, ordered like <see cref="ReadableAsync"/>.</summary>
     Task<IReadOnlyList<RepositoryInfo>> WritableAsync(ClaimsPrincipal? user, CancellationToken cancellationToken);
 
     /// <summary>
@@ -49,7 +49,7 @@ public interface IRepositoryAccess
 }
 
 /// <summary>
-/// Today's rule: every NuGet repository is readable, and writable by whoever the package authorization lets push (which
+/// Today's rule: every repository is readable, and writable by whoever the package authorization lets push (which
 /// the upload page still checks per package). Replaced when an access model exists.
 /// </summary>
 public sealed class OpenRepositoryAccess : IRepositoryAccess
@@ -72,7 +72,6 @@ public sealed class OpenRepositoryAccess : IRepositoryAccess
         var all = await _repositories.ListAsync(cancellationToken);
 
         return all
-            .Where(r => r.Format == RepositoryFormat.NuGet)
             .OrderBy(r => r.IsDefault ? 0 : 1)
             .ThenBy(r => r.Name, StringComparer.Ordinal)
             .ToList();
@@ -84,5 +83,5 @@ public sealed class OpenRepositoryAccess : IRepositoryAccess
 
     /// <inheritdoc/>
     public Task<bool> CanReadAsync(ClaimsPrincipal? user, RepositoryInfo repository, CancellationToken cancellationToken)
-        => Task.FromResult(repository.Format == RepositoryFormat.NuGet);
+        => Task.FromResult(true);
 }

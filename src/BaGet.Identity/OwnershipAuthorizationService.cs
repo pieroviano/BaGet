@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity;
@@ -28,6 +29,7 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
 {
     private readonly PackageOwnershipService _ownership;
     private readonly IPackageDatabase _packages;
+    private readonly IContext? _context;
     private readonly ILogger<OwnershipAuthorizationService> _logger;
     private readonly IAccessEvaluator _access;
     private readonly IRepositoryContext _repository;
@@ -37,8 +39,10 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
         IPackageDatabase packages,
         ILogger<OwnershipAuthorizationService> logger,
         IAccessEvaluator access,
-        IRepositoryContext repository)
+        IRepositoryContext repository,
+        IContext? context = null)
     {
+        _context = context;
         _access = access ?? throw new ArgumentNullException(nameof(access));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _ownership = ownership ?? throw new ArgumentNullException(nameof(ownership));
@@ -67,7 +71,7 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
             switch (action)
             {
                 case PackageAction.Push:
-                    var exists = await _packages.ExistsAsync(packageId, cancellationToken)
+                    var exists = await ExistsAsync(packageId, cancellationToken)
                                  || await _ownership.HasOwnersAsync(packageId, cancellationToken);
 
                     return exists
@@ -96,7 +100,7 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
                 // A new ID may be claimed; an existing one without owners may not.
                 return principal.HasScope(ApiKeyScopes.Push)
                        && !await _ownership.HasOwnersAsync(packageId, cancellationToken)
-                       && !await _packages.ExistsAsync(packageId, cancellationToken);
+                       && !await ExistsAsync(packageId, cancellationToken);
 
             case PackageAction.Manage:
             case PackageAction.Annotate:
@@ -105,6 +109,19 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
             default:
                 return false;
         }
+    }
+
+    // Whether the ID names a package of the current repository, whatever its format: a NuGet package id, or an npm package name.
+    private async Task<bool> ExistsAsync(string? packageId, CancellationToken cancellationToken)
+    {
+        if (_repository.Current.Format == RepositoryFormat.Npm && _context != null)
+        {
+            var name = packageId?.ToLowerInvariant();
+
+            return await _context.NpmPackages!.AnyAsync(p => p.Name == name, cancellationToken);
+        }
+
+        return await _packages.ExistsAsync(packageId, cancellationToken);
     }
 
     private static AccessAction Required(PackageAction action) => action switch

@@ -177,7 +177,7 @@ public class ProjectDetailModel : AccessPageModel
 
         var all = await HttpContext.RequestServices.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken);
         Assignable = all
-            .Where(r => r.Format == RepositoryFormat.NuGet && !Project.Repositories.Contains(r.Name, StringComparer.Ordinal))
+            .Where(r => !Project.Repositories.Contains(r.Name, StringComparer.Ordinal))
             .Select(r => r.Name)
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();

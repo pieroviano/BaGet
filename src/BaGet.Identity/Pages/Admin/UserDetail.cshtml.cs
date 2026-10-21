@@ -197,8 +197,6 @@ public class UserDetailModel : AdminPageModel
         var rows = new List<RepositoryAccessRow>();
         foreach (var repository in await services.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken))
         {
-            if (repository.Format != RepositoryFormat.NuGet) continue;
-
             rows.Add(new RepositoryAccessRow(repository, await evaluator.ExplainAsync(principal, repository, package, cancellationToken)));
         }
 
