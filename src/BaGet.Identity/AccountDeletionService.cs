@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity;
@@ -23,9 +24,9 @@ namespace BaGet.Identity;
 /// that own packages and so cannot be left without anyone to run them. Same rule as
 /// <see cref="PackageOwnershipService.RemoveMemberAsync"/>.
 /// </param>
-/// <param name="CurrentRepositoryPackageIds">
-/// The subset of <paramref name="LastOwnerPackageIds"/> in the repository the request works in: the only ones an
-/// administrator's deletion can remove. Null means all of them.
+/// <param name="LastOwnerPackages">
+/// The same IDs per repository (the same ID sole-owned in two repositories is two entries), with the repository's
+/// name so a page can name it and link to that repository's Manage page.
 /// </param>
 /// <param name="LastAdministrator">
 /// The user is the server's only administrator, so deleting them would leave nobody able to
@@ -35,17 +36,30 @@ public record DeletionBlockers(
     IReadOnlyList<string?> LastOwnerPackageIds,
     IReadOnlyList<string?> Organizations,
     bool LastAdministrator = false,
-    IReadOnlyList<string?>? CurrentRepositoryPackageIds = null)
+    IReadOnlyList<SoleOwnedPackage>? LastOwnerPackages = null)
 {
+    /// <summary>Per-repository detail of <see cref="LastOwnerPackageIds"/>; never null.</summary>
+    public IReadOnlyList<SoleOwnedPackage> LastOwnerPackages { get; init; } = LastOwnerPackages ?? Array.Empty<SoleOwnedPackage>();
+
     /// <summary>Whether anything blocks the deletion.</summary>
     public bool Any => LastOwnerPackageIds.Count > 0 || Organizations.Count > 0 || LastAdministrator;
 }
 
+/// <summary>A package ID in one repository that only one user owns.</summary>
+/// <param name="RepositoryKey">The repository's key.</param>
+/// <param name="RepositoryName">The repository's name (<see cref="Repository.DefaultName"/> for the default).</param>
+/// <param name="PackageId">The package ID.</param>
+public record SoleOwnedPackage(int RepositoryKey, string RepositoryName, string? PackageId)
+{
+    /// <summary>The ID for the default repository, <c>ID (name)</c> for any other, for messages that mix repositories.</summary>
+    public string Label => RepositoryKey == Repository.DefaultKey ? PackageId ?? string.Empty : $"{PackageId} ({RepositoryName})";
+}
+
 /// <summary>What an administrator's deletion of a user did.</summary>
 /// <param name="Result">The outcome of deleting the user. Failed with nothing deleted when refused.</param>
-/// <param name="KeptWithoutOwners">Sole-owned package IDs left without owners (only admins and the global key manage them).</param>
-/// <param name="DeletedPackageIds">Sole-owned package IDs removed with all their versions.</param>
-/// <param name="Failures">What could not be removed after the user was deleted; these IDs stay ownerless.</param>
+/// <param name="KeptWithoutOwners">Sole-owned package IDs left without owners (only admins and the global key manage them), in <see cref="SoleOwnedPackage.Label"/> form.</param>
+/// <param name="DeletedPackageIds">Sole-owned package IDs removed with all their versions, in every repository, in <see cref="SoleOwnedPackage.Label"/> form.</param>
+/// <param name="Failures">What could not be removed after the user was deleted; these IDs stay ownerless; <see cref="SoleOwnedPackage.Label"/> form.</param>
 public record AdminDeletionResult(
     IdentityResult Result,
     IReadOnlyList<string?> KeptWithoutOwners,
@@ -60,12 +74,12 @@ public record OrganizationOutcome(string? Name, string Outcome);
 /// <summary>What deleting a user as an administrator would remove or change.</summary>
 /// <param name="ApiKeys">How many API keys go.</param>
 /// <param name="DirectPackageIds">Package IDs the user owns directly.</param>
-/// <param name="SoleOwnedPackageIds">The subset nobody else owns.</param>
+/// <param name="SoleOwnedPackages">The subset nobody else owns, in every repository.</param>
 /// <param name="Organizations">What happens to each organization the user belongs to.</param>
 public record AdminDeletionPreview(
     int ApiKeys,
     IReadOnlyList<string?> DirectPackageIds,
-    IReadOnlyList<string?> SoleOwnedPackageIds,
+    IReadOnlyList<SoleOwnedPackage> SoleOwnedPackages,
     IReadOnlyList<OrganizationOutcome> Organizations);
 
 /// <summary>
@@ -76,25 +90,22 @@ public record AdminDeletionPreview(
 public class AccountDeletionService
 {
     private readonly IContext _context;
-    private readonly IRepositoryContext _repository;
     private readonly UserManager<BaGetUser> _users;
-    private readonly IPackageDatabase _packages;
-    private readonly IPackageDeletionService _packageDeletion;
+    private readonly IServiceScopeFactory _scopes;
+    private readonly IRepositoryService _repositories;
     private readonly ILogger<AccountDeletionService> _logger;
 
     public AccountDeletionService(
         IContext context,
-        IRepositoryContext repository,
         UserManager<BaGetUser> users,
-        IPackageDatabase packages,
-        IPackageDeletionService packageDeletion,
+        IServiceScopeFactory scopes,
+        IRepositoryService repositories,
         ILogger<AccountDeletionService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _users = users ?? throw new ArgumentNullException(nameof(users));
-        _packages = packages ?? throw new ArgumentNullException(nameof(packages));
-        _packageDeletion = packageDeletion ?? throw new ArgumentNullException(nameof(packageDeletion));
+        _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
+        _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -148,11 +159,20 @@ public class AccountDeletionService
         var lastAdministrator = user.IsAdministrator
             && await _context.Users.CountAsync(u => u.IsAdministrator, cancellationToken) <= 1;
 
+        var names = lastOwner.Count == 0
+            ? new Dictionary<int, string>()
+            : (await _repositories.ListAsync(cancellationToken)).ToDictionary(r => r.Key, r => r.Name);
+
         return new DeletionBlockers(
             lastOwner.Select(o => o.PackageId).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
             blocking,
             lastAdministrator,
-            lastOwner.Where(o => o.RepositoryKey == _repository.Current.Key).Select(o => o.PackageId).ToList());
+            lastOwner
+                .Select(o => new SoleOwnedPackage(
+                    o.RepositoryKey,
+                    names.TryGetValue(o.RepositoryKey, out var name) ? name : Repository.DefaultName,
+                    o.PackageId))
+                .ToList());
     }
 
     /// <summary>
@@ -195,9 +215,8 @@ public class AccountDeletionService
                 none, none, none);
         }
 
-        // Only the packages of the repository this runs in can be removed; the others stay, ownerless.
-        var soleOwned = blockers.LastOwnerPackageIds;
-        var removable = blockers.CurrentRepositoryPackageIds ?? soleOwned;
+        // The IDs only this user owned, in every repository: each is removed from its own repository.
+        var soleOwned = blockers.LastOwnerPackages;
         var userName = user?.UserName;
 
         await StageCleanupAsync(user, administrator: true, cancellationToken);
@@ -208,35 +227,45 @@ public class AccountDeletionService
         var failures = new List<string?>();
         if (deleteSoleOwnedPackages)
         {
-            foreach (var id in removable)
+            var repositories = (await _repositories.ListAsync(cancellationToken)).ToDictionary(r => r.Key);
+            foreach (var package in soleOwned)
             {
                 try
                 {
-                    var versions = await _packages.FindAsync(id, includeUnlisted: true, cancellationToken);
-                    var failed = false;
-                    foreach (var package in versions)
+                    if (!repositories.TryGetValue(package.RepositoryKey, out var repository))
                     {
-                        failed |= !await _packageDeletion.TryHardDeletePackageAsync(id, package.Version, cancellationToken);
+                        failures.Add(package.Label);
+                        continue;
                     }
 
-                    #pragma warning disable CS8604, CS8619
-                    (failed ? failures : deleted).Add(id);
-                    #pragma warning restore CS8604, CS8619
+                    // The deletion services work in the repository their scope is pinned to.
+                    using var scope = _scopes.CreateRepositoryScope(repository);
+                    var packages = scope.ServiceProvider.GetRequiredService<IPackageDatabase>();
+                    var deletion = scope.ServiceProvider.GetRequiredService<IPackageDeletionService>();
+
+                    var versions = await packages.FindAsync(package.PackageId, includeUnlisted: true, cancellationToken);
+                    var failed = false;
+                    foreach (var version in versions)
+                    {
+                        failed |= !await deletion.TryHardDeletePackageAsync(package.PackageId, version.Version, cancellationToken);
+                    }
+
+                    if (failed) failures.Add(package.Label); else deleted.Add(package.Label);
                 }
                 catch (Exception e) when (e is not OperationCanceledException and not MaintenanceException)
                 {
-                    _logger.LogError(e, "Could not delete package {Id} of deleted user {User}", id, userName);
-                    failures.Add(id);
+                    _logger.LogError(e, "Could not delete package {Id} ({Repository}) of deleted user {User}", package.PackageId, package.RepositoryName, userName);
+                    failures.Add(package.Label);
                 }
             }
         }
 
         var kept = deleteSoleOwnedPackages
-            ? soleOwned.Except(removable, StringComparer.OrdinalIgnoreCase).ToList()
-            : soleOwned;
+            ? new List<string>()
+            : soleOwned.Select(p => p.Label).ToList();
         _logger.LogWarning(
             "{Admin} deleted user {User}; sole-owned IDs {Ids} {Outcome}",
-            actor, userName, string.Join(", ", soleOwned), deleteSoleOwnedPackages ? "deleted" : "kept without owners");
+            actor, userName, string.Join(", ", soleOwned.Select(p => p.Label)), deleteSoleOwnedPackages ? "deleted" : "kept without owners");
 
         return new AdminDeletionResult(result, kept, deleted, failures);
     }
@@ -297,7 +326,7 @@ public class AccountDeletionService
         var keys = await _context.ApiKeys?.CountAsync(k => k.UserId == user.Id, cancellationToken);
         #pragma warning restore CS8602
 
-        return new AdminDeletionPreview(keys, direct, blockers.LastOwnerPackageIds, outcomes);
+        return new AdminDeletionPreview(keys, direct, blockers.LastOwnerPackages, outcomes);
     }
 
     /// <summary>

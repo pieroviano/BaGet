@@ -22,10 +22,16 @@
         {
             <div class="alert alert-warning" role="alert">
                 <p>You are the only owner of these packages. Add another owner first:</p>
-                <ul>
-                    @foreach (var id in Model.Blockers.LastOwnerPackageIds)
+                <ul id="last-owner-packages">
+                    @foreach (var package in Model.Blockers.LastOwnerPackages)
                     {
-                        <li>@id</li>
+                        <li>
+                            <a href="@Url.Content(BaGet.Identity.RepositoryPageLinks.Manage(package.RepositoryName, package.PackageId))">@package.PackageId</a>
+                            @if (package.RepositoryKey != BaGet.Core.Repository.DefaultKey)
+                            {
+                                <span class="text-muted">in repository @package.RepositoryName</span>
+                            }
+                        </li>
                     }
                 </ul>
             </div>

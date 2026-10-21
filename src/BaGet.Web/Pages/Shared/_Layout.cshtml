@@ -3,8 +3,13 @@
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> Site
 @inject BaGet.Core.IRepositoryContext RepositoryContext
 @inject BaGet.Core.IRepositoryAccess RepositoryAccess
+@inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> Options
 @{
     var hideSearchBar = ViewData["HideSearchBar"] is true;
+
+    // No Upload entry where an upload is impossible (read-only, a closed maintenance gate, nothing to authenticate with).
+    var canUpload = BaGet.Web.UploadAvailability.IsPossible(
+        Options.Value, Accounts.Value, Context.RequestServices.GetService<BaGet.Core.MaintenanceGate>());
 
     // The repository this page shows. Links in the header stay inside it ("r/{name}/" in front), and a page that acts
     // on a repository (RepositoryPageRouteConvention) offers the switcher when more than one is readable. The list
@@ -80,7 +85,10 @@
                 <div id="navbar" class="collapse navbar-collapse">
                     <ul class="nav navbar-nav" role="tablist">
                         <li role="presentation"><a href="@Url.Content("~/" + repositoryPrefix + "packages")" role="tab" nav-link><span>Packages</span></a></li>
-                        <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
+                        @if (canUpload)
+                        {
+                            <li role="presentation"><a asp-area="" asp-page="/Upload" role="tab" nav-link><span>Upload</span></a></li>
+                        }
                         <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
                         <li role="presentation">
                             <a role="tab" href="https://pieroviano.github.io/BaGet/" target="_blank" rel="noopener noreferrer">
@@ -122,7 +130,10 @@
                                         <li><a href="@Url.Page("/Account/ApiKeys")">API keys</a></li>
                                         <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
                                         <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>
-                                        <li><a href="@Url.Page("/Upload")">Upload package</a></li>
+                                        @if (canUpload)
+                                        {
+                                            <li><a href="@Url.Page("/Upload")">Upload package</a></li>
+                                        }
                                         @if (isAdministrator)
                                         {
                                             <li role="separator" class="divider"></li>

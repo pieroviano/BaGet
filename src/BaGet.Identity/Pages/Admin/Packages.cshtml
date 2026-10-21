@@ -9,7 +9,7 @@
     <hr class="breadcrumb-divider" />
 
     <p class="help-block">
-        These IDs predate accounts, or lost their only owner when an account was deleted. Only
+        These IDs (per repository) predate accounts, or lost their only owner when an account was deleted. Only
         administrators and the global API key can change them.
     </p>
 
@@ -21,17 +21,18 @@
     {
         <table class="table" id="ownerless-packages">
             <thead>
-                <tr><th>Package</th><th>Latest version</th><th>Versions</th><th>Downloads</th><th></th></tr>
+                <tr><th>Package</th>@if (Model.ShowRepository) {<th>Repository</th>}<th>Latest version</th><th>Versions</th><th>Downloads</th><th></th></tr>
             </thead>
             <tbody>
                 @foreach (var row in Model.Packages)
                 {
                     <tr>
-                        <td><a href="@Url.RepositoryContent("packages/" + row.Package.Id)">@row.Package.Id</a></td>
+                        <td><a href="@Url.Content(RepositoryPageLinks.Package(row.RepositoryName, row.Package.Id))">@row.Package.Id</a></td>
+                        @if (Model.ShowRepository) {<td>@row.RepositoryName</td>}
                         <td>@(row.Package.LatestVersion ?? "None")</td>
                         <td>@row.Package.VersionCount</td>
                         <td>@row.Package.Downloads.ToString("N0")</td>
-                        <td><a href="@Url.RepositoryContent("packages/" + row.Package.Id + "/manage")">Manage</a></td>
+                        <td><a href="@Url.Content(RepositoryPageLinks.Manage(row.RepositoryName, row.Package.Id))">Manage</a></td>
                     </tr>
                 }
             </tbody>

@@ -159,7 +159,7 @@ repository is `IRepositoryContext`; `IRepositoryAccess` (`BaGet.Core`, default `
 only when `SupportsMultipleRepositories` is false) is the one place that decides which repositories the UI offers: the header
 switcher (`_Layout`, only on repository pages, hidden for fewer than two), the Upload picker, My packages (grouped by repository)
 and `RepositoryPageFilter` (404 on a repository the caller cannot read). Every repository advertises its own
-`PackageDetailsUriTemplate` / `ReportAbuseUriTemplate`.
+`PackageDetailsUriTemplate` / `ReportAbuseUriTemplate`. Links from account/admin pages to a package page of a given repository go through `RepositoryPageLinks` (`BaGet.Identity`; default at `/packages/…`, others `/r/{name}/packages/…`, the pages' twin routes); `AccountDeletionService` works per repository (`SoleOwnedPackage`, deletes in each via `CreateRepositoryScope`).
 
 **Storage layout** (`RepositoryStorage`, `BaGet.Core/Repositories`): `default` keeps `packages/…`, `symbols/…`, `catalog/…`,
 `validation/…`, `staging/…` byte for byte (existing stores need no migration); every other repository nests the same

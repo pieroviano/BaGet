@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
@@ -57,6 +58,13 @@ public class PackageModel : PageModel
     /// Each owner's avatar address by name. Empty when Gravatar is off or accounts are disabled.
     /// </summary>
     public IReadOnlyDictionary<string, string> OwnerAvatars { get; private set; } = new Dictionary<string, string>();
+
+    /// <summary>
+    /// The management page's address when the signed in user may open it (an owner, directly or through an
+    /// organization, or an administrator), else null and the page offers no link. Built by
+    /// <see cref="RepositoryPageLinks.Manage"/> for the repository the request works in.
+    /// </summary>
+    public string? ManageUrl { get; private set; }
 
     public string? IconUrl { get; private set; }
     public string? LicenseUrl { get; private set; }
@@ -131,12 +139,29 @@ public class PackageModel : PageModel
             OwnerAvatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
                 .GetUrlsAsync(Owners, 32, cancellationToken);
             #pragma warning restore CS8602
+
+            if (User.Identity?.IsAuthenticated == true && await CanManageAsync(ownership, Package.Id, cancellationToken))
+            {
+                var repository = HttpContext?.RequestServices.GetService<IRepositoryContext>()?.Current;
+                ManageUrl = Url.Content(RepositoryPageLinks.Manage(repository?.Name, Package.Id));
+            }
         }
         PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
         #pragma warning disable CS8604
         PackageExplorerUrl = "https://nuget.info/packages/"
             + Uri.EscapeDataString(Package.Id) + "/" + Uri.EscapeDataString(Package.NormalizedVersionString);
         #pragma warning restore CS8604
+    }
+
+    // The rule of the management page itself (ManageModel): an owner or an administrator.
+    private async Task<bool> CanManageAsync(PackageOwnershipService ownership, string? packageId, CancellationToken cancellationToken)
+    {
+        var services = HttpContext!.RequestServices;
+        var userId = services.GetService<UserManager<BaGetUser>>()?.GetUserId(User);
+        if (await ownership.IsOwnerAsync(userId, User.Identity?.Name, packageId, cancellationToken)) return true;
+
+        var administrators = services.GetService<AdministratorService>();
+        return administrators != null && await administrators.IsAdministratorAsync(User, cancellationToken);
     }
 
     /// <summary>

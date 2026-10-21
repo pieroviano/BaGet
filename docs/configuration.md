@@ -156,7 +156,8 @@ shown, and nothing is published until the preview is confirmed. With
 [accounts](#accounts-package-owners-and-api-keys) on, the signed-in session is the identity and
 ownership decides what it may publish; with accounts off the page asks for the same `ApiKey` a push
 needs. `IsReadOnlyMode` refuses both. A `.snupkg` is indexed for a version the server already has -
-it never creates a package ID and confers no ownership.
+it never creates a package ID and confers no ownership. The *Upload* navigation entries are hidden
+where an upload cannot work: read-only mode, a closed maintenance gate, or accounts off with no `ApiKey`.
 
 | Operating note | |
 | --- | --- |
@@ -273,7 +274,8 @@ account without one). Everyone else, and every request while accounts are off, g
   | `/packages/{id}/manage` | Opens for any ID, ownerless ones included, with a "managing as an administrator" banner. Writes by a non-owner administrator are logged (`Administrator {Admin} ran {Handler} on {PackageId}`). |
   | Manage, *Delete permanently* | Hard-deletes one version, or every version and the owners (*Danger zone*), whatever `PackageDeletionBehavior` says. Needs the administrator's password (or a fresh provider sign-in); logged. Read-only mode refuses it. |
   | `/admin/users/{name}/packages` | The IDs a user owns, with owners and a link to Manage. |
-  | `/admin/packages` | IDs with no owner (predating accounts, or left without one), 50 per page. |
+  | `/admin/packages` | IDs with no owner (predating accounts, or left without one) in every repository, 50 per page; a Repository column appears once one is outside `default`, and each link goes to that repository's page. |
+| Package page, *Manage package* | Shown only to an owner (directly or through an organization) or an administrator. |
 * The check reads the database on every request, so a demotion applies at once.
 
 **User powers** (`/admin/users`; each action asks for the administrator's password, and none applies to your own row, which stays on `/account/settings`):
@@ -287,7 +289,7 @@ account without one). Everyone else, and every request while accounts are off, g
 
 * **Account deletion by an administrator** is never blocked by ownership. A package ID the user alone owned is either
   *left without owners* (the default: only administrators and the global API key manage it, like IDs that predate accounts)
-  or *deleted permanently with all its versions*. The user is removed first; a failure while deleting packages is reported
+  or *deleted permanently with all its versions*, in **every** repository the user was sole owner in (the confirmation lists each as `ID (repository)`). The user is removed first; a failure while deleting packages is reported
   and never rolls the deletion back.
 * **Organizations**: if the user is the last organization administrator and others remain, the longest-standing member
   becomes administrator. If the user is the only member and the organization owns packages, the organization is kept without members;

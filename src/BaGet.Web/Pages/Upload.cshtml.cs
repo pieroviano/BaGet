@@ -130,7 +130,7 @@ public class UploadModel : PageModel
     /// rendered to claim otherwise. <c>dotnet nuget push</c> is unaffected: this page is
     /// a convenience, not the authorization model.
     /// </summary>
-    public bool NothingCanAuthenticate => !AccountsEnabled && string.IsNullOrEmpty(_options.Value.ApiKey);
+    public bool NothingCanAuthenticate => UploadAvailability.NothingCanAuthenticate(_options.Value, _accounts.Value);
 
     /// <summary>
     /// What the page says in that state, so the explanation and the refusal are one

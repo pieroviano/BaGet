@@ -286,7 +286,8 @@ public class LookAndFeelTests : IDisposable
     [Fact]
     public async Task TheHeaderCarriesTheBrandAndTheNavigation()
     {
-        var (_, browser) = Start();
+        // Upload is listed only where an upload can work: here, by accounts being on.
+        var (_, browser) = Start(new Dictionary<string, string> { { "Accounts:Enabled", "true" } });
 
         var html = await browser.GetPageAsync("stats");
 

@@ -367,7 +367,7 @@ public class RepositoryIsolationTests : IDisposable
             // Sole ownership in either repository blocks the self-service deletion ...
             var blockers = await deletion.GetBlockersAsync(user, Cancellation);
             Assert.Equal(new[] { "Sole.default", "Sole.second" }, blockers.LastOwnerPackageIds.OrderBy(i => i));
-            Assert.Equal(new[] { "Sole.default" }, blockers.CurrentRepositoryPackageIds);
+            Assert.Equal(new[] { "default", "second" }, blockers.LastOwnerPackages.Select(p => p.RepositoryName).OrderBy(n => n));
 
             // ... and an administrator's deletion leaves nobody's ownership behind anywhere.
             var result = await deletion.DeleteByAdministratorAsync(user, deleteSoleOwnedPackages: false, "admin", Cancellation);

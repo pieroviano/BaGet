@@ -32,10 +32,10 @@
     else
     {
         <form method="post">
-            @if (Model.Preview?.SoleOwnedPackageIds.Count > 0)
+            @if (Model.Preview?.SoleOwnedPackages.Count > 0)
             {
                 <h2>Packages only @Model.Name owns</h2>
-                <p>@string.Join(", ", Model.Preview.SoleOwnedPackageIds)</p>
+                <p id="sole-owned-packages">@string.Join(", ", Model.Preview.SoleOwnedPackages.Select(p => p.Label))</p>
                 <div class="radio">
                     <label>
                         <input type="radio" name="soleOwned" value="keep" checked="@(Model.SoleOwned != "delete")" />
@@ -45,7 +45,7 @@
                 <div class="radio">
                     <label>
                         <input type="radio" name="soleOwned" value="delete" checked="@(Model.SoleOwned == "delete")" disabled="@Model.IsReadOnlyMode" />
-                        Delete them permanently, with all their versions.
+                        Delete them permanently, with all their versions, in every repository they are in.
                     </label>
                 </div>
             }

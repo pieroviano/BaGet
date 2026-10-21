@@ -144,6 +144,8 @@ last-owner rules of `PackageOwnershipService`), manage members. Pages under `/ad
 
 ### U8 — UI inconsistencies
 
+**Done** (`UiConsistencyTests`). Links go through `RepositoryPageLinks` (`BaGet.Identity`), the one seam for where a repository's package pages live: default at `/packages/…`, others at `/r/{name}/packages/…` (404 until the repository-aware pages exist). "Manage" is shown to owners and administrators (holders of a Manage permission arrive with U2). The Upload nav rule is `UploadAvailability` (read-only, closed maintenance gate, nothing to authenticate with).
+
 | Fix | Where |
 |---|---|
 | "Manage package" only for owners, admins, or holders of Manage | `Package.cshtml:361-366` |
