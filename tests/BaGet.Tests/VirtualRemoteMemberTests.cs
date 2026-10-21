@@ -89,6 +89,21 @@ public class VirtualRemoteMemberTests : IDisposable
         Assert.Equal(fetches, _wire.Count(".nupkg"));
     }
 
+    [Theory]
+    [InlineData("r/up/")]
+    [InlineData("r/v/")]
+    public async Task AFetchRefusedByTheClosedGateIsA503NotA404AndNoMemberIsSkipped(string prefix)
+    {
+        await SeedUpstreamAsync();
+        _app.Services.GetRequiredService<MaintenanceGate>().Close("Copying the database");
+
+        using var response = await _client.GetAsync(prefix + Nupkg, Cancel);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.True(response.Headers.RetryAfter != null, "Retry-After is missing.");
+        Assert.Equal(0, await StoredAsync("up"));
+    }
+
     [Fact]
     public async Task ALocalMemberAheadOfTheRemoteOneAnswersWithoutAskingTheUpstreamForThatVersion()
     {

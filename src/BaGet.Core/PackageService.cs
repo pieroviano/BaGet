@@ -180,8 +180,10 @@ public class PackageService : IPackageService
                 return result == PackageIndexingResult.Success;
             }
         }
-        catch (Exception e)
+        catch (Exception e) when (e is not MaintenanceException)
         {
+            // A closed MaintenanceGate is not a failed fetch: it propagates so the caller answers 503 + Retry-After
+            // (and a virtual repository does not fall through to its next member).
             BaGetDiagnostics.Fail(activity, e);
 
             _logger.LogError(
