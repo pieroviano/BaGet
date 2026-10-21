@@ -37,7 +37,7 @@ Other administrator pages work across all repositories:
 |---|---|
 | `/admin/operations` | Runs *Rebuild the catalog* and *Import download counts* for a chosen repository as background jobs; shows each one's last status |
 | `/admin/validation` | Pending and quarantined submissions of every repository: retry, release (index anyway, audited), reject (see [configuration](configuration.md#validation)) |
-| `/admin/abuse` | Abuse reports of every repository (unresolved by default, `?all=true` for all): resolve or reopen; links to Manage for `default` packages (package pages are not repository-aware yet) |
+| `/admin/abuse` | Abuse reports of every repository (unresolved by default, `?all=true` for all): resolve or reopen; links each package to its Manage page in its own repository |
 
 Rules:
 

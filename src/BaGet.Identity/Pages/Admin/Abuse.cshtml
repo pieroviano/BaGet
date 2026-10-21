@@ -45,10 +45,9 @@
                     {
                         <tr data-report="@report.Key" data-repository="@report.Repository">
                             <td>
-                                @* The package pages show the default repository only until they are repository-aware. *@
-                                @if (report.Repository == BaGet.Core.Repository.DefaultName && report.PackageId != null)
+                                @if (report.PackageId != null)
                                 {
-                                    <a href="@Url.Page("/Packages/Manage", new { id = report.PackageId })">@report.PackageId @report.PackageVersion</a>
+                                    <a href="@Url.Content(RepositoryPageLinks.Manage(report.Repository, report.PackageId))">@report.PackageId @report.PackageVersion</a>
                                 }
                                 else
                                 {

@@ -428,8 +428,8 @@ public class AdminOperationsTests : IDisposable
         Assert.Contains("Open.Second", html);
         Assert.Contains("data-repository=\"second\"", html);
         Assert.DoesNotContain("Done.Default", html);
-        Assert.True(html.Contains("/packages/open.default/manage"), html);
-        Assert.DoesNotContain("/packages/open.second/manage", html);
+        Assert.True(html.Contains("href=\"/packages/Open.Default/manage\""), html);
+        Assert.True(html.Contains("href=\"/r/second/packages/Open.Second/manage\""), html);
 
         Assert.Contains("Done.Default", await _admin.GetPageAsync("admin/abuse?all=true"));
     }
