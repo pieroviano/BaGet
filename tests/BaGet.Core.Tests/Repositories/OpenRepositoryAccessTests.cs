@@ -8,7 +8,7 @@ using Xunit;
 namespace BaGet.Core.Tests.Repositories;
 
 /// <summary>
-/// What the UI offers today (every NuGet repository), and the single-repository mode (Azure Table, AzureSearch): the
+/// What the UI offers (every repository, of every format), and the single-repository mode (Azure Table, AzureSearch): the
 /// default repository only, with the switchers and pickers asking <see cref="IRepositoryAccess.SupportsMultipleRepositories"/>.
 /// </summary>
 public class OpenRepositoryAccessTests
@@ -27,7 +27,7 @@ public class OpenRepositoryAccessTests
     }
 
     [Fact]
-    public async Task ListsEveryNuGetRepositoryDefaultFirstThenByName()
+    public async Task ListsEveryRepositoryDefaultFirstThenByName()
     {
         var access = Access(true, Zeta, RepositoryInfo.Default, Alpha);
 
@@ -39,13 +39,15 @@ public class OpenRepositoryAccessTests
     }
 
     [Fact]
-    public async Task LeavesOutRepositoriesOfOtherFormats()
+    public async Task OffersRepositoriesOfEveryFormat()
     {
-        var npm = new RepositoryInfo(9, "packages-js", (RepositoryFormat)99, RepositoryKind.Local);
+        // The pages of a repository decide per format (RepositoryPageFilter); the listing is the same for every format.
+        var npm = new RepositoryInfo(9, "packages-js", RepositoryFormat.Npm, RepositoryKind.Local);
         var access = Access(true, RepositoryInfo.Default, npm);
 
-        Assert.Equal(new[] { "default" }, (await access.ReadableAsync(null, CancellationToken.None)).Select(r => r.Name));
-        Assert.False(await access.CanReadAsync(null, npm, CancellationToken.None));
+        Assert.Equal(new[] { "default", "packages-js" }, (await access.ReadableAsync(null, CancellationToken.None)).Select(r => r.Name));
+        Assert.Equal(new[] { "default", "packages-js" }, (await access.WritableAsync(null, CancellationToken.None)).Select(r => r.Name));
+        Assert.True(await access.CanReadAsync(null, npm, CancellationToken.None));
         Assert.True(await access.CanReadAsync(null, Alpha, CancellationToken.None));
     }
 

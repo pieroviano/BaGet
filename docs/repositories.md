@@ -7,7 +7,7 @@ A server holds one or more named repositories. Each has its own packages, owners
 | `default` | `/v3/index.json` (unchanged; every existing install is this one) |
 | any other | `/r/{name}/v3/index.json` |
 
-Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) NuGet repositories can be created; the [format layer](formats.md) is how other formats (npm next) plug in.
+Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) NuGet repositories can be created, and local [npm](npm-registry.md) ones (the [format layer](formats.md) is how formats plug in).
 
 ## Web pages
 
@@ -27,7 +27,7 @@ Administrators manage them at `/admin/repositories` (menu: *Repositories*). Othe
 
 | Page | Does |
 |---|---|
-| `/admin/repositories` | Lists name, type, package count and feed address (with a copy button); creates a local, a [remote](remote-repositories.md) or a [virtual](virtual-repositories.md) repository |
+| `/admin/repositories` | Lists name, format, type, package count and feed address (with a copy button) and the links of its format (npm: *Browse*, *Upload*, *Registry*); creates a local, a [remote](remote-repositories.md) or a [virtual](virtual-repositories.md) NuGet repository, or a local one of another format ([npm](npm-registry.md)) |
 | `/admin/repositories/{name}` | Shows the feed and who effectively holds each action (see [Access control](access-control.md#admin-pages)); edits *Anonymous read*; for a remote repository also its upstream, *Test connection*, the cache and *Purge* ([details](remote-repositories.md)); for a virtual one its members, deploy repository and *Where would a package come from?* ([details](virtual-repositories.md)); a member lists the virtual repositories it belongs to |
 | `/admin/repositories/{name}/delete` | Deletes a repository that holds **no packages** (a remote one: purge its cache first) |
 

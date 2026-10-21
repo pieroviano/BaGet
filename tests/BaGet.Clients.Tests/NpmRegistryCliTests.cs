@@ -16,11 +16,11 @@ namespace BaGet.Clients.Tests;
 /// </summary>
 public class NpmRegistryCliTests
 {
-    private const string Repository = "web";
-    private const string GlobalKey = "global-key-for-cli";
+    internal const string Repository = "web";
+    internal const string GlobalKey = "global-key-for-cli";
 
     // npm writes its configuration to $HOME/.npmrc; the other settings keep the output to what the tests assert on.
-    private static string Npmrc(BaGetServer server, string? token, string repository = Repository, string extra = "")
+    internal static string Npmrc(BaGetServer server, string? token, string repository = Repository, string extra = "")
     {
         var lines = $"registry={server.RegistryUrl(repository)}\\nupdate-notifier=false\\nfund=false\\naudit=false\\nprogress=false\\n{extra}";
         if (token != null) lines += $"{server.AuthKey(repository)}={token}\\n";
@@ -28,7 +28,7 @@ public class NpmRegistryCliTests
         return $"printf '{lines}' > $HOME/.npmrc\n";
     }
 
-    private static string Package(string dir, string name, string version, string extraJson = "", string? readme = null)
+    internal static string Package(string dir, string name, string version, string extraJson = "", string? readme = null)
         => $$"""
             mkdir -p {{dir}} && cd {{dir}}
             cat > package.json <<'JSON'
@@ -62,7 +62,7 @@ public class NpmRegistryCliTests
 
     private static string Clean(string script) => script.Replace("\r\n", "\n");
 
-    private static async Task<(BaGetServer Server, DotNet.Testcontainers.Containers.IContainer Node)> StartAsync(IDictionary<string, string>? settings = null, bool anonymousRead = true)
+    internal static async Task<(BaGetServer Server, DotNet.Testcontainers.Containers.IContainer Node)> StartAsync(IDictionary<string, string>? settings = null, bool anonymousRead = true)
     {
         var node = await ClientContainers.NodeAsync();
         var server = await BaGetServer.StartAsync(settings);
@@ -71,7 +71,7 @@ public class NpmRegistryCliTests
         return (server, node);
     }
 
-    private static async Task<CliResult> RunAsync(DotNet.Testcontainers.Containers.IContainer node, string script)
+    internal static async Task<CliResult> RunAsync(DotNet.Testcontainers.Containers.IContainer node, string script)
     {
         return await ClientContainers.RunAsync(node, Clean(script));
     }
@@ -338,33 +338,5 @@ public class NpmRegistryCliTests
         var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser>>();
         var alice = (await users.FindByNameAsync("alice"))!;
         Assert.Empty(await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>().ListAsync(alice.Id, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public async Task ALargeTarballIsPublishedAndInstalledIntactWithBoundedServerMemory()
-    {
-        var (server, node) = await StartAsync(new Dictionary<string, string> { ["ApiKey"] = GlobalKey });
-        await using var _ = server;
-
-        // 40 MB of random bytes do not compress, so the request body is about 53 MB of base64.
-        var before = GC.GetTotalAllocatedBytes(precise: false);
-        var publish = await RunAsync(node, Npmrc(server, GlobalKey) + Package("pub", "big-pkg", "1.0.0")
-            + "head -c 41943040 /dev/urandom > payload.bin\nsha256sum payload.bin | cut -d' ' -f1 > /tmp/expected-big.sha\nnpm publish 2>&1\necho \"--- sha\"\ncat /tmp/expected-big.sha\n");
-        var allocated = GC.GetTotalAllocatedBytes(precise: false) - before;
-        Assert.True(publish.ExitCode == 0, publish.All);
-        var expected = publish.Stdout.Split("--- sha\n").Last().Trim();
-
-        // Reading the body, the base64 and the tarball does not allocate in proportion to the file.
-        Assert.True(allocated < 24L * 1024 * 1024, $"the server allocated {allocated} bytes while a 40 MB tarball was published");
-
-        var consume = await RunAsync(node, Npmrc(server, null) + """
-            mkdir app && cd app
-            echo '{"name":"app","version":"1.0.0"}' > package.json
-            npm install big-pkg
-            sha256sum node_modules/big-pkg/payload.bin | cut -d' ' -f1
-            """);
-        Assert.True(consume.ExitCode == 0, consume.All);
-        Assert.Equal(expected, consume.Stdout.Trim().Split('\n').Last());
-        Assert.True((await server.PackageAsync(Repository, "big-pkg"))!.Versions.Single().TarballSize > 41943040L);
     }
 }

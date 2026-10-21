@@ -45,6 +45,7 @@ nav:
   - Configuration: configuration.md
   - Repositories: repositories.md
   - Package formats: formats.md
+  - npm registry: npm-registry.md
   - Remote repositories: remote-repositories.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md

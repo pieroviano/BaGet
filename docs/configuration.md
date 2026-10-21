@@ -125,6 +125,15 @@ address, or a redirect to one, is refused; with an HTTP proxy configured the pro
 upstream is contacted by NuGet's own HTTP stack: only the URL's host is checked. `Mirror:PackageSource` is operator
 configuration: if it is refused the `mirror` repository is not created (a warning is logged) and fetches fail.
 
+## npm repositories
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Npm:UnpublishWindow` | `72:00:00` | how long after publishing a version its owner may unpublish it with Deploy alone; later unpublishing needs Delete. Zero or negative: always Delete. Live |
+| `Npm:MaxPublishBytes` | `536870912` | largest `npm publish` request body in bytes (413 above); `0` = no limit. Live |
+
+See [npm registry](npm-registry.md).
+
 ## Enable package hard deletions
 
 To prevent the ["left pad" problem](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm),

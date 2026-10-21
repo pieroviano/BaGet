@@ -37,9 +37,12 @@ tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 
 to the last migration before `AddRepositories` (looked up per provider, timestamps differ), fills the old schema with raw
 parameterised SQL, then the current migrations must put every row in repository key 1 and allow the same ID/version in key 2.
 
-`BaGet.Clients.Tests` (client rigs, B6) runs the real `npm` 10 in `node:22-alpine` (Testcontainers, idle container, scripts `exec`ed with an empty `$HOME`) against
-`HostRegistry`, a recording Kestrel server on `0.0.0.0` reached as `host.docker.internal` (WebApplicationFactory has no socket); skips without Docker. It pins what npm
-sends for a read, `whoami`, `login` (web then CouchDB fallback) and `publish` (`docs/formats.md`). `docker:dind` and `maven` rigs follow with P5/P4.
+`BaGet.Clients.Tests` (client rigs, B6) runs the real `npm` 10 in `node:22-alpine` (Testcontainers, idle container, scripts `exec`ed with a fresh empty `$HOME` **per run**, so one
+script must hold a whole scenario) against a Kestrel server on `0.0.0.0` reached as `host.docker.internal` (WebApplicationFactory has no socket); skips without Docker.
+`HostRegistry` is a recording fake: `NpmClientFlowTests` pins what npm sends for a read, `whoami`, `login` (web then CouchDB fallback) and `publish` (`docs/formats.md`).
+`BaGetServer` is the **real application** (`Program.BuildApplication` with command-line settings, SQLite and a file store in a temp folder, `RunMigrationsAsync`, then `StartAsync`) on that kind of socket:
+`NpmRegistryCliTests` (publish, install, scoped names through `%2f`, dist-tag, deprecate, unpublish, search/ping/whoami/audit, login/logout, a private repository) and `NpmLargeTarballCliTests`
+(40 MB, server allocations under 24 MB, runs alone in the `AllocationMeasurements` collection). `npm login` needs a terminal, so the tests run npm's own `npm-profile` login. `docker:dind` and `maven` rigs follow with P5/P4.
 
 `BaGet.Telemetry.Tests` (shares `BaGetApplication` etc. from `BaGet.Tests` as linked files; `Containers.cs`) runs a real host against
 `jaegertracing/all-in-one:1.76.0` (traces; query API read back) and `otel/opentelemetry-collector:0.140.0` (debug exporter, read back
@@ -159,9 +162,27 @@ registered with `TryAddEnumerable`, collected by `FormatRegistry`, which refuses
 scoped `IFormatService`s (`IFormatIndexer`, `IFormatSearchProvider` implemented by NuGet; `IFormatRetentionHooks`, `IFormatScanner` interfaces only) found with
 `GetFormatService<T>(format)`. `NuGetFormatModule` is the NuGet refactor (no behaviour change). `RepositoryService.CreateAsync` asks the module (unknown format or
 kind -> `NotSupportedException`; a `fields` overload for module-specific create forms). Format routes go through `BaGetEndpointBuilder.MapRoute(..., format:)`.
-No npm module is registered yet, so no `Npm` repository can be created; the tables exist (`NpmPackages` repository-scoped, `NpmVersions`, `NpmDistTags`; migration
-`AddNpmTables` x4). Admin: `/admin/formats` (list), Repositories page (links by module, per-format create form). Still NuGet-only until the npm registry: upload picker,
-header switcher, My packages, the `Format == NuGet` filters in access/API-key code.
+`NpmFormatModule` is registered (local repositories only), so `Npm` repositories can be created: tables `NpmPackages` (repository-scoped), `NpmVersions`, `NpmDistTags`
+(migration `AddNpmTables` x4; the registry needed no further schema change). Admin: `/admin/formats` (list), Repositories page (links by module, per-format create form).
+The upload picker, header switcher, My packages, access listings and API-key limits cover every format (the `Format == NuGet` filters are gone; virtual repositories stay NuGet-only).
+**Razor Pages and formats:** pages are served under `/r/{repo}/` for every repository; `RepositoryPageRouteConvention.PageFormats` names a page's format (NuGet unless listed) and
+`RepositoryPageFilter` answers 404 for a page of another format, redirecting only the NuGet front page (`/Index`) of a repository of another format to the module's `browse` link.
+`RepositoryResolutionMiddleware` therefore format-checks only protocol routes, not pages.
+
+**npm registry** (`BaGet.Core/Formats/Npm`, user docs `docs/npm-registry.md`). `INpmRegistry` (`NpmRegistryService`, scoped, works in `IRepositoryContext.Current`) holds every operation: `GetPackument(abbreviated)`, `OpenTarball`,
+`Publish`/`PublishTarball`, dist-tags, `Deprecate`, `UnpublishVersions`/`UnpublishPackage`/`DeleteTarball`, `Search(canRead)`. Reads take no caller (the route or page already required Read); **every write takes the caller**
+and goes through `IPackageAuthorizationService` (Push = Deploy for publish and tags, Annotate = deprecate, Manage = Delete after `Npm:UnpublishWindow`; Push is enough inside the window) so routes and pages cannot
+differ; results are `NpmResult`/`NpmStatus` (mapped to 400/401/403/404/409 by `NpmController`, `{"error": …}` bodies). Names are `NpmNames` (lower case, `@scope/name`, `%2f` decoded; the one place that validates
+names, versions, tags and the tarball path `npm/{name}/-/{file}` under `RepositoryStorage.Scope`). Publish: `NpmPublishBody` copies the `PUT` body to a temp file, strips `_attachments.*.data` in one lexical pass
+(keys and base64 may be JSON-escaped by other encoders) and decodes each attachment from the file to another temp file, so memory is the metadata, never the tarball; `NpmRegistryService.PublishAsync`
+hashes it (sha512 SRI + sha1), refuses a declared integrity/shasum/length that differs, reads `package.json` out of the tarball (`NpmTarballReader`, bounded) and requires the same name and version, then stores
+the file and writes package/version/tags in one transaction (a unique-index race is a 409; a failure deletes the file it stored). The first version always gets `latest`. The manifest is stored as published minus
+`dist.tarball` (rebuilt per request from `IUrlGenerator.GetNpmRegistryUrl`). Routes: `BaGetEndpointBuilder.MapNpmRoutes` registers every package route in two shapes (`{name}` for `@scope%2fname`,
+`@{scope}/{pkg}`); `RepositoryReadFilter` decodes the name for the access patterns (`NpmRouteNames`) and adds a `Bearer` challenge; write routes are method-constrained (WritesOnly) and call
+`RequestPrincipalResolver.ResolveForWriteAsync` (API key as Basic password / Bearer / `X-NuGet-ApiKey`, **never the cookie session**). Ownership reuses `PackageOwner` (`OwnershipAuthorizationService.ExistsAsync` asks the
+repository's format); `npm login` = `INpmTokenService` (`NpmTokenService`, accounts only): password checked like the sign-in page (lockout, confirmed email, no two-factor), token = an API key limited to the repository.
+Pages: `NpmPackages`, `NpmPackage`, `NpmUpload` (BaGet.Web), `Packages/NpmManage` (Identity; owners, tags, deprecate, unpublish with password); `NpmInstallSnippets` builds the commands and `.npmrc` lines.
+Search/listings match names and are filtered per package Read (`SearchAsync(canRead)`). Options `Npm:UnpublishWindow`, `Npm:MaxPublishBytes` (`NpmOptions`). Admin user deletion unpublishes sole-owned npm packages (`AccountDeletionService`).
 
 **Remote repositories** (`RepositoryKind.Remote`; `BaGet.Core/Repositories/Remote`, docs: `docs/remote-repositories.md`). The upstream
 is `RemoteRepositorySettings` as JSON in `Repository.Settings` (no extra table; the password is stored as `protectedPassword` through
@@ -404,7 +425,9 @@ A new protocol test class should follow the pattern. Helpers:
 `RepositoryLifecycleIsolationTests` pushes/unlists/relists/deprecates in one repository and asserts the other's whole read
 surface is unchanged; `UpgradeFromPreRepositoryTests` (B7) starts the real app on a pre-repository SQLite database and
 `packages/…` store and asserts everything is served unchanged at `/`, keys/owners still work and no file moves.
-`AdminFormatsTests` registers a fake npm module (its `FakeNpmModule`) to drive the format pages end to end. `RepositoryPagesTests` / `RepositoryAccountPagesTests` cover the pages at `/r/second/` (links stay inside, switcher, upload target, My packages grouped,
+`AdminFormatsTests` replaces the real npm module with a fake one that has create fields (its `FakeNpmModule`) to drive the generic format pages end to end. npm: `NpmRegistryTests` (HTTP protocol; the test server decodes
+`%2f`, so scoped names arrive as two segments), `NpmAccessTests` (ownership, scopes, window, private repositories, login), `NpmPagesTests` (pages, filter, header), helper `NpmTestPackages` (tarballs and publish bodies),
+`CreateNpmRepositoryAsync`. `RepositoryPagesTests` / `RepositoryAccountPagesTests` cover the pages at `/r/second/` (links stay inside, switcher, upload target, My packages grouped,
 admin Browse/Upload links, `IRepositoryAccess` refusal = 404); `RepositoryPageRoutingFacts` (`BaGet.Web.Tests`) the convention and `RepositoryUrlHelper`.
 
 **Access tests** (`BaGet.Tests`): `AccessUpgradeEquivalenceTests` (B3 merge gate: a pre-repository database migrated by the current code behaves as before),

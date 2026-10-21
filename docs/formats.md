@@ -1,12 +1,12 @@
 # Package formats
 
-A repository has a **format**. NuGet is the only one with a protocol today; npm follows (its tables and client rig exist), then
-Maven and Docker. `/admin/formats` (administrators) lists what this server can host.
+A repository has a **format**. NuGet and npm (local repositories, see [npm registry](npm-registry.md)) have a protocol today; Maven and
+Docker follow. `/admin/formats` (administrators) lists what this server can host.
 
 | Format | Served under | Feed address | Repository kinds | Storage folders | Status |
 |---|---|---|---|---|---|
 | NuGet | the repository base (`/v3/…`, `/api/v2`, symbols) | `v3/index.json` | local, remote, virtual | `packages` `symbols` `catalog` `validation` `staging` | done |
-| npm | `npm/` | `npm/` | local (remote, virtual later) | `npm` | tables only; no registry yet |
+| npm | `npm/` | `npm/` | local (remote, virtual later) | `npm` | local registry done ([details](npm-registry.md)) |
 | Maven, Docker | | | | | not started |
 
 The *repository base* is `/` for `default` and `/r/{name}/` for the others, so an npm repository `web` is at `/r/web/npm/`. A
@@ -32,15 +32,19 @@ What a format does per request is a scoped service beside the module, found with
 
 | Service | Phase | NuGet |
 |---|---|---|
-| `IFormatIndexer` (deploy) | npm P3 | `NuGetFormatIndexer` over `IPackageIndexingService` |
-| `IFormatSearchProvider` | npm P3 | `NuGetFormatSearchProvider` over `ISearchService` |
+| `IFormatIndexer` (deploy) | npm P3 | `NuGetFormatIndexer` over `IPackageIndexingService`; npm has none (publishing needs the caller, so it is `INpmRegistry.PublishAsync`) |
+| `IFormatSearchProvider` | npm P3 | `NuGetFormatSearchProvider` over `ISearchService`; `NpmFormatSearchProvider` over `INpmRegistry.SearchAsync` |
 | `IFormatRetentionHooks` | P6 | not yet |
 | `IFormatScanner` | P7 | not yet |
 
 Routes go through `BaGetEndpointBuilder.MapRoute(..., format: module.Format)` with a pattern starting `"{RoutePrefix}/…"`; it
-registers the default and `r/{repo}/` variants and tags the endpoint (`RepositoryRouteMetadata.Format`). Razor Pages and
-unmarked endpoints are NuGet's. Not yet format-aware (still NuGet-only, to widen with the npm registry): the upload picker,
-header switcher, My packages, API-key repository limits, access-model listings (`Format == NuGet` filters), Azure Table.
+registers the default and `r/{repo}/` variants and tags the endpoint (`RepositoryRouteMetadata.Format`). Unmarked endpoints are
+NuGet's. **Razor Pages** are served under `/r/{repo}/` for every repository and decide per page: `RepositoryPageRouteConvention.PageFormats`
+names the format of a page (NuGet unless listed; the npm pages `/NpmPackages`, `/NpmPackage`, `/NpmUpload`, `/Packages/NpmManage`),
+and `RepositoryPageFilter` answers 404 for a page of another format, except that the NuGet front page of a repository of another format
+redirects to the module's `browse` link. Widened with npm: the upload picker, header switcher, My packages, API-key repository
+limits and the access-model listings now cover every format (the `Format == NuGet` filters are gone, except in virtual
+repositories, which stay NuGet). Azure Table still serves `default` only.
 
 ## Data model (B1)
 
@@ -52,7 +56,9 @@ npm tables exist (migration `AddNpmTables` on SQLite, SQL Server, PostgreSQL, My
 | `NpmVersions` | `PackageKey`, `Version` (256), `Integrity` (sha512 SRI), `Shasum` (sha1 hex), `TarballSize`, `Manifest` (JSON, unbounded), `Deprecated`, `Published` | unique `(PackageKey, Version)`; cascade from package |
 | `NpmDistTags` | `PackageKey`, `Tag` (128), `Version` | unique `(PackageKey, Tag)`; cascade; no FK to the version |
 
-The packument is built from the manifests, so the registry answers what was published. Tarballs live in storage, not in rows.
+The packument is built from the manifests, so the registry answers what was published (without the tarball address, built per request).
+Tarballs live in storage, not in rows. The npm registry needed no further schema change: its migration is `AddNpmTables`.
+Package owners are the common `PackageOwner` rows (repository-scoped, keyed by the lower-case npm name).
 
 Sketches for later phases (not built):
 
