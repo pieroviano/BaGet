@@ -12,8 +12,9 @@ namespace BaGet.Web;
 /// <summary>
 /// The single check every repository page passes (<see cref="RepositoryPageRouteConvention.RepositoryPages"/>): the
 /// caller must be allowed to read the repository the request resolved to (<see cref="IRepositoryAccess"/>), else the
-/// page answers 404, the same answer as an unknown repository, so nothing says that a private one exists. An access
-/// model plugs in by replacing <see cref="IRepositoryAccess"/>; no page repeats the check.
+/// page answers 404 to a signed-in user (the same answer as an unknown repository, so nothing says that a private one
+/// exists) and sends a visitor who is not signed in to sign in, when the host has accounts. <see cref="IRepositoryAccess"/>
+/// is backed by the access model (<see cref="IAccessEvaluator"/>); no page repeats the check.
 /// </summary>
 public class RepositoryPageFilter : IAsyncPageFilter
 {
@@ -32,7 +33,13 @@ public class RepositoryPageFilter : IAsyncPageFilter
 
             if (!await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted))
             {
-                context.Result = new NotFoundResult();
+                // A visitor who is not signed in is sent to sign in (when the host has accounts) - they may be allowed
+                // once they are; a signed-in user without Read gets 404, so nothing says the repository exists.
+                var schemes = services.GetRequiredService<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>();
+                context.Result = context.HttpContext.User.Identity?.IsAuthenticated != true
+                    && await schemes.GetDefaultChallengeSchemeAsync() != null
+                    ? new ChallengeResult()
+                    : new NotFoundResult();
                 return;
             }
         }

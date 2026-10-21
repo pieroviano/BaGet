@@ -24,8 +24,8 @@ namespace BaGet.Core;
 /// <item>Checks that need no access to the target run first, so a refusal leaves it as it was: the source has no
 /// pending migrations, and nothing in it is something the target cannot hold (<see cref="DatabaseCopyPreflight"/>,
 /// judged on the target's model). Then the target: reachable (a database that does not exist yet is created), its
-/// schema migrated, every mapped table empty (the <c>default</c> repository row that the <c>AddRepositories</c> migration
-/// seeds does not count; it is removed, the source's own rows replacing it). A target that is current and not empty is refused untouched; one
+/// schema migrated, every mapped table empty (the <c>default</c> repository row of the <c>AddRepositories</c> migration and the built-in groups,
+/// targets and grants of <c>AddAccessControl</c> do not count; they are removed, the source's own rows replacing them). A target that is current and not empty is refused untouched; one
 /// that needed migrating and is then found not empty keeps its updated schema, and the refusal says so.</item>
 /// <item>Tables in foreign-key order, in batches of <see cref="BatchSize"/> rows ordered by primary key, with
 /// the provider's explicit-key hooks (<see cref="IContext.BeginKeyedInsertAsync"/>).</item>
@@ -240,7 +240,7 @@ public class DatabaseCopyService
             Update(s => s with { Phase = DatabaseCopyPhase.Migrating, Table = null, Message = "Preparing the target's schema." });
             await target.RunMigrationsAsync(cancellationToken).ConfigureAwait(false);
             await EnsureEmptyAsync(targetDb, tables, schemaUpdated: true, cancellationToken).ConfigureAwait(false);
-            await RemoveSeededDefaultRepositoryAsync(targetDb, cancellationToken).ConfigureAwait(false);
+            await RemoveSeededRowsAsync(targetDb, cancellationToken).ConfigureAwait(false);
 
             var totals = new Dictionary<DatabaseTable, long>();
             foreach (var table in tables) totals[table] = await table.CountAsync(source, cancellationToken).ConfigureAwait(false);
@@ -553,12 +553,33 @@ public class DatabaseCopyService
         if (problems.Count > 0) throw new CopyRefusedException(problems.ToArray());
     }
 
-    // The row the AddRepositories migration creates: it is what a fresh target holds, so it is not "data".
+    // The rows the AddRepositories and AddAccessControl migrations create: what a fresh target holds, so not "data".
+    // The source's own copies of them (edited or not) replace them.
     private static readonly System.Linq.Expressions.Expression<Func<Repository, bool>> SeededDefault
         = r => r.Key == Repository.DefaultKey && r.Name == Repository.DefaultName;
 
-    private static Task RemoveSeededDefaultRepositoryAsync(DbContext target, CancellationToken cancellationToken)
-        => target.Set<Repository>().Where(SeededDefault).ExecuteDeleteAsync(cancellationToken);
+    // The grants of the seeded targets go with their target (cascade); the built-in groups' members do too.
+    private static async Task RemoveSeededRowsAsync(DbContext target, CancellationToken cancellationToken)
+    {
+        await target.Set<PermissionTarget>().Where(t => t.IsBuiltIn).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await target.Set<Group>().Where(g => g.IsBuiltIn).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await target.Set<Repository>().Where(SeededDefault).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    // How many rows of a table the migrations seeded (they are not data), or 0 for a table nothing seeds.
+    private static async Task<int> SeededCountAsync(DbContext target, Type clrType, CancellationToken cancellationToken)
+    {
+        if (clrType == typeof(Repository)) return await target.Set<Repository>().CountAsync(SeededDefault, cancellationToken).ConfigureAwait(false);
+        if (clrType == typeof(Group)) return await target.Set<Group>().CountAsync(g => g.IsBuiltIn, cancellationToken).ConfigureAwait(false);
+        if (clrType == typeof(PermissionTarget)) return await target.Set<PermissionTarget>().CountAsync(t => t.IsBuiltIn, cancellationToken).ConfigureAwait(false);
+        if (clrType == typeof(PermissionGrant))
+        {
+            return await target.Set<PermissionGrant>()
+                .CountAsync(g => target.Set<PermissionTarget>().Any(t => t.Key == g.TargetKey && t.IsBuiltIn), cancellationToken).ConfigureAwait(false);
+        }
+
+        return 0;
+    }
 
     private static async Task EnsureEmptyAsync(
         DbContext target,
@@ -569,9 +590,8 @@ public class DatabaseCopyService
         var problems = new List<string>();
         foreach (var table in tables)
         {
-            var count = table.EntityType.ClrType == typeof(Repository)
-                ? await target.Set<Repository>().CountAsync(cancellationToken).ConfigureAwait(false) - await target.Set<Repository>().CountAsync(SeededDefault, cancellationToken).ConfigureAwait(false)
-                : await table.CountAsync(target, cancellationToken).ConfigureAwait(false);
+            var count = await table.CountAsync(target, cancellationToken).ConfigureAwait(false)
+                - await SeededCountAsync(target, table.EntityType.ClrType, cancellationToken).ConfigureAwait(false);
             if (count > 0)
             {
                 problems.Add(schemaUpdated

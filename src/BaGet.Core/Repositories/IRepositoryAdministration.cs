@@ -49,10 +49,18 @@ public interface IRepositoryAdministration
     Task<RepositorySummary?> FindAsync(string? name, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Sets <see cref="Repository.AnonymousRead"/>. A repository is never renamed: its name is in URLs and storage paths.
+    /// Sets <see cref="Repository.AnonymousRead"/>, the shortcut for the <c>Everyone</c> group's Read on the repository.
+    /// Off, the group's Read grants no longer apply there (callers need a Read grant of their own). On, it applies
+    /// again, and when no target grants <c>Everyone</c> Read on the repository any more (an administrator deleted
+    /// the seeded one) a target <c>Anonymous read {name}</c> is created, so the flag never claims what the grants deny.
+    /// Audited. A repository is never renamed: its name is in URLs and storage paths.
     /// </summary>
+    /// <param name="name">The repository.</param>
+    /// <param name="anonymousRead">The new value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="actor">The user name recorded in the audit log.</param>
     /// <exception cref="KeyNotFoundException">No such repository.</exception>
-    Task SetAnonymousReadAsync(string name, bool anonymousRead, CancellationToken cancellationToken);
+    Task SetAnonymousReadAsync(string name, bool anonymousRead, CancellationToken cancellationToken, string? actor = null);
 
     /// <summary>
     /// Deletes a repository that holds no packages and no submission awaiting validation, together with its catalog

@@ -43,6 +43,11 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxProjectNameLength = 64;
     public const int MaxProjectDisplayNameLength = 256;
 
+    public const int MaxAccessNameLength = AccessNames.MaxLength;
+    public const int MaxAccessDescriptionLength = 256;
+    public const int MaxPrincipalTypeLength = 16;
+    public const int MaxAuditActionLength = 64;
+
     public const int MaxValidationTypeLength = 64;
 
     public const int MaxAbuseReasonLength = 128;
@@ -92,6 +97,12 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<AbuseReport>? AbuseReports { get; set; }
     public DbSet<Repository>? Repositories { get; set; }
     public DbSet<Project>? Projects { get; set; }
+    public DbSet<Group>? Groups { get; set; }
+    public DbSet<GroupMember>? GroupMembers { get; set; }
+    public DbSet<PermissionTarget>? PermissionTargets { get; set; }
+    public DbSet<PermissionGrant>? PermissionGrants { get; set; }
+    public DbSet<ProjectMember>? ProjectMembers { get; set; }
+    public DbSet<AccessAuditEntry>? AccessAuditEntries { get; set; }
 
     public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -153,6 +164,12 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<AbuseReport>(BuildAbuseReportEntity);
         builder.Entity<Repository>(BuildRepositoryEntity);
         builder.Entity<Project>(BuildProjectEntity);
+        builder.Entity<Group>(BuildGroupEntity);
+        builder.Entity<GroupMember>(BuildGroupMemberEntity);
+        builder.Entity<PermissionTarget>(BuildPermissionTargetEntity);
+        builder.Entity<PermissionGrant>(BuildPermissionGrantEntity);
+        builder.Entity<ProjectMember>(BuildProjectMemberEntity);
+        builder.Entity<AccessAuditEntry>(BuildAccessAuditEntryEntity);
 
         // Repository isolation: a query in one repository never sees another's rows. The filter reads the
         // context's current repository per query.
@@ -179,6 +196,79 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         repository.Property(r => r.Name).HasMaxLength(MaxRepositoryNameLength).IsRequired();
         repository.Property(r => r.Format).HasConversion<string>().HasMaxLength(MaxRepositoryFormatLength);
         repository.Property(r => r.Kind).HasConversion<string>().HasMaxLength(MaxRepositoryFormatLength);
+    }
+
+    private void BuildGroupEntity(EntityTypeBuilder<Group> group)
+    {
+        group.HasKey(g => g.Key);
+        group.HasIndex(g => g.Name).IsUnique();
+
+        group.Property(g => g.Name).HasMaxLength(MaxAccessNameLength).IsRequired();
+        group.Property(g => g.Description).HasMaxLength(MaxAccessDescriptionLength);
+    }
+
+    private void BuildGroupMemberEntity(EntityTypeBuilder<GroupMember> member)
+    {
+        member.HasKey(m => m.Key);
+        member.HasIndex(m => new { m.GroupKey, m.UserId }).IsUnique();
+        member.HasIndex(m => m.UserId);
+
+        member.Property(m => m.UserId).HasMaxLength(MaxUserIdLength).IsRequired();
+
+        // A new table, so the cascade is safe to declare here (unlike the older optional relationships).
+        member.HasOne(m => m.Group).WithMany().HasForeignKey(m => m.GroupKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildPermissionTargetEntity(EntityTypeBuilder<PermissionTarget> target)
+    {
+        target.HasKey(t => t.Key);
+        target.HasIndex(t => t.Name).IsUnique();
+
+        target.Property(t => t.Name).HasMaxLength(MaxAccessNameLength).IsRequired();
+
+        #pragma warning disable CS8620
+        foreach (var patterns in new[] { target.Property(t => t.RepositoryPatterns), target.Property(t => t.IncludePatterns), target.Property(t => t.ExcludePatterns) })
+        {
+            patterns
+                .HasMaxLength(DefaultMaxStringLength)
+                .HasConversion(StringArrayToJsonConverter.Instance)
+                .Metadata.SetValueComparer(StringArrayComparer.Instance);
+        }
+        #pragma warning restore CS8620
+    }
+
+    private void BuildPermissionGrantEntity(EntityTypeBuilder<PermissionGrant> grant)
+    {
+        grant.HasKey(g => g.Key);
+        grant.HasIndex(g => new { g.TargetKey, g.PrincipalType, g.PrincipalId }).IsUnique();
+
+        grant.Property(g => g.PrincipalType).HasConversion<string>().HasMaxLength(MaxPrincipalTypeLength);
+        grant.Property(g => g.PrincipalId).HasMaxLength(MaxUserIdLength).IsRequired();
+
+        grant.HasOne(g => g.Target).WithMany().HasForeignKey(g => g.TargetKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildProjectMemberEntity(EntityTypeBuilder<ProjectMember> member)
+    {
+        member.HasKey(m => m.Key);
+        member.HasIndex(m => new { m.ProjectKey, m.PrincipalType, m.PrincipalId }).IsUnique();
+
+        member.Property(m => m.PrincipalType).HasConversion<string>().HasMaxLength(MaxPrincipalTypeLength);
+        member.Property(m => m.PrincipalId).HasMaxLength(MaxUserIdLength).IsRequired();
+        member.Property(m => m.Role).HasConversion<string>().HasMaxLength(MaxPrincipalTypeLength);
+
+        member.HasOne(m => m.Project).WithMany().HasForeignKey(m => m.ProjectKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildAccessAuditEntryEntity(EntityTypeBuilder<AccessAuditEntry> entry)
+    {
+        entry.HasKey(e => e.Key);
+        entry.HasIndex(e => e.Created);
+
+        entry.Property(e => e.Actor).HasMaxLength(MaxAccountNameLength);
+        entry.Property(e => e.Action).HasMaxLength(MaxAuditActionLength).IsRequired();
+        entry.Property(e => e.Subject).HasMaxLength(MaxAccountNameLength);
+        entry.Property(e => e.Details).HasMaxLength(DefaultMaxStringLength);
     }
 
     private void BuildProjectEntity(EntityTypeBuilder<Project> project)

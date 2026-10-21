@@ -184,6 +184,29 @@ layout under `repos/{name}/` (`repos` is no default prefix, so no collision). `P
 optional `IRepositoryContext` (null = default). Never build a path from a name without `RepositoryStorage.Prefix`, which
 re-validates it. `StagingSweepWorker` sweeps each repository in its own scope.
 
+**Access model** (`BaGet.Core/Access`; user docs `docs/access-control.md`). Tables `Groups`, `GroupMembers`, `PermissionTargets`, `PermissionGrants`,
+`ProjectMembers`, `AccessAuditEntries` (migration `AddAccessControl` x4; grants/members cascade from their group/target/project). The migration seeds
+groups *Everyone*/*Authenticated* (keys 1, 2), targets "Anyone reads every repository" (Read) and "Authenticated users deploy" (Annotate|Deploy|Delete|Manage,
+not only Deploy: ownership-based unlist/deprecate/Manage page worked before the model, so B3 equivalence needs them) and one grant each (PostgreSQL `setval`s
+the sequences). `IAccessEvaluator` (scoped; `AccessEvaluator`) answers `IsAllowedAsync(principal, repository, packageId?, action)`:
+superuser and `IsAdministrator` always, else the union of grants of targets matching repository (globs) and package (include/exclude; a null id is a
+repository-level question), for the principal's user id, groups (Everyone/Authenticated implicit), organizations, plus project roles on
+`Repository.ProjectKey`. `Repository.AnonymousRead` = false drops *Everyone*'s Read there (`AccessSnapshot.Granted`); `RepositoryAdministration.SetAnonymousReadAsync`
+re-creates an "Anonymous read {name}" target when turning it on finds none. `NullContext` (Azure Table) has no model: Read open, writes for any authenticated
+principal. State is one `AccessSnapshot` in the singleton `AccessModelCache` (targets, grants, repositories, project members; per-user memberships loaded lazily
+and kept with it), reloaded when `AccessModelVersion` changes or after 30 s; `AccessModelSaveChangesInterceptor` (added next to the maintenance one) bumps the
+version after any committed save touching those tables, `Repository`, `Project`, `Organization(Member)`, so no editor can forget; `ExecuteUpdate/Delete` would
+bypass it (none do). Edits go through `IAccessAdministration` (audits in the same save, refused by the maintenance gate). `OwnershipAuthorizationService` asks the
+evaluator first (Push -> Deploy, Manage -> Delete, new `PackageAction.Annotate` -> Annotate; repository = `IRepositoryContext.Current`), then applies ownership.
+**Reads**: `BaGetEndpointBuilder.MapRoute` tags every protocol endpoint with `RepositoryRouteMetadata`; `RepositoryReadFilter` (a global MVC resource filter, so
+every host gets it; `GET`/`HEAD` only) requires Read on the repository and, for a route with `{id}`, on the package: anonymous -> 401 +
+`WWW-Authenticate: Basic realm="BaGet"`, signed in without Read -> 404. Credentials: `RequestPrincipalResolver` (Basic password = API key with the user name
+checked against the key's owner, else `X-NuGet-ApiKey`, else the cookie session through `ISessionPrincipalFactory`, implemented by `SessionPrincipalFactory`);
+bad credentials count as none. Pages: `RepositoryPageFilter` -> `IRepositoryAccess` (`AccessRepositoryAccess`, replaces `OpenRepositoryAccess`): anonymous visitor
+is challenged (sign-in redirect) when the host has a default challenge scheme, else 404. Database copy treats the built-in groups/targets/grants as seeded rows
+(`SeededCountAsync`, removed from the target before copying). Account/organization deletion removes the identity's memberships, grants and project roles.
+Search/autocomplete/V2 listings are filtered per repository only, not per package pattern.
+
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host
 without the Web SDK has no generated `[ApplicationPart]` attributes. A new such assembly must be added there.

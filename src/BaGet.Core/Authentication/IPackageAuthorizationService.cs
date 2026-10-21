@@ -11,9 +11,15 @@ public enum PackageAction
     Push,
 
     /// <summary>
-    /// Unlist, relist or delete a version, or edit its deprecation or vulnerabilities.
+    /// Unlist, relist or delete a version (the access model's <see cref="AccessAction.Delete"/>).
     /// </summary>
     Manage,
+
+    /// <summary>
+    /// Edit a version's deprecation or vulnerabilities (<see cref="AccessAction.Annotate"/>). Needs ownership and the
+    /// unlist scope, like <see cref="Manage"/>.
+    /// </summary>
+    Annotate,
 }
 
 /// <summary>

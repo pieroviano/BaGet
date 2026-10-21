@@ -27,6 +27,9 @@ public static class IServiceCollectionExtensions
                 // The one read check of every repository page (404 when the caller may not see the repository).
                 options.Filters.Add<RepositoryPageFilter>();
 
+                // The read check of every protocol route (401 for anonymous callers, 404 without Read access).
+                options.Filters.Add<RepositoryReadFilter>();
+
                 // With nullable reference types on, MVC treats every non-nullable reference-type
                 // property or parameter it binds as [Required]. Optional query values such as the
                 // package list's "packageType" and "framework" would then fail validation whenever a
@@ -45,7 +48,7 @@ public static class IServiceCollectionExtensions
             // Add /packages route to the Index page
             options.Conventions.AddPageRoute("/Index", "/packages");
 
-            // Every repository page also at /r/{repo}/… (must come after the alias so it gets a twin as well).
+            // Every repository page also at /r/{repo}/ï¿½ (must come after the alias so it gets a twin as well).
             options.Conventions.Add(new RepositoryPageRouteConvention());
         });
 
@@ -53,6 +56,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<Microsoft.AspNetCore.Mvc.Routing.IUrlHelperFactory, RepositoryUrlHelperFactory>();
 
         services.AddHttpContextAccessor();
+        services.AddScoped<RequestPrincipalResolver>();
         services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();
 
         services.AddBaGetApplication(configureAction);

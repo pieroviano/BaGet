@@ -19,14 +19,19 @@ public class RepositoryAdministration : IRepositoryAdministration
 {
     private readonly IContext _context;
     private readonly IStorageService? _storage;
+    private readonly SystemTime? _time;
 
     /// <param name="context">The database.</param>
     /// <param name="storage">The store whose <c>repos/{name}/</c> folder is emptied when a repository is deleted. Null leaves storage alone.</param>
-    public RepositoryAdministration(IContext context, IStorageService? storage = null)
+    /// <param name="time">The clock for audit entries and created targets; null uses the system's.</param>
+    public RepositoryAdministration(IContext context, IStorageService? storage = null, SystemTime? time = null)
     {
+        _time = time;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage;
     }
+
+    private DateTime Now => _time?.UtcNow ?? DateTime.UtcNow;
 
     private bool Relational => !(_context is NullContext);
 
@@ -61,12 +66,77 @@ public class RepositoryAdministration : IRepositoryAdministration
     }
 
     /// <inheritdoc/>
-    public async Task SetAnonymousReadAsync(string name, bool anonymousRead, CancellationToken cancellationToken)
+    public async Task SetAnonymousReadAsync(string name, bool anonymousRead, CancellationToken cancellationToken, string? actor = null)
     {
         var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
         row.AnonymousRead = anonymousRead;
 
+        var created = false;
+        if (anonymousRead && !await EveryoneReadsAsync(row, cancellationToken).ConfigureAwait(false))
+        {
+            await GrantEveryoneReadAsync(row, cancellationToken).ConfigureAwait(false);
+            created = true;
+        }
+
+        AccessAdministration.Audit(_context, Now, actor, "repository.anonymous-read", name, new { anonymousRead, grantCreated = created });
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    // Whether some target grants the Everyone group Read on every package of the repository.
+    private async Task<bool> EveryoneReadsAsync(Repository row, CancellationToken cancellationToken)
+    {
+        var everyone = await _context.Groups!.AsNoTracking()
+            .Where(g => g.IsBuiltIn && g.Name == BuiltInNames.Everyone)
+            .Select(g => (int?)g.Key).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (everyone == null) return false;
+
+        var id = everyone.Value.ToString();
+        var targets = await _context.PermissionGrants!.AsNoTracking()
+            .Where(g => g.PrincipalType == PrincipalType.Group && g.PrincipalId == id && (g.Actions & AccessAction.Read) != 0)
+            .Select(g => g.Target!)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        return targets.Any(t =>
+            (t.ProjectKey == null || t.ProjectKey == row.ProjectKey)
+            && GlobSet.Parse(t.RepositoryPatterns, emptyMeansAll: false).IsMatch(row.Name)
+            && GlobSet.Parse(t.IncludePatterns, emptyMeansAll: true).IsMatch("*")
+            && !GlobSet.Parse(t.ExcludePatterns, emptyMeansAll: false).IsMatch("*"));
+    }
+
+    private async Task GrantEveryoneReadAsync(Repository row, CancellationToken cancellationToken)
+    {
+        var everyone = await _context.Groups!.AsNoTracking()
+            .Where(g => g.IsBuiltIn && g.Name == BuiltInNames.Everyone)
+            .Select(g => (int?)g.Key).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (everyone == null) return;
+
+        var targetName = "Anonymous read " + row.Name;
+        var target = await _context.PermissionTargets!.FirstOrDefaultAsync(t => t.Name == targetName, cancellationToken).ConfigureAwait(false);
+        if (target == null)
+        {
+            target = new PermissionTarget
+            {
+                Name = targetName,
+                RepositoryPatterns = new[] { row.Name! },
+                IncludePatterns = new[] { "*" },
+                ExcludePatterns = Array.Empty<string>(),
+                Created = Now,
+            };
+            _context.PermissionTargets!.Add(target);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var id = everyone.Value.ToString();
+        var grant = await _context.PermissionGrants!.FirstOrDefaultAsync(
+            g => g.TargetKey == target.Key && g.PrincipalType == PrincipalType.Group && g.PrincipalId == id, cancellationToken).ConfigureAwait(false);
+        if (grant == null)
+        {
+            _context.PermissionGrants!.Add(new PermissionGrant { TargetKey = target.Key, PrincipalType = PrincipalType.Group, PrincipalId = id, Actions = AccessAction.Read });
+        }
+        else
+        {
+            grant.Actions |= AccessAction.Read;
+        }
     }
 
     /// <inheritdoc/>

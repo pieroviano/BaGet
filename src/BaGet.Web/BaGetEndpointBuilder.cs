@@ -24,12 +24,13 @@ public class BaGetEndpointBuilder
         object defaults,
         object? constraints = null)
     {
-        endpoints.MapControllerRoute(name, pattern, defaults, constraints);
+        // The marker is what RepositoryReadFilter looks for: reads of every route registered here need Read access.
+        endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(RepositoryRouteMetadata.Instance);
         endpoints.MapControllerRoute(
             Routes.RepositoryRouteName(name),
             Routes.RepositoryPathPrefix + pattern,
             defaults,
-            constraints);
+            constraints).WithMetadata(RepositoryRouteMetadata.Instance);
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

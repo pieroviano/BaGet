@@ -202,7 +202,7 @@ public class PackageMetadataAdminController : Controller
             return Unauthorized();
         }
 
-        if (!await _authorization.AuthorizeAsync(principal, PackageAction.Manage, id, cancellationToken))
+        if (!await _authorization.AuthorizeAsync(principal, PackageAction.Annotate, id, cancellationToken))
         {
             return StatusCode(StatusCodes.Status403Forbidden);
         }

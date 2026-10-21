@@ -31,9 +31,14 @@ Send the key in the `X-NuGet-ApiKey` header: the global `ApiKey`, or with accoun
 | `PUT /api/v2/package`, `PUT /api/v2/symbol` | a key allowed to push the package id |
 | `DELETE`/`POST /api/v2/package/{id}/{version}`, deprecation and vulnerability writes | a key with the `package:unlist` scope that may manage the package |
 | `GET /v3/package/{id}/{version}/validation` | a key that may push or manage the package |
-| every other `GET` in this page | none |
+| every other `GET` in this page | `Read` on the repository ([access control](../access-control.md)); none while the repository is open to everyone, which is the default |
 
-`401` without a valid key, `403` for a key that may not act on the package. With `IsReadOnlyMode` on, push,
+Reads of a repository that is not open to everyone take `Authorization: Basic` (user name = the key's owner, password = the
+API key) or the same `X-NuGet-ApiKey` header: `401` + `WWW-Authenticate: Basic realm="BaGet"` for an anonymous caller,
+`404` for an authenticated one without `Read` (nothing says the repository or package exists).
+
+Writes: `401` without a valid key, `403` for a key that may not act on the package (no `Deploy`/`Delete`/`Annotate`
+permission in that repository for the package id, or not its owner). With `IsReadOnlyMode` on, push,
 delete, relist and the metadata writes answer `401`. While the [maintenance gate](../configuration.md#read-only-maintenance-gate) is closed (a database copy),
 any database write answers `503` with `Retry-After`.
 

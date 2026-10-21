@@ -12,8 +12,9 @@ public class BaGetUser : IdentityUser
     public DateTime Created { get; set; }
 
     /// <summary>
-    /// May change the server's settings and promote or demote administrators. It grants
-    /// nothing over packages: ownership rules apply to an administrator as to anyone.
+    /// May change the server's settings and promote or demote administrators. Holds every action of the access
+    /// model in every repository (<see cref="IAccessEvaluator"/>) and skips package ownership, but not the limits of the
+    /// API key in use: its scopes and package glob still apply (<c>OwnershipAuthorizationService</c>).
     /// </summary>
     public bool IsAdministrator { get; set; }
 }

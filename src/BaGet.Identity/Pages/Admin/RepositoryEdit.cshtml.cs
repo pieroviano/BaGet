@@ -46,7 +46,7 @@ public class RepositoryEditModel : AdminPageModel
         var administration = HttpContext.RequestServices.GetRequiredService<IRepositoryAdministration>();
         if (await administration.FindAsync(Name, cancellationToken) == null) return NotFound();
 
-        await administration.SetAnonymousReadAsync(Name!, AnonymousRead, cancellationToken);
+        await administration.SetAnonymousReadAsync(Name!, AnonymousRead, cancellationToken, User.Identity?.Name);
         TempData["Message"] = $"Repository {Name} was saved.";
 
         return RedirectToPage("/Admin/Repositories");

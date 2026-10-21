@@ -44,6 +44,7 @@ nav:
     - Windows IIS proxy: installation/iis-proxy.md
   - Configuration: configuration.md
   - Repositories: repositories.md
+  - Access control: access-control.md
   - Import:
     - Local feeds: import/local-feeds.md
     - NuGet.Server: import/nugetserver.md

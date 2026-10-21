@@ -46,6 +46,6 @@ Rules:
 * `default` cannot be deleted.
 * A repository that still holds packages, or submissions awaiting validation, cannot be deleted; delete the packages first and wait for the validations. Deleting removes its history rows too (catalog entries, owners, validations, abuse reports) and every file under `repos/{name}/` in storage (symbols, catalog files, staged uploads), so a repository re-created under the same name starts empty.
 * Writes are refused with `503` while the server is read-only for maintenance (for example during a database copy).
-* *Anonymous read* is stored but not enforced yet.
+* *Anonymous read* is enforced: off, anonymous callers get `401` (feeds) or the sign-in page, and others need a Read grant of their own. See [Access control](access-control.md).
 * Creating needs a relational database and a repository-aware search: with Azure Table, or with `Search:Type` = `AzureSearch` (one global index), only `default` exists and other repositories already in the database are not served.
 * The `AddRepositories` migration creates the `default` row itself, so it exists even when migrations are applied outside the app.

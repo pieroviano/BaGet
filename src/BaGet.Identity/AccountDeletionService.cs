@@ -353,6 +353,8 @@ public class AccountDeletionService
         #pragma warning restore CS8602
         _context.PackageOwners?.RemoveRange(ownerships);
 
+        await StageAccessCleanupAsync(PrincipalType.User, user?.Id, cancellationToken);
+
         foreach (var organization in await OrganizationsToLeaveAsync(user, cancellationToken))
         {
             #pragma warning disable CS8604
@@ -375,11 +377,30 @@ public class AccountDeletionService
             _context.OrganizationMembers.RemoveRange(removeOrganization ? members : members.Where(m => m.UserId == user?.Id));
             if (removeOrganization)
             {
+                await StageAccessCleanupAsync(PrincipalType.Organization, organization.Key.ToString(), cancellationToken);
                 #pragma warning disable CS8602
                 _context.Organizations?.RemoveRange(await _context.Organizations?.Where(o => o.Key == organization.Key).ToListAsync(cancellationToken));
                 #pragma warning restore CS8602
             }
         }
+    }
+
+    // A deleted user, or organization, leaves the access model with them: group memberships (users only), permission
+    // grants and project roles that name them. Orphans would be harmless to a decision (nobody can present that
+    // identity again) but would linger in the admin pages. Staged with the rest of the cleanup.
+    private async Task StageAccessCleanupAsync(PrincipalType type, string? id, CancellationToken cancellationToken)
+    {
+        if (id == null || _context.PermissionGrants == null) return;
+
+        if (type == PrincipalType.User)
+        {
+            _context.GroupMembers!.RemoveRange(await _context.GroupMembers.Where(m => m.UserId == id).ToListAsync(cancellationToken));
+        }
+
+        _context.PermissionGrants.RemoveRange(
+            await _context.PermissionGrants.Where(g => g.PrincipalType == type && g.PrincipalId == id).ToListAsync(cancellationToken));
+        _context.ProjectMembers!.RemoveRange(
+            await _context.ProjectMembers.Where(m => m.PrincipalType == type && m.PrincipalId == id).ToListAsync(cancellationToken));
     }
 
     // The cleanup is only staged. Deleting the user saves it in the same SaveChanges, so the

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +36,18 @@ public class NullContext : IContext
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Project>? Projects { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<Group>? Groups { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<GroupMember>? GroupMembers { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<PermissionTarget>? PermissionTargets { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<PermissionGrant>? PermissionGrants { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<ProjectMember>? ProjectMembers { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<AccessAuditEntry>? AccessAuditEntries { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<BaGetUser> Users { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 

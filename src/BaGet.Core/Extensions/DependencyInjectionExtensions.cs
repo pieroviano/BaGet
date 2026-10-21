@@ -102,7 +102,11 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IRepositoryContext, RepositoryContext>();
         services.TryAddScoped<IRepositoryService, RepositoryService>();
         services.TryAddScoped<IRepositoryAdministration, RepositoryAdministration>();
-        services.TryAddScoped<IRepositoryAccess, OpenRepositoryAccess>();
+        services.TryAddScoped<IRepositoryAccess, AccessRepositoryAccess>();
+        services.TryAddSingleton<AccessModelVersion>();
+        services.TryAddSingleton<AccessModelCache>();
+        services.TryAddScoped<IAccessEvaluator, AccessEvaluator>();
+        services.TryAddScoped<IAccessAdministration, AccessAdministration>();
 
         services.TryAddScoped<DownloadsImporter>();
         services.TryAddSingleton<IAdminAudit, LoggingAdminAudit>();

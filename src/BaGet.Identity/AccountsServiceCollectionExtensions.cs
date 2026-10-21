@@ -34,6 +34,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<ApiKeyService>();
         services.TryAddScoped<PackageOwnershipService>();
         services.TryAddScoped<SessionPrincipalFactory>();
+        services.TryAddScoped<ISessionPrincipalFactory>(provider => provider.GetRequiredService<SessionPrincipalFactory>());
         services.TryAddTransient<ApiKeyAuthenticationService>();
         services.TryAddScoped<AccountRecoveryService>();
         services.TryAddScoped<AccountDeletionService>();

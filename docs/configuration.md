@@ -553,11 +553,11 @@ other value is refused when saved on the Settings page and at startup.
 
 ## Private feeds
 
-A private feed requires users to authenticate before accessing packages.
-
-!!! warning
-    Private feeds are not supported at this time: [accounts](#accounts-package-owners-and-api-keys)
-    control who may change packages, not who may read them. See [this pull request](https://github.com/loic-sharma/BaGet/pull/69) for more information.
+A repository can require authentication to read: switch off *Anonymous read* on `/admin/repositories/{name}` (or remove
+the *Anyone reads every repository* permission target) and anonymous callers get `401` with a Basic challenge, which
+NuGet clients answer with an API key as password. See [Access control](access-control.md) for the model, the upgrade
+defaults (nothing changes until you edit them) and the client setup. Needs [accounts](#accounts-package-owners-and-api-keys)
+for per-user keys, and a relational database.
 
 ## Storage
 

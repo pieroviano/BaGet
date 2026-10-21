@@ -13,7 +13,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 |---|---|---|
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
 | P1 Remote and virtual NuGet | Not started | `RepositoryKind.Remote`/`Virtual` exist as values only; `RepositoryService.CreateAsync` refuses them (`RepositoryService.cs:93-99`) |
-| P2 Access control | **In progress** in [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4) | — |
+| P2 Access control | **Moved** to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4). U2 (backend: groups, targets, grants, projects, enforcement, audit) implemented; U3 UI and U4 key scopes pending | track `access` |
 | P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
@@ -56,7 +56,7 @@ Deviations from the table below, as built:
 | Item | As built |
 |---|---|
 | `Repository.Settings` (JSON), `ProjectKey`, `Project` entity | Columns/table exist; nothing reads or writes them yet (P1/P2) |
-| `AnonymousRead` | Stored and editable on the admin page, **not enforced** until P2 |
+| `AnonymousRead` | Enforced since P2 U2: gates the Everyone group's Read ([access-control.md](../access-control.md)) |
 | Migration | Also seeds the `default` row with key 1 (PostgreSQL `setval`); `EnsureDefaultAsync` restores it at startup |
 | Delete repository | Refused for `default`, for a repository with packages or a pending validation; purges catalog, owners, validations, abuse reports and `repos/{name}/` in storage |
 | Razor Pages | Stay at `/` and show `default` only; repository-aware pages moved to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) U1 |

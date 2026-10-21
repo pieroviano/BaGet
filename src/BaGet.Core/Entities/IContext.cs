@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -49,6 +49,19 @@ public interface IContext
     DbSet<Repository>? Repositories { get; set; }
 
     DbSet<Project>? Projects { get; set; }
+
+    /// <summary>The access model: groups, their members, permission targets and grants, project members and the audit log.</summary>
+    DbSet<Group>? Groups { get; set; }
+
+    DbSet<GroupMember>? GroupMembers { get; set; }
+
+    DbSet<PermissionTarget>? PermissionTargets { get; set; }
+
+    DbSet<PermissionGrant>? PermissionGrants { get; set; }
+
+    DbSet<ProjectMember>? ProjectMembers { get; set; }
+
+    DbSet<AccessAuditEntry>? AccessAuditEntries { get; set; }
 
     /// <summary>
     /// Identity's users. Declared here so that account services can query them through

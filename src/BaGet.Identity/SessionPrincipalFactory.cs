@@ -10,7 +10,7 @@ namespace BaGet.Identity;
 /// Turns a signed-in browser session into a <see cref="BaGetPrincipal"/>, so the browser
 /// path is authorized by exactly the rules the API key path is.
 /// </summary>
-public class SessionPrincipalFactory
+public class SessionPrincipalFactory : ISessionPrincipalFactory
 {
     private readonly UserManager<BaGetUser> _users;
 

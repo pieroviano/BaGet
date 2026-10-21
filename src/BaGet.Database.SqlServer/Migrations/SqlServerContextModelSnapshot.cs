@@ -72,6 +72,41 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("AbuseReports");
                 });
 
+            modelBuilder.Entity("BaGet.Core.AccessAuditEntry", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Actor")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Created");
+
+                    b.ToTable("AccessAuditEntries");
+                });
+
             modelBuilder.Entity("BaGet.Core.ApiKey", b =>
                 {
                     b.Property<int>("Key")
@@ -233,6 +268,63 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.HasIndex("RepositoryKey");
 
                     b.ToTable("CatalogLeafs");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Group", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsBuiltIn")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Groups");
+                });
+
+            modelBuilder.Entity("BaGet.Core.GroupMember", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("GroupKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("GroupKey", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("GroupMembers");
                 });
 
             modelBuilder.Entity("BaGet.Core.Organization", b =>
@@ -627,6 +719,80 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("PackageVulnerabilities");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PermissionGrant", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("Actions")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrincipalId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PrincipalType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<int>("TargetKey")
+                        .HasColumnType("int");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("TargetKey", "PrincipalType", "PrincipalId")
+                        .IsUnique();
+
+                    b.ToTable("PermissionGrants");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PermissionTarget", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExcludePatterns")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("IncludePatterns")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsBuiltIn")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RepositoryPatterns")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("PermissionTargets");
+                });
+
             modelBuilder.Entity("BaGet.Core.Project", b =>
                 {
                     b.Property<int>("Key")
@@ -653,6 +819,40 @@ namespace BaGet.Database.SqlServer.Migrations
                         .IsUnique();
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ProjectMember", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("PrincipalId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PrincipalType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<int>("ProjectKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ProjectKey", "PrincipalType", "PrincipalId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectMembers");
                 });
 
             modelBuilder.Entity("BaGet.Core.Repository", b =>
@@ -855,6 +1055,17 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("BaGet.Core.GroupMember", b =>
+                {
+                    b.HasOne("BaGet.Core.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+                });
+
             modelBuilder.Entity("BaGet.Core.OrganizationMember", b =>
                 {
                     b.HasOne("BaGet.Core.Organization", "Organization")
@@ -909,6 +1120,28 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasForeignKey("PackageKey");
 
                     b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("BaGet.Core.PermissionGrant", b =>
+                {
+                    b.HasOne("BaGet.Core.PermissionTarget", "Target")
+                        .WithMany()
+                        .HasForeignKey("TargetKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Target");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ProjectMember", b =>
+                {
+                    b.HasOne("BaGet.Core.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

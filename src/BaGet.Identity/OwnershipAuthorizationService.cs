@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace BaGet.Identity;
 
 /// <summary>
-/// Package ownership rules, as nuget.org applies them:
+/// The rules for changing packages, in two layers. First the access model (<see cref="IAccessEvaluator"/>): the caller must hold the matching action (Deploy to push, Delete to unlist or delete, Annotate to edit deprecation and
+/// vulnerabilities) on the package in the current repository. Then package ownership, as nuget.org applies it:
 /// <list type="bullet">
 /// <item>The superuser may do anything.</item>
 /// <item>A key acts only within its scopes and its package glob.</item>
@@ -28,12 +29,18 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
     private readonly PackageOwnershipService _ownership;
     private readonly IPackageDatabase _packages;
     private readonly ILogger<OwnershipAuthorizationService> _logger;
+    private readonly IAccessEvaluator _access;
+    private readonly IRepositoryContext _repository;
 
     public OwnershipAuthorizationService(
         PackageOwnershipService ownership,
         IPackageDatabase packages,
-        ILogger<OwnershipAuthorizationService> logger)
+        ILogger<OwnershipAuthorizationService> logger,
+        IAccessEvaluator access,
+        IRepositoryContext repository)
     {
+        _access = access ?? throw new ArgumentNullException(nameof(access));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _ownership = ownership ?? throw new ArgumentNullException(nameof(ownership));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -48,6 +55,10 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
         if (principal == null) return false;
         if (principal.IsSuperuser) return true;
         if (!principal.MatchesPackage(packageId)) return false;
+
+        // The access model first: a permission is necessary, ownership (below) remains necessary too. Administrators
+        // hold every action (the evaluator says so), the superuser returned above.
+        if (!await _access.IsAllowedAsync(principal, _repository.Current, packageId, Required(action), cancellationToken)) return false;
 
         // An administrator skips ownership, never the key's own limits: a push-only key an
         // administrator made for CI stays push-only.
@@ -64,6 +75,7 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
                         : principal.HasScope(ApiKeyScopes.Push);
 
                 case PackageAction.Manage:
+                case PackageAction.Annotate:
                     return principal.HasScope(ApiKeyScopes.Unlist);
 
                 default:
@@ -87,12 +99,20 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
                        && !await _packages.ExistsAsync(packageId, cancellationToken);
 
             case PackageAction.Manage:
+            case PackageAction.Annotate:
                 return isOwner && principal.HasScope(ApiKeyScopes.Unlist);
 
             default:
                 return false;
         }
     }
+
+    private static AccessAction Required(PackageAction action) => action switch
+    {
+        PackageAction.Push => AccessAction.Deploy,
+        PackageAction.Annotate => AccessAction.Annotate,
+        _ => AccessAction.Delete,
+    };
 
     public async Task OnPushedAsync(BaGetPrincipal? principal, string? packageId, bool isNewId, CancellationToken cancellationToken)
     {
