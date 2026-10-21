@@ -45,6 +45,16 @@ public class EngineUpgradeTests
         var created = await new RepositoryService(iContext).CreateAsync("second", RepositoryFormat.NuGet, RepositoryKind.Local, cancellationToken);
         Assert.Equal(Repository.DefaultKey + 1, created.Key);
 
+        // AddAccessControl seeds the upgrade defaults with explicit keys; generated keys continue after them on every engine.
+        Assert.Equal(new[] { "Authenticated", "Everyone" }, await iContext.Groups!.Select(g => g.Name!).OrderBy(n => n).ToListAsync(cancellationToken));
+        Assert.Equal(2, await iContext.PermissionTargets!.CountAsync(cancellationToken));
+        Assert.Equal(new[] { AccessAction.Read, AccessAction.Annotate | AccessAction.Deploy | AccessAction.Delete | AccessAction.Manage },
+            await iContext.PermissionGrants!.OrderBy(g => g.Key).Select(g => g.Actions).ToListAsync(cancellationToken));
+        var extra = new Group { Name = "extra", Created = DateTime.UtcNow };
+        iContext.Groups!.Add(extra);
+        await iContext.SaveChangesAsync(cancellationToken);
+        Assert.Equal(3, extra.Key);
+
         var packages = await iContext.Packages!
             .Include(p => p.Dependencies).Include(p => p.TargetFrameworks).Include(p => p.PackageTypes).Include(p => p.Deprecation)
             .OrderBy(p => p.Key).ToListAsync(cancellationToken);

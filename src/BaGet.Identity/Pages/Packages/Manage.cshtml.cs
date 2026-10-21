@@ -106,6 +106,14 @@ public class ManageModel : AccountPageModel
         #pragma warning restore CS8602
         IsAdministrator = await HttpContext.RequestServices.GetRequiredService<AdministratorService>()
             .IsAdministratorAsync(User, HttpContext.RequestAborted);
+        // An owner also needs the Manage permission in this repository (a seeded target gives every signed-in user
+        // that, so nothing changes until an administrator narrows it); an administrator holds every action.
+        if (isOwner && !IsAdministrator
+            && !await ManagePermission.HeldAsync(HttpContext.RequestServices, User, Id, HttpContext.RequestAborted))
+        {
+            isOwner = false;
+        }
+
         if (!isOwner && !IsAdministrator)
         {
             context.Result = StatusCode(403);

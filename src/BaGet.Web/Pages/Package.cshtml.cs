@@ -153,12 +153,14 @@ public class PackageModel : PageModel
         #pragma warning restore CS8604
     }
 
-    // The rule of the management page itself (ManageModel): an owner or an administrator.
+    // The rule of the management page itself (ManageModel): an owner holding the Manage permission in this
+    // repository, or an administrator.
     private async Task<bool> CanManageAsync(PackageOwnershipService ownership, string? packageId, CancellationToken cancellationToken)
     {
         var services = HttpContext!.RequestServices;
         var userId = services.GetService<UserManager<BaGetUser>>()?.GetUserId(User);
-        if (await ownership.IsOwnerAsync(userId, User.Identity?.Name, packageId, cancellationToken)) return true;
+        if (await ownership.IsOwnerAsync(userId, User.Identity?.Name, packageId, cancellationToken)
+            && await ManagePermission.HeldAsync(services, User, packageId, cancellationToken)) return true;
 
         var administrators = services.GetService<AdministratorService>();
         return administrators != null && await administrators.IsAdministratorAsync(User, cancellationToken);

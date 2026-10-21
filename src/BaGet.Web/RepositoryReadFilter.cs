@@ -44,17 +44,25 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         }
 
         var services = http.RequestServices;
-        var principal = await services.GetRequiredService<RequestPrincipalResolver>().ResolveAsync(http, http.RequestAborted);
         var evaluator = services.GetRequiredService<IAccessEvaluator>();
         var repository = services.GetRequiredService<IRepositoryContext>().Current;
+        var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
 
-        var allowed = await evaluator.IsAllowedAsync(principal, repository, packageId: null, AccessAction.Read, http.RequestAborted);
-        if (allowed && context.RouteData.Values.TryGetValue("id", out var id) && id is string packageId)
+        async Task<bool> MayReadAsync(BaGetPrincipal? caller)
+            => await evaluator.IsAllowedAsync(caller, repository, packageId: null, AccessAction.Read, http.RequestAborted)
+               && (packageId == null
+                   || await evaluator.IsAllowedAsync(caller, repository, packageId, AccessAction.Read, http.RequestAborted));
+
+        // Open to everyone is the common case (and the only one before the access model): answered without looking at
+        // the credentials, so a public feed costs no API key lookup even for a client that sends them.
+        if (await MayReadAsync(null))
         {
-            allowed = await evaluator.IsAllowedAsync(principal, repository, packageId, AccessAction.Read, http.RequestAborted);
+            await next();
+            return;
         }
 
-        if (allowed)
+        var principal = await services.GetRequiredService<RequestPrincipalResolver>().ResolveAsync(http, http.RequestAborted);
+        if (principal != null && await MayReadAsync(principal))
         {
             await next();
             return;

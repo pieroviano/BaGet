@@ -26,7 +26,7 @@ reads, any authenticated caller writes subject to ownership, as before.
 | `Annotate` | Deprecation and vulnerabilities |
 | `Deploy` | Push new packages and versions |
 | `Delete` | Unlist, relist, delete |
-| `Manage` | Owners of a package ID |
+| `Manage` | The package's Manage page (owners, unlist, deprecation): an owner needs it as well as ownership; administrators hold it everywhere |
 
 Actions are independent: `Deploy` does not imply `Read`. A caller holds an action when **any** applicable grant carries it.
 Server administrators and the global API key hold every action everywhere. Include/exclude patterns narrow package-level
@@ -72,13 +72,16 @@ but `search`, `autocomplete` and the V2 listings of a repository the caller may 
 The password is an **API key** (an account's key, or the global `ApiKey`); the user name is the key's owner (any name for
 the global key).
 
-| Client | Setup |
-|---|---|
-| `dotnet` / NuGet.exe | `dotnet nuget add source https://host/r/second/v3/index.json -n second -u alice -p <key> --store-password-in-clear-text`; on Linux/macOS clear text is required |
-| `NuGet.Config` | `<packageSourceCredentials><second><add key="Username" value="alice" /><add key="ClearTextPassword" value="<key>" /></second></packageSourceCredentials>` |
-| Visual Studio | Sends the 401 challenge's credentials from *Tools > Options > NuGet Package Manager > Package Sources*, or prompts |
-| PowerShellGet | `Register-PSRepository -Name second -SourceLocation <v2 url> -Credential (Get-Credential)`, and `-Credential` on `Install-Module` |
-| Symbols (Visual Studio) | Add the same credentials to the symbol server entry (`/api/download/symbols`) |
+| Client | Setup | Checked |
+|---|---|---|
+| `dotnet` (restore, search, push) | `dotnet nuget add source https://host/r/second/v3/index.json -n second -u alice -p <key> --store-password-in-clear-text` (add `--allow-insecure-connections` for `http`). Without credentials: `NU1301` 401. Push keeps using `--api-key` | yes, .NET SDK 10.0.402 against a running host |
+| `nuget.exe` | `nuget sources add -Name second -Source <url> -Username alice -Password <key> -StorePasswordInClearText`. Without credentials it asks its credential providers, then fails with 401 | yes, 6.2.1 (`install`; its `list` has no V3 support) |
+| `NuGet.Config` | `<packageSourceCredentials><second><add key="Username" value="alice" /><add key="ClearTextPassword" value="<key>" /></second></packageSourceCredentials>` | yes (what the two above write) |
+| Visual Studio | *Tools > Options > NuGet Package Manager > Package Sources*: user name and password on the source; it also prompts on the 401 challenge | no (same NuGet client code as `dotnet`) |
+| PowerShellGet (V2 feed `/r/second/api/v2`) | `Register-PSRepository ... -SourceLocation <v2 url>`, then `-Credential` on `Find-Module` / `Install-Module` | no: needs the NuGet provider bootstrap (internet). The V2 routes answer 401 / Basic exactly like V3 (`PrivateRepositoryTests`, real host: 401 anonymous, 200 with Basic) |
+| Symbols (Visual Studio) | Same credentials on the symbol server entry (`/api/download/symbols`) | route challenged (401 + Basic) anonymous, served with Basic; the debugger itself not run |
+
+A wrong password, or the right key with another user name, is `401` again.
 
 ## Request credentials
 

@@ -20,11 +20,13 @@ public class AccessEvaluatorTests : IDisposable
 {
     private const string Second = "second";
 
+    private readonly ITestOutputHelper _output;
     private readonly BaGetApplication _app;
     private readonly CancellationToken _token = CancellationToken.None;
 
     public AccessEvaluatorTests(ITestOutputHelper output)
     {
+        _output = output;
         _app = new BaGetApplication(output, configOverrides: new Dictionary<string, string>
         {
             { "ApiKey", "global-key" },
@@ -359,7 +361,7 @@ public class AccessEvaluatorTests : IDisposable
 
         watch.Stop();
         var perCheck = watch.Elapsed.TotalMilliseconds * 1000 / checks;
-        TestContext.Current.SendDiagnosticMessage($"access check, 50 targets / 20 groups: {perCheck:F1} microseconds each");
+        _output.WriteLine($"access check, 50 targets / 20 groups: {perCheck:F1} microseconds each");
 
         // Measured around 5 microseconds on a development machine; the bound is loose enough for a loaded CI machine
         // and far below the cost of the database query a request makes anyway.

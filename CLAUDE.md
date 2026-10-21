@@ -21,11 +21,12 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1928 tests** across `BaGet.Core.Tests` (545), `BaGet.Tests` (1077),
+Baseline: **1998 tests** across `BaGet.Core.Tests` (545), `BaGet.Tests` (1147),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
-`TelemetryE2ETests`) fail on a clean checkout too; not investigated. No external services needed; integration tests
+`TelemetryE2ETests`) fail on a clean checkout too; not investigated. Checked at `e213fe0` without Jaeger: 11 of them (`TelemetryExportTests` x3,
+`TelemetrySettingsPageTests` x8) fail on a clean checkout, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan...` fails in the full run (passes alone). No external services needed; integration tests
 use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
@@ -205,7 +206,7 @@ checked against the key's owner, else `X-NuGet-ApiKey`, else the cookie session 
 bad credentials count as none. Pages: `RepositoryPageFilter` -> `IRepositoryAccess` (`AccessRepositoryAccess`, replaces `OpenRepositoryAccess`): anonymous visitor
 is challenged (sign-in redirect) when the host has a default challenge scheme, else 404. Database copy treats the built-in groups/targets/grants as seeded rows
 (`SeededCountAsync`, removed from the target before copying). Account/organization deletion removes the identity's memberships, grants and project roles.
-Search/autocomplete/V2 listings are filtered per repository only, not per package pattern.
+The Manage page and its link need ownership **and** the Manage action (`ManagePermission.HeldAsync`); administrators bypass both. Search/autocomplete/V2 listings are filtered per repository only, not per package pattern.
 
 **MVC application parts are registered by BaGet, not the host.** `AddBaGetApplicationParts`
 (`src/BaGet.Web/Extensions/IServiceCollectionExtensions.cs`) adds every assembly with controllers or pages; a host
@@ -317,6 +318,10 @@ surface is unchanged; `UpgradeFromPreRepositoryTests` (B7) starts the real app o
 `packages/…` store and asserts everything is served unchanged at `/`, keys/owners still work and no file moves.
 `RepositoryPagesTests` / `RepositoryAccountPagesTests` cover the pages at `/r/second/` (links stay inside, switcher, upload target, My packages grouped,
 admin Browse/Upload links, `IRepositoryAccess` refusal = 404); `RepositoryPageRoutingFacts` (`BaGet.Web.Tests`) the convention and `RepositoryUrlHelper`.
+
+**Access tests** (`BaGet.Tests`): `AccessUpgradeEquivalenceTests` (B3 merge gate: a pre-repository database migrated by the current code behaves as before),
+`AccessEvaluatorTests` (decisions, administration, cache, audit, 50-target cost) with `GlobSetTests`, `PrivateRepositoryTests` (401/404/Basic on every protocol route,
+page redirect, push permissions), `ManagePermissionTests`. A test that needs a private repository removes the seeded targets through `IAccessAdministration`.
 
 Unit tests reach internals through `InternalsVisibleTo`, declared in each **project file** (not
 `AssemblyInfo.cs`):

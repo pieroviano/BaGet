@@ -18,10 +18,10 @@ Inventory that motivates it (2026-10-21, HEAD `1433dba`):
 | # | Check | Why it blocks | How |
 |---|---|---|---|
 | **B1** (resolved, see below) | Page routes under `r/{repo}/` without breaking links | CLAUDE.md: a second page route (`AddPageRoute`, `IServiceCollectionExtensions.cs:43`) makes `asp-page`/`Url.Page` emit empty `href`s. U1 needs every page reachable at `/x` and `/r/{repo}/x` | Prototype an `IPageRouteModelConvention` that adds an `r/{repo}/`-prefixed selector to every page, the existing one keeping `Order` 0. Test `Url.Page` with and without an ambient `repo` value, `asp-page` in a layout, `RedirectToPage`, and the existing `/packages` alias. If generation is ambiguous, fall back to an explicit `asp-route-repo` everywhere via one tag helper. Decide before U1 |
-| **B2** | Private reads with real NuGet clients | Enforced reads (U2) answer 401; `dotnet`, `nuget.exe`, Visual Studio and PowerShellGet must send credentials | Against a test host: `dotnet nuget add source -u <user> -p <api key>` and `--store-password-in-clear-text`, `nuget.exe sources add`, PowerShellGet `-Credential`. Confirm `401` + `WWW-Authenticate: Basic realm=...` triggers them, and that symbol downloads (Visual Studio) and the V2 feed authenticate the same way |
-| **B3** | Upgrade equivalence | Existing installs must behave exactly as today after U2 (anonymous read everywhere, push and manage by ownership) | U2's migration seeds built-in targets (D3). A test runs the whole current authorization suite (`OwnershipAuthorizationService` cases, push/unlist/delete/deprecate, Manage page) on the seeded model with no edits: identical outcomes |
-| **B4** | Cost of a check per request | Reads are hot (registration, flat container, search) | Measure the evaluator with 50 targets / 20 groups; cache the resolved permission set per principal per request plus a short per-user cache invalidated by an "access model version" bumped on every change |
-| **B5** | Single-repository backends | Azure Table (`NullContext`) and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`) | Switcher, repository pickers and per-repository targets hidden there; permission tables need a relational database. Under Azure Table, keep today's model and say so on the admin pages |
+| **B2** (resolved, see below) | Private reads with real NuGet clients | Enforced reads (U2) answer 401; `dotnet`, `nuget.exe`, Visual Studio and PowerShellGet must send credentials | Against a test host: `dotnet nuget add source -u <user> -p <api key>` and `--store-password-in-clear-text`, `nuget.exe sources add`, PowerShellGet `-Credential`. Confirm `401` + `WWW-Authenticate: Basic realm=...` triggers them, and that symbol downloads (Visual Studio) and the V2 feed authenticate the same way |
+| **B3** (resolved, see below) | Upgrade equivalence | Existing installs must behave exactly as today after U2 (anonymous read everywhere, push and manage by ownership) | U2's migration seeds built-in targets (D3). A test runs the whole current authorization suite (`OwnershipAuthorizationService` cases, push/unlist/delete/deprecate, Manage page) on the seeded model with no edits: identical outcomes |
+| **B4** (resolved, see below) | Cost of a check per request | Reads are hot (registration, flat container, search) | Measure the evaluator with 50 targets / 20 groups; cache the resolved permission set per principal per request plus a short per-user cache invalidated by an "access model version" bumped on every change |
+| **B5** (resolved, see below) | Single-repository backends | Azure Table (`NullContext`) and `Search:Type=AzureSearch` serve `default` only (`SupportsMultipleRepositories=false`) | Switcher, repository pickers and per-repository targets hidden there; permission tables need a relational database. Under Azure Table, keep today's model and say so on the admin pages |
 | B6 | Symbol deletion | No `ISymbolStorageService` delete; symbols are keyed by PDB, not by package (`SymbolStorageService.cs:50-76`) | Find where a `.snupkg` → PDB keys mapping can be recorded at index time. Without it, list/delete per package is impossible for existing symbols; decide (record from now on + document) |
 
 ### B1 outcome
@@ -31,6 +31,15 @@ Inventory that motivates it (2026-10-21, HEAD `1433dba`):
 | The `IPageRouteModelConvention` twin selector (`r/{repo}/` + each selector, `Order` -1, `/packages` alias included) generates correctly: no `repo` value gives the plain URL, a `repo` value the prefixed one, `repo = null` leaves; `Url.Page`, `asp-page`, forms and `RedirectToPage` agree | Implemented: `RepositoryPageRouteConvention` |
 | **Ambient `repo` is not carried to a different page** (only to the same page): `asp-page="/Upload"` in the layout of `/r/second/…` dropped the prefix | Not a per-link `asp-route-repo` tag helper but one `IUrlHelper` decorator (`RepositoryUrlHelperFactory`): adds `repo` to every link to a repository page; an explicit value wins; other pages untouched |
 | Hard-coded `~/packages/…` hrefs ignore routing | Replaced by `Url.Page` in the repository pages |
+
+### B2-B5 outcomes (track `access`)
+
+| # | Finding | Decision / where |
+|---|---|---|
+| B2 | Run against a real host (`Anonymous read` off on `second`): `dotnet package search` / `dotnet restore` get `401` + `WWW-Authenticate: Basic realm="BaGet"` anonymously and with a wrong password or the right key under another user name; with `-u <owner> -p <key>` they work (`NU1301` otherwise). `nuget.exe` 6.2.1 `install` likewise (its credential providers run on the challenge). V2 and symbol routes challenge and accept Basic identically. **Not runnable here:** Visual Studio and PowerShellGet (needs the NuGet provider bootstrap from the internet); documented per client in `docs/access-control.md` | Credentials: password = API key, user name checked against the key's owner (`RequestPrincipalResolver`); `http` sources need `allowInsecureConnections` in the client config, not a server matter |
+| B3 | `AccessUpgradeEquivalenceTests` (written first, green on the pre-U2 code except the seed check): a pre-repository database migrated by the current code serves anonymous reads in both repositories, refuses anonymous writes, and keeps ownership/scope/administrator outcomes. The existing authorization suite runs on the same seeded model (the harness migrates a fresh database). **The plan's seed was too narrow:** "Authenticated users deploy" needs Annotate, Delete and Manage as well, or unlisting/deprecating by owners (decided by ownership alone before) would break | Seed: Anyone reads (Read, Everyone); Authenticated users deploy (Annotate, Deploy, Delete, Manage; Authenticated) |
+| B4 | `AccessEvaluatorTests.ACheckAgainstFiftyTargetsAndTwentyGroupsCostsMicroseconds`: 50 targets, 20 groups, 20 000 package-level checks, 6.5 microseconds each in memory (development machine) (the assertion allows 500). Whole model cached as `AccessSnapshot`; invalidated by `AccessModelVersion` (bumped by a SaveChanges interceptor, so no editor forgets) and a 30 s TTL for other instances; memberships per user loaded once per snapshot | `BaGet.Core/Access/AccessSnapshot.cs` |
+| B5 | Azure Table (`NullContext`): the evaluator allows Read to all and writes to any authenticated principal (today's model); the switcher/pickers are already hidden (`SupportsMultipleRepositories`). `Search:Type=AzureSearch` with a relational database keeps the model for the `default` repository. The admin pages of U3 must say so | `AccessEvaluator`, `AccessEvaluatorTests.WithoutARelationalDatabase...` |
 
 ## Decisions
 
@@ -94,8 +103,20 @@ the filter is global and a page model reads `IRepositoryContext`.
 
 ### U2 — Access control backend (D1, D3-D5)
 
+Status: **implemented** (track `access`; B2-B5 above).
+
 The access model above; 4 migrations; seed (D3); `IAccessEvaluator` with the B4 cache; enforcement points; Basic auth;
 audit entries; `AnonymousRead` mapping; Azure Table falls back to today's model (B5).
+
+| Deviation from the sketch above | Why |
+|---|---|
+| Reads are enforced by `RepositoryReadFilter`, a global MVC **resource filter** reading a `RepositoryRouteMetadata` that `MapRoute` adds, not an endpoint filter | Endpoint filters exist for minimal APIs, not controllers; a global MVC filter also reaches hosts that map their own pipeline |
+| `ApiKeyRepository` (D6) not created here | It belongs to U4 |
+| `AnonymousRead` is a **gate** on the Everyone group's Read for that repository (turning it on re-creates an `Anonymous read {name}` target if none grants Everyone Read), not a stored grant that is added and removed | A seeded target with pattern `*` cannot be split per repository; the flag keeps its column and its meaning |
+| Group/target names allow 128 characters, spaces and `._-` (`AccessNames`) | A generated `Anonymous read {name}` must fit a 64-character repository name |
+| `PermissionTarget.IsBuiltIn`, `PackageAction.Annotate`, `ProjectMember` has `PrincipalType` (User or Group) instead of two nullable columns | Restorable built-ins; deprecation edits map to Annotate, unlist/delete to Delete; one column pair |
+| Read include/exclude patterns protect per-package routes (those with `{id}`); search, autocomplete and V2 listings are filtered per repository only | Filtering result sets by pattern needs the search/query layer; documented, open |
+| Deploy/Delete/Annotate/Manage do not imply Read | As Artifactory; a private repository needs explicit Read grants |
 
 ### U3 — Access control UI (`BaGet.Identity/Pages/Admin`)
 
@@ -144,7 +165,7 @@ last-owner rules of `PackageOwnershipService`), manage members. Pages under `/ad
 
 ### U8 — UI inconsistencies
 
-**Done** (`UiConsistencyTests`). Links go through `RepositoryPageLinks` (`BaGet.Identity`), the one seam for where a repository's package pages live: default at `/packages/…`, others at `/r/{name}/packages/…` (404 until the repository-aware pages exist). "Manage" is shown to owners and administrators (holders of a Manage permission arrive with U2). The Upload nav rule is `UploadAvailability` (read-only, closed maintenance gate, nothing to authenticate with).
+**Done** (`UiConsistencyTests`). Links go through `RepositoryPageLinks` (`BaGet.Identity`), the one seam for where a repository's package pages live: default at `/packages/…`, others at `/r/{name}/packages/…` (404 until the repository-aware pages exist). "Manage" is shown to owners holding the Manage action (the seeded model gives every signed-in user that) and to administrators. The Upload nav rule is `UploadAvailability` (read-only, closed maintenance gate, nothing to authenticate with).
 
 | Fix | Where |
 |---|---|
