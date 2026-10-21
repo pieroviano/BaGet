@@ -64,7 +64,7 @@ public class RemoteRepositoryTests : IDisposable
     {
         using var scope = _app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
-            .CreateAsync(name, RepositoryFormat.NuGet, RepositoryKind.Remote, Settings(change), Cancel);
+            .CreateAsync(name, RepositoryFormat.NuGet, RepositoryKind.Remote, Settings(change), anonymousRead: true, Cancel);
     }
 
     private async Task UpdateAsync(Action<RemoteRepositorySettings> change, string name = Remote)
