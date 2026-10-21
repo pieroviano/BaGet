@@ -21,6 +21,10 @@ public static class NpmNames
     // registry's own routes: /-/ping, /{name}/-/{file}). npm allows more in legacy names; new names are held to this.
     private static readonly Regex Part = new("^[a-z0-9~][a-z0-9._~-]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // The same shape for a name that is only looked up: npm's legacy names (registry.npmjs.org still serves JSONStream,
+    // Base64, ...) have upper case letters. Nothing else is relaxed, so the name stays a safe path segment.
+    private static readonly Regex LookupPart = new("^[A-Za-z0-9~][A-Za-z0-9._~-]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private static readonly Regex TagShape = new("^[A-Za-z0-9._~-]+$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly string[] Reserved = { "node_modules", "favicon.ico" };
@@ -33,7 +37,23 @@ public static class NpmNames
     /// <param name="normalized">The decoded name when valid.</param>
     /// <param name="error">Why not, when invalid.</param>
     public static bool TryParse(string? name, out string normalized, out string error)
+        => TryParse(name, legacy: false, out normalized, out error);
+
+    /// <summary>
+    /// Validates <paramref name="name"/> as a name to look up (read, proxy to an upstream, purge from a cache): like
+    /// <see cref="TryParse(string?, out string, out string)"/> but upper case letters are accepted, since packages published
+    /// long ago under such names still exist upstream. The case is kept (an upstream registry is asked for the name as
+    /// written). Publishing and every other change keep the strict rule.
+    /// </summary>
+    /// <param name="name">The name as the client wrote it (an encoded <c>%2f</c> is decoded first).</param>
+    /// <param name="normalized">The decoded name when valid.</param>
+    /// <param name="error">Why not, when invalid.</param>
+    public static bool TryParseLookup(string? name, out string normalized, out string error)
+        => TryParse(name, legacy: true, out normalized, out error);
+
+    private static bool TryParse(string? name, bool legacy, out string normalized, out string error)
     {
+        var part = legacy ? LookupPart : Part;
         normalized = string.Empty;
         error = string.Empty;
 
@@ -60,7 +80,7 @@ public static class NpmNames
             return false;
         }
 
-        if (decoded != decoded.ToLowerInvariant())
+        if (!legacy && decoded != decoded.ToLowerInvariant())
         {
             error = "A package name must be lower case.";
             return false;
@@ -76,7 +96,7 @@ public static class NpmNames
                 return false;
             }
 
-            if (!Part.IsMatch(decoded.Substring(1, slash - 1)))
+            if (!part.IsMatch(decoded.Substring(1, slash - 1)))
             {
                 error = "The scope of a package name has only lower case letters, digits and . _ ~ - characters.";
                 return false;
@@ -89,13 +109,13 @@ public static class NpmNames
             unscoped = decoded;
         }
 
-        if (!Part.IsMatch(unscoped) || unscoped.StartsWith('.') || unscoped.StartsWith('_'))
+        if (!part.IsMatch(unscoped) || unscoped.StartsWith('.') || unscoped.StartsWith('_'))
         {
             error = "A package name has only lower case letters, digits and . _ ~ - characters, and starts with a letter or digit.";
             return false;
         }
 
-        if (Array.IndexOf(Reserved, unscoped) >= 0)
+        if (Array.IndexOf(Reserved, unscoped.ToLowerInvariant()) >= 0)
         {
             error = $"'{unscoped}' is not allowed as a package name.";
             return false;

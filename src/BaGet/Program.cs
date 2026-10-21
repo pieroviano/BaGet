@@ -586,7 +586,7 @@ public partial class Program
 
         // After forwarded headers (so the client address is the real one) and the path base, before
         // anything that answers: it logs the final status of every request, one line each. The default
-        // message template carries the method, path and status, never the query string or headers, so
+        // message template carries the method, path (credentials in it masked) and status, never the query string or headers, so
         // "?apikey=" values and X-NuGet-ApiKey cannot reach the log; keep it that way.
         app.UseSerilogRequestLogging(requestLogging =>
         {
@@ -596,6 +596,14 @@ public partial class Program
             // process (the integration tests) would share and cross-feed.
             requestLogging.Logger = app.Services.GetRequiredService<Serilog.ILogger>();
             requestLogging.GetLevel = GetRequestLogLevel;
+            // The path is logged, so a credential carried in it (npm logout's token) is masked first.
+            requestLogging.GetMessageTemplateProperties = (context, path, elapsed, statusCode) => new[]
+            {
+                new Serilog.Events.LogEventProperty("RequestMethod", new Serilog.Events.ScalarValue(context.Request.Method)),
+                new Serilog.Events.LogEventProperty("RequestPath", new Serilog.Events.ScalarValue(BaGet.Web.RequestPathRedaction.Redact(path))),
+                new Serilog.Events.LogEventProperty("StatusCode", new Serilog.Events.ScalarValue(statusCode)),
+                new Serilog.Events.LogEventProperty("Elapsed", new Serilog.Events.ScalarValue(elapsed)),
+            };
             requestLogging.EnrichDiagnosticContext = (diagnostics, context) =>
                 diagnostics.Set("ClientIp", context.Connection.RemoteIpAddress?.ToString());
         });

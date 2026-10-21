@@ -93,10 +93,11 @@ public class NpmController : Controller
 
     private string? RawName => NpmRouteNames.FromRouteValues(RouteData.Values);
 
-    private bool TryName(out string name, out IActionResult? failure)
+    // A read (lookup: true) accepts npm's legacy upper case names, which an upstream may serve; a change needs a current name.
+    private bool TryName(out string name, out IActionResult? failure, bool lookup = false)
     {
         failure = null;
-        if (NpmNames.TryParse(RawName, out name, out var error)) return true;
+        if (lookup ? NpmNames.TryParseLookup(RawName, out name, out var error) : NpmNames.TryParse(RawName, out name, out error)) return true;
 
         failure = Error(400, error);
         return false;
@@ -181,7 +182,7 @@ public class NpmController : Controller
     [HttpGet]
     public async Task<IActionResult> Packument(CancellationToken cancellationToken)
     {
-        if (!TryName(out var name, out _)) return Error(404, "Not found");
+        if (!TryName(out var name, out _, lookup: true)) return Error(404, "Not found");
 
         var abbreviated = Request.Headers.Accept.ToString().Contains(AbbreviatedType, StringComparison.OrdinalIgnoreCase);
         var packument = await _registry.GetPackumentAsync(name, abbreviated, cancellationToken);
@@ -201,7 +202,7 @@ public class NpmController : Controller
     [HttpGet]
     public async Task<IActionResult> Tarball(string file, CancellationToken cancellationToken)
     {
-        if (!TryName(out var name, out _)) return Error(404, "Not found");
+        if (!TryName(out var name, out _, lookup: true)) return Error(404, "Not found");
 
         var tarball = await _registry.OpenTarballAsync(name, file, cancellationToken);
         if (tarball == null) return Error(404, "Not found");
@@ -215,7 +216,7 @@ public class NpmController : Controller
     [HttpGet]
     public async Task<IActionResult> DistTags(CancellationToken cancellationToken)
     {
-        if (!TryName(out var name, out _)) return Error(404, "Not found");
+        if (!TryName(out var name, out _, lookup: true)) return Error(404, "Not found");
 
         var tags = await _registry.GetDistTagsAsync(name, cancellationToken);
         if (tags == null) return Error(404, "Not found");

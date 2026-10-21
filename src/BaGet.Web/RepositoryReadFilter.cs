@@ -21,8 +21,9 @@ public sealed class RepositoryRouteMetadata
     private static readonly RepositoryRouteMetadata WriteOnly = new(writesOnly: true, authorizesItself: false, RepositoryFormat.NuGet);
     private static readonly RepositoryRouteMetadata SelfAuthorized = new(writesOnly: false, authorizesItself: true, RepositoryFormat.NuGet);
 
-    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself, RepositoryFormat format)
+    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself, RepositoryFormat format, bool writesContent = true)
     {
+        WritesContent = writesContent;
         WritesOnly = writesOnly;
         AuthorizesItself = authorizesItself;
         Format = format;
@@ -51,8 +52,16 @@ public sealed class RepositoryRouteMetadata
     /// </summary>
     public bool AuthorizesItself { get; }
 
-    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false, RepositoryFormat format = RepositoryFormat.NuGet)
-        => format != RepositoryFormat.NuGet ? new RepositoryRouteMetadata(writesOnly, authorizesItself, format)
+    /// <summary>
+    /// False for a route that does not change the repository's content though it is a write method: the credential calls
+    /// (npm's login and logout). <see cref="RepositoryResolutionMiddleware"/> leaves such a request on the repository it
+    /// addressed instead of moving it to a virtual repository's deploy repository, so a token issued by a login on a virtual
+    /// repository is a token of that virtual repository.
+    /// </summary>
+    public bool WritesContent { get; }
+
+    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false, RepositoryFormat format = RepositoryFormat.NuGet, bool writesContent = true)
+        => format != RepositoryFormat.NuGet || !writesContent ? new RepositoryRouteMetadata(writesOnly, authorizesItself, format, writesContent)
         : authorizesItself ? SelfAuthorized : writesOnly ? WriteOnly : Instance;
 }
 
@@ -93,7 +102,7 @@ public class RepositoryReadFilter : IAsyncResourceFilter
             var raw = NpmRouteNames.FromRouteValues(context.RouteData.Values);
             if (raw != null)
             {
-                if (!NpmNames.TryParse(raw, out var normalizedName, out _))
+                if (!NpmNames.TryParseLookup(raw, out var normalizedName, out _))
                 {
                     context.Result = new NotFoundResult();
                     return;

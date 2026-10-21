@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -95,6 +95,23 @@ public class LoggingTests : IDisposable
             .SelectMany(d => Directory.GetFiles(d, "*.log", SearchOption.AllDirectories))
             .Distinct()
             .ToDictionary(f => f, f => new FileInfo(f).Length);
+
+    [Fact]
+    public async Task TheTokenOfAnNpmLogoutIsNotLoggedInThePath()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var logs = new CapturingLoggerProvider();
+        var app = Start(logs);
+        await app.CreateNpmRepositoryAsync("web", cancellationToken: cancellationToken);
+        using var client = app.CreateClient();
+
+        using var response = await client.DeleteAsync("r/web/npm/-/user/token/PATH-SECRET", cancellationToken);
+
+        var line = Assert.Single(logs.Messages.Where(m => m.Contains("responded")).Distinct());
+        Assert.Contains("DELETE", line);
+        Assert.Contains("/r/web/npm/-/user/token/Redacted", line);
+        Assert.DoesNotContain(logs.Messages, m => m.Contains("PATH-SECRET"));
+    }
 
     [Fact]
     public async Task ARequestIsLoggedOnceWithoutItsQueryStringOrApiKey()

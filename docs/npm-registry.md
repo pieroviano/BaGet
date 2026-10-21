@@ -18,7 +18,7 @@ A **remote** npm repository proxies an upstream registry such as registry.npmjs.
 repository**, named `npm login (name)`, no expiry; it appears on *Account > API keys* and `npm logout` (or *Revoke*) deletes it.
 Refused: wrong password, a locked-out account (429), an unconfirmed email, an account with two-factor authentication (use an
 API key from the account page instead). Without accounts (`Accounts:Enabled` off) login answers 501: use the global key as the token.
-Login never creates an account.
+Login never creates an account. On a **virtual** repository the token is limited to that repository plus its members and deploy repository (so it reads through it and pushes to the deploy repository); logout and login are never moved to the deploy repository. The logout request names the token in its path; the request log and traces show `Redacted` in its place.
 
 ## Pages
 
@@ -38,7 +38,7 @@ read-only mode.
 
 | Topic | Rule |
 |---|---|
-| Names | `left-pad` or `@scope/name`, lower case, at most 214 characters, `a-z 0-9 . _ ~ -`, not starting with `.`, `_` or `-`; `node_modules` and `favicon.ico` reserved. An encoded `@scope%2fname` and `@scope/name` are the same package |
+| Names | `left-pad` or `@scope/name`, lower case (to publish; reading, and proxying a remote repository, also accept npm's legacy upper case names such as `JSONStream`), at most 214 characters, `a-z 0-9 . _ ~ -`, not starting with `.`, `_` or `-`; `node_modules` and `favicon.ico` reserved. An encoded `@scope%2fname` and `@scope/name` are the same package |
 | Versions | semantic versions only (`1.0.0`, `1.0.0-rc.1`, `1.0.0+build`); build metadata does not make a version different |
 | Publish | `PUT /{name}`: the body carries the tarball as base64. It is streamed to a temporary file and decoded to another, never held in memory. Refused (400, nothing stored) when the declared `integrity` (sha512), `shasum` (sha1) or `length` differ from the bytes, when the tarball has no `package.json` or it names another package or version, when the tag is missing or looks like a version. `409` for a published version. Size limit `Npm:MaxPublishBytes` (413); the document apart from the tarballs (manifest, readme) is held in memory and limited to 64 MiB (413) |
 | First version | always gets the `latest` tag, whatever tag it was published with. Later publishes move only the tag they name |
@@ -57,7 +57,7 @@ Same shape as npmjs, with the permission model of this server:
 
 | Case | Needs |
 |---|---|
-| A version published less than `Npm:UnpublishWindow` ago (default **72 hours**), or a package whose every version is that young | the owner's **Deploy** and a key with `package:push` / `package:pushversion` |
+| A version published less than `Npm:UnpublishWindow` ago (default **72 hours**), or a package whose every version is that young | the owner's **Deploy** and a key with `package:push` (a key limited to `package:pushversion` never deletes: it needs `package:unlist` and Delete like an old version) |
 | Anything older | **Delete** on the package, ownership (or administrator) and `package:unlist` |
 | `UnpublishWindow` zero or negative | always Delete |
 

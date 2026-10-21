@@ -469,7 +469,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         var id = packageId.Trim();
         if (row.Format == RepositoryFormat.Npm)
         {
-            if (!NpmNames.TryParse(id, out id, out var invalid)) throw new ArgumentException(invalid, nameof(packageId));
+            if (!NpmNames.TryParseLookup(id, out id, out var invalid)) throw new ArgumentException(invalid, nameof(packageId));
         }
 
         var deleted = await DeletePackagesAsync(row, id, version, cancellationToken).ConfigureAwait(false);

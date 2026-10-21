@@ -129,7 +129,7 @@ configuration: if it is refused the `mirror` repository is not created (a warnin
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `Npm:UnpublishWindow` | `72:00:00` | how long after publishing a version its owner may unpublish it with Deploy alone; later unpublishing needs Delete. Zero or negative: always Delete. Live |
+| `Npm:UnpublishWindow` | `72:00:00` | how long after publishing a version its owner may unpublish it with Deploy alone; later unpublishing needs Delete. A key limited to `package:pushversion` always needs Delete. Zero or negative: always Delete. Live |
 | `Npm:MaxPublishBytes` | `536870912` | largest `npm publish` request body in bytes (413 above); `0` = no limit. Live |
 
 See [npm registry](npm-registry.md).
@@ -732,7 +732,7 @@ no longer read.
   Windows) must already be registered if changed.
 - Request logging: one line per request, `HTTP GET /v3/index.json from <client> responded 200 in 12.3 ms`, after
   forwarded headers so the client is the real one. Level: Warning for 5xx or an exception, Debug for static files,
-  Information otherwise. The line has the path only: no query string, headers or body, so API keys never reach the log.
+  Information otherwise. The line has the path only: no query string, headers or body, so API keys never reach the log; the one credential that rides in a path (npm logout's token segment) is logged as `Redacted`, and masked in traces too.
   Quiet only that line: `Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware=Warning`.
 - The Settings page does not list `Serilog` (it is not an options type); edit the file or the environment.
 

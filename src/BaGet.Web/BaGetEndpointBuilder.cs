@@ -30,11 +30,12 @@ public class BaGetEndpointBuilder
         object defaults,
         object? constraints = null,
         bool authorizesItself = false,
-        RepositoryFormat format = RepositoryFormat.NuGet)
+        RepositoryFormat format = RepositoryFormat.NuGet,
+        bool writesContent = true)
     {
         // The marker is what RepositoryReadFilter looks for: every route registered here needs Read access, except a
         // route that is constrained to write methods only (and then only for those methods).
-        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself, format);
+        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself, format, writesContent);
         endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(metadata);
         endpoints.MapControllerRoute(
             Routes.RepositoryRouteName(name),
@@ -86,12 +87,12 @@ public class BaGetEndpointBuilder
     /// </summary>
     public void MapNpmRoutes(IEndpointRouteBuilder endpoints)
     {
-        void Map(string name, string pattern, string action, string? method, bool perPackage)
+        void Map(string name, string pattern, string action, string? method, bool perPackage, bool writesContent = true)
         {
             object? constraints = method == null ? null : new { httpMethod = new HttpMethodRouteConstraint(method) };
             var defaults = new { controller = "Npm", action };
 
-            MapRoute(endpoints, name, "npm/" + pattern.Replace("{package}", "{name}"), defaults, constraints, format: RepositoryFormat.Npm);
+            MapRoute(endpoints, name, "npm/" + pattern.Replace("{package}", "{name}"), defaults, constraints, format: RepositoryFormat.Npm, writesContent: writesContent);
             if (perPackage)
             {
                 MapRoute(endpoints, name + Routes.NpmScopedSuffix, "npm/" + pattern.Replace("{package}", "@{scope}/{pkg}"), defaults, constraints, format: RepositoryFormat.Npm);
@@ -102,8 +103,8 @@ public class BaGetEndpointBuilder
         Map(Routes.NpmWhoamiRouteName, "-/whoami", "Whoami", "GET", false);
         Map(Routes.NpmSearchRouteName, "-/v1/search", "Search", "GET", false);
         Map(Routes.NpmWebLoginRouteName, "-/v1/login", "WebLogin", "POST", false);
-        Map(Routes.NpmLoginRouteName, "-/user/{userKey}", "Login", "PUT", false);
-        Map(Routes.NpmLogoutRouteName, "-/user/token/{token}", "Logout", "DELETE", false);
+        Map(Routes.NpmLoginRouteName, "-/user/{userKey}", "Login", "PUT", false, writesContent: false);
+        Map(Routes.NpmLogoutRouteName, "-/user/token/{token}", "Logout", "DELETE", false, writesContent: false);
 
         // Not constrained: the audit calls are POSTs that only read, so they pass the read check like a GET.
         Map(Routes.NpmAuditBulkRouteName, "-/npm/v1/security/advisories/bulk", "AuditBulk", null, false);

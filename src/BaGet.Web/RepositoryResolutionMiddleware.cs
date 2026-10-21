@@ -89,6 +89,7 @@ public class RepositoryResolutionMiddleware
     {
         var route = context.GetEndpoint()?.Metadata.GetMetadata<RepositoryRouteMetadata>();
         var isWrite = route != null
+            && route.WritesContent
             && (route.AuthorizesItself
                 || (route.WritesOnly && !(HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))));
         if (!isWrite) return false;

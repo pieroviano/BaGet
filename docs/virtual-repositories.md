@@ -60,7 +60,7 @@ A virtual repository of format npm merges npm repositories (`/r/{name}/npm/`). M
 | Dist-tags (`GET`), `npm view`, package pages | The same merge |
 | Search | Merged by package name (the first member's entry), ordered by name; each member is read for the first `skip + take` hits (at most 1000); remote members contribute the packages they stored. `total` is exact while every member was read completely, else an upper bound |
 | `npm publish`, dist-tag, deprecate, unpublish | **Moved to the deploy repository** before authorization: it needs the matching action *there*, ownership there, and the unpublish window of `Npm:UnpublishWindow` applies there. Without a deploy repository: `403`. The service (`INpmRegistry`) does the same for callers that are not routes |
-| `npm login`, `whoami`, `ping`, `audit` | As for any repository |
+| `npm login`, `whoami`, `ping`, `audit` | As for any repository; login is answered by the virtual repository (not moved to the deploy repository) and its token also covers the members and the deploy repository |
 | Web pages | *Browse*, a package's page and *Upload* (to the deploy repository) work; *Manage* answers `404` (use the member's page) |
 
 The *Where would a package come from?* preview asks each npm member: *stored here* (the version's tarball is stored), *not stored yet; its upstream has it* (a remote member, from its remembered or fresh packument), *not found*, *its upstream could not be asked*, *offline*.

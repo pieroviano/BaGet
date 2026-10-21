@@ -76,6 +76,8 @@ internal static class TelemetryServiceCollectionExtensions
                         options.Filter = (_, _) => TelemetryEndpoints.Read(monitor)?.Traces?.Database != false;
                     }))
                 .AddProcessor<SqlTextRedactingProcessor>()
+                // npm logout names the API key to revoke in the path (url.path): mask it before the batch is queued.
+                .AddProcessor<PathRedactingProcessor>()
                 .AddProcessor(provider =>
                 {
                     var exporter = provider.GetRequiredService<ReloadableTraceExporter>();

@@ -353,8 +353,8 @@ public class RepositoryEditModel : RepositoryPageModel
 
         if (Repository.Format == RepositoryFormat.Npm)
         {
-            // An npm name is checked by the one rule every npm route and page uses (lower case, scoped names).
-            if (!NpmNames.TryParse(id, out id, out var invalidName))
+            // An npm name is checked by the one rule every npm route and page uses (scoped names; a lookup accepts legacy upper case).
+            if (!NpmNames.TryParseLookup(id, out id, out var invalidName))
             {
                 Error = invalidName;
 

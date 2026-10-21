@@ -148,6 +148,32 @@ public class RemoteNpmRepositoryTests : IDisposable
         Assert.Equal(5, detail.Settings.MetadataTtlSeconds);
     }
 
+    [Fact]
+    public async Task ALegacyUpperCaseNameIsServedFromTheUpstreamAndItsTarballIsCached()
+    {
+        _upstream.Add("JSONStream", "1.3.5");
+        await CreateRemoteAsync();
+
+        var (status, packument) = await PackumentAsync("JSONStream");
+        using var file = await TarballAsync("JSONStream", "1.3.5");
+
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal("JSONStream", (string?)packument!["name"]);
+        Assert.Equal(HttpStatusCode.OK, file.StatusCode);
+        Assert.Equal(_upstream.Tarball("JSONStream", "1.3.5").Bytes, await file.Content.ReadAsByteArrayAsync(Cancel));
+    }
+
+    [Fact]
+    public async Task ANewUpperCaseNameIsStillRefusedOnPublish()
+    {
+        await _app.CreateNpmRepositoryAsync("loc", cancellationToken: Cancel);
+
+        var tarball = NpmTestPackages.Tarball("Upper", "1.0.0");
+        using var response = await SendAsync(HttpMethod.Put, NpmTestPackages.Path("/r/loc/npm/", "Upper"), NpmTestPackages.PublishBody(tarball), token: Key);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     // ---- packuments ----
 
     [Fact]

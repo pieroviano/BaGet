@@ -887,9 +887,12 @@ public class NpmRegistryService : INpmRegistry
         var name = package.Name!;
 
         // Deploy lets an owner take back a recent mistake (npmjs allows it for 72 hours); anything older is a deletion.
+        // Only a key that may push whole packages (the push scope) takes that shortcut: a key limited to pushing new
+        // versions (package:pushversion) never deletes, so it is judged as for a deletion (the unlist scope).
         var window = UnpublishWindow;
         var now = _time.UtcNow;
         var young = window > TimeSpan.Zero
+                    && caller.HasScope(ApiKeyScopes.Push)
                     && removed.All(r => now - DateTime.SpecifyKind(r.Published, DateTimeKind.Utc) <= window);
         var denied = await DenyAsync(caller, young ? PackageAction.Push : PackageAction.Manage, name, cancellationToken).ConfigureAwait(false);
         if (denied != null) return denied;

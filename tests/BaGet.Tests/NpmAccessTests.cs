@@ -215,6 +215,24 @@ public class NpmAccessTests : IDisposable
     }
 
     [Fact]
+    public async Task AKeyThatOnlyPushesVersionsNeverUnpublishesEvenAYoungVersion()
+    {
+        var full = await KeyAsync("alice");
+        var pushVersion = await KeyAsync("alice", new[] { ApiKeyScopes.PushVersion });
+        await PublishAsync(full, "left-pad", "1.0.0");
+        await PublishAsync(pushVersion, "left-pad", "1.1.0");
+
+        using var version = await SendAsync(HttpMethod.Delete, Registry + "left-pad/-/left-pad-1.1.0.tgz/-rev/1-x", token: pushVersion);
+        using var whole = await SendAsync(HttpMethod.Delete, Registry + "left-pad/-rev/1-x", token: pushVersion);
+        using var packument = await SendAsync(HttpMethod.Get, Registry + "left-pad");
+
+        Assert.Equal(HttpStatusCode.Forbidden, version.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, whole.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, packument.StatusCode);
+        Assert.Contains("1.1.0", await packument.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task WithoutAWindowUnpublishingNeedsTheDeleteAction()
     {
         using var app = new BaGetApplication(

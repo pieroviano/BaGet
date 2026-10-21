@@ -67,7 +67,7 @@ public class NpmPackageModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        if (!NpmNames.TryParse(Id, out var name, out _)) return NotFound();
+        if (!NpmNames.TryParseLookup(Id, out var name, out _)) return NotFound();
 
         Package = await _registry.GetPackageAsync(name, cancellationToken);
         if (Package == null)

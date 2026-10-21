@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2588 tests** across `BaGet.Core.Tests` (719), `BaGet.Tests` (1537),
+Baseline: **2617 tests** across `BaGet.Core.Tests` (733), `BaGet.Tests` (1552),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (58),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (21, Docker). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -222,7 +222,7 @@ summed, orders by id or summed downloads (a total order, so paging is stable), a
 sort. The V2 controller and `VulnerabilityController` take an optional `VirtualRepositoryReader`. URLs come from the request's repository, so every link stays inside the virtual repository.
 No catalog: `CatalogController` answers 404 and `CatalogServiceIndexProvider` omits the resource when the repository is virtual. `Statistics`, `ReportAbuse`, `Packages/Manage`,
 `Packages/ContactOwners` are 404 on a virtual repository (`RepositoryPageFilter.NotOnVirtual`); the Package page hides their links.
-**Writes:** `RepositoryResolutionMiddleware` moves a write route (`RepositoryRouteMetadata.WritesOnly` with a non-GET method, or `AuthorizesItself`) of a virtual repository to its deploy
+**Writes:** `RepositoryResolutionMiddleware` moves a write route (`RepositoryRouteMetadata.WritesOnly` with a non-GET method, or `AuthorizesItself`, but not a route with `WritesContent` false: npm login/logout stay on the repository addressed) of a virtual repository to its deploy
 target with `IRepositoryContext.Use(target)` before authentication (403 with no deploy target); the Upload page does the same in `RepositoryPageFilter` (`RequestedVirtualItemKey` in
 `HttpContext.Items` remembers the virtual repository for the view). `AccessEvaluator` never grants Deploy on a virtual repository (like a remote one); `AccessRepositoryAccess` offers a virtual
 repository to `WritableAsync`/`CanWriteAsync` when the caller can read it and write to its deploy target. **Admin:** `IVirtualRepositoryAdministration` (create/update with validation: members exist,
@@ -371,7 +371,7 @@ On Windows a Serilog EventLog sink (Warning+, source `.NET Runtime`, `Serilog:Ev
 provider that `ClearProviders` removes. SelfLog goes to stderr. MinimumLevel reloads live, sinks need a restart. Libraries keep `Microsoft.Extensions.Logging.ILogger`. There is
 **no static/bootstrap logger** (it would throw "already frozen" when `WebApplicationFactory` builds a second host).
 `app.UseSerilogRequestLogging()` sits after forwarded headers/path base; its template has the path only, never the
-query or headers (API keys). `writeToProviders` delivers each event twice to a registered `ILoggerProvider`;
+query or headers (API keys); a credential inside a path (npm logout's `-/user/token/{token}`) is masked by `RequestPathRedaction` in the log (`GetMessageTemplateProperties`) and in traces (`PathRedactingProcessor`, `url.path`/`url.full`). `writeToProviders` delivers each event twice to a registered `ILoggerProvider`;
 tests that count lines use `Distinct()`. The harness switches the sinks off with `Enabled=false`.
 `WebApplicationFactory` `UseSetting` gives every parent key of a setting an empty value, which Serilog reads as a sink
 name, so a test that needs a working File sink runs `Program.BuildApplication` with command-line args instead.

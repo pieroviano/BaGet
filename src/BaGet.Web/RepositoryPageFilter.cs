@@ -62,9 +62,9 @@ public class RepositoryPageFilter : IAsyncPageFilter
             var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
             if (repository.Format == RepositoryFormat.Npm && !string.IsNullOrEmpty(packageId))
             {
-                // The access patterns see the decoded lower-case name, so @acme%2fSecret cannot reach a page that
+                // The access patterns see the decoded name (the patterns ignore case), so @acme%2fSecret cannot reach a page that
                 // the pattern for @acme/secret hides.
-                if (!NpmNames.TryParse(packageId, out var npmName, out _))
+                if (!NpmNames.TryParseLookup(packageId, out var npmName, out _))
                 {
                     context.Result = new NotFoundResult();
                     return;
