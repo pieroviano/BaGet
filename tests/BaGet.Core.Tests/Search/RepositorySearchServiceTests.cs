@@ -44,9 +44,13 @@ public class RepositorySearchServiceTests
 
         public int Calls;
 
+        /// <summary>Every (skip, take) any fake member was asked; cleared by the test that reads it (the tests of this class run one at a time).</summary>
+        public static readonly System.Collections.Concurrent.ConcurrentQueue<(int Skip, int Take)> Requests = new();
+
         public Task<SearchResponse> SearchAsync(SearchRequest request, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref Calls);
+            Requests.Enqueue((request.Skip, request.Take));
             var all = _data[_repository.Current.Name]
                 .Where(r => string.IsNullOrEmpty(request.Query) || r.PackageId!.Contains(request.Query, StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -146,6 +150,64 @@ public class RepositorySearchServiceTests
             Assert.Equal(1600, seen.Count);
             Assert.Equal(1600, seen.Distinct().Count());
             Assert.Equal(seen.OrderBy(i => i, StringComparer.OrdinalIgnoreCase).ToList(), seen);
+        }
+    }
+
+    [Fact]
+    public async Task AFirstPageOfLargeMembersAsksEachOnceForSkipPlusTakePlusOneResults()
+    {
+        var data = new Dictionary<string, List<SearchResult>>
+        {
+            ["a"] = Many("a", 5000),
+            ["b"] = Many("b", 3000),
+        };
+        var (search, scope) = Create(data, "a", "b");
+        using (scope)
+        {
+            while (FakeSearch.Requests.TryDequeue(out _))
+            {
+            }
+
+            var page = await search.SearchAsync(new SearchRequest { Skip = 0, Take = 10 }, Cancel);
+
+            Assert.Equal(new[] { (0, 11), (0, 11) }, FakeSearch.Requests.ToArray());
+            Assert.Equal(Many("a", 10).Select(r => r.PackageId), page.Data!.Select(d => d.PackageId));
+
+            // Past the exact limit the total is an estimate: never below the distinct ids, never above the sum of the members.
+            Assert.InRange(page.TotalHits, 22, 8000);
+        }
+    }
+
+    [Fact]
+    public async Task ADeepPageReadsEachMemberOnlyAsFarAsItNeedsAndNeverBeyondTheCap()
+    {
+        var data = new Dictionary<string, List<SearchResult>>
+        {
+            ["a"] = Many("a", 12000),
+            ["b"] = Many("b", 12000),
+        };
+        var (search, scope) = Create(data, "a", "b");
+        using (scope)
+        {
+            while (FakeSearch.Requests.TryDequeue(out _))
+            {
+            }
+
+            // The merge interleaves a and b by id: all of "a" sorts before "b", so ids 2495..2504 are all member a's.
+            var page = await search.SearchAsync(new SearchRequest { Skip = 2495, Take = 10 }, Cancel);
+            Assert.Equal(Many("a", 2505).Skip(2495).Select(r => r.PackageId), page.Data!.Select(d => d.PackageId));
+
+            var requests = FakeSearch.Requests.ToArray();
+            var perMember = RepositorySearchService.MaxScanPerMember / RepositorySearchService.MemberPageSize;
+            Assert.True(requests.Length <= 2 * perMember, $"{requests.Length} member calls");
+            Assert.Equal(2 * 6, requests.Length);
+            Assert.All(requests, r => Assert.True(r.Take <= RepositorySearchService.MemberPageSize));
+            Assert.Equal(2 * 2506, requests.Sum(r => r.Take));
+
+            FakeSearch.Requests.Clear();
+            await search.SearchAsync(new SearchRequest { Skip = 5_000_000, Take = 10 }, Cancel);
+            Assert.True(FakeSearch.Requests.Count <= 2 * perMember);
+            Assert.Equal(2 * RepositorySearchService.MaxScanPerMember, FakeSearch.Requests.Sum(r => r.Take));
         }
     }
 

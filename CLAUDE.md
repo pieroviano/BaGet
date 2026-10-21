@@ -176,8 +176,8 @@ upstream apply; a failing member is logged and skipped. The services that answer
 not virtual: `VirtualPackageService` (registered as `IPackageService`; versions = union, one version = first member), `VirtualPackageContentService` (`IPackageContentService`; first member
 that has the version, through the member's `DefaultPackageContentService`), `VirtualSymbolStorageService`, `RepositorySearchService` (wraps whatever `ISearchService` is registered last:
 `AddRepositoryAwareSearch()`, called at the end of `AddBaGetApplication` and again by `Program` after it registers the provider-chosen search). `DefaultPackageMetadataService` needs no
-change (it sits on `IPackageService`). Merged search drains each member (500 per page, `MaxScanPerMember` 10,000), keys an id by its first member's entry with versions unioned and downloads
-summed, orders by id or summed downloads (a total order, so paging is stable), and reports distinct ids as `totalHits` (an estimate only past the scan limit); `LastUpdated` is not a virtual
+change (it sits on `IPackageService`). Merged search reads each member only as far as the page needs (first `skip + take + 1` results, 500 per call, `MaxScanPerMember` 10,000; a member of at most `ExactScanPerMember` 2,000 is read completely), keys an id by its first member's entry with versions unioned and downloads
+summed, orders by id or summed downloads (a total order, so paging is stable), and reports distinct ids as `totalHits` (exact while every member was read completely, else an upper-bound estimate; downloads sums are windowed); `LastUpdated` is not a virtual
 sort. The V2 controller and `VulnerabilityController` take an optional `VirtualRepositoryReader`. URLs come from the request's repository, so every link stays inside the virtual repository.
 No catalog: `CatalogController` answers 404 and `CatalogServiceIndexProvider` omits the resource when the repository is virtual. `Statistics`, `ReportAbuse`, `Packages/Manage`,
 `Packages/ContactOwners` are 404 on a virtual repository (`RepositoryPageFilter.NotOnVirtual`); the Package page hides their links.
@@ -185,11 +185,11 @@ No catalog: `CatalogController` answers 404 and `CatalogServiceIndexProvider` om
 target with `IRepositoryContext.Use(target)` before authentication (403 with no deploy target); the Upload page does the same in `RepositoryPageFilter` (`RequestedVirtualItemKey` in
 `HttpContext.Items` remembers the virtual repository for the view). `AccessEvaluator` never grants Deploy on a virtual repository (like a remote one); `AccessRepositoryAccess` offers a virtual
 repository to `WritableAsync`/`CanWriteAsync` when the caller can read it and write to its deploy target. **Admin:** `IVirtualRepositoryAdministration` (create/update with validation: members exist,
-NuGet, no self/cycle, deploy repository a member that ends in a local one; `CandidatesAsync`, `ReferencedByAsync`, `PreviewAsync` = side-effect-free "where would it come from"); pages are
+NuGet, no self/cycle, deploy repository a member that ends in a local one; `CandidatesAsync`, `ReferencedByAsync`, `PreviewAsync` = side-effect-free "where would it come from": each member's `PackageService.ProbeAsync` = stored copy, then `IUpstreamClient.ProbeAsync` (`RemoteUpstreamClient` applies the same offline / remembered-404 gate as a download), so it cannot diverge from a real request); pages are
 `Repositories` (create) and `RepositoryEdit` (members add/remove/up/down, deploy picker, preview; handlers `AddMember`, `RemoveMember`, `MoveMember`, `Deploy`, `Preview`);
 `RepositoryAdministration.DeleteAsync` refuses a member of a virtual repository (`RepositoryReferencedException`). `RepositoryService.CreateAsync(..., Virtual)` stays `NotSupported`
 (it has no members to take). Tests: `VirtualRepositoryTests`, `VirtualRepositoryAccessTests`, `VirtualRemoteMemberTests` (+ `VirtualDefaultMirrorTests`), `AdminVirtualRepositoriesTests`,
-Core `VirtualRepositorySettingsTests`, `RepositorySearchServiceTests`.
+Core `VirtualRepositorySettingsTests`, `RepositorySearchServiceTests`, `VirtualSearchBoundTests` (member call sizes).
 
 **Admin operations** (`BaGet.Core/Operations`). `AdminJobService` (singleton) runs `IAdminOperation`s (`DownloadsImportOperation` in Core,
 `CatalogRebuildOperation` in `BaGet.Catalog`; register more with `TryAddEnumerable`) in the background in a repository scope, one run per

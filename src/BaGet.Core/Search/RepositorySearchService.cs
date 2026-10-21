@@ -15,14 +15,27 @@ namespace BaGet.Core;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A virtual search drains every member in pages (at most <see cref="MaxScanPerMember"/> results each; members are
-/// repository-filtered database searches, so this is the members' own answers), then orders the union once. A package id
-/// found in several members is one result: the first member's entry, with the versions of the others added and the download
+/// A virtual search reads each member in its own order, page by page, only as far as the page asked for needs: the first
+/// <c>skip + take + 1</c> results of each member (at most <see cref="MaxScanPerMember"/>, that is at most
+/// <see cref="MaxScanPerMember"/> / <see cref="MemberPageSize"/> page calls per member and request), so a request for the
+/// first page costs one small call per member however large the members are (a member of at most
+/// <see cref="ExactScanPerMember"/> results is then read to its end, at most that many results in
+/// <see cref="ExactScanPerMember"/> / <see cref="MemberPageSize"/> page calls, so small and medium installs keep exact
+/// totals). The windows are then merged once. A package id
+/// found in several members is one result: the first member entry, with the versions of the others added and the download
 /// counts summed. The order is total and does not depend on the page asked for: <see cref="SearchSort.Relevance"/> is the
-/// id (case-insensitive), <see cref="SearchSort.TotalDownloads"/> is the summed downloads then the id, so
-/// paging never repeats or drops a package, and <c>totalHits</c> is the number of distinct ids. When a member has more than
-/// <see cref="MaxScanPerMember"/> results the total is an estimate (the ids seen plus the member's unseen remainder) and the
-/// deep pages are cut off; <see cref="SearchSort.LastUpdated"/> is not offered (results carry no date).
+/// id (case-insensitive), <see cref="SearchSort.TotalDownloads"/> is the summed downloads then the id.
+/// </para>
+/// <para>
+/// Exactness: the page is exact whenever each member window covers it, which holds for <see cref="SearchSort.Relevance"/>
+/// (a member lists ids in ascending order, so an id of the merged first <c>n</c> is in its member first <c>n</c>; databases
+/// that order mixed-case ids differently from the case-insensitive merge can misplace one at a window edge) and for every
+/// result set that fits a window. For <see cref="SearchSort.TotalDownloads"/> an id held by several members is summed from
+/// the entries inside each member window, so an id near the edge of one window can rank slightly lower than its full
+/// total says. <c>totalHits</c> is the number of distinct ids when every member was read to its end (always the case when each
+/// has at most <see cref="ExactScanPerMember"/> results), else an estimate
+/// (the ids seen plus each member unseen remainder, an upper bound); results deeper than <see cref="MaxScanPerMember"/>
+/// per member are cut off. <see cref="SearchSort.LastUpdated"/> is not offered (results carry no date).
 /// </para>
 /// <para>Autocomplete and the dependents list are merged the same way (ids ordered by name).</para>
 /// </remarks>
@@ -31,7 +44,10 @@ public sealed class RepositorySearchService : ISearchService
     /// <summary>Page size used to read a member.</summary>
     internal const int MemberPageSize = 500;
 
-    /// <summary>Most results read from one member for one query.</summary>
+    /// <summary>A member with at most this many results is always read completely, which keeps the merged total exact.</summary>
+    public const int ExactScanPerMember = 2_000;
+
+    /// <summary>Most results read from one member for one query (so also the deepest page a virtual search can serve).</summary>
     public const int MaxScanPerMember = 10_000;
 
     private static readonly IReadOnlyCollection<SearchSort> VirtualSorts = new[] { SearchSort.Relevance, SearchSort.TotalDownloads };
@@ -56,16 +72,17 @@ public sealed class RepositorySearchService : ISearchService
         if (!_reader.IsVirtual) return await _inner.SearchAsync(request, cancellationToken).ConfigureAwait(false);
 
         var sort = request.SortBy == SearchSort.TotalDownloads ? SearchSort.TotalDownloads : SearchSort.Relevance;
+        var skip = Math.Max(request.Skip, 0);
+        var take = Math.Max(request.Take, 0);
+        var window = Window(skip, take);
         var members = await _reader.AllAsync(
             packageId: null,
-            sp => DrainSearchAsync(sp.GetRequiredService<ISearchService>(), request, sort, cancellationToken),
+            sp => DrainSearchAsync(sp.GetRequiredService<ISearchService>(), request, sort, window, cancellationToken),
             cancellationToken).ConfigureAwait(false);
 
         var merged = Merge(members.Select(m => m.Value.Items), sort);
         var remainder = members.Sum(m => Math.Max(0, m.Value.Total - m.Value.Items.Count));
 
-        var skip = Math.Max(request.Skip, 0);
-        var take = Math.Max(request.Take, 0);
         var response = _builder.BuildSearch(Array.Empty<PackageRegistration>(), merged.Count + remainder);
         response.Data = merged.Skip(skip).Take(take).ToList();
 
@@ -77,9 +94,10 @@ public sealed class RepositorySearchService : ISearchService
     {
         if (!_reader.IsVirtual) return await _inner.AutocompleteAsync(request, cancellationToken).ConfigureAwait(false);
 
+        var window = Window(Math.Max(request.Skip, 0), Math.Max(request.Take, 0));
         var members = await _reader.AllAsync(
             packageId: null,
-            sp => DrainAutocompleteAsync(sp.GetRequiredService<ISearchService>(), request, cancellationToken),
+            sp => DrainAutocompleteAsync(sp.GetRequiredService<ISearchService>(), request, window, cancellationToken),
             cancellationToken).ConfigureAwait(false);
 
         var ids = DistinctIgnoreCase(members.SelectMany(m => m.Value.Items))
@@ -197,18 +215,24 @@ public sealed class RepositorySearchService : ISearchService
         if (versions.Count > 0) winner.Version = versions[0].Version;
     }
 
-    private static async Task<Drained<SearchResult>> DrainSearchAsync(ISearchService search, SearchRequest request, SearchSort sort, CancellationToken cancellationToken)
+    // How many results of each member the page [skip, skip + take) needs, plus one to see that there are more.
+    private static int Window(int skip, int take)
+        => (int)Math.Min((long)skip + take + 1, MaxScanPerMember);
+
+    private static async Task<Drained<SearchResult>> DrainSearchAsync(ISearchService search, SearchRequest request, SearchSort sort, int window, CancellationToken cancellationToken)
     {
         var items = new List<SearchResult>();
         long total = 0;
 
-        while (items.Count < MaxScanPerMember)
+        var limit = window;
+        while (items.Count < limit)
         {
+            var take = Math.Min(MemberPageSize, limit - items.Count);
             var page = await search.SearchAsync(
                 new SearchRequest
                 {
                     Skip = items.Count,
-                    Take = MemberPageSize,
+                    Take = take,
                     IncludePrerelease = request.IncludePrerelease,
                     IncludeSemVer2 = request.IncludeSemVer2,
                     PackageType = request.PackageType,
@@ -219,27 +243,32 @@ public sealed class RepositorySearchService : ISearchService
                 cancellationToken).ConfigureAwait(false);
 
             total = page.TotalHits;
+
+            // A member that is small anyway is read to its end, so its total (and the merged one) stays exact.
+            if (total <= ExactScanPerMember) limit = Math.Max(limit, (int)total);
             var data = page.Data ?? Array.Empty<SearchResult>();
             items.AddRange(data);
 
-            if (data.Count < MemberPageSize || items.Count >= total) break;
+            if (data.Count < take || items.Count >= total) break;
         }
 
         return new Drained<SearchResult>(items, Math.Max(total, items.Count));
     }
 
-    private static async Task<Drained<string?>> DrainAutocompleteAsync(ISearchService search, AutocompleteRequest request, CancellationToken cancellationToken)
+    private static async Task<Drained<string?>> DrainAutocompleteAsync(ISearchService search, AutocompleteRequest request, int window, CancellationToken cancellationToken)
     {
         var items = new List<string?>();
         long total = 0;
 
-        while (items.Count < MaxScanPerMember)
+        var limit = window;
+        while (items.Count < limit)
         {
+            var take = Math.Min(MemberPageSize, limit - items.Count);
             var page = await search.AutocompleteAsync(
                 new AutocompleteRequest
                 {
                     Skip = items.Count,
-                    Take = MemberPageSize,
+                    Take = take,
                     IncludePrerelease = request.IncludePrerelease,
                     IncludeSemVer2 = request.IncludeSemVer2,
                     PackageType = request.PackageType,
@@ -248,10 +277,11 @@ public sealed class RepositorySearchService : ISearchService
                 cancellationToken).ConfigureAwait(false);
 
             total = page.TotalHits;
+            if (total <= ExactScanPerMember) limit = Math.Max(limit, (int)total);
             var data = page.Data ?? Array.Empty<string?>();
             items.AddRange(data);
 
-            if (data.Count < MemberPageSize || items.Count >= total) break;
+            if (data.Count < take || items.Count >= total) break;
         }
 
         return new Drained<string?>(items, Math.Max(total, items.Count));
