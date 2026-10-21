@@ -477,4 +477,31 @@ public class NpmAccessTests : IDisposable
         var context = scope.ServiceProvider.GetRequiredService<IContext>();
         Assert.Equal(1, await context.NpmVersions!.CountAsync(TestContext.Current.CancellationToken));
     }
+
+    [Fact]
+    public async Task SearchNamesOnlyThePackagesTheCallerMayRead()
+    {
+        var alice = await KeyAsync("alice");
+        await PublishAsync(alice, "@acme/secret", "1.0.0");
+        await PublishAsync(alice, "left-pad", "1.0.0");
+        await PublishAsync(alice, "left-over", "1.0.0");
+        using (var scope = _app.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IRepositoryAdministration>().SetAnonymousReadAsync("web", false, CancellationToken.None);
+            var admin = scope.ServiceProvider.GetRequiredService<IAccessAdministration>();
+            await admin.CreateTargetAsync("bob reads left", new[] { "web" }, new[] { "left-*" }, null, null, null, CancellationToken.None);
+            await admin.SetGrantAsync("bob reads left", PrincipalType.User, (await FindAsync(_app, "bob"))!.Id, AccessAction.Read, null, CancellationToken.None);
+        }
+
+        var bob = await KeyAsync("bob");
+        using var all = await SendAsync(HttpMethod.Get, Registry + "-/v1/search?text=&size=1&from=0", token: bob);
+        using var second = await SendAsync(HttpMethod.Get, Registry + "-/v1/search?text=&size=1&from=1", token: bob);
+        using var root = await SendAsync(HttpMethod.Get, Registry + "-/v1/search?text=", token: await KeyAsync("root"));
+
+        var first = JsonNode.Parse(await all.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!;
+        Assert.Equal(2, (int?)first["total"]);
+        Assert.Equal("left-over", (string?)first["objects"]![0]!["package"]!["name"]);
+        Assert.Equal("left-pad", (string?)JsonNode.Parse(await second.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!["objects"]![0]!["package"]!["name"]);
+        Assert.Equal(3, (int?)JsonNode.Parse(await root.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!["total"]);
+    }
 }

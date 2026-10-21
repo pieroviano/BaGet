@@ -249,7 +249,12 @@ public class NpmRegistryService : INpmRegistry
     }
 
     /// <inheritdoc/>
-    public async Task<NpmSearchPage> SearchAsync(string? text, int skip, int take, CancellationToken cancellationToken)
+    public async Task<NpmSearchPage> SearchAsync(
+        string? text,
+        int skip,
+        int take,
+        Func<string, CancellationToken, Task<bool>>? canRead = null,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<NpmPackage> query = _context.NpmPackages!.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(text))
@@ -258,8 +263,31 @@ public class NpmRegistryService : INpmRegistry
             query = query.Where(p => p.Name!.Contains(needle));
         }
 
-        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
-        var page = await query.OrderBy(p => p.Name).Skip(Math.Max(skip, 0)).Take(Math.Clamp(take, 0, 250)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        skip = Math.Max(skip, 0);
+        take = Math.Clamp(take, 0, 250);
+
+        int total;
+        List<NpmPackage> page;
+        if (canRead == null)
+        {
+            total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+            page = await query.OrderBy(p => p.Name).Skip(skip).Take(take).ToListAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            // Only the packages the caller may read count: the names are ordered, filtered and paged here, and only the
+            // page's packages are loaded in full.
+            var visible = new List<string>();
+            foreach (var name in await query.OrderBy(p => p.Name).Select(p => p.Name!).ToListAsync(cancellationToken).ConfigureAwait(false))
+            {
+                if (await canRead(name, cancellationToken).ConfigureAwait(false)) visible.Add(name);
+            }
+
+            total = visible.Count;
+            var names = visible.Skip(skip).Take(take).ToList();
+            page = (await _context.NpmPackages!.AsNoTracking().Where(p => names.Contains(p.Name!)).ToListAsync(cancellationToken).ConfigureAwait(false))
+                .OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
+        }
 
         var keys = page.Select(p => p.Key).ToList();
         var tags = await _context.NpmDistTags!.AsNoTracking().Where(t => keys.Contains(t.PackageKey) && t.Tag == "latest").ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -439,7 +467,7 @@ public class NpmRegistryService : INpmRegistry
 
         await _authorization.OnPushedAsync(caller!, name, isNewPackage, cancellationToken).ConfigureAwait(false);
 
-        return NpmResult.Created($"Published {name}@{version}.");
+        return NpmResult.Created($"Published {name}@{version}.", name);
     }
 
     /// <inheritdoc/>

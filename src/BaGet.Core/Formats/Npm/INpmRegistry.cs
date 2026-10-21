@@ -36,14 +36,15 @@ public enum NpmStatus
 /// <summary>The outcome of an operation of the registry.</summary>
 /// <param name="Status">How it ended.</param>
 /// <param name="Message">A sentence for the person or client when it did not succeed (or a note when it did).</param>
-public sealed record NpmResult(NpmStatus Status, string? Message = null)
+/// <param name="Subject">The package the operation was about, when it succeeded (the name a publish created a version of).</param>
+public sealed record NpmResult(NpmStatus Status, string? Message = null, string? Subject = null)
 {
     /// <summary>Whether the operation was done.</summary>
     public bool Succeeded => Status is NpmStatus.Ok or NpmStatus.Created;
 
     internal static NpmResult Ok(string? message = null) => new(NpmStatus.Ok, message);
 
-    internal static NpmResult Created(string? message = null) => new(NpmStatus.Created, message);
+    internal static NpmResult Created(string? message = null, string? subject = null) => new(NpmStatus.Created, message, subject);
 
     internal static NpmResult Fail(NpmStatus status, string message) => new(status, message);
 }
@@ -212,6 +213,15 @@ public interface INpmRegistry
     /// </summary>
     Task<NpmResult> DeleteTarballAsync(BaGetPrincipal? caller, string name, string file, CancellationToken cancellationToken);
 
-    /// <summary>Packages whose name contains <paramref name="text"/> (all when null or empty), ordered by name.</summary>
-    Task<NpmSearchPage> SearchAsync(string? text, int skip, int take, CancellationToken cancellationToken);
+    /// <summary>
+    /// Packages whose name contains <paramref name="text"/> (all when null or empty), ordered by name. With
+    /// <paramref name="canRead"/> only the packages it accepts are listed and counted (the per-package Read of the access model:
+    /// a listing must not name a package that its page would hide); without it every package of the repository is.
+    /// </summary>
+    Task<NpmSearchPage> SearchAsync(
+        string? text,
+        int skip,
+        int take,
+        Func<string, CancellationToken, Task<bool>>? canRead = null,
+        CancellationToken cancellationToken = default);
 }

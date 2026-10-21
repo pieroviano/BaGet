@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using BaGet.Core;
 
 namespace BaGet.Identity;
@@ -17,14 +18,24 @@ public static class RepositoryPageLinks
     /// <summary>The package page of <paramref name="id"/>.</summary>
     /// <param name="repositoryName">The repository; null or the default's name for the root pages.</param>
     /// <param name="id">The package ID.</param>
-    public static string Package(string? repositoryName, string? id)
-        => Prefix(repositoryName) + "packages/" + Uri.EscapeDataString(id ?? string.Empty);
+    /// <param name="format">The repository's format: an npm package has its own pages (<c>npm-packages/{name}</c>).</param>
+    public static string Package(string? repositoryName, string? id, RepositoryFormat format = RepositoryFormat.NuGet)
+        => format == RepositoryFormat.Npm
+            ? Prefix(repositoryName) + "npm-packages/" + NpmPath(id)
+            : Prefix(repositoryName) + "packages/" + Uri.EscapeDataString(id ?? string.Empty);
 
     /// <summary>The management page of <paramref name="id"/>.</summary>
     /// <param name="repositoryName">The repository; null or the default's name for the root pages.</param>
     /// <param name="id">The package ID.</param>
-    public static string Manage(string? repositoryName, string? id)
-        => Package(repositoryName, id) + "/manage";
+    /// <param name="format">The repository's format.</param>
+    public static string Manage(string? repositoryName, string? id, RepositoryFormat format = RepositoryFormat.NuGet)
+        => format == RepositoryFormat.Npm
+            ? Prefix(repositoryName) + "npm-manage/" + NpmPath(id)
+            : Package(repositoryName, id) + "/manage";
+
+    // A scoped name keeps its slash in the address (the pages take the rest of the path).
+    private static string NpmPath(string? id)
+        => string.Join("/", (id ?? string.Empty).Split('/').Select(Uri.EscapeDataString));
 
     private static string Prefix(string? repositoryName)
         => string.IsNullOrEmpty(repositoryName) || repositoryName == Repository.DefaultName

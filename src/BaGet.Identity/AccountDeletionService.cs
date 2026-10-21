@@ -49,7 +49,8 @@ public record DeletionBlockers(
 /// <param name="RepositoryKey">The repository's key.</param>
 /// <param name="RepositoryName">The repository's name (<see cref="Repository.DefaultName"/> for the default).</param>
 /// <param name="PackageId">The package ID.</param>
-public record SoleOwnedPackage(int RepositoryKey, string RepositoryName, string? PackageId)
+/// <param name="Format">The repository's format (an npm package is unpublished, a NuGet package deleted).</param>
+public record SoleOwnedPackage(int RepositoryKey, string RepositoryName, string? PackageId, RepositoryFormat Format = RepositoryFormat.NuGet)
 {
     /// <summary>The ID for the default repository, <c>ID (name)</c> for any other, for messages that mix repositories.</summary>
     public string Label => RepositoryKey == Repository.DefaultKey ? PackageId ?? string.Empty : $"{PackageId} ({RepositoryName})";
@@ -159,9 +160,9 @@ public class AccountDeletionService
         var lastAdministrator = user.IsAdministrator
             && await _context.Users.CountAsync(u => u.IsAdministrator, cancellationToken) <= 1;
 
-        var names = lastOwner.Count == 0
-            ? new Dictionary<int, string>()
-            : (await _repositories.ListAsync(cancellationToken)).ToDictionary(r => r.Key, r => r.Name);
+        var known = lastOwner.Count == 0
+            ? new Dictionary<int, RepositoryInfo>()
+            : (await _repositories.ListAsync(cancellationToken)).ToDictionary(r => r.Key);
 
         return new DeletionBlockers(
             lastOwner.Select(o => o.PackageId).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
@@ -170,8 +171,9 @@ public class AccountDeletionService
             lastOwner
                 .Select(o => new SoleOwnedPackage(
                     o.RepositoryKey,
-                    names.TryGetValue(o.RepositoryKey, out var name) ? name : Repository.DefaultName,
-                    o.PackageId))
+                    known.TryGetValue(o.RepositoryKey, out var found) ? found.Name : Repository.DefaultName,
+                    o.PackageId,
+                    found?.Format ?? RepositoryFormat.NuGet))
                 .ToList());
     }
 
@@ -240,6 +242,18 @@ public class AccountDeletionService
 
                     // The deletion services work in the repository their scope is pinned to.
                     using var scope = _scopes.CreateRepositoryScope(repository);
+
+                    if (repository.Format == RepositoryFormat.Npm)
+                    {
+                        // An npm package is unpublished whole, as the administrator the deletion is done by.
+                        var administrator = new BaGetPrincipal(null, actor, isSuperuser: false, ApiKeyScopes.All, "*", isAdministrator: true);
+                        var outcome = await scope.ServiceProvider.GetRequiredService<INpmRegistry>()
+                            .UnpublishPackageAsync(administrator, package.PackageId?.ToLowerInvariant() ?? string.Empty, cancellationToken);
+                        if (outcome.Succeeded || outcome.Status == NpmStatus.NotFound) deleted.Add(package.Label); else failures.Add(package.Label);
+
+                        continue;
+                    }
+
                     var packages = scope.ServiceProvider.GetRequiredService<IPackageDatabase>();
                     var deletion = scope.ServiceProvider.GetRequiredService<IPackageDeletionService>();
 

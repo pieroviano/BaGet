@@ -51,6 +51,7 @@ public class NpmController : Controller
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly IOptionsSnapshot<NpmOptions> _npmOptions;
     private readonly IUrlGenerator _urls;
+    private readonly IAccessEvaluator _access;
     private readonly INpmTokenService? _tokens;
 
     public NpmController(
@@ -60,8 +61,10 @@ public class NpmController : Controller
         IOptionsSnapshot<BaGetOptions> options,
         IOptionsSnapshot<NpmOptions> npmOptions,
         IUrlGenerator urls,
+        IAccessEvaluator access,
         INpmTokenService? tokens = null)
     {
+        _access = access ?? throw new ArgumentNullException(nameof(access));
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _principals = principals ?? throw new ArgumentNullException(nameof(principals));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -212,7 +215,15 @@ public class NpmController : Controller
     [HttpGet]
     public async Task<IActionResult> Search(string? text, int size = 20, int from = 0, CancellationToken cancellationToken = default)
     {
-        var page = await _registry.SearchAsync(text, Math.Max(from, 0), Math.Clamp(size, 1, 250), cancellationToken);
+        // A listing never names a package its caller could not read.
+        var caller = await _principals.ResolveAsync(HttpContext, cancellationToken);
+        var repository = _repository.Current;
+        var page = await _registry.SearchAsync(
+            text,
+            Math.Max(from, 0),
+            Math.Clamp(size, 1, 250),
+            (name, token) => _access.IsAllowedAsync(caller, repository, name, AccessAction.Read, token),
+            cancellationToken);
         var registry = _urls.GetNpmRegistryUrl();
 
         var objects = new JsonArray();

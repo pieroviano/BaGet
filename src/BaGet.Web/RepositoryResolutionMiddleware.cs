@@ -41,8 +41,12 @@ public class RepositoryResolutionMiddleware
             return resolver == null ? null : await resolver.ResolveAsync(context, cancellationToken);
         });
 
-        // The format the matched route speaks; pages and endpoints a host maps itself are NuGet's.
-        var format = context.GetEndpoint()?.Metadata.GetMetadata<RepositoryRouteMetadata>()?.Format ?? RepositoryFormat.NuGet;
+        // The format the matched route speaks; endpoints a host maps itself are NuGet's. A Razor Page is no protocol route:
+        // the pages of every format exist under /r/{repo}/, and RepositoryPageFilter decides which of them a repository has
+        // (it needs the caller's rights for that, and redirects the front page of an npm repository to its own).
+        var endpoint = context.GetEndpoint();
+        var isPage = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor>() != null;
+        var format = endpoint?.Metadata.GetMetadata<RepositoryRouteMetadata>()?.Format ?? RepositoryFormat.NuGet;
 
         if (context.GetRouteValue(Routes.RepositoryRouteKey) is string name)
         {
@@ -50,7 +54,7 @@ public class RepositoryResolutionMiddleware
             var found = await repositories.FindAsync(name.ToLowerInvariant(), context.RequestAborted);
 
             // Only a repository of the route's format speaks this protocol; a repository of another format has its own routes.
-            if (found == null || found.Format != format)
+            if (found == null || (!isPage && found.Format != format))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 context.Response.ContentType = "text/plain; charset=utf-8";
@@ -66,7 +70,7 @@ public class RepositoryResolutionMiddleware
             }
         }
 
-        else if (format != repository.Current.Format)
+        else if (!isPage && format != repository.Current.Format)
         {
             // The plain routes serve the default repository, which is NuGet: another format's routes are not there.
             context.Response.StatusCode = (int)HttpStatusCode.NotFound;

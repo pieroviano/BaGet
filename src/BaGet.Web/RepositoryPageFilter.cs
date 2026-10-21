@@ -52,13 +52,42 @@ public class RepositoryPageFilter : IAsyncPageFilter
             // A page of one package ({id} in its route) also needs Read on that package, so the include/exclude
             // patterns of the caller's grants hide it as they hide its registration and content.
             var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
-            // The upload page shows no package data of the repository, so it needs the right to publish
+            if (repository.Format == RepositoryFormat.Npm && !string.IsNullOrEmpty(packageId))
+            {
+                // The access patterns see the decoded lower-case name, so @acme%2fSecret cannot reach a page that
+                // the pattern for @acme/secret hides.
+                if (!NpmNames.TryParse(packageId, out var npmName, out _))
+                {
+                    context.Result = new NotFoundResult();
+                    return;
+                }
+
+                packageId = npmName;
+            }
+
+            // The upload pages show no package data of the repository, so they need the right to publish
             // (IRepositoryAccess.CanWriteAsync), not Read: a Deploy-only drop box is usable.
-            var allowed = string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase)
+            var isUpload = string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(page.ViewEnginePath, "/NpmUpload", StringComparison.OrdinalIgnoreCase);
+            var allowed = isUpload
                 ? await access.CanWriteAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
                 : string.IsNullOrEmpty(packageId)
                 ? await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
                 : await access.CanReadPackageAsync(context.HttpContext.User, repository, packageId, context.HttpContext.RequestAborted);
+
+            if (allowed && repository.Format != RepositoryPageRouteConvention.FormatOf(page.ViewEnginePath))
+            {
+                // The page belongs to another format. The front page of a repository is where its address (/r/name/) and the
+                // header lead, so it sends the visitor to the format's own browse page; anything else is not there.
+                var browse = string.Equals(page.ViewEnginePath, "/Index", StringComparison.OrdinalIgnoreCase)
+                    ? services.GetRequiredService<FormatRegistry>().Find(repository.Format)?.RepositoryLinks(repository)
+                        .FirstOrDefault(l => l.Id == "browse" && l.Page != null)
+                    : null;
+                context.Result = browse == null
+                    ? new NotFoundResult()
+                    : new RedirectToPageResult(browse.Page, new { repo = repository.IsDefault ? null : repository.Name });
+                return;
+            }
 
             if (allowed && repository.Kind == RepositoryKind.Virtual)
             {
@@ -70,7 +99,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
 
                 // An upload to a virtual repository is an upload to the repository it deploys to: from here on the request
                 // works in that one (staging, ownership, publishing), exactly as the push endpoint does.
-                if (string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase))
+                if (isUpload)
                 {
                     var target = await services.GetRequiredService<IVirtualRepositories>()
                         .DeployTargetAsync(repository, context.HttpContext.RequestAborted);

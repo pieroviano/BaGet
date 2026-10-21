@@ -31,25 +31,49 @@
                     <tbody>
                         @foreach (var package in group.Packages)
                         {
+                            var isNpm = group.Repository.Format == BaGet.Core.RepositoryFormat.Npm;
                             <tr>
-                                <td><a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id)">@package.Id</a></td>
-                                <td>
-                                    @if (package.LatestVersion == null)
-                                    {
-                                        <text>None</text>
-                                    }
-                                    else
-                                    {
-                                        <a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id + "/" + package.LatestVersion)">@package.LatestVersion</a>
-                                        @(package.LatestVersionIsListed ? "" : " (unlisted)")
-                                    }
-                                </td>
-                                <td>@package.VersionCount</td>
-                                <td>@package.Downloads.ToString("N0")</td>
-                                <td>
-                                    <a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id + "/manage")">Manage</a> ·
-                                    <a href="@(Url.RepositoryContent(group.Repository, "upload") + "?id=" + Uri.EscapeDataString(package.Id ?? string.Empty))">Upload new version</a>
-                                </td>
+                                @if (isNpm)
+                                {
+                                    <td><a href="@Url.RepositoryContent(group.Repository, "npm-packages/" + package.Id)">@package.Id</a></td>
+                                    <td>
+                                        @if (package.LatestVersion == null)
+                                        {
+                                            <text>None</text>
+                                        }
+                                        else
+                                        {
+                                            <a href="@(Url.RepositoryContent(group.Repository, "npm-packages/" + package.Id) + "?version=" + Uri.EscapeDataString(package.LatestVersion))">@package.LatestVersion</a>
+                                        }
+                                    </td>
+                                    <td>@package.VersionCount</td>
+                                    <td>@package.Downloads.ToString("N0")</td>
+                                    <td>
+                                        <a href="@Url.RepositoryContent(group.Repository, "npm-manage/" + package.Id)">Manage</a> ·
+                                        <a href="@Url.RepositoryContent(group.Repository, "npm-upload")">Upload new version</a>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td><a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id)">@package.Id</a></td>
+                                    <td>
+                                        @if (package.LatestVersion == null)
+                                        {
+                                            <text>None</text>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id + "/" + package.LatestVersion)">@package.LatestVersion</a>
+                                            @(package.LatestVersionIsListed ? "" : " (unlisted)")
+                                        }
+                                    </td>
+                                    <td>@package.VersionCount</td>
+                                    <td>@package.Downloads.ToString("N0")</td>
+                                    <td>
+                                        <a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id + "/manage")">Manage</a> ·
+                                        <a href="@(Url.RepositoryContent(group.Repository, "upload") + "?id=" + Uri.EscapeDataString(package.Id ?? string.Empty))">Upload new version</a>
+                                    </td>
+                                }
                             </tr>
                         }
                     </tbody>

@@ -26,7 +26,7 @@
                     @foreach (var package in Model.Blockers.LastOwnerPackages)
                     {
                         <li>
-                            <a href="@Url.Content(BaGet.Identity.RepositoryPageLinks.Manage(package.RepositoryName, package.PackageId))">@package.PackageId</a>
+                            <a href="@Url.Content(BaGet.Identity.RepositoryPageLinks.Manage(package.RepositoryName, package.PackageId, package.Format))">@package.PackageId</a>
                             @if (package.RepositoryKey != BaGet.Core.Repository.DefaultKey)
                             {
                                 <span class="text-muted">in repository @package.RepositoryName</span>

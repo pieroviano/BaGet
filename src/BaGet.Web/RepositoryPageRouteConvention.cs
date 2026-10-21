@@ -36,7 +36,28 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         "/Profiles/Profile",
         "/Admin/Packages",
         "/Admin/UserPackages",
+        "/NpmPackages",
+        "/NpmPackage",
+        "/NpmUpload",
+        "/Packages/NpmManage",
     };
+
+    /// <summary>
+    /// The format whose repositories a repository page belongs to; a page not listed is NuGet's. The pages of a format
+    /// answer 404 in a repository of another one (<see cref="RepositoryPageFilter"/>), and the NuGet landing page of an
+    /// npm repository sends the visitor to the format's own.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, BaGet.Core.RepositoryFormat> PageFormats = new Dictionary<string, BaGet.Core.RepositoryFormat>(StringComparer.OrdinalIgnoreCase)
+    {
+        { "/NpmPackages", BaGet.Core.RepositoryFormat.Npm },
+        { "/NpmPackage", BaGet.Core.RepositoryFormat.Npm },
+        { "/NpmUpload", BaGet.Core.RepositoryFormat.Npm },
+        { "/Packages/NpmManage", BaGet.Core.RepositoryFormat.Npm },
+    };
+
+    /// <summary>The format a repository page serves (NuGet unless <see cref="PageFormats"/> says otherwise).</summary>
+    public static BaGet.Core.RepositoryFormat FormatOf(string viewEnginePath)
+        => PageFormats.TryGetValue(viewEnginePath, out var format) ? format : BaGet.Core.RepositoryFormat.NuGet;
 
     /// <summary>Order of the repository twin of a selector; below the default 0 so it wins when it can be filled in.</summary>
     public const int TwinOrder = -1;

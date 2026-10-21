@@ -95,7 +95,7 @@ public class NpmFormatSearchProvider : IFormatSearchProvider
     {
         if (query == null) throw new ArgumentNullException(nameof(query));
 
-        var page = await _registry.SearchAsync(query.Query, query.Skip, query.Take, cancellationToken).ConfigureAwait(false);
+        var page = await _registry.SearchAsync(query.Query, query.Skip, query.Take, canRead: null, cancellationToken).ConfigureAwait(false);
 
         return new FormatSearchPage(
             page.Total,

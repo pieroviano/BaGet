@@ -53,6 +53,12 @@ public class PackagesModel : AccountPageModel
 
             if (ids == null || ids.Count == 0) continue;
 
+            if (repository.Format == RepositoryFormat.Npm)
+            {
+                groups.Add(new RepositoryPackages(repository, await SummariseNpmAsync(scope.ServiceProvider.GetRequiredService<INpmRegistry>(), ids, cancellationToken)));
+                continue;
+            }
+
             groups.Add(new RepositoryPackages(
                 repository,
                 Summarise(ids, await ListVersionsAsync(
@@ -101,6 +107,26 @@ public class PackagesModel : AccountPageModel
             })
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8602, CS8604
+    }
+
+    // An npm repository keeps its own tables: the summary comes from the registry, one package at a time (a user owns few).
+    private static async Task<List<OwnedPackage>> SummariseNpmAsync(INpmRegistry registry, IReadOnlyList<string> ids, CancellationToken cancellationToken)
+    {
+        var owned = new List<OwnedPackage>(ids.Count);
+        foreach (var id in ids)
+        {
+            var package = await registry.GetPackageAsync(id.ToLowerInvariant(), cancellationToken);
+            owned.Add(new OwnedPackage
+            {
+                Id = package?.Name ?? id,
+                LatestVersion = package?.Latest?.Version,
+                LatestVersionIsListed = package != null,
+                VersionCount = package?.Versions.Count ?? 0,
+                Downloads = 0,
+            });
+        }
+
+        return owned;
     }
 
     /// <summary>
