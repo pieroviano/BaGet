@@ -210,7 +210,7 @@ all work in the page's repository and are refused in read-only mode by the page'
 | Account-deletion blockers show the repository and link to that repository's Manage page | `Account/Settings.cshtml:21-30`, `AccountDeletionService.cs:108-131` |
 | Admin delete-user: offer deleting sole-owned IDs in **every** repository, not only `default`; Admin Packages lists ownerless IDs per repository | `AccountDeletionService.cs:198-200`, `Admin/Packages.cshtml.cs:34` |
 
-### U9 — Docs
+### U9 — Docs (done)
 
 `docs/configuration.md` (access model, private feeds, Basic auth client setup, upgrade defaults), a new
 `docs/access-control.md`, `docs/advanced/api.md` (401/404 semantics), `CLAUDE.md` (access model, page routing

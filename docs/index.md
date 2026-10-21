@@ -22,6 +22,11 @@ You can run BaGet Extension on your preferred platform:
 
 One server can hold several [repositories](repositories.md), each with its own feed at `/r/{name}/v3/index.json`; `default` stays at `/`.
 
+## Access control
+
+Who may read and write what is set by [groups, permission targets and project roles](access-control.md): private feeds,
+Basic-auth client setup, upgrade defaults and the admin pages.
+
 ## What BaGet Extension serves
 
 BaGet Extension speaks the NuGet V3 protocol, with a V2 feed for older clients (on by default), and serves

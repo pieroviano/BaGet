@@ -13,7 +13,7 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 |---|---|---|
 | P0 Repository foundation | **Done** | `8836612`..`6fc2c2a` (2026-10-20); deviations under P0 |
 | P1 Remote and virtual NuGet | Not started | `RepositoryKind.Remote`/`Virtual` exist as values only; `RepositoryService.CreateAsync` refuses them (`RepositoryService.cs:93-99`) |
-| P2 Access control | **Moved** to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4). U2 (backend: groups, targets, grants, projects, enforcement, audit) implemented; U3 UI and U4 key scopes pending | track `access` |
+| P2 Access control | **Moved** to [ui-coverage-and-access-control.md](ui-coverage-and-access-control.md) (U2-U4); all implemented and documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
 | P3-P10 | Not started | No format layer, npm/Maven/OCI, retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding

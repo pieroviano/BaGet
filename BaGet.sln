@@ -71,6 +71,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Database.Tests", "tes
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-36F0-49B4-868A-E062B2596A1B}"
 	ProjectSection(SolutionItems) = preProject
+		docsccess-control.md = docsccess-control.md
 		docs\configuration.md = docs\configuration.md
 		docs\index.md = docs\index.md
 		docs\repositories.md = docs\repositories.md
