@@ -282,10 +282,22 @@ account without one). Everyone else, and every request while accounts are off, g
 
 | Action | Behaviour |
 | --- | --- |
+| Name (`/admin/users/{name}`) | The user's detail page, built from sections: account, organizations, API keys (see below). |
 | Packages | Opens `/admin/users/{name}/packages`. |
+| Create a user | The *Create a user* form: name, optional email, and a typed password, a generated one (blank field; shown **once**, like a reset) or *Send an invitation* (needs SMTP and an address): the account gets an unknown random password and is mailed a reset link to choose its own. A name used by a user or organization is refused. The address counts as confirmed. Logged at `Warning`. |
 | Reset password, *Generate* | Replaces the password with a generated one, shown **once** on the response (no redirect, `Cache-Control: no-store`, never stored or logged). Two-factor is switched off, a lockout lifted, an unconfirmed email address marked confirmed, the user's sessions end. |
 | Reset password, *Email link* | Mails the user a reset link. Only offered while SMTP is configured and the user has an address; no rate limit. |
 | Delete (`/admin/users/{name}/delete`) | Removes the account, its API keys and its ownerships. The last administrator cannot be deleted. |
+
+* **API keys of any user** (`/admin/users/{name}`): lists description, scopes, package pattern and dates (never the key or its hash) and revokes one. Needs the administrator's password; logged.
+* **Organizations** (`/admin/organizations`, `/admin/organizations/{name}`; every action asks for the password, 503 while the server is read-only for maintenance):
+
+  | Action | Behaviour |
+  | --- | --- |
+  | List | Every organization with member, administrator and owned package-ID counts (all repositories). |
+  | Rename | Updates the organization and every `PackageOwner` row naming it, **in every repository**, in one save. Refused if the name is a user's or another organization's (a change of case is fine), blank, over 256 characters or has `/ \ ? # %`. |
+  | Delete | Removes the organization and its memberships. Refused while it owns a package ID in any repository (remove it as an owner first). |
+  | Members | Add by user name (optionally administrator), promote/demote, remove. An organization always keeps at least one administrator. |
 
 * **Account deletion by an administrator** is never blocked by ownership. A package ID the user alone owned is either
   *left without owners* (the default: only administrators and the global API key manage it, like IDs that predate accounts)

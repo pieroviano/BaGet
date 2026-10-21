@@ -71,6 +71,12 @@ public class UsersModel : AdminPageModel
     /// <summary>The user <see cref="GeneratedPassword"/> belongs to.</summary>
     public string? GeneratedFor { get; private set; }
 
+    /// <summary>Whether <see cref="GeneratedPassword"/> is a new account's first password rather than a reset.</summary>
+    public bool GeneratedForNewUser { get; private set; }
+
+    /// <summary>Whether an invitation (a reset link mailed to the new user) can be offered: SMTP is configured.</summary>
+    public bool CanInvite => EmailConfigured;
+
     /// <summary>Whether <paramref name="row"/> is another account, so actions apply to it.</summary>
     public bool CanAct(UserRow row)
         => !string.Equals(row.UserName, CurrentUserName, StringComparison.OrdinalIgnoreCase);
@@ -183,6 +189,81 @@ public class UsersModel : AdminPageModel
             {
                 Error = "The mail queue is full. Try again in a moment.";
             }
+        }
+
+        return BackToUsers();
+    }
+
+    /// <summary>
+    /// Creates an account. The password is typed, generated (shown once on this response, like a reset) or, with
+    /// <paramref name="invite"/>, unknown to everyone while the user is mailed a link to choose their own. Asks for
+    /// the administrator's password; refused with 503 while the <see cref="MaintenanceGate"/> is closed.
+    /// </summary>
+    public async Task<IActionResult> OnPostCreateAsync(
+        string? newUserName,
+        string? newEmail,
+        string? newPassword,
+        bool invite,
+        string? password,
+        CancellationToken cancellationToken)
+    {
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var current = await UserManager.GetUserAsync(User);
+        if (current == null) return Challenge();
+
+        if (!await IsConfirmedAsync(current, password))
+        {
+            Error = "The confirmation is incorrect, so nothing was changed.";
+
+            return BackToUsers();
+        }
+
+        if (invite && (!EmailConfigured || string.IsNullOrWhiteSpace(newEmail)))
+        {
+            Error = EmailConfigured
+                ? "An invitation is mailed to the user, so an email address is required."
+                : "Email is not configured, so no invitation can be sent. Give a password or generate one.";
+
+            return BackToUsers();
+        }
+
+        var mode = invite
+            ? NewUserPasswordMode.Invited
+            : string.IsNullOrEmpty(newPassword) ? NewUserPasswordMode.Generated : NewUserPasswordMode.Given;
+        var created = await HttpContext.RequestServices.GetRequiredService<AdminUserCreationService>()
+            .CreateAsync(newUserName, newEmail, mode, newPassword, cancellationToken);
+        if (!created.Succeeded)
+        {
+            Error = created.Error;
+
+            return BackToUsers();
+        }
+
+        var logger = HttpContext.RequestServices.GetRequiredService<ILogger<UsersModel>>();
+        logger.LogWarning("{Admin} created the user {User}", current.UserName, created.User!.UserName);
+
+        if (mode == NewUserPasswordMode.Generated)
+        {
+            Response.Headers.CacheControl = "no-store";
+            GeneratedPassword = created.GeneratedPassword;
+            GeneratedFor = created.User.UserName;
+            GeneratedForNewUser = true;
+            await LoadAsync(cancellationToken);
+
+            return Page();
+        }
+
+        if (mode == NewUserPasswordMode.Invited)
+        {
+            var template = PageLink("/Account/ResetPassword", PasswordResetLinkSender.Template);
+            Message = PasswordResetLinkSender.TryEnqueue(HttpContext.RequestServices, created.User.Id, template)
+                ? $"{created.User.UserName} was created. An invitation was sent to {MaskEmail(created.User.Email)}."
+                : $"{created.User.UserName} was created, but the mail queue is full, so no invitation was sent. Use Reset password, Email a reset link.";
+        }
+        else
+        {
+            Message = $"{created.User.UserName} was created.";
         }
 
         return BackToUsers();

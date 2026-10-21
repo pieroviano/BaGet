@@ -27,6 +27,36 @@ public enum OwnerChangeResult
     LastOwner,
 }
 
+/// <summary>The outcome of an administrator's change to an organization.</summary>
+public enum OrganizationChange
+{
+    /// <summary>Done.</summary>
+    Success,
+
+    /// <summary>No organization (or no such member) with that name.</summary>
+    NotFound,
+
+    /// <summary>The new name is empty, too long or has characters that cannot be in a URL path segment.</summary>
+    InvalidName,
+
+    /// <summary>The new name is another user's or organization's: they share one namespace.</summary>
+    NameTaken,
+
+    /// <summary>The organization owns package IDs (in some repository), so it cannot be deleted.</summary>
+    OwnsPackages,
+
+    /// <summary>An organization must keep at least one administrator.</summary>
+    LastAdministrator,
+}
+
+/// <summary>An organization as the administrator's list shows it.</summary>
+/// <param name="Name">The name.</param>
+/// <param name="Created">When it was created.</param>
+/// <param name="Members">How many members it has.</param>
+/// <param name="Administrators">How many of them administer it.</param>
+/// <param name="PackageIds">How many package IDs it owns, counted per repository.</param>
+public record OrganizationSummary(string? Name, DateTime Created, int Members, int Administrators, int PackageIds);
+
 /// <summary>
 /// Package owners, and the organizations users own packages through.
 /// </summary>
@@ -290,5 +320,152 @@ public class PackageOwnershipService
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    /// <summary>
+    /// Every organization with its member and owned-package counts, by name. Ownership is counted in
+    /// every repository.
+    /// </summary>
+    public async Task<IReadOnlyList<OrganizationSummary>> GetAllOrganizationsAsync(CancellationToken cancellationToken)
+    {
+        #pragma warning disable CS8602, CS8604
+        var organizations = await _context.Organizations.AsNoTracking().OrderBy(o => o.Name).ToListAsync(cancellationToken);
+        var members = await _context.OrganizationMembers.AsNoTracking()
+            .Where(m => m.OrganizationKey != null)
+            .Select(m => new { m.OrganizationKey, m.IsAdmin })
+            .ToListAsync(cancellationToken);
+        var owned = await _context.PackageOwners.IgnoreQueryFilters().AsNoTracking()
+            .Select(o => new { o.OwnerName, o.RepositoryKey, o.PackageId })
+            .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
+
+        var ownedBy = owned
+            .GroupBy(o => o.OwnerName?.ToLowerInvariant() ?? string.Empty)
+            .ToDictionary(g => g.Key, g => g.Select(o => (o.RepositoryKey, o.PackageId?.ToLowerInvariant())).Distinct().Count());
+
+        return organizations
+            .Select(o => new OrganizationSummary(
+                o.Name,
+                o.Created,
+                members.Count(m => m.OrganizationKey == o.Key),
+                members.Count(m => m.OrganizationKey == o.Key && m.IsAdmin),
+                ownedBy.GetValueOrDefault(o.Name?.ToLowerInvariant() ?? string.Empty)))
+            .ToList();
+    }
+
+    /// <summary>The organization with that name (any case), or null.</summary>
+    public async Task<Organization?> FindOrganizationAsync(string? name, CancellationToken cancellationToken)
+    {
+        var lower = name?.ToLowerInvariant();
+
+        #pragma warning disable CS8602, CS8604
+        return await _context.Organizations.AsNoTracking().FirstOrDefaultAsync(o => o.Name.ToLower() == lower, cancellationToken);
+        #pragma warning restore CS8602, CS8604
+    }
+
+    /// <summary>
+    /// The package IDs the account owns, counted per repository (every repository, not the request's).
+    /// </summary>
+    public async Task<int> CountOwnedPackageIdsAsync(string? ownerName, CancellationToken cancellationToken)
+    {
+        var name = ownerName?.ToLowerInvariant();
+
+        #pragma warning disable CS8602, CS8604
+        var owned = await _context.PackageOwners.IgnoreQueryFilters().AsNoTracking()
+            .Where(o => o.OwnerName.ToLower() == name)
+            .Select(o => new { o.RepositoryKey, o.PackageId })
+            .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
+
+        return owned.Select(o => (o.RepositoryKey, o.PackageId?.ToLowerInvariant())).Distinct().Count();
+    }
+
+    /// <summary>
+    /// Rename an organization. Every <see cref="PackageOwner"/> row naming it, in every repository, follows in the
+    /// same save, so ownership is never split between the two names. The new name must be free: users and
+    /// organizations share one namespace (the organization's own name is free, so a change of case works).
+    /// </summary>
+    public async Task<OrganizationChange> RenameOrganizationAsync(string? name, string? newName, CancellationToken cancellationToken)
+    {
+        var lower = name?.ToLowerInvariant();
+        #pragma warning disable CS8602, CS8604
+        var organization = await _context.Organizations.FirstOrDefaultAsync(o => o.Name.ToLower() == lower, cancellationToken);
+        #pragma warning restore CS8602, CS8604
+        if (organization == null) return OrganizationChange.NotFound;
+
+        var trimmed = newName?.Trim();
+        if (string.IsNullOrEmpty(trimmed)
+            || trimmed.Length > AbstractContext<DbContext>.MaxAccountNameLength
+            || trimmed.Any(c => char.IsControl(c) || UnsafeNameCharacters.Contains(c)))
+        {
+            return OrganizationChange.InvalidName;
+        }
+
+        var taken = await AccountExistsAsync(trimmed, cancellationToken)
+                    && !string.Equals(trimmed, organization.Name, StringComparison.OrdinalIgnoreCase);
+        if (taken) return OrganizationChange.NameTaken;
+
+        var oldLower = organization.Name?.ToLowerInvariant();
+        #pragma warning disable CS8602, CS8604
+        var owners = await _context.PackageOwners.IgnoreQueryFilters()
+            .Where(o => o.OwnerName.ToLower() == oldLower)
+            .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
+
+        organization.Name = trimmed;
+        foreach (var owner in owners) owner.OwnerName = trimmed;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return OrganizationChange.Success;
+    }
+
+    // Names appear in URL paths (/admin/organizations/{name}), so these cannot be in one.
+    private const string UnsafeNameCharacters = "/\\?#%";
+
+    /// <summary>
+    /// Delete an organization and its memberships. Refused while it owns a package ID in any repository: the
+    /// IDs would be left without an owner. (Remove it as an owner first, or hand the IDs over.)
+    /// </summary>
+    public async Task<OrganizationChange> DeleteOrganizationAsync(string? name, CancellationToken cancellationToken)
+    {
+        var lower = name?.ToLowerInvariant();
+        #pragma warning disable CS8602, CS8604
+        var organization = await _context.Organizations.FirstOrDefaultAsync(o => o.Name.ToLower() == lower, cancellationToken);
+        #pragma warning restore CS8602, CS8604
+        if (organization == null) return OrganizationChange.NotFound;
+
+        if (await CountOwnedPackageIdsAsync(organization.Name, cancellationToken) > 0) return OrganizationChange.OwnsPackages;
+
+        #pragma warning disable CS8602, CS8604
+        var members = await _context.OrganizationMembers.Where(m => m.OrganizationKey == organization.Key).ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
+        _context.OrganizationMembers.RemoveRange(members);
+        _context.Organizations.Remove(organization);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return OrganizationChange.Success;
+    }
+
+    /// <summary>
+    /// Make a member an administrator of the organization, or not. The last administrator cannot be demoted.
+    /// </summary>
+    public async Task<OrganizationChange> SetMemberAdminAsync(string organizationName, string userId, bool isAdmin, CancellationToken cancellationToken)
+    {
+        var name = organizationName.ToLowerInvariant();
+        #pragma warning disable CS8602, CS8604
+        var members = await _context.OrganizationMembers
+            .Where(m => m.Organization != null && m.Organization.Name.ToLower() == name)
+            .ToListAsync(cancellationToken);
+        #pragma warning restore CS8602, CS8604
+
+        var member = members.FirstOrDefault(m => m.UserId == userId);
+        if (member == null) return OrganizationChange.NotFound;
+        if (member.IsAdmin && !isAdmin && members.Count(m => m.IsAdmin) == 1) return OrganizationChange.LastAdministrator;
+
+        member.IsAdmin = isAdmin;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return OrganizationChange.Success;
     }
 }

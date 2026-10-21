@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **1907 tests** across `BaGet.Core.Tests` (545), `BaGet.Tests` (1056),
+Baseline: **1928 tests** across `BaGet.Core.Tests` (545), `BaGet.Tests` (1077),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (53),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (16), `BaGet.Telemetry.Tests` (6). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -147,6 +147,12 @@ submissions of all repositories (`IgnoreQueryFilters`) and retries/releases/reje
 `IAdminAudit` (default `LoggingAdminAudit`: a log line) is the seam for the access-audit table; release, reject, retry, resolve and job
 start/end go through it. Pages (`BaGet.Identity/Pages/Admin`): `Operations`, `Validation`, `Abuse`; the Identity project reaches these through the
 Core interfaces (it cannot reference Validation/Catalog). Tests: `AdminOperationsTests`.
+
+**Admin account tools** (`BaGet.Identity/Pages/Admin`; each action re-asks the admin's password, calls `MaintenanceGate.ThrowIfClosed`, logs at Warning).
+`Users` has a separate *Create a user* form (`AdminUserCreationService`: typed, generated-and-shown-once, or invite = unknown password + `PasswordResetLinkSender`).
+`UserDetail` (`/admin/users/{name}`) is a list of `<section id="user-section-*">` blocks (account, organizations, API keys with revoke) that other features extend.
+`Organizations` / `OrganizationDetail` use `PackageOwnershipService`: `RenameOrganizationAsync` rewrites `PackageOwner.OwnerName` in **every repository** (`IgnoreQueryFilters`) in the same save and refuses a name used by a user or organization;
+`DeleteOrganizationAsync` refuses while it owns any package ID in any repository; `SetMemberAdminAsync`/`RemoveMemberAsync` keep one administrator. The `{name}` route segment bars `/ \ ? # %` in names created here.
 
 **Repository routes.** `BaGetEndpointBuilder.MapRoute` registers every protocol route (V3, V2, symbols, catalog,
 deprecation/vulnerability, repository signatures) twice: plain (the `default` repository) and as `r:<name>` under

@@ -40,6 +40,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<PasswordResetLinkSender>();
         services.TryAddScoped<AvatarService>();
         services.TryAddScoped<AdministratorService>();
+        services.TryAddScoped<AdminUserCreationService>();
         services.TryAddSingleton<ContactRateLimiter>();
         services.TryAddSingleton<PasswordResetRateLimiter>();
         services.TryAddSingleton<BackgroundEmailQueue>();
