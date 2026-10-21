@@ -16,6 +16,12 @@ public enum RemoteProtocol
 
     /// <summary>NuGet V2 (OData/Atom feed).</summary>
     V2 = 1,
+
+    /// <summary>
+    /// The npm registry protocol (packuments at <c>{url}/{name}</c>, tarballs under <c>{url}/{name}/-/</c>): the only protocol of
+    /// an npm repository, set from its format (the create and edit forms do not offer a choice).
+    /// </summary>
+    Npm = 2,
 }
 
 /// <summary>
@@ -32,14 +38,17 @@ public sealed class RemoteRepositorySettings
     /// <summary>The largest cache period accepted: one year.</summary>
     public const int MaxTtlSeconds = 365 * 24 * 3600;
 
-    /// <summary>The upstream: a V3 <c>index.json</c> URL or a V2 feed URL (absolute http or https).</summary>
+    /// <summary>The upstream: a V3 <c>index.json</c> URL or a V2 feed URL, or the base URL of an npm registry (absolute http or https).</summary>
     public string? Url { get; set; }
 
     /// <summary>The protocol of <see cref="Url"/>.</summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public RemoteProtocol Protocol { get; set; } = RemoteProtocol.V3;
 
-    /// <summary>The user name sent with HTTP Basic to the upstream's host, if any.</summary>
+    /// <summary>
+    /// The user name sent with HTTP Basic to the upstream's own host, if any. An npm upstream with a password and no user name
+    /// gets the password as a bearer token (npm's <c>_authToken</c>) instead.
+    /// </summary>
     public string? Username { get; set; }
 
     /// <summary>
@@ -88,6 +97,26 @@ public sealed class RemoteRepositorySettings
     /// <summary>A copy that can be changed without affecting this one.</summary>
     public RemoteRepositorySettings Clone() => (RemoteRepositorySettings)MemberwiseClone();
 
+    /// <summary>
+    /// A copy whose <see cref="Protocol"/> fits <paramref name="format"/>: an npm repository speaks <see cref="RemoteProtocol.Npm"/>
+    /// only (the forms do not ask), a NuGet one V3 or V2 (a stray <see cref="RemoteProtocol.Npm"/> becomes V3, which then fails
+    /// the connection test rather than silently speaking npm to a NuGet feed).
+    /// </summary>
+    public RemoteRepositorySettings ForFormat(RepositoryFormat format)
+    {
+        var copy = Clone();
+        if (format == RepositoryFormat.Npm)
+        {
+            copy.Protocol = RemoteProtocol.Npm;
+        }
+        else if (copy.Protocol == RemoteProtocol.Npm)
+        {
+            copy.Protocol = RemoteProtocol.V3;
+        }
+
+        return copy;
+    }
+
     /// <summary>The settings the <c>Mirror:*</c> options describe (no cache periods: the mirror always asked).</summary>
     public static RemoteRepositorySettings FromMirror(MirrorOptions options)
     {
@@ -126,6 +155,10 @@ public sealed class RemoteRepositorySettings
         else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.V2)
         {
             problems.Add("The V2 feed URL must not have a query string.");
+        }
+        else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.Npm)
+        {
+            problems.Add("The npm registry URL must not have a query string.");
         }
 
         if (blockPrivateAddresses)

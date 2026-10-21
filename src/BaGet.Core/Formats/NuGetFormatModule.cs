@@ -22,6 +22,9 @@ public class NuGetFormatModule : IFormatModule
     public string DisplayName => "NuGet";
 
     /// <inheritdoc/>
+    public bool SupportsVirtual => true;
+
+    /// <inheritdoc/>
     public string RoutePrefix => string.Empty;
 
     /// <inheritdoc/>

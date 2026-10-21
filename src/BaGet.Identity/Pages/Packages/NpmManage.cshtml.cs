@@ -81,6 +81,15 @@ public class NpmManageModel : AccountPageModel
 
         Id = name;
 
+        // Owners and the owner tools exist where packages are published: a remote repository only caches an upstream's (every
+        // change is refused there) and a virtual one holds none, so neither has this page (RepositoryPageFilter says the same;
+        // the model's own filter can run before it, so the rule is kept here too).
+        if (HttpContext.RequestServices.GetRequiredService<IRepositoryContext>().Current.Kind != RepositoryKind.Local)
+        {
+            context.Result = NotFound();
+            return;
+        }
+
         #pragma warning disable CS8602
         var isOwner = await Ownership.IsOwnerAsync(UserManager.GetUserId(User), User.Identity.Name, Id, HttpContext.RequestAborted);
         #pragma warning restore CS8602

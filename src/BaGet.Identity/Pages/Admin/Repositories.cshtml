@@ -125,11 +125,20 @@
 
         <h2>New virtual repository</h2>
         <p class="help-block">
-            Presents several repositories (local, remote or other virtual ones) as one feed: the first member that has a package
-            answers, search merges them, and uploads go to the member you pick as the deploy repository. Created empty; you add
-            the members on its page.
+            Presents several repositories of one format (local, remote or other virtual ones) as one feed: the first member that has a
+            package answers, version lists and search merge them (an npm package's dist-tags follow the member order), and uploads go
+            to the member you pick as the deploy repository. Created empty; you add the members on its page.
         </p>
         <form method="post" asp-page-handler="Virtual" class="form-inline" id="virtual-create-form">
+            <div class="form-group">
+                <label for="virtual-format">Format</label>
+                <select id="virtual-format" name="format" class="form-control">
+                    @foreach (var module in Model.VirtualFormats)
+                    {
+                        <option value="@module.Format">@module.DisplayName</option>
+                    }
+                </select>
+            </div>
             <div class="form-group">
                 <label for="virtual-name">Name</label>
                 <input id="virtual-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
@@ -146,10 +155,21 @@
 
         <h2>New remote repository</h2>
         <p class="help-block">
-            Caches another NuGet feed (nuget.org, another BaGet, Artifactory, Azure Artifacts...): a package not stored here is fetched
-            from the upstream the first time it is requested. Clients cannot push to it.
+            Caches another feed or registry (NuGet: nuget.org, another BaGet, Artifactory, Azure Artifacts...; npm: registry.npmjs.org,
+            Verdaccio, Artifactory...): a package not stored here is fetched from the upstream the first time it is requested. Clients
+            cannot push to it.
         </p>
         <form method="post" asp-page-handler="Remote" id="remote-create-form">
+            <div class="form-group">
+                <label for="remote-format">Format</label>
+                <select id="remote-format" name="format" class="form-control">
+                    @foreach (var module in Model.RemoteFormats)
+                    {
+                        <option value="@module.Format" selected="@(Model.Format == module.Format.ToString())">@module.DisplayName</option>
+                    }
+                </select>
+                <span class="help-block">NuGet: a V3 <code>index.json</code> or V2 feed URL. npm: the registry's base URL, such as <code>https://registry.npmjs.org/</code>.</span>
+            </div>
             <div class="form-group">
                 <label for="remote-name">Name</label>
                 <input id="remote-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />

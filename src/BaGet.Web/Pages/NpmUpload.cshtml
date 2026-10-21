@@ -47,7 +47,10 @@
     {
         <form method="post" enctype="multipart/form-data" id="npm-upload-form">
             <p>
-                Publishes to <strong>@_repositoryContext.Current.Name</strong>. The name and the version are read from the
+                Publishes to <strong>@_repositoryContext.Current.Name</strong>@if (Model.HttpContext.Items[BaGet.Web.RepositoryPageFilter.RequestedVirtualItemKey] is BaGet.Core.RepositoryInfo requestedVirtual)
+                {
+                    <text> (the deploy repository of the virtual repository <strong>@requestedVirtual.Name</strong>)</text>
+                }. The name and the version are read from the
                 <code>package.json</code> inside the tarball, as <code>npm publish</code> reads them.
             </p>
             <div class="form-group">

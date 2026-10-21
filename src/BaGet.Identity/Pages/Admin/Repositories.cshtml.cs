@@ -11,7 +11,8 @@ namespace BaGet.Identity.Pages.Admin;
 
 /// <summary>
 /// Lists the repositories with their feed addresses and creates new ones: local, remote (an upstream cache, see
-/// <see cref="RemoteRepositorySettings"/>) or virtual (an ordered group of members, filled in on its edit page); the name
+/// <see cref="RemoteRepositorySettings"/>) or virtual (an ordered group of members, filled in on its edit page), of any format
+/// whose module offers the kind (the forms ask for the format); the name
 /// is validated by <see cref="RepositoryNames"/>. Creating is refused with 503 while the <see cref="MaintenanceGate"/> is
 /// closed. Creating a remote repository, which can carry credentials, asks for the administrator's password again.
 /// </summary>
@@ -62,6 +63,12 @@ public class RepositoriesModel : RepositoryPageModel
         => link.Page != null
             ? Url.Page(link.Page, new { repo = repository.IsDefault ? null : repository.Name }) ?? string.Empty
             : RepositoryFeedUrl.BaseFor(HttpContext, repository.Name) + link.Path;
+
+    /// <summary>The formats a remote repository can be created for (their module lists <see cref="RepositoryKind.Remote"/>).</summary>
+    public IReadOnlyList<IFormatModule> RemoteFormats => Formats.Modules.Where(m => m.CreatableKinds.Contains(RepositoryKind.Remote)).ToList();
+
+    /// <summary>The formats a virtual repository can be created for (<see cref="IFormatModule.SupportsVirtual"/>).</summary>
+    public IReadOnlyList<IFormatModule> VirtualFormats => Formats.Modules.Where(m => m.SupportsVirtual).ToList();
 
     /// <summary>The formats other than NuGet that can be created here (their module asks for a local repository), with their form fields.</summary>
     public IReadOnlyList<IFormatModule> OtherFormats
@@ -149,10 +156,13 @@ public class RepositoriesModel : RepositoryPageModel
         return RedirectToPage();
     }
 
-    /// <summary>Creates a virtual NuGet repository with no members; they are added on its page.</summary>
-    public async Task<IActionResult> OnPostVirtualAsync(bool anonymousRead = true, CancellationToken cancellationToken = default)
+    /// <summary>Creates a virtual repository (NuGet unless <paramref name="format"/> says otherwise) with no members; they are added on its page.</summary>
+    public async Task<IActionResult> OnPostVirtualAsync(string? format = null, bool anonymousRead = true, CancellationToken cancellationToken = default)
     {
         HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var module = ModuleOf(format, m => m.SupportsVirtual);
+        if (module == null) return NotFound();
 
         var name = Name?.Trim();
         if (!RepositoryNames.IsValid(name, out var invalid))
@@ -166,7 +176,7 @@ public class RepositoriesModel : RepositoryPageModel
         try
         {
             await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>()
-                .CreateAsync(name!, new VirtualRepositorySettings(), cancellationToken, User.Identity?.Name, anonymousRead);
+                .CreateAsync(name!, new VirtualRepositorySettings(), cancellationToken, User.Identity?.Name, anonymousRead, module.Format);
         }
         catch (Exception e) when (e is NotSupportedException or RepositoryExistsException or ArgumentException)
         {
@@ -176,15 +186,19 @@ public class RepositoriesModel : RepositoryPageModel
             return Page();
         }
 
-        TempData["Message"] = $"Virtual repository {name} was created. Add its members below.";
+        TempData["Message"] = $"Virtual {Describe(module)}repository {name} was created. Add its members below.";
 
         return RedirectToPage("/Admin/RepositoryEdit", new { name });
     }
 
-    /// <summary>Creates a remote NuGet repository from the posted upstream settings.</summary>
-    public async Task<IActionResult> OnPostRemoteAsync(string? password, string? anonymousRead, CancellationToken cancellationToken)
+    /// <summary>Creates a remote repository (NuGet unless <paramref name="format"/> says otherwise) from the posted upstream settings.</summary>
+    public async Task<IActionResult> OnPostRemoteAsync(string? password, string? anonymousRead, string? format = null, CancellationToken cancellationToken = default)
     {
         HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var module = ModuleOf(format, m => m.CreatableKinds.Contains(RepositoryKind.Remote));
+        if (module == null) return NotFound();
+        Format = module.Format.ToString();
 
         if (!await ConfirmedAsync(password))
         {
@@ -209,7 +223,7 @@ public class RepositoriesModel : RepositoryPageModel
             var settings = Remote.ToSettings();
             var anonymous = string.IsNullOrEmpty(anonymousRead) ? !settings.HasCredentials : string.Equals(anonymousRead, "true", StringComparison.OrdinalIgnoreCase);
             await HttpContext.RequestServices.GetRequiredService<IRepositoryService>()
-                .CreateAsync(name!, RepositoryFormat.NuGet, RepositoryKind.Remote, settings, anonymous, cancellationToken);
+                .CreateAsync(name!, module.Format, RepositoryKind.Remote, settings, anonymous, cancellationToken);
         }
         catch (Exception e) when (e is NotSupportedException or RepositoryExistsException or ArgumentException or InvalidOperationException)
         {
@@ -219,9 +233,22 @@ public class RepositoriesModel : RepositoryPageModel
             return Page();
         }
 
-        Message = $"Remote repository {name} was created.";
+        Message = $"Remote {Describe(module)}repository {name} was created.";
 
         return RedirectToPage("/Admin/RepositoryEdit", new { name });
+    }
+
+    // "npm " for a format other than NuGet, whose wording predates the format layer ("Remote repository up was created.").
+    private static string Describe(IFormatModule module) => module.Format == RepositoryFormat.NuGet ? string.Empty : module.DisplayName + " ";
+
+    // The module named by a posted format (NuGet when none), when it passes 'offers'; null otherwise.
+    private IFormatModule? ModuleOf(string? format, Func<IFormatModule, bool> offers)
+    {
+        var module = string.IsNullOrEmpty(format)
+            ? Formats.Find(RepositoryFormat.NuGet)
+            : Formats.Modules.FirstOrDefault(m => string.Equals(m.Format.ToString(), format, StringComparison.OrdinalIgnoreCase));
+
+        return module != null && offers(module) ? module : null;
     }
 
     private async Task LoadAsync(CancellationToken cancellationToken)

@@ -6,7 +6,7 @@ Docker follow. `/admin/formats` (administrators) lists what this server can host
 | Format | Served under | Feed address | Repository kinds | Storage folders | Status |
 |---|---|---|---|---|---|
 | NuGet | the repository base (`/v3/…`, `/api/v2`, symbols) | `v3/index.json` | local, remote, virtual | `packages` `symbols` `catalog` `validation` `staging` | done |
-| npm | `npm/` | `npm/` | local (remote, virtual later) | `npm` | local registry done ([details](npm-registry.md)) |
+| npm | `npm/` | `npm/` | local, remote, virtual | `npm` | done ([details](npm-registry.md)) |
 | Maven, Docker | | | | | not started |
 
 The *repository base* is `/` for `default` and `/r/{name}/` for the others, so an npm repository `web` is at `/r/web/npm/`. A
@@ -21,7 +21,8 @@ A module only **describes** its format. Register it with `TryAddEnumerable(Servi
 |---|---|
 | `Format`, `DisplayName` | identity |
 | `RoutePrefix`, `FeedPath` | where its routes start; the address clients are given (admin pages) |
-| `CreatableKinds` | what `IRepositoryService.CreateAsync` accepts (virtual repositories are created with their members) |
+| `CreatableKinds` | what `IRepositoryService.CreateAsync` accepts (NuGet and npm: local, remote) |
+| `SupportsVirtual` | whether virtual repositories of the format exist (`IVirtualRepositoryAdministration.CreateAsync(..., format)`, created with their members; the format's reads must merge and its writes move to the deploy repository) |
 | `StorageFolders` | folders it owns below `RepositoryStorage.Prefix` |
 | `CreateFields`, `CreateSettings` | extra inputs of the create form; turned into `Repository.Settings` (`ArgumentException` = message shown) |
 | `RepositoryLinks` | links on the Repositories page (NuGet: Browse, Upload) |
@@ -43,8 +44,9 @@ NuGet's. **Razor Pages** are served under `/r/{repo}/` for every repository and 
 names the format of a page (NuGet unless listed; the npm pages `/NpmPackages`, `/NpmPackage`, `/NpmUpload`, `/Packages/NpmManage`),
 and `RepositoryPageFilter` answers 404 for a page of another format, except that the NuGet front page of a repository of another format
 redirects to the module's `browse` link. Widened with npm: the upload picker, header switcher, My packages, API-key repository
-limits and the access-model listings now cover every format (the `Format == NuGet` filters are gone, except in virtual
-repositories, which stay NuGet). Azure Table still serves `default` only.
+limits and the access-model listings now cover every format (the `Format == NuGet` filters are gone). A virtual repository
+is of one format and so are its members; a remote repository speaks the format's own upstream protocol (`RemoteProtocol`:
+NuGet V3/V2, `Npm`), set from the format. Azure Table still serves `default` only.
 
 ## Data model (B1)
 

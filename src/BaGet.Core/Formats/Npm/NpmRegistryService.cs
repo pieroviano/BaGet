@@ -15,6 +15,31 @@ using NuGet.Versioning;
 
 namespace BaGet.Core;
 
+/// <summary>A version a remote repository fetched from its upstream and keeps, with what the upstream said about the package.</summary>
+/// <param name="Name">The package name.</param>
+/// <param name="Version">The version, as the upstream names it.</param>
+/// <param name="Manifest">The version's manifest as the upstream sent it.</param>
+/// <param name="Published">The upstream's publish time for the version.</param>
+/// <param name="Created">The upstream's creation time of the package.</param>
+/// <param name="Modified">The upstream's last change of the package.</param>
+/// <param name="Deprecated">The version's deprecation message, or null.</param>
+/// <param name="Integrity">The SRI string of the stored bytes (computed here, not the upstream's claim).</param>
+/// <param name="Shasum">The SHA-1 of the stored bytes in hex.</param>
+/// <param name="Length">The size of the stored bytes.</param>
+/// <param name="Tags">The upstream's dist-tags; those that point at a stored version are kept.</param>
+public sealed record NpmCachedVersion(
+    string Name,
+    string Version,
+    JsonObject Manifest,
+    DateTime Published,
+    DateTime Created,
+    DateTime Modified,
+    string? Deprecated,
+    string Integrity,
+    string Shasum,
+    long Length,
+    IReadOnlyDictionary<string, string> Tags);
+
 /// <summary>
 /// <see cref="INpmRegistry"/> over the npm tables and the storage service. Rows live in the repository of the request (the
 /// context's query filter and stamping), tarballs under <c>npm/{name}/-/{file}</c> of that repository's storage prefix.
@@ -235,6 +260,16 @@ public class NpmRegistryService : INpmRegistry
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<ResolutionOutcome> ProbeAsync(string name, string version, CancellationToken cancellationToken)
+    {
+        var stored = await _context.NpmVersions!.AsNoTracking()
+            .Join(_context.NpmPackages!.Where(p => p.Name == name), v => v.PackageKey, p => p.Key, (v, p) => v.Version!)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        return stored.Any(v => NpmNames.Comparable(v) == NpmNames.Comparable(version)) ? ResolutionOutcome.Stored : ResolutionOutcome.NotFound;
+    }
+
     private string StoragePath(string name, string version) => RepositoryStorage.Scope(_repository.Current, NpmNames.TarballPath(name, version));
 
     /// <inheritdoc/>
@@ -342,6 +377,157 @@ public class NpmRegistryService : INpmRegistry
 
         failure = NpmResult.Fail(NpmStatus.Invalid, error);
         return false;
+    }
+
+    // ---- remote cache ---------------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Keeps a version a remote repository fetched: the tarball file, the package and version rows and the tags that point at
+    /// stored versions, in one transaction. No authorization (the request only read), but the maintenance gate applies and
+    /// nothing is stored if a concurrent request stored the version first (its file stays). Called by
+    /// <see cref="RemoteNpmRegistry"/>.
+    /// </summary>
+    /// <param name="cached">What to keep.</param>
+    /// <param name="tarball">The bytes, seekable; read from the start, the caller disposes it.</param>
+    /// <param name="cancellationToken">Cancellation.</param>
+    /// <returns>True when this call stored the version, false when it was already stored.</returns>
+    /// <exception cref="MaintenanceException">The gate is closed.</exception>
+    internal async Task<bool> StoreCachedAsync(NpmCachedVersion cached, Stream tarball, CancellationToken cancellationToken)
+    {
+        _gate.ThrowIfClosed();
+
+        var name = cached.Name;
+        var version = cached.Version;
+        var path = StoragePath(name, version);
+
+        var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
+        var stored = package == null
+            ? new List<string>()
+            : await _context.NpmVersions!.AsNoTracking().Where(v => v.PackageKey == package.Key).Select(v => v.Version!).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (stored.Any(v => NpmNames.Comparable(v) == NpmNames.Comparable(version))) return false;
+
+        tarball.Position = 0;
+        var put = await _storage.PutAsync(path, tarball, TarballContentType, cancellationToken).ConfigureAwait(false);
+        if (put == StoragePutResult.Conflict)
+        {
+            // A file of an earlier attempt that never got its row.
+            await _storage.DeleteAsync(path, cancellationToken).ConfigureAwait(false);
+            tarball.Position = 0;
+            put = await _storage.PutAsync(path, tarball, TarballContentType, cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            if (package == null)
+            {
+                package = new NpmPackage { Name = name, Created = cached.Created, Modified = cached.Modified };
+                _context.NpmPackages!.Add(package);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            _context.NpmVersions!.Add(new NpmVersion
+            {
+                PackageKey = package.Key,
+                Version = version,
+                Integrity = cached.Integrity,
+                Shasum = cached.Shasum,
+                TarballSize = cached.Length,
+                Manifest = BuildStoredManifest(cached.Manifest, name, version, cached.Integrity, cached.Shasum).ToJsonString(),
+                Deprecated = string.IsNullOrWhiteSpace(cached.Deprecated) ? null : cached.Deprecated,
+                Published = cached.Published,
+            });
+
+            // The upstream's tags, for the versions this repository holds; "latest" always exists (the highest held version
+            // when the upstream's own is not held, which moves up as higher ones are kept), so the stored copy can answer a packument by itself.
+            stored.Add(version);
+            var tags = cached.Tags
+                .Where(t => NpmNames.IsValidTag(t.Key, out _) && stored.Contains(t.Value, StringComparer.Ordinal))
+                .ToDictionary(t => t.Key, t => t.Value, StringComparer.Ordinal);
+            foreach (var tag in tags) await SetTagAsync(package.Key, tag.Key, tag.Value, cancellationToken).ConfigureAwait(false);
+
+            if (!tags.ContainsKey("latest"))
+            {
+                var highest = NpmNames.Highest(stored);
+                if (highest != null) await SetTagAsync(package.Key, "latest", highest, cancellationToken).ConfigureAwait(false);
+            }
+
+            if (cached.Modified > package.Modified) package.Modified = cached.Modified;
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException e) when (_context.IsUniqueConstraintViolationException(e))
+        {
+            // A concurrent request stored the same version; its file is the one at the path.
+            return false;
+        }
+        catch
+        {
+            if (put == StoragePutResult.Success) await TryDeleteAsync(path).ConfigureAwait(false);
+
+            throw;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Deletes what a remote repository stored (rows and files), without authorization: the administrator's purge. One package
+    /// (every version, or the one given, matched by semantic version) or, with no name, every package. Tags that pointed at a
+    /// deleted version are removed, and <c>latest</c> moves to the highest version left. Called by
+    /// <see cref="RemoteRepositoryAdministration"/>.
+    /// </summary>
+    /// <returns>The versions deleted.</returns>
+    internal async Task<int> PurgeAsync(string? name, string? version, CancellationToken cancellationToken)
+    {
+        _gate.ThrowIfClosed();
+        if (name == null && version != null) throw new ArgumentException("A version needs the package it belongs to.", nameof(version));
+
+        var deleted = 0;
+        while (true)
+        {
+            var query = _context.NpmPackages!.AsQueryable();
+            if (name != null) query = query.Where(p => p.Name == name);
+
+            // A purge of everything empties 100 packages per round (each round removes the packages it handled); one package is a single round.
+            var packages = await query.OrderBy(p => p.Key).Take(100).ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (packages.Count == 0) return deleted;
+
+            foreach (var package in packages)
+            {
+                var rows = await _context.NpmVersions!.Where(v => v.PackageKey == package.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
+                var removed = version == null
+                    ? rows
+                    : rows.Where(r => NpmNames.Comparable(r.Version!) == NpmNames.Comparable(version)).ToList();
+                if (removed.Count == 0) continue;
+
+                var tags = await _context.NpmDistTags!.Where(t => t.PackageKey == package.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
+                _context.NpmVersions!.RemoveRange(removed);
+                var kept = rows.Except(removed).Select(r => r.Version!).ToHashSet(StringComparer.Ordinal);
+                if (kept.Count == 0)
+                {
+                    _context.NpmDistTags!.RemoveRange(tags);
+                    _context.NpmPackages!.Remove(package);
+                }
+                else
+                {
+                    foreach (var tag in tags.Where(t => t.Tag != "latest" && !kept.Contains(t.Version!))) _context.NpmDistTags!.Remove(tag);
+
+                    // "latest" always points at a version that is still held.
+                    var latest = tags.FirstOrDefault(t => t.Tag == "latest");
+                    if (latest != null && !kept.Contains(latest.Version!)) latest.Version = NpmNames.Highest(kept);
+                    package.Modified = _time.UtcNow;
+                }
+
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                foreach (var row in removed) await TryDeleteAsync(StoragePath(package.Name!, row.Version!)).ConfigureAwait(false);
+
+                deleted += removed.Count;
+            }
+
+            if (name != null) return deleted;
+        }
     }
 
     // ---- publish --------------------------------------------------------------------------------------------------------

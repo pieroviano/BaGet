@@ -86,6 +86,14 @@ public class RepositoryEditModel : RepositoryPageModel
     /// </summary>
     public RepositoryAccessSummary? Access { get; private set; }
 
+    /// <summary>The page of the repository's format that lists its packages (<c>/Index</c> for NuGet, <c>/NpmPackages</c> for npm).</summary>
+    public string BrowsePage => HttpContext.RequestServices.GetRequiredService<FormatRegistry>().Find(Repository?.Format ?? RepositoryFormat.NuGet)
+        ?.RepositoryLinks(new RepositoryInfo(Repository?.Key ?? 0, Repository?.Name ?? string.Empty, Repository?.Format ?? RepositoryFormat.NuGet, Repository?.Kind ?? RepositoryKind.Local))
+        .FirstOrDefault(l => l.Id == "browse" && l.Page != null)?.Page ?? "/Index";
+
+    /// <summary>The name of what a package is called in this repository's format (shown in the labels).</summary>
+    public string PackageWord => Repository?.Format == RepositoryFormat.Npm ? "package name" : "package id";
+
     /// <summary>The repository's feed address.</summary>
     public string FeedUrl => RepositoryFeedUrl.For(
         HttpContext,
@@ -204,6 +212,7 @@ public class RepositoryEditModel : RepositoryPageModel
             .TestConnectionAsync(Name, settings, cancellationToken);
         Remote.HasPassword = RemoteDetail.HasPassword;
         Remote.EndpointFromMirror = RemoteDetail.IsMirror;
+        Remote.Format = RemoteDetail.Repository.Format;
         Remote.Password = null;
 
         return Page();
@@ -245,7 +254,17 @@ public class RepositoryEditModel : RepositoryPageModel
             return await RefuseAsync($"'{PackageVersion}' is not a valid version.", cancellationToken);
         }
 
-        var result = await remotes.PurgePackageAsync(Name!, id, version, cancellationToken, User.Identity?.Name);
+        PurgeResult result;
+        try
+        {
+            result = await remotes.PurgePackageAsync(Name!, id, version, cancellationToken, User.Identity?.Name);
+        }
+        catch (ArgumentException e)
+        {
+            // A name the repository's format would not accept (an npm name must be lower case...).
+            return await RefuseAsync(e.Message, cancellationToken);
+        }
+
         TempData["Message"] = result.Packages == 0 && result.CachedAnswers == 0
             ? $"Nothing was cached for {id}{(version == null ? string.Empty : " " + version.ToNormalizedString())}."
             : $"{id}{(version == null ? string.Empty : " " + version.ToNormalizedString())} was purged: {result.Packages} package version(s) deleted, {result.CachedAnswers} remembered answer(s) dropped.";
@@ -332,6 +351,17 @@ public class RepositoryEditModel : RepositoryPageModel
             return Page();
         }
 
+        if (Repository.Format == RepositoryFormat.Npm)
+        {
+            // An npm name is checked by the one rule every npm route and page uses (lower case, scoped names).
+            if (!NpmNames.TryParse(id, out id, out var invalidName))
+            {
+                Error = invalidName;
+
+                return Page();
+            }
+        }
+
         Preview = await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>()
             .PreviewAsync(Name!, id, version, cancellationToken);
 
@@ -380,6 +410,7 @@ public class RepositoryEditModel : RepositoryPageModel
         {
             Remote.HasPassword = RemoteDetail.HasPassword;
             Remote.EndpointFromMirror = RemoteDetail.IsMirror;
+            Remote.Format = RemoteDetail.Repository.Format;
             Remote.Password = null;
         }
 

@@ -166,6 +166,8 @@ public class RepositoryService : IRepositoryService
         {
             if (remote == null) throw new ArgumentException("A remote repository needs its upstream settings.", nameof(remote));
 
+            // The protocol is the format's: npm speaks only the npm registry protocol, NuGet V3 or V2.
+            remote = remote.ForFormat(format);
             var problems = remote.Validate(_remoteOptions?.Value?.BlockPrivateAddresses == true);
             if (problems.Count > 0) throw new ArgumentException(string.Join(" ", problems), nameof(remote));
 

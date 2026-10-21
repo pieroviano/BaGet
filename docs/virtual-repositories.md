@@ -1,20 +1,20 @@
 # Virtual repositories
 
-A **virtual** repository presents several repositories (local, [remote](remote-repositories.md) or other virtual ones) as one feed at `/r/{name}/v3/index.json`. Clients configure one source; the server decides which member answers. It stores nothing itself.
+A **virtual** repository presents several repositories of one format (local, [remote](remote-repositories.md) or other virtual ones) as one feed at `/r/{name}/v3/index.json` (npm: `/r/{name}/npm/`, see [npm virtual repositories](#npm-virtual-repositories)). Clients configure one source; the server decides which member answers. It stores nothing itself.
 
 ## Create and edit
 
-Administrators: `/admin/repositories` > *New virtual repository* (a name; it starts empty), then `/admin/repositories/{name}`. Needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages). Not available with Azure Table or `Search:Type` = `AzureSearch` (only `default` exists there).
+Administrators: `/admin/repositories` > *New virtual repository* (a name and the **format**, NuGet or npm; it starts empty), then `/admin/repositories/{name}`. Needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages). Not available with Azure Table or `Search:Type` = `AzureSearch` (only `default` exists there).
 
 | Control | Does |
 |---|---|
 | *Anonymous read* (create form, default on) | Whether requests without credentials may read the virtual repository. A member is read only when the caller may read that member, so this never exposes a closed member |
 | Members table | Resolution order, top to bottom. *Up* / *Down* reorder, *Remove* drops a member. Saved at once, audited |
-| *Add a member* | Any other NuGet repository whose own members do not lead back to this one; added at the end |
+| *Add a member* | Any other repository **of the same format** whose own members do not lead back to this one; added at the end |
 | Deploy repository | The member that receives uploads: a local member, or a virtual member that itself deploys to a local one. A remote repository cannot be one. *None* = the repository takes no uploads |
-| *Where would a package come from?* | Package id + version: asks each effective member in order and shows what it found (*stored here*, *its upstream has it and it would be fetched*, *not found*, *its upstream could not be asked*, *not asked: an earlier member answers*) and which member answers. Fetches and stores nothing. It uses the rules of a real request: each member's stored copy, then its own upstream (a remote repository's, or the one `default` fetches through while `Mirror:Enabled`); an upstream in offline mode shows *not stored; its upstream is in offline mode*, a remembered 404 counts as not found, and later members' upstreams are not asked once one answers |
+| *Where would a package come from?* | Package id (npm: package name) + version: asks each effective member in order and shows what it found (*stored here*, *its upstream has it and it would be fetched*, *not found*, *its upstream could not be asked*, *not asked: an earlier member answers*) and which member answers. Fetches and stores nothing. It uses the rules of a real request: each member's stored copy, then its own upstream (a remote repository's, or the one `default` fetches through while `Mirror:Enabled`); an upstream in offline mode shows *not stored; its upstream is in offline mode*, a remembered 404 counts as not found, and later members' upstreams are not asked once one answers |
 
-Rules: at most 50 members; a repository is listed once; a member must exist and be a NuGet repository; **nesting** is allowed, a nested virtual member is expanded in place (each repository counts once, at its first place), and a change that would make a virtual repository contain itself is refused with the reason. A repository that a virtual repository lists cannot be deleted until it is removed there (the delete page says where). Edits are refused with `503` while the server is read-only for maintenance. Members are stored by name in `Repository.Settings` (no schema change).
+Rules: at most 50 members; a repository is listed once; a member must exist and be of the virtual repository's format (a NuGet virtual repository takes no npm member and the other way round); **nesting** is allowed, a nested virtual member is expanded in place (each repository counts once, at its first place), and a change that would make a virtual repository contain itself is refused with the reason. A repository that a virtual repository lists cannot be deleted until it is removed there (the delete page says where). Edits are refused with `503` while the server is read-only for maintenance. Members are stored by name in `Repository.Settings` (no schema change).
 
 ## What a client sees
 
@@ -49,6 +49,22 @@ A write to a virtual repository **is a write to its deploy repository**: the req
 * Search and the V2 listing filter by repository, not by package pattern, like everywhere else.
 * The *Effective access* table of a virtual repository shows *Deploy* as decided by the deploy repository.
 
+## npm virtual repositories
+
+A virtual repository of format npm merges npm repositories (`/r/{name}/npm/`). Members are read in their own scope (their storage, upstream and access rules apply), only those the caller may read, and a member that fails (an upstream that is down) is logged and skipped.
+
+| Request | Result |
+|---|---|
+| Packument (full and install-only) | The members' packuments **merged**: `versions` is the union, each version from the **first member** that has it (semantic versions compared without build metadata); `dist-tags` take, per tag, the **first member that has the tag**, so `latest` follows the member order and not the highest version (a tag whose version the merge does not hold is dropped; `latest` falls back to the highest version if no member has it); `time` is the union with the earliest `created` and the latest `modified`; description, readme and the other fields come from the first member that has them. Every tarball address points into the virtual repository |
+| Tarball | The first member that has it; a remote member downloads and stores it as it does when read directly |
+| Dist-tags (`GET`), `npm view`, package pages | The same merge |
+| Search | Merged by package name (the first member's entry), ordered by name; each member is read for the first `skip + take` hits (at most 1000); remote members contribute the packages they stored. `total` is exact while every member was read completely, else an upper bound |
+| `npm publish`, dist-tag, deprecate, unpublish | **Moved to the deploy repository** before authorization: it needs the matching action *there*, ownership there, and the unpublish window of `Npm:UnpublishWindow` applies there. Without a deploy repository: `403`. The service (`INpmRegistry`) does the same for callers that are not routes |
+| `npm login`, `whoami`, `ping`, `audit` | As for any repository |
+| Web pages | *Browse*, a package's page and *Upload* (to the deploy repository) work; *Manage* answers `404` (use the member's page) |
+
+The *Where would a package come from?* preview asks each npm member: *stored here* (the version's tarball is stored), *not stored yet; its upstream has it* (a remote member, from its remembered or fresh packument), *not found*, *its upstream could not be asked*, *offline*.
+
 ## `default` and the mirror
 
 `default` keeps its URL (`/`). With `Mirror:Enabled`, it behaves as a virtual repository of two members: its own packages, then the `mirror` remote repository (see [the mirror](remote-repositories.md#the-mirror)). What it fetches is stored **in `default`'s own rows**, exactly as before; `mirror` itself stays empty unless it is read at `/r/mirror/`. This is not a stored virtual repository (nothing to migrate, nothing to edit). To compose your own:
@@ -58,4 +74,4 @@ A write to a virtual repository **is a write to its deploy repository**: the req
 
 ## Not covered
 
-No per-member path rules (include/exclude patterns), no merged catalog, no *last updated* sort, and the V2 feed ignores `$filter`/`$orderby` as everywhere. Per-member resolution state of remote members (memory, health) is per node, as for [remote repositories](remote-repositories.md).
+No per-member path rules (include/exclude patterns), no merged catalog (npm has none), no *last updated* sort, and the V2 feed ignores `$filter`/`$orderby` as everywhere. Per-member resolution state of remote members (memory, health) is per node, as for [remote repositories](remote-repositories.md).

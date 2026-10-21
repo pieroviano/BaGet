@@ -77,25 +77,26 @@ public interface IVirtualRepositoryAdministration
     Task<VirtualRepositoryDetail?> FindAsync(string? name, CancellationToken cancellationToken);
 
     /// <summary>
-    /// The NuGet repositories that can be added to the virtual repository <paramref name="name"/> (every other
-    /// repository whose own members do not lead back to it), ordered by name; for a new repository pass null.
+    /// The repositories of the virtual repository's format that can be added to <paramref name="name"/> (every other
+    /// repository whose own members do not lead back to it), ordered by name. For a repository not created yet pass null and its
+    /// <paramref name="format"/>.
     /// </summary>
-    Task<IReadOnlyList<RepositoryInfo>> CandidatesAsync(string? name, CancellationToken cancellationToken);
+    Task<IReadOnlyList<RepositoryInfo>> CandidatesAsync(string? name, CancellationToken cancellationToken, RepositoryFormat format = RepositoryFormat.NuGet);
 
     /// <summary>The virtual repositories that list <paramref name="memberName"/> directly, ordered by name.</summary>
     Task<IReadOnlyList<string>> ReferencedByAsync(string memberName, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Creates a virtual NuGet repository. Audited.
+    /// Creates a virtual repository of <paramref name="format"/> (its members must be of that format: NuGet or npm). Audited.
     /// </summary>
     /// <exception cref="ArgumentException">The name or the settings are invalid; the message lists the problems.</exception>
     /// <exception cref="RepositoryExistsException">The name is taken.</exception>
     /// <exception cref="NotSupportedException">The configuration holds the default repository only.</exception>
-    Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null, bool anonymousRead = true);
+    Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null, bool anonymousRead = true, RepositoryFormat format = RepositoryFormat.NuGet);
 
     /// <summary>
     /// Replaces the members and the deploy repository. Refused (nothing changes) for an unknown, remote-only or
-    /// non-NuGet member, for a deploy repository that is not a member or does not end in a local repository, and for a
+    /// other-format member, for a deploy repository that is not a member or does not end in a local repository, and for a
     /// change that would close a cycle between virtual repositories. Audited.
     /// </summary>
     /// <exception cref="KeyNotFoundException">No such virtual repository.</exception>
@@ -105,7 +106,8 @@ public interface IVirtualRepositoryAdministration
     /// <summary>
     /// Where <paramref name="packageId"/> <paramref name="version"/> would come from: each effective member is asked in
     /// order whether it stores the version (a remote member that does not is asked whether its upstream has it, unless an
-    /// earlier member already answers). Stores nothing and fetches nothing.
+    /// earlier member already answers). Stores nothing and fetches nothing. For an npm repository the package id is the package
+    /// name and the version is read as a full semantic version (its full string form).
     /// </summary>
     /// <exception cref="KeyNotFoundException">No such virtual repository.</exception>
     Task<ResolutionPreview> PreviewAsync(string name, string packageId, NuGetVersion version, CancellationToken cancellationToken);
@@ -121,14 +123,17 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     private readonly IServiceScopeFactory _scopes;
     private readonly MaintenanceGate? _gate;
     private readonly SystemTime? _time;
+    private readonly FormatRegistry _formats;
 
     public VirtualRepositoryAdministration(
         IContext context,
         IRepositoryService repositories,
         IServiceScopeFactory scopes,
         MaintenanceGate? gate = null,
-        SystemTime? time = null)
+        SystemTime? time = null,
+        FormatRegistry? formats = null)
     {
+        _formats = formats ?? FormatRegistry.Default;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
@@ -159,14 +164,15 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RepositoryInfo>> CandidatesAsync(string? name, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<RepositoryInfo>> CandidatesAsync(string? name, CancellationToken cancellationToken, RepositoryFormat format = RepositoryFormat.NuGet)
     {
         if (_context.Repositories == null) return Array.Empty<RepositoryInfo>();
 
         var rows = await LoadAsync(cancellationToken).ConfigureAwait(false);
+        if (name != null && rows.TryGetValue(name, out var self)) format = self.Format;
 
         return rows.Values
-            .Where(r => r.Format == RepositoryFormat.NuGet && r.Name != name && !(name != null && r.Kind == RepositoryKind.Virtual && Reaches(r.Name!, name, rows)))
+            .Where(r => r.Format == format && r.Name != name && !(name != null && r.Kind == RepositoryKind.Virtual && Reaches(r.Name!, name, rows)))
             .OrderBy(r => r.Name, StringComparer.Ordinal)
             .Select(r => r.ToInfo())
             .ToList();
@@ -187,10 +193,15 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     }
 
     /// <inheritdoc/>
-    public async Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null, bool anonymousRead = true)
+    public async Task<RepositoryInfo> CreateAsync(string name, VirtualRepositorySettings settings, CancellationToken cancellationToken, string? actor = null, bool anonymousRead = true, RepositoryFormat format = RepositoryFormat.NuGet)
     {
         if (settings == null) throw new ArgumentNullException(nameof(settings));
         if (!RepositoryNames.IsValid(name, out var error)) throw new ArgumentException(error, nameof(name));
+        if (_formats.Find(format) is not { SupportsVirtual: true })
+        {
+            throw new NotSupportedException($"A virtual {format} repository is not available on this server.");
+        }
+
         _gate?.ThrowIfClosed();
 
         if (!_repositories.SupportsMultipleRepositories)
@@ -204,12 +215,12 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
         var rows = await LoadAsync(cancellationToken).ConfigureAwait(false);
         if (rows.ContainsKey(name)) throw new RepositoryExistsException(name);
 
-        Validate(name, settings, rows);
+        Validate(name, format, settings, rows);
 
         var row = new Repository
         {
             Name = name,
-            Format = RepositoryFormat.NuGet,
+            Format = format,
             Kind = RepositoryKind.Virtual,
             Settings = VirtualSettingsCodec.Serialize(settings),
             AnonymousRead = anonymousRead,
@@ -242,7 +253,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
         if (row == null) throw new KeyNotFoundException($"There is no virtual repository named '{name}'.");
 
         var rows = await LoadAsync(cancellationToken).ConfigureAwait(false);
-        Validate(name, settings, rows);
+        Validate(name, row.Format, settings, rows);
 
         row.Settings = VirtualSettingsCodec.Serialize(settings);
         AccessAdministration.Audit(_context, Now, actor, "repository.virtual.update", name, Describe(settings));
@@ -267,7 +278,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
             {
                 // Only the stored copy is looked at (cheap and local): it shows a member the answering one shadows.
                 using var scope = _scopes.CreateRepositoryScope(member);
-                if (await scope.ServiceProvider.GetRequiredService<IPackageDatabase>().ExistsAsync(packageId, version, cancellationToken).ConfigureAwait(false))
+                if (await StoredAsync(scope.ServiceProvider, detail.Repository.Format, packageId, version, cancellationToken).ConfigureAwait(false))
                 {
                     outcome = ResolutionOutcome.Stored;
                 }
@@ -279,8 +290,11 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
                 using var scope = _scopes.CreateRepositoryScope(member);
                 try
                 {
-                    outcome = await scope.ServiceProvider.GetRequiredService<PackageService>()
-                        .ProbeAsync(packageId, version, cancellationToken).ConfigureAwait(false);
+                    outcome = detail.Repository.Format == RepositoryFormat.Npm
+                        ? await scope.ServiceProvider.GetRequiredService<INpmRegistry>()
+                            .ProbeAsync(packageId.ToLowerInvariant(), version.ToFullString(), cancellationToken).ConfigureAwait(false)
+                        : await scope.ServiceProvider.GetRequiredService<PackageService>()
+                            .ProbeAsync(packageId, version, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -293,6 +307,19 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
         }
 
         return new ResolutionPreview(packageId, version, steps, answers);
+    }
+
+    // Whether the member's own storage holds the version (cheap and local).
+    private static async Task<bool> StoredAsync(IServiceProvider services, RepositoryFormat format, string packageId, NuGetVersion version, CancellationToken cancellationToken)
+    {
+        if (format != RepositoryFormat.Npm)
+        {
+            return await services.GetRequiredService<IPackageDatabase>().ExistsAsync(packageId, version, cancellationToken).ConfigureAwait(false);
+        }
+
+        // An npm member's stored copy only: the probe of a remote member would ask its upstream, which a shadowed member must not.
+        return await services.GetRequiredService<NpmRegistryService>()
+            .ProbeAsync(packageId.ToLowerInvariant(), version.ToFullString(), cancellationToken).ConfigureAwait(false) == ResolutionOutcome.Stored;
     }
 
     private static object Describe(VirtualRepositorySettings settings)
@@ -327,7 +354,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     }
 
     // Throws ArgumentException listing every problem of 'settings' as the settings of the virtual repository 'name'.
-    private static void Validate(string name, VirtualRepositorySettings settings, Dictionary<string, Repository> rows)
+    private static void Validate(string name, RepositoryFormat format, VirtualRepositorySettings settings, Dictionary<string, Repository> rows)
     {
         var problems = settings.ValidateShape().ToList();
 
@@ -341,9 +368,9 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
             {
                 problems.Add($"There is no repository named '{member}'.");
             }
-            else if (row.Format != RepositoryFormat.NuGet)
+            else if (row.Format != format)
             {
-                problems.Add($"'{member}' is not a NuGet repository.");
+                problems.Add($"'{member}' is not a {format} repository.");
             }
             else if (row.Kind == RepositoryKind.Virtual && Reaches(member, name, rows))
             {
@@ -360,7 +387,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
                 {
                     Key = rows.TryGetValue(name, out var existing) ? existing.Key : 0,
                     Name = name,
-                    Format = RepositoryFormat.NuGet,
+                    Format = format,
                     Kind = RepositoryKind.Virtual,
                     Settings = VirtualSettingsCodec.Serialize(settings),
                 },

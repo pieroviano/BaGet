@@ -105,7 +105,11 @@ public static partial class DependencyInjectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, NuGetFormatModule>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, NpmFormatModule>());
         services.TryAddSingleton(provider => new FormatRegistry(provider.GetServices<IFormatModule>()));
-        services.TryAddScoped<INpmRegistry, NpmRegistryService>();
+        services.TryAddScoped<NpmRegistryService>();
+        services.TryAddScoped<NpmUpstreamClient>();
+        services.TryAddScoped<RemoteNpmRegistry>();
+        services.TryAddScoped<VirtualNpmRegistry>();
+        services.TryAddScoped<INpmRegistry, RepositoryNpmRegistry>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NpmFormatSearchProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatIndexer, NuGetFormatIndexer>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NuGetFormatSearchProvider>());

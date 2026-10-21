@@ -33,7 +33,15 @@ public class RepositoryPageFilter : IAsyncPageFilter
         "/Statistics",
         "/ReportAbuse",
         "/Packages/Manage",
+        "/Packages/NpmManage",
         "/Packages/ContactOwners",
+    };
+
+    // Pages whose every action a remote npm repository refuses (publish, tags, deprecate and unpublish are 403 there; the cache is
+    // managed on the administration page): they answer 404 instead of offering what cannot be done.
+    private static readonly string[] NotOnRemote =
+    {
+        "/Packages/NpmManage",
     };
 
     /// <inheritdoc/>
@@ -86,6 +94,12 @@ public class RepositoryPageFilter : IAsyncPageFilter
                 context.Result = browse == null
                     ? new NotFoundResult()
                     : new RedirectToPageResult(browse.Page, new { repo = repository.IsDefault ? null : repository.Name });
+                return;
+            }
+
+            if (allowed && repository.Kind == RepositoryKind.Remote && NotOnRemote.Contains(page.ViewEnginePath, StringComparer.OrdinalIgnoreCase))
+            {
+                context.Result = new NotFoundResult();
                 return;
             }
 

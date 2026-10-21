@@ -85,8 +85,11 @@ public class NpmPackageModel : PageModel
         SelectedTags = Package.DistTags.Where(t => t.Value == Selected.Version).Select(t => t.Key).OrderBy(t => t, StringComparer.Ordinal).ToList();
         InstallTabs = NpmInstallSnippets.Build(Package.Name, Selected.Version, SelectedTags.FirstOrDefault(t => t != "latest"), RegistryUrl);
 
+        // Owners and the manage page belong to a repository that holds packages of its own; a remote one caches an upstream's and a
+        // virtual one holds none (it is managed where the package is stored).
         var services = HttpContext.RequestServices;
-        if (services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
+        var kind = services.GetService<IRepositoryContext>()?.Current.Kind ?? RepositoryKind.Local;
+        if (kind == RepositoryKind.Local && services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
         {
             var ownership = services.GetService<PackageOwnershipService>();
             if (ownership != null)

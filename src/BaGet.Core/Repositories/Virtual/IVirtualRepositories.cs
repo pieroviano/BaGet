@@ -16,8 +16,8 @@ public interface IVirtualRepositories
     /// <summary>
     /// The repositories that answer for <paramref name="virtualRepository"/>, in resolution order: its members, with a
     /// member that is itself virtual replaced in place by its own members. Each repository appears once (its first
-    /// place counts), a cycle is cut where it closes, and members that no longer exist or are not NuGet repositories are
-    /// skipped. The result holds local and remote repositories only.
+    /// place counts), a cycle is cut where it closes, and members that no longer exist or are of another format than the
+    /// virtual repository are skipped. The result holds local and remote repositories only.
     /// </summary>
     Task<IReadOnlyList<RepositoryInfo>> EffectiveMembersAsync(RepositoryInfo virtualRepository, CancellationToken cancellationToken);
 
@@ -79,7 +79,7 @@ public sealed class VirtualRepositories : IVirtualRepositories
 
             var next = VirtualSettingsCodec.Deserialize(row.Settings).DeployRepository;
             if (string.IsNullOrEmpty(next) || !rows.TryGetValue(next!, out var target)) return null;
-            if (target.Format != RepositoryFormat.NuGet) return null;
+            if (target.Format != row.Format) return null;
             if (target.Kind == RepositoryKind.Local) return target.ToInfo();
             if (target.Kind != RepositoryKind.Virtual) return null;
 
@@ -103,7 +103,8 @@ public sealed class VirtualRepositories : IVirtualRepositories
 
         foreach (var memberName in VirtualSettingsCodec.Deserialize(row.Settings).Members)
         {
-            if (!rows.TryGetValue(memberName, out var member) || member.Format != RepositoryFormat.NuGet) continue;
+            // A virtual repository is of one format: its members are too.
+            if (!rows.TryGetValue(memberName, out var member) || member.Format != row.Format) continue;
 
             if (member.Kind == RepositoryKind.Virtual)
             {

@@ -1,13 +1,13 @@
 # npm registry
 
 A local **npm** repository is an npm registry: `npm publish`, `npm install`, dist-tags, deprecate, unpublish, search, `npm login`.
-Remote (a proxy of registry.npmjs.org) and virtual npm repositories are a later phase.
+A **remote** npm repository proxies an upstream registry such as registry.npmjs.org ([details](remote-repositories.md#npm-remote-repositories)); a **virtual** one merges several npm repositories ([details](virtual-repositories.md#npm-virtual-repositories)).
 
 ## Create and use
 
 | Step | How |
 |---|---|
-| Create | Administrators: `/admin/repositories` > *npm* form (a name; *Anonymous read* chosen there). Refused on Azure Table / Azure Search (default repository only) |
+| Create | Administrators: `/admin/repositories` > *npm* form (a name; *Anonymous read* chosen there). *New remote repository* / *New virtual repository* with the format *npm* for the other kinds. Refused on Azure Table / Azure Search (default repository only) |
 | Registry address | `https://host/r/{name}/npm/` (shown on the repository list and the browse page). `/npm/` of the root is never served: `default` is NuGet |
 | Point npm at it | `npm config set registry https://host/r/{name}/npm/`, or only a scope: `@acme:registry=https://host/r/{name}/npm/` in `.npmrc` |
 | Sign in | `npm login --registry=…` (user name and password, accounts on) or `//host/r/{name}/npm/:_authToken=<API key>` in `.npmrc` (any user API key, or the global `ApiKey`) |

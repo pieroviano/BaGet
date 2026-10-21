@@ -224,4 +224,26 @@ public interface INpmRegistry
         int take,
         Func<string, CancellationToken, Task<bool>>? canRead = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Where <paramref name="version"/> of <paramref name="name"/> would come from, without fetching or storing anything:
+    /// <see cref="ResolutionOutcome.Stored"/> when the repository holds it, <see cref="ResolutionOutcome.WouldFetch"/> when it is a
+    /// remote repository whose upstream has it, <see cref="ResolutionOutcome.Offline"/> / <see cref="ResolutionOutcome.Unavailable"/> /
+    /// <see cref="ResolutionOutcome.NotFound"/> otherwise. What the resolution preview of a virtual repository asks of each member.
+    /// </summary>
+    Task<ResolutionOutcome> ProbeAsync(string name, string version, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// The upstream of a remote npm repository could not be reached (or refused the credentials, or sent something that is not a
+/// registry's answer) and nothing stored or remembered can answer instead. The HTTP route answers 502; a virtual repository
+/// skips the member. The message names no URL and no credential.
+/// </summary>
+public sealed class NpmUpstreamException : Exception
+{
+    /// <param name="message">What failed, safe to show.</param>
+    public NpmUpstreamException(string message)
+        : base(message)
+    {
+    }
 }

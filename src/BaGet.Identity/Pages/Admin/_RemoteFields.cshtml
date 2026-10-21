@@ -10,12 +10,27 @@
     }
     else
     {
-        <input asp-for="Url" class="form-control" placeholder="https://api.nuget.org/v3/index.json" autocomplete="off" maxlength="@BaGet.Core.RemoteRepositorySettings.MaxUrlLength" />
-        <p class="help-block">A V3 <code>index.json</code> URL or a V2 feed URL. Put credentials in the fields below, not in the URL.</p>
+        @if (Model.Format == BaGet.Core.RepositoryFormat.Npm)
+        {
+            <input asp-for="Url" class="form-control" placeholder="https://registry.npmjs.org/" autocomplete="off" maxlength="@BaGet.Core.RemoteRepositorySettings.MaxUrlLength" />
+            <p class="help-block">The base URL of an npm registry (packages are at <code>{url}/{name}</code>). Put credentials in the fields below, not in the URL.</p>
+        }
+        else
+        {
+            <input asp-for="Url" class="form-control" placeholder="https://api.nuget.org/v3/index.json" autocomplete="off" maxlength="@BaGet.Core.RemoteRepositorySettings.MaxUrlLength" />
+            <p class="help-block">A V3 <code>index.json</code> URL or a V2 feed URL (for npm, the registry's base URL). Put credentials in the fields below, not in the URL.</p>
+        }
     }
 </div>
+@if (Model.Format == BaGet.Core.RepositoryFormat.Npm)
+{
+    <input type="hidden" asp-for="Protocol" value="V3" />
+    <p class="help-block" id="remote-protocol-npm">Protocol: the npm registry protocol.</p>
+}
+else
+{
 <div class="form-group">
-    <label asp-for="Protocol">Protocol</label>
+    <label asp-for="Protocol">Protocol (NuGet)</label>
     @if (Model.EndpointFromMirror)
     {
         <input type="hidden" asp-for="Protocol" />
@@ -25,9 +40,10 @@
     }
     else
     {
-        <select asp-for="Protocol" class="form-control" asp-items="Html.GetEnumSelectList<BaGet.Core.RemoteProtocol>()"></select>
+        <select asp-for="Protocol" class="form-control" asp-items="Html.GetEnumSelectList<BaGet.Core.RemoteProtocol>().Where(i => i.Value != ((int)BaGet.Core.RemoteProtocol.Npm).ToString())"></select>
     }
 </div>
+}
 <div class="form-group">
     <label asp-for="Username">User name</label>
     <input asp-for="Username" class="form-control" autocomplete="off" maxlength="256" />
@@ -36,7 +52,7 @@
     <label asp-for="Password">Password or token</label>
     <input asp-for="Password" type="password" value="" class="form-control" autocomplete="new-password" maxlength="4096" />
     <p class="help-block">
-        Sent as HTTP Basic to the upstream's own host only. Stored protected (ASP.NET Core data protection), never shown again, never logged.
+        Sent as HTTP Basic to the upstream's own host only (an npm upstream with no user name gets it as a bearer token, npm's <code>_authToken</code>). Stored protected (ASP.NET Core data protection), never shown again, never logged.
         @if (Model.HasPassword)
         {
             <text>A password is stored; leave blank to keep it.</text>

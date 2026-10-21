@@ -64,7 +64,9 @@ public class RemoteHttpClientFactory : IRemoteHttpClientFactory
         if (!followRedirects && handler is SocketsHttpHandler sockets) sockets.AllowAutoRedirect = false;
         if (settings.HasCredentials && settings.UrlOrNull != null)
         {
-            handler = new HostScopedBasicAuthHandler(settings.UrlOrNull, settings.Username, settings.Password) { InnerHandler = handler };
+            // An npm upstream with only a password is given a token (npm's _authToken), which is a bearer credential.
+            var bearer = settings.Protocol == RemoteProtocol.Npm && string.IsNullOrEmpty(settings.Username);
+            handler = new HostScopedBasicAuthHandler(settings.UrlOrNull, settings.Username, settings.Password, bearer) { InnerHandler = handler };
         }
 
         var assembly = Assembly.GetEntryAssembly();
@@ -126,19 +128,21 @@ public class RemoteHttpClientFactory : IRemoteHttpClientFactory
 }
 
 /// <summary>
-/// Adds HTTP Basic credentials to requests for one origin (scheme, host, port) and to no other.
+/// Adds HTTP Basic (or, for a token, Bearer) credentials to requests for one origin (scheme, host, port) and to no other.
 /// </summary>
 internal sealed class HostScopedBasicAuthHandler : DelegatingHandler
 {
     private readonly Uri _origin;
     private readonly AuthenticationHeaderValue _header;
 
-    public HostScopedBasicAuthHandler(Uri origin, string? username, string? password)
+    public HostScopedBasicAuthHandler(Uri origin, string? username, string? password, bool bearer = false)
     {
         _origin = origin;
-        _header = new AuthenticationHeaderValue(
-            "Basic",
-            Convert.ToBase64String(Encoding.UTF8.GetBytes((username ?? string.Empty) + ":" + (password ?? string.Empty))));
+        _header = bearer
+            ? new AuthenticationHeaderValue("Bearer", password ?? string.Empty)
+            : new AuthenticationHeaderValue(
+                "Basic",
+                Convert.ToBase64String(Encoding.UTF8.GetBytes((username ?? string.Empty) + ":" + (password ?? string.Empty))));
     }
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

@@ -43,8 +43,9 @@ parameterised SQL, then the current migrations must put every row in repository 
 script must hold a whole scenario) against a Kestrel server on `0.0.0.0` reached as `host.docker.internal` (WebApplicationFactory has no socket); skips without Docker.
 `HostRegistry` is a recording fake: `NpmClientFlowTests` pins what npm sends for a read, `whoami`, `login` (web then CouchDB fallback) and `publish` (`docs/formats.md`).
 `BaGetServer` is the **real application** (`Program.BuildApplication` with command-line settings, SQLite and a file store in a temp folder, `RunMigrationsAsync`, then `StartAsync`) on that kind of socket:
-`NpmRegistryCliTests` (publish, install, scoped names through `%2f`, dist-tag, deprecate, unpublish, search/ping/whoami/audit, login/logout, a private repository) and `NpmLargeTarballCliTests`
-(40 MB, server allocations under 24 MB, runs alone in the `AllocationMeasurements` collection). `npm login` needs a terminal, so the tests run npm's own `npm-profile` login. `docker:dind` and `maven` rigs follow with P5/P4.
+`NpmRegistryCliTests` (publish, install, scoped names through `%2f`, dist-tag, deprecate, unpublish, search/ping/whoami/audit, login/logout, a private repository), `NpmLargeTarballCliTests`
+(40 MB, server allocations under 24 MB, runs alone in the `AllocationMeasurements` collection) and `NpmRemoteVirtualCliTests` (remote and virtual npm repositories; the upstream of a remote one is a *second* `BaGetServer`
+reached as `localhost` by the first, so no fixture registry is needed; one test uses registry.npmjs.org and skips when it cannot be reached). `npm login` needs a terminal, so the tests run npm's own `npm-profile` login. `docker:dind` and `maven` rigs follow with P5/P4.
 
 `BaGet.Telemetry.Tests` (shares `BaGetApplication` etc. from `BaGet.Tests` as linked files; `Containers.cs`) runs a real host against
 `jaegertracing/all-in-one:1.76.0` (traces; query API read back) and `otel/opentelemetry-collector:0.140.0` (debug exporter, read back
@@ -164,14 +165,14 @@ registered with `TryAddEnumerable`, collected by `FormatRegistry`, which refuses
 scoped `IFormatService`s (`IFormatIndexer`, `IFormatSearchProvider` implemented by NuGet; `IFormatRetentionHooks`, `IFormatScanner` interfaces only) found with
 `GetFormatService<T>(format)`. `NuGetFormatModule` is the NuGet refactor (no behaviour change). `RepositoryService.CreateAsync` asks the module (unknown format or
 kind -> `NotSupportedException`; a `fields` overload for module-specific create forms). Format routes go through `BaGetEndpointBuilder.MapRoute(..., format:)`.
-`NpmFormatModule` is registered (local repositories only), so `Npm` repositories can be created: tables `NpmPackages` (repository-scoped), `NpmVersions`, `NpmDistTags`
+`NpmFormatModule` is registered (`CreatableKinds` local and remote, `SupportsVirtual`; a module's `SupportsVirtual` is the only thing that lets `IVirtualRepositoryAdministration.CreateAsync(..., format)` create a virtual repository of its format), so `Npm` repositories can be created: tables `NpmPackages` (repository-scoped), `NpmVersions`, `NpmDistTags`
 (migration `AddNpmTables` x4; the registry needed no further schema change). Admin: `/admin/formats` (list), Repositories page (links by module, per-format create form).
-The upload picker, header switcher, My packages, access listings and API-key limits cover every format (the `Format == NuGet` filters are gone; virtual repositories stay NuGet-only).
+The upload picker, header switcher, My packages, access listings and API-key limits cover every format (the `Format == NuGet` filters are gone). A virtual repository is of one format and so are its members (`VirtualRepositories.Flatten`/`ResolveDeploy`, `VirtualRepositoryAdministration.Validate` compare with the virtual row's format).
 **Razor Pages and formats:** pages are served under `/r/{repo}/` for every repository; `RepositoryPageRouteConvention.PageFormats` names a page's format (NuGet unless listed) and
 `RepositoryPageFilter` answers 404 for a page of another format, redirecting only the NuGet front page (`/Index`) of a repository of another format to the module's `browse` link.
 `RepositoryResolutionMiddleware` therefore format-checks only protocol routes, not pages.
 
-**npm registry** (`BaGet.Core/Formats/Npm`, user docs `docs/npm-registry.md`). `INpmRegistry` (`NpmRegistryService`, scoped, works in `IRepositoryContext.Current`) holds every operation: `GetPackument(abbreviated)`, `OpenTarball`,
+**npm registry** (`BaGet.Core/Formats/Npm`, user docs `docs/npm-registry.md`). `INpmRegistry` is `RepositoryNpmRegistry` (scoped), which forwards **per call** by `IRepositoryContext.Current.Kind` to `NpmRegistryService` (local), `RemoteNpmRegistry` or `VirtualNpmRegistry` (resolved per call: a write to a virtual repository continues in its deploy repository inside the same scope); `NpmRegistryService` (scoped, works in `IRepositoryContext.Current`) holds every operation of a local repository: `GetPackument(abbreviated)`, `OpenTarball`,
 `Publish`/`PublishTarball`, dist-tags, `Deprecate`, `UnpublishVersions`/`UnpublishPackage`/`DeleteTarball`, `Search(canRead)`. Reads take no caller (the route or page already required Read); **every write takes the caller**
 and goes through `IPackageAuthorizationService` (Push = Deploy for publish and tags, Annotate = deprecate, Manage = Delete after `Npm:UnpublishWindow`; Push is enough inside the window) so routes and pages cannot
 differ; results are `NpmResult`/`NpmStatus` (mapped to 400/401/403/404/409 by `NpmController`, `{"error": …}` bodies). Names are `NpmNames` (lower case, `@scope/name`, `%2f` decoded; the one place that validates
@@ -185,6 +186,8 @@ the file and writes package/version/tags in one transaction (a unique-index race
 repository's format); `npm login` = `INpmTokenService` (`NpmTokenService`, accounts only): password checked like the sign-in page (lockout, confirmed email, no two-factor), token = an API key limited to the repository.
 Pages: `NpmPackages`, `NpmPackage`, `NpmUpload` (BaGet.Web), `Packages/NpmManage` (Identity; owners, tags, deprecate, unpublish with password); `NpmInstallSnippets` builds the commands and `.npmrc` lines.
 Search/listings match names and are filtered per package Read (`SearchAsync(canRead)`). Options `Npm:UnpublishWindow`, `Npm:MaxPublishBytes` (`NpmOptions`). Admin user deletion unpublishes sole-owned npm packages (`AccountDeletionService`).
+**Remote npm** (`RemoteNpmRegistry`, `NpmUpstreamClient`; docs `docs/remote-repositories.md#npm-remote-repositories`): the upstream is the generic `RemoteRepositorySettings` (`RemoteProtocol.Npm`, forced from the format by `ForFormat` in `RepositoryService.CreateAsync` and `RemoteRepositoryAdministration.UpdateAsync`/`TestConnectionAsync`; a password with no user name is a bearer token). Packuments are asked as `@scope%2fname`, remembered in `RemoteRepositoryState` under keys `na:`/`nf:`/`nd:` + the name with `/` written `%2f` (because `ClearPackage` splits keys at the first `/`; at most `NpmUpstreamClient.MaxCachedAnswers` per repository), get every `dist.tarball` rewritten to this server, and fall back to the stored rows (`NpmRegistryService.GetPackumentAsync`) when the upstream is 404/offline/down; an upstream that cannot answer with nothing stored is `NpmUpstreamException` = `502` (`NpmController.OnActionExecuted`; a virtual member skips it). A tarball is downloaded once at a time per version, hashed to a temp file, checked against the packument's `integrity`/`shasum`, and stored by `NpmRegistryService.StoreCachedAsync` (gate first; file + rows + tags in one transaction); the packument's tarball URL is used only on the upstream's origin. Writes return Forbidden; search is the stored packages; purge is `NpmRegistryService.PurgeAsync`.
+**Virtual npm** (`VirtualNpmRegistry` over `VirtualRepositoryReader`; docs `docs/virtual-repositories.md#npm-virtual-repositories`): `MergePackuments` (versions union, first member per version, dist-tags per tag from the first member that has it, time min created / max modified), first-hit tarball, merged search (per-member `canRead` through `VirtualRepositoryReader.CanReadInMemberAsync`), writes delegated to the deploy repository (routes were already moved there by `RepositoryResolutionMiddleware`).
 
 **Remote repositories** (`RepositoryKind.Remote`; `BaGet.Core/Repositories/Remote`, docs: `docs/remote-repositories.md`). The upstream
 is `RemoteRepositorySettings` as JSON in `Repository.Settings` (no extra table; the password is stored as `protectedPassword` through
@@ -198,7 +201,7 @@ answer exists) and records health; `RemoteRepositoryState` (singleton, in memory
 answers, counters and the pooled `HttpClient`/`NuGetClient` (a V3 service index is cached by the latter). Credentials go to the upstream's own origin only
 (`HostScopedBasicAuthHandler`); replace `IRemoteHttpClientFactory` to change the transport (tests: `ForwardingRemoteHttpClientFactory`;
 registering an `HttpClient` no longer affects mirroring). Cached packages are ordinary rows of the remote repository
-(`PackageService.MirrorAsync` indexes into the current repository). `StoreLocally=false` is a pass-through
+(`PackageService.MirrorAsync` indexes into the current repository; an npm remote's are ordinary `NpmPackages`/`NpmVersions` rows, see *npm registry*). `StoreLocally=false` is a pass-through
 (`IPassThroughUpstreamClient`, `IPackageService.OpenUncachedAsync`): nothing is stored. `Deploy` is never granted on a remote
 (`AccessEvaluator.IsAllowedAsync`/`ExplainAsync`, administrators too), `[RemoteRepositoryReadOnly]` answers `403` on push and symbol push
 (accounts off too), `AccessRepositoryAccess` hides it from the upload picker. Admin pages: create on `Repositories`, edit/test/cache/purge on
@@ -227,7 +230,8 @@ NuGet, no self/cycle, deploy repository a member that ends in a local one; `Cand
 `Repositories` (create) and `RepositoryEdit` (members add/remove/up/down, deploy picker, preview; handlers `AddMember`, `RemoveMember`, `MoveMember`, `Deploy`, `Preview`);
 `RepositoryAdministration.DeleteAsync` refuses a member of a virtual repository (`RepositoryReferencedException`). `RepositoryService.CreateAsync(..., Virtual)` stays `NotSupported`
 (it has no members to take). Tests: `VirtualRepositoryTests`, `VirtualRepositoryAccessTests`, `VirtualRemoteMemberTests` (+ `VirtualDefaultMirrorTests`), `AdminVirtualRepositoriesTests`,
-Core `VirtualRepositorySettingsTests`, `RepositorySearchServiceTests`, `VirtualSearchBoundTests` (member call sizes).
+Core `VirtualRepositorySettingsTests`, `RepositorySearchServiceTests`, `VirtualSearchBoundTests` (member call sizes). npm: `RemoteNpmRepositoryTests`, `VirtualNpmRepositoryTests`, `AdminNpmRemoteVirtualTests`
+(HTTP/service tests over the in-memory `FakeNpmUpstream` and `ForwardingRemoteHttpClientFactory`), Core `RemoteAndVirtualNpmTests`.
 
 **Admin operations** (`BaGet.Core/Operations`). `AdminJobService` (singleton) runs `IAdminOperation`s (`DownloadsImportOperation` in Core,
 `CatalogRebuildOperation` in `BaGet.Catalog`; register more with `TryAddEnumerable`) in the background in a repository scope, one run per

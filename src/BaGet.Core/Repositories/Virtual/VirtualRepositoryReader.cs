@@ -76,6 +76,19 @@ public sealed class VirtualRepositoryReader
         return readable;
     }
 
+    /// <summary>
+    /// Whether the caller may read <paramref name="packageId"/> in <paramref name="member"/> (the repository, and the package when
+    /// given): what a merged listing asks per hit, since the members' own listings do not know the caller.
+    /// </summary>
+    public async Task<bool> CanReadInMemberAsync(RepositoryInfo member, string? packageId, CancellationToken cancellationToken)
+    {
+        var principal = await _caller.GetAsync(cancellationToken).ConfigureAwait(false);
+
+        return await _evaluator.IsAllowedAsync(principal, member, packageId: null, AccessAction.Read, cancellationToken).ConfigureAwait(false)
+            && (packageId == null
+                || await _evaluator.IsAllowedAsync(principal, member, packageId, AccessAction.Read, cancellationToken).ConfigureAwait(false));
+    }
+
     /// <summary>Runs <paramref name="action"/> in a scope pinned to <paramref name="member"/>.</summary>
     public async Task<T> InMemberAsync<T>(RepositoryInfo member, Func<IServiceProvider, Task<T>> action)
     {

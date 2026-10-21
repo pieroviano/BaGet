@@ -76,6 +76,21 @@ public class NpmController : Controller
 
     // ---- helpers --------------------------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// A remote repository whose upstream cannot answer (and has nothing stored to answer instead) is a bad gateway, not a missing
+    /// package: npm retries a 502 and fails an install on it, where a 404 would be believed.
+    /// </summary>
+    public override void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
+    {
+        if (context.Exception is NpmUpstreamException e)
+        {
+            context.Result = Error(502, e.Message);
+            context.ExceptionHandled = true;
+        }
+
+        base.OnActionExecuted(context);
+    }
+
     private string? RawName => NpmRouteNames.FromRouteValues(RouteData.Values);
 
     private bool TryName(out string name, out IActionResult? failure)

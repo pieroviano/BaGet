@@ -8,10 +8,16 @@ namespace BaGet.Identity.Pages.Admin;
 /// </summary>
 public class RemoteFormModel
 {
-    /// <summary>The upstream URL (V3 <c>index.json</c> or V2 feed).</summary>
+    /// <summary>
+    /// For display: the format of the repository being edited (an npm repository has no protocol choice and a different URL and
+    /// credential wording). Never read back: the repository's own format decides.
+    /// </summary>
+    public RepositoryFormat Format { get; set; } = RepositoryFormat.NuGet;
+
+    /// <summary>The upstream URL (V3 <c>index.json</c> or V2 feed, or an npm registry's base URL).</summary>
     public string? Url { get; set; }
 
-    /// <summary>The upstream's protocol.</summary>
+    /// <summary>The upstream's protocol (NuGet only; an npm repository speaks the npm registry protocol).</summary>
     public RemoteProtocol Protocol { get; set; } = RemoteProtocol.V3;
 
     /// <summary>The HTTP Basic user name, if the upstream needs one.</summary>
@@ -61,6 +67,7 @@ public class RemoteFormModel
     /// <summary>The fields for an existing remote repository.</summary>
     public static RemoteFormModel From(RemoteRepositoryDetail detail) => new()
     {
+        Format = detail.Repository.Format,
         Url = detail.Settings.Url,
         Protocol = detail.Settings.Protocol,
         Username = detail.Settings.Username,

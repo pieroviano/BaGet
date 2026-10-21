@@ -178,7 +178,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
         var stored = _codec.Deserialize(row.Settings) ?? new RemoteRepositorySettings();
 
-        var settings = input.Clone();
+        var settings = input.ForFormat(row.Format);
         var passwordChanged = false;
         if (clearPassword)
         {
@@ -241,6 +241,13 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
 
         var settings = input.Clone();
         var storedPasswordWithheld = false;
+        if (!string.IsNullOrEmpty(name))
+        {
+            // The repository's format decides the protocol (an npm repository speaks the npm registry protocol only).
+            var format = (await FindRowOrNullAsync(name, cancellationToken).ConfigureAwait(false))?.Format;
+            if (format != null) settings = settings.ForFormat(format.Value);
+        }
+
         if (string.IsNullOrEmpty(settings.Password) && !string.IsNullOrEmpty(name))
         {
             // The stored password goes only to the upstream it was stored for (the rule saving applies): testing another
@@ -277,35 +284,48 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
 
             using var client = _http.CreateProbe(settings);
 
-            // Redirects are followed by hand and only within the origin that was typed: following one to another host
-            // would let a probe be steered at addresses nobody named.
-            var target = settings.UrlOrNull!;
-            HttpResponseMessage response;
-            var hops = 0;
-            while (true)
-            {
-                response = await client.GetAsync(target, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
-                if (!IsRedirect(response.StatusCode) || response.Headers.Location == null) break;
+            // An npm registry is asked for its ping (BaGet, Verdaccio, Artifactory and npmjs answer it), then for its root.
+            var targets = settings.Protocol == RemoteProtocol.Npm
+                ? new[] { new Uri(NpmBase(settings) + "-/ping"), new Uri(NpmBase(settings)) }
+                : new[] { settings.UrlOrNull! };
 
-                var next = new Uri(target, response.Headers.Location);
-                var elapsed = watch.ElapsedMilliseconds;
-                var redirectStatus = (int)response.StatusCode;
-                response.Dispose();
-                if (!SameOrigin(target, next) || ++hops > MaxProbeRedirects)
+            HttpResponseMessage? response = null;
+            foreach (var start in targets)
+            {
+                response?.Dispose();
+
+                // Redirects are followed by hand and only within the origin that was typed: following one to another host
+                // would let a probe be steered at addresses nobody named.
+                var target = start;
+                var hops = 0;
+                while (true)
                 {
-                    return new RemoteConnectionResult(
-                        false,
-                        $"The upstream answered HTTP {redirectStatus} and redirects to another host (or too many times); Test connection does not follow that. Use the final URL.",
-                        redirectStatus,
-                        elapsed);
+                    response = await client.GetAsync(target, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
+                    if (!IsRedirect(response.StatusCode) || response.Headers.Location == null) break;
+
+                    var next = new Uri(target, response.Headers.Location);
+                    var elapsed = watch.ElapsedMilliseconds;
+                    var redirectStatus = (int)response.StatusCode;
+                    response.Dispose();
+                    if (!SameOrigin(target, next) || ++hops > MaxProbeRedirects)
+                    {
+                        return new RemoteConnectionResult(
+                            false,
+                            $"The upstream answered HTTP {redirectStatus} and redirects to another host (or too many times); Test connection does not follow that. Use the final URL.",
+                            redirectStatus,
+                            elapsed);
+                    }
+
+                    target = next;
                 }
 
-                target = next;
+                // Only a missing ping sends the npm probe on to the root.
+                if (response.StatusCode != HttpStatusCode.NotFound) break;
             }
 
             using (response)
             {
-                var status = (int)response.StatusCode;
+                var status = (int)response!.StatusCode;
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
                 {
@@ -347,6 +367,8 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
                     return new RemoteConnectionResult(false, "The upstream answered, but not with a V3 service index (index.json with a resources list). Is the protocol right?", status, watch.ElapsedMilliseconds);
                 }
 
+                if (settings.Protocol == RemoteProtocol.Npm) return new RemoteConnectionResult(true, "Connected: the npm registry answered.", status, watch.ElapsedMilliseconds);
+
                 return new RemoteConnectionResult(true, "Connected: the V2 feed answered.", status, watch.ElapsedMilliseconds);
             }
         }
@@ -356,6 +378,13 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
 
             return new RemoteConnectionResult(false, "Could not reach the upstream: " + RemoteUpstreamClient.Describe(e), null, watch.ElapsedMilliseconds);
         }
+    }
+
+    private static string NpmBase(RemoteRepositorySettings settings)
+    {
+        var text = settings.UrlOrNull!.GetLeftPart(UriPartial.Path);
+
+        return text.EndsWith('/') ? text : text + "/";
     }
 
     // The most of an answer Test connection reads: a service index is a few KB; anything bigger is not one.
@@ -399,6 +428,16 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
     public async Task<RemoteCacheOverview> GetCacheAsync(string name, CancellationToken cancellationToken)
     {
         var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
+        if (row.Format == RepositoryFormat.Npm)
+        {
+            var npmPackages = _context.NpmPackages!.IgnoreQueryFilters().AsNoTracking().Where(p => p.RepositoryKey == row.Key);
+            var versions = await _context.NpmVersions!.AsNoTracking()
+                .Join(npmPackages, v => v.PackageKey, p => p.Key, (v, p) => v.Key)
+                .CountAsync(cancellationToken).ConfigureAwait(false);
+
+            return new RemoteCacheOverview(_state.Status(row.Key), versions, await npmPackages.CountAsync(cancellationToken).ConfigureAwait(false));
+        }
+
         var packages = _context.Packages!.IgnoreQueryFilters().AsNoTracking().Where(p => p.RepositoryKey == row.Key);
         var count = await packages.CountAsync(cancellationToken).ConfigureAwait(false);
         var ids = await packages.Select(p => p.Id).Distinct().CountAsync(cancellationToken).ConfigureAwait(false);
@@ -427,14 +466,20 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         _gate?.ThrowIfClosed();
         var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
 
-        var deleted = await DeletePackagesAsync(row, packageId.Trim(), version, cancellationToken).ConfigureAwait(false);
-        var answers = _state.ClearPackage(row.Key, packageId.Trim());
+        var id = packageId.Trim();
+        if (row.Format == RepositoryFormat.Npm)
+        {
+            if (!NpmNames.TryParse(id, out id, out var invalid)) throw new ArgumentException(invalid, nameof(packageId));
+        }
+
+        var deleted = await DeletePackagesAsync(row, id, version, cancellationToken).ConfigureAwait(false);
+        var answers = _state.ClearPackage(row.Key, row.Format == RepositoryFormat.Npm ? NpmUpstreamClient.KeyName(id) : id);
 
         await AuditAsync(
             actor,
             "repository.remote.purge-package",
             name,
-            new { packageId = packageId.Trim(), version = version?.ToNormalizedString(), packages = deleted, answers },
+            new { packageId = id, version = version?.ToNormalizedString(), packages = deleted, answers },
             cancellationToken).ConfigureAwait(false);
 
         return new PurgeResult(deleted, answers);
@@ -539,6 +584,15 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
     {
         var info = row.ToInfo();
         var deleted = 0;
+
+        if (row.Format == RepositoryFormat.Npm)
+        {
+            // The registry service works in the repository of its scope and deletes rows and files together.
+            using var npmScope = _scopes.CreateRepositoryScope(info);
+
+            return await npmScope.ServiceProvider.GetRequiredService<NpmRegistryService>()
+                .PurgeAsync(packageId, version?.ToFullString(), cancellationToken).ConfigureAwait(false);
+        }
 
         while (true)
         {

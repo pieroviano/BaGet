@@ -119,7 +119,8 @@
             <h2>Members</h2>
             <p class="help-block">
                 A request is answered by the first member, in this order, that has the package version; the version lists, the
-                registration index, search and autocomplete merge the members (a package id in several members is one result).
+                registration index (npm: the packument, whose dist-tags follow the member order), search and autocomplete merge the
+                members (a package in several members is one result).
                 Only the members the caller may read are asked. Uploads go to the deploy repository and need Deploy there.
                 The catalog is not served by a virtual repository.
             </p>
@@ -185,7 +186,7 @@
             }
             else
             {
-                <p class="help-block" id="virtual-no-candidates">Every other NuGet repository is already a member (or would make this one contain itself).</p>
+                <p class="help-block" id="virtual-no-candidates">Every other @Model.Repository?.Format repository is already a member (or would make this one contain itself).</p>
             }
 
             <h3>Deploy repository</h3>
@@ -216,7 +217,7 @@
             <h3>Where would a package come from?</h3>
             <form method="post" asp-page-handler="Preview" class="form-inline" id="virtual-preview-form">
                 <div class="form-group">
-                    <label for="preview-package-id">Package id</label>
+                    <label for="preview-package-id">@(Model.Repository?.Format == BaGet.Core.RepositoryFormat.Npm ? "Package name" : "Package id")</label>
                     <input id="preview-package-id" name="previewPackageId" type="text" class="form-control" value="@Model.PreviewPackageId" autocomplete="off" />
                 </div>
                 <div class="form-group">
@@ -308,7 +309,7 @@
                 </tbody>
             </table>
             <p>
-                <a id="remote-browse" href="@Url.Page("/Index", new { repo = Model.Repository?.Name })">Browse the cached packages</a>
+                <a id="remote-browse" href="@Url.Page(Model.BrowsePage, new { repo = Model.Repository?.Name })">Browse the cached packages</a>
             </p>
 
             <form method="post" asp-page-handler="Purge" id="remote-purge-form">

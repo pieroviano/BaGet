@@ -92,6 +92,43 @@ public sealed class BaGetServer : IAsyncDisposable
             .CreateAsync(name, RepositoryFormat.Npm, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, CancellationToken.None);
     }
 
+    /// <summary>The address of this server as the test process itself reaches it (the process hosts it, so <c>localhost</c>).</summary>
+    public string LocalRegistryUrl(string repository) => $"http://localhost:{Port}/r/{repository}/npm/";
+
+    /// <summary>Creates a remote npm repository that caches the registry at <paramref name="upstreamUrl"/>.</summary>
+    public async Task CreateRemoteNpmRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
+    {
+        var settings = new RemoteRepositorySettings { Url = upstreamUrl, Protocol = RemoteProtocol.Npm };
+        change?.Invoke(settings);
+
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.Npm, RepositoryKind.Remote, settings, anonymousRead: true, CancellationToken.None);
+    }
+
+    /// <summary>Creates a virtual npm repository of <paramref name="members"/> (in order) that deploys to <paramref name="deploy"/>.</summary>
+    public async Task CreateVirtualNpmRepositoryAsync(string name, string[] members, string? deploy)
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>().CreateAsync(
+            name,
+            new VirtualRepositorySettings { Members = members.ToList(), DeployRepository = deploy },
+            CancellationToken.None,
+            actor: null,
+            anonymousRead: true,
+            RepositoryFormat.Npm);
+    }
+
+    /// <summary>What the repository itself stored of a package (rows), whatever its upstream says; null when nothing.</summary>
+    public async Task<NpmPackageInfo?> StoredAsync(string repository, string name)
+    {
+        using var scope = Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<IRepositoryContext>()
+            .Use((await scope.ServiceProvider.GetRequiredService<IRepositoryService>().FindAsync(repository, CancellationToken.None))!);
+
+        return await scope.ServiceProvider.GetRequiredService<NpmRegistryService>().GetPackageAsync(name, CancellationToken.None);
+    }
+
     /// <summary>Creates a user with <see cref="Password"/>.</summary>
     public async Task CreateUserAsync(string name, bool administrator = false)
     {

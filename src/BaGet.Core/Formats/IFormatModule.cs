@@ -50,6 +50,13 @@ public interface IFormatModule
     IReadOnlyCollection<RepositoryKind> CreatableKinds { get; }
 
     /// <summary>
+    /// Whether virtual repositories of this format exist (<see cref="IVirtualRepositoryAdministration.CreateAsync"/>): the format's
+    /// reads then merge the members, and a write goes to the deploy repository. False for a format that has not implemented the
+    /// merge.
+    /// </summary>
+    bool SupportsVirtual => false;
+
+    /// <summary>
     /// The top-level storage folders the format writes below a repository's <see cref="RepositoryStorage.Prefix"/>
     /// (<c>packages</c>, <c>symbols</c>…). Two modules may not claim the same folder, nor <see cref="RepositoryStorage.ReposFolder"/>:
     /// <see cref="FormatRegistry"/> refuses the registration, since a collision would let one format read another's files.

@@ -23,7 +23,7 @@
                 <tr data-format="@row.Module.Format">
                     <td>@row.Module.DisplayName</td>
                     <td><code>@(row.Module.RoutePrefix.Length == 0 ? "/" : "/" + row.Module.RoutePrefix + "/")</code> (<code>@row.Module.FeedPath</code>)</td>
-                    <td>@string.Join(", ", row.Module.CreatableKinds)</td>
+                    <td>@string.Join(", ", row.Module.CreatableKinds.Concat(row.Module.SupportsVirtual ? new[] { BaGet.Core.RepositoryKind.Virtual } : System.Array.Empty<BaGet.Core.RepositoryKind>()))</td>
                     <td>@string.Join(", ", row.Module.StorageFolders)</td>
                     <td>@(row.Capabilities.Count == 0 ? "-" : string.Join(", ", row.Capabilities))</td>
                     <td>@row.Repositories</td>

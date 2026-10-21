@@ -136,29 +136,32 @@ public sealed class RemoteRepositoryState
         return true;
     }
 
-    /// <summary>Remembers an answer for <paramref name="ttl"/>. Nothing is kept for a zero period.</summary>
-    internal void Set(int key, string cacheKey, object? value, bool negative, TimeSpan ttl)
+    /// <summary>
+    /// Remembers an answer for <paramref name="ttl"/>. Nothing is kept for a zero period. At most <paramref name="limit"/>
+    /// answers are kept per repository (the oldest go first): an npm packument can be megabytes, a NuGet version list is small.
+    /// </summary>
+    internal void Set(int key, string cacheKey, object? value, bool negative, TimeSpan ttl, int limit = MaxEntries)
     {
         if (ttl <= TimeSpan.Zero) return;
 
         var entry = For(key);
-        if (entry.Metadata.Count >= MaxEntries) Trim(entry);
+        if (entry.Metadata.Count >= limit) Trim(entry, limit);
 
         // An expired entry stays so it can be served while the upstream is down, until purged or trimmed.
         entry.Metadata[cacheKey] = new Item(value, negative, UtcNow + ttl);
     }
 
-    private void Trim(Entry entry)
+    private void Trim(Entry entry, int limit)
     {
         var now = UtcNow;
-        foreach (var pair in entry.Metadata.Where(p => p.Value.ExpiresUtc <= now).Take(MaxEntries / 4).ToList())
+        foreach (var pair in entry.Metadata.Where(p => p.Value.ExpiresUtc <= now).Take(Math.Max(limit / 4, 1)).ToList())
         {
             entry.Metadata.TryRemove(pair.Key, out _);
         }
 
-        if (entry.Metadata.Count < MaxEntries) return;
+        if (entry.Metadata.Count < limit) return;
 
-        foreach (var pair in entry.Metadata.OrderBy(p => p.Value.ExpiresUtc).Take(MaxEntries / 4).ToList())
+        foreach (var pair in entry.Metadata.OrderBy(p => p.Value.ExpiresUtc).Take(Math.Max(limit / 4, 1)).ToList())
         {
             entry.Metadata.TryRemove(pair.Key, out _);
         }

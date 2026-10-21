@@ -10,7 +10,8 @@ namespace BaGet.Core;
 /// <summary>
 /// npm on the format layer: the registry protocol under <c>npm/</c> of the repository base (<c>/npm/</c> is never served for
 /// <c>default</c>, which is NuGet; a repository <c>web</c> is at <c>/r/web/npm/</c>), tarballs under <c>npm/…</c> in storage.
-/// Local repositories only; remote (a proxy of registry.npmjs.org) and virtual ones are later phases. See <see cref="INpmRegistry"/>.
+/// Local repositories hold packages; a remote one caches an upstream registry (<see cref="RemoteNpmRegistry"/>); a virtual one merges
+/// members (<see cref="VirtualNpmRegistry"/>). See <see cref="INpmRegistry"/>.
 /// </summary>
 public class NpmFormatModule : IFormatModule
 {
@@ -27,7 +28,10 @@ public class NpmFormatModule : IFormatModule
     public string FeedPath => "npm/";
 
     /// <inheritdoc/>
-    public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local };
+    public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local, RepositoryKind.Remote };
+
+    /// <inheritdoc/>
+    public bool SupportsVirtual => true;
 
     /// <inheritdoc/>
     public IReadOnlyList<string> StorageFolders { get; } = new[] { NpmNames.StorageFolder };
