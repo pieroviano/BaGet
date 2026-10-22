@@ -11,6 +11,8 @@ If you want to run from BaGet Extension's source code:
 5. Start the service with `dotnet run -p:GeneratePackageOnBuild=false`
 6. Open the URL `http://localhost:6060/v3/index.json` in your browser
 
+Every project is strong-name signed with `SignKey.snk` at the repository root (a checkout without it fails to build).
+
 Always pass `-p:GeneratePackageOnBuild=false` to `dotnet build`, `run` and `test`: `src/Directory.Build.props`
 packs on build into the shared `Packages` folder. `dotnet run` may rewrite
 `src/BaGet/Properties/launchSettings.json`; revert it rather than committing it.

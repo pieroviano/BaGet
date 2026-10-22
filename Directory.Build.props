@@ -1,8 +1,8 @@
 <Project>
 
   <!--
-    Strong naming for every project of BaGet.sln (src, tests, samples). SignKey.snk is untracked (the
-    key pair is not committed), so a checkout without it cannot build. src/ and tests/ Directory.Build.props
+    Strong naming for every project of BaGet.sln (src, tests, samples). SignKey.snk is in the repository (a
+    checkout without it at the root cannot build). src/ and tests/ Directory.Build.props
     import this file, because MSBuild reads only the nearest Directory.Build.props.
   -->
   <PropertyGroup>

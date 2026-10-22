@@ -462,6 +462,16 @@ Unit tests reach internals through `InternalsVisibleTo`, declared in each **proj
 | `BaGet.Web.V2` | `BaGet.Web.V2.Tests` (no such project; `BaGet.Tests` has no access) |
 | `BaGet.Aws`, `BaGet.Gcp`, `BaGet.Aliyun` | none |
 
+## Strong naming
+
+Every project of `BaGet.sln` (src, tests, samples) is signed with `SignKey.snk` at the repository root. The root
+`Directory.Build.props` sets `SignAssembly`, `AssemblyOriginatorKeyFile` and `BaGetPublicKey` (the full public key);
+`src/` and `tests/Directory.Build.props` import it (MSBuild reads only the nearest props file), samples read it directly.
+Public key token `a5ab967c088e8330`. Every `<InternalsVisibleTo>` in a project file needs `Key="$(BaGetPublicKey)"`
+(an unsigned friend name is CS1726). The key file is in the repository (so are git worktrees); a checkout without
+`SignKey.snk` at its root cannot build. Moq on `internal` types would need `DynamicProxyGenAssembly2` with Castle's
+well-known key; none is used today. The only unsigned dependency is Markdig (no CS8002 is raised; .NET loads it).
+
 ## Packaging
 
 Every packable project's `README.md` is its package readme (`PackageReadmeFile`, set in `src/Directory.Build.props`

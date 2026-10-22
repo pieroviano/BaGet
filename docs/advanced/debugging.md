@@ -2,6 +2,8 @@
 
 ## Run
 
+Every project is strong-name signed with `SignKey.snk` at the repository root; the build fails without it.
+
 In a fresh clone create the `Packages` folder at the repository root first: nuget.config lists the untracked `Packages` folder as a package source, and restore fails with NU1301 without it.
 
 ```
