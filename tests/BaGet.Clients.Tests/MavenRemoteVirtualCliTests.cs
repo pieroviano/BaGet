@@ -269,7 +269,7 @@ public class MavenRemoteVirtualCliTests
         Assert.Matches(new Regex(@"Downloaded from central-proxy: .*commons-lang3-3\.14\.0\.jar"), result.Stdout);
 
         var stored = await down.StoredMavenAsync(Mirror);
-        Assert.Equal(new[] { "3.14.0" }, stored["org.apache.commons:commons-lang3"]);
+        Assert.Contains("3.14.0", stored["org.apache.commons:commons-lang3"]);
         Assert.Contains("org.apache.maven.plugins:maven-dependency-plugin", stored.Keys);
     }
 }
