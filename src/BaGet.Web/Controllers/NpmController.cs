@@ -462,7 +462,8 @@ public class NpmController : Controller
             new NpmPublication(name, version, manifest, tag, tarball, integrity, shasum, attachment.DeclaredLength),
             cancellationToken);
 
-        return await RespondHidingAsync(result, caller, name, cancellationToken);
+        // Not hidden: publishing a missing name creates it, so a hidden refusal would still tell the two apart.
+        return Respond(result);
     }
 
     private async Task<IActionResult> UpdateMetadataAsync(BaGetPrincipal? caller, string name, JsonObject root, CancellationToken cancellationToken)
