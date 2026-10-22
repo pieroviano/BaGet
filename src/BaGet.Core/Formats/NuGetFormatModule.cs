@@ -44,11 +44,29 @@ public class NuGetFormatModule : IFormatModule
     public string? CreateSettings(IReadOnlyDictionary<string, string?> fields) => null;
 
     /// <inheritdoc/>
-    public IReadOnlyList<FormatLink> RepositoryLinks(RepositoryInfo repository) => new[]
+    /// <remarks>
+    /// Browse and upload, then the protocol resources a client or an operator can open besides the service index: the V2 feed,
+    /// the vulnerability index, and (a local repository only, the others have no log or signer of their own) the catalog and the
+    /// repository signatures.
+    /// </remarks>
+    public IReadOnlyList<FormatLink> RepositoryLinks(RepositoryInfo repository)
     {
-        new FormatLink("browse", "Browse", "/Index"),
-        new FormatLink("upload", "Upload", "/Upload", NeedsUploads: true),
-    };
+        var links = new List<FormatLink>
+        {
+            new FormatLink("browse", "Browse", "/Index"),
+            new FormatLink("upload", "Upload", "/Upload", NeedsUploads: true),
+            new FormatLink("v2", "V2 feed", null, "api/v2"),
+            new FormatLink("vulnerabilities", "Vulnerabilities", null, "v3/vulnerabilities/index.json"),
+        };
+
+        if (repository.Kind == RepositoryKind.Local)
+        {
+            links.Add(new FormatLink("catalog", "Catalog", null, "v3/catalog/index.json"));
+            links.Add(new FormatLink("signatures", "Signatures", null, "v3/repository-signatures/index.json"));
+        }
+
+        return links;
+    }
 
     /// <inheritdoc/>
     public async Task<IReadOnlyDictionary<int, int>> CountArtifactsAsync(IContext context, CancellationToken cancellationToken)

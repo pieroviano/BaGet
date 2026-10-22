@@ -444,4 +444,53 @@ public class PackageMetadataPageTests : IDisposable
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    // ---- Deprecation: every field the metadata API takes ----
+
+    private async Task<PackageDeprecation?> DeprecationAsync()
+    {
+        using var scope = _app.Services.CreateScope();
+        var package = await scope.ServiceProvider.GetRequiredService<IPackageDatabase>()
+            .FindOrNullAsync(PackageId, NuGetVersion.Parse(Version), includeUnlisted: true, TestContext.Current.CancellationToken);
+
+        return package?.Deprecation;
+    }
+
+    [Fact]
+    public async Task DeprecatingFromThePageTakesTheAlternateVersionRange()
+    {
+        await SeedAsync(null, withSymbols: false);
+
+        using var response = await PostAsync(_alice, null, "Deprecate", new()
+        {
+            { "version", Version },
+            { "reasons", "Legacy" },
+            { "alternatePackageId", "Better.Package" },
+            { "alternateVersionRange", "[2.0.0, )" },
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var deprecation = await DeprecationAsync();
+        Assert.Equal("Better.Package", deprecation?.AlternatePackageId);
+        Assert.Equal("[2.0.0, )", deprecation?.AlternateVersionRange);
+    }
+
+    [Theory]
+    [InlineData("", "[2.0.0, )", "needs an alternate package")]
+    [InlineData("Better.Package", "not a range", "is not a version range")]
+    public async Task TheAlternateVersionRangeFollowsTheApiRules(string alternate, string range, string expected)
+    {
+        await SeedAsync(null, withSymbols: false);
+
+        using var response = await PostAsync(_alice, null, "Deprecate", new()
+        {
+            { "version", Version },
+            { "reasons", "Legacy" },
+            { "alternatePackageId", alternate },
+            { "alternateVersionRange", range },
+        });
+
+        Assert.Contains(expected, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Null(await DeprecationAsync());
+    }
 }

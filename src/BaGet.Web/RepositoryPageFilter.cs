@@ -35,6 +35,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
         "/Packages/Manage",
         "/Packages/NpmManage",
         "/Packages/ContactOwners",
+        "/Packages/ValidationStatus",
     };
 
     // Pages whose every action a remote npm repository refuses (publish, tags, deprecate and unpublish are 403 there; the cache is

@@ -167,6 +167,25 @@ public class AdminUserActionsTests : IDisposable
     }
 
     [Fact]
+    public async Task ResettingCanSetAndConfirmTheEmailAddressLikeTheCommandDoes()
+    {
+        var (app, admin) = await StartAsync();
+        await CreateUserAsync(app, "alice");
+
+        using var response = await admin.PostAsync("admin/users", new Dictionary<string, string>
+        {
+            { "userName", "alice" },
+            { "password", Password },
+            { "resetEmail", "alice@example.com" },
+        }, action: "admin/users?handler=ResetPassword");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var alice = await FindAsync(app, "alice");
+        Assert.Equal("alice@example.com", alice?.Email);
+        Assert.True(alice?.EmailConfirmed);
+    }
+
+    [Fact]
     public async Task ANonAdministratorCannotReset()
     {
         var (app, _) = await StartAsync();

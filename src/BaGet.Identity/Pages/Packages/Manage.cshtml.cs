@@ -46,6 +46,9 @@ public class ManageModel : AccountPageModel
 
     public string? Message { get; private set; }
 
+    /// <summary>Whether validation has submissions for the ID (the page links to their status).</summary>
+    public bool HasValidation { get; private set; }
+
     /// <summary>Whether the ID is verified (reserved): an owner row carries the flag.</summary>
     public bool IsVerified => Owners.Any(o => o.IsVerified);
 
@@ -315,6 +318,7 @@ public class ManageModel : AccountPageModel
         List<string>? reasons,
         string message,
         string alternatePackageId,
+        string? alternateVersionRange,
         CancellationToken cancellationToken)
     {
         reasons = reasons?.Where(r => PackageDeprecation.KnownReasons.Contains(r, StringComparer.Ordinal)).Distinct().ToList();
@@ -323,11 +327,25 @@ public class ManageModel : AccountPageModel
             return await DoneAsync("Choose at least one deprecation reason.", cancellationToken);
         }
 
+        // The same rules as the metadata API (PackageMetadataAdminController.Validate).
+        var alternateId = string.IsNullOrWhiteSpace(alternatePackageId) ? null : alternatePackageId.Trim();
+        var alternateRange = string.IsNullOrWhiteSpace(alternateVersionRange) ? null : alternateVersionRange.Trim();
+        if (alternateId == null && alternateRange != null)
+        {
+            return await DoneAsync("An alternate version range needs an alternate package ID.", cancellationToken);
+        }
+
+        if (alternateRange != null && alternateRange != "*" && !VersionRange.TryParse(alternateRange, out _))
+        {
+            return await DoneAsync($"'{alternateRange}' is not a version range.", cancellationToken);
+        }
+
         var deprecation = new PackageDeprecation
         {
             Reasons = reasons.ToArray(),
             Message = string.IsNullOrWhiteSpace(message) ? null : message.Trim(),
-            AlternatePackageId = string.IsNullOrWhiteSpace(alternatePackageId) ? null : alternatePackageId.Trim(),
+            AlternatePackageId = alternateId,
+            AlternateVersionRange = alternateRange,
         };
 
         return await ChangeVersionAsync(version, v => Packages.SetDeprecationAsync(Id, v, deprecation, cancellationToken), "deprecated", cancellationToken);
@@ -516,6 +534,9 @@ public class ManageModel : AccountPageModel
                 .Where(r => r.PackageId.ToLower() == lowerId && r.Resolved == null)
                 .OrderByDescending(r => r.Key)
                 .ToListAsync(cancellationToken);
+            HasValidation = await Context.PackageValidations
+                .AsNoTracking()
+                .AnyAsync(v => v.PackageId.ToLower() == lowerId, cancellationToken);
             #pragma warning restore CS8602, CS8604
         }
     }

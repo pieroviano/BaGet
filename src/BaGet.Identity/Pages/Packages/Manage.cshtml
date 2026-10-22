@@ -30,6 +30,13 @@
         </div>
     }
 
+    @if (Model.HasValidation)
+    {
+        <p id="manage-validation">
+            <a href="@Url.RepositoryContent("packages/" + Model.Id + "/validation")">Validation status of the submissions</a>
+        </p>
+    }
+
     <h2>Owners</h2>
     <table class="table">
         <tbody>
@@ -113,6 +120,7 @@
                             }
                             <input type="text" name="message" class="form-control input-sm" placeholder="Message" />
                             <input type="text" name="alternatePackageId" class="form-control input-sm" placeholder="Alternate package" />
+                            <input type="text" name="alternateVersionRange" class="form-control input-sm" placeholder="Alternate range, e.g. [2.0.0, )" />
                             <button type="submit" class="btn btn-warning btn-xs" disabled="@Model.IsReadOnlyMode">Deprecate</button>
                         </form>
                     </td>

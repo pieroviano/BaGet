@@ -1,6 +1,7 @@
 @page
 @model IndexModel
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
+@inject BaGet.Core.IUrlGenerator Autocomplete
 
 @{
     ViewData["Title"] = Model.IsHome ? "Home" : "Packages";
@@ -43,8 +44,11 @@
                        name="q"
                        class="form-control"
                        autoComplete="off"
+                       list="home-package-suggestions"
+                       data-autocomplete="@Autocomplete.GetAutocompleteResourceUrl()"
                        autofocus
                        placeholder="Search for packages..." />
+                <datalist id="home-package-suggestions"></datalist>
                 <span class="input-group-btn">
                     <button type="submit" class="btn btn-default" title="Search for packages">
                         <span class="ms-Icon ms-Icon--Search" aria-hidden="true"></span>

@@ -308,6 +308,8 @@ account without one). Everyone else, and every request while accounts are off, g
   | `/admin/users/{name}/packages` | The IDs a user owns, with owners and a link to Manage. |
   | `/admin/packages` | IDs with no owner (predating accounts, or left without one) in every repository, 50 per page; a Repository column appears once one is outside `default`, and each link goes to that repository's page. |
 | Manage, *Vulnerabilities* | Owners and administrators add or remove a version's advisories (http/https URL, severity low to critical, optional version range); the same rules as the `PUT .../vulnerabilities` API. |
+| Manage, *Deprecation* | Reasons, message, alternate package and alternate version range, with the rules of the `PUT .../deprecation` API. |
+| Manage, *Validation status* | With validation on, a link to `/packages/{id}/validation`: each version's newest submission and the verdict and message of every step (the page form of `GET /v3/package/{id}/{version}/validation`; needs push or manage). |
 | Manage, *Symbols* | Lists the PDBs each version's symbol package contributed and deletes them (database rows and stored content; content another version still lists is kept). Only symbols indexed after this list was introduced are recorded: older ones keep being served but cannot be listed or deleted per package. Not available with Azure Table. |
 | Package page, *Manage package* | Shown only to an owner (directly or through an organization) or an administrator. |
 * The check reads the database on every request, so a demotion applies at once.
@@ -426,7 +428,7 @@ It needs `Accounts:Enabled` and works with or without SMTP.
 address who knows their password can use "Forgot password" (following the link confirms it). A user
 with no address cannot sign in: the administrator runs
 `baget account reset-password <user> --email <address>`, which sets the address, marks it confirmed
-and prints a new password.
+and prints a new password. The Users page does the same: its *Confirm* section takes the address, used by *Generate a password*.
 
 Email also enables **Contact owners** on a package page (`/packages/{id}/contact-owners`, signed-in
 users only). The message goes, one email each, to the owning users with a confirmed address and to the

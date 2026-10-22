@@ -115,9 +115,10 @@ public class UsersModel : AdminPageModel
     /// Replaces the user's password with a generated one and shows it once. The answer is the
     /// page itself rather than a redirect, so the password never goes through TempData or a
     /// cookie, and it is not cacheable. Two-factor is switched off, a lockout lifted and the
-    /// user's sessions end.
+    /// user's sessions end. <paramref name="resetEmail"/> (optional) is set and confirmed as the user's address, as
+    /// <c>account reset-password --email</c> does.
     /// </summary>
-    public async Task<IActionResult> OnPostResetPasswordAsync(string userName, string? password, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostResetPasswordAsync(string userName, string? password, string? resetEmail, CancellationToken cancellationToken)
     {
         var current = await UserManager.GetUserAsync(User);
         if (current == null) return Challenge();
@@ -131,7 +132,7 @@ public class UsersModel : AdminPageModel
         }
 
         var generated = await HttpContext.RequestServices.GetRequiredService<AccountRecoveryService>()
-            .ResetPasswordAsync(userName, cancellationToken);
+            .ResetPasswordAsync(userName, cancellationToken, resetEmail);
         if (generated == null)
         {
             Error = "There is no user with that name.";

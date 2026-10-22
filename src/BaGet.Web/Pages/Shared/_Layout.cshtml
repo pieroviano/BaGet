@@ -6,6 +6,8 @@
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> Options
 @{
     var hideSearchBar = ViewData["HideSearchBar"] is true;
+    // Type-ahead for the search boxes: the repository's own V3 autocomplete resource (site.js fills the datalist).
+    var autocompleteUrl = Context.RequestServices.GetService<BaGet.Core.IUrlGenerator>()?.GetAutocompleteResourceUrl();
 
     // No Upload entry where an upload is impossible (read-only, a closed maintenance gate, nothing to authenticate with).
     var canUpload = BaGet.Web.UploadAvailability.IsPossible(
@@ -191,7 +193,10 @@
                                    value="@ViewData["SearchQuery"]"
                                    class="form-control"
                                    autoComplete="off"
+                                   list="package-suggestions"
+                                   data-autocomplete="@autocompleteUrl"
                                    placeholder="Search packages..." />
+                            <datalist id="package-suggestions"></datalist>
 
                             <span class="input-group-btn">
                                 <button type="submit"

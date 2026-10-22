@@ -33,7 +33,7 @@ BaGet Extension speaks the NuGet V3 protocol, with a V2 feed for older clients (
 symbols. Accounts with package owners and per-user API keys are on by default; a validation
 pipeline with repository signing is opt-in. Both are set in its [configuration](configuration.md).
 By default it listens on `http://localhost:6060` (`Kestrel:Endpoints`; `--urls` has no effect). The [server API](advanced/api.md) lists
-every resource and page, and [BaGet Extension vs nuget.org](vs/nugetorg.md) compares the two.
+every resource and page, [UI coverage](ui-coverage.md) maps every capability to its page, and [BaGet Extension vs nuget.org](vs/nugetorg.md) compares the two.
 
 ## Import packages
 

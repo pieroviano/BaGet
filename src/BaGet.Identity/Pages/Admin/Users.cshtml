@@ -99,6 +99,11 @@
         }
 
         <h2>Confirm</h2>
+        <div class="form-group">
+            <label for="resetEmail">Email address for "Generate a password" (optional)</label>
+            <input id="resetEmail" name="resetEmail" type="email" class="form-control" autocomplete="off" />
+            <span class="help-block">Sets and confirms this address for the user, as <code>account reset-password --email</code> does: a user with no address cannot sign in while SMTP is configured.</span>
+        </div>
         <p>Every action here, creating a user included, asks for your password again.</p>
         @if (Model.HasPassword)
         {

@@ -104,3 +104,37 @@
         }
     };
 })();
+// Type-ahead: a search box with data-autocomplete (the repository's V3 autocomplete resource) and a list (a datalist) offers
+// the matching package IDs as the user types.
+(function () {
+    document.querySelectorAll('input[data-autocomplete]').forEach(function (input) {
+        var url = input.getAttribute('data-autocomplete');
+        var list = document.getElementById(input.getAttribute('list'));
+        if (!url || !list || !window.fetch) return;
+
+        // Same origin whatever host the server advertises (a proxy), so only the path is kept.
+        var target;
+        try { target = new URL(url, window.location.href).pathname; } catch (e) { return; }
+
+        var timer = null;
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            var text = input.value.trim();
+            if (text.length < 2) { list.innerHTML = ''; return; }
+            timer = setTimeout(function () {
+                fetch(target + '?prerelease=true&take=10&q=' + encodeURIComponent(text))
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (body) {
+                        if (!body || !body.data) return;
+                        list.innerHTML = '';
+                        body.data.forEach(function (id) {
+                            var option = document.createElement('option');
+                            option.value = id;
+                            list.appendChild(option);
+                        });
+                    })
+                    .catch(function () { });
+            }, 200);
+        });
+    });
+})();

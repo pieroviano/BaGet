@@ -33,6 +33,7 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         "/Upload",
         "/Packages/Manage",
         "/Packages/ContactOwners",
+        "/Packages/ValidationStatus",
         "/Profiles/Profile",
         "/Admin/Packages",
         "/Admin/UserPackages",

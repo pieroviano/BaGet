@@ -49,6 +49,7 @@ nav:
   - Remote repositories: remote-repositories.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md
+  - UI coverage: ui-coverage.md
   - Import:
     - Local feeds: import/local-feeds.md
     - NuGet.Server: import/nugetserver.md

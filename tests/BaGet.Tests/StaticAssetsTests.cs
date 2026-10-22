@@ -48,6 +48,15 @@ public class StaticAssetsTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task TheSiteScriptWiresTheSearchBoxTypeAhead()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var script = await _client.GetStringAsync("/_content/BaGet.Web/js/site.js", cancellationToken);
+
+        Assert.Contains("input[data-autocomplete]", script);
+    }
+
     public void Dispose()
     {
         _client.Dispose();

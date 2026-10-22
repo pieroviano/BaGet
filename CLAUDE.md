@@ -76,7 +76,7 @@ change: a feature is not done while it exists only as REST, CLI or a service met
 (same action/permission, antiforgery, password or re-authentication for destructive or access changes,
 `MaintenanceGate.ThrowIfClosed` on writes) and link it from the navigation or the page it belongs to. Reviews check it.
 Where the UI cannot yet do something the server can (a REST field, a CLI option, a service operation), enrich the UI
-to cover it; `docs/ui-coverage.md` (once present) maps every capability to its page and gate and must stay complete.
+to cover it; `docs/ui-coverage.md` maps every capability to its page and gate and must stay complete.
 
 ## Every docs page is in the solution and reachable
 
