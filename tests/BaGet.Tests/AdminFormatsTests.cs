@@ -202,7 +202,8 @@ public class AdminFormatsTests : IDisposable
     [Fact]
     public async Task AFormatWithoutAModuleIsNotFoundAndNuGetHasNoGenericForm()
     {
-        using var docker = await CreateNpmAsync("jars", format: "Docker");
+        // Every format of RepositoryFormat has a module now; a name that is no format at all is refused the same way.
+        using var docker = await CreateNpmAsync("jars", format: "Helm");
         using var nuget = await CreateNpmAsync("feed2", format: "NuGet");
         using var empty = await CreateNpmAsync("feed3", format: null);
 

@@ -447,6 +447,29 @@ public class OciRegistryTests : IDisposable
     }
 
     [Fact]
+    public async Task AnEmptyChunkChangesNothingAndTheUploadGoesOn()
+    {
+        await CreateAsync();
+        var token = await PushTokenAsync();
+        var content = Encoding.UTF8.GetBytes("after an empty chunk");
+        using var start = await SendAsync(HttpMethod.Post, "/v2/libs/app/blobs/uploads/", token);
+        var location = start.Headers.Location!.ToString();
+
+        using var empty = await SendAsync(HttpMethod.Patch, location, token, Array.Empty<byte>(), "application/octet-stream");
+        Assert.Equal(HttpStatusCode.Accepted, empty.StatusCode);
+        Assert.Equal("0-0", empty.Headers.GetValues("Range").Single());
+
+        using var chunk = await SendAsync(HttpMethod.Patch, location, token, content, "application/octet-stream");
+        Assert.Equal($"0-{content.Length - 1}", chunk.Headers.GetValues("Range").Single());
+
+        // The last chunk may be empty as well: the blob is what was appended.
+        using var finish = await SendAsync(HttpMethod.Put, location + "?digest=" + OciTestImage.Digest(content), token, Array.Empty<byte>(), "application/octet-stream");
+        Assert.Equal(HttpStatusCode.Created, finish.StatusCode);
+        using var get = await SendAsync(HttpMethod.Get, $"/v2/libs/app/blobs/{OciTestImage.Digest(content)}", token);
+        Assert.Equal(content, await get.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task AChunkThatDoesNotStartWhereTheUploadEndsIs416WithTheRealLength()
     {
         await CreateAsync();

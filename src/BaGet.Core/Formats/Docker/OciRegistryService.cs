@@ -353,10 +353,12 @@ public class OciRegistryService : IOciRegistry
             throw new OciException(OciErrorCode.RangeInvalid, $"The chunk starts at {offset.Value} but the upload holds {current.Value} bytes.", current.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)) { UploadLength = current.Value };
         }
 
-        long length;
+        // An empty chunk (a PATCH with no body, a final PUT with none) adds nothing: not every store takes an empty part.
+        var length = current.Value;
+        var data = await OciStreams.NonEmptyAsync(chunk, cancellationToken).ConfigureAwait(false);
         try
         {
-            length = await Streaming.AppendAsync(upload.StorageUploadId!, current.Value, chunk, cancellationToken).ConfigureAwait(false);
+            if (data != null) length = await Streaming.AppendAsync(upload.StorageUploadId!, current.Value, data, cancellationToken).ConfigureAwait(false);
         }
         catch (StorageUploadOffsetException e)
         {
@@ -449,7 +451,8 @@ public class OciRegistryService : IOciRegistry
         StorageCommitResult commit;
         try
         {
-            await Streaming.AppendAsync(uploadId, 0, content, cancellationToken).ConfigureAwait(false);
+            var data = await OciStreams.NonEmptyAsync(content, cancellationToken).ConfigureAwait(false);
+            if (data != null) await Streaming.AppendAsync(uploadId, 0, data, cancellationToken).ConfigureAwait(false);
             commit = await Streaming.CommitAsync(uploadId, BlobPath(digest), OciNames.HexOf(digest), cancellationToken).ConfigureAwait(false);
         }
         catch (StorageDigestMismatchException)
