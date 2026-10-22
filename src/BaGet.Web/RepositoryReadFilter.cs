@@ -112,6 +112,19 @@ public class RepositoryReadFilter : IAsyncResourceFilter
             }
         }
 
+        if (route.Format == RepositoryFormat.Maven)
+        {
+            // A Maven route names the artifact through its path: the access patterns see group:artifact, which the repository
+            // works out from what is stored (metadata can name an artifact or one of its versions).
+            var requested = MavenNames.ParsePath(context.RouteData.Values.TryGetValue("path", out var raw) ? raw as string : null);
+            if (requested == null)
+            {
+                context.Result = new NotFoundResult();
+                return;
+            }
+
+            packageId = (await services.GetRequiredService<IMavenRepository>().ResolveAsync(requested, http.RequestAborted))?.Name;
+        }
 
         async Task<bool> MayReadAsync(BaGetPrincipal? caller)
             => await evaluator.IsAllowedAsync(caller, repository, packageId: null, AccessAction.Read, http.RequestAborted)

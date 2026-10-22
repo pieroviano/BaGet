@@ -111,7 +111,7 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
         }
     }
 
-    // Whether the ID names a package of the current repository, whatever its format: a NuGet package id, or an npm package name.
+    // Whether the ID names a package of the current repository, whatever its format: a NuGet package id, an npm package name, or a Maven group:artifact.
     private async Task<bool> ExistsAsync(string? packageId, CancellationToken cancellationToken)
     {
         if (_repository.Current.Format == RepositoryFormat.Npm && _context != null)
@@ -119,6 +119,14 @@ public class OwnershipAuthorizationService : IPackageAuthorizationService
             var name = packageId?.ToLowerInvariant();
 
             return await _context.NpmPackages!.AnyAsync(p => p.Name == name, cancellationToken);
+        }
+
+        if (_repository.Current.Format == RepositoryFormat.Maven && _context != null)
+        {
+            // A Maven artifact is "group:artifact"; both parts are case-sensitive.
+            if (!MavenNames.TryParseArtifactName(packageId, out var groupId, out var artifactId)) return false;
+
+            return await _context.MavenArtifacts!.AnyAsync(a => a.GroupId == groupId && a.ArtifactId == artifactId, cancellationToken);
         }
 
         return await _packages.ExistsAsync(packageId, cancellationToken);

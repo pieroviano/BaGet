@@ -89,11 +89,11 @@ public static class MavenNames
     /// <summary>The checksum extensions, in the order a repository serves them.</summary>
     public static readonly IReadOnlyList<string> ChecksumAlgorithms = new[] { "sha1", "md5", "sha256", "sha512" };
 
-    private static readonly Regex GroupSegment = new(@"^[A-Za-z0-9_][A-Za-z0-9_\-]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly Regex Identifier = new(@"^[A-Za-z0-9_][A-Za-z0-9_.+\-]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly Regex ExtensionPattern = new(@"^[A-Za-z][A-Za-z0-9_.+\-]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly Regex ClassifierPattern = new(@"^[A-Za-z0-9_][A-Za-z0-9_+\-]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly Regex Timestamp = new(@"^\d{8}\.\d{6}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex GroupSegment = new(@"^[A-Za-z0-9_][A-Za-z0-9_\-]*\z", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex Identifier = new(@"^[A-Za-z0-9_][A-Za-z0-9_.+\-]*\z", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex ExtensionPattern = new(@"^[A-Za-z][A-Za-z0-9_.+\-]*\z", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex ClassifierPattern = new(@"^[A-Za-z0-9_][A-Za-z0-9_+\-]*\z", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex Timestamp = new(@"^\d{8}\.\d{6}\z", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>The name of an artifact in the access model: <c>group:artifact</c>.</summary>
     public static string ArtifactName(string groupId, string artifactId) => groupId + ":" + artifactId;

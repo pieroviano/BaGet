@@ -18,10 +18,12 @@ public static class RepositoryPageLinks
     /// <summary>The package page of <paramref name="id"/>.</summary>
     /// <param name="repositoryName">The repository; null or the default's name for the root pages.</param>
     /// <param name="id">The package ID.</param>
-    /// <param name="format">The repository's format: an npm package has its own pages (<c>npm-packages/{name}</c>).</param>
+    /// <param name="format">The repository's format: an npm package has its own pages (<c>npm-packages/{name}</c>), a Maven artifact too (<c>maven-artifacts/{group}/{artifact}</c>).</param>
     public static string Package(string? repositoryName, string? id, RepositoryFormat format = RepositoryFormat.NuGet)
         => format == RepositoryFormat.Npm
             ? Prefix(repositoryName) + "npm-packages/" + NpmPath(id)
+            : format == RepositoryFormat.Maven
+            ? Prefix(repositoryName) + "maven-artifacts/" + MavenPath(id)
             : Prefix(repositoryName) + "packages/" + Uri.EscapeDataString(id ?? string.Empty);
 
     /// <summary>The management page of <paramref name="id"/>.</summary>
@@ -31,11 +33,17 @@ public static class RepositoryPageLinks
     public static string Manage(string? repositoryName, string? id, RepositoryFormat format = RepositoryFormat.NuGet)
         => format == RepositoryFormat.Npm
             ? Prefix(repositoryName) + "npm-manage/" + NpmPath(id)
+            : format == RepositoryFormat.Maven
+            ? Prefix(repositoryName) + "maven-manage/" + MavenPath(id)
             : Package(repositoryName, id) + "/manage";
 
     // A scoped name keeps its slash in the address (the pages take the rest of the path).
     private static string NpmPath(string? id)
         => string.Join("/", (id ?? string.Empty).Split('/').Select(Uri.EscapeDataString));
+
+    // A Maven "group:artifact" is two path segments (group, artifact) in the address.
+    private static string MavenPath(string? id)
+        => string.Join("/", (id ?? string.Empty).Split(':').Select(Uri.EscapeDataString));
 
     private static string Prefix(string? repositoryName)
         => string.IsNullOrEmpty(repositoryName) || repositoryName == Repository.DefaultName

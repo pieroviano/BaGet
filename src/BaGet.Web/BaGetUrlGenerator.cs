@@ -180,6 +180,11 @@ public class BaGetUrlGenerator : IUrlGenerator
         return AbsoluteUrl("npm/");
     }
 
+    public string GetMavenRepositoryUrl()
+    {
+        return AbsoluteUrl("maven/");
+    }
+
     public string GetVulnerabilityIndexUrl()
     {
         return AbsoluteUrl("v3/vulnerabilities/index.json");

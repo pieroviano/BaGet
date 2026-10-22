@@ -41,6 +41,10 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         "/NpmPackage",
         "/NpmUpload",
         "/Packages/NpmManage",
+        "/MavenArtifacts",
+        "/MavenArtifact",
+        "/MavenUpload",
+        "/Packages/MavenManage",
     };
 
     /// <summary>
@@ -54,6 +58,10 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         { "/NpmPackage", BaGet.Core.RepositoryFormat.Npm },
         { "/NpmUpload", BaGet.Core.RepositoryFormat.Npm },
         { "/Packages/NpmManage", BaGet.Core.RepositoryFormat.Npm },
+        { "/MavenArtifacts", BaGet.Core.RepositoryFormat.Maven },
+        { "/MavenArtifact", BaGet.Core.RepositoryFormat.Maven },
+        { "/MavenUpload", BaGet.Core.RepositoryFormat.Maven },
+        { "/Packages/MavenManage", BaGet.Core.RepositoryFormat.Maven },
     };
 
     /// <summary>The format a repository page serves (NuGet unless <see cref="PageFormats"/> says otherwise).</summary>

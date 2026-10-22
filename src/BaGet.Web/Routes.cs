@@ -79,4 +79,9 @@ public class Routes
 
     /// <summary>Appended to the name of the npm route variant whose scope is a path segment of its own (<c>@{scope}/{pkg}</c>).</summary>
     public const string NpmScopedSuffix = "-scoped";
+
+    /// <summary>Route names of the Maven repository protocol (<see cref="BaGetEndpointBuilder.MapMavenRoutes"/>).</summary>
+    public const string MavenGetRouteName = "maven-get";
+    public const string MavenPutRouteName = "maven-put";
+    public const string MavenDeleteRouteName = "maven-delete";
 }

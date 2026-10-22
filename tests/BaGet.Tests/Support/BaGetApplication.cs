@@ -180,6 +180,35 @@ internal static class BaGetWebApplicationFactoryExtensions
             .CreateAsync(name, RepositoryFormat.Npm, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a local Maven repository with the given name (its repository is at <c>/r/{name}/maven/</c>); the settings are the
+    /// create form's fields (<c>policy</c>, <c>redeploy</c>, <c>snapshotBuilds</c>).
+    /// </summary>
+    public static async Task CreateMavenRepositoryAsync(
+        this WebApplicationFactory<Program> factory,
+        string name,
+        string? policy = null,
+        bool redeploy = false,
+        int snapshotBuilds = 0,
+        bool anonymousRead = true,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(
+                name,
+                RepositoryFormat.Maven,
+                RepositoryKind.Local,
+                new Dictionary<string, string?>
+                {
+                    ["policy"] = policy,
+                    ["redeploy"] = redeploy ? "Yes" : "No",
+                    ["snapshotBuilds"] = snapshotBuilds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                },
+                anonymousRead,
+                cancellationToken);
+    }
+
     /// <summary>A DI scope whose current repository is the named one (null = default), as routing sets it.</summary>
     public static async Task<IServiceScope> CreateRepositoryScopeAsync(
         this WebApplicationFactory<Program> factory,

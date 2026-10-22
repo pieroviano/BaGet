@@ -174,4 +174,10 @@ public interface IUrlGenerator
     /// with a trailing slash (<c>https://host/r/web/npm/</c>). Tarball URLs are this plus <c>{name}/-/{file}</c>.
     /// </summary>
     string GetNpmRegistryUrl();
+
+    /// <summary>
+    /// Get the address a Maven client is configured with for the current repository: <c>maven/</c> below the repository base,
+    /// with a trailing slash (<c>https://host/r/libs/maven/</c>). A file is this plus its layout path.
+    /// </summary>
+    string GetMavenRepositoryUrl();
 }

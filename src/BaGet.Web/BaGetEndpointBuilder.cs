@@ -76,6 +76,28 @@ public class BaGetEndpointBuilder
         MapCatalogRoutes(endpoints);
         MapValidationRoutes(endpoints);
         MapNpmRoutes(endpoints);
+        MapMavenRoutes(endpoints);
+    }
+
+    /// <summary>
+    /// The Maven 2 repository layout (<see cref="RepositoryFormat.Maven"/>): everything below <c>maven/</c> of a repository's base,
+    /// so a repository <c>libs</c> is at <c>/r/libs/maven/</c>. One catch-all path per method: reads pass
+    /// <see cref="RepositoryReadFilter"/>; <c>PUT</c> and <c>DELETE</c> authorize themselves (see <see cref="MavenController"/>).
+    /// </summary>
+    public void MapMavenRoutes(IEndpointRouteBuilder endpoints)
+    {
+        void Map(string name, string action, params string[] methods)
+            => MapRoute(
+                endpoints,
+                name,
+                "maven/{**path}",
+                new { controller = "Maven", action },
+                new { httpMethod = new HttpMethodRouteConstraint(methods) },
+                format: RepositoryFormat.Maven);
+
+        Map(Routes.MavenGetRouteName, "Get", "GET", "HEAD");
+        Map(Routes.MavenPutRouteName, "Put", "PUT");
+        Map(Routes.MavenDeleteRouteName, "Delete", "DELETE");
     }
 
     /// <summary>

@@ -34,6 +34,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
         "/ReportAbuse",
         "/Packages/Manage",
         "/Packages/NpmManage",
+        "/Packages/MavenManage",
         "/Packages/ContactOwners",
         "/Packages/ValidationStatus",
     };
@@ -43,6 +44,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
     private static readonly string[] NotOnRemote =
     {
         "/Packages/NpmManage",
+        "/Packages/MavenManage",
     };
 
     /// <inheritdoc/>
@@ -74,10 +76,25 @@ public class RepositoryPageFilter : IAsyncPageFilter
                 packageId = npmName;
             }
 
+            if (repository.Format == RepositoryFormat.Maven
+                && context.RouteData.Values.TryGetValue("group", out var group) && group is string mavenGroup
+                && context.RouteData.Values.TryGetValue("artifact", out var artifact) && artifact is string mavenArtifact)
+            {
+                // A Maven page names its artifact by group and artifact; the access patterns see group:artifact.
+                if (!MavenNames.IsValidGroupId(mavenGroup) || !MavenNames.IsValidArtifactId(mavenArtifact))
+                {
+                    context.Result = new NotFoundResult();
+                    return;
+                }
+
+                packageId = MavenNames.ArtifactName(mavenGroup, mavenArtifact);
+            }
+
             // The upload pages show no package data of the repository, so they need the right to publish
             // (IRepositoryAccess.CanWriteAsync), not Read: a Deploy-only drop box is usable.
             var isUpload = string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(page.ViewEnginePath, "/NpmUpload", StringComparison.OrdinalIgnoreCase);
+                || string.Equals(page.ViewEnginePath, "/NpmUpload", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(page.ViewEnginePath, "/MavenUpload", StringComparison.OrdinalIgnoreCase);
             var allowed = isUpload
                 ? await access.CanWriteAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
                 : string.IsNullOrEmpty(packageId)

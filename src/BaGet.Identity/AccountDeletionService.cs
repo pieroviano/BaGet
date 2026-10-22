@@ -254,6 +254,18 @@ public class AccountDeletionService
                         continue;
                     }
 
+                    if (repository.Format == RepositoryFormat.Maven)
+                    {
+                        // A Maven artifact is deleted whole (every version and file), as the administrator the deletion is done by.
+                        var administrator = new BaGetPrincipal(null, actor, isSuperuser: false, ApiKeyScopes.All, "*", isAdministrator: true);
+                        var deletedArtifact = MavenNames.TryParseArtifactName(package.PackageId, out var mavenGroup, out var mavenArtifact)
+                            ? await scope.ServiceProvider.GetRequiredService<IMavenRepository>().DeleteArtifactAsync(administrator, mavenGroup, mavenArtifact, cancellationToken)
+                            : null;
+                        if (deletedArtifact != null && (deletedArtifact.Succeeded || deletedArtifact.Status == MavenStatus.NotFound)) deleted.Add(package.Label); else failures.Add(package.Label);
+
+                        continue;
+                    }
+
                     var packages = scope.ServiceProvider.GetRequiredService<IPackageDatabase>();
                     var deletion = scope.ServiceProvider.GetRequiredService<IPackageDeletionService>();
 

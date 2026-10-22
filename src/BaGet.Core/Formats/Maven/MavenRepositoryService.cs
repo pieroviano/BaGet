@@ -576,10 +576,37 @@ public class MavenRepositoryService : IMavenRepository
 
         var artifact = await FindArtifactAsync(coordinate.GroupId, coordinate.ArtifactId, cancellationToken).ConfigureAwait(false);
         var existed = false;
-        if (artifact != null)
+        if (artifact == null)
+        {
+            // Names are case-sensitive, but a file system that is not (Windows, macOS) would keep both spellings in one folder:
+            // a name that differs from an existing one only in letter case is refused, whatever the store.
+            var group = coordinate.GroupId.ToLowerInvariant();
+            var artifactId = coordinate.ArtifactId.ToLowerInvariant();
+            if (await _context.MavenArtifacts!.AsNoTracking().AnyAsync(a => a.GroupId!.ToLower() == group && a.ArtifactId!.ToLower() == artifactId, cancellationToken).ConfigureAwait(false))
+            {
+                return MavenResult.Fail(MavenStatus.Conflict, $"{name} differs only in letter case from an artifact that exists in this repository.");
+            }
+        }
+        else
         {
             var versionKey = await _context.MavenVersions!.AsNoTracking().Where(v => v.ArtifactKey == artifact.Key && v.Version == version).Select(v => (int?)v.Key).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            existed = versionKey != null && await _context.MavenFiles!.AsNoTracking().AnyAsync(f => f.VersionKey == versionKey && f.FileName == fileName, cancellationToken).ConfigureAwait(false);
+            if (versionKey == null)
+            {
+                var lowerVersion = version.ToLowerInvariant();
+                if (await _context.MavenVersions!.AsNoTracking().AnyAsync(v => v.ArtifactKey == artifact.Key && v.Version!.ToLower() == lowerVersion, cancellationToken).ConfigureAwait(false))
+                {
+                    return MavenResult.Fail(MavenStatus.Conflict, $"Version {version} of {name} differs only in letter case from a version that exists.");
+                }
+            }
+            else
+            {
+                existed = await _context.MavenFiles!.AsNoTracking().AnyAsync(f => f.VersionKey == versionKey && f.FileName == fileName, cancellationToken).ConfigureAwait(false);
+                var lowerFile = fileName.ToLowerInvariant();
+                if (!existed && await _context.MavenFiles!.AsNoTracking().AnyAsync(f => f.VersionKey == versionKey && f.FileName!.ToLower() == lowerFile, cancellationToken).ConfigureAwait(false))
+                {
+                    return MavenResult.Fail(MavenStatus.Conflict, $"{fileName} differs only in letter case from a file that exists in {name} {version}.");
+                }
+            }
         }
 
         if (existed && !MavenNames.IsSnapshot(version))
@@ -823,17 +850,20 @@ public class MavenRepositoryService : IMavenRepository
         return MavenResult.Ok($"Deleted {fileName}.", 1, version.Name);
     }
 
-    // The version goes with its last file, the artifact with its last version.
-    private async Task RemoveIfEmptyAsync(MavenArtifact artifact, MavenVersion version, CancellationToken cancellationToken)
+    // The version goes with its last file (when one is given), the artifact with its last version.
+    private async Task RemoveIfEmptyAsync(MavenArtifact artifact, MavenVersion? version, CancellationToken cancellationToken)
     {
-        if (!await _context.MavenFiles!.AnyAsync(f => f.VersionKey == version.Key, cancellationToken).ConfigureAwait(false))
+        if (version != null)
         {
-            _context.MavenVersions!.Remove(version);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            version.Modified = _time.UtcNow;
+            if (!await _context.MavenFiles!.AnyAsync(f => f.VersionKey == version.Key, cancellationToken).ConfigureAwait(false))
+            {
+                _context.MavenVersions!.Remove(version);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                version.Modified = _time.UtcNow;
+            }
         }
 
         if (!await _context.MavenVersions!.AnyAsync(v => v.ArtifactKey == artifact.Key, cancellationToken).ConfigureAwait(false))
@@ -866,7 +896,8 @@ public class MavenRepositoryService : IMavenRepository
         _context.MavenVersions!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        await RemoveIfEmptyAsync(artifact, row, cancellationToken).ConfigureAwait(false);
+        // The version and its files are gone; the artifact goes with its last version.
+        await RemoveIfEmptyAsync(artifact, version: null, cancellationToken).ConfigureAwait(false);
         foreach (var name in names) await TryDeleteAsync(StoragePath(version.GroupId, version.ArtifactId, version.Version, name)).ConfigureAwait(false);
 
         return MavenResult.Ok($"Deleted {version.Name} {version.Version}.", names.Count, version.Name);
