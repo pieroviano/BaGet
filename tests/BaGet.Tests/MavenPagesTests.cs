@@ -115,7 +115,7 @@ public class MavenPagesTests : IDisposable
         Assert.True((int)created.StatusCode is 200 or 302, created.StatusCode.ToString());
 
         using var scope = _app.Services.CreateScope();
-        var row = await scope.ServiceProvider.GetRequiredService<IContext>().Repositories!.AsNoTracking().FirstAsync(r => r.Name == "snap");
+        var row = await scope.ServiceProvider.GetRequiredService<IContext>().Repositories!.AsNoTracking().FirstAsync(r => r.Name == "snap", TestContext.Current.CancellationToken);
         var settings = MavenRepositorySettings.Parse(row.Settings);
         Assert.Equal(RepositoryFormat.Maven, row.Format);
         Assert.Equal(MavenPolicy.Snapshots, settings.Policy);
@@ -143,7 +143,7 @@ public class MavenPagesTests : IDisposable
 
         Assert.Contains("policy", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.OrdinalIgnoreCase);
         using var scope = _app.Services.CreateScope();
-        Assert.False(await scope.ServiceProvider.GetRequiredService<IContext>().Repositories!.AnyAsync(r => r.Name == "bad"));
+        Assert.False(await scope.ServiceProvider.GetRequiredService<IContext>().Repositories!.AnyAsync(r => r.Name == "bad", TestContext.Current.CancellationToken));
     }
 
     [Fact]
