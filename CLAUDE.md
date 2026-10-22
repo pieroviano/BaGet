@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2626 tests** across `BaGet.Core.Tests` (733), `BaGet.Tests` (1557),
+Baseline: **2637 tests** across `BaGet.Core.Tests` (733), `BaGet.Tests` (1568),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (58),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (20), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (21, Docker). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
