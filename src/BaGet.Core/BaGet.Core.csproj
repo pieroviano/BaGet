@@ -32,11 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="BaGet.Core.Tests" />
-    <InternalsVisibleTo Include="BaGet.Tests" />
-    <InternalsVisibleTo Include="BaGet.Database.Tests" />
-    <InternalsVisibleTo Include="BaGet.Catalog" />
-    <InternalsVisibleTo Include="BaGet.Identity" />
+    <InternalsVisibleTo Include="BaGet.Core.Tests" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Database.Tests" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Catalog" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Identity" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>

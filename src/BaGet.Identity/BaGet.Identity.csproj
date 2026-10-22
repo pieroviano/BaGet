@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="BaGet.Tests" />
+    <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
 </Project>

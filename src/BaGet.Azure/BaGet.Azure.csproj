@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="BaGet.Azure.Tests" />
+    <InternalsVisibleTo Include="BaGet.Azure.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>

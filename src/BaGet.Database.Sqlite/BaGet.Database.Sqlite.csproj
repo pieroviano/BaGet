@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="BaGet.Tests" />
+    <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>
