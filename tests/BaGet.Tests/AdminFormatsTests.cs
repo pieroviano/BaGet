@@ -202,11 +202,11 @@ public class AdminFormatsTests : IDisposable
     [Fact]
     public async Task AFormatWithoutAModuleIsNotFoundAndNuGetHasNoGenericForm()
     {
-        using var maven = await CreateNpmAsync("jars", format: "Maven");
+        using var docker = await CreateNpmAsync("jars", format: "Docker");
         using var nuget = await CreateNpmAsync("feed2", format: "NuGet");
         using var empty = await CreateNpmAsync("feed3", format: null);
 
-        Assert.Equal(HttpStatusCode.NotFound, maven.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, docker.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, nuget.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, empty.StatusCode);
         Assert.Null(await RowAsync("jars"));
