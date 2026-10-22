@@ -33,7 +33,7 @@ use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with
 `DatabaseCopyService` on Testcontainers servers (`TestcontainersPackageVersion` in `tests/Directory.Build.props`;
-images `mssql/server:2022-latest`, `postgres:17`, `mysql:8.4`, pulled on first run). Without a Docker daemon the 16
+images `mssql/server:2022-latest`, `postgres:17`, `mysql:8.4`, pulled on first run). Without a Docker daemon the 20
 tests **skip** (`Assert.Skip`), so the suite stays green; with one they take ~2 minutes. 4 of them
 (`EngineUpgradeTests`) are the B7 upgrade on each engine: `PreRepositoryDatabase` (also linked into `BaGet.Tests`) migrates
 to the last migration before `AddRepositories` (looked up per provider, timestamps differ), fills the old schema with raw
