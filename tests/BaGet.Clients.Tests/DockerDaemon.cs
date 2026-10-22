@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -27,7 +28,11 @@ public sealed class DockerDaemon : IAsyncDisposable
 
     /// <summary>Starts the daemon and waits until <c>docker info</c> answers.</summary>
     /// <param name="insecureRegistry">The <c>host:port</c> of the registry the daemon may talk plain http to.</param>
-    public static async Task<DockerDaemon> StartAsync(string insecureRegistry)
+    public static Task<DockerDaemon> StartAsync(string insecureRegistry) => StartAsync(new[] { insecureRegistry });
+
+    /// <summary>Starts the daemon and waits until <c>docker info</c> answers.</summary>
+    /// <param name="insecureRegistries">The <c>host:port</c> of every registry the daemon may talk plain http to.</param>
+    public static async Task<DockerDaemon> StartAsync(string[] insecureRegistries)
     {
         IContainer? container = null;
         try
@@ -36,7 +41,7 @@ public sealed class DockerDaemon : IAsyncDisposable
                 .WithPrivileged(true)
                 // No TLS: the CLI in the same container uses the unix socket.
                 .WithEnvironment("DOCKER_TLS_CERTDIR", string.Empty)
-                .WithCommand("--insecure-registry", insecureRegistry)
+                .WithCommand(insecureRegistries.SelectMany(r => new[] { "--insecure-registry", r }).ToArray())
                 .WithExtraHost(ClientContainers.HostAlias, "host-gateway")
                 .Build();
             await container.StartAsync().ConfigureAwait(false);

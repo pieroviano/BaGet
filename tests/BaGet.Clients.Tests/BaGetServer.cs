@@ -122,6 +122,48 @@ public sealed class BaGetServer : IAsyncDisposable
             .CreateAsync(name, RepositoryFormat.Docker, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, CancellationToken.None);
     }
 
+    /// <summary>Creates a remote Docker repository that caches the registry at <paramref name="upstreamUrl"/>.</summary>
+    public async Task CreateRemoteDockerRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
+    {
+        var settings = new RemoteRepositorySettings { Url = upstreamUrl, Protocol = RemoteProtocol.Docker };
+        change?.Invoke(settings);
+
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.Docker, RepositoryKind.Remote, settings, anonymousRead: true, CancellationToken.None);
+    }
+
+    /// <summary>Creates a virtual Docker repository of <paramref name="members"/> (in order) that deploys to <paramref name="deploy"/>.</summary>
+    public async Task CreateVirtualDockerRepositoryAsync(string name, string[] members, string? deploy)
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>().CreateAsync(
+            name,
+            new VirtualRepositorySettings { Members = members.ToList(), DeployRepository = deploy },
+            CancellationToken.None,
+            actor: null,
+            anonymousRead: true,
+            RepositoryFormat.Docker);
+    }
+
+    /// <summary>Switches a remote repository's offline mode.</summary>
+    public async Task SetRemoteOfflineAsync(string name, bool offline)
+    {
+        using var scope = Services.CreateScope();
+        var admin = scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>();
+        var settings = (await admin.FindAsync(name, CancellationToken.None))!.Settings;
+        settings.Offline = offline;
+        await admin.UpdateAsync(name, settings, clearPassword: false, CancellationToken.None);
+    }
+
+    /// <summary>The bytes of layers a remote Docker repository keeps.</summary>
+    public async Task<long> StoredDockerBytesAsync(string name)
+    {
+        using var scope = Services.CreateScope();
+
+        return (await scope.ServiceProvider.GetRequiredService<IRemoteRepositoryAdministration>().GetCacheAsync(name, CancellationToken.None)).StoredBytes;
+    }
+
     /// <summary>Creates a remote Maven repository that caches the repository at <paramref name="upstreamUrl"/>.</summary>
     public async Task CreateRemoteMavenRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
     {

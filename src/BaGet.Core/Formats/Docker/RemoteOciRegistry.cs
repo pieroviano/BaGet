@@ -573,6 +573,14 @@ public sealed class RemoteOciRegistry : IOciRegistry
                 _received += read;
                 if (_writer != null) await AppendAsync(buffer.Slice(0, read), cancellationToken).ConfigureAwait(false);
 
+                // The last bytes are held back until the blob is stored: a client that has them all may go on at once (and ask for the
+                // layer again), and a digest that does not match must reach it as a download that ends in error, not as a finished one.
+                if (_received >= _blob.Length && !_finished)
+                {
+                    _finished = true;
+                    await FinishAsync(cancellationToken).ConfigureAwait(false);
+                }
+
                 return read;
             }
 
