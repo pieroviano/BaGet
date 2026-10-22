@@ -180,6 +180,18 @@ internal static class BaGetWebApplicationFactoryExtensions
             .CreateAsync(name, RepositoryFormat.Npm, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, cancellationToken);
     }
 
+    /// <summary>Creates a local Docker repository with the given name (its registry is at <c>/v2/{name}/…</c>).</summary>
+    public static async Task CreateDockerRepositoryAsync(
+        this WebApplicationFactory<Program> factory,
+        string name,
+        bool anonymousRead = true,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.Docker, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, cancellationToken);
+    }
+
     /// <summary>
     /// Creates a local Maven repository with the given name (its repository is at <c>/r/{name}/maven/</c>); the settings are the
     /// create form's fields (<c>policy</c>, <c>redeploy</c>, <c>snapshotBuilds</c>).
