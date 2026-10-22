@@ -73,6 +73,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<MirrorOptions>(nameof(BaGetOptions.Mirror));
         services.AddBaGetOptions<RemoteOptions>(nameof(BaGetOptions.Remote));
         services.AddBaGetOptions<NpmOptions>(nameof(BaGetOptions.Npm));
+        services.AddBaGetOptions<MavenOptions>(nameof(BaGetOptions.Maven));
         services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
         services.AddBaGetOptions<AccountsOptions>(nameof(BaGetOptions.Accounts));
         services.AddBaGetOptions<EmailOptions>(nameof(BaGetOptions.Email));
@@ -110,6 +111,10 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<RemoteNpmRegistry>();
         services.TryAddScoped<VirtualNpmRegistry>();
         services.TryAddScoped<INpmRegistry, RepositoryNpmRegistry>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, MavenFormatModule>());
+        services.TryAddScoped<IMavenRepository, MavenRepositoryService>();
+        services.TryAddScoped<IMavenRepositoryAdministration, MavenRepositoryAdministration>();
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, MavenFormatSearchProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NpmFormatSearchProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatIndexer, NuGetFormatIndexer>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, NuGetFormatSearchProvider>());

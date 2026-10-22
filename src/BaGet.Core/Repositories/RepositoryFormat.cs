@@ -16,6 +16,12 @@ public enum RepositoryFormat
     /// later phase registers; until then none can be created.
     /// </summary>
     Npm = 1,
+
+    /// <summary>
+    /// Maven 2 (the repository layout under <c>maven/</c>): <c>mvn deploy</c>, <c>mvn dependency:get</c>, Gradle. Local
+    /// repositories only for now.
+    /// </summary>
+    Maven = 2,
 }
 
 /// <summary>

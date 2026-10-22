@@ -60,6 +60,15 @@ public interface IContext
     /// <summary>The dist-tags of npm packages; see <see cref="NpmDistTag"/>.</summary>
     DbSet<NpmDistTag>? NpmDistTags { get; set; }
 
+    /// <summary>Maven artifacts (group and artifact id); see <see cref="MavenArtifact"/>. Repository-scoped.</summary>
+    DbSet<MavenArtifact>? MavenArtifacts { get; set; }
+
+    /// <summary>The versions of Maven artifacts; see <see cref="MavenVersion"/>.</summary>
+    DbSet<MavenVersion>? MavenVersions { get; set; }
+
+    /// <summary>The files of Maven versions, with their checksums; see <see cref="MavenFile"/>.</summary>
+    DbSet<MavenFile>? MavenFiles { get; set; }
+
     /// <summary>
     /// The repositories. Not repository-scoped: it lists them all.
     /// </summary>

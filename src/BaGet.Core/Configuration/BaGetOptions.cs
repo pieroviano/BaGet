@@ -76,6 +76,8 @@ public class BaGetOptions
 
     public NpmOptions? Npm { get; set; }
 
+    public MavenOptions? Maven { get; set; }
+
     public FeedsOptions? Feeds { get; set; }
 
     public AccountsOptions? Accounts { get; set; }

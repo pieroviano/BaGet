@@ -47,6 +47,19 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxNpmTagLength = 128;
     public const int MaxNpmIntegrityLength = 256;
     public const int MaxNpmShasumLength = 40;
+    // Maven's layout is folders, so the lengths keep the unique indexes (group, artifact; version, file) within SQL Server's and
+    // MySQL's key limits.
+    public const int MaxMavenGroupLength = 200;
+    public const int MaxMavenArtifactLength = 128;
+    public const int MaxMavenVersionLength = 128;
+    public const int MaxMavenFileNameLength = 256;
+    public const int MaxMavenClassifierLength = 64;
+    public const int MaxMavenExtensionLength = 64;
+    public const int MaxMavenNameLength = 512;
+    public const int MaxMavenDescriptionLength = 4000;
+    public const int MaxMavenPackagingLength = 64;
+    public const int MaxMavenSnapshotTimestampLength = 15;
+    public const int MaxMavenChecksumLength = 128;
     public const int MaxProjectNameLength = 64;
     public const int MaxProjectDisplayNameLength = 256;
 
@@ -109,6 +122,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<NpmPackage>? NpmPackages { get; set; }
     public DbSet<NpmVersion>? NpmVersions { get; set; }
     public DbSet<NpmDistTag>? NpmDistTags { get; set; }
+    public DbSet<MavenArtifact>? MavenArtifacts { get; set; }
+    public DbSet<MavenVersion>? MavenVersions { get; set; }
+    public DbSet<MavenFile>? MavenFiles { get; set; }
     public DbSet<Repository>? Repositories { get; set; }
     public DbSet<Project>? Projects { get; set; }
     public DbSet<Group>? Groups { get; set; }
@@ -181,6 +197,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<NpmPackage>(BuildNpmPackageEntity);
         builder.Entity<NpmVersion>(BuildNpmVersionEntity);
         builder.Entity<NpmDistTag>(BuildNpmDistTagEntity);
+        builder.Entity<MavenArtifact>(BuildMavenArtifactEntity);
+        builder.Entity<MavenVersion>(BuildMavenVersionEntity);
+        builder.Entity<MavenFile>(BuildMavenFileEntity);
         builder.Entity<Repository>(BuildRepositoryEntity);
         builder.Entity<Project>(BuildProjectEntity);
         builder.Entity<Group>(BuildGroupEntity);
@@ -199,6 +218,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<AbuseReport>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<PackageSymbol>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<NpmPackage>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<MavenArtifact>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
 
         // The column default is what the upgrade migration gives every row that predates repositories: they
         // belong to the default repository.
@@ -209,6 +229,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<AbuseReport>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<PackageSymbol>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<NpmPackage>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<MavenArtifact>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
     }
 
     private void BuildNpmPackageEntity(EntityTypeBuilder<NpmPackage> package)
@@ -242,6 +263,45 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         tag.Property(t => t.Version).HasMaxLength(MaxNpmVersionLength).IsRequired();
 
         tag.HasOne<NpmPackage>().WithMany().HasForeignKey(t => t.PackageKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildMavenArtifactEntity(EntityTypeBuilder<MavenArtifact> artifact)
+    {
+        artifact.HasKey(a => a.Key);
+        artifact.HasIndex(a => new { a.RepositoryKey, a.GroupId, a.ArtifactId }).IsUnique();
+
+        artifact.Property(a => a.GroupId).HasMaxLength(MaxMavenGroupLength).IsRequired();
+        artifact.Property(a => a.ArtifactId).HasMaxLength(MaxMavenArtifactLength).IsRequired();
+    }
+
+    private void BuildMavenVersionEntity(EntityTypeBuilder<MavenVersion> version)
+    {
+        version.HasKey(v => v.Key);
+        version.HasIndex(v => new { v.ArtifactKey, v.Version }).IsUnique();
+
+        version.Property(v => v.Version).HasMaxLength(MaxMavenVersionLength).IsRequired();
+        version.Property(v => v.Name).HasMaxLength(MaxMavenNameLength);
+        version.Property(v => v.Description).HasMaxLength(MaxMavenDescriptionLength);
+        version.Property(v => v.Packaging).HasMaxLength(MaxMavenPackagingLength);
+
+        version.HasOne<MavenArtifact>().WithMany().HasForeignKey(v => v.ArtifactKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildMavenFileEntity(EntityTypeBuilder<MavenFile> file)
+    {
+        file.HasKey(f => f.Key);
+        file.HasIndex(f => new { f.VersionKey, f.FileName }).IsUnique();
+
+        file.Property(f => f.FileName).HasMaxLength(MaxMavenFileNameLength).IsRequired();
+        file.Property(f => f.Classifier).HasMaxLength(MaxMavenClassifierLength);
+        file.Property(f => f.Extension).HasMaxLength(MaxMavenExtensionLength).IsRequired();
+        file.Property(f => f.SnapshotTimestamp).HasMaxLength(MaxMavenSnapshotTimestampLength);
+        file.Property(f => f.Sha1).HasMaxLength(40).IsRequired();
+        file.Property(f => f.Md5).HasMaxLength(32).IsRequired();
+        file.Property(f => f.Sha256).HasMaxLength(64).IsRequired();
+        file.Property(f => f.Sha512).HasMaxLength(MaxMavenChecksumLength).IsRequired();
+
+        file.HasOne<MavenVersion>().WithMany().HasForeignKey(f => f.VersionKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
     }
 
     private void BuildRepositoryEntity(EntityTypeBuilder<Repository> repository)

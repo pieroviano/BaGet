@@ -42,6 +42,12 @@ public class NullContext : IContext
 
     public DbSet<NpmDistTag>? NpmDistTags { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<MavenArtifact>? MavenArtifacts { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<MavenVersion>? MavenVersions { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<MavenFile>? MavenFiles { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Project>? Projects { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

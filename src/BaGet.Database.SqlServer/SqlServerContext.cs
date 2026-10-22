@@ -37,6 +37,12 @@ public class SqlServerContext : AbstractContext<SqlServerContext>
 
         builder.Entity<NpmPackage>().Property(p => p.Name).UseCollation(NpmCollation);
         builder.Entity<NpmDistTag>().Property(t => t.Tag).UseCollation(NpmCollation);
+
+        // Maven coordinates, versions and file names are case-sensitive folders, compared by code point for the same reason.
+        builder.Entity<MavenArtifact>().Property(a => a.GroupId).UseCollation(NpmCollation);
+        builder.Entity<MavenArtifact>().Property(a => a.ArtifactId).UseCollation(NpmCollation);
+        builder.Entity<MavenVersion>().Property(v => v.Version).UseCollation(NpmCollation);
+        builder.Entity<MavenFile>().Property(f => f.FileName).UseCollation(NpmCollation);
     }
 
     /// <summary>The binary collation of the npm identifier columns.</summary>
