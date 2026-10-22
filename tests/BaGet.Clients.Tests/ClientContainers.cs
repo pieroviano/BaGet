@@ -17,8 +17,8 @@ public sealed record CliResult(long ExitCode, string Stdout, string Stderr)
 }
 
 /// <summary>
-/// Real package-manager CLIs in containers (B6 of the Artifactory-parity plan): <c>node</c> with the real <c>npm</c> today;
-/// <c>maven</c> and <c>docker:dind</c> (privileged) follow with their phases. Each image starts once per run and is shared; a
+/// Real package-manager CLIs in containers (B6 of the Artifactory-parity plan): <c>node</c> with the real <c>npm</c> and <c>maven</c> with the
+/// real <c>mvn</c>; <c>docker:dind</c> (privileged) follows with its phase. Each image starts once per run and is shared; a
 /// test that needs one skips (<see cref="Assert.Skip(string)"/>) when there is no Docker daemon, so the normal suite stays green
 /// without it, as in <c>BaGet.Database.Tests</c>.
 /// </summary>
@@ -30,7 +30,25 @@ public static class ClientContainers
     /// <summary>Node 22 LTS on Alpine; ships npm 10 (the version the recorded flows were captured with).</summary>
     public const string NodeImage = "node:22-alpine";
 
+    /// <summary>Maven 3.9 on a Temurin 21 JDK (the real <c>mvn</c> and <c>jar</c>).</summary>
+    public const string MavenImage = "maven:3.9-eclipse-temurin-21";
+
     private static readonly Lazy<Task<IContainer>> NodeStart = new(() => StartAsync(NodeImage));
+    private static readonly Lazy<Task<IContainer>> MavenStart = new(() => StartAsync(MavenImage));
+
+    /// <summary>The shared maven container (idle; commands are executed in it). Skips the calling test when Docker is unavailable.</summary>
+    public static async Task<IContainer> MavenAsync()
+    {
+        try
+        {
+            return await MavenStart.Value.ConfigureAwait(false);
+        }
+        catch (Exception e) when (IsDockerUnavailable(e))
+        {
+            Assert.Skip($"The Maven client container needs Docker, which is not available: {e.GetBaseException().Message}");
+            throw;
+        }
+    }
 
     /// <summary>The shared node container (idle; commands are executed in it). Skips the calling test when Docker is unavailable.</summary>
     public static async Task<IContainer> NodeAsync()

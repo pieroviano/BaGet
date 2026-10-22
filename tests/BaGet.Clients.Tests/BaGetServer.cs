@@ -95,6 +95,25 @@ public sealed class BaGetServer : IAsyncDisposable
     /// <summary>The address of this server as the test process itself reaches it (the process hosts it, so <c>localhost</c>).</summary>
     public string LocalRegistryUrl(string repository) => $"http://localhost:{Port}/r/{repository}/npm/";
 
+    /// <summary>The Maven repository <paramref name="repository"/> as the container addresses it (no trailing slash).</summary>
+    public string MavenUrl(string repository) => $"http://{ContainerAuthority}/r/{repository}/maven";
+
+    /// <summary>The Maven repository as the test process itself reaches it (no trailing slash).</summary>
+    public string LocalMavenUrl(string repository) => $"http://localhost:{Port}/r/{repository}/maven";
+
+    /// <summary>Creates a local Maven repository (<paramref name="policy"/>: Releases, Snapshots or Both).</summary>
+    public async Task CreateMavenRepositoryAsync(string name, string policy = "Releases", bool redeploy = false, bool anonymousRead = true)
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>().CreateAsync(
+            name,
+            RepositoryFormat.Maven,
+            RepositoryKind.Local,
+            new Dictionary<string, string?> { ["policy"] = policy, ["redeploy"] = redeploy ? "Yes" : "No", ["snapshotBuilds"] = "0" },
+            anonymousRead,
+            CancellationToken.None);
+    }
+
     /// <summary>Creates a remote npm repository that caches the registry at <paramref name="upstreamUrl"/>.</summary>
     public async Task CreateRemoteNpmRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
     {
