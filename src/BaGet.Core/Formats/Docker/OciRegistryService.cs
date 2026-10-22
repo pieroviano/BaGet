@@ -179,7 +179,8 @@ public class OciRegistryService : IOciRegistry
         }
         else
         {
-            if (!OciNames.IsValidTag(reference)) throw new OciException(OciErrorCode.TagInvalid, $"'{reference}' is not a valid tag.");
+            // Neither a digest nor a tag: nothing can be stored under it, so there is nothing to find.
+            if (!OciNames.IsValidTag(reference)) return null;
 
             manifest = await (from t in _context.OciTags!.AsNoTracking()
                               join m in _context.OciManifests!.AsNoTracking() on t.ManifestKey equals m.Key
@@ -718,9 +719,9 @@ public class OciRegistryService : IOciRegistry
     /// <inheritdoc/>
     public async Task<bool> DeleteTagAsync(string image, string tag, CancellationToken cancellationToken)
     {
-        if (!OciNames.IsValidTag(tag)) throw new OciException(OciErrorCode.TagInvalid, $"'{tag}' is not a valid tag.");
-
         var row = await RequireImageAsync(image, cancellationToken).ConfigureAwait(false);
+        if (!OciNames.IsValidTag(tag)) return false;
+
         var existing = await _context.OciTags!.FirstOrDefaultAsync(t => t.ImageKey == row.Key && t.Name == tag, cancellationToken).ConfigureAwait(false);
         if (existing == null) return false;
 

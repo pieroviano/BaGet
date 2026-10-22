@@ -1,16 +1,20 @@
 # Package formats
 
-A repository has a **format**. NuGet, npm (see [npm registry](npm-registry.md)) and Maven (local repositories, see [Maven repositories](maven-repositories.md)) have a protocol today; Docker follows. `/admin/formats` (administrators) lists what this server can host.
+A repository has a **format**. NuGet, npm (see [npm registry](npm-registry.md)), Maven (local repositories, see [Maven repositories](maven-repositories.md)) and Docker (local repositories, see [Docker registry](docker-registry.md)) have a protocol today. `/admin/formats` (administrators) lists what this server can host.
 
 | Format | Served under | Feed address | Repository kinds | Storage folders | Status |
 |---|---|---|---|---|---|
 | NuGet | the repository base (`/v3/…`, `/api/v2`, symbols) | `v3/index.json` | local, remote, virtual | `packages` `symbols` `catalog` `validation` `staging` | done |
 | npm | `npm/` | `npm/` | local, remote, virtual | `npm` | done ([details](npm-registry.md)) |
 | Maven | `maven/` | `maven/` | local | `maven` | done, local only ([details](maven-repositories.md)) |
-| Docker | | | | | not started |
+| Docker | `/v2/{repo}/{image}/…` (server root) | `v2/{repo}/` | local | `docker` | done, local only ([details](docker-registry.md)) |
 
 The *repository base* is `/` for `default` and `/r/{name}/` for the others, so an npm repository `web` is at `/r/web/npm/`. A
 route belongs to one format: asking a NuGet route of an npm repository (or an npm route of `default`, which is NuGet) is `404`.
+**Docker is the exception** (D2): the OCI Distribution Spec fixes the registry at `/v2/`, so a Docker repository is addressed as `/v2/{repo}/…`
+(the BaGet repository is the first path segment of the image name) and its routes carry `RepositoryRouteMetadata.ResolvesRepositoryItself`: the
+registry's own filter picks and authorizes the repository, answering in the registry's error format. A `FeedPath` containing `{repo}` is
+relative to the server root instead of the repository base.
 
 ## Module contract (`IFormatModule`, `BaGet.Core/Formats`)
 
@@ -64,18 +68,14 @@ Package owners are the common `PackageOwner` rows (repository-scoped, keyed by t
 
 Maven (built, migration `AddMavenTables`): `MavenArtifacts` (repo, `GroupId`, `ArtifactId`), `MavenVersions` (version, snapshot flag), `MavenFiles` (name, classifier, extension, size, sha1/sha256/md5/sha512, timestamp+build for snapshot builds); `maven-metadata.xml` is generated from the rows, never stored; GAV stays a string (index length on MySQL).
 
-Sketch for a later phase (not built):
-
-| Format | Tables | Notes |
-|---|---|---|
-| OCI | `OciRepositories` (repo, image path), `OciManifests` (digest, media type, size, `subject` digest for referrers), `OciTags` (tag to manifest digest, unique per image), `OciBlobs` (digest unique per registry, size, refcount), manifest-to-blob link table | blobs by digest, deduplicated across images; digests are `sha256:` + 64 hex (71); refcount drives garbage collection (P6) |
+Docker / OCI (built, migration `AddOciTables`; details in [Docker registry](docker-registry.md#storage-and-data)): `OciRepositories` (image per repository), `OciManifests` (digest, media type, artifact type, `subject` digest for referrers, the JSON as pushed), `OciTags` (case-sensitive, deleted with the manifest), `OciBlobs` (digest unique per repository, size, `RefCount`), `OciBlobLinks` (which image holds which blob; a blob is served only through its link) and `OciUploads` (open sessions). Blobs are files named by digest, stored once per repository; digests are `sha256:` + 64 hex (71, columns 140).
 
 ## Client authentication (B3)
 
 | Client | Flow | Verified |
 |---|---|---|
 | npm | `//host/:_authToken=T` in `.npmrc`; every request after carries `Authorization: Bearer T`. Nothing is sent unprompted without a token; a `401` is final (`E401`, no retry). `npm whoami` is `GET /-/whoami`. `npm login` tries `POST /-/v1/login` (web login); on `404` it falls back to `PUT /-/user/org.couchdb.user:NAME` with `{_id,name,password,type:"user",roles,date}` and expects `{ok,id,rev,token}`; the token is then stored as `_authToken`. The registry therefore needs **bearer tokens** (access tokens) and the CouchDB user call | real npm 10.9.9, `NpmClientFlowTests` |
-| Docker | `GET /v2/` answers `401` + `WWW-Authenticate: Bearer realm="…/token",service="…"`; `docker login` then sends `GET {realm}?account=U&client_id=docker&offline_token=true&service=S` with **Basic** (user and password or token), takes `{token,expires_in}` and retries `/v2/` with `Bearer`; pull and push ask `{realm}?scope=repository:NAME:pull,push&service=S` first. Plain HTTP only for `localhost` or an insecure registry. API keys do not fit; P5 adds the token endpoint | real Docker 27.5 in `docker:27-dind`, manual probe (not in the suite) |
+| Docker | `GET /v2/` answers `401` + `WWW-Authenticate: Bearer realm="…/token",service="…"`; `docker login` then sends `GET {realm}?account=U&client_id=docker&offline_token=true&service=S` with **Basic** (user and password or token), takes `{token,expires_in}` and retries `/v2/` with `Bearer`; pull and push ask `{realm}?scope=repository:NAME:pull,push&service=S` first. Plain HTTP only for `localhost` or an insecure registry. **Built (P5):** `GET /v2/token` validates the Basic credentials (an API key is the password) and answers a signed, short-lived, scope-limited token that never contains the key | real Docker 27 in `docker:27-dind` (`DockerCliTests`: login, push, pull, wrong key refused, private repository) |
 | Maven | HTTP Basic from `settings.xml` (`<server><id>` matching the repository id; user, password or token). Maven sends credentials **after a `401`** with `WWW-Authenticate: Basic`; deploy (`PUT`) also challenges first. `401` with a Basic challenge is enough | verified with the real `mvn` 3.9 (`MavenCliTests`): deploy and resolve both send the `settings.xml` credentials after the challenge; Maven 3.8.1+ also blocks plain-http repositories |
 
 ## Client test rigs (B6)
@@ -85,9 +85,10 @@ it with an empty `$HOME`. `HostRegistry` is a real Kestrel server on `0.0.0.0` t
 `host.docker.internal:{port}` (an extra host `host-gateway`, so Linux works too). `WebApplicationFactory` has no socket, so P3-npm
 hosts the real application on such a server for the CLI tests. The tests skip without a Docker daemon (as `BaGet.Database.Tests`).
 
-`docker:dind`: **feasible** on Docker Desktop (WSL2): `docker:27-dind` with `--privileged`, `DOCKER_TLS_CERTDIR=` and
-`--insecure-registry=<registry host:port>` reaches `docker info` in ~25 s and pulls from Docker Hub. A CI runner must allow privileged
-containers; the P5 tests skip when it does not. Maven: `ClientContainers.MavenAsync()` (`maven:3.9-eclipse-temurin-21`) needs no privilege and, like npm, runs `mvn` in a fresh `$HOME`; the plugins come from Maven Central.
+`docker:dind`: **used by `DockerCliTests`** (`DockerDaemon`): `docker:27-dind` with `--privileged`, `DOCKER_TLS_CERTDIR=` and
+`--insecure-registry=<registry host:port>` reaches `docker info` in ~25 s; the `docker` CLI runs inside the same container against the unix socket,
+each script with its own `DOCKER_CONFIG`. Images are built `FROM scratch` (no internet). A CI runner must allow privileged
+containers; the tests skip when it does not. Maven: `ClientContainers.MavenAsync()` (`maven:3.9-eclipse-temurin-21`) needs no privilege and, like npm, runs `mvn` in a fresh `$HOME`; the plugins come from Maven Central.
 
 ## Streaming storage (B2)
 
@@ -109,7 +110,7 @@ existing providers and tests are unaffected.
   content at commit, still streaming. The caller owns an upload's lifetime (sessions expire; abort).
 - **Reads:** S3, Aliyun and GCS serve a range as bounded 64 MiB requests (`WindowedReadStream`), each re-requested from the exact byte
   if its connection drops, so a many-GB `GET` is never one connection that must survive; Azure's read stream already works in windows.
-- **Refusal:** `IFormatModule.RequiresStreamingStorage` (default false; the Docker module of P5 sets it) makes `RepositoryService.CreateAsync` throw
+- **Refusal:** `IFormatModule.RequiresStreamingStorage` (default false; the Docker module sets it) makes `RepositoryService.CreateAsync` throw
   `NotSupportedException` (`StreamingStorage.Require`) for a local or remote repository of that format when the configured store is not
   an `IStreamingStorageService`; virtual repositories hold no blobs and are exempt. Every shipped provider streams, so today this guards custom stores.
 

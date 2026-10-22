@@ -107,13 +107,19 @@ public class OciNamesTests
     [InlineData("app")]
     [InlineData("app/blobs")]
     [InlineData("App/manifests/latest")]
-    [InlineData("app/manifests/.bad")]
     [InlineData("app/blobs/notadigest")]
     [InlineData("app/other/latest")]
     [InlineData("app/tags/other")]
     public void ThingsThatAreNotRegistryPathsAreNull(string? path)
     {
         Assert.Null(OciNames.Parse(path));
+    }
+
+    [Fact]
+    public void AnInvalidManifestReferenceStillParsesSoAReadCanAnswerNotFound()
+    {
+        Assert.Equal(new OciPath(OciPathKind.Manifest, "app", ".INVALID_MANIFEST_NAME"), OciNames.Parse("app/manifests/.INVALID_MANIFEST_NAME"));
+        Assert.Null(OciNames.Parse("app/manifests/" + new string('x', 301)));
     }
 
     [Fact]

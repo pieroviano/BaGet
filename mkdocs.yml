@@ -47,6 +47,7 @@ nav:
   - Package formats: formats.md
   - npm registry: npm-registry.md
   - Maven repositories: maven-repositories.md
+  - Docker registry: docker-registry.md
   - Remote repositories: remote-repositories.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md

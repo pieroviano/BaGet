@@ -57,12 +57,27 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Policy, redeploy, snapshot builds kept | service | RepositoryEdit: Maven settings (audited) | Admin |
 | Dependency / `settings.xml` / `<repositories>` / Gradle snippets | machine-only config | artifact and browse pages | read |
 
+## Docker registry (per repository, `/v2/{repo}/`)
+
+| Capability | Reached by | UI | Gate |
+|---|---|---|---|
+| Version check `GET /v2/` | REST | machine-only handshake (the browse page shows the registry address and `docker login`) | none (401 challenge) |
+| Token service `GET /v2/token` (`docker login`) | REST | machine-only; Account API keys creates the key used as the password; the browse page shows the login, `curl` and daemon snippets | API key / anonymous |
+| Pull: blobs (ranges), manifests, tag list, referrers | REST | `/docker-images` (browse, search), `/docker-images/{image}` (tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, the document) | Read |
+| Push: upload sessions (monolithic, chunked, mount), manifests | REST | machine-only (Docker CLI); the browse and image pages show the push, `buildx` and pull commands | Deploy |
+| Delete a tag | REST (`DELETE manifests/{tag}`) | DockerManage | Delete + Password |
+| Delete a manifest (with its tags) | REST (`DELETE manifests/{digest}`) | DockerManage | Delete + Password |
+| Delete a blob from an image | REST (`DELETE blobs/{digest}`) | covered by *Remove unused layers* (a blob in use is refused) | Delete |
+| Remove unused layers | service | DockerManage | Delete + Password |
+| Delete the whole image | service | DockerManage | Delete + Password |
+| Repository: create, list, anonymous read, delete | service | Repositories (Docker create form, Browse link), RepositoryEdit, RepositoryDelete | Admin |
+
 ## Repositories (Admin)
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
 | List, counts, feed URL, links per format | service | Admin Repositories | Admin |
-| Create local NuGet / npm / Maven | service | Repositories create forms | Admin |
+| Create local NuGet / npm / Maven / Docker | service | Repositories create forms | Admin |
 | Create remote (URL, credentials, cache periods, offline) | service | Repositories remote form, RepositoryEdit | Admin + Password |
 | Create virtual, members, order, upload target | service | Repositories virtual form, RepositoryEdit | Admin |
 | Virtual preview, remote connection test | service | RepositoryEdit: Preview, Test | Admin (+ Password for test) |

@@ -363,6 +363,29 @@ public class OciRegistryTests : IDisposable
         Assert.Null(Web.OciHttp.Required("DELETE", OciPathKind.TagList));
     }
 
+    [Fact]
+    public void EveryRegistryRouteIsServedByTheControllerThatAuthorizesAndNoActionEscapesTheFilter()
+    {
+        // Deny by default: a route of the Docker format that did not resolve and authorize itself would be read like a NuGet route.
+        var endpoints = _app.Services.GetServices<Microsoft.AspNetCore.Routing.EndpointDataSource>().SelectMany(s => s.Endpoints).OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>()
+            .Where(e => e.Metadata.GetMetadata<Web.RepositoryRouteMetadata>()?.Format == RepositoryFormat.Docker)
+            .ToList();
+
+        Assert.NotEmpty(endpoints);
+        foreach (var endpoint in endpoints)
+        {
+            var metadata = endpoint.Metadata.GetMetadata<Web.RepositoryRouteMetadata>()!;
+            Assert.True(metadata.ResolvesRepositoryItself && metadata.AuthorizesItself, endpoint.RoutePattern.RawText);
+            Assert.StartsWith("v2", endpoint.RoutePattern.RawText);
+            Assert.Equal("Oci", endpoint.RoutePattern.RequiredValues["controller"]);
+        }
+
+        // Every other action of the controller sits behind the authorization filter (the attribute is on the class).
+        Assert.Contains(typeof(Web.OciController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ServiceFilterAttribute), inherit: true).Cast<Microsoft.AspNetCore.Mvc.ServiceFilterAttribute>(), a => a.ServiceType == typeof(Web.OciAuthorizationFilter));
+        var actions = typeof(Web.OciController).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly);
+        Assert.Equal(new[] { "Base", "Delete", "Get", "Patch", "Post", "Put", "Token" }, actions.Select(a => a.Name).OrderBy(n => n).ToArray());
+    }
+
     // ---- blobs ----
 
     [Fact]
@@ -851,6 +874,27 @@ public class OciRegistryTests : IDisposable
         using var image = await SendAsync(HttpMethod.Get, "/v2/libs/ghost/manifests/1", other);
         Assert.Equal(HttpStatusCode.NotFound, image.StatusCode);
         Assert.Equal("NAME_UNKNOWN", ErrorCode(await TextAsync(image)));
+    }
+
+    [Fact]
+    public async Task AReadOfAReferenceThatCannotBeATagIs404AndAPutOfOneIs400()
+    {
+        await CreateAsync();
+        var token = await PushTokenAsync();
+        var image = OciTestImage.Create("badtag");
+        await PushBlobAsync(token, "libs/app", image.Config);
+        await PushBlobAsync(token, "libs/app", image.Layers[0]);
+
+        using var head = await SendAsync(HttpMethod.Head, "/v2/libs/app/manifests/.INVALID_MANIFEST_NAME", token);
+        Assert.Equal(HttpStatusCode.NotFound, head.StatusCode);
+        using var get = await SendAsync(HttpMethod.Get, "/v2/libs/app/manifests/.INVALID_MANIFEST_NAME", token);
+        Assert.Equal(HttpStatusCode.NotFound, get.StatusCode);
+        using var delete = await SendAsync(HttpMethod.Delete, "/v2/libs/app/manifests/.INVALID_MANIFEST_NAME", token);
+        Assert.Equal(HttpStatusCode.NotFound, delete.StatusCode);
+
+        using var put = await PutManifestAsync(token, "libs/app", ".INVALID_MANIFEST_NAME", image.Manifest);
+        Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        Assert.Equal("TAG_INVALID", ErrorCode(await TextAsync(put)));
     }
 
     [Fact]

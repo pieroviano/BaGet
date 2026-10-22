@@ -134,6 +134,18 @@ configuration: if it is refused the `mirror` repository is not created (a warnin
 
 See [npm registry](npm-registry.md).
 
+## Docker repositories
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Oci:TokenLifetime` | `00:05:00` | validity of a registry token from `/v2/token` (at least 10 seconds). Live |
+| `Oci:Service` | `BaGet` | the `service` named in the registry's `WWW-Authenticate` challenge and expected at the token endpoint. Live |
+| `Oci:MaxManifestBytes` | `4194304` | largest manifest or index in bytes (413 above). Live |
+| `Oci:UploadExpiry` | `1.00:00:00` | idle time after which an upload session is discarded (checked when a new upload starts). Live |
+| `Oci:PruneGrace` | `01:00:00` | how long a layer no manifest uses is kept before *Remove unused layers* may remove it. Live |
+
+See [Docker registry](docker-registry.md).
+
 ## Enable package hard deletions
 
 To prevent the ["left pad" problem](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm),

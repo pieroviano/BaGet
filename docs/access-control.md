@@ -25,7 +25,7 @@ reads, any authenticated caller writes subject to ownership, as before.
 | `Read` | Feed, symbols, catalog, registrations, package pages of the repository; npm: packuments, tarballs, search, the browse and package pages |
 | `Annotate` | Deprecation and vulnerabilities; npm: `npm deprecate` |
 | `Deploy` | Push new packages and versions. Never held on a [remote repository](remote-repositories.md) (not by administrators either): it only holds what the server cached. Never held on a [virtual repository](virtual-repositories.md#writes) either: a push to it is judged on its deploy repository |
-| `Delete` | Unlist, relist, delete; npm: unpublish (a version younger than `Npm:UnpublishWindow` needs only `Deploy`, see [npm registry](npm-registry.md#unpublish-policy)) |
+| `Delete` | Unlist, relist, delete; Docker: delete tags, manifests and blobs (pull = Read, push = Deploy; the image name is the package id of the patterns, see [Docker registry](docker-registry.md#access)); npm: unpublish (a version younger than `Npm:UnpublishWindow` needs only `Deploy`, see [npm registry](npm-registry.md#unpublish-policy)) |
 | `Manage` | The package's Manage page (owners, unlist, deprecation): an owner needs it as well as ownership; administrators hold it everywhere |
 
 Actions are independent: `Deploy` does not imply `Read`. A caller holds an action when **any** applicable grant carries it.

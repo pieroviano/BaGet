@@ -179,7 +179,9 @@ public static class OciNames
                 return LooksLikeDigest(last) ? Build(OciPathKind.Blob, segments, 2, last) : null;
 
             case "manifests":
-                return IsValidTag(last) || LooksLikeDigest(last) ? Build(OciPathKind.Manifest, segments, 2, last) : null;
+                // Any reference is accepted here: a read of one that is neither a tag nor a digest is "unknown" (404), as the
+                // specification's conformance suite expects, and only a PUT refuses it (TAG_INVALID).
+                return last.Length is > 0 and <= 300 ? Build(OciPathKind.Manifest, segments, 2, last) : null;
 
             case "referrers":
                 return LooksLikeDigest(last) ? Build(OciPathKind.Referrers, segments, 2, last) : null;

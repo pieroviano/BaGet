@@ -114,6 +114,14 @@ public sealed class BaGetServer : IAsyncDisposable
             CancellationToken.None);
     }
 
+    /// <summary>Creates a local Docker repository (its registry is at <c>/v2/{name}/</c>).</summary>
+    public async Task CreateDockerRepositoryAsync(string name, bool anonymousRead = true)
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.Docker, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, CancellationToken.None);
+    }
+
     /// <summary>Creates a remote npm repository that caches the registry at <paramref name="upstreamUrl"/>.</summary>
     public async Task CreateRemoteNpmRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
     {
