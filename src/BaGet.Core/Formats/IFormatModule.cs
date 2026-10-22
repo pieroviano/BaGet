@@ -57,6 +57,13 @@ public interface IFormatModule
     bool SupportsVirtual => false;
 
     /// <summary>
+    /// Whether the format stores blobs too large to buffer (Docker layers) and so needs a store that is an
+    /// <see cref="IStreamingStorageService"/>. A repository of such a format is refused at creation when the configured store
+    /// cannot stream (<see cref="StreamingStorage.Require"/>).
+    /// </summary>
+    bool RequiresStreamingStorage => false;
+
+    /// <summary>
     /// The top-level storage folders the format writes below a repository's <see cref="RepositoryStorage.Prefix"/>
     /// (<c>packages</c>, <c>symbols</c>…). Two modules may not claim the same folder, nor <see cref="RepositoryStorage.ReposFolder"/>:
     /// <see cref="FormatRegistry"/> refuses the registration, since a collision would let one format read another's files.

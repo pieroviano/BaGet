@@ -13,21 +13,31 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Gcp;
 
-public class GoogleCloudStorageService : IStorageService, IListableStorageService
+public partial class GoogleCloudStorageService : IStreamingStorageService, IListableStorageService
 {
     private readonly string? _bucketName;
+    private readonly Func<Task<StorageClient>> _clientFactory;
 
     public GoogleCloudStorageService(IOptionsSnapshot<GoogleCloudStorageOptions> options)
+        : this(options, () => StorageClient.CreateAsync())
+    {
+    }
+
+    /// <summary>Builds the service over a client other than the default one (an emulator, in tests).</summary>
+    internal GoogleCloudStorageService(IOptionsSnapshot<GoogleCloudStorageOptions> options, Func<Task<StorageClient>> clientFactory)
     {
         if (options == null)
             throw new ArgumentNullException(nameof(options));
 
         _bucketName = options.Value.BucketName;
+        _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
     }
+
+    private Task<StorageClient> CreateClientAsync() => _clientFactory();
 
     public async Task<Stream> GetAsync(string path, CancellationToken cancellationToken = default)
     {
-        using (var storage = await StorageClient.CreateAsync())
+        using (var storage = await CreateClientAsync())
         {
             var stream = new MemoryStream();
             await storage.DownloadObjectAsync(_bucketName, CoercePath(path), stream, cancellationToken: cancellationToken);
@@ -44,7 +54,7 @@ public class GoogleCloudStorageService : IStorageService, IListableStorageServic
 
     public async Task<StoragePutResult> PutAsync(string path, Stream content, string contentType, CancellationToken cancellationToken = default)
     {
-        using (var storage = await StorageClient.CreateAsync())
+        using (var storage = await CreateClientAsync())
         using (var seekableContent = new MemoryStream())
         {
             await content.CopyToAsync(seekableContent, 65536, cancellationToken);
@@ -78,7 +88,7 @@ public class GoogleCloudStorageService : IStorageService, IListableStorageServic
 
     public async Task DeleteAsync(string path, CancellationToken cancellationToken = default)
     {
-        using (var storage = await StorageClient.CreateAsync())
+        using (var storage = await CreateClientAsync())
         {
             try
             {
@@ -102,7 +112,7 @@ public class GoogleCloudStorageService : IStorageService, IListableStorageServic
         var prefix = CoercePath(pathPrefix).TrimEnd('/') + "/";
         var paths = new List<string>();
 
-        using (var storage = await StorageClient.CreateAsync())
+        using (var storage = await CreateClientAsync())
         {
             // The object's name is already the path IStorageService takes.
             await foreach (var item in storage.ListObjectsAsync(_bucketName, prefix).WithCancellation(cancellationToken))

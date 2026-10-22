@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Azure.Tests" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Storage.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>

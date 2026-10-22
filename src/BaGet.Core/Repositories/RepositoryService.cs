@@ -22,14 +22,17 @@ public class RepositoryService : IRepositoryService
     private readonly RemoteSettingsCodec _codec;
     private readonly IOptionsSnapshot<RemoteOptions>? _remoteOptions;
     private readonly FormatRegistry _formats;
+    private readonly IStorageService? _storage;
 
     /// <param name="context">The database.</param>
     /// <param name="search">The search options (whether the index is repository-aware).</param>
     /// <param name="codec">Writes a remote repository's settings; null stores them without being able to protect a password.</param>
     /// <param name="remoteOptions">The <c>Remote:*</c> options (whether private upstream addresses are refused).</param>
     /// <param name="formats">The format modules (which formats and kinds can be created); null knows NuGet only.</param>
-    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null, RemoteSettingsCodec? codec = null, IOptionsSnapshot<RemoteOptions>? remoteOptions = null, FormatRegistry? formats = null)
+    /// <param name="storage">The configured store; a format that <see cref="IFormatModule.RequiresStreamingStorage"/> is refused when it cannot stream. Null skips that check.</param>
+    public RepositoryService(IContext context, IOptions<SearchOptions>? search = null, RemoteSettingsCodec? codec = null, IOptionsSnapshot<RemoteOptions>? remoteOptions = null, FormatRegistry? formats = null, IStorageService? storage = null)
     {
+        _storage = storage;
         _formats = formats ?? FormatRegistry.Default;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _search = search;
@@ -146,6 +149,12 @@ public class RepositoryService : IRepositoryService
 
         var module = _formats.Find(format)
             ?? throw new NotSupportedException($"The {format} format is not available on this server.");
+        // A virtual repository holds no blobs of its own; local and remote ones of a streaming format need a store that streams.
+        if (module.RequiresStreamingStorage && kind != RepositoryKind.Virtual && _storage != null)
+        {
+            StreamingStorage.Require(_storage, $"{module.DisplayName} repositories");
+        }
+
         if (!module.CreatableKinds.Contains(kind))
         {
             throw new NotSupportedException(

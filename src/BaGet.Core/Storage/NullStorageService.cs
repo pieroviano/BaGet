@@ -7,10 +7,37 @@ using System.Threading.Tasks;
 namespace BaGet.Core;
 
 /// <summary>
-/// A minimal storage implementation, used for advanced scenarios.
+/// A minimal storage implementation, used for advanced scenarios. It is a streaming store that holds nothing: uploaded
+/// bytes are counted and discarded, nothing is ever readable, and a commit finds no upload.
 /// </summary>
-public class NullStorageService : IStorageService, IListableStorageService
+public class NullStorageService : IStreamingStorageService, IListableStorageService
 {
+    public Task<string> BeginUploadAsync(string contentType, CancellationToken cancellationToken = default)
+        => Task.FromResult(Guid.NewGuid().ToString("N"));
+
+    public async Task<long> AppendAsync(string uploadId, long offset, Stream chunk, CancellationToken cancellationToken = default)
+    {
+        var buffer = new byte[81920];
+        var total = offset;
+        int read;
+        while ((read = await chunk.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0) total += read;
+        return total;
+    }
+
+    public Task<long?> GetUploadLengthAsync(string uploadId, CancellationToken cancellationToken = default)
+        => Task.FromResult<long?>(null);
+
+    public Task<StorageCommitResult> CommitAsync(string uploadId, string path, string? expectedSha256, CancellationToken cancellationToken = default)
+        => throw new StorageUploadNotFoundException(uploadId);
+
+    public Task AbortAsync(string uploadId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task<StorageBlobInfo?> GetInfoAsync(string path, CancellationToken cancellationToken = default)
+        => Task.FromResult<StorageBlobInfo?>(null);
+
+    public Task<Stream?> GetRangeAsync(string path, long offset, long? length, CancellationToken cancellationToken = default)
+        => Task.FromResult<Stream?>(null);
+
     public Task DeleteAsync(string path, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Aliyun;
 
-public class AliyunStorageService : IStorageService, IListableStorageService
+public partial class AliyunStorageService : IStreamingStorageService, IListableStorageService
 {
     private const string Separator = "/";
 

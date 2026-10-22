@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Aws;
 
-public class S3StorageService : IStorageService, IListableStorageService
+public partial class S3StorageService : IStreamingStorageService, IListableStorageService
 {
     private const string Separator = "/";
 

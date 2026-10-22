@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Azure;
 
 // See: https://github.com/NuGet/NuGetGallery/blob/master/src/NuGetGallery.Core/Services/CloudBlobCoreFileStorageService.cs
-public class BlobStorageService : IStorageService, IListableStorageService
+public partial class BlobStorageService : IStreamingStorageService, IListableStorageService
 {
     private readonly CloudBlobContainer _container;
     private readonly TimeSpan _downloadUriExpiry;
