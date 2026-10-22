@@ -45,6 +45,9 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         "/MavenArtifact",
         "/MavenUpload",
         "/Packages/MavenManage",
+        "/DockerImages",
+        "/DockerImage",
+        "/Packages/DockerManage",
     };
 
     /// <summary>
@@ -62,6 +65,9 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         { "/MavenArtifact", BaGet.Core.RepositoryFormat.Maven },
         { "/MavenUpload", BaGet.Core.RepositoryFormat.Maven },
         { "/Packages/MavenManage", BaGet.Core.RepositoryFormat.Maven },
+        { "/DockerImages", BaGet.Core.RepositoryFormat.Docker },
+        { "/DockerImage", BaGet.Core.RepositoryFormat.Docker },
+        { "/Packages/DockerManage", BaGet.Core.RepositoryFormat.Docker },
     };
 
     /// <summary>The format a repository page serves (NuGet unless <see cref="PageFormats"/> says otherwise).</summary>

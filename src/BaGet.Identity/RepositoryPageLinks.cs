@@ -24,6 +24,8 @@ public static class RepositoryPageLinks
             ? Prefix(repositoryName) + "npm-packages/" + NpmPath(id)
             : format == RepositoryFormat.Maven
             ? Prefix(repositoryName) + "maven-artifacts/" + MavenPath(id)
+            : format == RepositoryFormat.Docker
+            ? Prefix(repositoryName) + "docker-images/" + NpmPath(id)
             : Prefix(repositoryName) + "packages/" + Uri.EscapeDataString(id ?? string.Empty);
 
     /// <summary>The management page of <paramref name="id"/>.</summary>
@@ -35,6 +37,8 @@ public static class RepositoryPageLinks
             ? Prefix(repositoryName) + "npm-manage/" + NpmPath(id)
             : format == RepositoryFormat.Maven
             ? Prefix(repositoryName) + "maven-manage/" + MavenPath(id)
+            : format == RepositoryFormat.Docker
+            ? Prefix(repositoryName) + "docker-manage/" + NpmPath(id)
             : Package(repositoryName, id) + "/manage";
 
     // A scoped name keeps its slash in the address (the pages take the rest of the path).

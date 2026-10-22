@@ -35,6 +35,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
         "/Packages/Manage",
         "/Packages/NpmManage",
         "/Packages/MavenManage",
+        "/Packages/DockerManage",
         "/Packages/ContactOwners",
         "/Packages/ValidationStatus",
     };
@@ -88,6 +89,19 @@ public class RepositoryPageFilter : IAsyncPageFilter
                 }
 
                 packageId = MavenNames.ArtifactName(mavenGroup, mavenArtifact);
+            }
+
+            if (repository.Format == RepositoryFormat.Docker
+                && context.RouteData.Values.TryGetValue("image", out var image) && image is string dockerImage)
+            {
+                // A Docker page names its image in the address; the access patterns see the (lower-case) image name, as the registry routes do.
+                if (!OciNames.IsValidImage(dockerImage))
+                {
+                    context.Result = new NotFoundResult();
+                    return;
+                }
+
+                packageId = dockerImage;
             }
 
             // The upload pages show no package data of the repository, so they need the right to publish

@@ -95,7 +95,7 @@ public class RepositoryEditModel : RepositoryPageModel
         .FirstOrDefault(l => l.Id == "browse" && l.Page != null)?.Page ?? "/Index";
 
     /// <summary>The name of what a package is called in this repository's format (shown in the labels).</summary>
-    public string PackageWord => Repository?.Format switch { RepositoryFormat.Npm => "package name", RepositoryFormat.Maven => "artifact (group:artifact)", _ => "package id" };
+    public string PackageWord => Repository?.Format switch { RepositoryFormat.Npm => "package name", RepositoryFormat.Maven => "artifact (group:artifact)", RepositoryFormat.Docker => "image name", _ => "package id" };
 
     /// <summary>The repository's feed address.</summary>
     public string FeedUrl => RepositoryFeedUrl.For(

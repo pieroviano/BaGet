@@ -18,7 +18,9 @@ internal static class RepositoryFeedUrl
     /// falling back to the request.
     /// </summary>
     public static string For(HttpContext http, string repositoryName, string feedPath = ServiceIndexPath)
-        => BaseFor(http, repositoryName) + feedPath;
+        => feedPath.Contains("{repo}", System.StringComparison.Ordinal)
+            ? BaseFor(http, Repository.DefaultName) + feedPath.Replace("{repo}", repositoryName)
+            : BaseFor(http, repositoryName) + feedPath;
 
     /// <summary>
     /// The address of the repository's base (ends with a slash): where its format's routes start.
