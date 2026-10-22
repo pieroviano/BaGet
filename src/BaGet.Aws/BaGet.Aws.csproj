@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="BaGet.Storage.Tests" />
+    <InternalsVisibleTo Include="BaGet.Storage.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>
