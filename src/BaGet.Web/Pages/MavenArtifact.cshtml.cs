@@ -102,9 +102,9 @@ public class MavenArtifactModel : PageModel
             };
         }
 
-        // Owners and the manage page belong to a repository that holds artifacts of its own.
+        // Owners and the manage page belong to a repository that holds artifacts of its own (a local one).
         var services = HttpContext.RequestServices;
-        if (services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
+        if (_repository.Current.Kind == RepositoryKind.Local && services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
         {
             var ownership = services.GetService<PackageOwnershipService>();
             if (ownership != null)

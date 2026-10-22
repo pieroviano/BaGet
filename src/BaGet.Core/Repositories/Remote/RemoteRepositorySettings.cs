@@ -22,6 +22,13 @@ public enum RemoteProtocol
     /// an npm repository, set from its format (the create and edit forms do not offer a choice).
     /// </summary>
     Npm = 2,
+
+    /// <summary>
+    /// The Maven 2 repository layout (files at <c>{url}/{group/as/folders}/{artifact}/{version}/{file}</c>, <c>maven-metadata.xml</c>
+    /// beside them): the only protocol of a Maven repository, set from its format (Maven Central is
+    /// <c>https://repo.maven.apache.org/maven2/</c>).
+    /// </summary>
+    Maven = 3,
 }
 
 /// <summary>
@@ -38,7 +45,7 @@ public sealed class RemoteRepositorySettings
     /// <summary>The largest cache period accepted: one year.</summary>
     public const int MaxTtlSeconds = 365 * 24 * 3600;
 
-    /// <summary>The upstream: a V3 <c>index.json</c> URL or a V2 feed URL, or the base URL of an npm registry (absolute http or https).</summary>
+    /// <summary>The upstream: a V3 <c>index.json</c> URL or a V2 feed URL, the base URL of an npm registry or the root of a Maven repository (absolute http or https).</summary>
     public string? Url { get; set; }
 
     /// <summary>The protocol of <see cref="Url"/>.</summary>
@@ -99,8 +106,9 @@ public sealed class RemoteRepositorySettings
 
     /// <summary>
     /// A copy whose <see cref="Protocol"/> fits <paramref name="format"/>: an npm repository speaks <see cref="RemoteProtocol.Npm"/>
-    /// only (the forms do not ask), a NuGet one V3 or V2 (a stray <see cref="RemoteProtocol.Npm"/> becomes V3, which then fails
-    /// the connection test rather than silently speaking npm to a NuGet feed).
+    /// only and a Maven one <see cref="RemoteProtocol.Maven"/> only (the forms do not ask), a NuGet one V3 or V2 (a stray npm or
+    /// Maven protocol becomes V3, which then fails the connection test rather than silently speaking another protocol to a
+    /// NuGet feed).
     /// </summary>
     public RemoteRepositorySettings ForFormat(RepositoryFormat format)
     {
@@ -109,7 +117,11 @@ public sealed class RemoteRepositorySettings
         {
             copy.Protocol = RemoteProtocol.Npm;
         }
-        else if (copy.Protocol == RemoteProtocol.Npm)
+        else if (format == RepositoryFormat.Maven)
+        {
+            copy.Protocol = RemoteProtocol.Maven;
+        }
+        else if (copy.Protocol is RemoteProtocol.Npm or RemoteProtocol.Maven)
         {
             copy.Protocol = RemoteProtocol.V3;
         }
@@ -159,6 +171,10 @@ public sealed class RemoteRepositorySettings
         else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.Npm)
         {
             problems.Add("The npm registry URL must not have a query string.");
+        }
+        else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.Maven)
+        {
+            problems.Add("The Maven repository URL must not have a query string.");
         }
 
         if (blockPrivateAddresses)

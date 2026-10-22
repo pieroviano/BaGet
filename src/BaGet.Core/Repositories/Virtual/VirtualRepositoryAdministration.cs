@@ -59,11 +59,11 @@ public enum ResolutionOutcome
 public sealed record ResolutionStep(RepositoryInfo Member, ResolutionOutcome Outcome);
 
 /// <summary>Where a package version would come from, member by member.</summary>
-/// <param name="PackageId">The package id asked about.</param>
-/// <param name="Version">The version asked about.</param>
+/// <param name="PackageId">The package id asked about (<c>group:artifact</c> for Maven).</param>
+/// <param name="Version">The version asked about, as written for the format (a NuGet or npm version in its normalized form; a Maven version as typed).</param>
 /// <param name="Steps">The effective members in resolution order and what each found.</param>
 /// <param name="Answers">The member that answers (the first that stores the version or whose upstream has it), or null when none.</param>
-public sealed record ResolutionPreview(string PackageId, NuGetVersion Version, IReadOnlyList<ResolutionStep> Steps, RepositoryInfo? Answers);
+public sealed record ResolutionPreview(string PackageId, string Version, IReadOnlyList<ResolutionStep> Steps, RepositoryInfo? Answers);
 
 /// <summary>
 /// Creates, edits and explains virtual repositories. What the administration pages use; writes go through the database
@@ -111,6 +111,15 @@ public interface IVirtualRepositoryAdministration
     /// </summary>
     /// <exception cref="KeyNotFoundException">No such virtual repository.</exception>
     Task<ResolutionPreview> PreviewAsync(string name, string packageId, NuGetVersion version, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Like <see cref="PreviewAsync(string, string, NuGetVersion, CancellationToken)"/> for a version written as text: a Maven version
+    /// (<c>5.3.20.RELEASE</c>, <c>1.0-SNAPSHOT</c>) is not always a NuGet version, and the package id of a Maven repository is
+    /// <c>group:artifact</c>. A NuGet or npm repository still needs a version that parses.
+    /// </summary>
+    /// <exception cref="KeyNotFoundException">No such virtual repository.</exception>
+    /// <exception cref="ArgumentException">The version or the package id is not valid for the repository's format.</exception>
+    Task<ResolutionPreview> PreviewAsync(string name, string packageId, string version, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -261,10 +270,32 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
     }
 
     /// <inheritdoc/>
-    public async Task<ResolutionPreview> PreviewAsync(string name, string packageId, NuGetVersion version, CancellationToken cancellationToken)
+    public Task<ResolutionPreview> PreviewAsync(string name, string packageId, NuGetVersion version, CancellationToken cancellationToken)
+        => PreviewAsync(name, packageId, version?.ToFullString() ?? throw new ArgumentNullException(nameof(version)), cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<ResolutionPreview> PreviewAsync(string name, string packageId, string version, CancellationToken cancellationToken)
     {
+        if (version == null) throw new ArgumentNullException(nameof(version));
+
         var detail = await FindAsync(name, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"There is no virtual repository named '{name}'.");
+
+        // NuGet and npm versions are semantic versions; a Maven version is any version folder name.
+        NuGetVersion? parsed = null;
+        string shown = version;
+        string group = string.Empty, artifact = string.Empty;
+        if (detail.Repository.Format == RepositoryFormat.Maven)
+        {
+            if (!MavenNames.TryParseArtifactName(packageId, out group, out artifact)) throw new ArgumentException($"{packageId} is not an artifact: write it as group:artifact.", nameof(packageId));
+            if (!MavenNames.IsValidVersion(version)) throw new ArgumentException($"{version} is not a valid version.", nameof(version));
+        }
+        else
+        {
+            if (!NuGetVersion.TryParse(version, out parsed)) throw new ArgumentException($"{version} is not a valid version.", nameof(version));
+
+            shown = parsed.ToNormalizedString();
+        }
 
         var steps = new List<ResolutionStep>();
         RepositoryInfo? answers = null;
@@ -278,7 +309,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
             {
                 // Only the stored copy is looked at (cheap and local): it shows a member the answering one shadows.
                 using var scope = _scopes.CreateRepositoryScope(member);
-                if (await StoredAsync(scope.ServiceProvider, detail.Repository.Format, packageId, version, cancellationToken).ConfigureAwait(false))
+                if (await StoredAsync(scope.ServiceProvider, detail.Repository.Format, packageId, parsed, group, artifact, version, cancellationToken).ConfigureAwait(false))
                 {
                     outcome = ResolutionOutcome.Stored;
                 }
@@ -290,11 +321,15 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
                 using var scope = _scopes.CreateRepositoryScope(member);
                 try
                 {
-                    outcome = detail.Repository.Format == RepositoryFormat.Npm
-                        ? await scope.ServiceProvider.GetRequiredService<INpmRegistry>()
-                            .ProbeAsync(packageId.ToLowerInvariant(), version.ToFullString(), cancellationToken).ConfigureAwait(false)
-                        : await scope.ServiceProvider.GetRequiredService<PackageService>()
-                            .ProbeAsync(packageId, version, cancellationToken).ConfigureAwait(false);
+                    outcome = detail.Repository.Format switch
+                    {
+                        RepositoryFormat.Npm => await scope.ServiceProvider.GetRequiredService<INpmRegistry>()
+                            .ProbeAsync(packageId.ToLowerInvariant(), parsed!.ToFullString(), cancellationToken).ConfigureAwait(false),
+                        RepositoryFormat.Maven => await scope.ServiceProvider.GetRequiredService<IMavenRepository>()
+                            .ProbeAsync(group, artifact, version, cancellationToken).ConfigureAwait(false),
+                        _ => await scope.ServiceProvider.GetRequiredService<PackageService>()
+                            .ProbeAsync(packageId, parsed!, cancellationToken).ConfigureAwait(false),
+                    };
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -306,20 +341,34 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
             steps.Add(new ResolutionStep(member, outcome));
         }
 
-        return new ResolutionPreview(packageId, version, steps, answers);
+        return new ResolutionPreview(packageId, shown, steps, answers);
     }
 
     // Whether the member's own storage holds the version (cheap and local).
-    private static async Task<bool> StoredAsync(IServiceProvider services, RepositoryFormat format, string packageId, NuGetVersion version, CancellationToken cancellationToken)
+    private static async Task<bool> StoredAsync(
+        IServiceProvider services,
+        RepositoryFormat format,
+        string packageId,
+        NuGetVersion? parsed,
+        string group,
+        string artifact,
+        string version,
+        CancellationToken cancellationToken)
     {
+        if (format == RepositoryFormat.Maven)
+        {
+            // A Maven member's stored copy only: the probe of a remote member would ask its upstream, which a shadowed member must not.
+            return await services.GetRequiredService<MavenRepositoryService>().HasVersionAsync(group, artifact, version, cancellationToken).ConfigureAwait(false);
+        }
+
         if (format != RepositoryFormat.Npm)
         {
-            return await services.GetRequiredService<IPackageDatabase>().ExistsAsync(packageId, version, cancellationToken).ConfigureAwait(false);
+            return await services.GetRequiredService<IPackageDatabase>().ExistsAsync(packageId, parsed!, cancellationToken).ConfigureAwait(false);
         }
 
         // An npm member's stored copy only: the probe of a remote member would ask its upstream, which a shadowed member must not.
         return await services.GetRequiredService<NpmRegistryService>()
-            .ProbeAsync(packageId.ToLowerInvariant(), version.ToFullString(), cancellationToken).ConfigureAwait(false) == ResolutionOutcome.Stored;
+            .ProbeAsync(packageId.ToLowerInvariant(), parsed!.ToFullString(), cancellationToken).ConfigureAwait(false) == ResolutionOutcome.Stored;
     }
 
     private static object Describe(VirtualRepositorySettings settings)

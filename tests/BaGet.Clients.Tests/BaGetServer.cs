@@ -122,6 +122,48 @@ public sealed class BaGetServer : IAsyncDisposable
             .CreateAsync(name, RepositoryFormat.Docker, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead, CancellationToken.None);
     }
 
+    /// <summary>Creates a remote Maven repository that caches the repository at <paramref name="upstreamUrl"/>.</summary>
+    public async Task CreateRemoteMavenRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
+    {
+        var settings = new RemoteRepositorySettings { Url = upstreamUrl, Protocol = RemoteProtocol.Maven };
+        change?.Invoke(settings);
+
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+            .CreateAsync(name, RepositoryFormat.Maven, RepositoryKind.Remote, settings, anonymousRead: true, CancellationToken.None);
+    }
+
+    /// <summary>Creates a virtual Maven repository of <paramref name="members"/> (in order) that deploys to <paramref name="deploy"/>.</summary>
+    public async Task CreateVirtualMavenRepositoryAsync(string name, string[] members, string? deploy)
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>().CreateAsync(
+            name,
+            new VirtualRepositorySettings { Members = members.ToList(), DeployRepository = deploy },
+            CancellationToken.None,
+            actor: null,
+            anonymousRead: true,
+            RepositoryFormat.Maven);
+    }
+
+    /// <summary>The artifacts (<c>group:artifact</c>) with their versions that the repository itself stored (rows), whatever its upstream says.</summary>
+    public async Task<IReadOnlyDictionary<string, string[]>> StoredMavenAsync(string repository)
+    {
+        using var scope = Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<IRepositoryContext>()
+            .Use((await scope.ServiceProvider.GetRequiredService<IRepositoryService>().FindAsync(repository, CancellationToken.None))!);
+
+        var maven = scope.ServiceProvider.GetRequiredService<MavenRepositoryService>();
+        var result = new Dictionary<string, string[]>();
+        foreach (var hit in (await maven.SearchAsync(null, 0, 250, null, CancellationToken.None)).Hits)
+        {
+            var artifact = await maven.GetArtifactAsync(hit.GroupId, hit.ArtifactId, CancellationToken.None);
+            result[hit.CoordinateName] = artifact!.Versions.Select(v => v.Version).ToArray();
+        }
+
+        return result;
+    }
+
     /// <summary>Creates a remote npm repository that caches the registry at <paramref name="upstreamUrl"/>.</summary>
     public async Task CreateRemoteNpmRepositoryAsync(string name, string upstreamUrl, Action<RemoteRepositorySettings>? change = null)
     {

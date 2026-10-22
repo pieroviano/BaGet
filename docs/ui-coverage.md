@@ -55,6 +55,10 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Snapshot clean-up (keep newest N builds) | service | MavenManage | Manage + Password |
 | Owners | service | MavenManage | Manage |
 | Policy, redeploy, snapshot builds kept | service | RepositoryEdit: Maven settings (audited) | Admin |
+| Remote Maven repository: create (URL, credentials, periods, offline, store locally) | service | Repositories > *New remote repository* (format Maven) | Admin + Password |
+| Remote Maven: edit upstream, *Test connection*, cache table, *Purge cache*, *Purge package* (`group:artifact`, version text) | service | RepositoryEdit (`/admin/repositories/{name}`) | Admin + Password |
+| Remote Maven: read through (`GET`/`HEAD` of files, checksums, metadata) | REST | `/maven-artifacts` (the stored artifacts), snippets incl. the Central `<mirror>` | read |
+| Virtual Maven repository: create, members, order, deploy repository, *Where would an artifact come from?* | service | Repositories > *New virtual repository* (format Maven); RepositoryEdit members and preview (`group:artifact`, any version) | Admin |
 | Dependency / `settings.xml` / `<repositories>` / Gradle snippets | machine-only config | artifact and browse pages | read |
 
 ## Docker registry (per repository, `/v2/{repo}/`)

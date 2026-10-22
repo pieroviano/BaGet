@@ -80,6 +80,10 @@ public class MavenRepositoryService : IMavenRepository
         return _settings = MavenRepositorySettings.Parse(json);
     }
 
+    /// <inheritdoc/>
+    public async Task<ResolutionOutcome> ProbeAsync(string groupId, string artifactId, string version, CancellationToken cancellationToken)
+        => await HasVersionAsync(groupId, artifactId, version, cancellationToken).ConfigureAwait(false) ? ResolutionOutcome.Stored : ResolutionOutcome.NotFound;
+
     // ---- reads ----------------------------------------------------------------------------------------------------------
 
     /// <inheritdoc/>
@@ -118,6 +122,9 @@ public class MavenRepositoryService : IMavenRepository
             ? await OpenMetadataAsync(path, cancellationToken).ConfigureAwait(false)
             : await OpenFileAsync(path, cancellationToken).ConfigureAwait(false);
     }
+
+    /// <inheritdoc/>
+    public Task<MavenDownload?> HeadAsync(MavenRequestPath path, CancellationToken cancellationToken) => OpenAsync(path, cancellationToken);
 
     private async Task<MavenDownload?> OpenFileAsync(MavenRequestPath path, CancellationToken cancellationToken)
     {
@@ -470,7 +477,7 @@ public class MavenRepositoryService : IMavenRepository
         return MavenResult.Created();
     }
 
-    private sealed class Spooled : IDisposable
+    internal sealed class Spooled : IDisposable
     {
         public Spooled(FileStream file, long length, string sha1, string md5, string sha256, string sha512)
         {
@@ -498,7 +505,7 @@ public class MavenRepositoryService : IMavenRepository
     }
 
     // Copies the body to a temporary file (deleted on close) while hashing it; null when it is larger than the limit.
-    private static async Task<Spooled?> SpoolAsync(Stream body, long limit, CancellationToken cancellationToken)
+    internal static async Task<Spooled?> SpoolAsync(Stream body, long limit, CancellationToken cancellationToken)
     {
         var file = new FileStream(
             Path.Combine(Path.GetTempPath(), "baget-maven-" + Guid.NewGuid().ToString("N")),
@@ -821,6 +828,178 @@ public class MavenRepositoryService : IMavenRepository
         finally
         {
             generated?.Dispose();
+        }
+    }
+
+    // ---- cache support (RemoteMavenRepository) ----------------------------------------------------------------------------
+
+    /// <summary>
+    /// Keeps a file a remote repository fetched from its upstream: the bytes under <c>maven/…</c> and the artifact, version and file
+    /// rows, exactly as a deployed file is kept (so counting, search, the pages, access and the database copy need nothing new).
+    /// No caller, policy or ownership applies: the upstream decides what exists. A file that is already stored (a concurrent request
+    /// won) is left as it is. Refused while the maintenance gate is closed, before anything is written.
+    /// </summary>
+    internal async Task StoreCachedAsync(MavenCoordinate coordinate, string fileName, MavenFileParts parts, Spooled spooled, CancellationToken cancellationToken)
+    {
+        _gate.ThrowIfClosed();
+
+        var version = coordinate.Version!;
+        MavenPomInfo? pom = null;
+        if (parts.Classifier == null && parts.Extension == "pom" && spooled.Length <= MavenPom.MaxBytes)
+        {
+            pom = MavenPom.TryParse(spooled.File);
+        }
+
+        spooled.File.Position = 0;
+
+        var path = StoragePath(coordinate.GroupId, coordinate.ArtifactId, version, fileName);
+        var contentType = MavenNames.ContentTypeOf(LastExtension(parts.Extension));
+        var put = await _storage.PutAsync(path, spooled.File, contentType, cancellationToken).ConfigureAwait(false);
+        if (put == StoragePutResult.Conflict)
+        {
+            // A leftover of an attempt that never got its row.
+            await _storage.DeleteAsync(path, cancellationToken).ConfigureAwait(false);
+            spooled.File.Position = 0;
+            put = await _storage.PutAsync(path, spooled.File, contentType, cancellationToken).ConfigureAwait(false);
+        }
+
+        var storedByThisCall = put == StoragePutResult.Success;
+        var now = _time.UtcNow;
+
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+                var artifact = await _context.MavenArtifacts!.FirstOrDefaultAsync(a => a.GroupId == coordinate.GroupId && a.ArtifactId == coordinate.ArtifactId, cancellationToken).ConfigureAwait(false);
+                if (artifact == null)
+                {
+                    artifact = new MavenArtifact { GroupId = coordinate.GroupId, ArtifactId = coordinate.ArtifactId, Created = now, Modified = now };
+                    _context.MavenArtifacts!.Add(artifact);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                var versionRow = await _context.MavenVersions!.FirstOrDefaultAsync(v => v.ArtifactKey == artifact.Key && v.Version == version, cancellationToken).ConfigureAwait(false);
+                if (versionRow == null)
+                {
+                    versionRow = new MavenVersion { ArtifactKey = artifact.Key, Version = version, IsSnapshot = MavenNames.IsSnapshot(version), Created = now, Modified = now };
+                    _context.MavenVersions!.Add(versionRow);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                if (await _context.MavenFiles!.AnyAsync(f => f.VersionKey == versionRow.Key && f.FileName == fileName, cancellationToken).ConfigureAwait(false))
+                {
+                    // A concurrent request stored the same file first; its bytes are the upstream's too.
+                    return;
+                }
+
+                _context.MavenFiles!.Add(new MavenFile
+                {
+                    VersionKey = versionRow.Key,
+                    FileName = fileName,
+                    Classifier = parts.Classifier,
+                    Extension = parts.Extension,
+                    SnapshotTimestamp = parts.SnapshotTimestamp,
+                    SnapshotBuild = parts.SnapshotBuild,
+                    Size = spooled.Length,
+                    Sha1 = spooled.Sha1,
+                    Md5 = spooled.Md5,
+                    Sha256 = spooled.Sha256,
+                    Sha512 = spooled.Sha512,
+                    Created = now,
+                });
+
+                if (pom != null)
+                {
+                    versionRow.Packaging = Cut(pom.Packaging, Ctx.MaxMavenPackagingLength);
+                    versionRow.Name = Cut(pom.Name, Ctx.MaxMavenNameLength);
+                    versionRow.Description = Cut(pom.Description, Ctx.MaxMavenDescriptionLength);
+                }
+
+                versionRow.Modified = now;
+                artifact.Modified = now;
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+                return;
+            }
+            catch (DbUpdateException e) when (_context.IsUniqueConstraintViolationException(e) && attempt < 2)
+            {
+                (_context as DbContext)?.ChangeTracker.Clear();
+            }
+            catch
+            {
+                if (storedByThisCall) await TryDeleteAsync(path).ConfigureAwait(false);
+
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Whether the repository stores the version (some file of it), without asking any upstream: what the resolution preview of a
+    /// virtual repository shows for a member another member already shadows.
+    /// </summary>
+    internal async Task<bool> HasVersionAsync(string groupId, string artifactId, string version, CancellationToken cancellationToken)
+    {
+        var artifact = await FindArtifactAsync(groupId, artifactId, cancellationToken).ConfigureAwait(false);
+
+        return artifact != null
+            && await _context.MavenVersions!.AsNoTracking().AnyAsync(v => v.ArtifactKey == artifact.Key && v.Version == version, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Deletes what a remote repository cached, rows and files together: everything, one artifact (<paramref name="artifactName"/>
+    /// <c>group:artifact</c>), or one version of it. No caller check: the administration that asks has done it. Closed gate: refused.
+    /// </summary>
+    /// <returns>The number of files deleted.</returns>
+    internal async Task<int> PurgeAsync(string? artifactName, string? version, CancellationToken cancellationToken)
+    {
+        _gate.ThrowIfClosed();
+
+        var artifacts = _context.MavenArtifacts!.AsQueryable();
+        if (artifactName != null)
+        {
+            if (!MavenNames.TryParseArtifactName(artifactName, out var group, out var artifactId)) return 0;
+
+            artifacts = artifacts.Where(a => a.GroupId == group && a.ArtifactId == artifactId);
+        }
+
+        var deleted = 0;
+        while (true)
+        {
+            var batch = await artifacts.OrderBy(a => a.Key).Take(100).ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (batch.Count == 0) return deleted;
+
+            foreach (var artifact in batch)
+            {
+                var versions = _context.MavenVersions!.Where(v => v.ArtifactKey == artifact.Key);
+                if (version != null) versions = versions.Where(v => v.Version == version);
+
+                var rows = await versions.ToListAsync(cancellationToken).ConfigureAwait(false);
+                var keys = rows.Select(v => v.Key).ToList();
+                var files = await _context.MavenFiles!.Where(f => keys.Contains(f.VersionKey)).Select(f => new { f.VersionKey, f.FileName }).ToListAsync(cancellationToken).ConfigureAwait(false);
+
+                _context.MavenVersions!.RemoveRange(rows);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                if (!await _context.MavenVersions!.AnyAsync(v => v.ArtifactKey == artifact.Key, cancellationToken).ConfigureAwait(false))
+                {
+                    _context.MavenArtifacts!.Remove(artifact);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                foreach (var file in files)
+                {
+                    var owner = rows.First(v => v.Key == file.VersionKey).Version!;
+                    await TryDeleteAsync(StoragePath(artifact.GroupId!, artifact.ArtifactId!, owner, file.FileName!)).ConfigureAwait(false);
+                }
+
+                deleted += files.Count;
+            }
+
+            // One artifact at most is filtered by name, and a version filter only exists with one: a single pass.
+            if (artifactName != null) return deleted;
         }
     }
 

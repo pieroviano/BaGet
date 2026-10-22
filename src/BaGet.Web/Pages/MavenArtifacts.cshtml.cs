@@ -51,6 +51,9 @@ public class MavenArtifactsModel : PageModel
     /// <summary>The address Maven is configured with for this repository.</summary>
     public string RepositoryUrl => _urls.GetMavenRepositoryUrl();
 
+    /// <summary>The kind of the repository: a remote one lists what it cached, a virtual one what its members hold.</summary>
+    public RepositoryKind Kind => _repository.Current.Kind;
+
     /// <summary>The repository's name, which is the <c>id</c> in <c>settings.xml</c> and the POM.</summary>
     public string RepositoryName => _repository.Current.Name;
 
@@ -75,13 +78,13 @@ public class MavenArtifactsModel : PageModel
 
         var id = RepositoryName;
         var url = RepositoryUrl;
-        ConfigurationTabs = new[]
-        {
-            new InstallSnippet { Name = "settings.xml", Lines = MavenSnippets.SettingsXml(id) },
-            new InstallSnippet { Name = "Deploy (pom.xml)", Lines = MavenSnippets.DistributionManagement(id, url) },
-            new InstallSnippet { Name = "Resolve (pom.xml)", Lines = MavenSnippets.Repositories(id, url, Settings.Policy != MavenPolicy.Snapshots, Settings.Policy != MavenPolicy.Releases) },
-            new InstallSnippet { Name = "Gradle", Lines = MavenSnippets.GradleRepository(url) },
-        };
+        var tabs = new List<InstallSnippet> { new() { Name = "settings.xml", Lines = MavenSnippets.SettingsXml(id) } };
+        if (Kind == RepositoryKind.Remote) tabs.Add(new InstallSnippet { Name = "Mirror of Maven Central (settings.xml)", Lines = MavenSnippets.Mirror(id, url) });
+        if (Kind != RepositoryKind.Remote) tabs.Add(new InstallSnippet { Name = "Deploy (pom.xml)", Lines = MavenSnippets.DistributionManagement(id, url) });
+
+        tabs.Add(new InstallSnippet { Name = "Resolve (pom.xml)", Lines = MavenSnippets.Repositories(id, url, Settings.Policy != MavenPolicy.Snapshots, Settings.Policy != MavenPolicy.Releases) });
+        tabs.Add(new InstallSnippet { Name = "Gradle", Lines = MavenSnippets.GradleRepository(url) });
+        ConfigurationTabs = tabs;
 
         return Page();
     }

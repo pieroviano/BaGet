@@ -97,6 +97,15 @@ public interface IRemoteRepositoryAdministration
     Task<PurgeResult> PurgePackageAsync(string name, string packageId, NuGetVersion? version, CancellationToken cancellationToken, string? actor = null);
 
     /// <summary>
+    /// Deletes one stored artifact of a Maven repository (<c>group:artifact</c>; every version when <paramref name="version"/> is
+    /// null) and drops the answers remembered about it. Like <see cref="PurgePackageAsync"/> for a format whose versions are not NuGet
+    /// versions. Audited.
+    /// </summary>
+    /// <exception cref="KeyNotFoundException">No such remote repository.</exception>
+    /// <exception cref="ArgumentException">The repository is not a Maven one, or the artifact or version is not valid.</exception>
+    Task<PurgeResult> PurgeArtifactAsync(string name, string artifact, string? version, CancellationToken cancellationToken, string? actor = null);
+
+    /// <summary>
     /// When <c>Mirror:Enabled</c>: creates the <see cref="Repository.MirrorName"/> remote repository from <c>Mirror:*</c> if
     /// it is missing, else brings its URL, protocol and timeout in line with the options. Idempotent; called at startup.
     /// A non-remote repository with that name is left alone (the default repository then reads <c>Mirror:*</c> directly).
@@ -285,9 +294,12 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             using var client = _http.CreateProbe(settings);
 
             // An npm registry is asked for its ping (BaGet, Verdaccio, Artifactory and npmjs answer it), then for its root.
+            // A Maven repository is asked for its root (Maven Central, Artifactory and Nexus list it).
             var targets = settings.Protocol == RemoteProtocol.Npm
                 ? new[] { new Uri(NpmBase(settings) + "-/ping"), new Uri(NpmBase(settings)) }
-                : new[] { settings.UrlOrNull! };
+                : settings.Protocol == RemoteProtocol.Maven
+                    ? new[] { new Uri(NpmBase(settings)) }
+                    : new[] { settings.UrlOrNull! };
 
             HttpResponseMessage? response = null;
             foreach (var start in targets)
@@ -337,6 +349,17 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
                         watch.ElapsedMilliseconds);
                 }
 
+                if (response.StatusCode == HttpStatusCode.NotFound && settings.Protocol == RemoteProtocol.Maven)
+                {
+                    // A Maven client never asks for the root: a repository may list nothing there. The host answered and accepted the
+                    // credentials; whether the path is the repository's is only seen when an artifact is requested.
+                    return new RemoteConnectionResult(
+                        true,
+                        "Connected: the server answered, but HTTP 404 for the repository root (many Maven repositories list nothing there). Check the URL by requesting an artifact.",
+                        status,
+                        watch.ElapsedMilliseconds);
+                }
+
                 if (!response.IsSuccessStatusCode)
                 {
                     return new RemoteConnectionResult(false, $"The upstream answered HTTP {status} {response.StatusCode}.", status, watch.ElapsedMilliseconds);
@@ -368,6 +391,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
                 }
 
                 if (settings.Protocol == RemoteProtocol.Npm) return new RemoteConnectionResult(true, "Connected: the npm registry answered.", status, watch.ElapsedMilliseconds);
+                if (settings.Protocol == RemoteProtocol.Maven) return new RemoteConnectionResult(true, "Connected: the Maven repository answered.", status, watch.ElapsedMilliseconds);
 
                 return new RemoteConnectionResult(true, "Connected: the V2 feed answered.", status, watch.ElapsedMilliseconds);
             }
@@ -380,6 +404,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         }
     }
 
+    // The upstream URL with a trailing slash (an npm registry's or a Maven repository's root).
     private static string NpmBase(RemoteRepositorySettings settings)
     {
         var text = settings.UrlOrNull!.GetLeftPart(UriPartial.Path);
@@ -438,6 +463,16 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             return new RemoteCacheOverview(_state.Status(row.Key), versions, await npmPackages.CountAsync(cancellationToken).ConfigureAwait(false));
         }
 
+        if (row.Format == RepositoryFormat.Maven)
+        {
+            var artifacts = _context.MavenArtifacts!.IgnoreQueryFilters().AsNoTracking().Where(a => a.RepositoryKey == row.Key);
+            var mavenVersions = await _context.MavenVersions!.AsNoTracking()
+                .Join(artifacts, v => v.ArtifactKey, a => a.Key, (v, a) => v.Key)
+                .CountAsync(cancellationToken).ConfigureAwait(false);
+
+            return new RemoteCacheOverview(_state.Status(row.Key), mavenVersions, await artifacts.CountAsync(cancellationToken).ConfigureAwait(false));
+        }
+
         var packages = _context.Packages!.IgnoreQueryFilters().AsNoTracking().Where(p => p.RepositoryKey == row.Key);
         var count = await packages.CountAsync(cancellationToken).ConfigureAwait(false);
         var ids = await packages.Select(p => p.Id).Distinct().CountAsync(cancellationToken).ConfigureAwait(false);
@@ -466,6 +501,9 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         _gate?.ThrowIfClosed();
         var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
 
+        // A Maven artifact is group:artifact; its versions are free text, so PurgeArtifactAsync takes them as such.
+        if (row.Format == RepositoryFormat.Maven) return await PurgeArtifactAsync(name, packageId, version?.ToFullString(), cancellationToken, actor).ConfigureAwait(false);
+
         var id = packageId.Trim();
         if (row.Format == RepositoryFormat.Npm)
         {
@@ -480,6 +518,43 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             "repository.remote.purge-package",
             name,
             new { packageId = id, version = version?.ToNormalizedString(), packages = deleted, answers },
+            cancellationToken).ConfigureAwait(false);
+
+        return new PurgeResult(deleted, answers);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PurgeResult> PurgeArtifactAsync(string name, string artifact, string? version, CancellationToken cancellationToken, string? actor = null)
+    {
+        if (string.IsNullOrWhiteSpace(artifact)) throw new ArgumentException("An artifact (group:artifact) is required.", nameof(artifact));
+        _gate?.ThrowIfClosed();
+        var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
+        if (row.Format != RepositoryFormat.Maven) throw new ArgumentException("Only a Maven repository has artifacts with group:artifact coordinates.", nameof(name));
+
+        var coordinate = artifact.Trim();
+        if (!MavenNames.TryParseArtifactName(coordinate, out var group, out var artifactId)) throw new ArgumentException($"{coordinate} is not an artifact: write it as group:artifact.", nameof(artifact));
+
+        var wanted = string.IsNullOrWhiteSpace(version) ? null : version.Trim();
+        if (wanted != null && !MavenNames.IsValidVersion(wanted)) throw new ArgumentException($"{wanted} is not a valid version.", nameof(version));
+
+        int deleted;
+        using (var scope = _scopes.CreateRepositoryScope(row.ToInfo()))
+        {
+            deleted = await scope.ServiceProvider.GetRequiredService<MavenRepositoryService>().PurgeAsync(coordinate, wanted, cancellationToken).ConfigureAwait(false);
+        }
+
+        // The answers about the artifact: its files, checksums and metadata; for one version, that version's and the version list.
+        var folder = MavenNames.GroupPath(group) + "/" + artifactId;
+        var list = "mm:" + folder + "/" + MavenNames.MetadataFileName;
+        var answers = _state.ClearMatching(row.Key, key => wanted == null
+            ? MavenUpstreamClient.PathPrefix(key, folder)
+            : key == list || MavenUpstreamClient.PathPrefix(key, folder + "/" + wanted));
+
+        await AuditAsync(
+            actor,
+            "repository.remote.purge-package",
+            name,
+            new { packageId = coordinate, version = wanted, packages = deleted, answers },
             cancellationToken).ConfigureAwait(false);
 
         return new PurgeResult(deleted, answers);
@@ -591,6 +666,14 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             using var npmScope = _scopes.CreateRepositoryScope(info);
 
             return await npmScope.ServiceProvider.GetRequiredService<NpmRegistryService>()
+                .PurgeAsync(packageId, version?.ToFullString(), cancellationToken).ConfigureAwait(false);
+        }
+
+        if (row.Format == RepositoryFormat.Maven)
+        {
+            using var mavenScope = _scopes.CreateRepositoryScope(info);
+
+            return await mavenScope.ServiceProvider.GetRequiredService<MavenRepositoryService>()
                 .PurgeAsync(packageId, version?.ToFullString(), cancellationToken).ConfigureAwait(false);
         }
 

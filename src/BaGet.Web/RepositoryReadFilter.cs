@@ -105,6 +105,7 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         var evaluator = services.GetRequiredService<IAccessEvaluator>();
         var repository = services.GetRequiredService<IRepositoryContext>().Current;
         var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
+        Func<Task<string?>>? resolveName = null;
         if (route.Format == RepositoryFormat.Npm)
         {
             // npm routes name the package in "name" (possibly @scope%2fname) or "scope" and "pkg"; the access patterns see the
@@ -133,13 +134,25 @@ public class RepositoryReadFilter : IAsyncResourceFilter
                 return;
             }
 
-            packageId = (await services.GetRequiredService<IMavenRepository>().ResolveAsync(requested, http.RequestAborted))?.Name;
+            // Looked up only once the repository itself may be read: a remote repository asks its upstream to tell a version's metadata
+            // from an artifact's, which nobody who may not read the repository should be able to make it do.
+            var maven = services.GetRequiredService<IMavenRepository>();
+            resolveName = async () => (await maven.ResolveAsync(requested, http.RequestAborted))?.Name;
         }
 
         async Task<bool> MayReadAsync(BaGetPrincipal? caller)
-            => await evaluator.IsAllowedAsync(caller, repository, packageId: null, AccessAction.Read, http.RequestAborted)
-               && (packageId == null
-                   || await evaluator.IsAllowedAsync(caller, repository, packageId, AccessAction.Read, http.RequestAborted));
+        {
+            if (!await evaluator.IsAllowedAsync(caller, repository, packageId: null, AccessAction.Read, http.RequestAborted)) return false;
+
+            if (resolveName != null)
+            {
+                packageId = await resolveName();
+                resolveName = null;
+            }
+
+            return packageId == null
+                || await evaluator.IsAllowedAsync(caller, repository, packageId, AccessAction.Read, http.RequestAborted);
+        }
 
         // Open to everyone is the common case (and the only one before the access model): answered without looking at
         // the credentials, so a public feed costs no API key lookup even for a client that sends them.

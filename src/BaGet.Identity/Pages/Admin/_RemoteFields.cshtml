@@ -15,6 +15,11 @@
             <input asp-for="Url" class="form-control" placeholder="https://registry.npmjs.org/" autocomplete="off" maxlength="@BaGet.Core.RemoteRepositorySettings.MaxUrlLength" />
             <p class="help-block">The base URL of an npm registry (packages are at <code>{url}/{name}</code>). Put credentials in the fields below, not in the URL.</p>
         }
+        else if (Model.Format == BaGet.Core.RepositoryFormat.Maven)
+        {
+            <input asp-for="Url" class="form-control" placeholder="https://repo.maven.apache.org/maven2/" autocomplete="off" maxlength="@BaGet.Core.RemoteRepositorySettings.MaxUrlLength" />
+            <p class="help-block">The root of a Maven repository (files are at <code>{url}/{group/as/folders}/{artifact}/{version}/{file}</code>); Maven Central is <code>https://repo.maven.apache.org/maven2/</code>. Put credentials in the fields below, not in the URL.</p>
+        }
         else
         {
             <input asp-for="Url" class="form-control" placeholder="https://api.nuget.org/v3/index.json" autocomplete="off" maxlength="@BaGet.Core.RemoteRepositorySettings.MaxUrlLength" />
@@ -26,6 +31,11 @@
 {
     <input type="hidden" asp-for="Protocol" value="V3" />
     <p class="help-block" id="remote-protocol-npm">Protocol: the npm registry protocol.</p>
+}
+else if (Model.Format == BaGet.Core.RepositoryFormat.Maven)
+{
+    <input type="hidden" asp-for="Protocol" value="V3" />
+    <p class="help-block" id="remote-protocol-maven">Protocol: the Maven 2 repository layout.</p>
 }
 else
 {
@@ -52,7 +62,7 @@ else
     <label asp-for="Password">Password or token</label>
     <input asp-for="Password" type="password" value="" class="form-control" autocomplete="new-password" maxlength="4096" />
     <p class="help-block">
-        Sent as HTTP Basic to the upstream's own host only (an npm upstream with no user name gets it as a bearer token, npm's <code>_authToken</code>). Stored protected (ASP.NET Core data protection), never shown again, never logged.
+        Sent as HTTP Basic to the upstream's own host only (an npm upstream with no user name gets it as a bearer token, npm's <code>_authToken</code>; a Maven upstream gets Basic, like <code>settings.xml</code>'s <code>&lt;server&gt;</code>). Stored protected (ASP.NET Core data protection), never shown again, never logged.
         @if (Model.HasPassword)
         {
             <text>A password is stored; leave blank to keep it.</text>
@@ -88,7 +98,7 @@ else
 </div>
 <div class="checkbox">
     <label><input asp-for="StoreLocally" /> Store artifacts locally</label>
-    <p class="help-block">On: packages are kept (database and files) the first time they are requested and served from there afterwards, also while the upstream is down. Off: pass-through; metadata and downloads come from the upstream each time and nothing is kept (search and package pages stay empty).</p>
+    <p class="help-block">On: packages (Maven: files) are kept (database and files) the first time they are requested and served from there afterwards, also while the upstream is down. Off: pass-through; metadata and downloads come from the upstream each time and nothing is kept (search and package pages stay empty).</p>
 </div>
 <div class="checkbox">
     <label><input asp-for="Offline" /> Offline mode</label>

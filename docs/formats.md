@@ -1,12 +1,12 @@
 # Package formats
 
-A repository has a **format**. NuGet, npm (see [npm registry](npm-registry.md)), Maven (local repositories, see [Maven repositories](maven-repositories.md)) and Docker (local repositories, see [Docker registry](docker-registry.md)) have a protocol today. `/admin/formats` (administrators) lists what this server can host.
+A repository has a **format**. NuGet, npm (see [npm registry](npm-registry.md)), Maven (local, remote and virtual repositories, see [Maven repositories](maven-repositories.md)) and Docker (local repositories, see [Docker registry](docker-registry.md)) have a protocol today. `/admin/formats` (administrators) lists what this server can host.
 
 | Format | Served under | Feed address | Repository kinds | Storage folders | Status |
 |---|---|---|---|---|---|
 | NuGet | the repository base (`/v3/…`, `/api/v2`, symbols) | `v3/index.json` | local, remote, virtual | `packages` `symbols` `catalog` `validation` `staging` | done |
 | npm | `npm/` | `npm/` | local, remote, virtual | `npm` | done ([details](npm-registry.md)) |
-| Maven | `maven/` | `maven/` | local | `maven` | done, local only ([details](maven-repositories.md)) |
+| Maven | `maven/` | `maven/` | local, remote, virtual | `maven` | done ([details](maven-repositories.md)) |
 | Docker | `/v2/{repo}/{image}/…` (server root) | `v2/{repo}/` | local | `docker` | done, local only ([details](docker-registry.md)) |
 
 The *repository base* is `/` for `default` and `/r/{name}/` for the others, so an npm repository `web` is at `/r/web/npm/`. A

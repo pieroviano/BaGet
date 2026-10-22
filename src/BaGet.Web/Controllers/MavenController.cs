@@ -45,6 +45,21 @@ public class MavenController : Controller
         _access = access ?? throw new ArgumentNullException(nameof(access));
     }
 
+    /// <summary>
+    /// A remote repository whose upstream cannot answer (and has nothing stored to answer instead) is a bad gateway, not a missing
+    /// file: Maven reports a 502 as a transfer failure it may retry elsewhere, where a 404 would be believed and remembered.
+    /// </summary>
+    public override void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
+    {
+        if (context.Exception is MavenUpstreamException e)
+        {
+            context.Result = Text(StatusCodes.Status502BadGateway, e.Message);
+            context.ExceptionHandled = true;
+        }
+
+        base.OnActionExecuted(context);
+    }
+
     private MavenRequestPath? RequestedPath
         => MavenNames.ParsePath(RouteData.Values.TryGetValue("path", out var path) ? path as string : null);
 
@@ -96,7 +111,10 @@ public class MavenController : Controller
         var path = RequestedPath;
         if (path == null) return Text(StatusCodes.Status404NotFound, "Not found.");
 
-        var download = await _maven.OpenAsync(path, cancellationToken);
+        // A HEAD does not read the content: a remote repository answers it from the upstream's headers without fetching and keeping the file.
+        var download = HttpMethods.IsHead(Request.Method)
+            ? await _maven.HeadAsync(path, cancellationToken)
+            : await _maven.OpenAsync(path, cancellationToken);
         if (download == null) return Text(StatusCodes.Status404NotFound, "Not found.");
 
         Response.RegisterForDispose(download);

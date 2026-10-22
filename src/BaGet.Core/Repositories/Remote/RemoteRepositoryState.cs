@@ -262,6 +262,24 @@ public sealed class RemoteRepositoryState
         return removed;
     }
 
+    /// <summary>
+    /// Drops the cached answers whose key satisfies <paramref name="match"/> (a format whose keys are paths, such as Maven's, cannot
+    /// use <see cref="ClearPackage"/>'s name split).
+    /// </summary>
+    /// <returns>How many answers were dropped.</returns>
+    public int ClearMatching(int key, Func<string, bool> match)
+    {
+        if (!_entries.TryGetValue(key, out var entry)) return 0;
+
+        var removed = 0;
+        foreach (var cacheKey in entry.Metadata.Keys.ToList())
+        {
+            if (match(cacheKey) && entry.Metadata.TryRemove(cacheKey, out _)) removed++;
+        }
+
+        return removed;
+    }
+
     internal enum CacheEvent { Hit, Miss, NegativeHit, Stale }
 
     private sealed record LoadedSettings(object? Value, DateTime LoadedUtc);

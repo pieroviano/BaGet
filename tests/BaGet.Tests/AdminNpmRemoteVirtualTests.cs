@@ -161,10 +161,10 @@ public class AdminNpmRemoteVirtualTests : IDisposable
     [Fact]
     public async Task AnUnknownFormatOrOneWithoutTheKindIsNotFound()
     {
-        using var unknown = await CreateRemoteAsync(format: "Maven");
+        using var unknown = await CreateRemoteAsync(format: "Oci");
         Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
 
-        using var unknownVirtual = await CreateVirtualAsync("v", "Maven");
+        using var unknownVirtual = await CreateVirtualAsync("v", "Oci");
         Assert.Equal(HttpStatusCode.NotFound, unknownVirtual.StatusCode);
         Assert.Null(await FindAsync("v"));
     }

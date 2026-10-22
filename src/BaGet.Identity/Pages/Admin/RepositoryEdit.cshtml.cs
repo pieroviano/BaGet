@@ -19,7 +19,7 @@ namespace BaGet.Identity.Pages.Admin;
 /// repository ask for the administrator's password again (a test saves nothing, but makes the server send a request to a
 /// typed URL, with the stored password when the origin is unchanged). A virtual repository shows and
 /// edits its members (add, remove, move up or down), its deploy repository, and previews where a package version would come
-/// from (<see cref="IVirtualRepositoryAdministration.PreviewAsync"/>); those edits are saved at once, refused with 503 while
+/// from (<see cref="IVirtualRepositoryAdministration.PreviewAsync(string, string, string, CancellationToken)"/>); those edits are saved at once, refused with 503 while
 /// the gate is closed.
 /// </summary>
 public class RepositoryEditModel : RepositoryPageModel
@@ -275,7 +275,8 @@ public class RepositoryEditModel : RepositoryPageModel
         HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
 
         var remotes = HttpContext.RequestServices.GetRequiredService<IRemoteRepositoryAdministration>();
-        if (await remotes.FindAsync(Name, cancellationToken) == null) return NotFound();
+        var found = await remotes.FindAsync(Name, cancellationToken);
+        if (found == null) return NotFound();
         if (!await ConfirmedAsync(password)) return await RefuseAsync(NotConfirmed, cancellationToken);
 
         var id = PackageId?.Trim();
@@ -284,16 +285,26 @@ public class RepositoryEditModel : RepositoryPageModel
             return await RefuseAsync("Enter the id of the package to purge.", cancellationToken);
         }
 
+        // A Maven version is any version folder name, not always a NuGet version (5.3.20.RELEASE): it travels as text.
+        var isMaven = found.Repository.Format == RepositoryFormat.Maven;
         NuGet.Versioning.NuGetVersion? version = null;
-        if (!string.IsNullOrWhiteSpace(PackageVersion) && !NuGet.Versioning.NuGetVersion.TryParse(PackageVersion.Trim(), out version))
+        string? versionText = string.IsNullOrWhiteSpace(PackageVersion) ? null : PackageVersion.Trim();
+        if (!isMaven && versionText != null)
         {
-            return await RefuseAsync($"'{PackageVersion}' is not a valid version.", cancellationToken);
+            if (!NuGet.Versioning.NuGetVersion.TryParse(versionText, out version))
+            {
+                return await RefuseAsync($"'{PackageVersion}' is not a valid version.", cancellationToken);
+            }
+
+            versionText = version.ToNormalizedString();
         }
 
         PurgeResult result;
         try
         {
-            result = await remotes.PurgePackageAsync(Name!, id, version, cancellationToken, User.Identity?.Name);
+            result = isMaven
+                ? await remotes.PurgeArtifactAsync(Name!, id, versionText, cancellationToken, User.Identity?.Name)
+                : await remotes.PurgePackageAsync(Name!, id, version, cancellationToken, User.Identity?.Name);
         }
         catch (ArgumentException e)
         {
@@ -301,9 +312,10 @@ public class RepositoryEditModel : RepositoryPageModel
             return await RefuseAsync(e.Message, cancellationToken);
         }
 
+        var shown = versionText == null ? string.Empty : " " + versionText;
         TempData["Message"] = result.Packages == 0 && result.CachedAnswers == 0
-            ? $"Nothing was cached for {id}{(version == null ? string.Empty : " " + version.ToNormalizedString())}."
-            : $"{id}{(version == null ? string.Empty : " " + version.ToNormalizedString())} was purged: {result.Packages} package version(s) deleted, {result.CachedAnswers} remembered answer(s) dropped.";
+            ? $"Nothing was cached for {id}{shown}."
+            : $"{id}{shown} was purged: {result.Packages} {(isMaven ? "file(s)" : "package version(s)")} deleted, {result.CachedAnswers} remembered answer(s) dropped.";
 
         return RedirectToPage(new { name = Name });
     }
@@ -380,7 +392,8 @@ public class RepositoryEditModel : RepositoryPageModel
             return Page();
         }
 
-        if (!NuGet.Versioning.NuGetVersion.TryParse(PreviewVersion?.Trim(), out var version))
+        var isMaven = Repository.Format == RepositoryFormat.Maven;
+        if (!isMaven && !NuGet.Versioning.NuGetVersion.TryParse(PreviewVersion?.Trim(), out _))
         {
             Error = $"'{PreviewVersion}' is not a valid version.";
 
@@ -398,8 +411,16 @@ public class RepositoryEditModel : RepositoryPageModel
             }
         }
 
-        Preview = await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>()
-            .PreviewAsync(Name!, id, version, cancellationToken);
+        try
+        {
+            Preview = await HttpContext.RequestServices.GetRequiredService<IVirtualRepositoryAdministration>()
+                .PreviewAsync(Name!, id, PreviewVersion!.Trim(), cancellationToken);
+        }
+        catch (ArgumentException e)
+        {
+            // An artifact that is not group:artifact, or a version that is not a folder name.
+            Error = e.Message;
+        }
 
         return Page();
     }

@@ -181,11 +181,13 @@ public sealed record MavenSearchHit(string GroupId, string ArtifactId, string? V
 public sealed record MavenSearchPage(int Total, IReadOnlyList<MavenSearchHit> Hits);
 
 /// <summary>
-/// A local Maven repository (<see cref="RepositoryFormat.Maven"/>): the Maven 2 layout under <c>maven/</c> of the repository
-/// base, checksums, generated <c>maven-metadata.xml</c>, snapshots with timestamped builds, the release/snapshot policy and the
-/// pages' reads. It works in the repository of the request. Every change takes the caller and is authorized through
-/// <see cref="IPackageAuthorizationService"/> (the access model, then ownership of <c>group:artifact</c>), so routes, pages and
-/// accounts cannot differ.
+/// A Maven repository (<see cref="RepositoryFormat.Maven"/>): the Maven 2 layout under <c>maven/</c> of the repository
+/// base, checksums, <c>maven-metadata.xml</c>, snapshots with timestamped builds and the pages' reads. It works in the repository
+/// of the request, whose kind picks the implementation (<see cref="RepositoryMavenRepository"/>): <see cref="MavenRepositoryService"/>
+/// for a local repository (generated metadata, the release/snapshot policy; every change takes the caller and is authorized through
+/// <see cref="IPackageAuthorizationService"/>: the access model, then ownership of <c>group:artifact</c>), <see cref="RemoteMavenRepository"/>
+/// (a caching proxy of an upstream such as Maven Central, which takes no changes) and <see cref="VirtualMavenRepository"/> (members
+/// merged, changes going to the deploy repository), so routes, pages and accounts cannot differ.
 /// </summary>
 public interface IMavenRepository
 {
@@ -197,6 +199,12 @@ public interface IMavenRepository
 
     /// <summary>Opens what <paramref name="path"/> names: a stored file, a checksum, or generated metadata. Null when there is none.</summary>
     Task<MavenDownload?> OpenAsync(MavenRequestPath path, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Like <see cref="OpenAsync"/> for a <c>HEAD</c> request: the answer's length, type and checksums are right but its content is
+    /// not read (a remote repository does not download and keep a file only to say that it exists). Null when there is none.
+    /// </summary>
+    Task<MavenDownload?> HeadAsync(MavenRequestPath path, CancellationToken cancellationToken);
 
     /// <summary>
     /// <c>PUT</c>: stores a file, checks a checksum, or accepts metadata (which is generated, not stored). The body is read once,
@@ -239,8 +247,14 @@ public interface IMavenRepository
     /// <summary>One version with its files and POM, or null.</summary>
     Task<MavenVersionDetail?> GetVersionAsync(string groupId, string artifactId, string version, CancellationToken cancellationToken);
 
-    /// <summary>The settings of the repository (policy, redeploy, snapshot builds kept).</summary>
+    /// <summary>The settings of the repository (policy, redeploy, snapshot builds kept; a remote or virtual repository has none of its own and accepts both kinds).</summary>
     Task<MavenRepositorySettings> GetSettingsAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Where a version would come from, without storing or serving anything: stored here, fetched from the upstream, unknown, or
+    /// not askable (the resolution preview of a virtual repository asks each member).
+    /// </summary>
+    Task<ResolutionOutcome> ProbeAsync(string groupId, string artifactId, string version, CancellationToken cancellationToken);
 }
 
 /// <summary>What the upload page hands to <see cref="IMavenRepository.DeployAsync"/>.</summary>
@@ -269,4 +283,18 @@ public sealed class MavenDeployment
 
     /// <summary>The POM file, or null to generate a minimal one (only when the main file has no classifier).</summary>
     public Stream? Pom { get; init; }
+}
+
+/// <summary>
+/// The upstream of a remote Maven repository could not be reached (or refused the credentials, or sent something that is not a
+/// repository's answer) and nothing stored or remembered can answer instead. The HTTP route answers 502; a virtual repository
+/// skips the member. The message names no URL and no credential.
+/// </summary>
+public sealed class MavenUpstreamException : Exception
+{
+    /// <param name="message">What failed, safe to show.</param>
+    public MavenUpstreamException(string message)
+        : base(message)
+    {
+    }
 }

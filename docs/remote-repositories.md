@@ -1,15 +1,15 @@
 # Remote repositories
 
-A **remote** repository caches another feed: a NuGet feed (nuget.org, another BaGet, Artifactory, Azure Artifacts, ...) or an [npm registry](#npm-remote-repositories) (registry.npmjs.org, Verdaccio, Artifactory, another BaGet, ...). A package it does not hold is fetched from the upstream the first time it is requested, stored, and served from there afterwards. Its feed is `/r/{name}/v3/index.json` (npm: `/r/{name}/npm/`) like any repository's; clients cannot push to it.
+A **remote** repository caches another feed: a NuGet feed (nuget.org, another BaGet, Artifactory, Azure Artifacts, ...) an [npm registry](#npm-remote-repositories) (registry.npmjs.org, Verdaccio, Artifactory, another BaGet, ...) or a [Maven repository](#maven-remote-repositories) (Maven Central, Artifactory, Nexus, another BaGet, ...). A package it does not hold is fetched from the upstream the first time it is requested, stored, and served from there afterwards. Its feed is `/r/{name}/v3/index.json` (npm: `/r/{name}/npm/`) like any repository's; clients cannot push to it.
 
 ## Create and edit
 
-Administrators: `/admin/repositories` > *New remote repository* (pick the **format**: NuGet or npm); later `/admin/repositories/{name}` (needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages)).
+Administrators: `/admin/repositories` > *New remote repository* (pick the **format**: NuGet, npm or Maven); later `/admin/repositories/{name}` (needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages)).
 
 | Setting | Default | Meaning |
 |---|---|---|
-| Upstream URL | required | A V3 `index.json` URL or a V2 feed URL; for npm the registry's base URL (`https://registry.npmjs.org/`). Absolute `http`/`https`, no credentials inside |
-| Protocol | V3 | NuGet: `V3` or `V2`. npm repositories speak the npm registry protocol only: the form does not ask, and saving always keeps it |
+| Upstream URL | required | A V3 `index.json` URL or a V2 feed URL; for npm the registry's base URL (`https://registry.npmjs.org/`); for Maven the repository root (`https://repo.maven.apache.org/maven2/`). Absolute `http`/`https`, no credentials inside |
+| Protocol | V3 | NuGet: `V3` or `V2`. npm and Maven repositories speak their own protocol only: the form does not ask, and saving always keeps it |
 | User name / password | none | HTTP Basic, sent to the upstream's own host only, never to hosts a service index or redirect points to. A token goes in the password; an **npm** upstream with a password and no user name gets it as a bearer token (npm's `_authToken`). Stored protected with ASP.NET Core data protection (the host's key ring; back it up with the host), never shown again, never logged. Blank on save or on *Test connection* keeps the stored one while the URL's scheme/host/port and the user name are unchanged (one rule for both) (on the `mirror` repository only the origin counts: `Mirror:*` never sets a user name, so a changed timeout, `Legacy` or URL path keeps it; otherwise it is dropped and a new one must be typed); *Remove the stored password* clears it. A host without data protection refuses to store a password |
 | Metadata cache period | 600 s | How long the upstream's version lists and metadata are reused. `0` asks every time. An expired answer is still served when the upstream cannot be reached |
 | Negative cache period | 60 s | How long a `404` from the upstream is remembered. A failure to reach the upstream (network, 5xx, 401) is never remembered as "not found" |
@@ -40,8 +40,8 @@ On `/admin/repositories/{name}`:
 | *Test connection* | Asks the upstream with the values in the form, saved or not (blank password = the stored one, if the URL's origin and user name are unchanged), and saves nothing. V3: the URL must answer a service index (at most 1 MB is read); V2: any success; npm: `{url}/-/ping`, and `{url}` itself where there is no ping (any success). Redirects are followed only within the same origin (at most 5), never to another host. Shows the HTTP status and time; failures say which (refused credentials, HTTP status, unreachable) without URLs or credentials |
 | Cache table | Stored package versions and ids; remembered answers; hits, upstream requests, `404`s answered from memory, expired answers served; the upstream's health (last answer, failing since, last error). Counters and remembered answers are per node and reset at restart |
 | *Purge cache* | Deletes every stored package (database and files) and drops the remembered answers. Audited |
-| *Purge package* | The same for one package id (npm: package name, `@scope/name`), one version or all of them. Audited |
-| *Browse the cached packages* | The repository's browse page (NuGet: front page; npm: `/npm-packages`) |
+| *Purge package* | The same for one package id (npm: package name, `@scope/name`; Maven: `group:artifact`, any version text such as `5.3.20.RELEASE`), one version or all of them. Audited |
+| *Browse the cached packages* | The repository's browse page (NuGet: front page; npm: `/npm-packages`; Maven: `/maven-artifacts`) |
 
 Creating a remote repository, saving its upstream, *Test connection* and both purges **ask for your password again** (or a recent sign-in with the external provider, for an account without a password): a test saves nothing but makes the server send a request to a typed URL. The stored password is sent by *Test connection* only while the URL's origin and user name are unchanged (the rule saving applies), so testing another host never hands it to that server. A remote repository with cached packages cannot be deleted until its cache is purged. Creating, editing and purging are refused with `503` while the server is read-only for maintenance (for example during a [database copy](configuration.md)).
 
@@ -60,6 +60,10 @@ An npm repository of kind remote proxies an upstream registry: `npm install` aga
 | `npm audit` | "No advisories", as for every repository until vulnerability scanning exists |
 
 What is kept: a stored version is an ordinary npm version row (manifest, checksums, deprecation, upstream publish time) and its tarball under `repos/{name}/npm/`; the packument itself is **remembered in memory only**, per node (at most 1000 answers per repository, 128 MB each), so after a restart with the upstream down the packument lists only the stored versions. The cache table counts stored versions and packages. Each tarball fetch emits the `mirror.fetch` span (package, version, result; never a URL or credential), as a NuGet mirror fetch does.
+
+## Maven remote repositories
+
+A Maven repository of kind remote proxies an upstream Maven repository, with the settings above (HTTP Basic credentials, metadata and negative periods, offline, *store locally*; the V3/V2 choice does not exist). *Test connection* asks the repository root: `2xx` is connected; `404` is reported as connected with a note (many repositories list nothing at their root); `401`/`403` is a refusal of the credentials. Behaviour per request (files, checksums verified against the upstream's, metadata, snapshots, offline, `502`) is in [Maven repositories](maven-repositories.md#remote-maven-repositories). The cache table counts stored versions and artifacts; *Purge package* takes `group:artifact` and optionally one version (which also drops the remembered version list).
 
 ## Upstream addresses (SSRF)
 

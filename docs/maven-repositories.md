@@ -1,8 +1,8 @@
 # Maven repositories
 
 A local **Maven** repository is a Maven 2 repository: `mvn deploy`, dependency resolution, `maven-metadata.xml`, checksums, SNAPSHOT
-builds, a release/snapshot policy. Gradle's `maven-publish` and `maven { url }` use the same protocol. Remote (Maven Central proxy)
-and virtual Maven repositories are not built yet.
+builds, a release/snapshot policy. Gradle's `maven-publish` and `maven { url }` use the same protocol. A [remote](#remote-maven-repositories) Maven repository
+proxies Maven Central (or any Maven repository) and a [virtual](#virtual-maven-repositories) one merges several.
 
 ## Create and use
 
@@ -57,8 +57,42 @@ Files: `maven/{group}/{artifact}/{version}/{file}` under the repository's prefix
 Tables `MavenArtifacts`, `MavenVersions`, `MavenFiles` (repository-scoped; migration `AddMavenTables`, all four providers). Owners are the
 common `PackageOwner` rows keyed by `group:artifact`.
 
+## Remote Maven repositories
+
+A remote Maven repository caches an upstream: Maven Central (`https://repo.maven.apache.org/maven2/`), another BaGet, Artifactory, Nexus. Create it at `/admin/repositories` > *New remote repository* > format *Maven*; the settings (URL, credentials, cache periods, offline, *store locally*, download timeout), *Test connection*, the cache table and both purges are those of [remote repositories](remote-repositories.md#maven-remote-repositories). Point `settings.xml` at it with a `<mirror>` of `central` (or of `*`, which also sends plugins through it); the browse page shows the snippet.
+
+| Request | Result |
+|---|---|
+| File (`GET`) | Stored: served from storage with its checksums (also while the upstream is down). Else downloaded, hashed while written to a temporary file, compared with the checksum the upstream publishes (`.sha1`, else `.sha256`, else `.md5`; a mismatch is neither stored nor served: `502`), stored, served. An `HTML` page answered `200` for a missing file is a `404` |
+| `HEAD` | Stored: as for a local repository. Else the upstream is asked for the headers only; nothing is downloaded or kept |
+| Checksum of a file not stored yet | The upstream's, remembered like metadata; the file is not downloaded for it |
+| `maven-metadata.xml` (artifact, version, group level: plugin prefixes resolve too) and its checksums | The upstream's, cached for the metadata period (`404` for the negative period; an expired one while the upstream is down). Else generated from the versions this repository stored; else `502` (down) or `404` |
+| `-SNAPSHOT` | A timestamped build is immutable and kept. The moving name (`lib-1.0-SNAPSHOT.jar`) is always streamed from the upstream and never kept; a stored build answers it only while the upstream cannot. Use a metadata period of `0` to see a new build at once |
+| `PUT`, `DELETE` | `403` (`401` without credentials): a remote repository takes no changes. The release/snapshot policy does not apply: whatever the upstream has is served |
+| Pages and search | The **stored** artifacts only (browse, artifact page); no owners or *Manage* |
+| Private repository | The upstream is not asked (not even to tell a version's metadata from an artifact's) for a caller who may not read the repository |
+
+Files are ordinary Maven rows and files (`repos/{name}/maven/…`), so counting, search, access, the delete guard and the database copy need nothing new. Metadata and checksum answers are remembered **in memory** per node.
+
+## Virtual Maven repositories
+
+A virtual repository of format Maven merges Maven repositories (`/r/{name}/maven/`). Members are read in their own scope (storage, upstream and access rules), only those the caller may read; a member that fails is skipped.
+
+| Request | Result |
+|---|---|
+| File and its checksums | The first member that has it, so a file and its checksum always agree |
+| Artifact `maven-metadata.xml` | `versions` is the union (Maven's ordering); `latest` and `release` are the first member's own that the merged list contains (**member order**, not the highest version; the highest when no member names one); `lastUpdated` the latest. Its checksums describe the merged document |
+| Version `maven-metadata.xml` (snapshot builds) | The first member's that has it (the builds it names are that member's files) |
+| Group `maven-metadata.xml` (plugin prefixes) | The union of the members' plugins, a prefix once (first member wins) |
+| `PUT`, `DELETE`, upload | **Moved to the deploy repository** before authorization (its rules and the caller's rights there); without one `403` |
+| Pages, search | Merged by `group:artifact`; *Manage* is `404` (use the member) |
+
+The *Where would a package come from?* preview takes `group:artifact` and any Maven version (`5.3.20.RELEASE`). See [virtual repositories](virtual-repositories.md#maven-virtual-repositories).
+
 ## Tests
 
-`MavenLayoutTests` (Core), `MavenRepositoryTests`, `MavenPagesTests` (`BaGet.Tests`), and `MavenCliTests` (`BaGet.Clients.Tests`): the real
+`MavenLayoutTests` (Core), `MavenRepositoryTests`, `MavenPagesTests`, `RemoteMavenRepositoryTests`, `VirtualMavenRepositoryTests`, `AdminMavenRemoteVirtualTests` (`BaGet.Tests`, the upstream is the in-memory `FakeMavenUpstream`), and `MavenCliTests` (`BaGet.Clients.Tests`): the real
 `mvn` 3.9 in `maven:3.9-eclipse-temurin-21` deploys and resolves releases and snapshots, hits the 409 rules, and signs in to a private
 repository with `settings.xml` credentials. They skip without Docker and need the internet (the plugins come from Maven Central).
+
+`MavenRemoteVirtualCliTests` (`BaGet.Clients.Tests`): the real `mvn` against a remote repository whose upstream is a second real BaGet (releases, timestamped snapshots, upstream gone, `502`, deploy refused), a virtual repository, and, with the internet, the real Maven Central through a `*` mirror (plugins and prefix metadata included).

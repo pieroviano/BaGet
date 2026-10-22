@@ -27,13 +27,16 @@ public static class MavenMetadata
     /// <param name="artifactId">The artifact id.</param>
     /// <param name="versions">The stored versions.</param>
     /// <param name="lastUpdated">When the artifact last changed.</param>
-    public static string ForArtifact(string groupId, string artifactId, IEnumerable<string> versions, DateTime lastUpdated)
+    /// <param name="latest">The version to name as <c>latest</c> when it is one of <paramref name="versions"/> (a virtual repository follows its member order); the highest otherwise.</param>
+    /// <param name="release">The version to name as <c>release</c> when it is one of <paramref name="versions"/>; the highest release otherwise.</param>
+    public static string ForArtifact(string groupId, string artifactId, IEnumerable<string> versions, DateTime lastUpdated, string? latest = null, string? release = null)
     {
         var ordered = versions.Distinct(StringComparer.Ordinal).OrderBy(v => v, Comparer<string>.Create(MavenNames.CompareVersions)).ToList();
-        var release = ordered.LastOrDefault(v => !MavenNames.IsSnapshot(v));
+        latest = latest != null && ordered.Contains(latest, StringComparer.Ordinal) ? latest : ordered.Count > 0 ? ordered[^1] : null;
+        release = release != null && ordered.Contains(release, StringComparer.Ordinal) ? release : ordered.LastOrDefault(v => !MavenNames.IsSnapshot(v));
 
         var versioning = new XElement("versioning");
-        if (ordered.Count > 0) versioning.Add(new XElement("latest", ordered[^1]));
+        if (latest != null) versioning.Add(new XElement("latest", latest));
         if (release != null) versioning.Add(new XElement("release", release));
 
         versioning.Add(new XElement("versions", ordered.Select(v => new XElement("version", v))));

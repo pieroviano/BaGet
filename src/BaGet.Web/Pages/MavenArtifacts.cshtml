@@ -23,8 +23,19 @@
 
     <p id="maven-repository-url">
         Repository: <code>@Model.RepositoryUrl</code>
-        &middot; accepts <strong id="maven-policy">@(Model.Settings.Policy switch { BaGet.Core.MavenPolicy.Releases => "releases", BaGet.Core.MavenPolicy.Snapshots => "snapshots", _ => "releases and snapshots" })</strong>@(Model.Settings.AllowRedeploy ? ", releases may be redeployed" : "")
-        &middot; <a asp-page="/MavenUpload">Upload an artifact</a>
+        @if (Model.Kind == BaGet.Core.RepositoryKind.Local)
+        {
+            <text>&middot; accepts <strong id="maven-policy">@(Model.Settings.Policy switch { BaGet.Core.MavenPolicy.Releases => "releases", BaGet.Core.MavenPolicy.Snapshots => "snapshots", _ => "releases and snapshots" })</strong>@(Model.Settings.AllowRedeploy ? ", releases may be redeployed" : "")
+            &middot; <a asp-page="/MavenUpload">Upload an artifact</a></text>
+        }
+        else if (Model.Kind == BaGet.Core.RepositoryKind.Remote)
+        {
+            <text>&middot; <strong id="maven-remote-note">caches an upstream repository</strong>: the artifacts below were requested through it; anything else is fetched on first use.</text>
+        }
+        else
+        {
+            <text>&middot; <strong id="maven-virtual-note">merges its member repositories</strong>, in the order set by the administrator.</text>
+        }
     </p>
 
     @if (Model.Result.Hits.Count == 0)
@@ -33,7 +44,14 @@
             <h2>Oops, nothing here...</h2>
             <p>
                 @(string.IsNullOrWhiteSpace(Model.Query) ? "This repository holds no artifact yet." : "No artifact matches that text.")
-                Deploy one with <code>mvn deploy</code> (see below), or <a asp-page="/MavenUpload">upload files</a>.
+                @if (Model.Kind == BaGet.Core.RepositoryKind.Local)
+                {
+                    <text>Deploy one with <code>mvn deploy</code> (see below), or <a asp-page="/MavenUpload">upload files</a>.</text>
+                }
+                else if (Model.Kind == BaGet.Core.RepositoryKind.Remote)
+                {
+                    <text>Resolve a dependency through it (see below) and it appears here.</text>
+                }
             </p>
         </div>
     }
@@ -109,5 +127,8 @@
             </div>
         }
     </div>
-    <p>Then <code>@MavenSnippets.DeployCommand</code> deploys the project.</p>
+    @if (Model.Kind != BaGet.Core.RepositoryKind.Remote)
+    {
+        <p>Then <code>@MavenSnippets.DeployCommand</code> deploys the project.</p>
+    }
 </div>

@@ -10,8 +10,9 @@ namespace BaGet.Core;
 /// <summary>
 /// Maven on the format layer: the Maven 2 repository layout under <c>maven/</c> of the repository base (never served for
 /// <c>default</c>, which is NuGet; a repository <c>libs</c> is at <c>/r/libs/maven/</c>), files under <c>maven/…</c> in storage.
-/// Local repositories only; see <see cref="IMavenRepository"/>. The release/snapshot policy, redeploy and snapshot retention are
-/// the repository's <see cref="MavenRepositorySettings"/>.
+/// A local repository holds artifacts (its release/snapshot policy, redeploy and snapshot retention are its
+/// <see cref="MavenRepositorySettings"/>); a remote one caches an upstream such as Maven Central (<see cref="RemoteMavenRepository"/>);
+/// a virtual one merges members (<see cref="VirtualMavenRepository"/>). See <see cref="IMavenRepository"/>.
 /// </summary>
 public class MavenFormatModule : IFormatModule
 {
@@ -28,7 +29,10 @@ public class MavenFormatModule : IFormatModule
     public string FeedPath => "maven/";
 
     /// <inheritdoc/>
-    public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local };
+    public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local, RepositoryKind.Remote };
+
+    /// <inheritdoc/>
+    public bool SupportsVirtual => true;
 
     /// <inheritdoc/>
     public IReadOnlyList<string> StorageFolders { get; } = new[] { MavenNames.StorageFolder };

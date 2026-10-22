@@ -113,7 +113,11 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<VirtualNpmRegistry>();
         services.TryAddScoped<INpmRegistry, RepositoryNpmRegistry>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, MavenFormatModule>());
-        services.TryAddScoped<IMavenRepository, MavenRepositoryService>();
+        services.TryAddScoped<MavenRepositoryService>();
+        services.TryAddScoped<MavenUpstreamClient>();
+        services.TryAddScoped<RemoteMavenRepository>();
+        services.TryAddScoped<VirtualMavenRepository>();
+        services.TryAddScoped<IMavenRepository, RepositoryMavenRepository>();
         services.TryAddScoped<IMavenRepositoryAdministration, MavenRepositoryAdministration>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, MavenFormatSearchProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, DockerFormatModule>());

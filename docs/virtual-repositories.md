@@ -4,7 +4,7 @@ A **virtual** repository presents several repositories of one format (local, [re
 
 ## Create and edit
 
-Administrators: `/admin/repositories` > *New virtual repository* (a name and the **format**, NuGet or npm; it starts empty), then `/admin/repositories/{name}`. Needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages). Not available with Azure Table or `Search:Type` = `AzureSearch` (only `default` exists there).
+Administrators: `/admin/repositories` > *New virtual repository* (a name and the **format**, NuGet, npm or Maven; it starts empty), then `/admin/repositories/{name}`. Needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages). Not available with Azure Table or `Search:Type` = `AzureSearch` (only `default` exists there).
 
 | Control | Does |
 |---|---|
@@ -64,6 +64,10 @@ A virtual repository of format npm merges npm repositories (`/r/{name}/npm/`). M
 | Web pages | *Browse*, a package's page and *Upload* (to the deploy repository) work; *Manage* answers `404` (use the member's page) |
 
 The *Where would a package come from?* preview asks each npm member: *stored here* (the version's tarball is stored), *not stored yet; its upstream has it* (a remote member, from its remembered or fresh packument), *not found*, *its upstream could not be asked*, *offline*.
+
+## Maven virtual repositories
+
+A virtual repository of format Maven merges Maven repositories (`/r/{name}/maven/`): files from the first member that has them, artifact `maven-metadata.xml` merged (versions union; `latest` and `release` follow the member order), writes moved to the deploy repository. Details in [Maven repositories](maven-repositories.md#virtual-maven-repositories). The preview takes `group:artifact` and a Maven version and asks each member (*stored here*, *would be fetched*, *not found*...).
 
 ## `default` and the mirror
 

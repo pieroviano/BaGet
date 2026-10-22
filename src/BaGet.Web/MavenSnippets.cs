@@ -26,6 +26,23 @@ internal static class MavenSnippets
         "</settings>",
     };
 
+    /// <summary>
+    /// The <c>&lt;mirror&gt;</c> entry for <c>~/.m2/settings.xml</c> that sends every request for Maven Central through this
+    /// repository (a remote repository that proxies it); its id is also the <c>&lt;server&gt;</c> id of the credentials.
+    /// </summary>
+    public static IReadOnlyList<string> Mirror(string repositoryId, string url) => new[]
+    {
+        "<settings>",
+        "  <mirrors>",
+        "    <mirror>",
+        "      <id>" + X(repositoryId) + "</id>",
+        "      <mirrorOf>central</mirrorOf>",
+        "      <url>" + X(url) + "</url>",
+        "    </mirror>",
+        "  </mirrors>",
+        "</settings>",
+    };
+
     /// <summary>The POM's <c>distributionManagement</c>: where <c>mvn deploy</c> sends releases and snapshots.</summary>
     public static IReadOnlyList<string> DistributionManagement(string repositoryId, string url) => new[]
     {

@@ -30,8 +30,9 @@ public sealed record MavenCoordinate(string GroupId, string ArtifactId, string? 
 /// <summary>A request path below <c>maven/</c>, taken apart.</summary>
 public sealed class MavenRequestPath
 {
-    internal MavenRequestPath(MavenPathKind kind, string fileName, string baseName, string? checksum, IReadOnlyList<MavenCoordinate> candidates, string? groupOnly)
+    internal MavenRequestPath(string relativePath, MavenPathKind kind, string fileName, string baseName, string? checksum, IReadOnlyList<MavenCoordinate> candidates, string? groupOnly)
     {
+        RelativePath = relativePath;
         Kind = kind;
         FileName = fileName;
         BaseName = baseName;
@@ -39,6 +40,9 @@ public sealed class MavenRequestPath
         Candidates = candidates;
         GroupOnly = groupOnly;
     }
+
+    /// <summary>The path as requested, relative to the repository's <c>maven/</c> address (<c>org/acme/lib/1.0/lib-1.0.jar.sha1</c>).</summary>
+    public string RelativePath { get; }
 
     /// <summary>Whether it is a file or metadata.</summary>
     public MavenPathKind Kind { get; }
@@ -58,6 +62,13 @@ public sealed class MavenRequestPath
     /// of <c>a:b</c> or the artifact <c>b:c</c> of group <c>a</c>; the stored versions decide.
     /// </summary>
     public IReadOnlyList<MavenCoordinate> Candidates { get; }
+
+    /// <summary>
+    /// The same request without the checksum extension (<c>…/lib-1.0.jar</c> for <c>…/lib-1.0.jar.sha1</c>); this path itself when it
+    /// is not a checksum request.
+    /// </summary>
+    public MavenRequestPath Plain
+        => ChecksumAlgorithm == null ? this : MavenNames.ParsePath(RelativePath.Substring(0, RelativePath.Length - ChecksumAlgorithm.Length - 1)) ?? this;
 
     /// <summary>For metadata one level above the artifacts (<c>org/acme/maven-metadata.xml</c>, plugin prefixes): the group; else null.</summary>
     public string? GroupOnly { get; }
@@ -190,7 +201,7 @@ public static class MavenNames
             var groupOnly = TryGroup(directories, out var onlyGroup) ? onlyGroup : null;
             if (candidates.Count == 0 && groupOnly == null) return null;
 
-            return new MavenRequestPath(MavenPathKind.Metadata, fileName, baseName, checksum, candidates, groupOnly);
+            return new MavenRequestPath(path, MavenPathKind.Metadata, fileName, baseName, checksum, candidates, groupOnly);
         }
 
         if (directories.Length < 3) return null;
@@ -202,6 +213,7 @@ public static class MavenNames
         }
 
         return new MavenRequestPath(
+            path,
             MavenPathKind.File,
             fileName,
             baseName,
