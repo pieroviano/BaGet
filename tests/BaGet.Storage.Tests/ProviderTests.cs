@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -73,6 +74,12 @@ public sealed class S3StreamingTests : StreamingStorageContract
     }
 }
 
+internal sealed class NoReuseHttpClientFactory : Google.Apis.Http.HttpClientFactory
+{
+    protected override HttpMessageHandler CreateHandler(Google.Apis.Http.CreateHttpClientArgs args)
+        => new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.Zero, PooledConnectionIdleTimeout = TimeSpan.Zero, UseCookies = false };
+}
+
 /// <summary>Google Cloud Storage resumable sessions against a Cloud Storage emulator.</summary>
 public sealed class GoogleCloudStreamingTests : StreamingStorageContract
 {
@@ -84,7 +91,13 @@ public sealed class GoogleCloudStreamingTests : StreamingStorageContract
     protected override async Task<IStreamingStorageService> CreateStoreAsync()
     {
         var url = await StorageContainers.GcsUrlAsync();
-        Task<StorageClient> Factory() => new StorageClientBuilder { BaseUri = url + "/storage/v1/", UnauthenticatedAccess = true }.BuildAsync();
+        // The emulator is a single-threaded HTTP/1.0 Python server that now and then drops a connection a client reuses: no reuse.
+        Task<StorageClient> Factory() => new StorageClientBuilder
+        {
+            BaseUri = url + "/storage/v1/",
+            UnauthenticatedAccess = true,
+            HttpClientFactory = new NoReuseHttpClientFactory(),
+        }.BuildAsync();
 
         var bucket = "t" + Guid.NewGuid().ToString("N");
         using (var admin = await Factory())
