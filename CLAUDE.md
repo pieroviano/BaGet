@@ -75,6 +75,15 @@ Every operation a service, REST endpoint or CLI command offers must also be reac
 change: a feature is not done while it exists only as REST, CLI or a service method. Gate the page like the operation
 (same action/permission, antiforgery, password or re-authentication for destructive or access changes,
 `MaintenanceGate.ThrowIfClosed` on writes) and link it from the navigation or the page it belongs to. Reviews check it.
+Where the UI cannot yet do something the server can (a REST field, a CLI option, a service operation), enrich the UI
+to cover it; `docs/ui-coverage.md` (once present) maps every capability to its page and gate and must stay complete.
+
+## Every docs page is in the solution and reachable
+
+Every Markdown file under `docs/` (recursively) is listed in `BaGet.sln` under the `docs` solution folder (subfolders as
+nested solution folders), linked from `docs/index.md` or a page reachable from it, and in the `mkdocs.yml` nav. A new,
+moved or deleted page updates all three in the same commit. **Exception: plan documents (`docs/plans/`) are never listed,
+linked or put in the nav.**
 
 ## Architecture
 
