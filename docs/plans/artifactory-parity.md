@@ -219,8 +219,8 @@ User documentation: [Maven repositories](../maven-repositories.md#remote-maven-r
 |---|---|
 | OCI Distribution Spec v1.1: `/v2/`, blobs (`HEAD/GET`, monolithic and chunked upload sessions, cross-repo mount), manifests (`PUT/GET/DELETE` by tag and digest, image index), tags list, referrers API, `docker login` token endpoint (B3) | Tables `OciRepositories`, `OciManifests`, `OciTags`, `OciBlobs` (digest, size, refcount). Storage by digest, deduplicated |
 | Streaming storage (B2): `IStorageService` gains a multipart/append API | **Done (track `p5-storage`)** as the separate `IStreamingStorageService` (no change to `IStorageService`), all providers, see B2 |
-| Garbage collection of unreferenced blobs | Runs under P6's retention engine |
-| Remote = Docker Hub / any registry proxy (with its token auth); virtual = ordered pull-through | |
+| Garbage collection of unreferenced blobs | **Done (track `p5-oci-remote`)** as admin operations `docker-gc` / dry run on the Operations page (password for the removing run); P6 schedules it. See [docker-registry.md](../docker-registry.md) |
+| Remote = Docker Hub / any registry proxy (with its token auth); virtual = ordered pull-through | **Done (track `p5-oci-remote`)**: `RemoteOciRegistry`/`OciUpstreamClient` (token auth, `library/` names, streamed layer caching, TTLs, offline, `Remote:BlockPrivateAddresses`), `VirtualOciRegistry` (ordered pull-through, push to deploy repository), admin UI on Repositories/RepositoryEdit. Blocking checks: none assigned beyond B2/B3 (already done); no deviation. |
 | Tests | `docker:dind`: push, pull, multi-arch index, chunked upload, conformance subset (`opencontainers/distribution-spec` conformance tests) |
 
 #### As built: local Docker registry (track `p5-oci`)
