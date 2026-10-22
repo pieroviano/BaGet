@@ -32,6 +32,12 @@ public interface IAdminOperation
     /// </summary>
     bool AppliesTo(RepositoryInfo repository) => true;
 
+    /// <summary>
+    /// Whether the operation deletes data, so the Operations page asks the administrator's password again before it starts it (as the
+    /// other destructive pages do). Default: no.
+    /// </summary>
+    bool RequiresConfirmation => false;
+
     /// <summary>Runs it inside a scope already pinned to the repository.</summary>
     /// <returns>A short human-readable result, such as the counts.</returns>
     Task<string> RunAsync(IServiceProvider services, CancellationToken cancellationToken);

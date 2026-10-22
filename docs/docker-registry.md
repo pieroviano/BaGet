@@ -1,7 +1,7 @@
 # Docker registry
 
 A local **Docker** repository is an OCI registry (Distribution Spec v1.1): `docker login`, `push`, `pull`, multi-platform indexes,
-referrers (signatures, SBOMs), tag listing, deletes. A **remote** Docker repository caches Docker Hub (or any registry); see [Remote Docker repositories](#remote-docker-repositories).
+referrers (signatures, SBOMs), tag listing, deletes. A **remote** Docker repository caches Docker Hub (or any registry), a **virtual** one merges repositories; see [Remote Docker repositories](#remote-docker-repositories) and [Virtual Docker repositories](#virtual-docker-repositories). Blobs nothing uses are removed by the [garbage collection](#garbage-collection).
 
 ## Create and use
 
@@ -77,7 +77,36 @@ A Docker repository of kind remote is a **pull-through cache** of an upstream re
 | Pushes and deletes | `403 DENIED` for anyone who may pull (`docker push` fails with *denied*); the token service never grants `push`/`delete` on a remote repository |
 | Referrers, pages, search | Cover what is stored |
 
-*Test connection* does what a client does: `GET /v2/` anonymously, then through the token service with the typed credentials, so a wrong password shows there (it saves nothing and uses a client of its own). *Purge cache* deletes every cached image; *Purge package* takes an image name and optionally one tag or digest. The cache table shows the cached manifests, images and the bytes of their layers. Docker Hub's anonymous rate limit applies to what BaGet pulls (`GET` of manifests), not to cache hits.
+*Test connection* does what a client does: `GET /v2/` anonymously, then through the token service with the typed credentials, so a wrong password shows there (it saves nothing and uses a client of its own). *Purge cache* deletes every cached image; *Purge package* takes an image name and optionally one tag or digest. The cache table shows the cached manifests, images and the bytes of their layers. Layers no cached manifest uses are removed by the [garbage collection](#garbage-collection). Docker Hub's anonymous rate limit applies to what BaGet pulls (`GET` of manifests), not to cache hits.
+
+## Virtual Docker repositories
+
+A virtual Docker repository presents several Docker repositories (local or remote, of the same format; another virtual one is flattened in place) as one registry, in the order of its members. Create it on `/admin/repositories` > *New virtual repository* (format Docker), then add members, order them and choose the **deploy repository** (a local member) on `/admin/repositories/{name}`; *Where would an image come from?* takes an image name and a tag or digest and asks each member (*stored here*, *not stored yet; its upstream has it*, *not found*, ...) without fetching or storing anything. Clients use it like any repository: `docker pull host/{virtual}/{image}`.
+
+| Request | Result |
+|---|---|
+| Manifest by tag or digest | The first member, in order, that has it; a remote member fetches and keeps it. A tag in several members is the first member's |
+| Layer, `HEAD` of a layer | The first member that holds it (a remote member in front streams it from its upstream and keeps it; one whose upstream lacks it passes) |
+| Tag list | The union of the members' tags, paged here |
+| Referrers, browse page, search | Merged across the members (the first member's entry wins an image) |
+| Push, upload session, mount, manifest `PUT`, delete | **Moved to the deploy repository** before authorization: the caller needs the action *there*, and the upload URLs the registry hands out stay in the virtual repository. Without a deploy repository: `403 DENIED` |
+
+Only the members the caller may pull the image from are asked (a member the caller cannot read is skipped, never revealed), each in its own scope so its storage, upstream and rules apply as when it is read directly; a member that fails (its upstream is down) is logged and skipped, so the next one answers. **Tokens:** `/v2/token` for a scope on a virtual repository grants `pull` on it, `push`/`delete` as the deploy repository grants them, and `pull` on each member the caller may pull the image from (the token names them, a registry token having no user to ask later). A manage page is not offered (404): use the member's.
+
+## Garbage collection
+
+*Remove unused layers* (Manage) works on one image. The **garbage collection** works on a whole Docker repository, local or remote, and is what keeps a registry from filling up with blobs nobody can reach. Start it on `/admin/operations` (administrators): **Docker garbage collection: dry run** reports and removes nothing, **Docker garbage collection** removes; both are background jobs like the other operations (one run at a time per repository, status kept in memory, audited, refused with `503` while the server is read-only, except the dry run). Scheduling it is the retention engine's job (P6); the service is `IOciGarbageCollector`.
+
+What it marks, in this order:
+
+| Mark | Meaning | Removed |
+|---|---|---|
+| Expired upload sessions | idle longer than `Oci:UploadExpiry` | the session row and what it received in storage |
+| Unreferenced layers | an image holds a layer none of its manifests uses and it is older than `Oci:PruneGrace`, **unless the image has an upload session still open** (a push sends its layers first and the manifest last, however long they take) | the image's link to the layer |
+| Blobs nobody holds | no image holds the blob once those links are gone (reference count 0), or a blob row nobody ever linked, older than `Oci:PruneGrace` | the blob row and its file |
+| Orphan files | a file under the repository's `docker/blobs/` that no blob row names (a push that died between storing the file and recording it); only where the store can list files, and not while a blob is being stored | the file |
+
+The report (shown on the Operations page after the run) says how many of each, the bytes freed and the first items; a layer two images hold is removed only when no image holds it, and a manifest, its config and its layers are never touched. A dry run reports exactly what the real run would remove at that moment. A virtual repository has no blobs of its own (the operation is not offered for it); the repository's other formats are not affected.
 
 ## Pages
 
@@ -104,7 +133,7 @@ repository. Manifests are rows (their bytes are the digest). Tables, migration `
 | `OciUploads` | open upload sessions (reference, storage upload id); idle ones expire after `Oci:UploadExpiry` when the next upload starts |
 
 A blob is served under an image only through its link, so restricting `team/secret` cannot be bypassed by asking another image for its digest.
-Deleting a repository needs it empty of images. Garbage collection beyond *Remove unused layers* arrives with the retention engine (P6).
+Deleting a repository needs it empty of images (a remote one: purge its cache first).
 
 ## Configuration
 
@@ -113,8 +142,8 @@ Deleting a repository needs it empty of images. Garbage collection beyond *Remov
 | `Oci:TokenLifetime` | `00:05:00` | validity of a token from `/v2/token` (at least 10 s). Live |
 | `Oci:Service` | `BaGet` | the `service` of the challenge, checked at the token endpoint. Live |
 | `Oci:MaxManifestBytes` | `4194304` | largest manifest or index. Live |
-| `Oci:UploadExpiry` | `1.00:00:00` | idle time after which an upload session is discarded. Live |
-| `Oci:PruneGrace` | `01:00:00` | a layer no manifest uses is kept this long before *Remove unused layers* may remove it. Live |
+| `Oci:UploadExpiry` | `1.00:00:00` | idle time after which an upload session is discarded (when the next upload starts, and by the garbage collection). Live |
+| `Oci:PruneGrace` | `01:00:00` | a layer no manifest uses is kept this long before *Remove unused layers* or the garbage collection may remove it. Live |
 
 Kestrel has no request body limit; behind IIS a single `PATCH` is capped (`IISServerOptions.MaxRequestBodySize`, `maxAllowedContentLength`): Docker
 pushes a layer in one `PATCH`, so raise both ([streaming storage](formats.md#streaming-storage-b2)). Reverse proxies need `client_max_body_size 0` and
@@ -122,8 +151,14 @@ must pass `Authorization` and the `Host` header (the token URL is built from it)
 
 ## Tests
 
-`OciNamesTests` (Core: names, paths, scopes, manifest reader), `OciRegistryTests` (HTTP protocol, token flow, access), `DockerPagesTests`
-(`BaGet.Tests`), and `DockerCliTests` (`BaGet.Clients.Tests`): the real Docker 27 in a privileged `docker:27-dind` logs in, pushes and pulls
+`OciNamesTests` (Core: names, paths, scopes, manifest reader), `OciUpstreamTests` (Core: remote settings, token challenge, Docker Hub names),
+`OciRegistryTests` (HTTP protocol, token flow, access), `DockerPagesTests`, `RemoteOciRepositoryTests` (an in-memory registry with the token flow, a CDN
+redirect, private images, corrupt layers and a registry that is down), `VirtualOciRepositoryTests`, `OciGarbageCollectorTests`,
+`AdminDockerRemoteVirtualTests` (`BaGet.Tests`), and `DockerRemoteVirtualCliTests` and `DockerCliTests` (`BaGet.Clients.Tests`).
+`DockerRemoteVirtualCliTests` pulls through remote repositories whose upstream is a second real BaGet (a private repository that wants the
+`docker login` token flow with an API key, and a public one) and the reference `registry:2` image (started by Testcontainers; the test skips
+when it cannot be), and through a virtual repository that pushes to its deploy repository; the daemon is told the registries are insecure.
+`DockerCliTests`: the real Docker 27 in a privileged `docker:27-dind` logs in, pushes and pulls
 multi-layer and 96 MB images, a multi-platform index, public and private repositories, and the `opencontainers/distribution-spec` v1.1.0
 conformance suite (push, pull, content discovery, content management) runs against the same server. They skip without a Docker daemon that
 allows privileged containers; the images are built `FROM scratch`, so they need no internet (the conformance image comes from `ghcr.io`).

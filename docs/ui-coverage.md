@@ -78,6 +78,9 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Remote Docker repository: create (URL, user name, password or token, periods, offline, store locally) | service | Repositories > *New remote repository* (format Docker) | Admin + Password |
 | Remote Docker: edit upstream, *Test connection* (version check through the token flow), cache table (manifests, images, layer bytes), *Purge cache*, *Purge package* (image, optional tag or digest) | service | RepositoryEdit (`/admin/repositories/{name}`) | Admin + Password |
 | Remote Docker: pull through (`GET`/`HEAD` of manifests, layers, tags) | REST | `/docker-images` (the cached images, pull commands), `/docker-images/{image}` | read |
+| Virtual Docker repository: create, members, order, deploy repository, *Where would an image come from?* (image, tag or digest) | service | Repositories > *New virtual repository* (format Docker); RepositoryEdit members and preview | Admin |
+| Virtual Docker: pull from the first member, merged tags, push to the deploy repository | REST | `/docker-images` (the members' images merged), `/docker-images/{image}` | read / Deploy |
+| Docker garbage collection of a repository (dry run, run) | service (`IOciGarbageCollector`) | Admin Operations: *Docker garbage collection: dry run* and *Docker garbage collection* per local or remote Docker repository | Admin, audited |
 
 ## Repositories (Admin)
 

@@ -379,8 +379,8 @@ public class OciGarbageCollectorTests : IDisposable
 
     // ---- the Operations page ----
 
-    private Task<HttpResponseMessage> StartAsync(string operation, string repository)
-        => _admin.PostAsync("admin/operations", new Dictionary<string, string> { { "operation", operation }, { "repository", repository } });
+    private Task<HttpResponseMessage> StartAsync(string operation, string repository, string? password = Password)
+        => _admin.PostAsync("admin/operations", new Dictionary<string, string> { { "operation", operation }, { "repository", repository }, { "password", password ?? string.Empty } });
 
     [Fact]
     public async Task TheOperationsPageOffersBothCollectionsForDockerRepositoriesOnly()
@@ -428,6 +428,35 @@ public class OciGarbageCollectorTests : IDisposable
 
         var html = await _admin.GetPageAsync("admin/operations");
         Assert.Contains("Removed: 0 expired upload session(s), 1 unreferenced layer link(s), 1 blob(s)", html);
+    }
+
+    [Fact]
+    public async Task TheCollectionThatRemovesAsksForThePasswordAndTheDryRunDoesNot()
+    {
+        var loose = await PushLooseLayerAsync("team/app", "pw");
+        var digest = OciTestImage.Digest(loose);
+        _clock.Advance(TimeSpan.FromHours(2));
+        var jobs = _app.Services.GetRequiredService<AdminJobService>();
+
+        var page = await _admin.GetPageAsync("admin/operations");
+        Assert.Matches(@$"data-operation=""{OciGarbageCollectionOperation.RunName}"" data-repository=""{Repo}""[\s\S]*?name=""password""", page);
+
+        using (var wrong = await StartAsync(OciGarbageCollectionOperation.RunName, Repo, password: "wrong"))
+        {
+            Assert.Equal(HttpStatusCode.Redirect, wrong.StatusCode);
+        }
+
+        Assert.Null(jobs.Get(OciGarbageCollectionOperation.RunName, Repo));
+        Assert.Contains("confirmation is incorrect", await _admin.GetPageAsync("admin/operations"));
+        Assert.True(await StoredAsync(digest));
+
+        using (var dry = await StartAsync(OciGarbageCollectionOperation.DryRunName, Repo, password: null))
+        {
+            Assert.Equal(HttpStatusCode.Redirect, dry.StatusCode);
+        }
+
+        await jobs.WaitAsync(OciGarbageCollectionOperation.DryRunName, Repo);
+        Assert.Equal(AdminJobState.Succeeded, jobs.Get(OciGarbageCollectionOperation.DryRunName, Repo)!.State);
     }
 
     [Fact]

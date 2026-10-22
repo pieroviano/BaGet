@@ -69,6 +69,10 @@ The *Where would a package come from?* preview asks each npm member: *stored her
 
 A virtual repository of format Maven merges Maven repositories (`/r/{name}/maven/`): files from the first member that has them, artifact `maven-metadata.xml` merged (versions union; `latest` and `release` follow the member order), writes moved to the deploy repository. Details in [Maven repositories](maven-repositories.md#virtual-maven-repositories). The preview takes `group:artifact` and a Maven version and asks each member (*stored here*, *would be fetched*, *not found*...).
 
+## Docker virtual repositories
+
+A virtual repository of format Docker merges Docker repositories (`docker pull host/{name}/{image}`): manifests and layers from the first member that has them, tag lists merged, a push moved to the deploy repository (a `403 DENIED` without one). Only the members the caller may pull from are asked; a registry token names the members it was issued for. Details in [Docker registry](docker-registry.md#virtual-docker-repositories). The preview takes an image name and a tag or digest and asks each member (*stored here*, *would be fetched*, *not found*...) with a `HEAD` and nothing stored.
+
 ## `default` and the mirror
 
 `default` keeps its URL (`/`). With `Mirror:Enabled`, it behaves as a virtual repository of two members: its own packages, then the `mirror` remote repository (see [the mirror](remote-repositories.md#the-mirror)). What it fetches is stored **in `default`'s own rows**, exactly as before; `mirror` itself stays empty unless it is read at `/r/mirror/`. This is not a stored virtual repository (nothing to migrate, nothing to edit). To compose your own:

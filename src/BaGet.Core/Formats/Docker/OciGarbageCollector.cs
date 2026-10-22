@@ -353,6 +353,10 @@ public abstract class OciGarbageCollectionOperation : IAdminOperation
         => repository.Format == RepositoryFormat.Docker && repository.Kind != RepositoryKind.Virtual;
 
     /// <inheritdoc/>
+    /// <remarks>The collection that removes asks for the password; the dry run deletes nothing.</remarks>
+    public bool RequiresConfirmation => !_dryRun;
+
+    /// <inheritdoc/>
     public async Task<string> RunAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         var report = await services.GetRequiredService<IOciGarbageCollector>().RunAsync(_dryRun, cancellationToken).ConfigureAwait(false);

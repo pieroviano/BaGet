@@ -141,8 +141,8 @@ See [npm registry](npm-registry.md).
 | `Oci:TokenLifetime` | `00:05:00` | validity of a registry token from `/v2/token` (at least 10 seconds). Live |
 | `Oci:Service` | `BaGet` | the `service` named in the registry's `WWW-Authenticate` challenge and expected at the token endpoint. Live |
 | `Oci:MaxManifestBytes` | `4194304` | largest manifest or index in bytes (413 above). Live |
-| `Oci:UploadExpiry` | `1.00:00:00` | idle time after which an upload session is discarded (checked when a new upload starts). Live |
-| `Oci:PruneGrace` | `01:00:00` | how long a layer no manifest uses is kept before *Remove unused layers* may remove it. Live |
+| `Oci:UploadExpiry` | `1.00:00:00` | idle time after which an upload session is discarded (checked when a new upload starts, and by the Docker garbage collection). Live |
+| `Oci:PruneGrace` | `01:00:00` | how long a layer no manifest uses is kept before *Remove unused layers* or the Docker garbage collection may remove it. Live |
 
 See [Docker registry](docker-registry.md).
 
@@ -581,7 +581,7 @@ dotnet BaGet.dll catalog rebuild
 ```
 
 Each repository has its own catalog; `catalog rebuild --repository <name>` rebuilds a repository other than `default`.
-Administrators can also start it, and `import downloads`, per repository at `/admin/operations` (menu: *Operations*):
+Administrators can also start it, `import downloads` and (Docker repositories) the [garbage collection](docker-registry.md#garbage-collection) (with a dry run), per repository at `/admin/operations` (menu: *Operations*):
 a background job, one run at a time per operation and repository, with its last status (counts or error) kept in
 memory until the next start. Starting is refused with `503` while the server is read-only for maintenance.
 
