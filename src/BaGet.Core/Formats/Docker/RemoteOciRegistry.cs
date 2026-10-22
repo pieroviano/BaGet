@@ -213,14 +213,20 @@ public sealed class RemoteOciRegistry : IOciRegistry
 
         OciUpstreamBlob? blob = null;
         OciBlobCacheWriter? writer = null;
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.MirrorFetch);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageId, image);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, digest);
         try
         {
             try
             {
                 blob = await _upstream.OpenBlobAsync(upstream, image, digest, null, null, cancellationToken).ConfigureAwait(false);
+                activity?.SetTag(BaGetDiagnostics.Tags.Result, blob == null ? "NotFound" : "Streaming");
             }
             catch (OciUpstreamException e)
             {
+                BaGetDiagnostics.Fail(activity, e);
+
                 throw new OciException(OciErrorCode.UpstreamUnavailable, e.Message);
             }
 
@@ -271,7 +277,13 @@ public sealed class RemoteOciRegistry : IOciRegistry
         var upstream = await _upstream.ResolveAsync(cancellationToken).ConfigureAwait(false);
         if (upstream == null) return stored;
 
+        // The span of a fetch from the upstream (as a NuGet mirror fetch has): image and reference, never a URL or a credential.
+        using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.MirrorFetch);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageId, image);
+        activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, reference);
+
         var answer = await _upstream.GetManifestAsync(upstream, image, reference, stored, cancellationToken).ConfigureAwait(false);
+        activity?.SetTag(BaGetDiagnostics.Tags.Result, answer.Status.ToString());
         switch (answer.Status)
         {
             case OciUpstreamStatus.Found:

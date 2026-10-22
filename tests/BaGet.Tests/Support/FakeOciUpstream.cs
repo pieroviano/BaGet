@@ -127,6 +127,16 @@ internal sealed class FakeOciUpstream : HttpMessageHandler
         return digest;
     }
 
+    /// <summary>Adds a multi-platform index over manifests already added (<c>linux/amd64</c> and the like) under a tag; returns its digest.</summary>
+    public string AddIndex(string image, string tag, params (string Manifest, string Os, string Architecture)[] children)
+    {
+        var entries = children.Select(c =>
+            $"{{\"mediaType\":\"{ManifestType}\",\"digest\":\"{c.Manifest}\",\"size\":{_manifests[image][c.Manifest].Content.Length},\"platform\":{{\"architecture\":\"{c.Architecture}\",\"os\":\"{c.Os}\"}}}}");
+        var content = Encoding.UTF8.GetBytes("{\"schemaVersion\":2,\"mediaType\":\"application/vnd.oci.image.index.v1+json\",\"manifests\":[" + string.Join(",", entries) + "]}");
+
+        return AddManifest(image, tag, "application/vnd.oci.image.index.v1+json", content);
+    }
+
     /// <summary>Points a tag at a manifest (a tag moving upstream).</summary>
     public void MoveTag(string image, string tag, string digest) => _tags.GetOrAdd(image, _ => new(StringComparer.Ordinal))[tag] = digest;
 

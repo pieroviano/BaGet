@@ -376,6 +376,37 @@ public class RemoteOciRepositoryTests : IDisposable
         Assert.Equal(1, _upstream.Count("HEAD", "/manifests/1.0"));
     }
 
+    [Fact]
+    public async Task AMultiPlatformIndexAndTheChildThePlatformPicksAreFetchedAndKept()
+    {
+        var amd64 = _upstream.AddImage("team/multi", "amd64", "a");
+        var arm64 = _upstream.AddImage("team/multi", "arm64", "b");
+        var index = _upstream.AddIndex("team/multi", "latest", (amd64, "linux", "amd64"), (arm64, "linux", "arm64"));
+        await CreateRemoteAsync();
+
+        // A client asks for the index by tag, then for the one child its platform needs, by digest, then for that child's layers.
+        using var list = await GetAsync(ManifestPath("team/multi", "latest"));
+        Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+        Assert.Equal(index, list.Headers.GetValues("Docker-Content-Digest").Single());
+        Assert.Equal("application/vnd.oci.image.index.v1+json", list.Content.Headers.ContentType?.MediaType);
+
+        using var child = await GetAsync(ManifestPath("team/multi", arm64));
+        Assert.Equal(HttpStatusCode.OK, child.StatusCode);
+        var layer = _upstream.LayersOf("team/multi", "arm64")[0];
+        using var blob = await GetAsync(BlobPath("team/multi", layer));
+        Assert.Equal(_upstream.Blob(layer), await blob.Content.ReadAsByteArrayAsync(Cancel));
+
+        // The index and the child are kept; the child nobody asked for is not fetched.
+        Assert.Equal((2, 1, (await StoredAsync()).Bytes), await StoredAsync());
+        Assert.True((await StoredAsync()).Bytes > 0);
+        Assert.Equal(0, _upstream.Count("GET", "manifests/" + amd64));
+
+        using var scope = await _app.CreateRepositoryScopeAsync(Remote, Cancel);
+        var detail = await scope.ServiceProvider.GetRequiredService<IOciRegistry>().GetManifestDetailAsync("team/multi", index, Cancel);
+        Assert.Equal(new[] { "linux/amd64", "linux/arm64" }, detail!.Platforms.Select(p => p.Platform));
+        Assert.Equal(new[] { false, true }, detail.Platforms.Select(p => p.Present));
+    }
+
     // ---- blobs ----
 
     [Fact]
