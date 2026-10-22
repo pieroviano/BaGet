@@ -15,9 +15,8 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | P1 Remote and virtual NuGet | **Done**: remote + caching (track `p1-remote`, [remote-repositories.md](../remote-repositories.md)); virtual + D3 (track `p1-virtual`, [virtual-repositories.md](../virtual-repositories.md)) | `dc2ef5e`..`53a399a` (remote), `ef4c403` (virtual), review fixes `3e6c8e2`, `b64b039`, `06696f3`, `103489c`, `9636888`, `312b363`; `IVirtualRepositoryAdministration` creates `Virtual`, `RepositoryService.CreateAsync(..., Virtual)` stays refused (no members) |
 | P2 Access control | **Done** (implemented with its UI by the UI-coverage plan, since removed); documented in [access-control.md](../access-control.md) | tracks `access`, `access-ui`, `keys` |
 | P3 Format layer + npm | **Format layer done** (track `p3-format`, [formats.md](../formats.md)); **local npm registry done** (track `p3-npm`, [npm-registry.md](../npm-registry.md)); **remote and virtual npm done** (track `p3-npm-remote`, see *As built: remote and virtual npm* under P3). P3 is complete | `cf8cd41`..`da27c53` (format `cf8cd41`,`173c5a3`; npm `dd56089`..`62881d0`; remote/virtual `2f2a951`..`da27c53`); `IFormatModule`, NuGet on it, `Npm` format, npm tables (migration x4), Clients rig; `NpmRegistryService`, `NpmController`, npm pages, real-npm tests |
-| P4 Maven | **Local Maven repositories done** (track `p4-maven`); **remote (Central proxy) and virtual Maven done** (track `p4-maven-remote`); see [maven-repositories.md](../maven-repositories.md); Gradle not tested | branches `wt/p4-maven`, `wt/p4-maven-remote` |
-| P5 row 2 (streaming storage, B2) | **Done** (track `p5-storage`, [formats.md](../formats.md#streaming-storage-b2)); the rest of P5 (OCI protocol, tables, token endpoint) not started | `6bf588a`, `b06565f`, docs commit |
-| P5 rows 1 and 5 (local Docker / OCI registry) | **Done** (track `p5-oci`, [docker-registry.md](../docker-registry.md)); remote (Docker Hub proxy) and virtual Docker, and blob garbage collection beyond *Remove unused layers* (P6), not done | branch `wt/p5-oci`; see *As built: local Docker registry* under P5 |
+| P4 Maven | **Done**: local (track `p4-maven`), remote (Central proxy) and virtual (track `p4-maven-remote`); see [maven-repositories.md](../maven-repositories.md); Gradle not tested | `c97d37a` (remote/virtual), `769bd3e`, integration `7ff8c17`; branches `wt/p4-maven`, `wt/p4-maven-remote` |
+| P5 Docker / OCI | **Done**: streaming storage (B2, track `p5-storage`, [formats.md](../formats.md#streaming-storage-b2), `6bf588a`, `b06565f`); local registry (track `p5-oci`, [docker-registry.md](../docker-registry.md), `f9bdd3e`..`49b2124`); remote, virtual and garbage collection (track `p5-oci-remote`, `9bd42b6`..`9f639e5`) | see *As built* under P5 |
 | P6-P10 | Not started | No retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
@@ -193,7 +192,7 @@ User documentation: [remote](../remote-repositories.md#npm-remote-repositories) 
 | npm registry API: packument `GET /{name}`, scoped `@scope/name`, tarball download, `npm publish` (`PUT`), dist-tags, deprecate, unpublish rules, `npm login` / `_authToken`, `/-/v1/search` | Tables `NpmPackages`, `NpmVersions`, `NpmDistTags`. Remote = registry.npmjs.org proxy; virtual merges packuments |
 | Tests | Real `npm` CLI in a container: publish, install, dist-tag, scoped packages, remote and virtual |
 
-### P4 — Maven
+### P4 — Maven — DONE
 
 | Item | Note |
 |---|---|
@@ -213,7 +212,7 @@ User documentation: [Maven repositories](../maven-repositories.md#remote-maven-r
 | Deviations from the sketch | (1) No schema change (reuses `Maven*` tables, no migration). (2) `ResolutionPreview.Version` is now a string and `PreviewAsync`/`PurgeArtifactAsync` take text versions: Maven versions (`5.3.20.RELEASE`) are not NuGet versions. (3) The release/snapshot policy does not apply to remote repositories. (4) Remote search/pages cover stored artifacts only; metadata/checksum answers are in memory only (as npm). (5) Test connection reports a `404` root as connected with a note. (6) Tests were written beside the code, key ones proven by mutation |
 | Not done | Gradle against remote/virtual, per-member path rules, Maven search proxying, persisting metadata across restarts |
 
-### P5 — Docker / OCI distribution
+### P5 — Docker / OCI distribution — DONE
 
 | Item | Note |
 |---|---|
@@ -241,6 +240,20 @@ User documentation: [docker-registry.md](../docker-registry.md).
 | Deviations from the sketch | (1) **Six tables, not four**: `OciBlobLinks` (a blob is served only through the image that holds it, else image-level permissions could be bypassed by digest, and a manifest can only reference blobs of its own image) and `OciUploads` (upload sessions bound to their image, expiry). `OciBlobs.RefCount` counts holders (images), the file goes at zero. (2) Manifests are stored in the row (max 4 MiB), not as files. (3) The route is not in `MapRoute`'s twin shape but a server-root registration (`serverRoot`). (4) **No startup check** for routes without a declared action: the structure is deny by default (the filter is on the controller, `OciHttp.Required` has no default allow) and `EveryRegistryRouteIsServedByTheControllerThatAuthorizes…` fails if a Docker route is added without it. (5) The token endpoint takes an API key as the password, not the account password, and only `GET` (the OAuth `POST` flow is not offered; clients fall back to `GET`). (6) Only `sha256` digests; a cross-repository mount works within one BaGet repository (otherwise a normal upload starts, which the specification allows); `DELETE blob` is `405` while a manifest uses it. (7) Tests were written beside the code in one pass and the key ones were then proven by mutation (see *Verification*), not strictly first |
 | Verification | Full solution run in the worktree with Docker running: 2988 tests, 14 failures, all of them the ones CLAUDE.md lists as failing on a clean checkout (`TelemetrySettingsPageTests` x8, `TelemetryExportTests` x3, `TelemetryE2ETests` x2, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan…` in the full run); `BaGet.Database.Tests`, `BaGet.Storage.Tests` and `BaGet.Clients.Tests` (33, the Docker ones included) ran, none skipped; 0 build warnings; `dotnet ef migrations has-pending-model-changes` clean on all four providers. Eight mutations (blob served without its link, token action ignored, digest not verified, manifest references not checked, unknown repository answered 404 to anonymous callers, delete mapped to Push, tag not moved, blob in use deletable) each turned the matching test red. Found by the real clients, not by the HTTP tests: a read of `manifests/.INVALID_MANIFEST_NAME` must be 404 (conformance), not 400; a user with Deploy but no Read cannot `docker push` (Docker checks which layers exist first). Also fixed in passing: the NuGet upload page listed Docker (and npm/Maven) repositories whose upload page is 404 |
 | Not done | Remote (Docker Hub proxy with its token auth) and virtual Docker repositories; blob garbage collection under the retention engine (P6; *Remove unused layers* exists per image); `_catalog`; token revocation; `sha512`; image scanning (P7) |
+
+#### As built: remote and virtual Docker, garbage collection (track `p5-oci-remote`)
+
+User documentation: [Docker registry](../docker-registry.md).
+
+| Item | As built |
+|---|---|
+| Remote | `RemoteOciRegistry` + `OciUpstreamClient` (Bearer token auth, `library/` names for Docker Hub, streamed layer caching, TTLs, offline, `Remote:BlockPrivateAddresses`), `mirror.fetch` spans; admin UI on Repositories / RepositoryEdit |
+| Virtual | `VirtualOciRegistry`: ordered pull-through, push to the deploy repository |
+| Garbage collection | Admin operations `docker-gc` and its dry run on the Operations page; the removing run asks for the administrator's password (`IAdminOperation.RequiresConfirmation`, default false), the dry run does not; scheduling is P6 |
+| Tests | `FakeOciUpstream`, `VirtualOciRepositoryTests`, `OciGarbageCollectorTests` (17), admin pages, `DockerRemoteVirtualCliTests` (5, real Docker; **not run at integration: no Docker daemon**) |
+| Deviations | (1) GC password gate added per the destructive-operation rule. (2) No schema change |
+| Verification (integration) | Full solution, no Docker: 3192 total, 3084 passed, 97 skipped (Docker suites), 11 failed = `TelemetryExportTests` x3 + `TelemetrySettingsPageTests` x8 (listed in CLAUDE.md); 0 build warnings. Rerun the Docker suites (`Clients`, `Storage`, `Database`, `Telemetry` E2E) with Docker |
+| Blocking checks | B1, B2, B3, B6 resolved (table above); none open |
 
 ### P6 — Retention and cleanup
 
