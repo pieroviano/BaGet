@@ -21,6 +21,12 @@ public abstract class StreamingStorageContract
     /// <summary>A store whose blobs cannot collide with another test's.</summary>
     protected abstract Task<IStreamingStorageService> CreateStoreAsync();
 
+    /// <summary>False for an emulator that keeps answering for a cancelled resumable session (the real service answers 404/499).</summary>
+    protected virtual bool CancelledSessionsAreGone => true;
+
+    /// <summary>False for an emulator that ignores <c>ifGenerationMatch=0</c> on a copy (the real service answers 412).</summary>
+    protected virtual bool ConditionalCopyIsEnforced => true;
+
     private const int MiB = 1024 * 1024;
 
     private static async Task<(string Id, long Length)> UploadAsync(IStreamingStorageService store, long total, int seed, params long[] chunks)
@@ -140,7 +146,7 @@ public abstract class StreamingStorageContract
 
         Assert.Equal(PatternStream.Sha256Of(20 * MiB, 7), e.Actual);
         Assert.Null(await store.GetInfoAsync(path, Token));
-        Assert.Null(await store.GetUploadLengthAsync(id, Token));
+        if (CancelledSessionsAreGone) Assert.Null(await store.GetUploadLengthAsync(id, Token));
     }
 
     [Fact]
@@ -178,6 +184,8 @@ public abstract class StreamingStorageContract
 
         var (first, _) = await UploadAsync(store, 20 * MiB, 31, 20 * MiB);
         Assert.Equal(StoragePutResult.Success, (await store.CommitAsync(first, path, null, Token)).Result);
+
+        if (!ConditionalCopyIsEnforced) return;
 
         var (same, _) = await UploadAsync(store, 20 * MiB, 31, 7 * MiB, 13 * MiB);
         Assert.Equal(StoragePutResult.AlreadyExists, (await store.CommitAsync(same, path, null, Token)).Result);
@@ -238,6 +246,7 @@ public abstract class StreamingStorageContract
         await store.AbortAsync(id, Token);
         await store.AbortAsync(id, Token);
 
+        if (!CancelledSessionsAreGone) return;
         Assert.Null(await store.GetUploadLengthAsync(id, Token));
         await Assert.ThrowsAsync<StorageUploadNotFoundException>(() => store.AppendAsync(id, 20 * MiB, new MemoryStream(new byte[1]), Token));
         await Assert.ThrowsAsync<StorageUploadNotFoundException>(() => store.CommitAsync(id, NewPath(), null, Token));

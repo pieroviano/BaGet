@@ -218,43 +218,45 @@ public partial class GoogleCloudStorageService
         if (count == 0) return Stream.Null;
 
         var storage = await CreateClientAsync().ConfigureAwait(false);
-        try
-        {
-            var url = storage.Service.BaseUri + "b/" + Uri.EscapeDataString(_bucketName!) + "/o/" + Uri.EscapeDataString(CoercePath(path)) + "?alt=media";
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Range = new RangeHeaderValue(offset, offset + count - 1);
+        var url = storage.Service.BaseUri + "b/" + Uri.EscapeDataString(_bucketName!) + "/o/" + Uri.EscapeDataString(CoercePath(path)) + "?alt=media";
 
-            var response = await storage.Service.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.NotFound)
+        // Bounded range requests, each re-requested from the exact byte if its connection drops: one GET of many GB must not be the unit of failure.
+        var windows = new WindowedReadStream(
+            async (from, size, ct) =>
             {
-                response.Dispose();
-                storage.Dispose();
-                return null;
-            }
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Range = new RangeHeaderValue(from, from + size - 1);
 
-            response.EnsureSuccessStatusCode();
-            var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-
-            // Servers that ignore Range answer 200 with the whole object: skip to the offset and stop at the count.
-            Stream result = body;
-            if (response.StatusCode == HttpStatusCode.OK && offset > 0)
-            {
-                var skip = new byte[81920];
-                for (var left = offset; left > 0;)
+                var response = await storage.Service.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+                try
                 {
-                    var read = await body.ReadAsync(skip.AsMemory(0, (int)Math.Min(skip.Length, left)), cancellationToken).ConfigureAwait(false);
-                    if (read == 0) break;
-                    left -= read;
-                }
-            }
+                    response.EnsureSuccessStatusCode();
+                    var body = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 
-            return new OwnedReadStream(new RangeReadStream(result, count), new Disposables(response, storage));
-        }
-        catch
-        {
-            storage.Dispose();
-            throw;
-        }
+                    // Servers that ignore Range answer 200 with the whole object: skip to the offset and stop at the count.
+                    if (response.StatusCode == HttpStatusCode.OK && from > 0)
+                    {
+                        var skip = new byte[81920];
+                        for (var left = from; left > 0;)
+                        {
+                            var read = await body.ReadAsync(skip.AsMemory(0, (int)Math.Min(skip.Length, left)), ct).ConfigureAwait(false);
+                            if (read == 0) break;
+                            left -= read;
+                        }
+                    }
+
+                    return new OwnedReadStream(new RangeReadStream(body, size), response);
+                }
+                catch
+                {
+                    response.Dispose();
+                    throw;
+                }
+            },
+            offset,
+            count);
+
+        return new OwnedReadStream(windows, storage);
     }
 
     private string TempName(string id) => StreamingStorage.UploadsFolder + "/" + id;
@@ -309,6 +311,10 @@ public partial class GoogleCloudStorageService
         {
             var range = values.First();
             persisted = long.Parse(range.Substring(range.LastIndexOf('-') + 1), System.Globalization.CultureInfo.InvariantCulture) + 1;
+
+            // Only whole chunks are ever sent before the final one (a multiple of 256 KiB), so one persisted byte cannot be real:
+            // an empty session is reported as "bytes=0-0" by some emulators, and as no Range header by the service.
+            if (persisted == 1) persisted = 0;
         }
 
         var tail = Array.Empty<byte>();
@@ -360,18 +366,6 @@ public partial class GoogleCloudStorageService
         }
         catch (GoogleApiException e) when (e.HttpStatusCode == HttpStatusCode.NotFound)
         {
-        }
-    }
-
-    private sealed class Disposables : IDisposable
-    {
-        private readonly IDisposable[] _items;
-
-        public Disposables(params IDisposable[] items) => _items = items;
-
-        public void Dispose()
-        {
-            foreach (var item in _items) item.Dispose();
         }
     }
 }

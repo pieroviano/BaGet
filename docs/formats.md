@@ -88,3 +88,44 @@ hosts the real application on such a server for the CLI tests. The tests skip wi
 `docker:dind`: **feasible** on Docker Desktop (WSL2): `docker:27-dind` with `--privileged`, `DOCKER_TLS_CERTDIR=` and
 `--insecure-registry=<registry host:port>` reaches `docker info` in ~25 s and pulls from Docker Hub. A CI runner must allow privileged
 containers; the P5 tests skip when it does not. Maven: `ClientContainers.MavenAsync()` (`maven:3.9-eclipse-temurin-21`) needs no privilege and, like npm, runs `mvn` in a fresh `$HOME`; the plugins come from Maven Central.
+
+## Streaming storage (B2)
+
+`IStreamingStorageService : IStorageService` (`BaGet.Core/Storage`) is the capability a format with huge blobs (Docker layers,
+many GB) needs; `PutAsync` takes a whole stream and the cloud providers buffer it. Nothing is added to `IStorageService`, so
+existing providers and tests are unaffected.
+
+| Call | Meaning |
+|---|---|
+| `BeginUploadAsync(contentType)` | opaque, URL-safe upload id |
+| `AppendAsync(id, offset, chunk)` | adds bytes at the length the store holds; another offset throws `StorageUploadOffsetException` carrying the real length (OCI `416` + `Range`). Returns the new length |
+| `GetUploadLengthAsync(id)` | where to resume; null = no such upload |
+| `CommitAsync(id, path, sha256?)` | makes the content visible at `path` (known only now, a digest path) and removes the upload. `Success`, `AlreadyExists` (identical content) or `Conflict`; a wrong digest throws `StorageDigestMismatchException` and stores nothing |
+| `AbortAsync(id)` | discards; unknown ids ignored |
+| `GetInfoAsync(path)` / `GetRangeAsync(path, offset, length?)` | `HEAD` and `GET` with `Range`; stream, never a whole blob |
+
+- **Memory:** one part/block buffer per request (8 MiB Azure and GCS, 16 MiB S3 and Aliyun), never the blob. SHA-256 is computed while the bytes stream
+  (`UploadDigestTracker`); a node that lost the running hash (restart, another node took the chunk) recomputes it from the stored
+  content at commit, still streaming. The caller owns an upload's lifetime (sessions expire; abort).
+- **Refusal:** `IFormatModule.RequiresStreamingStorage` (default false; the Docker module of P5 sets it) makes `RepositoryService.CreateAsync` throw
+  `NotSupportedException` (`StreamingStorage.Require`) for a local or remote repository of that format when the configured store is not
+  an `IStreamingStorageService`; virtual repositories hold no blobs and are exempt. Every shipped provider streams, so today this guards custom stores.
+
+| Provider | Mechanism | Verified against |
+|---|---|---|
+| FileSystem, Null | file grown under `.uploads/`, moved into place on commit | in-process |
+| AwsS3 | multipart into `.uploads/`, bytes short of a part kept in a `.tail` object, copied to the final key by ranged multipart copy completed with `If-None-Match: *` | S3Mock (Testcontainers) |
+| AzureBlobStorage | staged blocks of a temp blob (`.uploads/`), committed then copied server side if-not-exists | Azurite |
+| GoogleCloud | resumable session over HTTP (8 MiB chunks, a multiple of 256 KiB), tail object, copy with `ifGenerationMatch=0` | `oittaa/gcp-storage-emulator` |
+| AliyunOss | as S3 (multipart + tail + ranged copy) | **no emulator exists**: code review and the shared contract only; commit of the same key is not atomic (the SDK sends no `x-oss-forbid-overwrite`) |
+
+Emulator limits (not service limits): the GCS emulator ignores `DELETE` on a session and `ifGenerationMatch` on a copy, so those
+contract assertions are switched off for it (`CancelledSessionsAreGone`, `ConditionalCopyIsEnforced`); MinIO was planned for S3 but no longer
+publishes images. Tests: `tests/BaGet.Storage.Tests` (one shared contract run against every provider; skips without Docker). The
+large-blob test streams 96 MiB by default and 5 GB with `BAGET_STORAGE_LARGE_BYTES=5368709120`, measuring the process's private memory.
+
+**Body limits for chunked uploads.** The host sets Kestrel's `MaxRequestBodySize` to unlimited (`Program.cs`; the plan's "~2 GB" was
+`FormOptions.MultipartBodyLengthLimit`, which only form posts see, not a raw `PATCH`). Under IIS the limits are per request, so a
+client that sends a layer in one `PATCH` hits them: `IISServerOptions.MaxRequestBodySize` (BaGet default 250 MB) and `web.config`
+`requestLimits maxAllowedContentLength` (30 MB default, 4 GB ceiling). Raise both, or put the registry behind a proxy with no body
+limit; a client that chunks (`Content-Range`) stays under them. See [Configuration](configuration.md#iis-server-options).

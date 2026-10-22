@@ -686,6 +686,8 @@ There are three settings related to the database configuration:
 IIS Server options can be configured under the `IISServerOptions` key. The available options are detailed at [docs.microsoft.com](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.builder.iisserveroptions)
 Note: If not specified, the MaxRequestBodySize in BaGet Extension defaults to 250MB (262144000 bytes), rather than the ASP.NET Core default of 30MB
 
+A Docker registry (large layers sent in one `PATCH`) also needs `requestLimits maxAllowedContentLength` in `web.config` raised (30 MB default, 4 GB ceiling); see [Streaming storage](formats.md#streaming-storage-b2).
+
 ```json
 {
     ...

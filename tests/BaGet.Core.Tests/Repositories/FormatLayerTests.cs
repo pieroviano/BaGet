@@ -22,6 +22,11 @@ public sealed class FakeNpmModule : IFormatModule
     public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local };
     public IReadOnlyList<string> StorageFolders { get; } = new[] { "npm" };
 
+    /// <summary>Makes the module claim it stores blobs too large to buffer (a Docker-like format).</summary>
+    public bool NeedsStreaming { get; init; }
+
+    bool IFormatModule.RequiresStreamingStorage => NeedsStreaming;
+
     public IReadOnlyList<FormatCreateField> CreateFields { get; } = new[]
     {
         new FormatCreateField("scope", "Default scope", "Packages without a scope are refused when set.", Required: false),
@@ -187,6 +192,32 @@ public class FormatLayerTests : IDisposable
     }
 
     // ---- creating ----
+
+    private sealed class BufferingStorage : IStorageService
+    {
+        public Task<Stream> GetAsync(string path, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<Uri> GetDownloadUriAsync(string path, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<StoragePutResult> PutAsync(string path, Stream content, string contentType, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task DeleteAsync(string path, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    [Fact]
+    public async Task AFormatThatNeedsStreamingIsRefusedOnAStoreThatCannotStreamAndAllowedOnOneThatCan()
+    {
+        using var context = await NewContextAsync();
+        var formats = new FormatRegistry(new IFormatModule[] { new NuGetFormatModule(), new FakeNpmModule { NeedsStreaming = true } });
+
+        var refused = new RepositoryService(context, formats: formats, storage: new BufferingStorage());
+        var e = await Assert.ThrowsAsync<NotSupportedException>(() => refused.CreateAsync("big", RepositoryFormat.Npm, RepositoryKind.Local, new Dictionary<string, string?>(), true, Token));
+        Assert.Contains("BufferingStorage", e.Message);
+        Assert.Null(await refused.FindAsync("big", Token));
+
+        // NuGet does not need it, so the same store still takes a NuGet repository.
+        await refused.CreateAsync("feed", RepositoryFormat.NuGet, RepositoryKind.Local, Token);
+
+        var allowed = new RepositoryService(context, formats: formats, storage: new NullStorageService());
+        Assert.NotNull(await allowed.CreateAsync("big", RepositoryFormat.Npm, RepositoryKind.Local, new Dictionary<string, string?>(), true, Token));
+    }
 
     [Fact]
     public async Task AFormatWithoutAModuleCannotBeCreated()

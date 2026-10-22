@@ -52,16 +52,16 @@ public sealed class AzureBlobStreamingTests : StreamingStorageContract
     }
 }
 
-/// <summary>S3 multipart against MinIO.</summary>
+/// <summary>S3 multipart against S3Mock.</summary>
 public sealed class S3StreamingTests : StreamingStorageContract
 {
     protected override async Task<IStreamingStorageService> CreateStoreAsync()
     {
         var client = new AmazonS3Client(
-            new BasicAWSCredentials(StorageContainers.MinioUser, StorageContainers.MinioPassword),
+            new BasicAWSCredentials(StorageContainers.S3AccessKey, StorageContainers.S3SecretKey),
             new AmazonS3Config
             {
-                ServiceURL = await StorageContainers.MinioUrlAsync(),
+                ServiceURL = await StorageContainers.S3UrlAsync(),
                 ForcePathStyle = true,
                 RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
                 ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
@@ -73,12 +73,17 @@ public sealed class S3StreamingTests : StreamingStorageContract
     }
 }
 
-/// <summary>Google Cloud Storage resumable sessions against fake-gcs-server.</summary>
+/// <summary>Google Cloud Storage resumable sessions against a Cloud Storage emulator.</summary>
 public sealed class GoogleCloudStreamingTests : StreamingStorageContract
 {
+    // oittaa/gcp-storage-emulator ignores DELETE on a session and ifGenerationMatch on a copy; both are covered by the service's contract.
+    protected override bool CancelledSessionsAreGone => false;
+
+    protected override bool ConditionalCopyIsEnforced => false;
+
     protected override async Task<IStreamingStorageService> CreateStoreAsync()
     {
-        var url = await StorageContainers.FakeGcsUrlAsync();
+        var url = await StorageContainers.GcsUrlAsync();
         Task<StorageClient> Factory() => new StorageClientBuilder { BaseUri = url + "/storage/v1/", UnauthenticatedAccess = true }.BuildAsync();
 
         var bucket = "t" + Guid.NewGuid().ToString("N");

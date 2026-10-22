@@ -190,7 +190,13 @@ public partial class BlobStorageService
     private CloudBlockBlob MetaBlob(string uploadId) => _container.GetBlockBlobReference(StreamingStorage.UploadsFolder + "/" + uploadId + ".meta");
 
     // Fixed-length ids are required: every block of a blob has an id of the same length.
-    private static string BlockId(int index) => Convert.ToBase64String(Encoding.ASCII.GetBytes(index.ToString("D8")));
+    internal static string BlockId(int index) => Convert.ToBase64String(Encoding.ASCII.GetBytes(index.ToString("D8")));
+
+    // Base64 text does not sort like what it encodes (digits come after letters in its alphabet), so blocks are ordered by the
+    // index inside the id, never by the id text: that put a 5 GB blob (more than ~320 blocks) together out of order.
+    internal static int BlockIndex(string blockId) => int.Parse(Encoding.ASCII.GetString(Convert.FromBase64String(blockId)), System.Globalization.CultureInfo.InvariantCulture);
+
+    internal static IEnumerable<string> InUploadOrder(IEnumerable<string> blockIds) => blockIds.OrderBy(BlockIndex);
 
     private async Task EnsureExistsAsync(string uploadId, CancellationToken cancellationToken)
     {
@@ -205,7 +211,7 @@ public partial class BlobStorageService
         try
         {
             var blocks = await TempBlob(uploadId).DownloadBlockListAsync(BlockListingFilter.Uncommitted, null, null, null, cancellationToken).ConfigureAwait(false);
-            return blocks.OrderBy(b => b.Name, StringComparer.Ordinal).ToList();
+            return blocks.OrderBy(b => BlockIndex(b.Name)).ToList();
         }
         catch (StorageException e) when (e.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.NotFound)
         {

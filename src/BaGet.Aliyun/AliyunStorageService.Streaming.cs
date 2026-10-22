@@ -241,10 +241,17 @@ public partial class AliyunStorageService
         var count = StreamingStorage.ResolveRange(info.Length, offset, length);
         if (count == 0) return Stream.Null;
 
-        var request = new GetObjectRequest(_bucket, PrepareKey(path));
-        request.SetRange(offset, offset + count - 1);
-        var result = await Run(() => _client.GetObject(request), cancellationToken).ConfigureAwait(false);
-        return new OwnedReadStream(result.Content, result);
+        // Bounded range requests, each re-requested from the exact byte if its connection drops: one GET of many GB must not be the unit of failure.
+        return new WindowedReadStream(
+            async (from, size, ct) =>
+            {
+                var request = new GetObjectRequest(_bucket, PrepareKey(path));
+                request.SetRange(from, from + size - 1);
+                var result = await Run(() => _client.GetObject(request), ct).ConfigureAwait(false);
+                return new OwnedReadStream(result.Content, result);
+            },
+            offset,
+            count);
     }
 
     private string TempKey(string id) => PrepareKey(StreamingStorage.UploadsFolder + Separator + id);

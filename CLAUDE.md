@@ -297,6 +297,17 @@ layout under `repos/{name}/` (`repos` is no default prefix, so no collision). `P
 optional `IRepositoryContext` (null = default). Never build a path from a name without `RepositoryStorage.Prefix`, which
 re-validates it. `StagingSweepWorker` sweeps each repository in its own scope.
 
+**Streaming storage** (`IStreamingStorageService : IStorageService`, `BaGet.Core/Storage`; user docs `docs/formats.md#streaming-storage-b2`). Optional
+capability for blobs too big to buffer (Docker layers): `BeginUpload` / `Append(id, offset, chunk)` (wrong offset =
+`StorageUploadOffsetException` with the real length) / `Commit(id, path, sha256?)` (path only known at commit) / `Abort`, plus `GetInfo`
+(HEAD) and `GetRange`. Implemented by FileSystem, Null, S3 (multipart + `.tail` object + ranged copy), Azure (staged blocks), GCS
+(resumable session over HTTP + tail) and Aliyun (as S3; **no emulator**, unverified live). Uploads live under `.uploads/`; a node that
+lost the running SHA-256 (`UploadDigestTracker`) recomputes it streaming at commit. `IFormatModule.RequiresStreamingStorage` makes
+`RepositoryService.CreateAsync` refuse (`StreamingStorage.Require`) a non-virtual repository of that format on a store that cannot stream.
+`tests/BaGet.Storage.Tests`: one contract (`StreamingStorageContract`) per provider on Testcontainers (Azurite, S3Mock, `oittaa/gcp-storage-emulator`),
+skips without Docker; `BAGET_STORAGE_LARGE_BYTES=5368709120` runs the 5 GB memory test (run one provider at a time: the probe is process-wide).
+Kestrel's body limit is off (`Program.cs`); IIS caps a single request (`IISServerOptions.MaxRequestBodySize`, `maxAllowedContentLength`), so chunk or raise them.
+
 **Access model** (`BaGet.Core/Access`; user docs `docs/access-control.md`). Tables `Groups`, `GroupMembers`, `PermissionTargets`, `PermissionGrants`,
 `ProjectMembers`, `AccessAuditEntries` (migration `AddAccessControl` x4; grants/members cascade from their group/target/project). The migration seeds
 groups *Everyone*/*Authenticated* (keys 1, 2), targets "Anyone reads every repository" (Read) and "Authenticated users deploy" (Annotate|Deploy|Delete|Manage,

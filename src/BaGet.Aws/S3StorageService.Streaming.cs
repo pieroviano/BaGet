@@ -233,17 +233,17 @@ public partial class S3StorageService
         var count = StreamingStorage.ResolveRange(info.Length, offset, length);
         if (count == 0) return Stream.Null;
 
-        try
-        {
-            var response = await _client.GetObjectAsync(
-                new GetObjectRequest { BucketName = _bucket, Key = PrepareKey(path), ByteRange = new ByteRange(offset, offset + count - 1) },
-                cancellationToken).ConfigureAwait(false);
-            return new OwnedReadStream(response.ResponseStream, response);
-        }
-        catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
-        {
-            return null;
-        }
+        // Bounded range requests, each re-requested from the exact byte if its connection drops: one GET of many GB must not be the unit of failure.
+        return new WindowedReadStream(
+            async (from, size, ct) =>
+            {
+                var response = await _client.GetObjectAsync(
+                    new GetObjectRequest { BucketName = _bucket, Key = PrepareKey(path), ByteRange = new ByteRange(from, from + size - 1) },
+                    ct).ConfigureAwait(false);
+                return new OwnedReadStream(response.ResponseStream, response);
+            },
+            offset,
+            count);
     }
 
     private string TempKey(string id) => PrepareKey(StreamingStorage.UploadsFolder + Separator + id);
@@ -374,7 +374,7 @@ public partial class S3StorageService
                 cancellationToken).ConfigureAwait(false);
             return StoragePutResult.Success;
         }
-        catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.PreconditionFailed)
+        catch (AmazonS3Exception e) when (KeyIsTaken(e))
         {
             return await CompareWithStoredAsync(key, sha, cancellationToken).ConfigureAwait(false);
         }
@@ -382,6 +382,13 @@ public partial class S3StorageService
 
     private async Task<StoragePutResult> CopyIfAbsentAsync(string sourceKey, string key, long size, string? contentType, string sha, CancellationToken cancellationToken)
     {
+        // The conditional complete below is what makes this atomic on S3; the plain check first spares the copy in the usual case of
+        // a blob that is already there, and covers S3-compatible stores that do not honour If-None-Match: * on a multipart complete.
+        if (await ExistsAsync(key, cancellationToken).ConfigureAwait(false))
+        {
+            return await CompareWithStoredAsync(key, sha, cancellationToken).ConfigureAwait(false);
+        }
+
         var start = await _client.InitiateMultipartUploadAsync(
             new InitiateMultipartUploadRequest { BucketName = _bucket, Key = key, ContentType = contentType },
             cancellationToken).ConfigureAwait(false);
@@ -414,15 +421,34 @@ public partial class S3StorageService
                 cancellationToken).ConfigureAwait(false);
             return StoragePutResult.Success;
         }
-        catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.PreconditionFailed)
+        catch (AmazonS3Exception e) when (KeyIsTaken(e))
         {
+            // Compared before the abort: the stored blob is what the answer is about.
+            var result = await CompareWithStoredAsync(key, sha, cancellationToken).ConfigureAwait(false);
             await AbortQuietlyAsync(key, start.UploadId).ConfigureAwait(false);
-            return await CompareWithStoredAsync(key, sha, cancellationToken).ConfigureAwait(false);
+            return result;
         }
         catch
         {
             await AbortQuietlyAsync(key, start.UploadId).ConfigureAwait(false);
             throw;
+        }
+    }
+
+    // S3 answers a taken key with 412 Precondition Failed; some S3-compatible stores answer 304 Not Modified to the same header.
+    private static bool KeyIsTaken(AmazonS3Exception e)
+        => e.StatusCode == HttpStatusCode.PreconditionFailed || e.StatusCode == HttpStatusCode.NotModified;
+
+    private async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _client.GetObjectMetadataAsync(_bucket, key, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
         }
     }
 
