@@ -69,7 +69,7 @@ tags are case-sensitive. Only `sha256` digests are stored. Writes are `403` in r
 | Image | `/docker-images/{image}` | readers of the image: tags, manifests (type, platform, layers, size). `?digest=` shows one manifest: config and layers with sizes, an index's platforms with links to each manifest, annotations, the document |
 | Manage | `/docker-manage/{image}` | signed-in users with **Delete** on the image: delete a tag, a manifest (with its tags), remove unused layers (older than `Oci:PruneGrace`), delete the whole image; each asks the password |
 
-Docker pages are 404 in other formats' repositories and theirs are 404 in a Docker one. There is no upload page: images are pushed with the CLI.
+Docker pages are 404 in other formats' repositories and theirs are 404 in a Docker one. There is no upload page: images are pushed with the CLI (and the NuGet upload page does not offer Docker repositories).
 
 ## Storage and data
 

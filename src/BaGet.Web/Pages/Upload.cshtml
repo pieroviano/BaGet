@@ -30,7 +30,8 @@
     IReadOnlyList<RepositoryInfo> writable = Array.Empty<RepositoryInfo>();
     if (!Model.IsReadOnlyMode && _repositoryAccess.SupportsMultipleRepositories)
     {
-        writable = await _repositoryAccess.WritableAsync(User, Model.HttpContext.RequestAborted);
+        // This page uploads .nupkg files: the repositories of other formats have their own upload pages (or none, like Docker's).
+        writable = (await _repositoryAccess.WritableAsync(User, Model.HttpContext.RequestAborted)).Where(r => r.Format == BaGet.Core.RepositoryFormat.NuGet).ToList();
     }
 }
 

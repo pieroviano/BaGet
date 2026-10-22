@@ -277,6 +277,23 @@ public class DockerPagesTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task TheNuGetUploadPageDoesNotOfferADockerRepository()
+    {
+        using (var scope = _app.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IRepositoryService>().CreateAsync("feed", RepositoryFormat.NuGet, RepositoryKind.Local, CancellationToken.None);
+        }
+
+        var html = await _alice.GetPageAsync("upload");
+
+        Assert.Contains("id=\"upload-repository\"", html);
+        var picker = html.Substring(html.IndexOf("id=\"upload-repository\"", StringComparison.Ordinal));
+        picker = picker.Substring(0, picker.IndexOf("</p>", StringComparison.Ordinal));
+        Assert.Contains("data-repository=\"feed\"", picker);
+        Assert.DoesNotContain("data-repository=\"reg\"", picker);
+    }
+
     // ---- manage ----
 
     private Task<HttpResponseMessage> ManageAsync(Browser browser, string handler, Dictionary<string, string> fields, string image = "team/app")
