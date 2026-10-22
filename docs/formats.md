@@ -1,13 +1,13 @@
 # Package formats
 
-A repository has a **format**. NuGet and npm (local repositories, see [npm registry](npm-registry.md)) have a protocol today; Maven and
-Docker follow. `/admin/formats` (administrators) lists what this server can host.
+A repository has a **format**. NuGet, npm (see [npm registry](npm-registry.md)) and Maven (local repositories, see [Maven repositories](maven-repositories.md)) have a protocol today; Docker follows. `/admin/formats` (administrators) lists what this server can host.
 
 | Format | Served under | Feed address | Repository kinds | Storage folders | Status |
 |---|---|---|---|---|---|
 | NuGet | the repository base (`/v3/…`, `/api/v2`, symbols) | `v3/index.json` | local, remote, virtual | `packages` `symbols` `catalog` `validation` `staging` | done |
 | npm | `npm/` | `npm/` | local, remote, virtual | `npm` | done ([details](npm-registry.md)) |
-| Maven, Docker | | | | | not started |
+| Maven | `maven/` | `maven/` | local | `maven` | done, local only ([details](maven-repositories.md)) |
+| Docker | | | | | not started |
 
 The *repository base* is `/` for `default` and `/r/{name}/` for the others, so an npm repository `web` is at `/r/web/npm/`. A
 route belongs to one format: asking a NuGet route of an npm repository (or an npm route of `default`, which is NuGet) is `404`.
@@ -62,11 +62,12 @@ The packument is built from the manifests, so the registry answers what was publ
 Tarballs live in storage, not in rows. The npm registry needed no further schema change: its migration is `AddNpmTables`.
 Package owners are the common `PackageOwner` rows (repository-scoped, keyed by the lower-case npm name).
 
-Sketches for later phases (not built):
+Maven (built, migration `AddMavenTables`): `MavenArtifacts` (repo, `GroupId`, `ArtifactId`), `MavenVersions` (version, snapshot flag), `MavenFiles` (name, classifier, extension, size, sha1/sha256/md5/sha512, timestamp+build for snapshot builds); `maven-metadata.xml` is generated from the rows, never stored; GAV stays a string (index length on MySQL).
+
+Sketch for a later phase (not built):
 
 | Format | Tables | Notes |
 |---|---|---|
-| Maven | `MavenArtifacts` (repo, `GroupId`, `ArtifactId`), `MavenVersions` (version, snapshot flag, timestamp+build for snapshots), `MavenFiles` (name, classifier, extension, size, sha1/sha256/md5) | `maven-metadata.xml` is generated from versions, never stored; unique `(Repo, Group, Artifact)`, `(Artifact, Version)`, `(Version, FileName)`; GAV stays a string (index length on MySQL) |
 | OCI | `OciRepositories` (repo, image path), `OciManifests` (digest, media type, size, `subject` digest for referrers), `OciTags` (tag to manifest digest, unique per image), `OciBlobs` (digest unique per registry, size, refcount), manifest-to-blob link table | blobs by digest, deduplicated across images; digests are `sha256:` + 64 hex (71); refcount drives garbage collection (P6) |
 
 ## Client authentication (B3)
@@ -75,7 +76,7 @@ Sketches for later phases (not built):
 |---|---|---|
 | npm | `//host/:_authToken=T` in `.npmrc`; every request after carries `Authorization: Bearer T`. Nothing is sent unprompted without a token; a `401` is final (`E401`, no retry). `npm whoami` is `GET /-/whoami`. `npm login` tries `POST /-/v1/login` (web login); on `404` it falls back to `PUT /-/user/org.couchdb.user:NAME` with `{_id,name,password,type:"user",roles,date}` and expects `{ok,id,rev,token}`; the token is then stored as `_authToken`. The registry therefore needs **bearer tokens** (access tokens) and the CouchDB user call | real npm 10.9.9, `NpmClientFlowTests` |
 | Docker | `GET /v2/` answers `401` + `WWW-Authenticate: Bearer realm="…/token",service="…"`; `docker login` then sends `GET {realm}?account=U&client_id=docker&offline_token=true&service=S` with **Basic** (user and password or token), takes `{token,expires_in}` and retries `/v2/` with `Bearer`; pull and push ask `{realm}?scope=repository:NAME:pull,push&service=S` first. Plain HTTP only for `localhost` or an insecure registry. API keys do not fit; P5 adds the token endpoint | real Docker 27.5 in `docker:27-dind`, manual probe (not in the suite) |
-| Maven | HTTP Basic from `settings.xml` (`<server><id>` matching the repository id; user, password or token). Maven sends credentials **after a `401`** with `WWW-Authenticate: Basic`; deploy (`PUT`) also challenges first. `401` with a Basic challenge is enough | documented from Maven's behaviour; verify with the `maven` image in P4 |
+| Maven | HTTP Basic from `settings.xml` (`<server><id>` matching the repository id; user, password or token). Maven sends credentials **after a `401`** with `WWW-Authenticate: Basic`; deploy (`PUT`) also challenges first. `401` with a Basic challenge is enough | verified with the real `mvn` 3.9 (`MavenCliTests`): deploy and resolve both send the `settings.xml` credentials after the challenge; Maven 3.8.1+ also blocks plain-http repositories |
 
 ## Client test rigs (B6)
 
@@ -86,4 +87,4 @@ hosts the real application on such a server for the CLI tests. The tests skip wi
 
 `docker:dind`: **feasible** on Docker Desktop (WSL2): `docker:27-dind` with `--privileged`, `DOCKER_TLS_CERTDIR=` and
 `--insecure-registry=<registry host:port>` reaches `docker info` in ~25 s and pulls from Docker Hub. A CI runner must allow privileged
-containers; the P5 tests skip when it does not. Maven: the `maven` image needs no privilege.
+containers; the P5 tests skip when it does not. Maven: `ClientContainers.MavenAsync()` (`maven:3.9-eclipse-temurin-21`) needs no privilege and, like npm, runs `mvn` in a fresh `$HOME`; the plugins come from Maven Central.

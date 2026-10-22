@@ -44,12 +44,25 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Ping, whoami, audit | REST | stateless handshakes; whoami is the signed-in profile, audit answers "none" | none |
 | Web login `-/v1/login` | REST | not offered (answers 404, npm falls back to user and password) | - |
 
+## Maven repository (per repository, `maven/`)
+
+| Capability | Reached by | UI | Gate |
+|---|---|---|---|
+| Read file, checksum, `maven-metadata.xml` | REST (`GET`/`HEAD`) | `/maven-artifacts` (browse, search), `/maven-artifacts/{group}/{artifact}/{version}` (files with sizes and checksums, POM view, download links) | read |
+| Deploy (`mvn deploy`, `PUT`) | REST | `/maven-upload` (coordinates, file, optional POM), `settings.xml` and `distributionManagement` snippets on browse and upload | Deploy |
+| Delete a file | REST (`DELETE`) | MavenManage | Manage + Password |
+| Delete a version / the artifact | service | MavenManage | Manage + Password |
+| Snapshot clean-up (keep newest N builds) | service | MavenManage | Manage + Password |
+| Owners | service | MavenManage | Manage |
+| Policy, redeploy, snapshot builds kept | service | RepositoryEdit: Maven settings (audited) | Admin |
+| Dependency / `settings.xml` / `<repositories>` / Gradle snippets | machine-only config | artifact and browse pages | read |
+
 ## Repositories (Admin)
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
 | List, counts, feed URL, links per format | service | Admin Repositories | Admin |
-| Create local NuGet / npm | service | Repositories create forms | Admin |
+| Create local NuGet / npm / Maven | service | Repositories create forms | Admin |
 | Create remote (URL, credentials, cache periods, offline) | service | Repositories remote form, RepositoryEdit | Admin + Password |
 | Create virtual, members, order, upload target | service | Repositories virtual form, RepositoryEdit | Admin |
 | Virtual preview, remote connection test | service | RepositoryEdit: Preview, Test | Admin (+ Password for test) |
