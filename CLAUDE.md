@@ -21,9 +21,9 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **2777 tests** across `BaGet.Core.Tests` (799), `BaGet.Tests` (1638),
-`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (105), `BaGet.Web.Tests` (58),
-`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (20), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (25, Docker). On a machine with a local Jaeger
+Baseline: **2825 tests** across `BaGet.Core.Tests` (805), `BaGet.Tests` (1638),
+`BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (107), `BaGet.Web.Tests` (58),
+`BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (20), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (25, Docker), `BaGet.Storage.Tests` (40, Docker; the GCS emulator is a single-threaded Python server and now and then drops a connection when the whole suite loads the machine: rerun the class). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
 `TelemetryE2ETests`) fail on a clean checkout too; not investigated. Checked at `e213fe0` without Jaeger: 11 of them (`TelemetryExportTests` x3,
 `TelemetrySettingsPageTests` x8) fail on a clean checkout, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan...` fails in the full run (passes alone). With Docker running, the 2
@@ -301,7 +301,7 @@ re-validates it. `StagingSweepWorker` sweeps each repository in its own scope.
 capability for blobs too big to buffer (Docker layers): `BeginUpload` / `Append(id, offset, chunk)` (wrong offset =
 `StorageUploadOffsetException` with the real length) / `Commit(id, path, sha256?)` (path only known at commit) / `Abort`, plus `GetInfo`
 (HEAD) and `GetRange`. Implemented by FileSystem, Null, S3 (multipart + `.tail` object + ranged copy), Azure (staged blocks), GCS
-(resumable session over HTTP + tail) and Aliyun (as S3; **no emulator**, unverified live). Uploads live under `.uploads/`; a node that
+(resumable session over HTTP + tail) and Aliyun (as S3; **no emulator**, unverified live). S3/Aliyun/GCS read a range as 64 MiB windows (`WindowedReadStream`, retries from the exact byte); Azure orders staged blocks by the index inside the base64 id, never by id text. Uploads live under `.uploads/`; a node that
 lost the running SHA-256 (`UploadDigestTracker`) recomputes it streaming at commit. `IFormatModule.RequiresStreamingStorage` makes
 `RepositoryService.CreateAsync` refuse (`StreamingStorage.Require`) a non-virtual repository of that format on a store that cannot stream.
 `tests/BaGet.Storage.Tests`: one contract (`StreamingStorageContract`) per provider on Testcontainers (Azurite, S3Mock, `oittaa/gcp-storage-emulator`),

@@ -79,8 +79,7 @@ public partial class GoogleCloudStorageService
 
             if (tail.Length > 0)
             {
-                using var body = new MemoryStream(tail, writable: false);
-                await storage.UploadObjectAsync(_bucketName, TailName(id), GenericContentType, body, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await PutTailAsync(storage, TailName(id), tail, cancellationToken).ConfigureAwait(false);
             }
             else if (state.Tail.Length > 0)
             {
@@ -295,10 +294,15 @@ public partial class GoogleCloudStorageService
     private async Task<UploadState> ReadStateAsync(StorageClient storage, string id, Uri session, string uploadId, CancellationToken cancellationToken)
     {
         // "bytes */*" asks how much the session holds: 308 with "Range: bytes=0-N" (no header = nothing yet).
-        using var request = new HttpRequestMessage(HttpMethod.Put, session) { Content = new ByteArrayContent(Array.Empty<byte>()) };
-        request.Content.Headers.TryAddWithoutValidation("Content-Range", "bytes */*");
-
-        using var response = await storage.Service.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await SendIdempotentAsync(
+            storage,
+            () =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Put, session) { Content = new ByteArrayContent(Array.Empty<byte>()) };
+                request.Content.Headers.TryAddWithoutValidation("Content-Range", "bytes */*");
+                return request;
+            },
+            cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.Gone)
         {
             throw new StorageUploadNotFoundException(uploadId);
@@ -333,17 +337,56 @@ public partial class GoogleCloudStorageService
 
     private static async Task PutRangeAsync(StorageClient storage, Uri session, long start, ReadOnlyMemory<byte> bytes, long? total, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Put, session) { Content = new ReadOnlyMemoryContent(bytes) };
         var totalText = total?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "*";
-        request.Content.Headers.TryAddWithoutValidation(
-            "Content-Range",
-            bytes.Length == 0 ? "bytes */" + totalText : $"bytes {start}-{start + bytes.Length - 1}/{totalText}");
+        var range = bytes.Length == 0 ? "bytes */" + totalText : $"bytes {start}-{start + bytes.Length - 1}/{totalText}";
 
-        using var response = await storage.Service.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        // The same range of the same session may be sent again: the session ignores bytes it already holds.
+        using var response = await SendIdempotentAsync(
+            storage,
+            () =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Put, session) { Content = new ReadOnlyMemoryContent(bytes) };
+                request.Content.Headers.TryAddWithoutValidation("Content-Range", range);
+                return request;
+            },
+            cancellationToken).ConfigureAwait(false);
         var status = (int)response.StatusCode;
         if (status == 308 || response.IsSuccessStatusCode) return;
 
         throw new IOException($"The upload session answered {status}.");
+    }
+
+    // The tail is at most one chunk: one simple upload (a single request) rather than the client library's resumable one (two or more).
+    private async Task PutTailAsync(StorageClient storage, string name, byte[] bytes, CancellationToken cancellationToken)
+    {
+        var url = UploadBase(storage) + "b/" + Uri.EscapeDataString(_bucketName!) + "/o?uploadType=media&name=" + Uri.EscapeDataString(name);
+        using var response = await SendIdempotentAsync(
+            storage,
+            () =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = new ByteArrayContent(bytes) };
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue(GenericContentType);
+                return request;
+            },
+            cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+    }
+
+    // Sends a request whose repetition is harmless (a session status query, the same range of a session, an overwrite of the tail),
+    // again when the connection fails before an answer arrives (a reused connection the service closed, a reset): up to 3 tries.
+    private static async Task<HttpResponseMessage> SendIdempotentAsync(StorageClient storage, Func<HttpRequestMessage> create, CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            using var request = create();
+            try
+            {
+                return await storage.Service.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            }
+            catch (HttpRequestException) when (attempt < 3 && !cancellationToken.IsCancellationRequested)
+            {
+            }
+        }
     }
 
     private static async Task CancelSessionAsync(StorageClient storage, Uri session)

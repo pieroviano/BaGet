@@ -107,6 +107,8 @@ existing providers and tests are unaffected.
 - **Memory:** one part/block buffer per request (8 MiB Azure and GCS, 16 MiB S3 and Aliyun), never the blob. SHA-256 is computed while the bytes stream
   (`UploadDigestTracker`); a node that lost the running hash (restart, another node took the chunk) recomputes it from the stored
   content at commit, still streaming. The caller owns an upload's lifetime (sessions expire; abort).
+- **Reads:** S3, Aliyun and GCS serve a range as bounded 64 MiB requests (`WindowedReadStream`), each re-requested from the exact byte
+  if its connection drops, so a many-GB `GET` is never one connection that must survive; Azure's read stream already works in windows.
 - **Refusal:** `IFormatModule.RequiresStreamingStorage` (default false; the Docker module of P5 sets it) makes `RepositoryService.CreateAsync` throw
   `NotSupportedException` (`StreamingStorage.Require`) for a local or remote repository of that format when the configured store is not
   an `IStreamingStorageService`; virtual repositories hold no blobs and are exempt. Every shipped provider streams, so today this guards custom stores.
@@ -118,6 +120,10 @@ existing providers and tests are unaffected.
 | AzureBlobStorage | staged blocks of a temp blob (`.uploads/`), committed then copied server side if-not-exists | Azurite |
 | GoogleCloud | resumable session over HTTP (8 MiB chunks, a multiple of 256 KiB), tail object, copy with `ifGenerationMatch=0` | `oittaa/gcp-storage-emulator` |
 | AliyunOss | as S3 (multipart + tail + ranged copy) | **no emulator exists**: code review and the shared contract only; commit of the same key is not atomic (the SDK sends no `x-oss-forbid-overwrite`) |
+
+Measured (5 GiB blob in 256 MiB chunks, growth of the test process's private memory; B2 of the plan): FileSystem 6 MiB, Azure/Azurite 55 MiB,
+S3/S3Mock 68 MiB; GCS 1 GiB 11 MiB (the emulator keeps blobs in RAM, a 5 GiB run did not finish); Aliyun not measurable. Azure
+block ids are ordered by their index, not their base64 text (the 5 GiB run caught a scrambled blob).
 
 Emulator limits (not service limits): the GCS emulator ignores `DELETE` on a session and `ifGenerationMatch` on a copy, so those
 contract assertions are switched off for it (`CancelledSessionsAreGone`, `ConditionalCopyIsEnforced`); MinIO was planned for S3 but no longer
