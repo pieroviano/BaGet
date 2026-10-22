@@ -89,8 +89,9 @@ public class MavenManageModel : AccountPageModel
             return;
         }
 
-        // Owners and the owner tools exist where artifacts are deployed: only a local repository (the only kind Maven has).
-        if (HttpContext.RequestServices.GetRequiredService<IRepositoryContext>().Current.Kind != RepositoryKind.Local)
+        // Owners and the owner tools exist where artifacts are deployed: only a local Maven repository (a page of another format is 404, as RepositoryPageFilter says; the model filter can run before it).
+        var current = HttpContext.RequestServices.GetRequiredService<IRepositoryContext>().Current;
+        if (current.Kind != RepositoryKind.Local || current.Format != RepositoryFormat.Maven)
         {
             context.Result = NotFound();
             return;

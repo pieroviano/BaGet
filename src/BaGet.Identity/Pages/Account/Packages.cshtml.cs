@@ -59,6 +59,12 @@ public class PackagesModel : AccountPageModel
                 continue;
             }
 
+            if (repository.Format == RepositoryFormat.Maven)
+            {
+                groups.Add(new RepositoryPackages(repository, await SummariseMavenAsync(scope.ServiceProvider.GetRequiredService<IMavenRepository>(), ids, cancellationToken)));
+                continue;
+            }
+
             groups.Add(new RepositoryPackages(
                 repository,
                 Summarise(ids, await ListVersionsAsync(
@@ -107,6 +113,27 @@ public class PackagesModel : AccountPageModel
             })
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8602, CS8604
+    }
+
+    // A Maven repository keeps its own tables too: the owned ids are group:artifact, summarised one artifact at a time.
+    private static async Task<List<OwnedPackage>> SummariseMavenAsync(IMavenRepository maven, IReadOnlyList<string> ids, CancellationToken cancellationToken)
+    {
+        var owned = new List<OwnedPackage>(ids.Count);
+        foreach (var id in ids)
+        {
+            var found = MavenNames.TryParseArtifactName(id, out var groupId, out var artifactId);
+            var artifact = found ? await maven.GetArtifactAsync(groupId, artifactId, cancellationToken) : null;
+            owned.Add(new OwnedPackage
+            {
+                Id = artifact?.Name ?? id,
+                LatestVersion = artifact?.Latest?.Version,
+                LatestVersionIsListed = artifact != null,
+                VersionCount = artifact?.Versions.Count ?? 0,
+                Downloads = 0,
+            });
+        }
+
+        return owned;
     }
 
     // An npm repository keeps its own tables: the summary comes from the registry, one package at a time (a user owns few).

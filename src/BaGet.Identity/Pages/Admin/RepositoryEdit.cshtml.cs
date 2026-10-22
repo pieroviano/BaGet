@@ -42,6 +42,9 @@ public class RepositoryEditModel : RepositoryPageModel
     /// <summary>The remote repository's upstream, null for the other kinds.</summary>
     public RemoteRepositoryDetail? RemoteDetail { get; private set; }
 
+    /// <summary>The settings of a local Maven repository (policy, redeploy, snapshot builds kept), null for the other repositories.</summary>
+    public MavenRepositorySettings? MavenSettings { get; private set; }
+
     /// <summary>What a remote repository stores and remembers.</summary>
     public RemoteCacheOverview? Cache { get; private set; }
 
@@ -92,7 +95,7 @@ public class RepositoryEditModel : RepositoryPageModel
         .FirstOrDefault(l => l.Id == "browse" && l.Page != null)?.Page ?? "/Index";
 
     /// <summary>The name of what a package is called in this repository's format (shown in the labels).</summary>
-    public string PackageWord => Repository?.Format == RepositoryFormat.Npm ? "package name" : "package id";
+    public string PackageWord => Repository?.Format switch { RepositoryFormat.Npm => "package name", RepositoryFormat.Maven => "artifact (group:artifact)", _ => "package id" };
 
     /// <summary>The repository's feed address.</summary>
     public string FeedUrl => RepositoryFeedUrl.For(
@@ -145,6 +148,11 @@ public class RepositoryEditModel : RepositoryPageModel
             ReferencedBy = await services.GetRequiredService<IVirtualRepositoryAdministration>().ReferencedByAsync(Repository.Name, cancellationToken);
         }
 
+        if (Repository.Format == RepositoryFormat.Maven && Repository.Kind == RepositoryKind.Local)
+        {
+            MavenSettings = await services.GetRequiredService<IMavenRepositoryAdministration>().GetSettingsAsync(Repository.Name, cancellationToken);
+        }
+
         if (Repository.IsDefault)
         {
             MirrorRepository = await services.GetRequiredService<IRemoteRepositoryAdministration>().FindAsync(BaGet.Core.Repository.MirrorName, cancellationToken);
@@ -188,6 +196,34 @@ public class RepositoryEditModel : RepositoryPageModel
         TempData["Message"] = $"Repository {Name} was saved.";
 
         return RedirectToPage("/Admin/Repositories");
+    }
+
+    /// <summary>
+    /// Saves the policy of a local Maven repository: which versions it accepts, whether a release may be redeployed and how many
+    /// snapshot builds are kept. Audited; a stricter policy applies to later deploys and deletes nothing.
+    /// </summary>
+    public async Task<IActionResult> OnPostMavenSettingsAsync(string? policy, string? redeploy, string? snapshotBuilds, CancellationToken cancellationToken)
+    {
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        MavenRepositorySettings settings;
+        try
+        {
+            settings = MavenRepositorySettings.FromFields(new Dictionary<string, string?> { ["policy"] = policy, ["redeploy"] = redeploy, ["snapshotBuilds"] = snapshotBuilds });
+        }
+        catch (ArgumentException e)
+        {
+            return await RefuseAsync(e.Message, cancellationToken);
+        }
+
+        if (!await HttpContext.RequestServices.GetRequiredService<IMavenRepositoryAdministration>().SaveSettingsAsync(Name!, settings, User.Identity?.Name, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        TempData["Message"] = $"The settings of repository {Name} were saved.";
+
+        return RedirectToPage(new { name = Name });
     }
 
     /// <summary>Asks the upstream with the posted, unsaved values (a blank password means the stored one) and saves nothing.</summary>

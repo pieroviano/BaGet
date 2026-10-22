@@ -53,6 +53,27 @@
                                         <a href="@Url.RepositoryContent(group.Repository, "npm-upload")">Upload new version</a>
                                     </td>
                                 }
+                                else if (group.Repository.Format == BaGet.Core.RepositoryFormat.Maven)
+                                {
+                                    var mavenPath = string.Join("/", (package.Id ?? string.Empty).Split(':').Select(Uri.EscapeDataString));
+                                    <td><a href="@Url.RepositoryContent(group.Repository, "maven-artifacts/" + mavenPath)">@package.Id</a></td>
+                                    <td>
+                                        @if (package.LatestVersion == null)
+                                        {
+                                            <text>None</text>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.RepositoryContent(group.Repository, "maven-artifacts/" + mavenPath + "/" + Uri.EscapeDataString(package.LatestVersion))">@package.LatestVersion</a>
+                                        }
+                                    </td>
+                                    <td>@package.VersionCount</td>
+                                    <td>@package.Downloads.ToString("N0")</td>
+                                    <td>
+                                        <a href="@Url.RepositoryContent(group.Repository, "maven-manage/" + mavenPath)">Manage</a> &middot;
+                                        <a href="@Url.RepositoryContent(group.Repository, "maven-upload")">Upload new version</a>
+                                    </td>
+                                }
                                 else
                                 {
                                     <td><a href="@Url.RepositoryContent(group.Repository, "packages/" + package.Id)">@package.Id</a></td>

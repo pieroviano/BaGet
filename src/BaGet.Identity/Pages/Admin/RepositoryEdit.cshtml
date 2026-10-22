@@ -112,6 +112,37 @@
         <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
     </form>
 
+    @if (Model.MavenSettings != null)
+    {
+        <h2>Maven settings</h2>
+        <form method="post" asp-page-handler="MavenSettings" id="maven-settings-form">
+            <div class="form-group">
+                <label for="maven-policy">Versions accepted</label>
+                <select id="maven-policy" name="policy" class="form-control">
+                    @foreach (var option in new[] { BaGet.Core.MavenPolicy.Releases, BaGet.Core.MavenPolicy.Snapshots, BaGet.Core.MavenPolicy.Both })
+                    {
+                        <option value="@option" selected="@(Model.MavenSettings.Policy == option)">@option</option>
+                    }
+                </select>
+                <span class="help-block">A deploy the policy refuses is answered 409. A stricter policy deletes nothing already stored.</span>
+            </div>
+            <div class="form-group">
+                <label for="maven-redeploy">Redeploy releases</label>
+                <select id="maven-redeploy" name="redeploy" class="form-control">
+                    <option value="No" selected="@(!Model.MavenSettings.AllowRedeploy)">No</option>
+                    <option value="Yes" selected="@Model.MavenSettings.AllowRedeploy">Yes</option>
+                </select>
+                <span class="help-block">When yes, a release file that exists may be replaced by a caller who also holds the Delete permission.</span>
+            </div>
+            <div class="form-group">
+                <label for="maven-snapshot-builds">Snapshot builds kept</label>
+                <input id="maven-snapshot-builds" name="snapshotBuilds" type="number" min="0" max="@BaGet.Core.MavenRepositorySettings.MaxSnapshotBuildsLimit" class="form-control" value="@Model.MavenSettings.MaxSnapshotBuilds" />
+                <span class="help-block">0 keeps every build. Otherwise older builds of a snapshot version are deleted when a newer one arrives; an artifact's manage page cleans up on demand.</span>
+            </div>
+            <button type="submit" class="btn btn-default" id="maven-settings-save">Save Maven settings</button>
+        </form>
+    }
+
     @if (Model.VirtualDetail != null)
     {
         var virtualDetail = Model.VirtualDetail;
