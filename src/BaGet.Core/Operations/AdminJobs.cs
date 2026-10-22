@@ -26,6 +26,12 @@ public interface IAdminOperation
     /// <summary>Whether the configured services can run it; <paramref name="services"/> is a request scope.</summary>
     bool IsAvailable(IServiceProvider services);
 
+    /// <summary>
+    /// Whether the operation makes sense for <paramref name="repository"/> (a Docker garbage collection does not for a NuGet repository).
+    /// The Operations page lists it only for those, and <see cref="AdminJobService.TryStart"/> refuses the others. Default: every repository.
+    /// </summary>
+    bool AppliesTo(RepositoryInfo repository) => true;
+
     /// <summary>Runs it inside a scope already pinned to the repository.</summary>
     /// <returns>A short human-readable result, such as the counts.</returns>
     Task<string> RunAsync(IServiceProvider services, CancellationToken cancellationToken);
@@ -117,6 +123,12 @@ public sealed class AdminJobService
         if (definition == null)
         {
             refusal = "Unknown operation.";
+            return false;
+        }
+
+        if (!definition.AppliesTo(repository))
+        {
+            refusal = $"{definition.Title} does not apply to {repository.Name}.";
             return false;
         }
 

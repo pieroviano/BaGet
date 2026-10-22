@@ -75,6 +75,9 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Remove unused layers | service | DockerManage | Delete + Password |
 | Delete the whole image | service | DockerManage | Delete + Password |
 | Repository: create, list, anonymous read, delete | service | Repositories (Docker create form, Browse link), RepositoryEdit, RepositoryDelete | Admin |
+| Remote Docker repository: create (URL, user name, password or token, periods, offline, store locally) | service | Repositories > *New remote repository* (format Docker) | Admin + Password |
+| Remote Docker: edit upstream, *Test connection* (version check through the token flow), cache table (manifests, images, layer bytes), *Purge cache*, *Purge package* (image, optional tag or digest) | service | RepositoryEdit (`/admin/repositories/{name}`) | Admin + Password |
+| Remote Docker: pull through (`GET`/`HEAD` of manifests, layers, tags) | REST | `/docker-images` (the cached images, pull commands), `/docker-images/{image}` | read |
 
 ## Repositories (Admin)
 

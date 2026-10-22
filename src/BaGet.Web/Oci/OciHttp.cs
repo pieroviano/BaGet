@@ -45,6 +45,8 @@ public static class OciHttp
         OciErrorCode.RangeInvalid => "BLOB_UPLOAD_INVALID",
         OciErrorCode.PaginationNumberInvalid => "PAGINATION_NUMBER_INVALID",
         OciErrorCode.ManifestTooLarge => "MANIFEST_INVALID",
+        OciErrorCode.Denied => "DENIED",
+        OciErrorCode.UpstreamUnavailable => "UNAVAILABLE",
         _ => "UNSUPPORTED",
     };
 
@@ -55,6 +57,8 @@ public static class OciHttp
         OciErrorCode.Unsupported => StatusCodes.Status405MethodNotAllowed,
         OciErrorCode.RangeInvalid => StatusCodes.Status416RangeNotSatisfiable,
         OciErrorCode.ManifestTooLarge => StatusCodes.Status413PayloadTooLarge,
+        OciErrorCode.Denied => StatusCodes.Status403Forbidden,
+        OciErrorCode.UpstreamUnavailable => StatusCodes.Status502BadGateway,
         _ => StatusCodes.Status400BadRequest,
     };
 
@@ -127,9 +131,10 @@ public static class OciHttp
 
 /// <summary>What the authorization filter worked out for a request, handed to <see cref="OciController"/>.</summary>
 /// <param name="Path">The parsed path: kind, image and reference.</param>
-/// <param name="Repository">The BaGet repository.</param>
+/// <param name="Repository">The BaGet repository the client addressed (its name is in every URL the registry hands out).</param>
 /// <param name="Caller">Who is asking.</param>
-public sealed record OciRequest(OciPath Path, RepositoryInfo Repository, OciCaller Caller)
+/// <param name="Target">The repository the request is authorized in and runs in: <paramref name="Repository"/>, except for a push or delete to a virtual repository, which is its deploy repository's.</param>
+public sealed record OciRequest(OciPath Path, RepositoryInfo Repository, OciCaller Caller, RepositoryInfo Target)
 {
     /// <summary><see cref="HttpContext.Items"/> key.</summary>
     public const string ItemKey = "BaGet.OciRequest";

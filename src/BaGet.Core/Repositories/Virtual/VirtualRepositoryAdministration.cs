@@ -281,11 +281,17 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
         var detail = await FindAsync(name, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"There is no virtual repository named '{name}'.");
 
-        // NuGet and npm versions are semantic versions; a Maven version is any version folder name.
+        // NuGet and npm versions are semantic versions; a Maven version is any version folder name; a Docker "version" is a tag or a digest.
         NuGetVersion? parsed = null;
         string shown = version;
         string group = string.Empty, artifact = string.Empty;
-        if (detail.Repository.Format == RepositoryFormat.Maven)
+        if (detail.Repository.Format == RepositoryFormat.Docker)
+        {
+            packageId = packageId.Trim().ToLowerInvariant();
+            if (!OciNames.IsValidImage(packageId)) throw new ArgumentException($"{packageId} is not an image name: lower-case letters, digits, '.', '_', '-' in components separated by '/'.", nameof(packageId));
+            if (!(OciNames.IsValidTag(version) || OciNames.IsValidDigest(version))) throw new ArgumentException($"{version} is not a tag or a sha256 digest.", nameof(version));
+        }
+        else if (detail.Repository.Format == RepositoryFormat.Maven)
         {
             if (!MavenNames.TryParseArtifactName(packageId, out group, out artifact)) throw new ArgumentException($"{packageId} is not an artifact: write it as group:artifact.", nameof(packageId));
             if (!MavenNames.IsValidVersion(version)) throw new ArgumentException($"{version} is not a valid version.", nameof(version));
@@ -327,6 +333,8 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
                             .ProbeAsync(packageId.ToLowerInvariant(), parsed!.ToFullString(), cancellationToken).ConfigureAwait(false),
                         RepositoryFormat.Maven => await scope.ServiceProvider.GetRequiredService<IMavenRepository>()
                             .ProbeAsync(group, artifact, version, cancellationToken).ConfigureAwait(false),
+                        RepositoryFormat.Docker => await scope.ServiceProvider.GetRequiredService<IOciRegistry>()
+                            .ProbeAsync(packageId, version, cancellationToken).ConfigureAwait(false),
                         _ => await scope.ServiceProvider.GetRequiredService<PackageService>()
                             .ProbeAsync(packageId, parsed!, cancellationToken).ConfigureAwait(false),
                     };
@@ -355,6 +363,12 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
         string version,
         CancellationToken cancellationToken)
     {
+        if (format == RepositoryFormat.Docker)
+        {
+            // A Docker member's stored copy only: the probe of a remote member would ask its upstream, which a shadowed member must not.
+            return await services.GetRequiredService<OciRegistryService>().ProbeAsync(packageId, version, cancellationToken).ConfigureAwait(false) == ResolutionOutcome.Stored;
+        }
+
         if (format == RepositoryFormat.Maven)
         {
             // A Maven member's stored copy only: the probe of a remote member would ask its upstream, which a shadowed member must not.

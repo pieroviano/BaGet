@@ -1,7 +1,7 @@
 # Docker registry
 
 A local **Docker** repository is an OCI registry (Distribution Spec v1.1): `docker login`, `push`, `pull`, multi-platform indexes,
-referrers (signatures, SBOMs), tag listing, deletes. Remote (Docker Hub proxy) and virtual Docker repositories are not built yet.
+referrers (signatures, SBOMs), tag listing, deletes. A **remote** Docker repository caches Docker Hub (or any registry); see [Remote Docker repositories](#remote-docker-repositories).
 
 ## Create and use
 
@@ -61,6 +61,24 @@ Errors are the specification's JSON (`{"errors":[{"code","message","detail"}]}`)
 undefined method `405`, an invalid name `400 NAME_INVALID`. Repository names match case-insensitively; image names and digests are lower case,
 tags are case-sensitive. Only `sha256` digests are stored. Writes are `403` in read-only mode and `503` while a database copy has the maintenance gate closed.
 
+## Remote Docker repositories
+
+A Docker repository of kind remote is a **pull-through cache** of an upstream registry (Docker Hub `https://registry-1.docker.io`, GHCR `https://ghcr.io`, Quay, Harbor, Artifactory, another BaGet, a `registry:2`). Create it on `/admin/repositories` > *New remote repository* (format Docker): upstream address, optional credentials, the cache settings of [remote repositories](remote-repositories.md). `docker pull host/hub/library/nginx:1.27` (BaGet repository `hub`) is answered from the cache, fetched from the upstream on a miss.
+
+| Part | Behaviour |
+|---|---|
+| Names | The image is the name after the repository, as for a local one (`hub/team/app` is `team/app` upstream). At **Docker Hub** (`registry-1.docker.io`, `index.docker.io`, `docker.io`) a name without a slash is an official image and is asked for as `library/{name}`: `docker pull host/hub/nginx` fetches `library/nginx` |
+| Authentication | As `docker login` does: the first request goes without credentials; a `401` with `WWW-Authenticate: Bearer realm="…",service="…",scope="…"` sends BaGet to that **realm** (Docker Hub: `auth.docker.io`) for a token, with the configured user name and password as Basic (anonymously when none: Docker Hub hands out anonymous pull tokens, with its rate limit). The token is kept per scope until it expires and sent as the bearer credential. A registry that asks for `Basic` itself gets the pair at its own host; a password with **no user name** is sent as a ready-made bearer token to the registry. Credentials go to the registry's origin and to the realm only: a **redirect** (Docker Hub sends layers to a CDN) is followed without any credential, never from https to http. A realm on http under an https registry is refused |
+| Manifests | A tag is asked of the upstream and cached for the **metadata period**; a digest never changes, so a stored one is never asked again. After the period an unchanged tag is verified with a `HEAD` (which Docker Hub does not count as a pull) and the manifest is not downloaded again. The document must be a supported manifest or index whose digest matches the one asked for (and `Docker-Content-Digest`); with *Store locally* it is kept with its tag (a moved tag moves here, the old manifest stays by digest) |
+| Layers | A layer an image holds is served from storage. Otherwise it is **streamed from the upstream while it is written to storage** (a pull is not kept waiting for a multi-gigabyte layer) and kept once its SHA-256 matches the digest: a layer that does not is not kept and the download ends in error. A layer another image of the repository already stores is linked to the image once the upstream confirms (`HEAD`) that the image has it, so a base layer is stored and downloaded once. Range requests, a layer already being downloaded by another request and a read-only server pass through unkept. Concurrency and storage failures never fail a pull |
+| Tags | `tags/list` is the upstream's tags (all pages) plus the stored ones, paged here (`n`, `last`) |
+| Not found / down | A `404` (or a `401`/`403` after the token service gave a token: Docker Hub answers a missing or private image so) is `404` and is remembered for the **negative period**. A registry that cannot be reached, refuses the credentials at its token service or sends something unusable is `502` (`UNAVAILABLE`), never remembered as "not found"; what was cached before is still served |
+| Offline | The upstream is never contacted: stored manifests and layers only |
+| Pushes and deletes | `403 DENIED` for anyone who may pull (`docker push` fails with *denied*); the token service never grants `push`/`delete` on a remote repository |
+| Referrers, pages, search | Cover what is stored |
+
+*Test connection* does what a client does: `GET /v2/` anonymously, then through the token service with the typed credentials, so a wrong password shows there (it saves nothing and uses a client of its own). *Purge cache* deletes every cached image; *Purge package* takes an image name and optionally one tag or digest. The cache table shows the cached manifests, images and the bytes of their layers. Docker Hub's anonymous rate limit applies to what BaGet pulls (`GET` of manifests), not to cache hits.
+
 ## Pages
 
 | Page | Address (under `/r/{name}/`) | Who |
@@ -69,7 +87,7 @@ tags are case-sensitive. Only `sha256` digests are stored. Writes are `403` in r
 | Image | `/docker-images/{image}` | readers of the image: tags, manifests (type, platform, layers, size). `?digest=` shows one manifest: config and layers with sizes, an index's platforms with links to each manifest, annotations, the document |
 | Manage | `/docker-manage/{image}` | signed-in users with **Delete** on the image: delete a tag, a manifest (with its tags), remove unused layers (older than `Oci:PruneGrace`), delete the whole image; each asks the password |
 
-Docker pages are 404 in other formats' repositories and theirs are 404 in a Docker one. There is no upload page: images are pushed with the CLI (and the NuGet upload page does not offer Docker repositories).
+Docker pages are 404 in other formats' repositories and theirs are 404 in a Docker one. In a remote repository the browse and image pages list the cached images, show only the pull commands, and *Manage* is 404. There is no upload page: images are pushed with the CLI (and the NuGet upload page does not offer Docker repositories).
 
 ## Storage and data
 

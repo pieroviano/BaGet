@@ -10,7 +10,8 @@ namespace BaGet.Core;
 /// <summary>
 /// Docker / OCI on the format layer: the Distribution Spec v1.1 at <c>/v2/{repository}/{image}/…</c> (the BaGet repository is the first
 /// path segment, so <c>docker push host/libs/team/app:1</c> pushes image <c>team/app</c> into repository <c>libs</c>), blobs by
-/// digest under <c>docker/</c> in storage. Local repositories only. Needs a store that streams
+/// digest under <c>docker/</c> in storage. A local repository holds pushed images, a remote one caches an upstream registry
+/// (<see cref="RemoteOciRegistry"/>), a virtual one merges members (<see cref="VirtualOciRegistry"/>). Needs a store that streams
 /// (<see cref="RequiresStreamingStorage"/>). See <see cref="IOciRegistry"/>.
 /// </summary>
 public class DockerFormatModule : IFormatModule
@@ -33,7 +34,10 @@ public class DockerFormatModule : IFormatModule
     public string FeedPath => "v2/{repo}/";
 
     /// <inheritdoc/>
-    public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local };
+    public IReadOnlyCollection<RepositoryKind> CreatableKinds { get; } = new[] { RepositoryKind.Local, RepositoryKind.Remote };
+
+    /// <inheritdoc/>
+    public bool SupportsVirtual => true;
 
     /// <inheritdoc/>
     public bool RequiresStreamingStorage => true;

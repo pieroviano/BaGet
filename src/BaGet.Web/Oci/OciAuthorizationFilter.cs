@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
@@ -14,8 +15,12 @@ namespace BaGet.Web;
 /// <see cref="RepositoryRouteMetadata.ResolvesRepositoryItself"/>, so neither <see cref="RepositoryReadFilter"/> nor the repository
 /// middleware has looked at them). It parses the path (<see cref="OciNames.Parse"/>), maps method and path to the action needed
 /// (<see cref="OciHttp.Required"/>: pull = Read, push = Deploy, delete = Delete; a request that needs nothing defined is refused),
-/// finds the repository (Docker, local), asks <see cref="OciCallerResolver"/> whether the caller holds the action on the image,
-/// and only then selects the repository for the rest of the request.
+/// finds the repository (Docker: local, remote or virtual), asks <see cref="OciCallerResolver"/> whether the caller holds the action
+/// on the image, and only then selects the repository for the rest of the request.
+/// <para>A <b>remote</b> repository takes no push or delete: a caller who may pull it is told so (<c>403 DENIED</c>) rather than
+/// challenged again. A <b>virtual</b> one is pulled with the caller's rights in each member (the caller's registry token carries a
+/// pull grant per member it was issued for) and written through its deploy repository: a push or delete is authorized, and runs, in
+/// that repository (<see cref="OciRequest.Target"/>); a virtual repository without one answers <c>403 DENIED</c>.</para>
 /// <para>
 /// A caller who is anonymous, or presents a registry token that does not cover the request, gets <c>401</c> with the token
 /// challenge, <b>whether the repository exists or not</b>, so a client cannot tell a private repository from a missing one
@@ -26,6 +31,8 @@ namespace BaGet.Web;
 public class OciAuthorizationFilter : IAsyncResourceFilter
 {
     private readonly OciCallerResolver _callers;
+    private readonly IVirtualRepositories _virtuals;
+    private readonly IOciRequestAccess _memberAccess;
     private readonly IRepositoryService _repositories;
     private readonly IRepositoryContext _repositoryContext;
     private readonly IUrlGenerator _urls;
@@ -34,6 +41,8 @@ public class OciAuthorizationFilter : IAsyncResourceFilter
 
     public OciAuthorizationFilter(
         OciCallerResolver callers,
+        IVirtualRepositories virtuals,
+        IOciRequestAccess memberAccess,
         IRepositoryService repositories,
         IRepositoryContext repositoryContext,
         IUrlGenerator urls,
@@ -41,6 +50,8 @@ public class OciAuthorizationFilter : IAsyncResourceFilter
         IOptionsSnapshot<BaGetOptions> baGetOptions)
     {
         _callers = callers ?? throw new ArgumentNullException(nameof(callers));
+        _virtuals = virtuals ?? throw new ArgumentNullException(nameof(virtuals));
+        _memberAccess = memberAccess ?? throw new ArgumentNullException(nameof(memberAccess));
         _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
         _repositoryContext = repositoryContext ?? throw new ArgumentNullException(nameof(repositoryContext));
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
@@ -83,13 +94,33 @@ public class OciAuthorizationFilter : IAsyncResourceFilter
 
         var cancellationToken = http.RequestAborted;
         var found = string.IsNullOrEmpty(name) ? null : await _repositories.FindAsync(name.ToLowerInvariant(), cancellationToken);
-        var repository = found is { Format: RepositoryFormat.Docker, Kind: RepositoryKind.Local } ? found : null;
-
+        var repository = found is { Format: RepositoryFormat.Docker } ? found : null;
         var caller = await _callers.ResolveAsync(http, cancellationToken);
-        var allowed = repository != null && await _callers.AllowsAsync(caller, repository, parsed.Image, required.Value, cancellationToken);
+
+        // Where the request is authorized and runs: the repository itself, except a write to a virtual one, which is its deploy repository's.
+        var target = repository;
+        if (repository is { Kind: RepositoryKind.Virtual } && required != OciActions.Pull)
+        {
+            target = await _virtuals.DeployTargetAsync(repository, cancellationToken);
+        }
+
+        var allowed = repository != null && await IsAllowedAsync(caller, repository, target, parsed.Image, required.Value, cancellationToken);
 
         if (!allowed)
         {
+            // A repository that takes no such change says so to a caller who may use it, instead of sending a client round the token flow.
+            if (repository != null && required != OciActions.Pull && (repository.Kind == RepositoryKind.Remote || target == null)
+                && await _callers.AllowsAsync(caller, repository, parsed.Image, OciActions.Pull, cancellationToken))
+            {
+                context.Result = OciHttp.Error(
+                    StatusCodes.Status403Forbidden,
+                    "DENIED",
+                    repository.Kind == RepositoryKind.Remote
+                        ? "This repository caches an upstream registry and takes no pushes or deletes."
+                        : "This virtual repository has no deploy repository, so it takes no pushes or deletes.");
+                return;
+            }
+
             if (caller.Token != null || caller.IsAnonymous || caller.TokenRefused)
             {
                 var scope = OciScopes.Format(new OciGrant((name ?? string.Empty).ToLowerInvariant(), parsed.Image, OciHttp.ChallengeActions(required.Value)));
@@ -107,15 +138,33 @@ public class OciAuthorizationFilter : IAsyncResourceFilter
             return;
         }
 
+        // A virtual repository is read through its members: how the caller's right to each is decided (a token's grants, a key's rights).
+        _memberAccess.Use((member, image, ct) => _callers.AllowsAsync(caller, member, image, OciActions.Pull, ct));
+
         if (required != OciActions.Pull && _baGetOptions.Value.IsReadOnlyMode)
         {
             context.Result = OciHttp.Error(StatusCodes.Status403Forbidden, "DENIED", "This server is read only.");
             return;
         }
 
-        _repositoryContext.Use(repository!);
-        http.Items[OciRequest.ItemKey] = new OciRequest(parsed, repository!, caller);
+        _repositoryContext.Use(target!);
+        http.Items[OciRequest.ItemKey] = new OciRequest(parsed, repository!, caller, target!);
 
         await next();
+    }
+
+    // Whether the caller holds the action. Pulls, and everything in a local repository, are judged in the repository itself; a remote one
+    // allows only pulls; a write to a virtual one is judged where it lands. A registry token names the repository the client used (a
+    // virtual one included), a key is judged in the repository that does the work.
+    private async Task<bool> IsAllowedAsync(OciCaller caller, RepositoryInfo repository, RepositoryInfo? target, string image, OciActions action, CancellationToken cancellationToken)
+    {
+        if (action == OciActions.Pull || repository.Kind == RepositoryKind.Local)
+        {
+            return await _callers.AllowsAsync(caller, repository, image, action, cancellationToken);
+        }
+
+        if (repository.Kind != RepositoryKind.Virtual || target == null) return false;
+
+        return await _callers.AllowsAsync(caller, repository, target, image, action, cancellationToken);
     }
 }

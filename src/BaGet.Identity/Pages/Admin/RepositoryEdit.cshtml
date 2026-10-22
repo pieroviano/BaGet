@@ -151,8 +151,8 @@
             <p class="help-block">
                 A request is answered by the first member, in this order, that has the package version; the version lists, the
                 registration index (npm: the packument, whose dist-tags follow the member order; Maven: <code>maven-metadata.xml</code>,
-                whose <code>latest</code> and <code>release</code> follow the member order), search and autocomplete merge the
-                members (a package in several members is one result).
+                whose <code>latest</code> and <code>release</code> follow the member order; Docker: a tag or digest is the first member's, the tag list is the
+                members' merged), search and autocomplete merge the members (a package in several members is one result).
                 Only the members the caller may read are asked. Uploads go to the deploy repository and need Deploy there.
                 The catalog is not served by a virtual repository.
             </p>
@@ -249,11 +249,11 @@
             <h3>Where would a package come from?</h3>
             <form method="post" asp-page-handler="Preview" class="form-inline" id="virtual-preview-form">
                 <div class="form-group">
-                    <label for="preview-package-id">@(Model.Repository?.Format switch { BaGet.Core.RepositoryFormat.Npm => "Package name", BaGet.Core.RepositoryFormat.Maven => "Artifact (group:artifact)", _ => "Package id" })</label>
+                    <label for="preview-package-id">@Model.PackageLabel</label>
                     <input id="preview-package-id" name="previewPackageId" type="text" class="form-control" value="@Model.PreviewPackageId" autocomplete="off" />
                 </div>
                 <div class="form-group">
-                    <label for="preview-package-version">Version</label>
+                    <label for="preview-package-version">@Model.VersionWord</label>
                     <input id="preview-package-version" name="previewVersion" type="text" class="form-control" value="@Model.PreviewVersion" autocomplete="off" />
                 </div>
                 <button type="submit" class="btn btn-default">Resolve</button>
@@ -310,7 +310,14 @@
             <h2>Cache</h2>
             <table class="table" id="remote-cache">
                 <tbody>
-                    <tr><th>@(Model.Repository?.Format == BaGet.Core.RepositoryFormat.Maven ? "Stored artifacts" : "Stored packages")</th><td id="cache-packages">@Model.Cache.PackageCount version(s) of @Model.Cache.PackageIdCount @(Model.Repository?.Format == BaGet.Core.RepositoryFormat.Maven ? "artifact(s)" : "package(s)")</td></tr>
+                    @if (Model.Repository?.Format == BaGet.Core.RepositoryFormat.Docker)
+                    {
+                        <tr><th>Stored images</th><td id="cache-packages">@Model.Cache.PackageCount manifest(s) of @Model.Cache.PackageIdCount image(s), @Model.Cache.StoredBytes.ToString("N0") bytes of layers</td></tr>
+                    }
+                    else
+                    {
+                        <tr><th>@(Model.Repository?.Format == BaGet.Core.RepositoryFormat.Maven ? "Stored artifacts" : "Stored packages")</th><td id="cache-packages">@Model.Cache.PackageCount version(s) of @Model.Cache.PackageIdCount @(Model.Repository?.Format == BaGet.Core.RepositoryFormat.Maven ? "artifact(s)" : "package(s)")</td></tr>
+                    }
                     <tr><th>Remembered answers</th><td id="cache-entries">@status.MetadataEntries metadata, @status.NegativeEntries not found (this node, since it started)</td></tr>
                     <tr><th>Cache hits / upstream requests</th><td id="cache-counters">@status.Hits / @status.Misses (not found from cache: @status.NegativeHits, expired served while the upstream was down: @status.StaleServed)</td></tr>
                     <tr>
@@ -352,11 +359,11 @@
 
             <form method="post" asp-page-handler="PurgePackage" class="form-inline" id="remote-purge-package-form">
                 <div class="form-group">
-                    <label for="purge-package-id">@(Model.Repository?.Format switch { BaGet.Core.RepositoryFormat.Npm => "Package name", BaGet.Core.RepositoryFormat.Maven => "Artifact (group:artifact)", _ => "Package id" })</label>
+                    <label for="purge-package-id">@Model.PackageLabel</label>
                     <input id="purge-package-id" name="packageId" type="text" class="form-control" value="@Model.PackageId" autocomplete="off" />
                 </div>
                 <div class="form-group">
-                    <label for="purge-package-version">Version</label>
+                    <label for="purge-package-version">@Model.VersionWord</label>
                     <input id="purge-package-version" name="packageVersion" type="text" class="form-control" value="@Model.PackageVersion" placeholder="all versions" autocomplete="off" />
                 </div>
                 <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePackagePassword")" />

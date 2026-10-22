@@ -29,6 +29,13 @@ public enum RemoteProtocol
     /// <c>https://repo.maven.apache.org/maven2/</c>).
     /// </summary>
     Maven = 3,
+
+    /// <summary>
+    /// The OCI Distribution Spec / Docker Registry HTTP API v2 (<c>{url}/v2/{name}/manifests/{reference}</c>, blobs, tags) with its
+    /// token authentication (<c>WWW-Authenticate: Bearer realm=…</c>, as Docker Hub does) or HTTP Basic: the only protocol of a
+    /// Docker repository, set from its format (Docker Hub is <c>https://registry-1.docker.io</c>).
+    /// </summary>
+    Docker = 4,
 }
 
 /// <summary>
@@ -45,7 +52,7 @@ public sealed class RemoteRepositorySettings
     /// <summary>The largest cache period accepted: one year.</summary>
     public const int MaxTtlSeconds = 365 * 24 * 3600;
 
-    /// <summary>The upstream: a V3 <c>index.json</c> URL or a V2 feed URL, the base URL of an npm registry or the root of a Maven repository (absolute http or https).</summary>
+    /// <summary>The upstream: a V3 <c>index.json</c> URL or a V2 feed URL, the base URL of an npm registry, the root of a Maven repository or the address of a Docker registry (absolute http or https).</summary>
     public string? Url { get; set; }
 
     /// <summary>The protocol of <see cref="Url"/>.</summary>
@@ -54,7 +61,9 @@ public sealed class RemoteRepositorySettings
 
     /// <summary>
     /// The user name sent with HTTP Basic to the upstream's own host, if any. An npm upstream with a password and no user name
-    /// gets the password as a bearer token (npm's <c>_authToken</c>) instead.
+    /// gets the password as a bearer token (npm's <c>_authToken</c>) instead. A Docker upstream gets the pair at its token service
+    /// (HTTP Basic, the <c>docker login</c> flow) or, when it asks for Basic itself, at its own host; a password with no user name
+    /// is sent as a ready-made bearer token to the registry's own host.
     /// </summary>
     public string? Username { get; set; }
 
@@ -106,9 +115,9 @@ public sealed class RemoteRepositorySettings
 
     /// <summary>
     /// A copy whose <see cref="Protocol"/> fits <paramref name="format"/>: an npm repository speaks <see cref="RemoteProtocol.Npm"/>
-    /// only and a Maven one <see cref="RemoteProtocol.Maven"/> only (the forms do not ask), a NuGet one V3 or V2 (a stray npm or
-    /// Maven protocol becomes V3, which then fails the connection test rather than silently speaking another protocol to a
-    /// NuGet feed).
+    /// only, a Maven one <see cref="RemoteProtocol.Maven"/> only and a Docker one <see cref="RemoteProtocol.Docker"/> only (the forms
+    /// do not ask), a NuGet one V3 or V2 (a stray npm, Maven or Docker protocol becomes V3, which then fails the connection test
+    /// rather than silently speaking another protocol to a NuGet feed).
     /// </summary>
     public RemoteRepositorySettings ForFormat(RepositoryFormat format)
     {
@@ -121,7 +130,11 @@ public sealed class RemoteRepositorySettings
         {
             copy.Protocol = RemoteProtocol.Maven;
         }
-        else if (copy.Protocol is RemoteProtocol.Npm or RemoteProtocol.Maven)
+        else if (format == RepositoryFormat.Docker)
+        {
+            copy.Protocol = RemoteProtocol.Docker;
+        }
+        else if (copy.Protocol is RemoteProtocol.Npm or RemoteProtocol.Maven or RemoteProtocol.Docker)
         {
             copy.Protocol = RemoteProtocol.V3;
         }
@@ -175,6 +188,10 @@ public sealed class RemoteRepositorySettings
         else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.Maven)
         {
             problems.Add("The Maven repository URL must not have a query string.");
+        }
+        else if (!string.IsNullOrEmpty(UrlOrNull.Query) && Protocol == RemoteProtocol.Docker)
+        {
+            problems.Add("The registry URL must not have a query string.");
         }
 
         if (blockPrivateAddresses)

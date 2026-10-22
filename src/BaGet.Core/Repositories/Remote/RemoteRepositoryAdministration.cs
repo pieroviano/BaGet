@@ -43,7 +43,8 @@ public sealed record RemoteConnectionResult(bool Success, string Message, int? S
 /// <param name="Status">The in-memory cache and upstream health (this node).</param>
 /// <param name="PackageCount">Package versions stored.</param>
 /// <param name="PackageIdCount">Distinct package ids stored.</param>
-public sealed record RemoteCacheOverview(RemoteCacheStatus Status, int PackageCount, int PackageIdCount);
+/// <param name="StoredBytes">Bytes of the blobs stored (a Docker repository: its layers); 0 when the format does not report it.</param>
+public sealed record RemoteCacheOverview(RemoteCacheStatus Status, int PackageCount, int PackageIdCount, long StoredBytes = 0);
 
 /// <summary>
 /// What a purge removed.
@@ -104,6 +105,15 @@ public interface IRemoteRepositoryAdministration
     /// <exception cref="KeyNotFoundException">No such remote repository.</exception>
     /// <exception cref="ArgumentException">The repository is not a Maven one, or the artifact or version is not valid.</exception>
     Task<PurgeResult> PurgeArtifactAsync(string name, string artifact, string? version, CancellationToken cancellationToken, string? actor = null);
+
+    /// <summary>
+    /// Deletes what a Docker repository cached of one image: the image with everything in it, or with <paramref name="reference"/> only
+    /// that tag or digest (and the manifest it points at), and drops the answers remembered about it. Like
+    /// <see cref="PurgePackageAsync"/> for a format whose versions are tags. Audited.
+    /// </summary>
+    /// <exception cref="KeyNotFoundException">No such remote repository.</exception>
+    /// <exception cref="ArgumentException">The repository is not a Docker one, or the image or reference is not valid.</exception>
+    Task<PurgeResult> PurgeImageAsync(string name, string image, string? reference, CancellationToken cancellationToken, string? actor = null);
 
     /// <summary>
     /// When <c>Mirror:Enabled</c>: creates the <see cref="Repository.MirrorName"/> remote repository from <c>Mirror:*</c> if
@@ -291,6 +301,11 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
                 if (refused != null) return new RemoteConnectionResult(false, refused, null, watch.ElapsedMilliseconds);
             }
 
+            if (settings.Protocol == RemoteProtocol.Docker)
+            {
+                return await TestRegistryAsync(name, settings, storedPasswordWithheld, watch, timeout.Token).ConfigureAwait(false);
+            }
+
             using var client = _http.CreateProbe(settings);
 
             // An npm registry is asked for its ping (BaGet, Verdaccio, Artifactory and npmjs answer it), then for its root.
@@ -400,8 +415,53 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
         {
             if (IsPrivateAddressRefusal(e)) return new RemoteConnectionResult(false, RemoteAddressPolicy.Message, null, watch.ElapsedMilliseconds);
 
+            // A refusal the registry client raised itself (a token service that wants other credentials) already says what it is.
+            if (e is System.IO.InvalidDataException) return new RemoteConnectionResult(false, e.Message, null, watch.ElapsedMilliseconds);
+
             return new RemoteConnectionResult(false, "Could not reach the upstream: " + RemoteUpstreamClient.Describe(e), null, watch.ElapsedMilliseconds);
         }
+    }
+
+    // A registry is asked its version check (GET /v2/) the way a Docker client does: anonymously first, then through the token service the
+    // challenge names with the credentials typed, so a wrong password shows here and not on the first pull. Nothing is saved or cached:
+    // the client has a state of its own.
+    private async Task<RemoteConnectionResult> TestRegistryAsync(string? name, RemoteRepositorySettings settings, bool storedPasswordWithheld, Stopwatch watch, CancellationToken cancellationToken)
+    {
+        var probe = new OciUpstreamClient(
+            repository: null,
+            new NoUpstreamSource(),
+            new RemoteRepositoryState(),
+            _http,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<OciUpstreamClient>.Instance);
+
+        var status = (int)await probe.PingAsync(new ResolvedUpstream(0, name ?? "test", settings), cancellationToken).ConfigureAwait(false);
+        if (status is 401 or 403)
+        {
+            return new RemoteConnectionResult(
+                false,
+                (settings.HasCredentials ? $"The registry refused the credentials (HTTP {status})." : $"The registry wants credentials (HTTP {status}); fill in the user name and password or token.")
+                + (storedPasswordWithheld ? " The stored password is only sent while the URL's origin and the user name are unchanged; type the password to test them." : string.Empty),
+                status,
+                watch.ElapsedMilliseconds);
+        }
+
+        if (status == 404)
+        {
+            return new RemoteConnectionResult(false, "The upstream answered HTTP 404 for /v2/: it is not a Docker registry at this address (a registry is at the root, e.g. https://registry-1.docker.io).", status, watch.ElapsedMilliseconds);
+        }
+
+        if (status is < 200 or >= 300) return new RemoteConnectionResult(false, $"The upstream answered HTTP {status}.", status, watch.ElapsedMilliseconds);
+
+        return new RemoteConnectionResult(
+            true,
+            "Connected: the registry answered the version check" + (settings.HasCredentials ? " with the credentials." : " (anonymously)."),
+            status,
+            watch.ElapsedMilliseconds);
+    }
+
+    private sealed class NoUpstreamSource : IRemoteUpstreamSource
+    {
+        public Task<ResolvedUpstream?> ResolveAsync(RepositoryInfo repository, CancellationToken cancellationToken) => Task.FromResult<ResolvedUpstream?>(null);
     }
 
     // The upstream URL with a trailing slash (an npm registry's or a Maven repository's root).
@@ -463,6 +523,14 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             return new RemoteCacheOverview(_state.Status(row.Key), versions, await npmPackages.CountAsync(cancellationToken).ConfigureAwait(false));
         }
 
+        if (row.Format == RepositoryFormat.Docker)
+        {
+            using var scope = _scopes.CreateRepositoryScope(row.ToInfo());
+            var (manifests, images, bytes) = await scope.ServiceProvider.GetRequiredService<OciRegistryService>().GetUsageAsync(cancellationToken).ConfigureAwait(false);
+
+            return new RemoteCacheOverview(_state.Status(row.Key), manifests, images, bytes);
+        }
+
         if (row.Format == RepositoryFormat.Maven)
         {
             var artifacts = _context.MavenArtifacts!.IgnoreQueryFilters().AsNoTracking().Where(a => a.RepositoryKey == row.Key);
@@ -503,6 +571,7 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
 
         // A Maven artifact is group:artifact; its versions are free text, so PurgeArtifactAsync takes them as such.
         if (row.Format == RepositoryFormat.Maven) return await PurgeArtifactAsync(name, packageId, version?.ToFullString(), cancellationToken, actor).ConfigureAwait(false);
+        if (row.Format == RepositoryFormat.Docker) return await PurgeImageAsync(name, packageId, version?.ToFullString(), cancellationToken, actor).ConfigureAwait(false);
 
         var id = packageId.Trim();
         if (row.Format == RepositoryFormat.Npm)
@@ -555,6 +624,39 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             "repository.remote.purge-package",
             name,
             new { packageId = coordinate, version = wanted, packages = deleted, answers },
+            cancellationToken).ConfigureAwait(false);
+
+        return new PurgeResult(deleted, answers);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PurgeResult> PurgeImageAsync(string name, string image, string? reference, CancellationToken cancellationToken, string? actor = null)
+    {
+        if (string.IsNullOrWhiteSpace(image)) throw new ArgumentException("An image name is required.", nameof(image));
+        _gate?.ThrowIfClosed();
+        var row = await FindRowAsync(name, cancellationToken).ConfigureAwait(false);
+        if (row.Format != RepositoryFormat.Docker) throw new ArgumentException("Only a Docker repository has images.", nameof(name));
+
+        var wanted = image.Trim().ToLowerInvariant();
+        if (!OciNames.IsValidImage(wanted)) throw new ArgumentException($"{image.Trim()} is not an image name: lower-case letters, digits, '.', '_', '-' in components separated by '/'.", nameof(image));
+
+        var tagOrDigest = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim();
+        if (tagOrDigest != null && !(OciNames.IsValidTag(tagOrDigest) || OciNames.IsValidDigest(tagOrDigest))) throw new ArgumentException($"{tagOrDigest} is not a tag or a sha256 digest.", nameof(reference));
+
+        int deleted;
+        using (var scope = _scopes.CreateRepositoryScope(row.ToInfo()))
+        {
+            deleted = await scope.ServiceProvider.GetRequiredService<OciRegistryService>().PurgeAsync(wanted, tagOrDigest, cancellationToken).ConfigureAwait(false);
+        }
+
+        // The answers about the image: its manifests, tag lists and blob sizes (for one tag, that tag's and the lists).
+        var answers = _state.ClearMatching(row.Key, key => OciUpstreamClient.MatchesImage(key, wanted, tagOrDigest));
+
+        await AuditAsync(
+            actor,
+            "repository.remote.purge-package",
+            name,
+            new { packageId = wanted, version = tagOrDigest, packages = deleted, answers },
             cancellationToken).ConfigureAwait(false);
 
         return new PurgeResult(deleted, answers);
@@ -666,6 +768,14 @@ public class RemoteRepositoryAdministration : IRemoteRepositoryAdministration
             using var npmScope = _scopes.CreateRepositoryScope(info);
 
             return await npmScope.ServiceProvider.GetRequiredService<NpmRegistryService>()
+                .PurgeAsync(packageId, version?.ToFullString(), cancellationToken).ConfigureAwait(false);
+        }
+
+        if (row.Format == RepositoryFormat.Docker)
+        {
+            using var dockerScope = _scopes.CreateRepositoryScope(info);
+
+            return await dockerScope.ServiceProvider.GetRequiredService<OciRegistryService>()
                 .PurgeAsync(packageId, version?.ToFullString(), cancellationToken).ConfigureAwait(false);
         }
 

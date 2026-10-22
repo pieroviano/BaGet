@@ -314,4 +314,18 @@ internal sealed class UpstreamTransport
     public HttpClient? Http { get; }
 
     public NuGetClient? V3 { get; }
+
+    /// <summary>
+    /// Bearer tokens the upstream's token service issued, by scope (a Docker upstream); they live as long as the transport, which
+    /// is rebuilt when the URL or the credentials change, so a token never outlives the settings it was obtained with.
+    /// </summary>
+    internal ConcurrentDictionary<string, UpstreamToken> Tokens { get; } = new();
+
+    /// <summary>Set once the upstream has answered a request with a Basic challenge: the credentials are then sent to its host at once.</summary>
+    internal volatile bool BasicChallenged;
 }
+
+/// <summary>A bearer token and when it stops being valid.</summary>
+/// <param name="Value">The token.</param>
+/// <param name="ExpiresUtc">When to ask for another.</param>
+internal sealed record UpstreamToken(string Value, DateTime ExpiresUtc);

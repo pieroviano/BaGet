@@ -50,6 +50,9 @@ public class DockerImageModel : PageModel
     /// <summary>The repository's name.</summary>
     public string RepositoryName => _repository.Current.Name;
 
+    /// <summary>Whether the repository caches an upstream registry (it takes no pushes).</summary>
+    public bool IsRemote => _repository.Current.Kind == RepositoryKind.Remote;
+
     /// <summary>Whether the signed-in user holds Delete on the image, so the manage page is offered.</summary>
     public bool CanManage { get; private set; }
 
@@ -87,7 +90,7 @@ public class DockerImageModel : PageModel
         if (tag != null) tabs.Add(new InstallSnippet { Name = "Pull by tag", Prefix = ">", Lines = new[] { DockerSnippets.Pull(Host, RepositoryName, Image!, tag: tag) } });
         var digest = Selected?.Summary.Digest ?? Info.Tags.FirstOrDefault()?.Digest ?? Info.Manifests.FirstOrDefault()?.Digest;
         if (digest != null) tabs.Add(new InstallSnippet { Name = "Pull by digest", Prefix = ">", Lines = new[] { DockerSnippets.Pull(Host, RepositoryName, Image!, digest: digest) } });
-        tabs.Add(new InstallSnippet { Name = "Push", Prefix = ">", Lines = DockerSnippets.Push(Host, RepositoryName, Image!) });
+        if (!IsRemote) tabs.Add(new InstallSnippet { Name = "Push", Prefix = ">", Lines = DockerSnippets.Push(Host, RepositoryName, Image!) });
         PullTabs = tabs;
 
         CanManage = await DockerManageAccess.CanOpenAsync(HttpContext.RequestServices, User, _repository.Current, Image!, cancellationToken);
@@ -101,7 +104,8 @@ internal static class DockerManageAccess
 {
     public static async Task<bool> CanOpenAsync(IServiceProvider services, System.Security.Claims.ClaimsPrincipal user, RepositoryInfo repository, string image, CancellationToken cancellationToken)
     {
-        if (user.Identity?.IsAuthenticated != true) return false;
+        // The tools exist where images are pushed: only a local repository (the manage page of another kind is 404).
+        if (user.Identity?.IsAuthenticated != true || repository.Kind != RepositoryKind.Local) return false;
 
         var sessions = services.GetService<ISessionPrincipalFactory>();
         var principal = sessions == null ? null : await sessions.CreateAsync(user);

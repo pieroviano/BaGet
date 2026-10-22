@@ -54,6 +54,12 @@ public class DockerImagesModel : PageModel
     /// <summary>The repository's name, the first path segment of every image reference.</summary>
     public string RepositoryName => _repository.Current.Name;
 
+    /// <summary>Whether the repository caches an upstream registry (it takes no pushes).</summary>
+    public bool IsRemote => _repository.Current.Kind == RepositoryKind.Remote;
+
+    /// <summary>Whether the repository merges other repositories (a push goes to its deploy repository).</summary>
+    public bool IsVirtual => _repository.Current.Kind == RepositoryKind.Virtual;
+
     /// <summary>Whether another page follows.</summary>
     public bool HasNext => PageIndex * ResultsPerPage < Result.Total;
 
@@ -76,9 +82,18 @@ public class DockerImagesModel : PageModel
         {
             new() { Name = "Login", Prefix = ">", Lines = new[] { DockerSnippets.Login(Host) } },
             new() { Name = "Pull", Prefix = ">", Lines = new[] { DockerSnippets.Pull(Host, RepositoryName, "team/app", "latest") } },
-            new() { Name = "Push", Prefix = ">", Lines = DockerSnippets.Push(Host, RepositoryName, "team/app") },
-            new() { Name = "Multi-platform", Prefix = ">", Lines = new[] { DockerSnippets.BuildxPush(Host, RepositoryName, "team/app") } },
         };
+        if (IsRemote)
+        {
+            // A cache of Docker Hub serves the official images as single names: nginx is library/nginx there.
+            tabs.Add(new InstallSnippet { Name = "Pull an official image", Prefix = ">", Lines = new[] { DockerSnippets.Pull(Host, RepositoryName, "nginx", "latest") } });
+        }
+        else
+        {
+            tabs.Add(new InstallSnippet { Name = "Push", Prefix = ">", Lines = DockerSnippets.Push(Host, RepositoryName, "team/app") });
+            tabs.Add(new InstallSnippet { Name = "Multi-platform", Prefix = ">", Lines = new[] { DockerSnippets.BuildxPush(Host, RepositoryName, "team/app") } });
+        }
+
         if (IsHttp) tabs.Add(new InstallSnippet { Name = "Plain http (daemon.json)", Lines = DockerSnippets.InsecureRegistry(Host) });
         CommandTabs = tabs;
 

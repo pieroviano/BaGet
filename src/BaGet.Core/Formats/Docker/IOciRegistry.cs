@@ -54,6 +54,12 @@ public enum OciErrorCode
 
     /// <summary>The manifest is larger than <see cref="OciOptions.MaxManifestBytes"/> (413).</summary>
     ManifestTooLarge,
+
+    /// <summary>The repository does not take this change (a remote repository caches an upstream, a virtual one has no deploy repository) (403).</summary>
+    Denied,
+
+    /// <summary>The upstream registry of a remote repository could not be reached or sent something unusable, and nothing stored can answer (502).</summary>
+    UpstreamUnavailable,
 }
 
 /// <summary>
@@ -111,7 +117,17 @@ public sealed class OciBlobContent : IDisposable
     public long Length { get; }
 
     /// <inheritdoc/>
-    public void Dispose() => Content.Dispose();
+    public void Dispose()
+    {
+        Content.Dispose();
+        Owner?.Dispose();
+    }
+
+    /// <summary>
+    /// Something to release after <see cref="Content"/> (the scope of the virtual repository's member that serves the blob, whose
+    /// services a caching stream still uses while it is read).
+    /// </summary>
+    internal IDisposable? Owner { get; set; }
 }
 
 /// <summary>A blob as a <c>HEAD</c> reports it.</summary>
@@ -333,6 +349,13 @@ public interface IOciRegistry
 
     /// <summary>Removes a blob from the image; false when absent. Refused (<see cref="OciErrorCode.Unsupported"/>) while a manifest of the image uses it.</summary>
     Task<bool> DeleteBlobAsync(string image, string digest, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Where a manifest would come from, without storing or serving it: <see cref="ResolutionOutcome.Stored"/> when this repository
+    /// holds the tag or digest, otherwise (a remote repository) whether its upstream has it. The resolution preview of a virtual
+    /// repository asks each member.
+    /// </summary>
+    Task<ResolutionOutcome> ProbeAsync(string image, string reference, CancellationToken cancellationToken);
 
     /// <summary>Deletes the image with everything in it; false when absent.</summary>
     Task<bool> DeleteImageAsync(string image, CancellationToken cancellationToken);

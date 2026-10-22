@@ -32,6 +32,7 @@ public class OciController : Controller
     private readonly IOciTokenService _tokens;
     private readonly IOciAccess _access;
     private readonly IRepositoryService _repositories;
+    private readonly IVirtualRepositories _virtuals;
     private readonly IUrlGenerator _urls;
     private readonly IOptionsSnapshot<OciOptions> _options;
     private readonly SystemTime _time;
@@ -42,6 +43,7 @@ public class OciController : Controller
         IOciTokenService tokens,
         IOciAccess access,
         IRepositoryService repositories,
+        IVirtualRepositories virtuals,
         IUrlGenerator urls,
         IOptionsSnapshot<OciOptions> options,
         SystemTime time)
@@ -51,6 +53,7 @@ public class OciController : Controller
         _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
         _access = access ?? throw new ArgumentNullException(nameof(access));
         _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
+        _virtuals = virtuals ?? throw new ArgumentNullException(nameof(virtuals));
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _time = time ?? throw new ArgumentNullException(nameof(time));
@@ -129,14 +132,21 @@ public class OciController : Controller
             if (requested == null || !OciNames.IsValidImage(requested.Image)) continue;
 
             var repository = await _repositories.FindAsync(requested.Repository, cancellationToken);
-            if (repository is not { Format: RepositoryFormat.Docker, Kind: RepositoryKind.Local }) continue;
+            if (repository is not { Format: RepositoryFormat.Docker }) continue;
 
-            var granted = await _access.GrantedAsync(principal, repository, requested.Image, requested.Actions, cancellationToken);
+            var granted = await GrantedAsync(principal, repository, requested.Image, requested.Actions, cancellationToken);
             if (granted == OciActions.None) continue;
 
-            var existing = grants.FindIndex(g => g.Repository == requested.Repository && g.Image == requested.Image);
-            if (existing >= 0) grants[existing] = grants[existing] with { Actions = grants[existing].Actions | granted };
-            else grants.Add(new OciGrant(requested.Repository, requested.Image, granted));
+            Grant(grants, requested.Repository, requested.Image, granted);
+
+            // A virtual repository is pulled through its members, each judged on its own: the token names the ones the caller may pull from.
+            if (repository.Kind == RepositoryKind.Virtual && granted.HasFlag(OciActions.Pull))
+            {
+                foreach (var member in await _virtuals.EffectiveMembersAsync(repository, cancellationToken))
+                {
+                    if (await _access.IsAllowedAsync(principal, member, requested.Image, OciActions.Pull, cancellationToken)) Grant(grants, member.Name, requested.Image, OciActions.Pull);
+                }
+            }
         }
 
         var token = _tokens.Issue(principal?.UserName, grants);
@@ -154,6 +164,37 @@ public class OciController : Controller
         Response.Headers.CacheControl = "no-store";
 
         return new ContentResult { StatusCode = StatusCodes.Status200OK, ContentType = "application/json", Content = Encoding.UTF8.GetString(stream.ToArray()) };
+    }
+
+    private static void Grant(System.Collections.Generic.List<OciGrant> grants, string repository, string image, OciActions actions)
+    {
+        var existing = grants.FindIndex(g => g.Repository == repository && g.Image == image);
+        if (existing >= 0) grants[existing] = grants[existing] with { Actions = grants[existing].Actions | actions };
+        else grants.Add(new OciGrant(repository, image, actions));
+    }
+
+    // What the principal holds of the requested actions on the image: in a local repository, as is; in a remote one only pulls (it takes no
+    // changes); in a virtual one pulls on the virtual repository itself and pushes and deletes where they land, in its deploy repository.
+    private async Task<OciActions> GrantedAsync(BaGetPrincipal? principal, RepositoryInfo repository, string image, OciActions requested, CancellationToken cancellationToken)
+    {
+        switch (repository.Kind)
+        {
+            case RepositoryKind.Local:
+                return await _access.GrantedAsync(principal, repository, image, requested, cancellationToken);
+
+            case RepositoryKind.Remote:
+                return await _access.GrantedAsync(principal, repository, image, requested & OciActions.Pull, cancellationToken);
+
+            default:
+                var granted = await _access.GrantedAsync(principal, repository, image, requested & OciActions.Pull, cancellationToken);
+                var writes = requested & (OciActions.Push | OciActions.Delete);
+                if (writes != OciActions.None && await _virtuals.DeployTargetAsync(repository, cancellationToken) is { } target)
+                {
+                    granted |= await _access.GrantedAsync(principal, target, image, writes, cancellationToken);
+                }
+
+                return granted;
+        }
     }
 
     // ---- reads ------------------------------------------------------------------------------------------------------
@@ -437,7 +478,7 @@ public class OciController : Controller
 
         var source = from.Substring(slash + 1);
         if (!OciNames.IsValidImage(source) || !OciNames.IsValidDigest(digest)) return false;
-        if (!await _callers.AllowsAsync(Current.Caller, Current.Repository, source, OciActions.Pull, cancellationToken)) return false;
+        if (!await _callers.AllowsAsync(Current.Caller, Current.Repository, Current.Target, source, OciActions.Pull, cancellationToken)) return false;
 
         return await _registry.MountBlobAsync(Current.Path.Image, digest, source, cancellationToken);
     }

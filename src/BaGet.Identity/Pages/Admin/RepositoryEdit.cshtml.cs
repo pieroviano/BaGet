@@ -97,6 +97,12 @@ public class RepositoryEditModel : RepositoryPageModel
     /// <summary>The name of what a package is called in this repository's format (shown in the labels).</summary>
     public string PackageWord => Repository?.Format switch { RepositoryFormat.Npm => "package name", RepositoryFormat.Maven => "artifact (group:artifact)", RepositoryFormat.Docker => "image name", _ => "package id" };
 
+    /// <summary>What the "version" of a package is called in this repository's format (a Docker image has a tag or a digest).</summary>
+    public string VersionWord => Repository?.Format == RepositoryFormat.Docker ? "Tag or digest" : "Version";
+
+    /// <summary>The label of the field that names a package (a Docker image is an image name).</summary>
+    public string PackageLabel => Repository?.Format switch { RepositoryFormat.Npm => "Package name", RepositoryFormat.Maven => "Artifact (group:artifact)", RepositoryFormat.Docker => "Image name", _ => "Package id" };
+
     /// <summary>The repository's feed address.</summary>
     public string FeedUrl => RepositoryFeedUrl.For(
         HttpContext,
@@ -264,7 +270,7 @@ public class RepositoryEditModel : RepositoryPageModel
         if (!await ConfirmedAsync(password)) return await RefuseAsync(NotConfirmed, cancellationToken);
 
         var result = await remotes.PurgeAsync(Name!, cancellationToken, User.Identity?.Name);
-        TempData["Message"] = $"The cache of {Name} was purged: {result.Packages} package version(s) deleted, {result.CachedAnswers} remembered answer(s) dropped.";
+        TempData["Message"] = $"The cache of {Name} was purged: {result.Packages} {((await remotes.FindAsync(Name, cancellationToken))?.Repository.Format == RepositoryFormat.Docker ? "manifest(s)" : "package version(s)")} deleted, {result.CachedAnswers} remembered answer(s) dropped.";
 
         return RedirectToPage(new { name = Name });
     }
@@ -285,11 +291,13 @@ public class RepositoryEditModel : RepositoryPageModel
             return await RefuseAsync("Enter the id of the package to purge.", cancellationToken);
         }
 
-        // A Maven version is any version folder name, not always a NuGet version (5.3.20.RELEASE): it travels as text.
+        // A Maven version is any version folder name, not always a NuGet version (5.3.20.RELEASE), and a Docker one is a tag or a digest:
+        // they travel as text.
         var isMaven = found.Repository.Format == RepositoryFormat.Maven;
+        var isDocker = found.Repository.Format == RepositoryFormat.Docker;
         NuGet.Versioning.NuGetVersion? version = null;
         string? versionText = string.IsNullOrWhiteSpace(PackageVersion) ? null : PackageVersion.Trim();
-        if (!isMaven && versionText != null)
+        if (!isMaven && !isDocker && versionText != null)
         {
             if (!NuGet.Versioning.NuGetVersion.TryParse(versionText, out version))
             {
@@ -304,7 +312,9 @@ public class RepositoryEditModel : RepositoryPageModel
         {
             result = isMaven
                 ? await remotes.PurgeArtifactAsync(Name!, id, versionText, cancellationToken, User.Identity?.Name)
-                : await remotes.PurgePackageAsync(Name!, id, version, cancellationToken, User.Identity?.Name);
+                : isDocker
+                    ? await remotes.PurgeImageAsync(Name!, id, versionText, cancellationToken, User.Identity?.Name)
+                    : await remotes.PurgePackageAsync(Name!, id, version, cancellationToken, User.Identity?.Name);
         }
         catch (ArgumentException e)
         {
@@ -315,7 +325,7 @@ public class RepositoryEditModel : RepositoryPageModel
         var shown = versionText == null ? string.Empty : " " + versionText;
         TempData["Message"] = result.Packages == 0 && result.CachedAnswers == 0
             ? $"Nothing was cached for {id}{shown}."
-            : $"{id}{shown} was purged: {result.Packages} {(isMaven ? "file(s)" : "package version(s)")} deleted, {result.CachedAnswers} remembered answer(s) dropped.";
+            : $"{id}{shown} was purged: {result.Packages} {(isMaven ? "file(s)" : isDocker ? "manifest(s)" : "package version(s)")} deleted, {result.CachedAnswers} remembered answer(s) dropped.";
 
         return RedirectToPage(new { name = Name });
     }
@@ -393,7 +403,8 @@ public class RepositoryEditModel : RepositoryPageModel
         }
 
         var isMaven = Repository.Format == RepositoryFormat.Maven;
-        if (!isMaven && !NuGet.Versioning.NuGetVersion.TryParse(PreviewVersion?.Trim(), out _))
+        var isDocker = Repository.Format == RepositoryFormat.Docker;
+        if (!isMaven && !isDocker && !NuGet.Versioning.NuGetVersion.TryParse(PreviewVersion?.Trim(), out _))
         {
             Error = $"'{PreviewVersion}' is not a valid version.";
 

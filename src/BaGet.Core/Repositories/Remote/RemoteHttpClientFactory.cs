@@ -62,7 +62,9 @@ public class RemoteHttpClientFactory : IRemoteHttpClientFactory
 
         var handler = CreateInnerHandler();
         if (!followRedirects && handler is SocketsHttpHandler sockets) sockets.AllowAutoRedirect = false;
-        if (settings.HasCredentials && settings.UrlOrNull != null)
+        // A Docker upstream authenticates per request (a challenge, then a token from the realm it names, or Basic): its client
+        // sends the credentials itself, to the right place, so no handler adds them to every request.
+        if (settings.HasCredentials && settings.UrlOrNull != null && settings.Protocol != RemoteProtocol.Docker)
         {
             // An npm upstream with only a password is given a token (npm's _authToken), which is a bearer credential.
             var bearer = settings.Protocol == RemoteProtocol.Npm && string.IsNullOrEmpty(settings.Username);

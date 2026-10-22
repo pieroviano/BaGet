@@ -23,7 +23,7 @@
 
     <p id="docker-registry">
         Registry: <code>@Model.Host/@Model.RepositoryName</code>
-        &middot; push and pull with the Docker CLI (see below).
+        &middot; @(Model.IsRemote ? "pull through it with the Docker CLI (see below); what is pulled is cached here." : "push and pull with the Docker CLI (see below).")
     </p>
 
     @if (Model.Result.Images.Count == 0)
@@ -31,8 +31,15 @@
         <div id="docker-no-results">
             <h2>Oops, nothing here...</h2>
             <p>
-                @(string.IsNullOrWhiteSpace(Model.Query) ? "This repository holds no image yet." : "No image matches that text.")
-                Push one with <code>docker push</code> (see below).
+                @(string.IsNullOrWhiteSpace(Model.Query) ? (Model.IsRemote ? "This repository has cached no image yet." : "This repository holds no image yet.") : "No image matches that text.")
+                @if (Model.IsRemote)
+                {
+                    <text>Pull one through it with <code>docker pull</code> (see below); the upstream's images are cached the first time they are pulled.</text>
+                }
+                else
+                {
+                    <text>Push one with <code>docker push</code> (see below).</text>
+                }
             </p>
         </div>
     }
@@ -82,6 +89,15 @@
     }
 
     <h2>With the Docker CLI</h2>
+    @if (Model.IsRemote)
+    {
+        <p id="docker-remote-note">This repository caches an upstream registry: it takes no pushes. Manifests and layers are fetched from the upstream when first pulled and served from here afterwards.</p>
+    }
+    else if (Model.IsVirtual)
+    {
+        <p id="docker-virtual-note">This repository merges other repositories: a pull is answered by the first member, in order, that has the image; a push goes to its deploy repository.</p>
+    }
+
     <p>
         Sign in with your user name and an API key as the password (<a href="@Url.Page("/Account/ApiKeys")">create one</a>); Docker then asks the registry for a short-lived token for each image. The image name starts with the repository (<code>@Model.RepositoryName</code>).
     </p>

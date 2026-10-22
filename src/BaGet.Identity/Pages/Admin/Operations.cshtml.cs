@@ -43,7 +43,7 @@ public class OperationsModel : AdminPageModel
         var jobs = services.GetRequiredService<AdminJobService>();
         var info = await services.GetRequiredService<IRepositoryService>().FindAsync(repository, cancellationToken);
         var definition = jobs.Operations.FirstOrDefault(o => o.Name == operation);
-        if (info == null || definition == null || !definition.IsAvailable(services)) return NotFound();
+        if (info == null || definition == null || !definition.IsAvailable(services) || !definition.AppliesTo(info)) return NotFound();
 
         var user = await UserManager.GetUserAsync(User);
         if (!jobs.TryStart(definition.Name, info, user?.UserName, out var refusal))
@@ -66,7 +66,7 @@ public class OperationsModel : AdminPageModel
 
         Rows = jobs.Operations
             .Where(o => o.IsAvailable(services))
-            .SelectMany(o => repositories.Select(r => new Row(o, r, jobs.Get(o.Name, r.Name))))
+            .SelectMany(o => repositories.Where(o.AppliesTo).Select(r => new Row(o, r, jobs.Get(o.Name, r.Name))))
             .ToList();
     }
 }

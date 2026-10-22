@@ -11,7 +11,10 @@
     <div class="col-sm-12" id="docker-image-missing">
         <h1>Image not found</h1>
         <hr class="breadcrumb-divider" />
-        <p>There is no image <code>@Model.Image</code> in this repository. <a asp-page="/DockerImages">Browse the images</a>.</p>
+        <p>
+            There is no image <code>@Model.Image</code> in this repository@(Model.IsRemote ? " yet: an image of the upstream is cached the first time it is pulled" : "").
+            <a asp-page="/DockerImages">Browse the images</a>.
+        </p>
     </div>
 
     return;
@@ -59,7 +62,7 @@
         <h2>Tags</h2>
         @if (info.Tags.Count == 0)
         {
-            <p id="docker-no-tags">No tag. Push one with <code>docker push</code>.</p>
+            <p id="docker-no-tags">No tag. @(Model.IsRemote ? "Pull one through this repository to cache it." : "Push one with docker push.")</p>
         }
         else
         {
@@ -199,7 +202,7 @@
         <pre class="snippet" id="docker-manifest-json">@selected.Json</pre>
     }
 
-    <h2>Pull and push</h2>
+    <h2>@(Model.IsRemote ? "Pull" : "Pull and push")</h2>
     <div class="tabbed-info" x-data="{ active: 0 }">
         <ul class="nav">
             @for (var i = 0; i < Model.PullTabs.Count; i++)

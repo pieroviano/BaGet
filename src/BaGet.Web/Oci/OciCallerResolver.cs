@@ -77,6 +77,16 @@ public class OciCallerResolver
         return new OciCaller { Principal = principal, TokenRefused = refused && principal == null };
     }
 
+    /// <summary>
+    /// Whether <paramref name="caller"/> may do <paramref name="action"/> to <paramref name="image"/> where a request addressed to
+    /// <paramref name="named"/> lands in <paramref name="actual"/> (a push to a virtual repository lands in its deploy repository): a
+    /// registry token is checked against the repository the client named, a key against the one that does the work.
+    /// </summary>
+    public Task<bool> AllowsAsync(OciCaller caller, RepositoryInfo named, RepositoryInfo actual, string image, OciActions action, CancellationToken cancellationToken)
+        => caller.Token != null
+            ? AllowsAsync(caller, named, image, action, cancellationToken)
+            : AllowsAsync(caller, actual, image, action, cancellationToken);
+
     /// <summary>Whether <paramref name="caller"/> may do <paramref name="action"/> to <paramref name="image"/> of <paramref name="repository"/>.</summary>
     public Task<bool> AllowsAsync(OciCaller caller, RepositoryInfo repository, string image, OciActions action, CancellationToken cancellationToken)
     {

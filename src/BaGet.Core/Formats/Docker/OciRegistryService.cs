@@ -20,7 +20,7 @@ namespace BaGet.Core;
 /// <see cref="OciBlobLink"/>. Manifests are rows. Every write calls <see cref="MaintenanceGate.ThrowIfClosed"/> before it stores a
 /// file or a row.
 /// </summary>
-public class OciRegistryService : IOciRegistry
+public partial class OciRegistryService : IOciRegistry
 {
     private readonly IContext _context;
     private readonly IStorageService _storage;
@@ -385,6 +385,7 @@ public class OciRegistryService : IOciRegistry
         var uploadId = upload.StorageUploadId!;
 
         _gate.ThrowIfClosed();
+        using var inFlight = OciBlobCommits.Enter();
 
         if (lastChunk != null) await AppendCoreAsync(upload, offset, lastChunk, cancellationToken).ConfigureAwait(false);
 
@@ -446,6 +447,7 @@ public class OciRegistryService : IOciRegistry
         RequireSha256(digest);
         var imageKey = await EnsureImageAsync(image, cancellationToken).ConfigureAwait(false);
         _gate.ThrowIfClosed();
+        using var inFlight = OciBlobCommits.Enter();
 
         var uploadId = await Streaming.BeginUploadAsync("application/octet-stream", cancellationToken).ConfigureAwait(false);
         StorageCommitResult commit;
@@ -474,7 +476,7 @@ public class OciRegistryService : IOciRegistry
 
     // Records that the image holds the blob (creating the blob row when this is the repository's first copy) and settles the
     // upload session removal that the caller staged. A concurrent push of the same layer races on the unique indexes.
-    private async Task RecordBlobAsync(int imageKey, string digest, long size, CancellationToken cancellationToken)
+    private async Task RecordBlobAsync(int imageKey, string digest, long size, CancellationToken cancellationToken, bool countReferences = false)
     {
         for (var attempt = 0; ; attempt++)
         {
@@ -493,7 +495,9 @@ public class OciRegistryService : IOciRegistry
                 var linked = await _context.OciBlobLinks!.AnyAsync(l => l.ImageKey == imageKey && l.BlobKey == blob.Key, cancellationToken).ConfigureAwait(false);
                 if (!linked)
                 {
-                    _context.OciBlobLinks!.Add(new OciBlobLink { ImageKey = imageKey, BlobKey = blob.Key, Manifests = 0, Created = _time.UtcNow });
+                    // A layer cached for an image whose manifest is already stored is used by that manifest; an uploaded one is not yet.
+                    var users = countReferences ? await CountReferencingManifestsAsync(imageKey, digest, cancellationToken).ConfigureAwait(false) : 0;
+                    _context.OciBlobLinks!.Add(new OciBlobLink { ImageKey = imageKey, BlobKey = blob.Key, Manifests = users, Created = _time.UtcNow });
                     await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
 
@@ -533,7 +537,12 @@ public class OciRegistryService : IOciRegistry
     // ---- manifests --------------------------------------------------------------------------------------------------
 
     /// <inheritdoc/>
-    public async Task<OciManifestPut> PutManifestAsync(string image, string reference, string? mediaType, byte[] content, CancellationToken cancellationToken)
+    public Task<OciManifestPut> PutManifestAsync(string image, string reference, string? mediaType, byte[] content, CancellationToken cancellationToken)
+        => PutManifestCoreAsync(image, reference, mediaType, content, checkReferences: true, cancellationToken);
+
+    // checkReferences false: a manifest cached from an upstream registry is stored before its layers are (they follow when a client
+    // asks for them), so the blobs and children it names need not be here yet.
+    private async Task<OciManifestPut> PutManifestCoreAsync(string image, string reference, string? mediaType, byte[] content, bool checkReferences, CancellationToken cancellationToken)
     {
         if (content == null) throw new ArgumentNullException(nameof(content));
 
@@ -575,7 +584,7 @@ public class OciRegistryService : IOciRegistry
                 {
                     var present = await _context.OciManifests!.AsNoTracking().Where(m => m.ImageKey == imageKey && wanted.Contains(m.Digest!)).Select(m => m.Digest!).ToListAsync(cancellationToken).ConfigureAwait(false);
                     var missing = wanted.FirstOrDefault(d => !present.Contains(d, StringComparer.Ordinal));
-                    if (missing != null) throw new OciException(OciErrorCode.ManifestBlobUnknown, "The index references a manifest the repository does not hold.", missing);
+                    if (missing != null && checkReferences) throw new OciException(OciErrorCode.ManifestBlobUnknown, "The index references a manifest the repository does not hold.", missing);
                 }
                 else
                 {
@@ -584,7 +593,7 @@ public class OciRegistryService : IOciRegistry
                                       where l.ImageKey == imageKey && wanted.Contains(b.Digest!)
                                       select new { Link = l, b.Digest }).ToListAsync(cancellationToken).ConfigureAwait(false);
                     var missing = wanted.FirstOrDefault(d => held.All(h => !string.Equals(h.Digest, d, StringComparison.Ordinal)));
-                    if (missing != null) throw new OciException(OciErrorCode.ManifestBlobUnknown, "The manifest references a blob the repository does not hold.", missing);
+                    if (missing != null && checkReferences) throw new OciException(OciErrorCode.ManifestBlobUnknown, "The manifest references a blob the repository does not hold.", missing);
 
                     links = held.Select(h => h.Link).ToList();
                 }

@@ -121,7 +121,15 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IMavenRepositoryAdministration, MavenRepositoryAdministration>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, MavenFormatSearchProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFormatModule, DockerFormatModule>());
-        services.TryAddScoped<IOciRegistry, OciRegistryService>();
+        services.TryAddScoped<OciRegistryService>();
+        services.TryAddScoped<OciUpstreamClient>();
+        services.TryAddScoped<RemoteOciRegistry>();
+        services.TryAddScoped<VirtualOciRegistry>();
+        services.TryAddScoped<IOciRegistry, RepositoryOciRegistry>();
+        services.TryAddScoped<IOciRequestAccess, OciRequestAccess>();
+        services.TryAddScoped<IOciGarbageCollector, OciGarbageCollector>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, OciGarbageCollectionDryRunOperation>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, OciGarbageCollectionRunOperation>());
         services.TryAddScoped<IOciAccess, OciAccess>();
         services.TryAddScoped<IOciTokenService, OciTokenService>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, DockerFormatSearchProvider>());
