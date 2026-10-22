@@ -21,8 +21,9 @@ public sealed class RepositoryRouteMetadata
     private static readonly RepositoryRouteMetadata WriteOnly = new(writesOnly: true, authorizesItself: false, RepositoryFormat.NuGet);
     private static readonly RepositoryRouteMetadata SelfAuthorized = new(writesOnly: false, authorizesItself: true, RepositoryFormat.NuGet);
 
-    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself, RepositoryFormat format, bool writesContent = true)
+    private RepositoryRouteMetadata(bool writesOnly, bool authorizesItself, RepositoryFormat format, bool writesContent = true, bool resolvesRepositoryItself = false)
     {
+        ResolvesRepositoryItself = resolvesRepositoryItself;
         WritesContent = writesContent;
         WritesOnly = writesOnly;
         AuthorizesItself = authorizesItself;
@@ -60,8 +61,17 @@ public sealed class RepositoryRouteMetadata
     /// </summary>
     public bool WritesContent { get; }
 
-    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false, RepositoryFormat format = RepositoryFormat.NuGet, bool writesContent = true)
-        => format != RepositoryFormat.NuGet || !writesContent ? new RepositoryRouteMetadata(writesOnly, authorizesItself, format, writesContent)
+    /// <summary>
+    /// True for a route that finds its repository itself and answers an unknown or forbidden one in its own protocol (the OCI
+    /// registry: <c>/v2/{repo}/…</c> must answer <c>401</c> with a token challenge, not a plain <c>404</c>, so that a client
+    /// cannot tell a private repository from one that does not exist). <see cref="RepositoryResolutionMiddleware"/> then leaves
+    /// the repository alone; the route's own filter calls <see cref="BaGet.Core.IRepositoryContext.Use"/> once it has authorized.
+    /// Such a route also <see cref="AuthorizesItself"/>.
+    /// </summary>
+    public bool ResolvesRepositoryItself { get; }
+
+    internal static RepositoryRouteMetadata For(bool writesOnly, bool authorizesItself = false, RepositoryFormat format = RepositoryFormat.NuGet, bool writesContent = true, bool resolvesRepositoryItself = false)
+        => format != RepositoryFormat.NuGet || !writesContent || resolvesRepositoryItself ? new RepositoryRouteMetadata(writesOnly, authorizesItself || resolvesRepositoryItself, format, writesContent, resolvesRepositoryItself)
         : authorizesItself ? SelfAuthorized : writesOnly ? WriteOnly : Instance;
 }
 

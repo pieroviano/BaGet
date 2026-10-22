@@ -48,6 +48,18 @@ public class NullContext : IContext
 
     public DbSet<MavenFile>? MavenFiles { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<OciRepository>? OciRepositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<OciManifest>? OciManifests { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<OciTag>? OciTags { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<OciBlob>? OciBlobs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<OciBlobLink>? OciBlobLinks { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<OciUpload>? OciUploads { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Project>? Projects { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

@@ -57,6 +57,8 @@ public static class IServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();
+        services.AddScoped<OciCallerResolver>();
+        services.AddScoped<OciAuthorizationFilter>();
         services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();
 
         services.AddBaGetApplication(configureAction);

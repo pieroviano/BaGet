@@ -69,6 +69,24 @@ public interface IContext
     /// <summary>The files of Maven versions, with their checksums; see <see cref="MavenFile"/>.</summary>
     DbSet<MavenFile>? MavenFiles { get; set; }
 
+    /// <summary>The image repositories of Docker repositories; see <see cref="OciRepository"/>. Repository-scoped.</summary>
+    DbSet<OciRepository>? OciRepositories { get; set; }
+
+    /// <summary>The manifests and indexes of images; see <see cref="OciManifest"/>.</summary>
+    DbSet<OciManifest>? OciManifests { get; set; }
+
+    /// <summary>The tags of images; see <see cref="OciTag"/>.</summary>
+    DbSet<OciTag>? OciTags { get; set; }
+
+    /// <summary>The blobs of a Docker repository, by digest; see <see cref="OciBlob"/>. Repository-scoped.</summary>
+    DbSet<OciBlob>? OciBlobs { get; set; }
+
+    /// <summary>Which images hold which blobs; see <see cref="OciBlobLink"/>.</summary>
+    DbSet<OciBlobLink>? OciBlobLinks { get; set; }
+
+    /// <summary>The open blob upload sessions; see <see cref="OciUpload"/>.</summary>
+    DbSet<OciUpload>? OciUploads { get; set; }
+
     /// <summary>
     /// The repositories. Not repository-scoped: it lists them all.
     /// </summary>

@@ -180,4 +180,17 @@ public interface IUrlGenerator
     /// with a trailing slash (<c>https://host/r/libs/maven/</c>). A file is this plus its layout path.
     /// </summary>
     string GetMavenRepositoryUrl();
+
+    /// <summary>
+    /// Get the root of the OCI registry: <c>v2/</c> at the server root (after the path base), with a trailing slash
+    /// (<c>https://host/v2/</c>). A registry is not under a repository's <c>r/{repo}/</c> prefix: the BaGet repository is the
+    /// first segment after <c>v2/</c>, so the address of an image is this plus <c>{repo}/{image}/…</c>.
+    /// </summary>
+    string GetOciRegistryUrl();
+
+    /// <summary>
+    /// Get the registry host as a Docker client writes it in an image reference (<c>host:port</c>, no scheme), and whether the
+    /// request came over plain http (a daemon must then list it as an insecure registry).
+    /// </summary>
+    (string Host, bool IsHttp) GetOciRegistryHost();
 }

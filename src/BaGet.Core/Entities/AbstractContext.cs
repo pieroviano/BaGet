@@ -60,6 +60,14 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxMavenPackagingLength = 64;
     public const int MaxMavenSnapshotTimestampLength = 15;
     public const int MaxMavenChecksumLength = 128;
+    // OCI: image names and tags are bounded by the specification (a tag by 128), digests by "sha256:" + 64 hex; the unique indexes
+    // (repository, image), (image, tag) stay within the key limits of SQL Server and MySQL.
+    public const int MaxOciImageLength = OciNames.MaxImageLength;
+    public const int MaxOciTagLength = OciNames.MaxTagLength;
+    public const int MaxOciDigestLength = OciNames.MaxDigestLength;
+    public const int MaxOciMediaTypeLength = OciNames.MaxMediaTypeLength;
+    public const int MaxOciUploadReferenceLength = 128;
+    public const int MaxOciStorageUploadIdLength = 512;
     public const int MaxProjectNameLength = 64;
     public const int MaxProjectDisplayNameLength = 256;
 
@@ -125,6 +133,12 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<MavenArtifact>? MavenArtifacts { get; set; }
     public DbSet<MavenVersion>? MavenVersions { get; set; }
     public DbSet<MavenFile>? MavenFiles { get; set; }
+    public DbSet<OciRepository>? OciRepositories { get; set; }
+    public DbSet<OciManifest>? OciManifests { get; set; }
+    public DbSet<OciTag>? OciTags { get; set; }
+    public DbSet<OciBlob>? OciBlobs { get; set; }
+    public DbSet<OciBlobLink>? OciBlobLinks { get; set; }
+    public DbSet<OciUpload>? OciUploads { get; set; }
     public DbSet<Repository>? Repositories { get; set; }
     public DbSet<Project>? Projects { get; set; }
     public DbSet<Group>? Groups { get; set; }
@@ -200,6 +214,12 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<MavenArtifact>(BuildMavenArtifactEntity);
         builder.Entity<MavenVersion>(BuildMavenVersionEntity);
         builder.Entity<MavenFile>(BuildMavenFileEntity);
+        builder.Entity<OciRepository>(BuildOciRepositoryEntity);
+        builder.Entity<OciManifest>(BuildOciManifestEntity);
+        builder.Entity<OciTag>(BuildOciTagEntity);
+        builder.Entity<OciBlob>(BuildOciBlobEntity);
+        builder.Entity<OciBlobLink>(BuildOciBlobLinkEntity);
+        builder.Entity<OciUpload>(BuildOciUploadEntity);
         builder.Entity<Repository>(BuildRepositoryEntity);
         builder.Entity<Project>(BuildProjectEntity);
         builder.Entity<Group>(BuildGroupEntity);
@@ -219,6 +239,8 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageSymbol>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<NpmPackage>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<MavenArtifact>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<OciRepository>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<OciBlob>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
 
         // The column default is what the upgrade migration gives every row that predates repositories: they
         // belong to the default repository.
@@ -230,6 +252,8 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageSymbol>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<NpmPackage>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<MavenArtifact>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<OciRepository>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<OciBlob>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
     }
 
     private void BuildNpmPackageEntity(EntityTypeBuilder<NpmPackage> package)
@@ -302,6 +326,75 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         file.Property(f => f.Sha512).HasMaxLength(MaxMavenChecksumLength).IsRequired();
 
         file.HasOne<MavenVersion>().WithMany().HasForeignKey(f => f.VersionKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildOciRepositoryEntity(EntityTypeBuilder<OciRepository> image)
+    {
+        image.HasKey(i => i.Key);
+        image.HasIndex(i => new { i.RepositoryKey, i.Name }).IsUnique();
+
+        image.Property(i => i.Name).HasMaxLength(MaxOciImageLength).IsRequired();
+    }
+
+    private void BuildOciManifestEntity(EntityTypeBuilder<OciManifest> manifest)
+    {
+        manifest.HasKey(m => m.Key);
+        manifest.HasIndex(m => new { m.ImageKey, m.Digest }).IsUnique();
+        manifest.HasIndex(m => new { m.ImageKey, m.SubjectDigest });
+
+        manifest.Property(m => m.Digest).HasMaxLength(MaxOciDigestLength).IsRequired();
+        manifest.Property(m => m.MediaType).HasMaxLength(MaxOciMediaTypeLength).IsRequired();
+        manifest.Property(m => m.ArtifactType).HasMaxLength(MaxOciMediaTypeLength);
+        manifest.Property(m => m.SubjectDigest).HasMaxLength(MaxOciDigestLength);
+        // The pushed bytes, unbounded text on every provider (a manifest is at most Oci:MaxManifestBytes).
+        manifest.Property(m => m.Content).IsRequired();
+
+        manifest.HasOne<OciRepository>().WithMany().HasForeignKey(m => m.ImageKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildOciTagEntity(EntityTypeBuilder<OciTag> tag)
+    {
+        tag.HasKey(t => t.Key);
+        tag.HasIndex(t => new { t.ImageKey, t.Name }).IsUnique();
+        tag.HasIndex(t => t.ManifestKey);
+
+        tag.Property(t => t.Name).HasMaxLength(MaxOciTagLength).IsRequired();
+
+        // The image is not a foreign key: deleting an image reaches its tags through its manifests (one cascade path, which
+        // SQL Server requires).
+        tag.HasOne<OciManifest>().WithMany().HasForeignKey(t => t.ManifestKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildOciBlobEntity(EntityTypeBuilder<OciBlob> blob)
+    {
+        blob.HasKey(b => b.Key);
+        blob.HasIndex(b => new { b.RepositoryKey, b.Digest }).IsUnique();
+
+        blob.Property(b => b.Digest).HasMaxLength(MaxOciDigestLength).IsRequired();
+    }
+
+    private void BuildOciBlobLinkEntity(EntityTypeBuilder<OciBlobLink> link)
+    {
+        link.HasKey(l => l.Key);
+        link.HasIndex(l => new { l.ImageKey, l.BlobKey }).IsUnique();
+        link.HasIndex(l => l.BlobKey);
+
+        // Deleting an image deletes its links; the blob side restricts (a blob row is removed only after its links, in code),
+        // since two cascade paths to one table are refused by SQL Server.
+        link.HasOne<OciRepository>().WithMany().HasForeignKey(l => l.ImageKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+        link.HasOne<OciBlob>().WithMany().HasForeignKey(l => l.BlobKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
+    }
+
+    private void BuildOciUploadEntity(EntityTypeBuilder<OciUpload> upload)
+    {
+        upload.HasKey(u => u.Key);
+        upload.HasIndex(u => u.Reference).IsUnique();
+        upload.HasIndex(u => u.ImageKey);
+
+        upload.Property(u => u.Reference).HasMaxLength(MaxOciUploadReferenceLength).IsRequired();
+        upload.Property(u => u.StorageUploadId).HasMaxLength(MaxOciStorageUploadIdLength).IsRequired();
+
+        upload.HasOne<OciRepository>().WithMany().HasForeignKey(u => u.ImageKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
     }
 
     private void BuildRepositoryEntity(EntityTypeBuilder<Repository> repository)

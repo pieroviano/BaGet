@@ -68,5 +68,8 @@ public class MySqlContext : AbstractContext<MySqlContext>
         builder.Entity<MavenArtifact>().Property(a => a.ArtifactId).UseCollation(NpmCollation);
         builder.Entity<MavenVersion>().Property(v => v.Version).UseCollation(NpmCollation);
         builder.Entity<MavenFile>().Property(f => f.FileName).UseCollation(NpmCollation);
+
+        // Tags are case-sensitive (image names and digests are lower case by rule).
+        builder.Entity<OciTag>().Property(t => t.Name).UseCollation(NpmCollation);
     }
 }

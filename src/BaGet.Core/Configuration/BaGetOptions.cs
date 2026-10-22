@@ -78,6 +78,8 @@ public class BaGetOptions
 
     public MavenOptions? Maven { get; set; }
 
+    public OciOptions? Oci { get; set; }
+
     public FeedsOptions? Feeds { get; set; }
 
     public AccountsOptions? Accounts { get; set; }

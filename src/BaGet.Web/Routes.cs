@@ -84,4 +84,14 @@ public class Routes
     public const string MavenGetRouteName = "maven-get";
     public const string MavenPutRouteName = "maven-put";
     public const string MavenDeleteRouteName = "maven-delete";
+
+    /// <summary>Route names of the OCI registry protocol (<see cref="BaGetEndpointBuilder.MapOciRoutes"/>).</summary>
+    public const string OciBaseRouteName = "oci-base";
+    public const string OciBaseSlashRouteName = "oci-base-slash";
+    public const string OciTokenRouteName = "oci-token";
+    public const string OciGetRouteName = "oci-get";
+    public const string OciPostRouteName = "oci-post";
+    public const string OciPatchRouteName = "oci-patch";
+    public const string OciPutRouteName = "oci-put";
+    public const string OciDeleteRouteName = "oci-delete";
 }

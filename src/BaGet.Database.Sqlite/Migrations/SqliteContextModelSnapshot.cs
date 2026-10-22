@@ -575,6 +575,209 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("NpmVersions");
                 });
 
+            modelBuilder.Entity("BaGet.Core.OciBlob", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(140)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RefCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.Property<long>("Size")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Digest")
+                        .IsUnique();
+
+                    b.ToTable("OciBlobs");
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciBlobLink", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BlobKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ImageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Manifests")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("BlobKey");
+
+                    b.HasIndex("ImageKey", "BlobKey")
+                        .IsUnique();
+
+                    b.ToTable("OciBlobLinks");
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciManifest", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ArtifactType")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(140)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ImageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SubjectDigest")
+                        .HasMaxLength(140)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ImageKey", "Digest")
+                        .IsUnique();
+
+                    b.HasIndex("ImageKey", "SubjectDigest");
+
+                    b.ToTable("OciManifests");
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciRepository", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name")
+                        .IsUnique();
+
+                    b.ToTable("OciRepositories");
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciTag", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ImageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ManifestKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ManifestKey");
+
+                    b.HasIndex("ImageKey", "Name")
+                        .IsUnique();
+
+                    b.ToTable("OciTags");
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciUpload", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ImageKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StorageUploadId")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ImageKey");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.ToTable("OciUploads");
+                });
+
             modelBuilder.Entity("BaGet.Core.Organization", b =>
                 {
                     b.Property<int>("Key")
@@ -1364,6 +1567,48 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.HasOne("BaGet.Core.NpmPackage", null)
                         .WithMany()
                         .HasForeignKey("PackageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciBlobLink", b =>
+                {
+                    b.HasOne("BaGet.Core.OciBlob", null)
+                        .WithMany()
+                        .HasForeignKey("BlobKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BaGet.Core.OciRepository", null)
+                        .WithMany()
+                        .HasForeignKey("ImageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciManifest", b =>
+                {
+                    b.HasOne("BaGet.Core.OciRepository", null)
+                        .WithMany()
+                        .HasForeignKey("ImageKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciTag", b =>
+                {
+                    b.HasOne("BaGet.Core.OciManifest", null)
+                        .WithMany()
+                        .HasForeignKey("ManifestKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciUpload", b =>
+                {
+                    b.HasOne("BaGet.Core.OciRepository", null)
+                        .WithMany()
+                        .HasForeignKey("ImageKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

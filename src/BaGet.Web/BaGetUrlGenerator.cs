@@ -185,6 +185,24 @@ public class BaGetUrlGenerator : IUrlGenerator
         return AbsoluteUrl("maven/");
     }
 
+    public string GetOciRegistryUrl()
+    {
+        #pragma warning disable CS8602
+        var request = _httpContextAccessor.HttpContext.Request;
+        #pragma warning restore CS8602
+
+        return string.Concat(request.Scheme, "://", request.Host.ToUriComponent(), request.PathBase.ToUriComponent(), "/v2/");
+    }
+
+    public (string Host, bool IsHttp) GetOciRegistryHost()
+    {
+        #pragma warning disable CS8602
+        var request = _httpContextAccessor.HttpContext.Request;
+        #pragma warning restore CS8602
+
+        return (request.Host.ToUriComponent(), string.Equals(request.Scheme, "http", StringComparison.OrdinalIgnoreCase));
+    }
+
     public string GetVulnerabilityIndexUrl()
     {
         return AbsoluteUrl("v3/vulnerabilities/index.json");

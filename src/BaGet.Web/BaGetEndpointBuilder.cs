@@ -31,12 +31,18 @@ public class BaGetEndpointBuilder
         object? constraints = null,
         bool authorizesItself = false,
         RepositoryFormat format = RepositoryFormat.NuGet,
-        bool writesContent = true)
+        bool writesContent = true,
+        bool serverRoot = false)
     {
         // The marker is what RepositoryReadFilter looks for: every route registered here needs Read access, except a
         // route that is constrained to write methods only (and then only for those methods).
-        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself, format, writesContent);
+        var metadata = RepositoryRouteMetadata.For(WritesOnly(constraints), authorizesItself, format, writesContent, resolvesRepositoryItself: serverRoot);
         endpoints.MapControllerRoute(name, pattern, defaults, constraints).WithMetadata(metadata);
+
+        // A server-root route (the OCI registry's /v2/) is registered once, at the root: the repository is part of its path
+        // ({repo}), not of an r/{repo}/ prefix, and it finds and authorizes the repository itself.
+        if (serverRoot) return;
+
         endpoints.MapControllerRoute(
             Routes.RepositoryRouteName(name),
             Routes.RepositoryPathPrefix + pattern,
@@ -77,6 +83,39 @@ public class BaGetEndpointBuilder
         MapValidationRoutes(endpoints);
         MapNpmRoutes(endpoints);
         MapMavenRoutes(endpoints);
+        MapOciRoutes(endpoints);
+    }
+
+    /// <summary>
+    /// The OCI Distribution Spec (<see cref="RepositoryFormat.Docker"/>), which a client addresses at the server root: <c>/v2/</c>
+    /// (version check), <c>/v2/token</c> (the <c>docker login</c> token service) and <c>/v2/{repo}/{image...}/blobs|manifests|tags|referrers/...</c>,
+    /// where <c>repo</c> is the BaGet repository and the rest is the image name and what is asked of it (the name has any number
+    /// of slashes, so <see cref="OciNames.Parse"/> splits it from the right). Registered once each (no <c>r/{repo}/</c> twin) and
+    /// <see cref="RepositoryRouteMetadata.ResolvesRepositoryItself"/>: <see cref="OciAuthorizationFilter"/> picks the
+    /// repository, authorizes it with a registry token or an API key, and answers in the registry's error format.
+    /// </summary>
+    public void MapOciRoutes(IEndpointRouteBuilder endpoints)
+    {
+        void Map(string name, string pattern, string action, params string[] methods)
+            => MapRoute(
+                endpoints,
+                name,
+                pattern,
+                new { controller = "Oci", action },
+                new { httpMethod = new HttpMethodRouteConstraint(methods) },
+                format: RepositoryFormat.Docker,
+                serverRoot: true);
+
+        Map(Routes.OciBaseRouteName, "v2", "Base", "GET", "HEAD");
+        Map(Routes.OciBaseSlashRouteName, "v2/", "Base", "GET", "HEAD");
+        Map(Routes.OciTokenRouteName, "v2/token", "Token", "GET", "POST");
+
+        var pattern = "v2/{" + Routes.RepositoryRouteKey + "}/{**path}";
+        Map(Routes.OciGetRouteName, pattern, "Get", "GET", "HEAD");
+        Map(Routes.OciPostRouteName, pattern, "Post", "POST");
+        Map(Routes.OciPatchRouteName, pattern, "Patch", "PATCH");
+        Map(Routes.OciPutRouteName, pattern, "Put", "PUT");
+        Map(Routes.OciDeleteRouteName, pattern, "Delete", "DELETE");
     }
 
     /// <summary>

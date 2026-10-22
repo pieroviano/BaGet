@@ -43,6 +43,9 @@ public class SqlServerContext : AbstractContext<SqlServerContext>
         builder.Entity<MavenArtifact>().Property(a => a.ArtifactId).UseCollation(NpmCollation);
         builder.Entity<MavenVersion>().Property(v => v.Version).UseCollation(NpmCollation);
         builder.Entity<MavenFile>().Property(f => f.FileName).UseCollation(NpmCollation);
+
+        // Tags are case-sensitive (image names and digests are lower case by rule).
+        builder.Entity<OciTag>().Property(t => t.Name).UseCollation(NpmCollation);
     }
 
     /// <summary>The binary collation of the npm identifier columns.</summary>

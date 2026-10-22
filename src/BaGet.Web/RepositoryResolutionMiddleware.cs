@@ -46,7 +46,15 @@ public class RepositoryResolutionMiddleware
         // (it needs the caller's rights for that, and redirects the front page of an npm repository to its own).
         var endpoint = context.GetEndpoint();
         var isPage = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor>() != null;
-        var format = endpoint?.Metadata.GetMetadata<RepositoryRouteMetadata>()?.Format ?? RepositoryFormat.NuGet;
+        var metadata = endpoint?.Metadata.GetMetadata<RepositoryRouteMetadata>();
+        var format = metadata?.Format ?? RepositoryFormat.NuGet;
+
+        // The registry routes (/v2/...) pick and authorize their repository themselves, in their own error format.
+        if (metadata?.ResolvesRepositoryItself == true)
+        {
+            await _next(context);
+            return;
+        }
 
         if (context.GetRouteValue(Routes.RepositoryRouteKey) is string name)
         {

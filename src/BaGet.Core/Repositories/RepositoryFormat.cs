@@ -22,6 +22,13 @@ public enum RepositoryFormat
     /// repositories only for now.
     /// </summary>
     Maven = 2,
+
+    /// <summary>
+    /// Docker / OCI images (the OCI Distribution Spec v1.1 under <c>/v2/{repository}/{image}/…</c>): <c>docker login</c>,
+    /// <c>push</c> and <c>pull</c>, multi-arch indexes, referrers. Local repositories only for now; needs a store that streams
+    /// (<see cref="IStreamingStorageService"/>).
+    /// </summary>
+    Docker = 3,
 }
 
 /// <summary>
