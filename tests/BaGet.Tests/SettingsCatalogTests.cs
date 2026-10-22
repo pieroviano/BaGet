@@ -56,6 +56,34 @@ public class SettingsCatalogTests : IDisposable
     }
 
     [Fact]
+    public void TheLoggingLevelAndEventLogKeysAreEditableSettings()
+    {
+        var level = Catalog.Find("Serilog:MinimumLevel:Default");
+        Assert.NotNull(level);
+        Assert.Equal(SettingKind.Enum, level!.Kind);
+        Assert.False(level.RequiresRestart);
+        Assert.Contains("Warning", level.EnumValues);
+
+        Assert.True(Catalog.Find("Serilog:EventLog:Enabled")!.RequiresRestart);
+        Assert.True(Catalog.Find("Serilog:EventLog:Source")!.RequiresRestart);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task ASavedLoggingLevelIsReadBackAndNullRemovesIt()
+    {
+        var service = _app.Services.GetRequiredService<SettingsService>();
+        var level = service.Catalog.Find("Serilog:MinimumLevel:Default")!;
+
+        var saved = await service.SaveAsync(new Dictionary<SettingDescriptor, object> { [level] = "Warning" }, "test", TestContext.Current.CancellationToken);
+        Assert.True(saved.Succeeded, string.Join("; ", saved.Errors));
+        Assert.Equal("Warning", service.GetState().Single(s => s.Descriptor.Key == level.Key).EffectiveValue);
+
+        var removed = await service.SaveAsync(new Dictionary<SettingDescriptor, object> { [level] = null! }, "test", TestContext.Current.CancellationToken);
+        Assert.True(removed.Succeeded, string.Join("; ", removed.Errors));
+        Assert.False(service.GetState().Single(s => s.Descriptor.Key == level.Key).IsOverridden);
+    }
+
+    [Fact]
     public void EveryPublicSettableScalarPropertyHasADescriptor()
     {
         var keys = new HashSet<string>(Catalog.Descriptors.Select(d => d.Key), StringComparer.OrdinalIgnoreCase);

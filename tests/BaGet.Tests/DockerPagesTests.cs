@@ -202,6 +202,28 @@ public class DockerPagesTests : IDisposable
     }
 
     [Fact]
+    public async Task TheManifestPageListsItsReferrersWithTheirArtifactType()
+    {
+        var subject = await PushAsync("team/app", "1.0", "subject");
+        var sbom = OciTestImage.Create("sbom", subject: subject.ManifestDigest, artifactType: "application/vnd.example.sbom");
+        using (var client = Client())
+        {
+            await PushBlobAsync(client, "team/app", sbom.Config);
+            foreach (var layer in sbom.Layers) await PushBlobAsync(client, "team/app", layer);
+            await PutManifestAsync(client, "team/app", "sbom", sbom.Manifest);
+        }
+
+        var html = await _anonymous.GetPageAsync($"r/reg/docker-images/team/app?digest={subject.ManifestDigest}");
+
+        Assert.Contains("id=\"docker-referrers\"", html);
+        Assert.Contains($"data-referrer=\"{sbom.ManifestDigest}\"", html);
+        Assert.Contains("application/vnd.example.sbom", html);
+
+        var own = await _anonymous.GetPageAsync($"r/reg/docker-images/team/app?digest={sbom.ManifestDigest}");
+        Assert.DoesNotContain("id=\"docker-referrers\"", own);
+    }
+
+    [Fact]
     public async Task AnIndexPageListsItsPlatformsAndLinksToTheirManifests()
     {
         var amd64 = await PushAsync("team/app", "amd64", "amd", architecture: "amd64");

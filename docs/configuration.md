@@ -750,7 +750,7 @@ no longer read.
   forwarded headers so the client is the real one. Level: Warning for 5xx or an exception, Debug for static files,
   Information otherwise. The line has the path only: no query string, headers or body, so API keys never reach the log; the one credential that rides in a path (npm logout's token segment) is logged as `Redacted`, and masked in traces too.
   Quiet only that line: `Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware=Warning`.
-- The Settings page does not list `Serilog` (it is not an options type); edit the file or the environment.
+- The Settings page lists `Serilog:MinimumLevel:Default` (live) and `Serilog:EventLog:Enabled` / `Source` (restart). Sinks, their arguments and `Override` levels are arrays and maps it cannot show: edit the file or the environment.
 
 ## Telemetry
 

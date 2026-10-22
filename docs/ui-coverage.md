@@ -67,7 +67,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 |---|---|---|---|
 | Version check `GET /v2/` | REST | machine-only handshake (the browse page shows the registry address and `docker login`) | none (401 challenge) |
 | Token service `GET /v2/token` (`docker login`) | REST | machine-only; Account API keys creates the key used as the password; the browse page shows the login, `curl` and daemon snippets | API key / anonymous |
-| Pull: blobs (ranges), manifests, tag list, referrers | REST | `/docker-images` (browse, search), `/docker-images/{image}` (tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, the document) | Read |
+| Pull: blobs (ranges), manifests, tag list, referrers | REST | `/docker-images` (browse, search), `/docker-images/{image}` (tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, referrers such as signatures and SBOMs, the document) | Read |
 | Push: upload sessions (monolithic, chunked, mount), manifests | REST | machine-only (Docker CLI); the browse and image pages show the push, `buildx` and pull commands | Deploy |
 | Delete a tag | REST (`DELETE manifests/{tag}`) | DockerManage | Delete + Password |
 | Delete a manifest (with its tags) | REST (`DELETE manifests/{digest}`) | DockerManage | Delete + Password |
@@ -131,6 +131,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Validation queue: retry, release, reject | service | Admin Validation | Admin (+ Password) |
 | Abuse reports: resolve, reopen | service | Admin Abuse; Manage for the owner | Admin / Manage |
 | Settings (every options section), restart-required marks | `appsettings.Overrides.json` | Admin Settings | Admin + Password |
+| Logging: default minimum level (live), Windows event log switch and source (restart) | `Serilog` section | Admin Settings > Serilog | Admin + Password |
 | Database copy (copy all data, status) | service | Admin Settings (database section) | Admin + Password |
 | Telemetry settings, status, connection test | service | Admin Settings (telemetry section) | Admin + Password |
 | Statistics | service | `/statistics` | read |
@@ -142,4 +143,6 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 |---|---|
 | `--urls`, host arguments | process start, not a runtime operation |
 | Registration, flat container, symbol download, tarball bodies | machine formats; the pages link the downloads |
+| Serilog sinks (`WriteTo`, file path, retention) and per-namespace `Override` levels | arrays and maps the Settings page cannot show; edit the file or the environment ([Logging](configuration.md#logging)) |
+| `Kestrel` endpoints, `SettingsOverridesPath` | read before the settings file exists (listening address, where the file lives) |
 | External login link / unlink | accounts are created by the first external sign-in; there is no link-later operation on the server |

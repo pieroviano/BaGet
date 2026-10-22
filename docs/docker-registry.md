@@ -113,7 +113,7 @@ The report (shown on the Operations page after the run) says how many of each, t
 | Page | Address (under `/r/{name}/`) | Who |
 |---|---|---|
 | Browse | `/docker-images?q=` | whoever may read the repository; lists only images the visitor may read; login, pull, push, buildx and daemon snippets |
-| Image | `/docker-images/{image}` | readers of the image: tags, manifests (type, platform, layers, size). `?digest=` shows one manifest: config and layers with sizes, an index's platforms with links to each manifest, annotations, the document |
+| Image | `/docker-images/{image}` | readers of the image: tags, manifests (type, platform, layers, size). `?digest=` shows one manifest: config and layers with sizes, an index's platforms with links to each manifest, annotations, the referrers (signatures, SBOMs), the document |
 | Manage | `/docker-manage/{image}` | signed-in users with **Delete** on the image: delete a tag, a manifest (with its tags), remove unused layers (older than `Oci:PruneGrace`), delete the whole image; each asks the password |
 
 Docker pages are 404 in other formats' repositories and theirs are 404 in a Docker one. In a remote repository the browse and image pages list the cached images, show only the pull commands, and *Manage* is 404. There is no upload page: images are pushed with the CLI (and the NuGet upload page does not offer Docker repositories).

@@ -87,6 +87,7 @@ public class SettingsCatalog
         ["Site"] = "legal-pages",
         ["Feeds"] = "nuget-v2-feed",
         ["Validation"] = "validate-packages-before-serving-them",
+        ["Serilog"] = "logging",
         ["Mirror"] = "enable-read-through-caching",
         ["Storage"] = "storage",
         ["Search"] = "search",

@@ -129,6 +129,24 @@
             </tbody>
         </table>
 
+        @if (Model.Referrers.Count > 0)
+        {
+            <h2>Referrers</h2>
+            <table class="table table-condensed" id="docker-referrers">
+                <thead><tr><th>Manifest</th><th>Artifact type</th><th>Size</th></tr></thead>
+                <tbody>
+                    @foreach (var referrer in Model.Referrers)
+                    {
+                        <tr data-referrer="@referrer.Digest">
+                            <td><a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@referrer.Digest"><code>@referrer.Digest.Substring(0, 19)...</code></a></td>
+                            <td>@(referrer.ArtifactType ?? referrer.MediaType)</td>
+                            <td>@referrer.Size.ToString("N0") bytes</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
         @if (selected.Platforms.Count > 0)
         {
             <h2>Platforms</h2>

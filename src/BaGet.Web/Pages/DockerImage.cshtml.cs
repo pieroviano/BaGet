@@ -44,6 +44,9 @@ public class DockerImageModel : PageModel
     /// <summary>The chosen manifest, or null.</summary>
     public OciManifestDetail? Selected { get; private set; }
 
+    /// <summary>The manifests whose <c>subject</c> is the chosen manifest (signatures, SBOMs): what <c>GET referrers/{digest}</c> answers. Empty without a selection.</summary>
+    public IReadOnlyList<OciDescriptor> Referrers { get; private set; } = Array.Empty<OciDescriptor>();
+
     /// <summary>The registry host as a Docker client writes it.</summary>
     public string Host { get; private set; } = string.Empty;
 
@@ -82,6 +85,11 @@ public class DockerImageModel : PageModel
                 Response.StatusCode = 404;
                 return Page();
             }
+        }
+
+        if (Selected != null)
+        {
+            Referrers = await _registry.GetReferrersAsync(Image!, Selected.Summary.Digest, null, cancellationToken) ?? Array.Empty<OciDescriptor>();
         }
 
         (Host, _) = _urls.GetOciRegistryHost();

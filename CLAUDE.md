@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **3192 tests** across `BaGet.Core.Tests` (893), `BaGet.Tests` (1898),
+Baseline: **3195 tests** across `BaGet.Core.Tests` (893), `BaGet.Tests` (1901),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (107), `BaGet.Web.Tests` (58),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (20), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (44, Docker), `BaGet.Storage.Tests` (40, Docker; the GCS emulator is a single-threaded Python server that drops reused connections, so its tests use a no-reuse HTTP handler; one GCS test still failed in 1 of 3 full-suite runs before that, rerun the class if it recurs). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -389,7 +389,7 @@ duplicates in unique indexes and keys (columns `NOCASE`/`citext`/`*_ci`, else th
 
 The host (and only the host) uses Serilog: `Program.ConfigureLogging` clears the Microsoft providers and calls
 `AddSerilog(... ReadFrom.Configuration ... , writeToProviders: true)`, so the `Serilog` section of `appsettings.json`
-is the one source of truth for levels and sinks (Console, File `logs/baget-.log`, resolved against the content
+is the one source of truth for levels and sinks (`SerilogOptions` lists `MinimumLevel:Default` and `EventLog:*` on the Settings page; sinks and `Override` stay file/env only) (Console, File `logs/baget-.log`, resolved against the content
 root / `BAGET_CONFIG_ROOT` for every File sink by `ResolveLogFilePaths`). `ApplyDefaultMinimumLevels` sets a code floor
 before `ReadFrom` (Microsoft and `Hosting.Diagnostics` Warning: that logger prints `?apikey=`), so a host with its own
 appsettings is safe. A sink with `Enabled=false` is blanked (`DisableSinks`; an empty env var is deleted on Windows).
