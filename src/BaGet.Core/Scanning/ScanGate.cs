@@ -67,6 +67,12 @@ public sealed record ScanAssessment(ScanState State, ScanResult? Result, Effecti
 /// </summary>
 public interface IScanGate
 {
+    /// <summary>Whether scanning is on and possible here (a cheap test; callers skip reading an artifact for scanning when false).</summary>
+    bool Enabled { get; }
+
+    /// <summary>Whether the policy in force refuses deploys at some severity (callers read the artifact's components only then).</summary>
+    Task<bool> BlocksDeploysAsync(CancellationToken cancellationToken);
+
     /// <summary>Throws <see cref="ScanBlockedException"/> when the policy refuses to hand out the version.</summary>
     Task CheckDownloadAsync(string name, string version, CancellationToken cancellationToken);
 
@@ -76,6 +82,13 @@ public interface IScanGate
     /// (logged): a security tool that is down must not stop every push.
     /// </summary>
     Task CheckDeployAsync(IReadOnlyList<ScanComponent> components, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// For artifacts that cannot be inspected before they are stored (container images): scans the stored version now and throws
+    /// <see cref="ScanBlockedException"/> when its findings reach the policy's deploy threshold, so the caller can remove it again.
+    /// Without a deploy threshold, or without a scanner for the format, it only queues a scan.
+    /// </summary>
+    Task CheckStoredAsync(string name, string version, CancellationToken cancellationToken);
 
     /// <summary>The state and the policy's verdict for a version, for the pages.</summary>
     Task<ScanAssessment> AssessAsync(string name, string version, CancellationToken cancellationToken);
@@ -122,6 +135,13 @@ public sealed class ScanGate : IScanGate
     private bool Active => _options.Value.Enabled && _context is not NullContext;
 
     /// <inheritdoc/>
+    public bool Enabled => Active;
+
+    /// <inheritdoc/>
+    public async Task<bool> BlocksDeploysAsync(CancellationToken cancellationToken)
+        => Active && (await _policies.GetEffectiveAsync(_repository.Current.Key, cancellationToken).ConfigureAwait(false)).Values.BlockDeploySeverity != null;
+
+    /// <inheritdoc/>
     public async Task CheckDownloadAsync(string name, string version, CancellationToken cancellationToken)
     {
         if (!Active) return;
@@ -160,7 +180,10 @@ public sealed class ScanGate : IScanGate
         {
             if (requireResult && result == null) return false;
             RequestScan(name, version);
-            if (values.BlockUnscanned)
+
+            // What a remote repository has not fetched yet cannot be scanned, and it is fetched by this very download: refusing it
+            // would keep it from ever being scanned. It is scanned as soon as it is stored.
+            if (values.BlockUnscanned && (result != null || await _scans.IsStoredAsync(name, version, cancellationToken).ConfigureAwait(false)))
             {
                 throw new ScanBlockedException(ScanBlockedOperation.Download,
                     $"Download of {name} {version} refused by the scanning policy of {Describe(policy, repository)}: it has not been scanned yet. Try again shortly.");
@@ -198,6 +221,33 @@ public sealed class ScanGate : IScanGate
         var blocking = hits.Where(h => h.Severity >= threshold.Value).OrderByDescending(h => h.Severity).ThenBy(h => h.Id, StringComparer.Ordinal).ToList();
         if (blocking.Count == 0) return;
 
+        throw new ScanBlockedException(ScanBlockedOperation.Deploy,
+            $"Deploy refused by the scanning policy of {Describe(policy, repository)} (blocks {ScanSeverities.Name(threshold.Value)} and above): {Summarize(blocking)}.");
+    }
+
+    /// <inheritdoc/>
+    public async Task CheckStoredAsync(string name, string version, CancellationToken cancellationToken)
+    {
+        if (!Active) return;
+
+        var repository = _repository.Current;
+        var policy = await _policies.GetEffectiveAsync(repository.Key, cancellationToken).ConfigureAwait(false);
+        var threshold = policy.Values.BlockDeploySeverity;
+        if (threshold == null || !_scans.GetEngineStatus().Available)
+        {
+            RequestScan(name, version);
+            return;
+        }
+
+        var result = await _scans.ScanAsync(name, version, cancellationToken).ConfigureAwait(false);
+        if (result?.ScannedAt == null || result.Highest < threshold.Value) return;
+
+        var blocking = (result.Findings ?? new List<ScanFinding>())
+            .Where(f => f.Severity >= threshold.Value)
+            .OrderByDescending(f => f.Severity)
+            .ThenBy(f => f.VulnerabilityId, StringComparer.Ordinal)
+            .Select(f => new ScanHit(f.VulnerabilityId!, f.Component!, f.ComponentVersion!, f.Severity, f.Summary, f.AdvisoryUrl ?? string.Empty, f.FixedVersion))
+            .ToList();
         throw new ScanBlockedException(ScanBlockedOperation.Deploy,
             $"Deploy refused by the scanning policy of {Describe(policy, repository)} (blocks {ScanSeverities.Name(threshold.Value)} and above): {Summarize(blocking)}.");
     }

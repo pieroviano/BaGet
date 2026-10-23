@@ -19,6 +19,7 @@ public class PackagePublishController : Controller
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly ILogger<PackagePublishController> _logger;
     private readonly PackageChangeNotifier _notifier;
+    private readonly IScanGate _scanGate;
 
     public PackagePublishController(
         IAuthenticationService authentication,
@@ -28,8 +29,10 @@ public class PackagePublishController : Controller
         IOptionsSnapshot<BaGetOptions> options,
         ILogger<PackagePublishController> logger,
         PackageChangeNotifier notifier,
-        IPackageAuthorizationService authorization)
+        IPackageAuthorizationService authorization,
+        IScanGate scanGate)
     {
+        _scanGate = scanGate ?? throw new ArgumentNullException(nameof(scanGate));
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
         _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
@@ -73,6 +76,13 @@ public class PackagePublishController : Controller
                     return;
                 }
 
+                // The scanning policy of the repository may refuse a package with known vulnerabilities (403 with the reason).
+                if (_scanGate.Enabled && await _scanGate.BlocksDeploysAsync(cancellationToken))
+                {
+                    var components = NuGetScanComponents.TryRead(uploadStream);
+                    if (components != null) await _scanGate.CheckDeployAsync(components, cancellationToken);
+                }
+
                 // Decided before the push: afterwards every ID exists.
                 var isNewId = packageId != null && !await _packages.ExistsAsync(packageId, cancellationToken);
 
@@ -105,9 +115,10 @@ public class PackagePublishController : Controller
                 }
             }
         }
-        catch (Exception e) when (!(e is MaintenanceException))
+        catch (Exception e) when (!(e is MaintenanceException) && !(e is ScanBlockedException))
         {
-            // A refused write (read-only maintenance) is not a server fault: MaintenanceMiddleware answers 503.
+            // A refused write (read-only maintenance) is not a server fault: MaintenanceMiddleware answers 503, and a scanning
+            // policy refusal is answered 403 with its reason by ScanBlockedFilter.
             _logger.LogError(e, "Exception thrown during package upload");
 
             HttpContext.Response.StatusCode = 500;

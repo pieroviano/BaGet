@@ -30,6 +30,9 @@ public static class IServiceCollectionExtensions
                 // The read check of every protocol route (401 for anonymous callers, 404 without Read access).
                 options.Filters.Add<RepositoryReadFilter>();
 
+                // A refusal by the vulnerability scanning policy is answered 403 with its reason, in the shape of the client's protocol.
+                options.Filters.Add<ScanBlockedFilter>();
+
                 // With nullable reference types on, MVC treats every non-nullable reference-type
                 // property or parameter it binds as [Required]. Optional query values such as the
                 // package list's "packageType" and "framework" would then fail validation whenever a

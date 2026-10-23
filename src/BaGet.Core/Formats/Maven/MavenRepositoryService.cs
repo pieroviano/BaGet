@@ -31,6 +31,7 @@ public class MavenRepositoryService : IMavenRepository
     private readonly ILogger<MavenRepositoryService> _logger;
     private readonly IOptionsSnapshot<MavenOptions>? _options;
     private readonly ArtifactUsageRecorder? _usage;
+    private readonly IScanGate? _scanGate;
     private MavenRepositorySettings? _settings;
 
     /// <param name="context">The database.</param>
@@ -42,6 +43,7 @@ public class MavenRepositoryService : IMavenRepository
     /// <param name="logger">The logger.</param>
     /// <param name="options">The <c>Maven:*</c> options.</param>
     /// <param name="usage">Notes downloads for the retention rules; null records nothing.</param>
+    /// <param name="scanGate">The vulnerability scanning policy checked before a deploy and told of what was stored.</param>
     public MavenRepositoryService(
         IContext context,
         IStorageService storage,
@@ -51,9 +53,11 @@ public class MavenRepositoryService : IMavenRepository
         MaintenanceGate gate,
         ILogger<MavenRepositoryService> logger,
         IOptionsSnapshot<MavenOptions>? options = null,
-        ArtifactUsageRecorder? usage = null)
+        ArtifactUsageRecorder? usage = null,
+        IScanGate? scanGate = null)
     {
         _usage = usage;
+        _scanGate = scanGate;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -650,6 +654,13 @@ public class MavenRepositoryService : IMavenRepository
             spooled.File.Position = 0;
         }
 
+        // The scanning policy of the repository may refuse an artifact with known vulnerabilities (ScanBlockedException, 403): a
+        // POM brings its dependencies, any other file the artifact itself.
+        if (_scanGate != null && _scanGate.Enabled && await _scanGate.BlocksDeploysAsync(cancellationToken).ConfigureAwait(false))
+        {
+            await _scanGate.CheckDeployAsync(MavenScanComponents.Of(coordinate.GroupId, coordinate.ArtifactId, version, pom), cancellationToken).ConfigureAwait(false);
+        }
+
         var path = StoragePath(coordinate.GroupId, coordinate.ArtifactId, version, fileName);
 
         // One deploy of a file at a time in this process: a deploy that finds a file at the path cannot tell a leftover from a
@@ -773,6 +784,8 @@ public class MavenRepositoryService : IMavenRepository
         {
             await PruneSnapshotsAsync(coordinate, versionRow!.Key, settings.MaxSnapshotBuilds, cancellationToken).ConfigureAwait(false);
         }
+
+        _scanGate?.RequestScan(name, version);
 
         return MavenResult.Created($"Deployed {fileName}.", name);
     }
@@ -956,6 +969,7 @@ public class MavenRepositoryService : IMavenRepository
                 artifact.Modified = now;
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                _scanGate?.RequestScan(coordinate.Name, version);
 
                 return;
             }

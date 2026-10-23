@@ -140,6 +140,10 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IScanService, ScanService>();
         services.TryAddScoped<IScanPolicyService, ScanPolicyService>();
         services.TryAddScoped<IScanGate, ScanGate>();
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatScanner, NuGetFormatScanner>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatScanner, NpmFormatScanner>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatScanner, MavenFormatScanner>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatScanner, DockerFormatScanner>());
         services.AddHostedService<ScanWorker>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, ScanRepositoryOperation>());
         services.TryAddScoped<IOciAccess, OciAccess>();

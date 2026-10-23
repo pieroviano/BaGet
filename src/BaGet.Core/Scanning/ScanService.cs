@@ -74,6 +74,17 @@ public sealed class ScanService : IScanService
     }
 
     /// <inheritdoc/>
+    public async Task<bool> IsStoredAsync(string name, string version, CancellationToken cancellationToken)
+    {
+        var scanner = _services.GetFormatService<IFormatScanner>(Repository.Format);
+        if (scanner == null || _context is NullContext) return false;
+
+        return scanner.Engine == ScanEngine.Osv
+            ? (await scanner.ListComponentsAsync(name, version, cancellationToken).ConfigureAwait(false)).Count > 0
+            : await scanner.GetImageReferenceAsync(name, version, cancellationToken).ConfigureAwait(false) != null;
+    }
+
+    /// <inheritdoc/>
     public async Task<ScanResult?> FindAsync(string name, string version, CancellationToken cancellationToken)
     {
         if (_context is NullContext) return null;

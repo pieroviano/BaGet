@@ -28,6 +28,7 @@ public class MavenController : Controller
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly IOptionsSnapshot<MavenOptions> _mavenOptions;
     private readonly IAccessEvaluator _access;
+    private readonly IScanGate? _scanGate;
 
     public MavenController(
         IMavenRepository maven,
@@ -35,8 +36,10 @@ public class MavenController : Controller
         IRepositoryContext repository,
         IOptionsSnapshot<BaGetOptions> options,
         IOptionsSnapshot<MavenOptions> mavenOptions,
-        IAccessEvaluator access)
+        IAccessEvaluator access,
+        IScanGate? scanGate = null)
     {
+        _scanGate = scanGate;
         _maven = maven ?? throw new ArgumentNullException(nameof(maven));
         _principals = principals ?? throw new ArgumentNullException(nameof(principals));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -110,6 +113,13 @@ public class MavenController : Controller
     {
         var path = RequestedPath;
         if (path == null) return Text(StatusCodes.Status404NotFound, "Not found.");
+
+        // The scanning policy of the repository may refuse the files of a version (403 with the reason, by ScanBlockedFilter); the
+        // generated maven-metadata.xml lists versions and stays readable.
+        if (_scanGate != null && path.Kind == MavenPathKind.File && path.Candidates.Count > 0 && path.Candidates[0].Version != null)
+        {
+            await _scanGate.CheckDownloadAsync(path.Candidates[0].Name, path.Candidates[0].Version!, cancellationToken);
+        }
 
         // A HEAD does not read the content: a remote repository answers it from the upstream's headers without fetching and keeping the file.
         var download = HttpMethods.IsHead(Request.Method)

@@ -15,9 +15,11 @@ namespace BaGet.Web;
 public class PackageContentController : Controller
 {
     private readonly IPackageContentService _content;
+    private readonly IScanGate? _scanGate;
 
-    public PackageContentController(IPackageContentService content)
+    public PackageContentController(IPackageContentService content, IScanGate? scanGate = null)
     {
+        _scanGate = scanGate;
         _content = content ?? throw new ArgumentNullException(nameof(content));
     }
 
@@ -38,6 +40,9 @@ public class PackageContentController : Controller
         {
             return NotFound();
         }
+
+        // The scanning policy of the repository may refuse the download (403 with the reason, by ScanBlockedFilter).
+        if (_scanGate != null) await _scanGate.CheckDownloadAsync(id, nugetVersion.ToNormalizedString(), cancellationToken);
 
         var packageStream = await _content.GetPackageContentStreamOrNullAsync(id, nugetVersion, cancellationToken);
         if (packageStream == null)

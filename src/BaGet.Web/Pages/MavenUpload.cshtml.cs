@@ -120,19 +120,29 @@ public class MavenUploadModel : PageModel
 
         await using var main = hasFile ? file!.OpenReadStream() : null;
         await using var pomStream = hasPom ? pom!.OpenReadStream() : null;
-        var result = await _maven.DeployAsync(
-            principal,
-            new MavenDeployment
-            {
-                GroupId = groupId,
-                ArtifactId = artifactId,
-                Version = version,
-                Packaging = packaging,
-                Classifier = classifier,
-                File = main,
-                Pom = pomStream,
-            },
-            cancellationToken);
+        MavenResult result;
+        try
+        {
+            result = await _maven.DeployAsync(
+                principal,
+                new MavenDeployment
+                {
+                    GroupId = groupId,
+                    ArtifactId = artifactId,
+                    Version = version,
+                    Packaging = packaging,
+                    Classifier = classifier,
+                    File = main,
+                    Pom = pomStream,
+                },
+                cancellationToken);
+        }
+        catch (ScanBlockedException e)
+        {
+            // The scanning policy of the repository refuses an artifact with known vulnerabilities.
+            return Refuse(403, e.Message);
+        }
+
         if (!result.Succeeded)
         {
             return Refuse(StatusOf(result.Status), result.Message ?? "The artifact was not deployed.");

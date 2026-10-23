@@ -97,7 +97,17 @@ public class NpmUploadModel : PageModel
         var content = copy ?? upload;
 
         var chosenTag = string.IsNullOrWhiteSpace(tag) ? "latest" : tag.Trim();
-        var result = await _registry.PublishTarballAsync(principal, content, chosenTag, cancellationToken);
+        NpmResult result;
+        try
+        {
+            result = await _registry.PublishTarballAsync(principal, content, chosenTag, cancellationToken);
+        }
+        catch (ScanBlockedException e)
+        {
+            // The scanning policy of the repository refuses a package with known vulnerabilities.
+            return Refuse(403, e.Message);
+        }
+
         if (!result.Succeeded)
         {
             return Refuse(StatusOf(result.Status), result.Message ?? "The package was not published.");

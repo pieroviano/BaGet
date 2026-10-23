@@ -41,6 +41,12 @@ public interface IScanService
     /// <summary>Whether and how the repository can be scanned now.</summary>
     ScanEngineStatus GetEngineStatus();
 
+    /// <summary>
+    /// Whether the repository stores the version (a remote repository does not until the first download fetched it, so there is
+    /// nothing to scan before).
+    /// </summary>
+    Task<bool> IsStoredAsync(string name, string version, CancellationToken cancellationToken);
+
     /// <summary>The stored result of a version with its findings (worst first), or null when it was never scanned.</summary>
     Task<ScanResult?> FindAsync(string name, string version, CancellationToken cancellationToken);
 

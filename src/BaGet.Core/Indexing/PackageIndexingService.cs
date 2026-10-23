@@ -20,6 +20,7 @@ public class PackageIndexingService : IPackageIndexingService
     private readonly ILogger<PackageIndexingService> _logger;
     private readonly PackageChangeNotifier _notifier;
     private readonly MaintenanceGate? _gate;
+    private readonly IScanGate? _scanGate;
 
     public PackageIndexingService(
         IPackageDatabase packages,
@@ -64,7 +65,31 @@ public class PackageIndexingService : IPackageIndexingService
         ILogger<PackageIndexingService> logger,
         PackageChangeNotifier notifier,
         MaintenanceGate? gate)
+        : this(packages, storage, search, time, options, logger, notifier, gate, scanGate: null)
     {
+    }
+
+    /// <param name="packages">The package database.</param>
+    /// <param name="storage">Where package content is stored.</param>
+    /// <param name="search">Indexes the package for search.</param>
+    /// <param name="time">The current time.</param>
+    /// <param name="options">The server's options.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="notifier">Told when a package changes, once it is indexed.</param>
+    /// <param name="gate">When closed, indexing is refused up front with <see cref="MaintenanceException"/>.</param>
+    /// <param name="scanGate">Told to scan the package for vulnerabilities once it is indexed (no-op when scanning is off).</param>
+    public PackageIndexingService(
+        IPackageDatabase packages,
+        IPackageStorageService storage,
+        ISearchIndexer search,
+        SystemTime time,
+        IOptionsSnapshot<BaGetOptions> options,
+        ILogger<PackageIndexingService> logger,
+        PackageChangeNotifier notifier,
+        MaintenanceGate? gate,
+        IScanGate? scanGate)
+    {
+        _scanGate = scanGate;
         _gate = gate;
         _notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
         _packages = packages ?? throw new ArgumentNullException(nameof(packages));
@@ -254,6 +279,8 @@ public class PackageIndexingService : IPackageIndexingService
             package.NormalizedVersionString);
 
         await _notifier.PackageChangedAsync(package.Id, package.Version, cancellationToken);
+
+        _scanGate?.RequestScan(package.Id!, package.NormalizedVersionString!);
 
         return PackageIndexingResult.Success;
     }

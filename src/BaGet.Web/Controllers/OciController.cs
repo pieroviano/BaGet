@@ -46,8 +46,10 @@ public class OciController : Controller
         IVirtualRepositories virtuals,
         IUrlGenerator urls,
         IOptionsSnapshot<OciOptions> options,
-        SystemTime time)
+        SystemTime time,
+        IScanGate scanGate)
     {
+        _scanGate = scanGate ?? throw new ArgumentNullException(nameof(scanGate));
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _callers = callers ?? throw new ArgumentNullException(nameof(callers));
         _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
@@ -58,6 +60,8 @@ public class OciController : Controller
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _time = time ?? throw new ArgumentNullException(nameof(time));
     }
+
+    private readonly IScanGate _scanGate;
 
     private OciRequest Current => (OciRequest)HttpContext.Items[OciRequest.ItemKey]!;
 
@@ -323,6 +327,10 @@ public class OciController : Controller
         var path = Current.Path;
         var manifest = await _registry.GetManifestAsync(path.Image, path.Reference!, cancellationToken);
         if (manifest == null) return OciHttp.Error(StatusCodes.Status404NotFound, "MANIFEST_UNKNOWN", "manifest unknown", path.Reference);
+
+        // The scanning policy of the repository may refuse an image with known vulnerabilities (403 DENIED, by ScanBlockedFilter).
+        // An index only lists platform manifests; each of those is checked when the client asks for it.
+        if (!OciNames.IsIndex(manifest.MediaType)) await _scanGate.CheckDownloadAsync(path.Image, manifest.Digest, cancellationToken);
 
         Response.Headers[OciHttp.DigestHeader] = manifest.Digest;
         Response.Headers.ETag = $"\"{manifest.Digest}\"";
@@ -595,6 +603,22 @@ public class OciController : Controller
 
         var mediaType = Request.ContentType?.Split(';')[0].Trim();
         var put = await _registry.PutManifestAsync(path.Image, path.Reference!, mediaType, buffer.ToArray(), cancellationToken);
+
+        // An image cannot be inspected before it is stored: with a deploy threshold in force it is scanned now and removed again when
+        // it reaches it (403 DENIED); otherwise a scan is queued. Indexes, signatures and other artifacts are not images.
+        if (mediaType != null && OciNames.ImageManifestTypes.Contains(mediaType, StringComparer.Ordinal) && put.SubjectDigest == null)
+        {
+            try
+            {
+                await _scanGate.CheckStoredAsync(path.Image, put.Digest, cancellationToken);
+            }
+            catch (ScanBlockedException) when (put.Created)
+            {
+                await _registry.DeleteManifestAsync(path.Image, put.Digest, CancellationToken.None);
+
+                throw;
+            }
+        }
 
         Response.Headers.Location = ImageUrl("manifests/" + put.Digest);
         Response.Headers[OciHttp.DigestHeader] = put.Digest;

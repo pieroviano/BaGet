@@ -57,6 +57,7 @@ public class NpmRegistryService : INpmRegistry
     private readonly MaintenanceGate _gate;
     private readonly IOptionsSnapshot<NpmOptions>? _options;
     private readonly ArtifactUsageRecorder? _usage;
+    private readonly IScanGate? _scanGate;
     private readonly ILogger<NpmRegistryService> _logger;
 
     /// <param name="context">The database.</param>
@@ -69,6 +70,7 @@ public class NpmRegistryService : INpmRegistry
     /// <param name="logger">The logger.</param>
     /// <param name="options">The <c>Npm:*</c> options.</param>
     /// <param name="usage">Notes downloads for the retention rules; null records nothing.</param>
+    /// <param name="scanGate">The vulnerability scanning policy checked before a publish and told of what was stored.</param>
     public NpmRegistryService(
         IContext context,
         IStorageService storage,
@@ -79,9 +81,11 @@ public class NpmRegistryService : INpmRegistry
         MaintenanceGate gate,
         ILogger<NpmRegistryService> logger,
         IOptionsSnapshot<NpmOptions>? options = null,
-        ArtifactUsageRecorder? usage = null)
+        ArtifactUsageRecorder? usage = null,
+        IScanGate? scanGate = null)
     {
         _usage = usage;
+        _scanGate = scanGate;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -489,6 +493,8 @@ public class NpmRegistryService : INpmRegistry
             throw;
         }
 
+        _scanGate?.RequestScan(name, version);
+
         return true;
     }
 
@@ -601,6 +607,12 @@ public class NpmRegistryService : INpmRegistry
             return NpmResult.Fail(NpmStatus.Invalid, $"The tarball's package.json is {innerName}@{innerVersion}, not {name}@{version}.");
         }
 
+        // The scanning policy of the repository may refuse a package with known vulnerabilities (ScanBlockedException, 403).
+        if (_scanGate != null && _scanGate.Enabled && await _scanGate.BlocksDeploysAsync(cancellationToken).ConfigureAwait(false))
+        {
+            await _scanGate.CheckDeployAsync(NpmScanComponents.Of(name, version, inner), cancellationToken).ConfigureAwait(false);
+        }
+
         _gate.ThrowIfClosed();
 
         var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
@@ -699,6 +711,7 @@ public class NpmRegistryService : INpmRegistry
         }
 
         await _authorization.OnPushedAsync(caller!, name, isNewPackage, cancellationToken).ConfigureAwait(false);
+        _scanGate?.RequestScan(name, version);
 
         return NpmResult.Created($"Published {name}@{version}.", name);
     }

@@ -53,6 +53,7 @@ public class NpmController : Controller
     private readonly IUrlGenerator _urls;
     private readonly IAccessEvaluator _access;
     private readonly INpmTokenService? _tokens;
+    private readonly IScanGate? _scanGate;
 
     public NpmController(
         INpmRegistry registry,
@@ -62,8 +63,10 @@ public class NpmController : Controller
         IOptionsSnapshot<NpmOptions> npmOptions,
         IUrlGenerator urls,
         IAccessEvaluator access,
-        INpmTokenService? tokens = null)
+        INpmTokenService? tokens = null,
+        IScanGate? scanGate = null)
     {
+        _scanGate = scanGate;
         _access = access ?? throw new ArgumentNullException(nameof(access));
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _principals = principals ?? throw new ArgumentNullException(nameof(principals));
@@ -219,6 +222,12 @@ public class NpmController : Controller
     public async Task<IActionResult> Tarball(string file, CancellationToken cancellationToken)
     {
         if (!TryName(out var name, out _, lookup: true)) return Error(404, "Not found");
+
+        // The scanning policy of the repository may refuse the download (403 {"error": reason}, by ScanBlockedFilter).
+        if (_scanGate != null && NpmNames.TryParseTarballFile(name, file, out var tarballVersion))
+        {
+            await _scanGate.CheckDownloadAsync(name, tarballVersion, cancellationToken);
+        }
 
         var tarball = await _registry.OpenTarballAsync(name, file, cancellationToken);
         if (tarball == null) return Error(404, "Not found");

@@ -79,6 +79,7 @@ public class UploadModel : PageModel
     private readonly IPackageStagingService _staging;
     private readonly IPackageDatabase _packages;
     private readonly ILogger<UploadModel> _logger;
+    private readonly IScanGate _scanGate;
 
     public UploadModel(
         IOptionsSnapshot<BaGetOptions> options,
@@ -89,8 +90,10 @@ public class UploadModel : PageModel
         ISymbolIndexingService symbols,
         IPackageStagingService staging,
         IPackageDatabase packages,
-        ILogger<UploadModel> logger)
+        ILogger<UploadModel> logger,
+        IScanGate scanGate)
     {
+        _scanGate = scanGate ?? throw new ArgumentNullException(nameof(scanGate));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
         _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
@@ -211,6 +214,13 @@ public class UploadModel : PageModel
         if (!await _authorization.AuthorizeAsync(principal, PackageAction.Push, staged.Id, cancellationToken))
         {
             return Refuse(403, Denied(staged.Id));
+        }
+
+        // The scanning policy of the repository may refuse a package with known vulnerabilities: said now, not after the upload.
+        if (!staged.IsSymbolPackage)
+        {
+            var blocked = await RefuseIfBlockedAsync(content, cancellationToken);
+            if (blocked != null) return blocked;
         }
 
         await DescribeSymbolTargetAsync(staged, cancellationToken);
@@ -334,6 +344,13 @@ public class UploadModel : PageModel
         PackageIndexingResult result;
         // Decided before the push: afterwards every ID exists.
         var isNewId = !await _packages.ExistsAsync(staged.Id, cancellationToken);
+        var refused = await RefuseIfBlockedAsync(content, cancellationToken);
+        if (refused != null)
+        {
+            Staged = staged;
+            return refused;
+        }
+
         try
         {
             result = await _submissions.SubmitAsync(content, cancellationToken);
@@ -561,6 +578,26 @@ public class UploadModel : PageModel
     /// again. Nothing about the upload is shown: it was not authenticated.
     /// </summary>
     public string? RetryToken { get; private set; }
+
+    // 403 with the reason when the scanning policy of the repository refuses a package with these dependencies (the stream is rewound).
+    private async Task<PageResult?> RefuseIfBlockedAsync(Stream package, CancellationToken cancellationToken)
+    {
+        if (!_scanGate.Enabled || !await _scanGate.BlocksDeploysAsync(cancellationToken)) return null;
+
+        var components = NuGetScanComponents.TryRead(package);
+        if (components == null) return null;
+
+        try
+        {
+            await _scanGate.CheckDeployAsync(components, cancellationToken);
+
+            return null;
+        }
+        catch (ScanBlockedException e)
+        {
+            return Refuse(403, e.Message);
+        }
+    }
 
     private PageResult Refuse(int statusCode, string message)
     {
