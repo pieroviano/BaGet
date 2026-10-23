@@ -172,11 +172,18 @@
                         <td>@(vulnerability.Severity >= 0 && vulnerability.Severity < Model.SeverityNames.Count ? Model.SeverityNames[vulnerability.Severity] : vulnerability.Severity.ToString())</td>
                         <td>@vulnerability.VersionRange</td>
                         <td>
-                            <form method="post" asp-page-handler="RemoveVulnerability">
-                                <input type="hidden" name="version" value="@version" />
-                                <input type="hidden" name="key" value="@vulnerability.Key" />
-                                <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
-                            </form>
+                            @if (vulnerability.Source == null)
+                            {
+                                <form method="post" asp-page-handler="RemoveVulnerability">
+                                    <input type="hidden" name="version" value="@version" />
+                                    <input type="hidden" name="key" value="@vulnerability.Key" />
+                                    <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">found by the @vulnerability.Source scan</span>
+                            }
                         </td>
                     </tr>
                 }

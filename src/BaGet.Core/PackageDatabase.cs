@@ -223,11 +223,15 @@ public class PackageDatabase : IPackageDatabase
             return false;
         }
 
-        // The list replaces whatever the version had, so an empty list clears it.
+        // The list replaces the entries set by hand, so an empty list clears them; what the vulnerability scanner recorded
+        // (Source set) is the scanner's and stays until the next scan.
+        var manual = (package.Vulnerabilities ?? new List<PackageVulnerability>()).Where(v => v.Source == null).ToList();
         #pragma warning disable CS8604
-        _context.PackageVulnerabilities?.RemoveRange(package.Vulnerabilities);
+        _context.PackageVulnerabilities?.RemoveRange(manual);
         #pragma warning restore CS8604
-        package.Vulnerabilities = vulnerabilities.ToList();
+        var scanned = (package.Vulnerabilities ?? new List<PackageVulnerability>()).Where(v => v.Source != null);
+        foreach (var vulnerability in vulnerabilities) vulnerability.Source = null;
+        package.Vulnerabilities = scanned.Concat(vulnerabilities).ToList();
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

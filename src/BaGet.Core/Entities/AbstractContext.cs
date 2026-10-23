@@ -42,6 +42,13 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxRepositoryFormatLength = 32;
 
     // npm's own limits: a package name (scope included) is at most 214 characters, a version and a dist-tag fit 256.
+    public const int MaxScanNameLength = ScanLimits.NameLength;
+    public const int MaxScanVersionLength = ScanLimits.VersionLength;
+    public const int MaxScanIdLength = ScanLimits.IdLength;
+    public const int MaxScanSummaryLength = ScanLimits.SummaryLength;
+    public const int MaxScanUrlLength = ScanLimits.UrlLength;
+    public const int MaxScanErrorLength = ScanLimits.ErrorLength;
+    public const int MaxScanScannerLength = ScanLimits.ScannerLength;
     public const int MaxNpmNameLength = 214;
     public const int MaxNpmVersionLength = 256;
     public const int MaxNpmTagLength = 128;
@@ -133,6 +140,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<PackageValidation>? PackageValidations { get; set; }
     public DbSet<AbuseReport>? AbuseReports { get; set; }
     public DbSet<PackageSymbol>? PackageSymbols { get; set; }
+    public DbSet<ScanResult>? ScanResults { get; set; }
+    public DbSet<ScanFinding>? ScanFindings { get; set; }
+    public DbSet<ScanPolicy>? ScanPolicies { get; set; }
     public DbSet<NpmPackage>? NpmPackages { get; set; }
     public DbSet<NpmVersion>? NpmVersions { get; set; }
     public DbSet<NpmDistTag>? NpmDistTags { get; set; }
@@ -217,6 +227,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageValidation>(BuildPackageValidationEntity);
         builder.Entity<AbuseReport>(BuildAbuseReportEntity);
         builder.Entity<PackageSymbol>(BuildPackageSymbolEntity);
+        builder.Entity<ScanResult>(BuildScanResultEntity);
+        builder.Entity<ScanFinding>(BuildScanFindingEntity);
+        builder.Entity<ScanPolicy>(BuildScanPolicyEntity);
         builder.Entity<NpmPackage>(BuildNpmPackageEntity);
         builder.Entity<NpmVersion>(BuildNpmVersionEntity);
         builder.Entity<NpmDistTag>(BuildNpmDistTagEntity);
@@ -249,6 +262,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageValidation>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<AbuseReport>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<PackageSymbol>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<ScanResult>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<NpmPackage>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<MavenArtifact>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<OciRepository>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
@@ -264,6 +278,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PackageValidation>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<AbuseReport>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<PackageSymbol>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<ScanResult>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<NpmPackage>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<MavenArtifact>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<OciRepository>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
@@ -303,6 +318,44 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
         usage.Property(u => u.Name).HasMaxLength(MaxRetentionNameLength).IsRequired();
         usage.Property(u => u.Version).HasMaxLength(MaxRetentionVersionLength).IsRequired();
+    }
+
+    private void BuildScanResultEntity(EntityTypeBuilder<ScanResult> result)
+    {
+        result.HasKey(r => r.Key);
+        result.HasIndex(r => new { r.RepositoryKey, r.Name, r.Version }).IsUnique();
+
+        result.Property(r => r.Name).HasMaxLength(MaxScanNameLength).IsRequired();
+        result.Property(r => r.Version).HasMaxLength(MaxScanVersionLength).IsRequired();
+        result.Property(r => r.Scanner).HasMaxLength(MaxScanScannerLength).IsRequired();
+        result.Property(r => r.Error).HasMaxLength(MaxScanErrorLength);
+        result.Property(r => r.Highest).HasDefaultValue(-1);
+
+        result.HasMany(r => r.Findings).WithOne().HasForeignKey(f => f.ResultKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private void BuildScanFindingEntity(EntityTypeBuilder<ScanFinding> finding)
+    {
+        finding.HasKey(f => f.Key);
+        finding.HasIndex(f => f.ResultKey);
+
+        finding.Property(f => f.VulnerabilityId).HasMaxLength(MaxScanIdLength).IsRequired();
+        finding.Property(f => f.Component).HasMaxLength(MaxScanNameLength).IsRequired();
+        finding.Property(f => f.ComponentVersion).HasMaxLength(MaxScanVersionLength).IsRequired();
+        finding.Property(f => f.Summary).HasMaxLength(MaxScanSummaryLength);
+        finding.Property(f => f.AdvisoryUrl).HasMaxLength(MaxScanUrlLength);
+        finding.Property(f => f.FixedVersion).HasMaxLength(MaxScanVersionLength);
+    }
+
+    private void BuildScanPolicyEntity(EntityTypeBuilder<ScanPolicy> policy)
+    {
+        policy.HasKey(p => p.Key);
+        // One policy per repository and one per project; separate indexes because a unique index over two nullable columns
+        // would not constrain the rows where the other one is null on every provider.
+        policy.HasIndex(p => p.RepositoryKey).IsUnique();
+        policy.HasIndex(p => p.ProjectKey).IsUnique();
+
+        policy.Property(p => p.ModifiedBy).HasMaxLength(MaxAccountNameLength);
     }
 
     private void BuildNpmPackageEntity(EntityTypeBuilder<NpmPackage> package)
@@ -664,6 +717,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
         vulnerability.Property(v => v.AdvisoryUrl).HasMaxLength(DefaultMaxStringLength);
         vulnerability.Property(v => v.VersionRange).HasMaxLength(MaxPackageDependencyVersionRangeLength);
+        vulnerability.Property(v => v.Source).HasMaxLength(MaxScanScannerLength);
 
         vulnerability
             .HasOne(v => v.Package)

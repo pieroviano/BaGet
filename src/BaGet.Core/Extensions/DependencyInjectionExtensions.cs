@@ -75,6 +75,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<NpmOptions>(nameof(BaGetOptions.Npm));
         services.AddBaGetOptions<MavenOptions>(nameof(BaGetOptions.Maven));
         services.AddBaGetOptions<OciOptions>(nameof(BaGetOptions.Oci));
+        services.AddBaGetOptions<ScanningOptions>(nameof(BaGetOptions.Scanning));
         services.AddBaGetOptions<FeedsOptions>(nameof(BaGetOptions.Feeds));
         services.AddBaGetOptions<AccountsOptions>(nameof(BaGetOptions.Accounts));
         services.AddBaGetOptions<EmailOptions>(nameof(BaGetOptions.Email));
@@ -131,6 +132,16 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IOciGarbageCollector, OciGarbageCollector>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, OciGarbageCollectionDryRunOperation>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, OciGarbageCollectionRunOperation>());
+        services.TryAddSingleton<OsvState>();
+        services.TryAddSingleton<ScanQueue>();
+        services.TryAddSingleton<ScanPolicyCache>();
+        services.TryAddSingleton<ITrivyRunner, ProcessTrivyRunner>();
+        services.TryAddScoped<IVulnerabilitySource, OsvVulnerabilitySource>();
+        services.TryAddScoped<IScanService, ScanService>();
+        services.TryAddScoped<IScanPolicyService, ScanPolicyService>();
+        services.TryAddScoped<IScanGate, ScanGate>();
+        services.AddHostedService<ScanWorker>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, ScanRepositoryOperation>());
         services.TryAddScoped<IOciAccess, OciAccess>();
         services.TryAddScoped<IOciTokenService, OciTokenService>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatSearchProvider, DockerFormatSearchProvider>());

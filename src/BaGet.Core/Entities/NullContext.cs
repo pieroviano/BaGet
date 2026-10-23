@@ -36,6 +36,12 @@ public class NullContext : IContext
 
     public DbSet<PackageSymbol>? PackageSymbols { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<ScanResult>? ScanResults { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<ScanFinding>? ScanFindings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<ScanPolicy>? ScanPolicies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<NpmPackage>? NpmPackages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<NpmVersion>? NpmVersions { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

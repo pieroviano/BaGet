@@ -80,6 +80,8 @@ public class BaGetOptions
 
     public OciOptions? Oci { get; set; }
 
+    public ScanningOptions? Scanning { get; set; }
+
     public FeedsOptions? Feeds { get; set; }
 
     public AccountsOptions? Accounts { get; set; }

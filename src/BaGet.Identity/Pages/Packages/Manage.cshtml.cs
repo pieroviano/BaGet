@@ -390,8 +390,9 @@ public class ManageModel : AccountPageModel
         var package = await Packages.FindOrNullAsync(Id, parsed, includeUnlisted: true, cancellationToken);
         if (package == null) return NotFound();
 
-        // Fresh copies: the stored rows are replaced as a whole, so the list must not reuse tracked entities.
-        var updated = change(package.Vulnerabilities ?? new List<PackageVulnerability>())
+        // Fresh copies: the stored rows are replaced as a whole, so the list must not reuse tracked entities. Entries the vulnerability
+        // scanner wrote (Source set) are not the administrator's to edit and are kept by the store, so they are left out of the list.
+        var updated = change((package.Vulnerabilities ?? new List<PackageVulnerability>()).Where(v => v.Source == null).ToList())
             .Select(v => new PackageVulnerability
             {
                 Key = v.Key,

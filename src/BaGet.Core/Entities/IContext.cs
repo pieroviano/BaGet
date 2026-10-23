@@ -51,6 +51,15 @@ public interface IContext
     /// </summary>
     DbSet<PackageSymbol>? PackageSymbols { get; set; }
 
+    /// <summary>What vulnerability scans found per artifact version; see <see cref="ScanResult"/>. Repository-scoped.</summary>
+    DbSet<ScanResult>? ScanResults { get; set; }
+
+    /// <summary>The findings of a <see cref="ScanResult"/>.</summary>
+    DbSet<ScanFinding>? ScanFindings { get; set; }
+
+    /// <summary>The scanning policies of repositories and projects; see <see cref="ScanPolicy"/>.</summary>
+    DbSet<ScanPolicy>? ScanPolicies { get; set; }
+
     /// <summary>npm packages (packuments); see <see cref="NpmPackage"/>. Repository-scoped.</summary>
     DbSet<NpmPackage>? NpmPackages { get; set; }
 

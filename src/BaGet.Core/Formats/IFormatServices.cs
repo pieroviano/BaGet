@@ -131,12 +131,41 @@ public interface IFormatRetentionHooks : IFormatService
 /// <param name="Version">Its version.</param>
 public sealed record ScanComponent(string Ecosystem, string Name, string Version);
 
+/// <summary>An artifact version to scan, named as <see cref="ScanResult"/> names it.</summary>
+/// <param name="Name">The artifact name (NuGet id, npm name, Maven <c>group:artifact</c>, Docker image).</param>
+/// <param name="Version">The version (Docker: the manifest digest).</param>
+public sealed record ScanArtifact(string Name, string Version);
+
+/// <summary>How a format's artifacts are checked.</summary>
+public enum ScanEngine
+{
+    /// <summary>The artifact's components are looked up in OSV (<see cref="IFormatScanner.ListComponentsAsync"/>).</summary>
+    Osv,
+
+    /// <summary>The artifact is a container image that Trivy pulls and scans (<see cref="IFormatScanner.GetImageReferenceAsync"/>).</summary>
+    Image,
+}
+
 /// <summary>
-/// What vulnerability scanning (phase P7) needs from a format: the components an artifact consists of (itself and its
-/// dependencies). No format implements it yet.
+/// What vulnerability scanning (phase P7) needs from a format, in the repository of the request: how its artifacts are checked,
+/// what is stored (to scan on a schedule), and for an OSV format the components an artifact consists of (itself and its
+/// declared dependencies, by exact version where the format states one).
 /// </summary>
 public interface IFormatScanner : IFormatService
 {
-    /// <summary>The components of the stored version, or none when it is unknown.</summary>
+    /// <summary>How the format's artifacts are checked. Default: components against OSV.</summary>
+    ScanEngine Engine => ScanEngine.Osv;
+
+    /// <summary>The components of the stored version, or none when it is unknown (<see cref="ScanEngine.Osv"/> formats).</summary>
     Task<IReadOnlyList<ScanComponent>> ListComponentsAsync(string name, string version, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// For <see cref="ScanEngine.Image"/>: the image as a registry names it below the repository, <c>{image}@{digest}</c>, or null
+    /// when it is not stored.
+    /// </summary>
+    Task<string?> GetImageReferenceAsync(string name, string version, CancellationToken cancellationToken)
+        => Task.FromResult<string?>(null);
+
+    /// <summary>Every artifact version stored in the repository (what a scheduled sweep and <em>Scan now</em> go through).</summary>
+    Task<IReadOnlyList<ScanArtifact>> ListArtifactsAsync(CancellationToken cancellationToken);
 }
