@@ -182,6 +182,9 @@ public class RepositoryAdministration : IRepositoryAdministration
         _context.RetentionPolicies!.RemoveRange(await _context.RetentionPolicies!.Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.RetentionHolds!.RemoveRange(await _context.RetentionHolds!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.ArtifactUsages!.RemoveRange(await _context.ArtifactUsages!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        // What vulnerability scans found in the repository and its scanning policy go with it (the artifacts are already gone).
+        _context.ScanResults!.RemoveRange(await _context.ScanResults!.IgnoreQueryFilters().Where(r => r.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.ScanPolicies!.RemoveRange(await _context.ScanPolicies!.Where(p => p.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
 
         // A key limited to this repository would otherwise be left with no limit, which means every repository: a key
         // limited to several only loses this one, one limited to this alone has no use left and is deleted.

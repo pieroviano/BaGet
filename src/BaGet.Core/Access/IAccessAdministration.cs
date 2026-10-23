@@ -461,6 +461,7 @@ public class AccessAdministration : IAccessAdministration
         var repositories = await _context.Repositories!.Where(r => r.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var repository in repositories) repository.ProjectKey = null;
+        _context.ScanPolicies!.RemoveRange(await _context.ScanPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.PermissionGrants!.RemoveRange(grants);
         _context.PermissionTargets!.RemoveRange(targets);
         _context.ProjectMembers!.RemoveRange(members);

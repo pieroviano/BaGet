@@ -39,6 +39,8 @@ else
                 </h1>
             </div>
 
+            <partial name="_ScanFindings" model="new ScanFindingsView(Model.Package!.Id!, Model.Package.NormalizedVersionString!)" />
+
             @* Every install pane is rendered by the server. Without JavaScript they stack and the tab links jump to them. *@
             <div class="tabbed-info" x-data="{ active: 0 }">
                 <ul class="nav">

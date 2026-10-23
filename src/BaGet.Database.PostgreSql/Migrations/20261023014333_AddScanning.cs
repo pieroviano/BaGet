@@ -52,7 +52,7 @@ namespace BaGet.Database.PostgreSql.Migrations
                     ScannedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Attempted = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Error = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Highest = table.Column<int>(type: "integer", nullable: false, defaultValue: -1),
+                    Highest = table.Column<int>(type: "integer", nullable: false),
                     FindingCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>

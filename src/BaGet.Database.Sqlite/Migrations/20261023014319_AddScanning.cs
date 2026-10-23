@@ -51,7 +51,7 @@ namespace BaGet.Database.Sqlite.Migrations
                     ScannedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Attempted = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Error = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    Highest = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: -1),
+                    Highest = table.Column<int>(type: "INTEGER", nullable: false),
                     FindingCount = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>

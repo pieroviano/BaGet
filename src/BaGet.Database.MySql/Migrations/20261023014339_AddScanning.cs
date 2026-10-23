@@ -59,7 +59,7 @@ namespace BaGet.Database.MySql.Migrations
                     Attempted = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     Error = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Highest = table.Column<int>(type: "int", nullable: false, defaultValue: -1),
+                    Highest = table.Column<int>(type: "int", nullable: false),
                     FindingCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BaGet.Database.PostgreSql.Migrations
 {
     [DbContext(typeof(PostgreSqlContext))]
-    [Migration("20261023010325_AddScanning")]
+    [Migration("20261023014333_AddScanning")]
     partial class AddScanning
     {
         /// <inheritdoc />
@@ -1555,9 +1555,7 @@ namespace BaGet.Database.PostgreSql.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Highest")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(-1);
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()

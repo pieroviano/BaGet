@@ -38,6 +38,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
         "/Packages/DockerManage",
         "/Packages/ContactOwners",
         "/Packages/ValidationStatus",
+        "/Packages/Scan",
     };
 
     // Pages whose every action a remote npm repository refuses (publish, tags, deprecate and unpublish are 403 there; the cache is
@@ -115,7 +116,7 @@ public class RepositoryPageFilter : IAsyncPageFilter
                 ? await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
                 : await access.CanReadPackageAsync(context.HttpContext.User, repository, packageId, context.HttpContext.RequestAborted);
 
-            if (allowed && repository.Format != RepositoryPageRouteConvention.FormatOf(page.ViewEnginePath))
+            if (allowed && RepositoryPageRouteConvention.FormatOf(page.ViewEnginePath) is { } pageFormat && repository.Format != pageFormat)
             {
                 // The page belongs to another format. The front page of a repository is where its address (/r/name/) and the
                 // header lead, so it sends the visitor to the format's own browse page; anything else is not there.

@@ -71,6 +71,14 @@
         }
     </section>
 
+    @if (Model.IsServerAdministrator)
+    {
+        <section id="project-section-scanning">
+            <h2>Scanning policy</h2>
+            <p>The vulnerability scanning policy of the project (warn, block download, block deploy) applies to its repositories that have none of their own. <a asp-page="/Admin/ScanProject" asp-route-name="@project?.Name" id="project-scanning-link">Edit the scanning policy</a>.</p>
+        </section>
+    }
+
     <section id="project-section-members">
         <h2>Members</h2>
         <p class="help-block">Viewer: Read. Developer: Read, Annotate, Deploy. Admin: every action, and manages this project's members and permission targets.</p>

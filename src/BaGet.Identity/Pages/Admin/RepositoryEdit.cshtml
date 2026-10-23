@@ -411,4 +411,12 @@
             }
         </section>
     }
+
+    @if (Model.Repository != null && Model.Repository.Kind != BaGet.Core.RepositoryKind.Virtual)
+    {
+        <section id="repository-section-scanning">
+            <h2>Vulnerabilities</h2>
+            <p>Findings, the scanning policy of this repository and <em>Scan now</em>: <a asp-page="/Admin/ScanRepository" asp-route-name="@Model.Repository.Name" id="repository-scanning-link">vulnerability dashboard</a>.</p>
+        </section>
+    }
 </div>

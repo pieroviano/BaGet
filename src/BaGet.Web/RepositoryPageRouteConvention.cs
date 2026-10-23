@@ -34,6 +34,7 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         "/Packages/Manage",
         "/Packages/ContactOwners",
         "/Packages/ValidationStatus",
+        "/Packages/Scan",
         "/Profiles/Profile",
         "/Admin/Packages",
         "/Admin/UserPackages",
@@ -70,9 +71,20 @@ public class RepositoryPageRouteConvention : IPageRouteModelConvention
         { "/Packages/DockerManage", BaGet.Core.RepositoryFormat.Docker },
     };
 
-    /// <summary>The format a repository page serves (NuGet unless <see cref="PageFormats"/> says otherwise).</summary>
-    public static BaGet.Core.RepositoryFormat FormatOf(string viewEnginePath)
-        => PageFormats.TryGetValue(viewEnginePath, out var format) ? format : BaGet.Core.RepositoryFormat.NuGet;
+    /// <summary>Repository pages that serve a repository of every format (they name an artifact generically): <em>Scan now</em>.</summary>
+    public static readonly IReadOnlyCollection<string> AnyFormatPages = new[]
+    {
+        "/Packages/Scan",
+    };
+
+    /// <summary>
+    /// The format a repository page serves (NuGet unless <see cref="PageFormats"/> says otherwise), or null for a page of
+    /// <see cref="AnyFormatPages"/>, which serves every format.
+    /// </summary>
+    public static BaGet.Core.RepositoryFormat? FormatOf(string viewEnginePath)
+        => AnyFormatPages.Contains(viewEnginePath, StringComparer.OrdinalIgnoreCase)
+            ? null
+            : PageFormats.TryGetValue(viewEnginePath, out var format) ? format : BaGet.Core.RepositoryFormat.NuGet;
 
     /// <summary>Order of the repository twin of a selector; below the default 0 so it wins when it can be filled in.</summary>
     public const int TwinOrder = -1;

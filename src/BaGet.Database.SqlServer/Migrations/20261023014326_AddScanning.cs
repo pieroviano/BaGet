@@ -51,7 +51,7 @@ namespace BaGet.Database.SqlServer.Migrations
                     ScannedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Attempted = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Error = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    Highest = table.Column<int>(type: "int", nullable: false, defaultValue: -1),
+                    Highest = table.Column<int>(type: "int", nullable: false),
                     FindingCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>

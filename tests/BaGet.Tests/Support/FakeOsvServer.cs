@@ -94,7 +94,9 @@ public sealed class FakeOsvServer : IAsyncDisposable
     /// <summary>Starts a server on a free loopback port.</summary>
     public static async Task<FakeOsvServer> StartAsync()
     {
-        var builder = WebApplication.CreateSlimBuilder();
+        // An empty content root: the appsettings.json next to the test binaries names Kestrel's endpoint (port 6060), which outranks
+        // the address below and would make a second server fail to bind.
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { ContentRootPath = Directory.CreateTempSubdirectory("osv").FullName });
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         var app = builder.Build();

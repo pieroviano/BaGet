@@ -329,7 +329,6 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         result.Property(r => r.Version).HasMaxLength(MaxScanVersionLength).IsRequired();
         result.Property(r => r.Scanner).HasMaxLength(MaxScanScannerLength).IsRequired();
         result.Property(r => r.Error).HasMaxLength(MaxScanErrorLength);
-        result.Property(r => r.Highest).HasDefaultValue(-1);
 
         result.HasMany(r => r.Findings).WithOne().HasForeignKey(f => f.ResultKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
     }

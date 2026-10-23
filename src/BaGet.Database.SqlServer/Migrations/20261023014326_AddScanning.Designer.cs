@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaGet.Database.SqlServer.Migrations
 {
     [DbContext(typeof(SqlServerContext))]
-    [Migration("20261023010317_AddScanning")]
+    [Migration("20261023014326_AddScanning")]
     partial class AddScanning
     {
         /// <inheritdoc />
@@ -1565,9 +1565,7 @@ namespace BaGet.Database.SqlServer.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Highest")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(-1);
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()

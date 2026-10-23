@@ -188,7 +188,8 @@ public sealed class ScanRepositoryOperation : IAdminOperation
     public string Description => "Checks every artifact of the repository against the vulnerability database (OSV, or Trivy for container images) and stores the findings. Needs Scanning:Enabled.";
 
     public bool IsAvailable(IServiceProvider services)
-        => services.GetRequiredService<IScanService>().GetEngineStatus().Available;
+        => services.GetRequiredService<IOptionsSnapshot<ScanningOptions>>().Value.Enabled
+           && services.GetRequiredService<IContext>() is not NullContext;
 
     public bool AppliesTo(RepositoryInfo repository) => repository.Kind != RepositoryKind.Virtual;
 

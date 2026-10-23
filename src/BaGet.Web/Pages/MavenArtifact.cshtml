@@ -38,6 +38,8 @@
             }
         </div>
 
+        <partial name="_ScanFindings" model="new ScanFindingsView(info.Name, summary.Version)" />
+
         <div class="tabbed-info" x-data="{ active: 0 }">
             <ul class="nav">
                 @for (var i = 0; i < Model.InstallTabs.Count; i++)

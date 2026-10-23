@@ -35,6 +35,8 @@
             </h1>
         </div>
 
+        <partial name="_ScanFindings" model="new ScanFindingsView(package.Name, selected.Version)" />
+
         @if (selected.Deprecated != null)
         {
             <div class="alert alert-warning" id="npm-deprecated" role="alert">
