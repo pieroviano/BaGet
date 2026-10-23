@@ -107,8 +107,9 @@ public interface IOciGarbageCollector
 /// layers take); (3) blobs no image holds once those links are gone (reference count 0), and blob rows nobody ever linked, older than the
 /// grace period; (4) files under the blob folder that no blob row names, when the store can list files and no blob is being committed
 /// right now (a file is stored a moment before its row is written).</para>
-/// <para><b>Swept</b> (not a dry run): the sessions are aborted in storage and deleted, the links and the blob rows deleted, then the
-/// files. A file that cannot be deleted is logged and counted; the next run finds it again as an orphan file.</para>
+/// <para><b>Swept</b> (not a dry run): the links and blobs are first re-checked against the current rows in a serializable
+/// transaction (a manifest or push that committed since the plan was made keeps its links and blobs; the report counts only what was
+/// removed), then the sessions, links and blob rows are deleted, the sessions aborted in storage, then the files. A file that cannot be deleted is logged and counted; the next run finds it again as an orphan file.</para>
 /// <para>This is what <c>Oci.PruneGrace</c> and <c>Oci.UploadExpiry</c> are for; running it for every repository on a schedule is the
 /// retention engine's job (P6), the Operations page runs it by hand.</para>
 /// </remarks>
@@ -259,12 +260,22 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
             }
         }
 
+        var removedLinks = loose.Count;
+        var removedBlobs = doomed.Count;
         if (!dryRun)
         {
-            await SweepAsync(repository, expired.Select(e => e.Session).ToList(), loose.Select(l => l.Link).ToList(), doomed, orphanFiles, cancellationToken).ConfigureAwait(false);
+            var swept = await SweepAsync(repository, expired.Select(e => e.Session).ToList(), loose.Select(l => l.Link).ToList(), doomed, orphanFiles, cancellationToken).ConfigureAwait(false);
+            removedLinks = swept.Links;
+            removedBlobs = swept.Blobs;
+            bytes = swept.Bytes;
+            if (swept.Kept > 0)
+            {
+                var kept = $"{swept.Kept} layer link(s) or blob(s) were used by a push while this ran and were kept.";
+                note = note == null ? kept : note + " " + kept;
+            }
         }
 
-        var report = new OciGcReport(dryRun, repository.Name, expired.Count, loose.Count, doomed.Count, orphanFiles.Count, bytes, items, truncated, note);
+        var report = new OciGcReport(dryRun, repository.Name, expired.Count, removedLinks, removedBlobs, orphanFiles.Count, bytes, items, truncated, note);
         _logger.LogInformation("Docker garbage collection of {Repository}{DryRun}: {Summary}", repository.Name, dryRun ? " (dry run)" : string.Empty, report.Summary);
 
         return report;
@@ -285,7 +296,10 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
         return StreamingStorage.IsSha256Hex(hex) && parts[1] == hex.Substring(0, 2) ? OciNames.DigestOf(hex) : null;
     }
 
-    private async Task SweepAsync(
+    // What the sweep really removed (the plan may shrink: see SweepAsync).
+    private readonly record struct Swept(int Links, int Blobs, long Bytes, int Kept);
+
+    private async Task<Swept> SweepAsync(
         RepositoryInfo repository,
         IReadOnlyList<OciUpload> expired,
         IReadOnlyList<OciBlobLink> loose,
@@ -293,15 +307,39 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
         IReadOnlyList<string> orphanFiles,
         CancellationToken cancellationToken)
     {
-        if (expired.Count > 0)
+        // The plan was made from rows read earlier; a manifest committed since then has raised Manifests of a planned link (or a push
+        // has linked a planned blob to another image). Deleting by key would remove that now-used link and its blob. So the plan is
+        // checked again inside a serializable transaction, against the rows as they are now, and shrinks to what is still unused;
+        // a committer running at the same time waits for the transaction or fails and retries on its own.
+        IReadOnlyList<OciBlobLink> removableLinks = loose;
+        IReadOnlyList<OciBlob> removableBlobs = doomed;
+        var kept = 0;
+        if (loose.Count > 0 || doomed.Count > 0)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
+
+            var looseKeys = loose.Select(l => l.Key).ToList();
+            var stillLoose = (await _context.OciBlobLinks!.AsNoTracking().Where(l => looseKeys.Contains(l.Key) && l.Manifests == 0)
+                .Select(l => l.Key).ToListAsync(cancellationToken).ConfigureAwait(false)).ToHashSet();
+            removableLinks = loose.Where(l => stillLoose.Contains(l.Key)).ToList();
+
+            var doomedKeys = doomed.Select(b => b.Key).ToList();
+            var linkCounts = await _context.OciBlobLinks!.AsNoTracking().Where(l => doomedKeys.Contains(l.BlobKey))
+                .GroupBy(l => l.BlobKey).Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionaryAsync(g => g.Key, g => g.Count, cancellationToken).ConfigureAwait(false);
+            var droppedPerBlob = removableLinks.GroupBy(l => l.BlobKey).ToDictionary(g => g.Key, g => g.Count());
+            removableBlobs = doomed.Where(b => linkCounts.GetValueOrDefault(b.Key) - droppedPerBlob.GetValueOrDefault(b.Key) <= 0).ToList();
+            kept = (loose.Count - removableLinks.Count) + (doomed.Count - removableBlobs.Count);
+
+            if (expired.Count > 0) _context.OciUploads!.RemoveRange(expired);
+            if (removableLinks.Count > 0) _context.OciBlobLinks!.RemoveRange(removableLinks);
+            if (removableBlobs.Count > 0) _context.OciBlobs!.RemoveRange(removableBlobs);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else if (expired.Count > 0)
         {
             _context.OciUploads!.RemoveRange(expired);
-        }
-
-        if (loose.Count > 0) _context.OciBlobLinks!.RemoveRange(loose);
-        if (doomed.Count > 0) _context.OciBlobs!.RemoveRange(doomed);
-        if (expired.Count > 0 || loose.Count > 0 || doomed.Count > 0)
-        {
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -317,7 +355,7 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
             }
         }
 
-        foreach (var path in doomed.Select(b => RepositoryStorage.Scope(repository, OciNames.BlobPath(b.Digest!))).Concat(orphanFiles))
+        foreach (var path in removableBlobs.Select(b => RepositoryStorage.Scope(repository, OciNames.BlobPath(b.Digest!))).Concat(orphanFiles))
         {
             try
             {
@@ -328,6 +366,8 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
                 _logger.LogWarning(e, "Could not delete the blob file {Path}", path);
             }
         }
+
+        return new Swept(removableLinks.Count, removableBlobs.Count, removableBlobs.Sum(b => b.Size), kept);
     }
 }
 

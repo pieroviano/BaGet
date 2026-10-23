@@ -334,6 +334,49 @@ public class OciGarbageCollectorTests : IDisposable
     }
 
     [Fact]
+    public async Task AManifestCommittedAfterThePlanWasMadeKeepsItsLayersAndLinks()
+    {
+        var content = OciTestImage.Create("racing-manifest");
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/app", content.Config);
+            foreach (var layer in content.Layers) await PutBlobAsync(sp, "team/app", layer);
+
+            return 0;
+        });
+        _clock.Advance(TimeSpan.FromHours(2));
+
+        // The layers are loose and past the grace period, so the plan lists them; then a push (which saw them with HEAD and sent none) commits its manifest.
+        OciGarbageCollector.AfterRowsLoaded = async name =>
+        {
+            if (name != Repo) return;
+            await InRepoAsync(async sp =>
+            {
+                await sp.GetRequiredService<IOciRegistry>().PutManifestAsync("team/app", "1.0", OciTestImage.ManifestType, content.Manifest, Token);
+
+                return 0;
+            });
+        };
+        OciGcReport report;
+        try
+        {
+            report = await RunAsync(dryRun: false);
+        }
+        finally
+        {
+            OciGarbageCollector.AfterRowsLoaded = null;
+        }
+
+        Assert.Equal(0, report.UnreferencedLayers);
+        Assert.Equal(0, report.Blobs);
+        foreach (var layer in content.Layers)
+        {
+            Assert.True(await StoredAsync(OciTestImage.Digest(layer)));
+            Assert.True(await ReadableUnderAsync("team/app", OciTestImage.Digest(layer)));
+        }
+    }
+
+    [Fact]
     public async Task OnlyTheRepositoryItRunsOnIsTouched()
     {
         await _app.CreateDockerRepositoryAsync("other", anonymousRead: true, Token);
