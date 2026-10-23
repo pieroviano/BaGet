@@ -154,5 +154,16 @@ public static class ApiKeyScopes
     /// </summary>
     public const string Unlist = "package:unlist";
 
+    /// <summary>
+    /// Call the administration REST API (<c>/api/v1</c>). Only a key of an administrator can carry it (the service refuses it
+    /// for anyone else, and the API checks the owner is still an administrator on every call). It is deliberately not in
+    /// <see cref="All"/>: sessions and npm tokens get <see cref="All"/>, and must never administer the server.
+    /// </summary>
+    public const string Admin = "admin:api";
+
+    /// <summary>The package scopes: what a session, an npm token and an ordinary key carry.</summary>
     public static readonly string[] All = { Push, PushVersion, Unlist };
+
+    /// <summary>Every scope a key can be created with: <see cref="All"/> and <see cref="Admin"/> (administrators only).</summary>
+    public static readonly string[] Assignable = { Push, PushVersion, Unlist, Admin };
 }

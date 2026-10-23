@@ -84,7 +84,15 @@ public class BaGetEndpointBuilder
         MapNpmRoutes(endpoints);
         MapMavenRoutes(endpoints);
         MapOciRoutes(endpoints);
+        MapAdminApiRoutes(endpoints);
     }
+
+    /// <summary>
+    /// The administration REST API (<c>/api/v1</c>, <see cref="BaGet.Web.Api.AdminApiController"/>): attribute-routed controllers, so
+    /// <c>MapControllers</c> maps them (no other controller carries a route attribute). They are not repository routes: they carry no
+    /// <see cref="RepositoryRouteMetadata"/>, no <c>r/{repo}/</c> twin, and authorize themselves with an administrator's API key.
+    /// </summary>
+    public void MapAdminApiRoutes(IEndpointRouteBuilder endpoints) => endpoints.MapControllers();
 
     /// <summary>
     /// The OCI Distribution Spec (<see cref="RepositoryFormat.Docker"/>), which a client addresses at the server root: <c>/v2/</c>

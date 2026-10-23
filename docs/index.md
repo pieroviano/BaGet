@@ -34,6 +34,11 @@ Trivy; findings appear on every package page and in an administrator dashboard, 
 per-repository or per-project policy can warn or refuse downloads and deploys with `403` and the reason:
 [vulnerability scanning](vulnerability-scanning.md).
 
+## Administration REST API
+
+`/api/v1` does everything the administrator pages do (repositories, access model, users, operations, retention, scanning) for
+scripts, with an administrator's API key and OpenAPI 3: [administration REST API](admin-api.md).
+
 ## What BaGet Extension serves
 
 BaGet Extension speaks the NuGet V3 protocol, with a V2 feed for older clients (on by default), and serves

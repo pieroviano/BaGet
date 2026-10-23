@@ -63,6 +63,7 @@ public class ApiKeysModel : AccountPageModel
             ModelState.AddModelError(nameof(Scopes), "Choose at least one scope.");
         }
 
+        _administrator = await HttpContext.RequestServices.GetRequiredService<AdministratorService>().IsAdministratorAsync(User, cancellationToken);
         if (ModelState.IsValid)
         {
             // Only a repository the user can read may be chosen: a key limited to one nobody can see is a probe.
@@ -108,6 +109,7 @@ public class ApiKeysModel : AccountPageModel
 
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
+        _administrator = await HttpContext.RequestServices.GetRequiredService<AdministratorService>().IsAdministratorAsync(User, cancellationToken);
         Keys = await ApiKeys.ListAsync(UserManager.GetUserId(User), cancellationToken);
         _keyRepositories = await ApiKeys.RepositoryNamesAsync(Keys, cancellationToken);
         await LoadRepositoriesAsync(cancellationToken);
@@ -128,5 +130,11 @@ public class ApiKeysModel : AccountPageModel
     public static string Describe(ApiKey key)
         => string.Join(", ", key.Scopes ?? Array.Empty<string>()) + " on " + key.PackageGlobPattern;
 
-    public static IReadOnlyList<string> AllScopes => ApiKeyScopes.All;
+    /// <summary>
+    /// The scopes the new-key form offers: the package scopes, plus <see cref="ApiKeyScopes.Admin"/> (the REST API under
+    /// <c>/api/v1</c>) for an administrator.
+    /// </summary>
+    public IReadOnlyList<string> AllScopes => _administrator ? ApiKeyScopes.Assignable : ApiKeyScopes.All;
+
+    private bool _administrator;
 }

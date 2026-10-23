@@ -58,10 +58,16 @@ public class ApiKeyService
     {
         if (string.IsNullOrEmpty(userId)) throw new ArgumentException("A user is required.", nameof(userId));
 
-        var unknown = scopes?.FirstOrDefault(s => !ApiKeyScopes.All.Contains(s, StringComparer.Ordinal));
+        var unknown = scopes?.FirstOrDefault(s => !ApiKeyScopes.Assignable.Contains(s, StringComparer.Ordinal));
         if (scopes == null || scopes.Count == 0 || unknown != null)
         {
-            throw new ArgumentException($"Scopes must be some of: {string.Join(", ", ApiKeyScopes.All)}.", nameof(scopes));
+            throw new ArgumentException($"Scopes must be some of: {string.Join(", ", ApiKeyScopes.Assignable)}.", nameof(scopes));
+        }
+
+        if (scopes.Contains(ApiKeyScopes.Admin, StringComparer.Ordinal)
+            && !await _context.Users.AnyAsync(u => u.Id == userId && u.IsAdministrator, cancellationToken))
+        {
+            throw new ArgumentException($"The scope {ApiKeyScopes.Admin} is for administrators.", nameof(scopes));
         }
 
         var limit = repositoryKeys?.Distinct().ToList() ?? new List<int>();

@@ -53,6 +53,7 @@ nav:
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md
   - Vulnerability scanning: vulnerability-scanning.md
+  - Administration REST API: admin-api.md
   - UI coverage: ui-coverage.md
   - Import:
     - Local feeds: import/local-feeds.md

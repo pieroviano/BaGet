@@ -71,6 +71,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-36F0-49B4-868A-E062B2596A1B}"
 	ProjectSection(SolutionItems) = preProject
 		docs\access-control.md = docs\access-control.md
+		docs\admin-api.md = docs\admin-api.md
 		docs\configuration.md = docs\configuration.md
 		docs\docker-registry.md = docs\docker-registry.md
 		docs\formats.md = docs\formats.md

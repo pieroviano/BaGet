@@ -56,11 +56,15 @@
         </div>
         <div class="form-group">
             <label>Scopes</label>
-            @foreach (var scope in BaGet.Identity.Pages.Account.ApiKeysModel.AllScopes)
+            @foreach (var scope in Model.AllScopes)
             {
                 <div class="checkbox">
                     <label><input type="checkbox" name="Scopes" value="@scope" checked="@Model.Scopes.Contains(scope)" /> @scope</label>
                 </div>
+            }
+            @if (Model.AllScopes.Contains(BaGet.Core.ApiKeyScopes.Admin))
+            {
+                <span class="help-block"><code>admin:api</code> lets the key call the administration REST API (<code>/api/v1</code>, see <a href="/admin/api">REST API</a>). Keep it short-lived and out of build logs.</span>
             }
         </div>
         <div class="form-group">

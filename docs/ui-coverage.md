@@ -155,6 +155,81 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Legal holds: place, list, lift (artifact or one version) | service (`IRetentionAdministration`) | Admin Retention > Legal holds (`/admin/retention/holds`) | Admin, lifting asks Password, audited |
 | Download times (last download per version, for the *unused* rule) | in memory (`ArtifactUsageRecorder`) | shown as *Last download* in a retention report | Admin |
 
+## Administration REST API (`/api/v1`)
+
+Every operation below has the page that offers the same operation and the same gate: an administrator's API key with the `admin:api` scope (or the global key) in place of the signed-in administrator, and the key owner's password in `X-Confirm-Password` where the page asks for the password. See [Administration REST API](admin-api.md). The list is generated from the controllers; `AdminApiAccessTests` fails when a row is missing or names a page that does not exist.
+
+| Capability | Reached by | UI | Gate |
+|---|---|---|---|
+| List access-audit entries, newest first, optionally by actor, subject or time | REST `GET /api/v1/audit` | `/Admin/Audit` | Admin key |
+| List the package formats and the kinds and fields each offers | REST `GET /api/v1/formats` | `/Admin/Formats` | Admin key |
+| List groups with their member counts | REST `GET /api/v1/groups` | `/Admin/Groups` | Admin key |
+| Create a group | REST `POST /api/v1/groups` | `/Admin/Groups` | Admin key |
+| Delete a group with the grants and project roles that name it | REST `DELETE /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key + password |
+| Show a group with its members and the grants naming it | REST `GET /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key |
+| Rename a group | REST `PATCH /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key |
+| Remove a user from a group | REST `DELETE /api/v1/groups/{name}/members/{user}` | `/Admin/GroupDetail` | Admin key + password |
+| Add a user to a group | REST `PUT /api/v1/groups/{name}/members/{user}` | `/Admin/GroupDetail` | Admin key + password |
+| Download the OpenAPI 3 description of this API | REST `GET /api/v1/openapi.json` | `/Admin/Api` | Admin key |
+| List the operations this server offers, the repositories each applies to and their last runs | REST `GET /api/v1/operations` | `/Admin/Operations` | Admin key |
+| Show the last run of an operation on a repository | REST `GET /api/v1/operations/{operation}/repositories/{repository}` | `/Admin/Operations` | Admin key |
+| Start an operation on a repository (one that deletes data asks for the password) | REST `POST /api/v1/operations/{operation}/repositories/{repository}` | `/Admin/Operations` | Admin key + password |
+| List permission targets | REST `GET /api/v1/permission-targets` | `/Admin/Permissions` | Admin key |
+| Create a permission target (add grants afterwards) | REST `POST /api/v1/permission-targets` | `/Admin/Permissions` | Admin key |
+| Preview which repositories (and whether a package) a set of patterns selects; saves nothing | REST `POST /api/v1/permission-targets/preview` | `/Admin/Permissions` | Admin key |
+| Re-create the built-in groups and permission targets that are missing | REST `POST /api/v1/permission-targets/restore-built-ins` | `/Admin/Permissions` | Admin key + password |
+| Delete a permission target and its grants | REST `DELETE /api/v1/permission-targets/{name}` | `/Admin/PermissionDetail` | Admin key + password |
+| Show a permission target with its grants | REST `GET /api/v1/permission-targets/{name}` | `/Admin/PermissionDetail` | Admin key |
+| Replace a permission target's repository and package patterns | REST `PUT /api/v1/permission-targets/{name}` | `/Admin/PermissionDetail` | Admin key + password |
+| Give a user, group or organization actions through a permission target (none removes the grant) | REST `PUT /api/v1/permission-targets/{name}/grants` | `/Admin/PermissionDetail` | Admin key + password |
+| List projects with their repository and member counts | REST `GET /api/v1/projects` | `/Admin/Projects` | Admin key |
+| Create a project | REST `POST /api/v1/projects` | `/Admin/Projects` | Admin key |
+| Delete a project with its members and targets (its repositories stay) | REST `DELETE /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key + password |
+| Show a project with its repositories, members and permission targets | REST `GET /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key |
+| Give a user or group a role in a project | REST `PUT /api/v1/projects/{name}/members` | `/Admin/ProjectDetail` | Admin key + password |
+| Remove a user or group from a project | REST `DELETE /api/v1/projects/{name}/members/{type}/{principal}` | `/Admin/ProjectDetail` | Admin key + password |
+| Take a repository out of a project | REST `DELETE /api/v1/projects/{name}/repositories/{repository}` | `/Admin/ProjectDetail` | Admin key + password |
+| Put a repository in a project (it leaves any project it was in) | REST `PUT /api/v1/projects/{name}/repositories/{repository}` | `/Admin/ProjectDetail` | Admin key + password |
+| List repositories (filter by format, kind or name) | REST `GET /api/v1/repositories` | `/Admin/Repositories` | Admin key |
+| Create a local, remote or virtual repository of any format (remote asks for the password) | REST `POST /api/v1/repositories` | `/Admin/Repositories` | Admin key + password |
+| Delete an empty repository (refused for default, a repository with packages, or a virtual member) | REST `DELETE /api/v1/repositories/{name}` | `/Admin/RepositoryDelete` | Admin key |
+| Show a repository with its upstream, cache or members | REST `GET /api/v1/repositories/{name}` | `/Admin/RepositoryEdit` | Admin key |
+| Switch a repository's anonymous read (a remote repository asks for the password) | REST `PATCH /api/v1/repositories/{name}` | `/Admin/RepositoryEdit` | Admin key + password |
+| Show who holds which action in a repository, and why | REST `GET /api/v1/repositories/{name}/access` | `/Admin/RepositoryEdit` | Admin key |
+| Change a remote repository's upstream and settings | REST `PUT /api/v1/repositories/{name}/remote` | `/Admin/RepositoryEdit` | Admin key + password |
+| Show what a remote repository stores and remembers | REST `GET /api/v1/repositories/{name}/remote/cache` | `/Admin/RepositoryEdit` | Admin key |
+| Purge a remote repository's cache (deletes what it stored) | REST `POST /api/v1/repositories/{name}/remote/purge` | `/Admin/RepositoryEdit` | Admin key + password |
+| Purge one cached package of a remote repository | REST `POST /api/v1/repositories/{name}/remote/purge-package` | `/Admin/RepositoryEdit` | Admin key + password |
+| Test a remote repository's upstream with unsaved settings (saves nothing) | REST `POST /api/v1/repositories/{name}/remote/test` | `/Admin/RepositoryEdit` | Admin key + password |
+| Replace a virtual repository's members, their order and its deploy repository | REST `PUT /api/v1/repositories/{name}/virtual` | `/Admin/RepositoryEdit` | Admin key |
+| Show where a package version would come from in a virtual repository (fetches and stores nothing) | REST `POST /api/v1/repositories/{name}/virtual/preview` | `/Admin/RepositoryEdit` | Admin key |
+| List legal holds, optionally of one repository | REST `GET /api/v1/retention/holds` | `/Admin/RetentionHolds` | Admin key |
+| Place a legal hold on an artifact (retention never deletes it) | REST `POST /api/v1/retention/holds` | `/Admin/RetentionHolds` | Admin key |
+| Lift a legal hold | REST `DELETE /api/v1/retention/holds/{key}` | `/Admin/RetentionHolds` | Admin key + password |
+| List retention policies with their last run | REST `GET /api/v1/retention/policies` | `/Admin/Retention` | Admin key |
+| Create a retention policy | REST `POST /api/v1/retention/policies` | `/Admin/Retention` | Admin key + password |
+| Delete a retention policy (what it deleted stays deleted) | REST `DELETE /api/v1/retention/policies/{key}` | `/Admin/RetentionPolicy` | Admin key + password |
+| Show a retention policy with its last run and report | REST `GET /api/v1/retention/policies/{key}` | `/Admin/RetentionPolicy` | Admin key |
+| Replace a retention policy's scope and rules | REST `PUT /api/v1/retention/policies/{key}` | `/Admin/RetentionPolicy` | Admin key + password |
+| Start a dry run of a policy: the report of what a run would delete (nothing is deleted) | REST `POST /api/v1/retention/policies/{key}/dry-run` | `/Admin/RetentionPolicy` | Admin key |
+| Show the last run (or dry run) of a policy with its report | REST `GET /api/v1/retention/policies/{key}/run` | `/Admin/RetentionPolicy` | Admin key |
+| Start a run of a policy: the versions it selects are deleted | REST `POST /api/v1/retention/policies/{key}/run` | `/Admin/RetentionPolicy` | Admin key + password |
+| Show whether scanning is on and every repository's numbers and policy | REST `GET /api/v1/scanning` | `/Admin/Scanning` | Admin key |
+| Show a project's scanning policy | REST `GET /api/v1/scanning/projects/{name}/policy` | `/Admin/ScanProject` | Admin key |
+| Set a project's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/projects/{name}/policy` | `/Admin/ScanProject` | Admin key + password |
+| Show a repository's scan numbers, its own policy and the last scan | REST `GET /api/v1/scanning/repositories/{name}` | `/Admin/ScanRepository` | Admin key |
+| Set a repository's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/repositories/{name}/policy` | `/Admin/ScanRepository` | Admin key + password |
+| List the scanned versions with findings of at least a severity, worst first | REST `GET /api/v1/scanning/repositories/{name}/results` | `/Admin/ScanRepository` | Admin key |
+| Scan every artifact of a repository in the background | REST `POST /api/v1/scanning/repositories/{name}/scan` | `/Admin/ScanRepository` | Admin key |
+| List users, optionally by a name fragment | REST `GET /api/v1/users` | `/Admin/Users` | Admin key |
+| Create a user (with a given or a generated password, returned once) | REST `POST /api/v1/users` | `/Admin/Users` | Admin key + password |
+| Show a user with groups, project roles, organizations and API keys | REST `GET /api/v1/users/{name}` | `/Admin/UserDetail` | Admin key |
+| Show what a user may do in each repository, and the grants behind it (for one package id with ?package=) | REST `GET /api/v1/users/{name}/access` | `/Admin/UserDetail` | Admin key |
+| Make a user an administrator or take the flag away (never the last administrator) | REST `PUT /api/v1/users/{name}/administrator` | `/Admin/Users` | Admin key + password |
+| Remove a user from a group | REST `DELETE /api/v1/users/{name}/groups/{group}` | `/Admin/UserDetail` | Admin key + password |
+| Add a user to a group | REST `PUT /api/v1/users/{name}/groups/{group}` | `/Admin/UserDetail` | Admin key + password |
+| Revoke one of a user's API keys | REST `DELETE /api/v1/users/{name}/keys/{key}` | `/Admin/UserDetail` | Admin key + password |
+
 ## Not in the UI, on purpose
 
 | Item | Why |
