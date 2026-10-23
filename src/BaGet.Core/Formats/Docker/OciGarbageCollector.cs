@@ -147,6 +147,9 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
 
     private IStreamingStorageService Streaming => StreamingStorage.Require(_storage, "Docker repositories");
 
+    /// <summary>Test seam: runs after the blob rows were loaded and before the storage listing, with the repository name.</summary>
+    internal static Func<string, Task>? AfterRowsLoaded { get; set; }
+
     private static string BlobFolder => OciNames.StorageFolder + "/blobs";
 
     /// <inheritdoc/>
@@ -227,20 +230,32 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
         {
             note = "The storage provider cannot list files, so files without a row were not looked for.";
         }
-        else if (OciBlobCommits.InFlight > 0)
-        {
-            note = "A blob was being stored while this ran, so files without a row were not looked for; run it again.";
-        }
         else
         {
+            // A file is an orphan only if no row names it AFTER the listing: a blob committed since `blobs` was loaded has a row now.
+            // Commits of this process are fenced: none may start during the listing nor be running when it ends (a commit writes its
+            // row before it leaves the counter), so every file the listing shows has its row by the time the rows are read again.
+            // Other nodes sharing the store are not fenced (see docs/docker-registry.md).
             var folder = RepositoryStorage.Scope(repository, BlobFolder);
-            foreach (var path in await listable.ListAsync(folder, cancellationToken).ConfigureAwait(false))
+            if (AfterRowsLoaded != null) await AfterRowsLoaded(repository.Name).ConfigureAwait(false);
+            var startedBefore = OciBlobCommits.Started;
+            var listed = await listable.ListAsync(folder, cancellationToken).ConfigureAwait(false);
+            if (OciBlobCommits.InFlight > 0 || OciBlobCommits.Started != startedBefore)
             {
-                var digest = DigestOfPath(path, folder);
-                if (digest == null || survivors.Contains(digest) || doomedDigests.Contains(digest)) continue;
+                note = "A blob was being stored while this ran, so files without a row were not looked for; run it again.";
+            }
+            else
+            {
+                var current = (await _context.OciBlobs!.AsNoTracking().Select(b => b.Digest!).ToListAsync(cancellationToken).ConfigureAwait(false))
+                    .ToHashSet(StringComparer.Ordinal);
+                foreach (var path in listed)
+                {
+                    var digest = DigestOfPath(path, folder);
+                    if (digest == null || survivors.Contains(digest) || doomedDigests.Contains(digest) || current.Contains(digest)) continue;
 
-                orphanFiles.Add(path);
-                Add(new OciGcItem(OciGcItemKind.OrphanFile, digest, 0, null));
+                    orphanFiles.Add(path);
+                    Add(new OciGcItem(OciGcItemKind.OrphanFile, digest, 0, null));
+                }
             }
         }
 

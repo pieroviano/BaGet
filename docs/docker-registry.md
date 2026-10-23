@@ -46,7 +46,7 @@ never an API key, and last `Oci:TokenLifetime` (5 minutes). A revoked permission
 | `HEAD`/`GET /v2/{repo}/{image}/blobs/{digest}` | the blob, `Docker-Content-Digest`, `Accept-Ranges`; `Range` (`206`, `416`). Served only through an image that holds it |
 | `POST …/blobs/uploads/` | `202` + `Location` (upload session), `Docker-Upload-UUID`, `Range: 0-0` |
 | `POST …/blobs/uploads/?digest=` | monolithic upload (`201`) |
-| `POST …/blobs/uploads/?mount={digest}&from={repo}/{image}` | `201` when the source image of the same repository holds the blob and the caller may pull it; otherwise a normal `202` session |
+| `POST …/blobs/uploads/?mount={digest}&from={repo}/{image}` | `201` when the source image of the same repository holds the blob and the caller may pull it (through a virtual repository: in its deploy repository, so a registry token needs the pull grant for that repository, not only for the virtual name); otherwise a normal `202` session |
 | `PATCH …/blobs/uploads/{ref}` | append a chunk (`202`); `Content-Range` start must equal the upload length, else `416` with the real `Range` |
 | `PUT …/blobs/uploads/{ref}?digest=` | optional last chunk, SHA-256 verified while streaming, `201`. A wrong digest is `400 DIGEST_INVALID` and ends the session |
 | `GET`/`DELETE …/blobs/uploads/{ref}` | `204` with the current `Range`; `204` cancel |
@@ -104,7 +104,7 @@ What it marks, in this order:
 | Expired upload sessions | idle longer than `Oci:UploadExpiry` | the session row and what it received in storage |
 | Unreferenced layers | an image holds a layer none of its manifests uses and it is older than `Oci:PruneGrace`, **unless the image has an upload session still open** (a push sends its layers first and the manifest last, however long they take) | the image's link to the layer |
 | Blobs nobody holds | no image holds the blob once those links are gone (reference count 0), or a blob row nobody ever linked, older than `Oci:PruneGrace` | the blob row and its file |
-| Orphan files | a file under the repository's `docker/blobs/` that no blob row names (a push that died between storing the file and recording it); only where the store can list files, and not while a blob is being stored | the file |
+| Orphan files | a file under the repository's `docker/blobs/` that no blob row names (a push that died between storing the file and recording it); only where the store can list files; skipped (the report says so) when a blob of this process was being stored during the listing, and rows are re-read after it, so a push finishing during the run is safe. **Nodes sharing one store are not coordinated**: run it while no other node is receiving pushes | the file |
 
 The report (shown on the Operations page after the run) says how many of each, the bytes freed and the first items; a layer two images hold is removed only when no image holds it, and a manifest, its config and its layers are never touched. A dry run reports exactly what the real run would remove at that moment. A virtual repository has no blobs of its own (the operation is not offered for it); the repository's other formats are not affected.
 

@@ -15,13 +15,18 @@ namespace BaGet.Core;
 internal static class OciBlobCommits
 {
     private static int _inFlight;
+    private static long _started;
 
     /// <summary>Commits between "file stored" and "row written" right now.</summary>
     public static int InFlight => Volatile.Read(ref _inFlight);
 
+    /// <summary>How many commits have started in this process; a change between two reads means one began in between.</summary>
+    public static long Started => Interlocked.Read(ref _started);
+
     /// <summary>Marks one commit as started; dispose when its row is written (or it failed).</summary>
     public static IDisposable Enter()
     {
+        Interlocked.Increment(ref _started);
         Interlocked.Increment(ref _inFlight);
 
         return new Exit();

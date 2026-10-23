@@ -404,6 +404,39 @@ public class VirtualOciRepositoryTests : IDisposable
         Assert.Equal(HttpStatusCode.Accepted, start.StatusCode);
     }
 
+    [Fact]
+    public async Task AMountThroughAVirtualRepositoryNeedsThePullOfTheSourceInTheDeployRepository()
+    {
+        await CreateLocalAsync("priv");
+        await CreateVirtualAsync("v", new[] { "priv" }, "priv");
+        var hidden = await PushImageAsync("priv", "secret/app", "1.0", "hidden");
+        var layer = OciTestImage.Digest(hidden.Layers[0]);
+        var tokens = _app.Services.CreateScope().ServiceProvider.GetRequiredService<IOciTokenService>();
+        var mountUri = $"/v2/v/u/app/blobs/uploads/?mount={Uri.EscapeDataString(layer)}&from=v/secret/app";
+
+        // Grants on the virtual name alone (what the token endpoint hands out from Read on the virtual repository).
+        var viaVirtualOnly = tokens.Issue("u", new[]
+        {
+            new OciGrant("v", "secret/app", OciActions.Pull),
+            new OciGrant("v", "u/app", OciActions.Pull | OciActions.Push),
+            new OciGrant("priv", "u/app", OciActions.Pull | OciActions.Push),
+        }).Token;
+        using (var refused = await SendAsync(HttpMethod.Post, mountUri, bearer: viaVirtualOnly))
+        {
+            Assert.Equal(HttpStatusCode.Accepted, refused.StatusCode);
+        }
+
+        var withMember = tokens.Issue("u", new[]
+        {
+            new OciGrant("v", "secret/app", OciActions.Pull),
+            new OciGrant("v", "u/app", OciActions.Pull | OciActions.Push),
+            new OciGrant("priv", "secret/app", OciActions.Pull),
+            new OciGrant("priv", "u/app", OciActions.Pull | OciActions.Push),
+        }).Token;
+        using var mounted = await SendAsync(HttpMethod.Post, mountUri, bearer: withMember);
+        Assert.Equal(HttpStatusCode.Created, mounted.StatusCode);
+    }
+
     // ---- administration and pages ----
 
     [Fact]

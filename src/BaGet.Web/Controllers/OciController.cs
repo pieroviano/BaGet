@@ -478,7 +478,9 @@ public class OciController : Controller
 
         var source = from.Substring(slash + 1);
         if (!OciNames.IsValidImage(source) || !OciNames.IsValidDigest(digest)) return false;
-        if (!await _callers.AllowsAsync(Current.Caller, Current.Repository, Current.Target, source, OciActions.Pull, cancellationToken)) return false;
+        // The link is copied inside Target (the deploy repository of a virtual one), so the right to pull the source is the one
+        // in Target: a token must carry a grant for that repository, not only for the virtual name the client used.
+        if (!await _callers.AllowsAsync(Current.Caller, Current.Target, source, OciActions.Pull, cancellationToken)) return false;
 
         return await _registry.MountBlobAsync(Current.Path.Image, digest, source, cancellationToken);
     }

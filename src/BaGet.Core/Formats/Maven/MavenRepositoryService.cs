@@ -60,6 +60,8 @@ public class MavenRepositoryService : IMavenRepository
         _options = options;
     }
 
+    private static readonly KeyedLocks FileLocks = new();
+
     private long MaxFileBytes => _options?.Value.MaxFileBytes ?? 1024L * 1024 * 1024;
 
     private string StoragePath(string groupId, string artifactId, string version, string fileName)
@@ -642,6 +644,32 @@ public class MavenRepositoryService : IMavenRepository
         }
 
         var path = StoragePath(coordinate.GroupId, coordinate.ArtifactId, version, fileName);
+
+        // One deploy of a file at a time in this process: a deploy that finds a file at the path cannot tell a leftover from a
+        // concurrent deploy's file whose row is not written yet, and replacing the latter would leave its row with no file (or the
+        // loser, refused afterwards, would delete the only copy). Under the lock the row decides, so a loser is refused untouched.
+        // Deploys on other nodes sharing the store are not fenced (docs/maven-repositories.md).
+        using var deployLock = await FileLocks.LockAsync(path, cancellationToken).ConfigureAwait(false);
+        if (!existed && !MavenNames.IsSnapshot(version))
+        {
+            var rowNow = await (from f in _context.MavenFiles!.AsNoTracking()
+                                join v in _context.MavenVersions!.AsNoTracking() on f.VersionKey equals v.Key
+                                join a in _context.MavenArtifacts!.AsNoTracking() on v.ArtifactKey equals a.Key
+                                where f.FileName == fileName && v.Version == version && a.GroupId == coordinate.GroupId && a.ArtifactId == coordinate.ArtifactId
+                                select f.Key).AnyAsync(cancellationToken).ConfigureAwait(false);
+            if (rowNow)
+            {
+                if (!settings.AllowRedeploy)
+                {
+                    return MavenResult.Fail(MavenStatus.Conflict, $"{fileName} already exists in {name} {version}, and this repository does not allow a release to be deployed again.");
+                }
+
+                var overwriteNow = await DenyAsync(caller, PackageAction.Manage, name, cancellationToken).ConfigureAwait(false);
+                if (overwriteNow != null) return overwriteNow;
+                existed = true;
+            }
+        }
+
         var put = await _storage.PutAsync(path, spooled.File, MavenNames.ContentTypeOf(LastExtension(parts.Extension)), cancellationToken).ConfigureAwait(false);
         if (put == StoragePutResult.Conflict)
         {

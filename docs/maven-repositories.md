@@ -36,7 +36,7 @@ does not parse still stores. Layout rules (`MavenNames`): ids use Maven's charac
 | Setting | Effect |
 |---|---|
 | Versions accepted | `Releases` (default), `Snapshots` or `Both`. A stricter policy deletes nothing stored |
-| Redeploy releases | off: a release file is immutable (409). On: replaced by a caller who also holds Delete |
+| Redeploy releases | off: a release file is immutable (409). On: replaced by a caller who also holds Delete. Simultaneous deploys of one file are serialised per process (the loser gets 409 and the winner's file stays); several nodes on one store are not coordinated |
 | Snapshot builds kept | 0 keeps all. N keeps the newest N builds of a snapshot version, deleting older ones on each new deploy; the manage page cleans up on demand |
 
 ## Pages

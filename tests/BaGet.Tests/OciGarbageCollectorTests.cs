@@ -305,6 +305,35 @@ public class OciGarbageCollectorTests : IDisposable
     }
 
     [Fact]
+    public async Task ABlobCommittedAfterTheRowsWereLoadedIsNotTakenForAnOrphanFile()
+    {
+        const string racing = "racegc";
+        await _app.CreateDockerRepositoryAsync(racing, anonymousRead: true, Token);
+        var bytes = Encoding.UTF8.GetBytes("a layer pushed while the collection runs");
+        var digest = OciTestImage.Digest(bytes);
+
+        OciGarbageCollector.AfterRowsLoaded = async name =>
+        {
+            if (name != racing) return;
+            await InRepoAsync(sp => { return PutBlobAsync(sp, "team/app", bytes).ContinueWith(_ => 0); }, racing);
+        };
+        try
+        {
+            var report = await RunAsync(dryRun: false, racing);
+
+            Assert.Equal(0, report.OrphanFiles);
+        }
+        finally
+        {
+            OciGarbageCollector.AfterRowsLoaded = null;
+        }
+
+        Assert.True(await StoredAsync(digest, racing));
+        using var file = await _app.Services.GetRequiredService<IStorageService>().GetAsync("repos/" + racing + "/" + OciNames.BlobPath(digest), Token);
+        Assert.NotNull(file);
+    }
+
+    [Fact]
     public async Task OnlyTheRepositoryItRunsOnIsTouched()
     {
         await _app.CreateDockerRepositoryAsync("other", anonymousRead: true, Token);
