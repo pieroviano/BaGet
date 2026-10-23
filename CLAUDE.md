@@ -475,9 +475,10 @@ Unit tests reach internals through `InternalsVisibleTo`, declared in each **proj
 | `BaGet.Core` | `BaGet.Core.Tests`, `BaGet.Tests`, `BaGet.Database.Tests`, `BaGet.Catalog`, `BaGet.Identity` |
 | `BaGet`, `BaGet.Catalog`, `BaGet.Identity`, `BaGet.Validation`, `BaGet.Database.*` | `BaGet.Tests` (`BaGet` also `BaGet.Telemetry.Tests`) |
 | `BaGet.Web` | `BaGet.Tests`, `BaGet.Web.Tests` |
-| `BaGet.Azure`, `BaGet.Protocol` | `BaGet.Azure.Tests`, `BaGet.Protocol.Tests` |
+| `BaGet.Azure` | `BaGet.Azure.Tests`, `BaGet.Storage.Tests` |
+| `BaGet.Protocol` | `BaGet.Protocol.Tests` |
 | `BaGet.Web.V2` | `BaGet.Web.V2.Tests` (no such project; `BaGet.Tests` has no access) |
-| `BaGet.Aws`, `BaGet.Gcp`, `BaGet.Aliyun` | none |
+| `BaGet.Aws`, `BaGet.Gcp`, `BaGet.Aliyun` | `BaGet.Storage.Tests` |
 
 ## Strong naming
 
