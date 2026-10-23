@@ -19,7 +19,8 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | P5 Docker / OCI | **Done**: streaming storage (B2, track `p5-storage`, [formats.md](../formats.md#streaming-storage-b2), `6bf588a`, `b06565f`); local registry (track `p5-oci`, [docker-registry.md](../docker-registry.md), `f9bdd3e`..`49b2124`); remote, virtual and garbage collection (track `p5-oci-remote`, `9bd42b6`..`9f639e5`) | see *As built* under P5 |
 | P6 Retention and cleanup | **Done** (track `p6-retention`, [retention.md](../retention.md)); see *As built* under P6 | branch `wt/p6-retention` |
 | P7 Vulnerability scanning | **Done** (track `p7-scan`, [vulnerability-scanning.md](../vulnerability-scanning.md)); see *As built* under P7 | branch `wt/p7-scan` |
-| P8-P10 | Not started | No `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
+| P8 Admin REST API | **Done** (track `p8-api`, [admin-api.md](../admin-api.md)); see *As built* under P8 | branch `wt/p8-api` |
+| P9-P10 | Not started | No replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
 
@@ -328,6 +329,27 @@ scanned per platform manifest, not per index.
 | Item | Note |
 |---|---|
 | `/api/v1/…` for repositories, projects, users, groups, permission targets, tokens, retention, scans, replication; OpenAPI document | Same authorization as P2 (Manage). Versioned, paged. |
+
+**As built (track `p8-api`).** Blocking checks: none assigned in the table; the one open choice (OpenAPI package or in-house) is resolved below.
+
+| Item | As built |
+|---|---|
+| Resources | `/api/v1`: `repositories` (+`formats`, `remote`, `virtual`, `access`), `projects`, `groups`, `permission-targets`, `audit`, `users`, `operations`, `retention` (`policies`, `holds`), `scanning`; 68 operations, each mapped to a page in `docs/ui-coverage.md` |
+| Authorization | server administrator only: the global `ApiKey`, or an administrator's key with the new scope `admin:api` (not in `ApiKeyScopes.All`) and no repository limit; never the cookie |
+| Confirmation | `X-Confirm-Password` = the key owner's password wherever the page asks the password; the global key confirms itself |
+| OpenAPI | in-house: `ApiCatalog` reads the controllers' `[ApiOperation]` and parameter types (no package to restore beside the 9.0.21 pins); `GET /api/v1/openapi.json` and the `/admin/api` page |
+| Errors, paging | ProblemDetails with a stable `code`; `Paged<T>` (`page`, `pageSize` max 200); 503 + `Retry-After` while read-only |
+
+**Deviations from the sketch.**
+
+| Sketch | Built | Why |
+|---|---|---|
+| "Same authorization as P2 (Manage)" | server administrators only; a project administrator's delegated pages are not exposed | the sketch's Manage is per repository/package; the admin pages this API mirrors are administrator pages, and a project administrator's rights would need per-project checks on every route. Stricter, never looser |
+| `tokens` | users' API keys: list in `GET /users/{name}`, revoke; the `admin:api` scope; creating a key for someone else is not offered | the pages do not create keys for others either |
+| `replication` | not present | P9 adds its endpoints to this API |
+| Every administration operation | not offered: password reset/invite, account deletion, organizations, validation and abuse queues, server settings, per-version scan, Maven repository settings, database copy | they mail, destroy, or carry secrets on someone's behalf, or belong to the package page (Manage on the package); listed in `docs/admin-api.md` |
+| API key shown to the page | the `admin:api` scope is offered on the API keys page to administrators only; `ApiKeyService.CreateAsync` refuses it for others | a non-administrator key with it would be useless but confusing |
+| Blocking check B-API (OpenAPI) | in-house generator | see table |
 
 ### P9 — Replication
 

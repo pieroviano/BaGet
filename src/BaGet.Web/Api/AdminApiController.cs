@@ -109,6 +109,9 @@ public sealed class ApiExceptionFilterAttribute : Attribute, IExceptionFilter
             AccessModelException => ApiProblems.BadRequest(exception.Message),
             ArgumentException => ApiProblems.BadRequest(exception.Message),
             NotSupportedException => ApiProblems.Create(422, "not-supported", "Not supported here", exception.Message),
+            // A password that nothing can protect (no data protection on the host): the services say so with this type, as the pages show it.
+            InvalidOperationException when exception.GetType() == typeof(InvalidOperationException) && exception.Message.Contains("protect", StringComparison.OrdinalIgnoreCase)
+                => ApiProblems.Create(422, "not-supported", "Not supported here", exception.Message),
             _ => null,
         };
     }

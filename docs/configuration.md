@@ -279,7 +279,7 @@ lists the IDs they own, directly or through an organization, and links to each o
 
 | Property | Meaning |
 | --- | --- |
-| Scopes | `package:push` (new IDs and new versions), `package:pushversion` (new versions of owned IDs only), `package:unlist` (unlist, relist, delete, deprecation and vulnerabilities) |
+| Scopes | `package:push` (new IDs and new versions), `package:pushversion` (new versions of owned IDs only), `package:unlist` (unlist, relist, delete, deprecation and vulnerabilities), and for administrators only `admin:api` (the [administration REST API](admin-api.md); never given to sessions or npm tokens) |
 | Package glob pattern | the IDs the key applies to, `*` as a wildcard, for example `Contoso.*` |
 | Repositories | optional: the repositories the key may be used in (tick them on `/account/apikeys`; none ticked = every repository, as every key was before). See [Repository-scoped keys](access-control.md#repository-scoped-api-keys) |
 | Expiry | after which the key stops working |

@@ -235,3 +235,59 @@ public class AdminApiAccessTests : IDisposable
         return directory?.FullName ?? throw new InvalidOperationException("BaGet.sln not found above the test output.");
     }
 }
+
+/// <summary>The REST API page and the key form that creates the <c>admin:api</c> key (the UI side of the API).</summary>
+public class AdminApiPageTests : IDisposable
+{
+    private readonly AdminApiHarness _api;
+
+    public AdminApiPageTests(ITestOutputHelper output)
+    {
+        _api = new AdminApiHarness(output);
+    }
+
+    public void Dispose() => _api.Dispose();
+
+    [Fact]
+    public async Task TheApiPageListsEveryOperationForAdministratorsOnlyAndTheMenuLinksToIt()
+    {
+        using var root = new Browser(_api.App);
+        await SignInAsync(root, "root");
+        using var alice = new Browser(_api.App);
+        await SignInAsync(alice, "alice");
+
+        var page = await root.GetPageAsync("admin/api");
+        var endpoints = ApiCatalog.Endpoints(_api.App.Services.GetRequiredService<IActionDescriptorCollectionProvider>());
+        Assert.All(endpoints, e => Assert.Contains($"data-path=\"{e.Path}\" data-method=\"{e.Method}\"", page));
+        Assert.Contains("/api/v1/openapi.json", page);
+        Assert.Contains("X-Confirm-Password", page);
+        Assert.Contains("href=\"/admin/api\"", await root.GetPageAsync(""));
+
+        using var denied = await alice.GetAsync("admin/api");
+        Assert.Equal(HttpStatusCode.NotFound, denied.StatusCode);
+    }
+
+    [Fact]
+    public async Task OnlyAdministratorsAreOfferedTheAdminScopeWhenCreatingAKey()
+    {
+        using var root = new Browser(_api.App);
+        await SignInAsync(root, "root");
+        using var alice = new Browser(_api.App);
+        await SignInAsync(alice, "alice");
+
+        Assert.Contains("value=\"admin:api\"", await root.GetPageAsync("account/apikeys"));
+        Assert.DoesNotContain("admin:api", await alice.GetPageAsync("account/apikeys"));
+    }
+
+    [Fact]
+    public async Task AWrongConfirmationPasswordCountsAsAFailedSignIn()
+    {
+        var user = await FindAsync(_api.App, "root");
+        Assert.Equal(0, user!.AccessFailedCount);
+
+        var wrong = await _api.PostAsync("/api/v1/repositories", new { name = "up", kind = "Remote", remote = new { url = "https://example.invalid/v3/index.json" } }, password: "wrong");
+        Assert.Equal("confirmation-required", wrong.Code);
+
+        Assert.Equal(1, (await FindAsync(_api.App, "root"))!.AccessFailedCount);
+    }
+}

@@ -56,6 +56,11 @@ any database write answers `503` with `Retry-After`.
 | `GET /v3/repository-signatures/{fingerprint}.crt` | the repository signing certificate |
 | `GET /api/v2`, `/api/v2/$metadata`, `/api/v2/Packages()`, `/api/v2/Packages(Id='..',Version='..')`, `/api/v2/FindPackagesById()`, `/api/v2/Search()` | V2 feed; `404` when `Feeds:EnableV2` is `false`, while push, delete and relist under `/api/v2/package` and `/api/v2/symbol` are unaffected |
 
+## Administration
+
+Repositories, the access model, users, operations, retention and scanning are administered under `/api/v1` with an administrator's
+`admin:api` key; see [Administration REST API](../admin-api.md) and its OpenAPI document `GET /api/v1/openapi.json`.
+
 ## Deprecation and vulnerabilities
 
 These change a package version, so they are authorised like a delete: the global `ApiKey`, or with
