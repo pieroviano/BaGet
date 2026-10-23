@@ -1503,6 +1503,9 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.Property<int?>("UnusedDays")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("UnusedSince")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Key");
 
                     b.HasIndex("Name")

@@ -75,10 +75,12 @@ public interface IScanGate
 
     /// <summary>
     /// Whether a pull of the image is the scanning engine's own (Trivy pulls the image it scans through this registry): the caller is
-    /// <see cref="ScanningOptions.TrivyRegistryUser"/>, or, when no user is configured, a scan of that very image is running. Such a
-    /// pull is not subject to <see cref="CheckDownloadAsync"/>: refusing it would keep an unscanned image from ever being scanned.
+    /// <see cref="ScanningOptions.TrivyRegistryUser"/> (exempt from <see cref="CheckDownloadAsync"/> entirely, so rescans of images
+    /// with findings still work), or, when no user is configured and so the scanner cannot be told from any other client, a scan of
+    /// that very image is running <b>and the image has no successful scan yet</b>. The second case only lets an unscanned image be
+    /// scanned; it never lifts the severity block of an image already known to be vulnerable.
     /// </summary>
-    bool IsScannerPull(string name, string version, string? callerName);
+    Task<bool> IsScannerPullAsync(string name, string version, string? callerName, CancellationToken cancellationToken);
 
     /// <summary>Throws <see cref="ScanBlockedException"/> when the policy refuses to hand out the version.</summary>
     Task CheckDownloadAsync(string name, string version, CancellationToken cancellationToken);
@@ -149,14 +151,21 @@ public sealed class ScanGate : IScanGate
         => Active && (await _policies.GetEffectiveAsync(_repository.Current.Key, cancellationToken).ConfigureAwait(false)).Values.BlockDeploySeverity != null;
 
     /// <inheritdoc/>
-    public bool IsScannerPull(string name, string version, string? callerName)
+    public async Task<bool> IsScannerPullAsync(string name, string version, string? callerName, CancellationToken cancellationToken)
     {
         if (!Active) return false;
 
         var user = _options.Value.TrivyRegistryUser;
-        return !string.IsNullOrWhiteSpace(user)
-            ? callerName != null && string.Equals(callerName, user.Trim(), StringComparison.OrdinalIgnoreCase)
-            : ScanInFlight.Contains(_repository.Current.Key, name, version);
+        if (!string.IsNullOrWhiteSpace(user))
+        {
+            return callerName != null && string.Equals(callerName, user.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!ScanInFlight.Contains(_repository.Current.Key, name, version)) return false;
+
+        // Any client could be the one pulling during the scan, so only the unscanned case (the "block unscanned" check) is lifted.
+        var result = await _scans.FindAsync(name, version, cancellationToken).ConfigureAwait(false);
+        return result?.ScannedAt == null;
     }
 
     /// <inheritdoc/>

@@ -4,7 +4,7 @@ namespace BaGet.Core;
 
 /// <summary>
 /// The container images being scanned right now, process-wide: the scanner pulls the image through this registry, and that pull must
-/// not be refused as "unscanned" (see <see cref="IScanGate.IsScannerPull"/>).
+/// not be refused as "unscanned" (see <see cref="IScanGate.IsScannerPullAsync"/>).
 /// </summary>
 internal static class ScanInFlight
 {

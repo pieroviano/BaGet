@@ -1591,6 +1591,9 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.Property<int?>("UnusedDays")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("UnusedSince")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Key");
 
                     b.HasIndex("Name")

@@ -87,6 +87,18 @@ public class RetentionEvaluatorTests
     }
 
     [Fact]
+    public void UnusedWatchesFromUnusedSinceWhenSetEvenOnAnOldPolicy()
+    {
+        var versions = new[] { V("a", "never-old", 100) };
+
+        var old = Evaluate(new RetentionPolicy { UnusedDays = 30, Created = Now.AddDays(-365), UnusedSince = Now.AddDays(-1) }, versions);
+        var legacy = Evaluate(new RetentionPolicy { UnusedDays = 30, Created = Now.AddDays(-365) }, versions);
+
+        Assert.Empty(old.Selected);
+        Assert.Equal(new[] { "a never-old" }, Keys(legacy.Selected));
+    }
+
+    [Fact]
     public void RulesCombineAsAUnionAndEachVersionNamesEveryRuleThatTookIt()
     {
         var versions = new[] { V("a", "1", 100), V("a", "2", 50), V("a", "3", 1) };

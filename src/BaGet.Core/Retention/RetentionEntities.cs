@@ -81,6 +81,13 @@ public class RetentionPolicy
 
     public DateTime Created { get; set; }
 
+    /// <summary>
+    /// Since when the unused rule has been watching the policy's scope (set when the rule is enabled or changed, or the repository,
+    /// project or name patterns change; null on rows that predate it, which fall back to <see cref="Created"/>). A version never
+    /// downloaded counts as unused from the later of its publication and this time: downloads are recorded only while watched.
+    /// </summary>
+    public DateTime? UnusedSince { get; set; }
+
     public DateTime Modified { get; set; }
 }
 

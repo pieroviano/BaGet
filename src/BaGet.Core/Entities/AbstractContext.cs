@@ -297,6 +297,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         policy.Property(p => p.Name).HasMaxLength(MaxAccessNameLength).IsRequired();
         policy.Property(p => p.NamePatterns).HasMaxLength(MaxRetentionPatternsLength);
         policy.Property(p => p.LastResult).HasMaxLength(MaxRetentionResultLength);
+        policy.Property(p => p.UnusedSince);
     }
 
     private void BuildRetentionHoldEntity(EntityTypeBuilder<RetentionHold> hold)

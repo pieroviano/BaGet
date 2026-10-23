@@ -330,8 +330,9 @@ public class OciController : Controller
 
         // The scanning policy of the repository may refuse an image with known vulnerabilities (403 DENIED, by ScanBlockedFilter).
         // An index only lists platform manifests; each of those is checked when the client asks for it.
-        // The scanner's own pull (Trivy) is exempt: refusing it would keep the image from ever being scanned or rescanned.
-        if (!OciNames.IsIndex(manifest.MediaType) && !_scanGate.IsScannerPull(path.Image, manifest.Digest, Current.Caller.Name))
+        // The scanner's own pull (Trivy) is exempt: refusing it would keep the image from ever being scanned or rescanned
+        // (without a configured scanner user, only while the image has no successful scan).
+        if (!OciNames.IsIndex(manifest.MediaType) && !await _scanGate.IsScannerPullAsync(path.Image, manifest.Digest, Current.Caller.Name, cancellationToken))
         {
             await _scanGate.CheckDownloadAsync(path.Image, manifest.Digest, cancellationToken);
         }

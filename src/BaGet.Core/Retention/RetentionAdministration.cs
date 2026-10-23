@@ -194,7 +194,7 @@ public sealed class RetentionAdministration : IRetentionAdministration
         string action;
         if (input.Key == 0)
         {
-            row = new RetentionPolicy { Created = now };
+            row = new RetentionPolicy { Created = now, UnusedSince = now };
             db.RetentionPolicies!.Add(row);
             action = "retention.policy.create";
         }
@@ -207,6 +207,14 @@ public sealed class RetentionAdministration : IRetentionAdministration
 
         // A changed schedule counts from now, so enabling a stale policy does not run it at once for the time it was off.
         var restartSchedule = input.Key == 0 || row.ScheduleHours != input.ScheduleHours || (!row.Enabled && input.Enabled);
+
+        // The unused rule judges only time it watched: restart that clock when the rule is switched on or changed, or when the
+        // scope it looks at (repository, project, name patterns) changes, since downloads of a newly covered version were not recorded.
+        if (input.Key != 0 && (row.UnusedDays != input.UnusedDays || row.RepositoryKey != repositoryKey || row.ProjectKey != projectKey
+            || !string.Equals(row.NamePatterns ?? string.Empty, patternText ?? string.Empty, StringComparison.Ordinal)))
+        {
+            row.UnusedSince = now;
+        }
 
         row.Name = name;
         row.RepositoryKey = repositoryKey;

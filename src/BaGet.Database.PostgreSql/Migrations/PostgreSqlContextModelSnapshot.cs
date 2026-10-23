@@ -1583,6 +1583,9 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.Property<int?>("UnusedDays")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("UnusedSince")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Key");
 
                     b.HasIndex("Name")

@@ -1589,6 +1589,9 @@ namespace BaGet.Database.MySql.Migrations
                     b.Property<int?>("UnusedDays")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("UnusedSince")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Key");
 
                     b.HasIndex("Name")

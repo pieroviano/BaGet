@@ -287,6 +287,29 @@ public class ScanningDockerTests
     }
 
     [Fact]
+    public async Task ARescanOfAnImageWithFindingsDoesNotLiftTheDownloadSeverityBlockForOtherClients()
+    {
+        var (harness, trivy) = await StartAsync();
+        await using var _ = harness;
+        trivy.Hits.Add(Hit("CVE-2024-0009", Critical));
+        var image = OciTestImage.Create("rescanned");
+        (await PushImageAsync(harness, "libs/app", "latest", image)).Dispose();
+        await harness.ScanAsync("libs", "app", image.ManifestDigest);
+        await harness.SetPolicyAsync("libs", blockDownload: High);
+        HttpStatusCode? during = null;
+        trivy.OnScan = async _ =>
+        {
+            using var pull = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/" + image.ManifestDigest);
+            during = pull.StatusCode;
+        };
+
+        await harness.ScanAsync("libs", "app", image.ManifestDigest);
+        trivy.OnScan = null;
+
+        Assert.Equal(HttpStatusCode.Forbidden, during);
+    }
+
+    [Fact]
     public async Task APushRefusedByBlockDeployPutsAMovedTagBackEvenForAManifestTheImageAlreadyHeld()
     {
         var (harness, trivy) = await StartAsync();

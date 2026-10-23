@@ -225,6 +225,26 @@ public class RetentionTests : IDisposable
     }
 
     [Fact]
+    public async Task EnablingTheUnusedRuleOnAnOldPolicyWatchesFromThatMoment()
+    {
+        await PushNuGetAsync("Old.Lib", "1.0.0");
+        await PushNuGetAsync("Old.Lib", "2.0.0");
+
+        // A keep-last policy a year old, then edited to add the unused rule: nothing was watched for downloads until now.
+        var created = await SaveAsync(Input("grows", keep: 5));
+        _clock.Advance(TimeSpan.FromDays(365));
+        var policy = await SaveAsync(Input("grows", unused: 30) with { Key = created.Key });
+
+        var early = await RunAsync(policy, dryRun: false);
+        Assert.Empty(Items(early, RetentionOutcome.Deleted));
+        Assert.Equal(new[] { "Old.Lib 1.0.0", "Old.Lib 2.0.0" }, await StoredAsync("default", RepositoryFormat.NuGet));
+
+        _clock.Advance(TimeSpan.FromDays(31));
+        var later = await RunAsync(policy, dryRun: true);
+        Assert.Equal(new[] { "Old.Lib 1.0.0", "Old.Lib 2.0.0" }, Items(later, RetentionOutcome.Planned));
+    }
+
+    [Fact]
     public async Task ALegalHoldOnAVersionOrAWholePackageKeepsWhatARuleSelected()
     {
         await PushNuGetAsync("Held.One", "1.0.0");
