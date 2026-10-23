@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A fork of [loic-sharma/BaGet](https://github.com/loic-sharma/BaGet), a lightweight NuGet and symbol
+A fork of [loic-sharma/BaGet](https://github.com/loic-sharma/BaGet), A NuGet, Maven, NVM, Docker and symbol
 server. The fork targets `net10.0` and has diverged substantially (accounts, V2 feed, validation,
 catalog). Some work here is upstreamed as PRs against `loic-sharma/BaGet`.
 
@@ -76,7 +76,7 @@ change: a feature is not done while it exists only as REST, CLI or a service met
 (same action/permission, antiforgery, password or re-authentication for destructive or access changes,
 `MaintenanceGate.ThrowIfClosed` on writes) and link it from the navigation or the page it belongs to. Reviews check it.
 Where the UI cannot yet do something the server can (a REST field, a CLI option, a service operation), enrich the UI
-to cover it; `docs/ui-coverage.md` maps every capability to its page and gate and must stay complete.
+to cover it; `docs/ui-coverage.md` maps every capability to its page and gate and must stay complete (`UiCoverageInventoryTests` fails on a controller, Razor page or CLI command with no row there).
 
 ## Every docs page is in the solution and reachable
 
@@ -408,7 +408,7 @@ duplicates in unique indexes and keys (columns `NOCASE`/`citext`/`*_ci`, else th
 
 The host (and only the host) uses Serilog: `Program.ConfigureLogging` clears the Microsoft providers and calls
 `AddSerilog(... ReadFrom.Configuration ... , writeToProviders: true)`, so the `Serilog` section of `appsettings.json`
-is the one source of truth for levels and sinks (`SerilogOptions` lists `MinimumLevel:Default` and `EventLog:*` on the Settings page; sinks and `Override` stay file/env only) (Console, File `logs/baget-.log`, resolved against the content
+is the one source of truth for levels and sinks (`SerilogOptions` lists `MinimumLevel:Default` and `EventLog:*` on the Settings page; `MinimumLevel:Override` levels have their own *Log levels per source* panel there (`SettingsService.GetLogLevelOverrides`/`SetLogLevelOverrideAsync`, rules in `LogLevelOverrides`: remove only what the overrides file holds); sinks stay file/env only) (Console, File `logs/baget-.log`, resolved against the content
 root / `BAGET_CONFIG_ROOT` for every File sink by `ResolveLogFilePaths`). `ApplyDefaultMinimumLevels` sets a code floor
 before `ReadFrom` (Microsoft and `Hosting.Diagnostics` Warning: that logger prints `?apikey=`), so a host with its own
 appsettings is safe. A sink with `Enabled=false` is blanked (`DisableSinks`; an empty env var is deleted on Windows).

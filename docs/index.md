@@ -1,6 +1,6 @@
 # BaGet Extension
 
-BaGet Extension is a lightweight NuGet and symbol server. It is [open source](https://github.com/pieroviano/BaGet) (a fork of [loic-sharma/BaGet](https://github.com/loic-sharma/BaGet)), cross-platform, and cloud ready!
+BaGet Extension is A NuGet, Maven, NVM, Docker and symbol server. It is [open source](https://github.com/pieroviano/BaGet) (a fork of [loic-sharma/BaGet](https://github.com/loic-sharma/BaGet)), cross-platform, and cloud ready!
 
 <p align="center">
   <img width="100%" src="BaGetSite.png">

@@ -4,7 +4,7 @@ Every operation the server offers (REST, CLI, service) is reachable from the web
 This page maps each capability to its page. Pages in repository scope also exist as `/r/{name}/...`. "Admin" = an
 administrator signed in (others get 404). "Password" = the administrator's password (or a fresh external sign-in) is
 asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed) and, on package pages, refuses in
-`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area.
+`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, Razor page or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none.
 
 ## NuGet protocol (per repository)
 
@@ -146,6 +146,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Abuse reports: resolve, reopen | service | Admin Abuse; Manage for the owner | Admin / Manage |
 | Settings (every options section), restart-required marks | `appsettings.Overrides.json` | Admin Settings | Admin + Password |
 | Logging: default minimum level (live), Windows event log switch and source (restart) | `Serilog` section | Admin Settings > Serilog | Admin + Password |
+| Logging: level per source (`Serilog:MinimumLevel:Override`, live): list with where each is set, set, remove (only what the page saved) | `SettingsService.SetLogLevelOverrideAsync` | Admin Settings > Serilog > *Log levels per source* | Admin + Password, 503 while read-only |
 | Database copy (copy all data, status) | service | Admin Settings (database section) | Admin + Password |
 | Telemetry settings, status, connection test | service | Admin Settings (telemetry section) | Admin + Password |
 | Statistics | service | `/statistics` | read |
@@ -236,6 +237,6 @@ Every operation below has the page that offers the same operation and the same g
 |---|---|
 | `--urls`, host arguments | process start, not a runtime operation |
 | Registration, flat container, symbol download, tarball bodies | machine formats; the pages link the downloads |
-| Serilog sinks (`WriteTo`, file path, retention) and per-namespace `Override` levels | arrays and maps the Settings page cannot show; edit the file or the environment ([Logging](configuration.md#logging)) |
+| Serilog sinks (`WriteTo`, file path, retention) | arrays of package-specific objects, read once at start; edit the file or the environment ([Logging](configuration.md#logging)) |
 | `Kestrel` endpoints, `SettingsOverridesPath` | read before the settings file exists (listening address, where the file lives) |
 | External login link / unlink | accounts are created by the first external sign-in; there is no link-later operation on the server |

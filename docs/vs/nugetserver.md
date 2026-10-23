@@ -1,6 +1,6 @@
 # NuGet.Server
 
-[NuGet.Server](https://github.com/NuGet/NuGet.Server) is a lightweight ASP.NET (.NET Framework) application
+[NuGet.Server](https://github.com/NuGet/NuGet.Server) is a ASP.NET (.NET Framework) application
 that serves a folder of packages over HTTP (OData). **It is deprecated**: the repository was archived on
 2026-05-29 and its README states no further features, bug fixes or security patches. Migrate; see the
 [migration guide](../import/nugetserver.md).

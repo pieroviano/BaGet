@@ -1,6 +1,6 @@
 # Import NuGet.Server packages
 
-[NuGet.Server](https://github.com/NuGet/NuGet.Server) is a lightweight standalone NuGet server. It is strongly recommended that you upgrade to BaGet Extension if you use NuGet.Server. Feel free to open a [GitHub issue](https://github.com/loic-sharma/BaGet/issues) if you need help migrating.
+[NuGet.Server](https://github.com/NuGet/NuGet.Server) is a standalone A NuGet, Maven, NVM, Docker and symbol. It is strongly recommended that you upgrade to BaGet Extension if you use NuGet.Server. Feel free to open a [GitHub issue](https://github.com/loic-sharma/BaGet/issues) if you need help migrating.
 
 !!! info
     Please refer to the [BaGet Extension vs NuGet.Server](../vs/nugetserver.md) page for reasons to upgrade to BaGet Extension.
