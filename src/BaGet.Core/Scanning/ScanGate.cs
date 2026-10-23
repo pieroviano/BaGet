@@ -179,7 +179,7 @@ public sealed class ScanGate : IScanGate
         if (result?.ScannedAt == null)
         {
             if (requireResult && result == null) return false;
-            RequestScan(name, version);
+            Enqueue(name, version);
 
             // What a remote repository has not fetched yet cannot be scanned, and it is fetched by this very download: refusing it
             // would keep it from ever being scanned. It is scanned as soon as it is stored.
@@ -239,6 +239,7 @@ public sealed class ScanGate : IScanGate
             return;
         }
 
+
         var result = await _scans.ScanAsync(name, version, cancellationToken).ConfigureAwait(false);
         if (result?.ScannedAt == null || result.Highest < threshold.Value) return;
 
@@ -280,8 +281,12 @@ public sealed class ScanGate : IScanGate
     /// <inheritdoc/>
     public void RequestScan(string name, string version)
     {
-        if (!Active) return;
-        _queue.Enqueue(_repository.Current, name, version);
+        if (Active && _options.Value.ScanOnDeploy) Enqueue(name, version);
+    }
+
+    private void Enqueue(string name, string version)
+    {
+        if (Active) _queue.Enqueue(_repository.Current, name, version);
     }
 
     private static string? DownloadReason(string name, string version, ScanResult result, EffectiveScanPolicy policy, RepositoryInfo repository)

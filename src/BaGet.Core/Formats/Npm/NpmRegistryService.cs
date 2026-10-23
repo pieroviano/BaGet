@@ -610,7 +610,9 @@ public class NpmRegistryService : INpmRegistry
         // The scanning policy of the repository may refuse a package with known vulnerabilities (ScanBlockedException, 403).
         if (_scanGate != null && _scanGate.Enabled && await _scanGate.BlocksDeploysAsync(cancellationToken).ConfigureAwait(false))
         {
-            await _scanGate.CheckDeployAsync(NpmScanComponents.Of(name, version, inner), cancellationToken).ConfigureAwait(false);
+            // What the tarball declares and what the packument will tell clients (the request's version object) are both checked.
+            var components = NpmScanComponents.Of(name, version, inner).Union(NpmScanComponents.Of(name, version, publication.Manifest)).ToList();
+            await _scanGate.CheckDeployAsync(components, cancellationToken).ConfigureAwait(false);
         }
 
         _gate.ThrowIfClosed();

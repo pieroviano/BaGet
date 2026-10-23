@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -12,7 +13,8 @@ namespace BaGet.Tests;
 /// </summary>
 internal static class TestPackages
 {
-    public static MemoryStream Build(string id, string version, string description = "Test package")
+    /// <param name="dependencies">Dependencies declared for every framework, as (id, version range) pairs.</param>
+    public static MemoryStream Build(string id, string version, string description = "Test package", params (string Id, string Range)[] dependencies)
     {
         var builder = new PackageBuilder
         {
@@ -22,6 +24,12 @@ internal static class TestPackages
         };
         builder.Authors.Add("Test author");
         builder.Files.Add(new InMemoryFile("content/readme.txt", "test"));
+        if (dependencies.Length > 0)
+        {
+            builder.DependencyGroups.Add(new PackageDependencyGroup(
+                NuGet.Frameworks.NuGetFramework.AnyFramework,
+                dependencies.Select(d => new NuGet.Packaging.Core.PackageDependency(d.Id, NuGet.Versioning.VersionRange.Parse(d.Range)))));
+        }
 
         var stream = new MemoryStream();
         builder.Save(stream);

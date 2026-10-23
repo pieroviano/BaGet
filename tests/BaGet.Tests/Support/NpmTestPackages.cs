@@ -63,7 +63,7 @@ internal static class NpmTestPackages
     }
 
     /// <summary>The JSON body <c>npm publish</c> sends: the version, its dist (with a placeholder tarball URL) and the tarball as base64.</summary>
-    public static string PublishBody(NpmTarballFile tarball, string tag = "latest", string? readme = "# Readme", string? integrity = null, string? shasum = null)
+    public static string PublishBody(NpmTarballFile tarball, string tag = "latest", string? readme = "# Readme", string? integrity = null, string? shasum = null, IDictionary<string, string>? dependencies = null)
     {
         var fileName = tarball.Name.Contains('/') ? tarball.Name + "-" + tarball.Version + ".tgz" : tarball.Name + "-" + tarball.Version + ".tgz";
         var version = new JsonObject
@@ -79,6 +79,13 @@ internal static class NpmTestPackages
                 ["tarball"] = "http://localhost:1/" + tarball.Name + "/-/" + fileName,
             },
         };
+
+        if (dependencies != null)
+        {
+            var map = new JsonObject();
+            foreach (var pair in dependencies) map[pair.Key] = pair.Value;
+            version["dependencies"] = map;
+        }
 
         var root = new JsonObject
         {

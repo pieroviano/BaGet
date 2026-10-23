@@ -16,6 +16,13 @@ public class ScanningOptions
     public bool Enabled { get; set; }
 
     /// <summary>
+    /// Whether a version is queued for a scan as soon as it is stored (published, deployed, pushed, or cached by a remote
+    /// repository). Default on. Off: versions are scanned by the schedule and by <em>Scan now</em> only (a download that finds a
+    /// version unscanned under a policy still queues it).
+    /// </summary>
+    public bool ScanOnDeploy { get; set; } = true;
+
+    /// <summary>
     /// The OSV API root. Default <c>https://api.osv.dev</c>. Data served by OSV.dev is licensed per source (mostly CC-BY 4.0,
     /// GitHub Advisory Database CC-BY 4.0); advisories shown in the UI carry their identifier and a link to the source.
     /// </summary>
