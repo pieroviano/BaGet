@@ -277,6 +277,8 @@ User documentation: [Retention and cleanup](../retention.md).
 | Schedule | `RetentionWorker` (hosted, every minute) starts due policies, waits while the gate is closed; `RetentionJobs` runs one policy at a time in the background and keeps the last report |
 | UI | `/admin/retention` (list, create), `/admin/retention/{id}` (edit, dry run, run now, report, delete), `/admin/retention/holds`; menu entry *Retention*; `docs/ui-coverage.md` rows |
 | Audit | `retention.*` entries in the access audit (same save as the change) and `IAdminAudit` for runs |
+| Verification | Full solution in the worktree, no Docker: 3249 total, 3140 passed, 97 skipped (Docker suites), 12 failed = `TelemetrySettingsPageTests` x8 + `TelemetryExportTests` x4 (pre-existing class; one more than CLAUDE.md lists, includes a port 6060 clash); 0 build warnings; new: 15 Core + 26 `RetentionTests` + 9 `RetentionPagesTests` |
+| Blocking checks | none assigned to P6 in the table above |
 | Deviations | (1) Policies also name `NamePatterns` (a glob filter) and `CollectGarbage`/`ScheduleHours`, which the sketch left implicit. (2) A Docker "version" is a tag; untagged-manifest age counts from the push (`OciManifest.Created`), as no untag time is stored. (3) The Docker dry run's GC reports the state before the run's own deletions. (4) NuGet package size is read from the store (cache limit only). (5) Holds govern retention only, not manual deletes. (6) No CLI command (the plan asked for none); service + UI only |
 
 ### P7 — Vulnerability scanning (D7)
