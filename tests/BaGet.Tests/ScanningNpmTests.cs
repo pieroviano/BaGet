@@ -365,6 +365,34 @@ public class ScanningNpmTests
     }
 
     [Fact]
+    public async Task AnOfflineCopyOfTheOsvDataScansWithoutAskingTheNetwork()
+    {
+        var directory = System.IO.Directory.CreateTempSubdirectory("osv-offline").FullName;
+        try
+        {
+            await using var source = await FakeOsvServer.StartAsync();
+            source.Add("npm", "left-pad", "1.0.0", "GHSA-offline", "CRITICAL", "1.3.0");
+            await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(directory, "GHSA-offline.json"), source.RecordOf("GHSA-offline").ToJsonString(), TestContext.Current.CancellationToken);
+            await using var harness = await StartAsync(new Dictionary<string, string> { { "Scanning:OsvOfflinePath", directory } });
+            await PublishAsync(harness, "lib", "2.0.0", new Dictionary<string, string> { ["left-pad"] = "1.0.0" });
+
+            var result = (await harness.ScanAsync("web", "lib", "2.0.0"))!;
+
+            Assert.Null(result.Error);
+            Assert.Equal(Critical, result.Highest);
+            var finding = (await harness.ResultAsync("web", "lib", "2.0.0"))!.Findings!.Single();
+            Assert.Equal("GHSA-offline", finding.VulnerabilityId);
+            Assert.Equal("1.3.0", finding.FixedVersion);
+            Assert.Equal(0, harness.Osv.Batches);
+            Assert.Equal(0, harness.Osv.Lookups);
+        }
+        finally
+        {
+            System.IO.Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task AReadOnlyDatabaseRefusesAScan()
     {
         await using var harness = await StartAsync();
