@@ -154,6 +154,75 @@
                         }
                     </div>
                 </form>
+                @if (string.Equals(s.Key, "Serilog", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="panel panel-default" id="log-levels" data-section-panel="@formId" hidden="@(formId != Model.SelectedId)">
+                        <div class="panel-heading"><strong>Log levels per source</strong></div>
+                        <div class="panel-body">
+                            <p class="help-block">
+                                The lowest level logged for one namespace or type name prefix (<code>Serilog:MinimumLevel:Override</code>); applies at once.
+                                A source without an entry uses the default level above. Sinks (where the log is written) are set in the configuration file.
+                            </p>
+                            @if (Model.LogLevels.Count == 0)
+                            {
+                                <p class="text-muted" id="log-levels-empty">No source has a level of its own.</p>
+                            }
+                            else
+                            {
+                                <table class="table table-condensed" id="log-levels-table">
+                                    <thead><tr><th>Source</th><th>Level</th><th>Set by</th><th></th></tr></thead>
+                                    <tbody>
+                                    @foreach (var entry in Model.LogLevels)
+                                    {
+                                        <tr data-log-source="@entry.Source">
+                                            <td><code>@entry.Source</code></td>
+                                            <td>@entry.Level</td>
+                                            <td>@(entry.InOverridesFile ? "this page" : "configuration file or environment")</td>
+                                            <td>
+                                                @if (entry.InOverridesFile)
+                                                {
+                                                    <form method="post" asp-page-handler="RemoveLogLevel" class="form-inline">
+                                                        <input type="hidden" name="source" value="@entry.Source" />
+                                                        @if (Model.HasPassword)
+                                                        {
+                                                            <input type="password" name="password" class="form-control input-sm" placeholder="Your password" autocomplete="current-password" required />
+                                                        }
+                                                        <button type="submit" class="btn btn-danger btn-xs log-level-remove">Remove</button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            }
+                            <form method="post" asp-page-handler="SetLogLevel" class="form-inline" id="log-level-form">
+                                <div class="form-group">
+                                    <label for="log-level-source">Source</label>
+                                    <input id="log-level-source" name="source" class="form-control" placeholder="Microsoft.AspNetCore" maxlength="@BaGet.Core.LogLevelOverrides.MaxSourceLength" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="log-level-level">Level</label>
+                                    <select id="log-level-level" name="level" class="form-control">
+                                        @foreach (var name in Model.LogLevelNames) { <option value="@name">@name</option> }
+                                    </select>
+                                </div>
+                                @if (Model.HasPassword)
+                                {
+                                    <div class="form-group">
+                                        <label for="log-level-password">Your password</label>
+                                        <input id="log-level-password" type="password" name="password" class="form-control" autocomplete="current-password" required />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
+                                }
+                                <button type="submit" class="btn btn-primary" id="log-level-save">Set level</button>
+                            </form>
+                        </div>
+                    </div>
+                }
             }
         </div>
     </div>

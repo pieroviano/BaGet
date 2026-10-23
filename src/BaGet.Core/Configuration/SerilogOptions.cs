@@ -2,8 +2,9 @@ namespace BaGet.Core;
 
 /// <summary>
 /// The operator-facing keys of the host's <c>Serilog</c> section (see "Logging" in docs/configuration.md), so the
-/// Settings page can edit them. The section holds more (<c>WriteTo</c> sinks and their arguments, <c>Override</c>
-/// levels per namespace): those are arrays and maps the Settings page cannot show, so they stay in the
+/// Settings page can edit them. The section holds more: the <c>Override</c> levels per namespace are edited by
+/// the page's "Log levels per source" panel (<see cref="SettingsService.SetLogLevelOverrideAsync"/>), while the
+/// <c>WriteTo</c> sinks and their arguments are arrays the Settings page cannot show, so they stay in the
 /// configuration file or the environment. The host reads the levels through Serilog's own configuration reload, which
 /// is why <see cref="MinimumLevelOptions.Default"/> applies without a restart and the event log keys do not.
 /// </summary>

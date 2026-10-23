@@ -227,6 +227,77 @@ public class SettingsService
         }
     }
 
+    /// <summary>
+    /// The per-source log levels now in effect (<see cref="LogLevelOverrides.SectionKey"/>), by source name, and whether the
+    /// overrides file holds each. A level set by a configuration file or the environment is listed too.
+    /// </summary>
+    public IReadOnlyList<LogLevelOverride> GetLogLevelOverrides()
+    {
+        HashSet<string> saved;
+        try
+        {
+            var prefix = LogLevelOverrides.SectionKey + ":";
+            saved = (_store?.Read() ?? new Dictionary<string, string>())
+                .Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                .Select(k => k.Substring(prefix.Length))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception e) when (IsStoreFailure(e))
+        {
+            saved = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        return _configuration.GetSection(LogLevelOverrides.SectionKey).GetChildren()
+            .Where(c => !string.IsNullOrEmpty(c.Value))
+            .Select(c => new LogLevelOverride(c.Key, c.Value!, saved.Contains(c.Key)))
+            .OrderBy(o => o.Source, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Sets the lowest level logged for <paramref name="source"/> (applies live) or, with a null <paramref name="level"/>,
+    /// removes the override this service saved. An override a configuration file or the environment sets cannot be removed
+    /// from here, only given another level (the overrides file ranks above the configuration files).
+    /// </summary>
+    /// <param name="source">A namespace or type name prefix, validated by <see cref="LogLevelOverrides.ValidateSource"/>.</param>
+    /// <param name="level">A Serilog level name (any case), or null to remove.</param>
+    /// <param name="actor">Who is saving, for the audit log.</param>
+    /// <param name="cancellationToken">Cancels the save.</param>
+    public Task<SettingsSaveResult> SetLogLevelOverrideAsync(string? source, string? level, string? actor, CancellationToken cancellationToken)
+    {
+        var problem = LogLevelOverrides.ValidateSource(source);
+        if (problem != null) return Task.FromResult(SettingsSaveResult.Failed(new[] { problem }));
+
+        var key = LogLevelOverrides.KeyOf(source!);
+        object value;
+        if (level == null)
+        {
+            var existing = GetLogLevelOverrides().FirstOrDefault(o => string.Equals(o.Source, source, StringComparison.OrdinalIgnoreCase));
+            if (existing is { InOverridesFile: false })
+            {
+                return Task.FromResult(SettingsSaveResult.Failed(new[]
+                {
+                    $"The level of {existing.Source} is set outside the overrides file (a configuration file or the environment), so it cannot be removed here; change its level instead.",
+                }));
+            }
+
+            value = null!;
+        }
+        else
+        {
+            var normalized = LogLevelOverrides.NormalizeLevel(level);
+            if (normalized == null)
+            {
+                return Task.FromResult(SettingsSaveResult.Failed(new[] { $"\"{level}\" is not a level; use one of {string.Join(", ", LogLevelOverrides.Levels)}." }));
+            }
+
+            value = normalized;
+        }
+
+        var descriptor = new SettingDescriptor(key, "Serilog", "Serilog", SettingKind.Enum, typeof(string), LogLevelOverrides.Levels, false, false, "The lowest level logged for one source.");
+        return SaveAsync(new Dictionary<SettingDescriptor, object> { [descriptor] = value }, actor, cancellationToken);
+    }
+
     private SettingState StateOf(
         SettingDescriptor descriptor,
         IReadOnlyDictionary<string, string> overrides,

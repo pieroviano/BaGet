@@ -321,6 +321,73 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal("a", new SettingsOverridesStore(_path).Read()["Test:Items:0"]);
     }
 
+    private static Dictionary<string, string> WithValue(string key, string value)
+    {
+        var values = Valid()!;
+        values[key] = value;
+        return values;
+    }
+
+    private const string OverrideKey = "Serilog:MinimumLevel:Override:";
+
+    [Fact]
+    public async Task ALogLevelOverrideIsSavedAndListedWithItsOrigin()
+    {
+        var service = Create(WithValue(OverrideKey + "Microsoft", "Warning"));
+
+        var result = await service.SetLogLevelOverrideAsync("BaGet.Core.Indexing", "debug", "admin", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("Debug", new SettingsOverridesStore(_path).Read()[OverrideKey + "BaGet.Core.Indexing"]);
+        var listed = service.GetLogLevelOverrides().ToDictionary(o => o.Source);
+        Assert.Equal("Debug", listed["BaGet.Core.Indexing"].Level);
+        Assert.True(listed["BaGet.Core.Indexing"].InOverridesFile);
+        Assert.Equal("Warning", listed["Microsoft"].Level);
+        Assert.False(listed["Microsoft"].InOverridesFile);
+    }
+
+    [Fact]
+    public async Task ALevelCanBeChangedForASourceTheConfigurationFileSets()
+    {
+        var service = Create(WithValue(OverrideKey + "Microsoft", "Warning"));
+
+        Assert.True((await service.SetLogLevelOverrideAsync("Microsoft", "Error", "admin", CancellationToken.None)).Succeeded);
+
+        var changed = Assert.Single(service.GetLogLevelOverrides(), o => o.Source == "Microsoft");
+        Assert.Equal("Error", changed.Level);
+        Assert.True(changed.InOverridesFile);
+    }
+
+    [Fact]
+    public async Task OnlyAnOverrideSavedHereCanBeRemoved()
+    {
+        var service = Create(WithValue(OverrideKey + "Microsoft", "Warning"));
+        await service.SetLogLevelOverrideAsync("System", "Error", "admin", CancellationToken.None);
+
+        Assert.True((await service.SetLogLevelOverrideAsync("System", null, "admin", CancellationToken.None)).Succeeded);
+        Assert.DoesNotContain(service.GetLogLevelOverrides(), o => o.Source == "System");
+
+        var refused = await service.SetLogLevelOverrideAsync("Microsoft", null, "admin", CancellationToken.None);
+        Assert.False(refused.Succeeded);
+        Assert.Contains("change its level", refused.Errors.Single());
+    }
+
+    [Theory]
+    [InlineData("", "Debug")]
+    [InlineData("A:B", "Debug")]
+    [InlineData("Has space", "Debug")]
+    [InlineData("Microsoft", "Loud")]
+    [InlineData("Microsoft", "")]
+    public async Task ABadSourceOrLevelIsRefusedAndNothingIsWritten(string source, string level)
+    {
+        var service = Create(Valid());
+
+        var result = await service.SetLogLevelOverrideAsync(source, level, "admin", CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.False(File.Exists(_path));
+    }
+
     [Fact]
     public void SavingWithoutAStoreIsNotAvailable()
     {

@@ -45,6 +45,12 @@ public class SettingsModel : AdminPageModel
     /// <summary>The section the <see cref="Errors"/> belong to.</summary>
     public string? ErrorSection { get; private set; }
 
+    /// <summary>The per-source log levels (<c>Serilog:MinimumLevel:Override</c>) shown under the Serilog section.</summary>
+    public IReadOnlyList<LogLevelOverride> LogLevels { get; private set; } = Array.Empty<LogLevelOverride>();
+
+    /// <summary>The level names offered for a source.</summary>
+    public IReadOnlyList<string> LogLevelNames => LogLevelOverrides.Levels;
+
     /// <summary>Why the overrides file could not be read, or null.</summary>
     public string? LoadError { get; private set; }
 
@@ -203,6 +209,38 @@ public class SettingsModel : AdminPageModel
         return RedirectToSection(section);
     }
 
+    /// <summary>
+    /// Sets the lowest level logged for one source (a namespace prefix); applies live. Confirmed with the password like a save,
+    /// refused with HTTP 503 while the <see cref="MaintenanceGate"/> is closed.
+    /// </summary>
+    public Task<IActionResult> OnPostSetLogLevelAsync(string? source, string? level, string? password)
+        => ChangeLogLevelAsync(source?.Trim(), level ?? string.Empty, password, "set");
+
+    /// <summary>Removes a per-source level saved on this page (one a configuration file sets is only given another level).</summary>
+    public Task<IActionResult> OnPostRemoveLogLevelAsync(string? source, string? password)
+        => ChangeLogLevelAsync(source?.Trim(), null, password, "removed");
+
+    private async Task<IActionResult> ChangeLogLevelAsync(string? source, string? level, string? password, string verb)
+    {
+        if (!Settings.IsAvailable) return NotFound();
+
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var user = await UserManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        if (!await IsConfirmedAsync(user, password))
+        {
+            return await FailAsync("Serilog", new[] { "The confirmation is incorrect, so nothing was changed." });
+        }
+
+        var result = await Settings.SetLogLevelOverrideAsync(source, level, user.UserName, HttpContext.RequestAborted);
+        if (!result.Succeeded) return await FailAsync("Serilog", result.Errors);
+
+        Message = level == null ? $"The level of {source} was {verb}." : $"The level of {source} was {verb} to {LogLevelOverrides.NormalizeLevel(level)}.";
+        return RedirectToSection("Serilog");
+    }
+
     /// <summary>Back to the page showing <paramref name="section"/>: <c>?section=id</c> (the server renders it) and <c>#id</c> (the browser keeps it).</summary>
     private IActionResult RedirectToSection(string section)
     {
@@ -312,6 +350,7 @@ public class SettingsModel : AdminPageModel
             ids[group.Key] = candidate;
         }
         _ids = ids;
+        LogLevels = Settings.GetLogLevelOverrides();
         TelemetrySignals = Telemetry?.GetStatus();
         PendingRestart = states.Where(s => s.PendingRestart).Select(s => s.Descriptor.Key).ToList();
 

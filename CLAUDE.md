@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **3409 tests** (P8 included, no Docker: 3301 passed, 97 skipped, 11 failed = `TelemetryExportTests` x3 and `TelemetrySettingsPageTests` x8 below) across `BaGet.Core.Tests` (978), `BaGet.Tests` (2030),
+Baseline: **3425 tests** (P8 included, no Docker: 3317 passed, 97 skipped, 11 failed = `TelemetryExportTests` x3 and `TelemetrySettingsPageTests` x8 below) across `BaGet.Core.Tests` (986), `BaGet.Tests` (2038),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (107), `BaGet.Web.Tests` (58),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (20), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (44, Docker), `BaGet.Storage.Tests` (40, Docker; the GCS emulator is a single-threaded Python server that drops reused connections, so its tests use a no-reuse HTTP handler; one GCS test still failed in 1 of 3 full-suite runs before that, rerun the class if it recurs). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
