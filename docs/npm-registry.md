@@ -104,3 +104,9 @@ skipped otherwise): publish, install, scoped names through `%2f`, dist-tag, depr
 login (npm's own login library; `npm login` needs a terminal), logout, a private repository, a 40 MB tarball with bounded
 server allocations. The protocol, access, pages and parser are covered in `BaGet.Tests` (`NpmRegistryTests`,
 `NpmAccessTests`, `NpmPagesTests`) and `BaGet.Core.Tests` (`NpmPublishBodyTests`).
+
+## Vulnerability scanning
+
+With `Scanning:Enabled`, each stored version and its dependencies that name one exact version are checked against OSV. A
+policy of the repository can refuse the tarball download (`403 {"error": reason}`) or the publish (`403`, nothing stored); the
+packument stays readable. See [vulnerability scanning](vulnerability-scanning.md). Tests: `ScanningNpmTests`.

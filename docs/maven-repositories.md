@@ -96,3 +96,10 @@ The *Where would a package come from?* preview takes `group:artifact` and any Ma
 repository with `settings.xml` credentials. They skip without Docker and need the internet (the plugins come from Maven Central).
 
 `MavenRemoteVirtualCliTests` (`BaGet.Clients.Tests`): the real `mvn` against a remote repository whose upstream is a second real BaGet (releases, timestamped snapshots, upstream gone, `502`, deploy refused), a virtual repository, and, with the internet, the real Maven Central through a `*` mirror (plugins and prefix metadata included).
+
+## Vulnerability scanning
+
+With `Scanning:Enabled`, each stored version and the compile and runtime dependencies of its POM that state a literal version are
+checked against OSV. A policy can refuse the files of a version (`403`, plain text; `maven-metadata.xml` stays readable) and a
+deploy whose artifact or POM dependencies have findings (nothing stored). See [vulnerability scanning](vulnerability-scanning.md).
+Tests: `ScanningMavenTests`.

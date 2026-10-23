@@ -16,7 +16,7 @@ the endpoints BaGet Extension adds of its own.
 | `PackageBaseAddress/3.0.0` | `/v3/package` | |
 | `PackageDetailsUriTemplate/5.1.0` | `/packages/{id}/{version}` | |
 | `ReportAbuseUriTemplate/3.0.0-beta`, `-rc` | `/packages/{id}/{version}/report-abuse` | |
-| `VulnerabilityInfo/6.7.0` | `/v3/vulnerabilities/index.json` | one page, `/v3/vulnerabilities/base.json` |
+| `VulnerabilityInfo/6.7.0` | `/v3/vulnerabilities/index.json` | one page, `/v3/vulnerabilities/base.json`; entries set by hand plus what [scanning](../vulnerability-scanning.md) found about the package version itself |
 | `Catalog/3.0.0` | `/v3/catalog/index.json` | not with Azure Table Storage (the `Catalog` resource is not advertised and its routes answer `404`) |
 | `RepositorySignatures/5.0.0` | `/v3/repository-signatures/index.json` | only while [repository signing](../configuration.md#repository-signing) is configured |
 
@@ -121,6 +121,8 @@ Pages marked "accounts" answer `404` while `Accounts:Enabled` is `false`; "sign-
 | `/account/profile` | accounts, sign-in; redirects to `/profiles/{name}` |
 | `/profiles/{name}` | a user's or organization's packages; accounts |
 | `/packages/{id}/manage` | accounts, sign-in; owners: owners, unlist/relist, delete (per `PackageDeletionBehavior`), deprecation, vulnerabilities, symbols (list/delete), abuse reports; administrators: verified flag |
+| `/scan-artifact?name=&version=` (also `/r/{repo}/scan-artifact`) | accounts, sign-in; may manage the package: *Scan now* of one version, see [vulnerability scanning](../vulnerability-scanning.md) |
+| `/admin/scanning`, `/admin/scanning/{repository}`, `/admin/scanning/projects/{name}` | administrators: scanning overview, a repository's dashboard and policy, a project's policy |
 | `/packages/{id}/validation` | accounts, sign-in, validation; push or manage: the validation status of the ID's submissions |
 | `/packages/{id}/contact-owners` | accounts, sign-in; `404` unless email is configured |
 | `/admin/users` | administrators: promote, demote, reset password, send reset link |

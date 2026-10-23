@@ -82,6 +82,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 		docs\retention.md = docs\retention.md
 		docs\ui-coverage.md = docs\ui-coverage.md
 		docs\virtual-repositories.md = docs\virtual-repositories.md
+		docs\vulnerability-scanning.md = docs\vulnerability-scanning.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "advanced", "advanced", "{4974D3C8-A572-426F-84A0-7EA7D087EADD}"

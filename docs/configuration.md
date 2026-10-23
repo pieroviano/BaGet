@@ -146,6 +146,21 @@ See [npm registry](npm-registry.md).
 
 See [Docker registry](docker-registry.md).
 
+## Vulnerability scanning
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Scanning:Enabled` | `false` | master switch; scanning calls OSV.dev, so it is off by default. Live |
+| `Scanning:ScanOnDeploy` | `true` | queue a scan when a version is stored. Live |
+| `Scanning:RescanInterval` | `1.00:00:00` | versions whose last scan is older are scanned again by a sweep every 10 minutes; `0` = never. Live |
+| `Scanning:OsvUrl` | `https://api.osv.dev` | the OSV API root. Live |
+| `Scanning:OsvOfflinePath` | empty | a directory or `.zip` of OSV records: scan without the internet. Live |
+| `Scanning:OsvTimeout`, `Scanning:OsvCacheLifetime` | `00:00:30`, `01:00:00` | one OSV request; how long an answer per component is reused. Live |
+| `Scanning:TrivyPath`, `Scanning:TrivyRegistryHost` | empty | the `trivy` executable and this server's registry address as Docker clients use it; both are needed to scan images. Live |
+| `Scanning:TrivyServerUrl`, `Scanning:TrivyInsecure`, `Scanning:TrivyRegistryUser`, `Scanning:TrivyRegistryPassword`, `Scanning:TrivyTimeout` | empty, `false`, empty, empty, `00:10:00` | `--server`, `--insecure`, the credentials Trivy pulls with (the password is a sensitive setting) and the limit of one run. Live |
+
+See [vulnerability scanning](vulnerability-scanning.md).
+
 ## Enable package hard deletions
 
 To prevent the ["left pad" problem](https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm),

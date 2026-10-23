@@ -162,3 +162,11 @@ when it cannot be), and through a virtual repository that pushes to its deploy r
 multi-layer and 96 MB images, a multi-platform index, public and private repositories, and the `opencontainers/distribution-spec` v1.1.0
 conformance suite (push, pull, content discovery, content management) runs against the same server. They skip without a Docker daemon that
 allows privileged containers; the images are built `FROM scratch`, so they need no internet (the conformance image comes from `ghcr.io`).
+
+## Vulnerability scanning
+
+Images are scanned by Trivy when `Scanning:TrivyPath` and `Scanning:TrivyRegistryHost` are set; without them images are marked
+unscanned in the UI and nothing is blocked. A policy can refuse a manifest pull (`403 DENIED`, tag or digest; layers are
+content-addressed and stay fetchable by digest), and a push that reaches the *block deploy* threshold is scanned right after the
+push and removed again (`403 DENIED`). See [vulnerability scanning](vulnerability-scanning.md). Tests: `ScanningDockerTests` (a fake
+Trivy), `TrivyRunnerTests` (a script standing in for the executable).

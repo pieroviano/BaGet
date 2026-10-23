@@ -57,7 +57,7 @@ An npm repository of kind remote proxies an upstream registry: `npm install` aga
 | Offline mode | The upstream is never contacted: remembered answers and stored versions only; anything else is `404` |
 | `npm publish`, dist-tag, deprecate, unpublish | `403` (`401` without credentials): a remote repository takes no changes |
 | `npm search` | Searches the **stored** packages only; a registry's catalogue is not searched through a cache |
-| `npm audit` | "No advisories", as for every repository until vulnerability scanning exists |
+| `npm audit` | "No advisories", as for every repository (the findings of [vulnerability scanning](vulnerability-scanning.md) are on the package pages, not in the audit endpoint) |
 
 What is kept: a stored version is an ordinary npm version row (manifest, checksums, deprecation, upstream publish time) and its tarball under `repos/{name}/npm/`; the packument itself is **remembered in memory only**, per node (at most 1000 answers per repository, 128 MB each), so after a restart with the upstream down the packument lists only the stored versions. The cache table counts stored versions and packages. Each tarball fetch emits the `mirror.fetch` span (package, version, result; never a URL or credential), as a NuGet mirror fetch does.
 

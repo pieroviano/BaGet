@@ -52,6 +52,7 @@ nav:
   - Remote repositories: remote-repositories.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md
+  - Vulnerability scanning: vulnerability-scanning.md
   - UI coverage: ui-coverage.md
   - Import:
     - Local feeds: import/local-feeds.md

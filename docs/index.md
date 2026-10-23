@@ -27,6 +27,13 @@ One server can hold several [repositories](repositories.md), each with its own f
 Who may read and write what is set by [groups, permission targets and project roles](access-control.md): private feeds,
 Basic-auth client setup, upgrade defaults and the admin pages.
 
+## Vulnerability scanning
+
+Packages, npm and Maven artifacts are checked against [OSV.dev](https://osv.dev) (online or an offline copy) and Docker images by
+Trivy; findings appear on every package page and in an administrator dashboard, feed NuGet's vulnerability resource, and a
+per-repository or per-project policy can warn or refuse downloads and deploys with `403` and the reason:
+[vulnerability scanning](vulnerability-scanning.md).
+
 ## What BaGet Extension serves
 
 BaGet Extension speaks the NuGet V3 protocol, with a V2 feed for older clients (on by default), and serves

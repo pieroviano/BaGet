@@ -27,6 +27,7 @@ Rules: at most 50 members; a repository is listed once; a member must exist and 
 | Symbols | The first member that stores the PDB |
 | V2 feed (`/r/{name}/api/v2`) | `FindPackagesById`, `Packages(Id,Version)`, `Packages()` and `Search()` read the members' stored packages the same way (the V2 feed never asks an upstream, here or elsewhere) |
 | Vulnerability index | The advisories of the readable members, each once |
+| Scanning policy (download refusals) | The first member that has a scan result for the version decides, under that member's policy; a virtual repository has no results or policy of its own |
 | Catalog | **Not served** (`404`, and the service index omits `Catalog/3.0.0`): a virtual repository records nothing, and a merged log would have no commit order a client could resume from. Use the members' catalogs |
 | Service index | Like any repository's, with every URL inside `/r/{name}/` |
 | Web pages | *Packages*, a package's page, *Upload* and *Browse* work; *Statistics*, *Report abuse*, *Manage package* and *Contact owners* answer `404` (a virtual repository has no owners, reports or counters of its own: use the member's page) |

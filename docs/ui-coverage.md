@@ -82,6 +82,20 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Virtual Docker: pull from the first member, merged tags, push to the deploy repository | REST | `/docker-images` (the members' images merged), `/docker-images/{image}` | read / Deploy |
 | Docker garbage collection of a repository (dry run, run) | service (`IOciGarbageCollector`) | Admin Operations: *Docker garbage collection: dry run* and *Docker garbage collection* per local or remote Docker repository; scheduled by a retention policy (*Collect garbage*) | Admin, audited |
 
+## Vulnerability scanning
+
+| Capability | Reached by | UI | Gate |
+|---|---|---|---|
+| Findings of a version (NuGet, npm, Maven, Docker image) | service (`IScanService`) | the *Vulnerabilities* section of `/packages/{id}/{version}`, `/npm-packages/{name}`, `/maven-artifacts/...`, `/docker-images/{image}?digest=` | read |
+| Scan a version now | service | `/scan-artifact` (linked from that section) | signed in, Manage on the package |
+| Scan a whole repository | service, operation `vulnerability-scan` | Admin Scanning > repository (*Scan the whole repository now*); Admin Operations | Admin, audited |
+| Counts by severity, versions with findings, engines in use | service | Admin Scanning, Admin Scanning > repository | Admin |
+| Policy of a repository (warn, block download, block deploy, block unscanned) | service (`IScanPolicyService`) | Admin Scanning > repository | Admin + Password, audited |
+| Policy of a project | service | Admin Scanning > project (linked from the project) | Admin + Password, audited |
+| 403 with the reason on download and deploy | REST (every format's routes) | package pages explain a refusal; the Upload pages show it | read / Deploy |
+| NuGet vulnerability resource | REST | Manage lists the scanner's entries read-only | read |
+| Scanning options (`Scanning:*`) | `appsettings.Overrides.json` | Admin Settings | Admin + Password |
+
 ## Repositories (Admin)
 
 | Capability | Reached by | UI | Gate |
