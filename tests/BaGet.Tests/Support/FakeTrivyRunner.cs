@@ -19,6 +19,9 @@ public sealed class FakeTrivyRunner : ITrivyRunner
     /// <summary>When set, every scan fails with this message.</summary>
     public string? Failure { get; set; }
 
+    /// <summary>Runs during a scan, with the image reference (a test pulls the image through the registry here, like Trivy does).</summary>
+    public Func<string, Task>? OnScan { get; set; }
+
     /// <summary>The image references scanned so far, in order.</summary>
     public string[] References => _references.ToArray();
 
@@ -27,11 +30,12 @@ public sealed class FakeTrivyRunner : ITrivyRunner
         => !string.IsNullOrWhiteSpace(options.TrivyPath) && !string.IsNullOrWhiteSpace(options.TrivyRegistryHost);
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<ScanHit>> ScanImageAsync(ScanningOptions options, string imageReference, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ScanHit>> ScanImageAsync(ScanningOptions options, string imageReference, CancellationToken cancellationToken)
     {
         _references.Enqueue(imageReference);
         if (Failure != null) throw new ScanUnavailableException(Failure);
+        if (OnScan != null) await OnScan(imageReference);
 
-        return Task.FromResult<IReadOnlyList<ScanHit>>(Hits.ToList());
+        return Hits.ToList();
     }
 }

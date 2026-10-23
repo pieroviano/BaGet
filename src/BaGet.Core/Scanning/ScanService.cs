@@ -146,6 +146,7 @@ public sealed class ScanService : IScanService
                     return null;
                 }
 
+                using var inFlight = ScanInFlight.Begin(Repository.Key, name, version);
                 hits = await _trivy.ScanImageAsync(Options, Options.TrivyRegistryHost!.Trim().TrimEnd('/') + "/" + Repository.Name + "/" + reference, cancellationToken).ConfigureAwait(false);
             }
         }

@@ -236,6 +236,38 @@ public class ScanningNpmTests
     }
 
     [Fact]
+    public async Task BlockUnscannedOfAMemberAppliesThroughAVirtualRepository()
+    {
+        await using var harness = await StartAsync();
+        await PublishAsync(harness, "lib", "1.0.0");
+        using (var scope = harness.App.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>().CreateAsync(
+                "all",
+                new VirtualRepositorySettings { Members = new List<string> { "web" }, DeployRepository = "web" },
+                TestContext.Current.CancellationToken,
+                actor: null,
+                anonymousRead: true,
+                RepositoryFormat.Npm);
+        }
+
+        await harness.SetPolicyAsync("web", blockUnscanned: true);
+        await harness.RunAsync("web", async sp =>
+        {
+            var context = sp.GetRequiredService<IContext>();
+            context.ScanResults!.RemoveRange(context.ScanResults!.ToList());
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+            return 0;
+        });
+
+        // The refusal queues a scan, so only the first request sees the version unscanned.
+        using var viaVirtual = await harness.Client.GetAsync("/r/all/npm/lib/-/lib-1.0.0.tgz", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, viaVirtual.StatusCode);
+    }
+
+    [Fact]
     public async Task APolicyOfTheProjectAppliesToItsRepositoriesUnlessTheRepositoryHasItsOwn()
     {
         await using var harness = await StartAsync();

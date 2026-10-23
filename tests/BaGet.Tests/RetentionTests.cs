@@ -201,6 +201,9 @@ public class RetentionTests : IDisposable
     {
         await PushNuGetAsync("Used.Lib", "1.0.0");
         await PushNuGetAsync("Used.Lib", "2.0.0");
+
+        // The policy watches from its creation: a version nobody is recorded to download counts as unused only N days after that.
+        var policy = await SaveAsync(Input("unused", unused: 30));
         _clock.Advance(TimeSpan.FromDays(40));
 
         // Version 2 is downloaded today, over HTTP like a client would.
@@ -215,7 +218,6 @@ public class RetentionTests : IDisposable
         Assert.True(await recorder.FlushAsync(_app.Services.GetRequiredService<IServiceScopeFactory>(), Token) > 0);
         Assert.Equal(0, recorder.Pending);
 
-        var policy = await SaveAsync(Input("unused", unused: 30));
         var run = await RunAsync(policy, dryRun: false);
 
         Assert.Equal(new[] { "Used.Lib 1.0.0" }, Items(run, RetentionOutcome.Deleted));
@@ -517,10 +519,10 @@ public class RetentionTests : IDisposable
         await CreateAsync("reg", RepositoryFormat.Docker);
         await PushImageAsync("reg", "team/app", "pulled");
         await PushImageAsync("reg", "team/app", "ignored");
+        var policy = await SaveAsync(Input("docker-unused", "reg", unused: 30));
         _clock.Advance(TimeSpan.FromDays(60));
         await InRepoAsync("reg", async sp => await sp.GetRequiredService<IOciRegistry>().GetManifestAsync("team/app", "pulled", Token));
         await _app.Services.GetRequiredService<ArtifactUsageRecorder>().FlushAsync(_app.Services.GetRequiredService<IServiceScopeFactory>(), Token);
-        var policy = await SaveAsync(Input("docker-unused", "reg", unused: 30));
 
         var run = await RunAsync(policy, dryRun: false);
 

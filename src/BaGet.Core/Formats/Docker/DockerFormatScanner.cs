@@ -36,12 +36,14 @@ public sealed class DockerFormatScanner : IFormatScanner
     {
         if (_context is NullContext || !OciNames.IsValidDigest(version)) return null;
 
-        var found = await _context.OciManifests!
+        // Only an image manifest is scannable (not an index, a signature or another artifact), so only it is "stored" for the gate.
+        var row = await _context.OciManifests!
             .AsNoTracking()
-            .Join(_context.OciRepositories!.Where(r => r.Name == name), m => m.ImageKey, r => r.Key, (m, r) => m)
-            .AnyAsync(m => m.Digest == version, cancellationToken)
+            .Join(_context.OciRepositories!.Where(r => r.Name == name), m => m.ImageKey, r => r.Key, (m, r) => new { m.Digest, m.MediaType, m.ArtifactType, m.SubjectDigest })
+            .Where(m => m.Digest == version)
+            .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
-        return found ? name + "@" + version : null;
+        return row != null && IsImage(row.MediaType, row.ArtifactType, row.SubjectDigest) ? name + "@" + version : null;
     }
 
     /// <inheritdoc/>

@@ -232,4 +232,81 @@ public class ScanningDockerTests
         Assert.False(DockerFormatScanner.IsImage(OciTestImage.ManifestType, "application/vnd.dev.cosign.artifact.sig.v1+json", null));
         Assert.False(DockerFormatScanner.IsImage(OciTestImage.ManifestType, OciTestImage.ConfigType, "sha256:abc"));
     }
+
+    [Fact]
+    public async Task BlockUnscannedRefusesNothingWhileNoEngineCanScan()
+    {
+        var (harness, _) = await StartAsync(configured: false);
+        await using var _ = harness;
+        (await PushImageAsync(harness, "libs/app", "latest", OciTestImage.Create("no-engine"))).Dispose();
+        await harness.SetPolicyAsync("libs", blockUnscanned: true);
+
+        using var pull = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/latest");
+
+        Assert.Equal(HttpStatusCode.OK, pull.StatusCode);
+    }
+
+    [Fact]
+    public async Task BlockUnscannedLeavesSignaturesAndOtherArtifactsPullable()
+    {
+        var (harness, _) = await StartAsync();
+        await using var _ = harness;
+        var image = OciTestImage.Create("signed");
+        (await PushImageAsync(harness, "libs/app", "latest", image)).Dispose();
+        var signature = OciTestImage.Create("sig", subject: image.ManifestDigest, artifactType: "application/vnd.dev.cosign.artifact.sig.v1+json");
+        (await PushImageAsync(harness, "libs/app", "sig", signature)).Dispose();
+        await harness.SetPolicyAsync("libs", blockUnscanned: true);
+
+        using var pull = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/" + signature.ManifestDigest);
+
+        Assert.Equal(HttpStatusCode.OK, pull.StatusCode);
+    }
+
+    [Fact]
+    public async Task TheScannersOwnPullIsNotRefusedAsUnscanned()
+    {
+        var (harness, trivy) = await StartAsync();
+        await using var _ = harness;
+        var image = OciTestImage.Create("to-scan");
+        (await PushImageAsync(harness, "libs/app", "latest", image)).Dispose();
+        await harness.SetPolicyAsync("libs", blockUnscanned: true);
+        HttpStatusCode? during = null;
+        trivy.OnScan = async _ =>
+        {
+            using var pull = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/" + image.ManifestDigest);
+            during = pull.StatusCode;
+        };
+
+        var result = (await harness.ScanAsync("libs", "app", image.ManifestDigest))!;
+        trivy.OnScan = null;
+        using var after = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/latest");
+
+        Assert.Equal(HttpStatusCode.OK, during);
+        Assert.NotNull(result.ScannedAt);
+        Assert.Equal(HttpStatusCode.OK, after.StatusCode);
+    }
+
+    [Fact]
+    public async Task APushRefusedByBlockDeployPutsAMovedTagBackEvenForAManifestTheImageAlreadyHeld()
+    {
+        var (harness, trivy) = await StartAsync();
+        await using var _ = harness;
+        var good = OciTestImage.Create("good");
+        var bad = OciTestImage.Create("bad");
+        (await PushImageAsync(harness, "libs/app", "prod", good)).Dispose();
+        (await PushImageAsync(harness, "libs/app", "other", bad)).Dispose();
+        trivy.Hits.Add(Hit("CVE-2024-0007", Critical));
+        await harness.SetPolicyAsync("libs", blockDeploy: High);
+
+        using var put = await PushImageAsync(harness, "libs/app", "prod", bad);
+        using var prod = await SendAsync(harness, HttpMethod.Head, "/v2/libs/app/manifests/prod");
+
+        Assert.Equal(HttpStatusCode.Forbidden, put.StatusCode);
+        Assert.Equal(good.ManifestDigest, prod.Headers.GetValues("Docker-Content-Digest").Single());
+
+        using var fresh = await PushImageAsync(harness, "libs/app", "brand-new", bad);
+        using var gone = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/brand-new");
+        Assert.Equal(HttpStatusCode.Forbidden, fresh.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, gone.StatusCode);
+    }
 }

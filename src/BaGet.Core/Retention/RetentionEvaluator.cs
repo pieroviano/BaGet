@@ -128,7 +128,11 @@ public static class RetentionEvaluator
         if (policy.UnusedDays is int unused)
         {
             var cutoff = now - TimeSpan.FromDays(unused);
-            foreach (var v in candidates.Where(v => (v.LastDownloaded ?? v.Published) < cutoff)) Select(v, RetentionRule.Unused);
+
+            // A version with no recorded download counts from its publication, but never from before the policy existed: downloads
+            // are recorded only since usage tracking began (an upgraded install has no history), so "unused for N days" cannot be
+            // judged for a period the policy did not watch.
+            foreach (var v in candidates.Where(v => (v.LastDownloaded ?? Latest(v.Published, policy.Created)) < cutoff)) Select(v, RetentionRule.Unused);
         }
 
         if (policy.CacheLimitBytes is long limit)
@@ -191,6 +195,8 @@ public static class RetentionEvaluator
 
         return new RetentionDecision(considered.Count, Order(selected).ToList(), Order(held).ToList(), notes);
     }
+
+    private static DateTime Latest(DateTime a, DateTime b) => a > b ? a : b;
 
     private sealed class PairKeyComparer : IEqualityComparer<(string, string)>
     {

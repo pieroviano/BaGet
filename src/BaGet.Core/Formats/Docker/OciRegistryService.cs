@@ -625,9 +625,15 @@ public partial class OciRegistryService : IOciRegistry
                     await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
 
+                string? previousDigest = null;
                 if (!byDigest)
                 {
                     var tag = await _context.OciTags!.FirstOrDefaultAsync(t => t.ImageKey == imageKey && t.Name == reference, cancellationToken).ConfigureAwait(false);
+                    if (tag != null)
+                    {
+                        previousDigest = await _context.OciManifests!.AsNoTracking().Where(m => m.Key == tag.ManifestKey).Select(m => m.Digest).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
                     if (tag == null)
                     {
                         _context.OciTags!.Add(new OciTag { ImageKey = imageKey, Name = reference, ManifestKey = manifest.Key, Updated = now });
@@ -644,7 +650,7 @@ public partial class OciRegistryService : IOciRegistry
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
-                return new OciManifestPut(digest, parsed.Subject?.Digest, created);
+                return new OciManifestPut(digest, parsed.Subject?.Digest, created, previousDigest);
             }
             catch (DbUpdateException e) when (_context.IsUniqueConstraintViolationException(e) && attempt < 2)
             {

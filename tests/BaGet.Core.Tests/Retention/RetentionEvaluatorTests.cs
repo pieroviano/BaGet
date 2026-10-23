@@ -70,6 +70,23 @@ public class RetentionEvaluatorTests
     }
 
     [Fact]
+    public void UnusedNeverJudgesAPeriodBeforeThePolicyExisted()
+    {
+        // An upgraded install has no download history: a version with none recorded is not "unused" for days the policy did not watch.
+        var versions = new[]
+        {
+            V("a", "never-old", 100),
+            V("a", "used-long-ago", 100, downloadedDaysAgo: 60),
+        };
+
+        var fresh = Evaluate(new RetentionPolicy { UnusedDays = 30, Created = Now.AddDays(-1) }, versions);
+        var matured = Evaluate(new RetentionPolicy { UnusedDays = 30, Created = Now.AddDays(-31) }, versions);
+
+        Assert.Equal(new[] { "a used-long-ago" }, Keys(fresh.Selected));
+        Assert.Equal(new[] { "a never-old", "a used-long-ago" }, Keys(matured.Selected).OrderBy(k => k, StringComparer.Ordinal).ToArray());
+    }
+
+    [Fact]
     public void RulesCombineAsAUnionAndEachVersionNamesEveryRuleThatTookIt()
     {
         var versions = new[] { V("a", "1", 100), V("a", "2", 50), V("a", "3", 1) };

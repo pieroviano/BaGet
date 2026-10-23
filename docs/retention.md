@@ -13,7 +13,7 @@ are skipped). A version is deleted when **any enabled rule selects it** and no l
 |---|---|---|
 | Keep the newest N | versions of an artifact beyond its N newest (by publish time) | per artifact (package id, npm name, Maven `group:artifact`, Docker image) |
 | Older than D days | published more than D days ago | |
-| Unused for D days | last download older than D days | publish time when no download was recorded (see below) |
+| Unused for D days | last download older than D days | publish time (not before the policy was created) when no download was recorded (see below) |
 | Prerelease only | restricts the three rules above to prerelease versions | NuGet pre-release, npm prerelease, Maven `-SNAPSHOT`; Docker tags are never prerelease |
 | Cache limit (MiB) | remote repositories: least recently used versions until the cache fits | ignored (with a note) elsewhere |
 | Untagged for D days | Docker manifests no tag, index or referrer relationship needs, pushed more than D days ago | counted from the push; children of an index and artifacts attached to a manifest (signatures) are kept |
@@ -34,7 +34,9 @@ What a "version" is per format:
 NuGet counts downloads; the other formats do not, so the server records **when each version was last downloaded**
 (NuGet package download, npm tarball, Maven file, Docker manifest pull by tag or digest). Writes are batched in memory and
 saved about once a minute (and before a run plans), so a restart can lose the last minute. Downloads before this feature
-existed are unknown: such a version counts from its publish time.
+existed are unknown: such a version counts from its publish time or from the creation of the policy, whichever is later,
+so a policy never judges a period it did not watch (a new policy waits N days before it selects a version nobody is recorded
+to have downloaded).
 
 ## Dry run, run, schedule
 

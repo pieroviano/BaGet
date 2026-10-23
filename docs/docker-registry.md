@@ -168,5 +168,5 @@ allows privileged containers; the images are built `FROM scratch`, so they need 
 Images are scanned by Trivy when `Scanning:TrivyPath` and `Scanning:TrivyRegistryHost` are set; without them images are marked
 unscanned in the UI and nothing is blocked. A policy can refuse a manifest pull (`403 DENIED`, tag or digest; layers are
 content-addressed and stay fetchable by digest), and a push that reaches the *block deploy* threshold is scanned right after the
-push and removed again (`403 DENIED`). See [vulnerability scanning](vulnerability-scanning.md). Tests: `ScanningDockerTests` (a fake
+push and removed again (`403 DENIED`; a tag the push created or moved, also onto a manifest the image already held, goes back to where it pointed). Trivy's own pull is never refused by *block download* / *block unscanned* (the caller named by `Scanning:TrivyRegistryUser`, or, with no user configured, any pull of the image while its scan runs). See [vulnerability scanning](vulnerability-scanning.md). Tests: `ScanningDockerTests` (a fake
 Trivy), `TrivyRunnerTests` (a script standing in for the executable).

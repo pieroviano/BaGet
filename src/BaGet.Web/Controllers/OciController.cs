@@ -330,7 +330,11 @@ public class OciController : Controller
 
         // The scanning policy of the repository may refuse an image with known vulnerabilities (403 DENIED, by ScanBlockedFilter).
         // An index only lists platform manifests; each of those is checked when the client asks for it.
-        if (!OciNames.IsIndex(manifest.MediaType)) await _scanGate.CheckDownloadAsync(path.Image, manifest.Digest, cancellationToken);
+        // The scanner's own pull (Trivy) is exempt: refusing it would keep the image from ever being scanned or rescanned.
+        if (!OciNames.IsIndex(manifest.MediaType) && !_scanGate.IsScannerPull(path.Image, manifest.Digest, Current.Caller.Name))
+        {
+            await _scanGate.CheckDownloadAsync(path.Image, manifest.Digest, cancellationToken);
+        }
 
         Response.Headers[OciHttp.DigestHeader] = manifest.Digest;
         Response.Headers.ETag = $"\"{manifest.Digest}\"";
@@ -612,9 +616,9 @@ public class OciController : Controller
             {
                 await _scanGate.CheckStoredAsync(path.Image, put.Digest, cancellationToken);
             }
-            catch (ScanBlockedException) when (put.Created)
+            catch (ScanBlockedException)
             {
-                await _registry.DeleteManifestAsync(path.Image, put.Digest, CancellationToken.None);
+                await UndoRefusedPushAsync(path.Image, path.Reference!, put);
 
                 throw;
             }
@@ -626,6 +630,25 @@ public class OciController : Controller
         Response.Headers.ContentLength = 0;
 
         return new StatusCodeResult(StatusCodes.Status201Created);
+    }
+
+    // A refused push leaves nothing behind: a manifest that was new is removed, and a tag the push created or moved (also onto a
+    // manifest the image already held) goes back to where it pointed.
+    private async Task UndoRefusedPushAsync(string image, string reference, OciManifestPut put)
+    {
+        var ct = CancellationToken.None;
+        if (put.Created) await _registry.DeleteManifestAsync(image, put.Digest, ct);
+        if (OciNames.LooksLikeDigest(reference)) return;
+
+        if (put.PreviousDigest == null)
+        {
+            await _registry.DeleteTagAsync(image, reference, ct);
+        }
+        else if (!string.Equals(put.PreviousDigest, put.Digest, StringComparison.Ordinal))
+        {
+            var previous = await _registry.GetManifestAsync(image, put.PreviousDigest, ct);
+            if (previous != null) await _registry.PutManifestAsync(image, reference, previous.MediaType, previous.Content, ct);
+        }
     }
 
     // ---- deletes ----------------------------------------------------------------------------------------------------

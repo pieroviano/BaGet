@@ -73,6 +73,13 @@ public interface IScanGate
     /// <summary>Whether the policy in force refuses deploys at some severity (callers read the artifact's components only then).</summary>
     Task<bool> BlocksDeploysAsync(CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Whether a pull of the image is the scanning engine's own (Trivy pulls the image it scans through this registry): the caller is
+    /// <see cref="ScanningOptions.TrivyRegistryUser"/>, or, when no user is configured, a scan of that very image is running. Such a
+    /// pull is not subject to <see cref="CheckDownloadAsync"/>: refusing it would keep an unscanned image from ever being scanned.
+    /// </summary>
+    bool IsScannerPull(string name, string version, string? callerName);
+
     /// <summary>Throws <see cref="ScanBlockedException"/> when the policy refuses to hand out the version.</summary>
     Task CheckDownloadAsync(string name, string version, CancellationToken cancellationToken);
 
@@ -142,6 +149,17 @@ public sealed class ScanGate : IScanGate
         => Active && (await _policies.GetEffectiveAsync(_repository.Current.Key, cancellationToken).ConfigureAwait(false)).Values.BlockDeploySeverity != null;
 
     /// <inheritdoc/>
+    public bool IsScannerPull(string name, string version, string? callerName)
+    {
+        if (!Active) return false;
+
+        var user = _options.Value.TrivyRegistryUser;
+        return !string.IsNullOrWhiteSpace(user)
+            ? callerName != null && string.Equals(callerName, user.Trim(), StringComparison.OrdinalIgnoreCase)
+            : ScanInFlight.Contains(_repository.Current.Key, name, version);
+    }
+
+    /// <inheritdoc/>
     public async Task CheckDownloadAsync(string name, string version, CancellationToken cancellationToken)
     {
         if (!Active) return;
@@ -170,26 +188,37 @@ public sealed class ScanGate : IScanGate
         var repository = _repository.Current;
         var policy = await _policies.GetEffectiveAsync(repository.Key, cancellationToken).ConfigureAwait(false);
         var values = policy.Values;
-        if (values.BlockDownloadSeverity == null && !values.BlockUnscanned)
+        var result = await _scans.FindAsync(name, version, cancellationToken).ConfigureAwait(false);
+
+        // A virtual lookup stops at the member that holds the version: one with a result, or one that stores it without having
+        // scanned it (its own "block unscanned" then applies).
+        var stored = result != null;
+        async Task<bool> HoldsAsync()
         {
-            return requireResult ? await _scans.FindAsync(name, version, cancellationToken).ConfigureAwait(false) != null : false;
+            if (!stored) stored = await _scans.IsStoredAsync(name, version, cancellationToken).ConfigureAwait(false);
+            return stored;
         }
 
-        var result = await _scans.FindAsync(name, version, cancellationToken).ConfigureAwait(false);
+        if (values.BlockDownloadSeverity == null && !values.BlockUnscanned)
+        {
+            return requireResult && await HoldsAsync().ConfigureAwait(false);
+        }
+
         if (result?.ScannedAt == null)
         {
-            if (requireResult && result == null) return false;
+            if (requireResult && !await HoldsAsync().ConfigureAwait(false)) return false;
             Enqueue(name, version);
 
+            // Without an engine nothing can ever be scanned, so refusing would be for good (the pages say nothing is blocked then).
             // What a remote repository has not fetched yet cannot be scanned, and it is fetched by this very download: refusing it
             // would keep it from ever being scanned. It is scanned as soon as it is stored.
-            if (values.BlockUnscanned && (result != null || await _scans.IsStoredAsync(name, version, cancellationToken).ConfigureAwait(false)))
+            if (values.BlockUnscanned && _scans.GetEngineStatus().Available && await HoldsAsync().ConfigureAwait(false))
             {
                 throw new ScanBlockedException(ScanBlockedOperation.Download,
                     $"Download of {name} {version} refused by the scanning policy of {Describe(policy, repository)}: it has not been scanned yet. Try again shortly.");
             }
 
-            return result != null;
+            return stored;
         }
 
         var reason = DownloadReason(name, version, result, policy, repository);

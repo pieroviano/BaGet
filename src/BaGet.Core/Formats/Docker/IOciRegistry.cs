@@ -148,7 +148,8 @@ public sealed record OciManifestContent(string Digest, string MediaType, byte[] 
 /// <param name="Digest">The manifest's digest.</param>
 /// <param name="SubjectDigest">The digest of its subject, or null.</param>
 /// <param name="Created">Whether the manifest was new to the image (a re-push of the same bytes is not).</param>
-public sealed record OciManifestPut(string Digest, string? SubjectDigest, bool Created);
+/// <param name="PreviousDigest">The digest the pushed tag pointed to before this push (null for a push by digest or a new tag); lets a caller that refuses the push put the tag back.</param>
+public sealed record OciManifestPut(string Digest, string? SubjectDigest, bool Created, string? PreviousDigest = null);
 
 /// <summary>An open upload session.</summary>
 /// <param name="Reference">The reference to put in the upload URL.</param>
