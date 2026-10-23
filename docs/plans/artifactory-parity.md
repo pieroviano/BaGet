@@ -7,7 +7,7 @@ an admin REST API, replication and high availability.
 **Size.** This is several products' worth of work. Each phase below ships on its own and gets **its own
 implementation run** (worktrees, review). Do not implement the whole plan in one run.
 
-## Status (2026-10-21)
+## Status (2026-10-23)
 
 | Phase | State | Commits / where |
 |---|---|---|
@@ -17,9 +17,9 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | P3 Format layer + npm | **Format layer done** (track `p3-format`, [formats.md](../formats.md)); **local npm registry done** (track `p3-npm`, [npm-registry.md](../npm-registry.md)); **remote and virtual npm done** (track `p3-npm-remote`, see *As built: remote and virtual npm* under P3). P3 is complete | `cf8cd41`..`da27c53` (format `cf8cd41`,`173c5a3`; npm `dd56089`..`62881d0`; remote/virtual `2f2a951`..`da27c53`); `IFormatModule`, NuGet on it, `Npm` format, npm tables (migration x4), Clients rig; `NpmRegistryService`, `NpmController`, npm pages, real-npm tests |
 | P4 Maven | **Done**: local (track `p4-maven`), remote (Central proxy) and virtual (track `p4-maven-remote`); see [maven-repositories.md](../maven-repositories.md); Gradle not tested | `c97d37a` (remote/virtual), `769bd3e`, integration `7ff8c17`; branches `wt/p4-maven`, `wt/p4-maven-remote` |
 | P5 Docker / OCI | **Done**: streaming storage (B2, track `p5-storage`, [formats.md](../formats.md#streaming-storage-b2), `6bf588a`, `b06565f`); local registry (track `p5-oci`, [docker-registry.md](../docker-registry.md), `f9bdd3e`..`49b2124`); remote, virtual and garbage collection (track `p5-oci-remote`, `9bd42b6`..`9f639e5`) | see *As built* under P5 |
-| P6 Retention and cleanup | **Done** (track `p6-retention`, [retention.md](../retention.md)); see *As built* under P6 | branch `wt/p6-retention` |
-| P7 Vulnerability scanning | **Done** (track `p7-scan`, [vulnerability-scanning.md](../vulnerability-scanning.md)); see *As built* under P7 | branch `wt/p7-scan` |
-| P8 Admin REST API | **Done** (track `p8-api`, [admin-api.md](../admin-api.md)); see *As built* under P8 | branch `wt/p8-api` |
+| P6 Retention and cleanup | **Done** (track `p6-retention`, [retention.md](../retention.md)); see *As built* under P6 | `115f126`..`26ffa42` |
+| P7 Vulnerability scanning | **Done** (track `p7-scan`, [vulnerability-scanning.md](../vulnerability-scanning.md)); see *As built* under P7 | `9781745`..`974a659` (migration regenerated after `AddRetention`) |
+| P8 Admin REST API | **Done** (track `p8-api`, [admin-api.md](../admin-api.md)); see *As built* under P8 | `d872c34`..`0d64b6b` |
 | P9-P10 | Not started | No replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
@@ -259,7 +259,7 @@ User documentation: [Docker registry](../docker-registry.md).
 | Verification (integration) | Full solution, no Docker: 3192 total, 3084 passed, 97 skipped (Docker suites), 11 failed = `TelemetryExportTests` x3 + `TelemetrySettingsPageTests` x8 (listed in CLAUDE.md); 0 build warnings. Rerun the Docker suites (`Clients`, `Storage`, `Database`, `Telemetry` E2E) with Docker |
 | Blocking checks | B1, B2, B3, B6 resolved (table above); none open |
 
-### P6 — Retention and cleanup
+### P6 — Retention and cleanup — DONE
 
 | Item | Note |
 |---|---|
@@ -284,7 +284,7 @@ User documentation: [Retention and cleanup](../retention.md).
 | Blocking checks | none assigned to P6 in the table above |
 | Deviations | (1) Policies also name `NamePatterns` (a glob filter) and `CollectGarbage`/`ScheduleHours`, which the sketch left implicit. (2) A Docker "version" is a tag; untagged-manifest age counts from the push (`OciManifest.Created`), as no untag time is stored. (3) The Docker dry run's GC reports the state before the run's own deletions. (4) NuGet package size is read from the store (cache limit only). (5) Holds govern retention only, not manual deletes. (6) No CLI command (the plan asked for none); service + UI only |
 
-### P7 — Vulnerability scanning (D7)
+### P7 — Vulnerability scanning (D7) — DONE
 
 | Item | Note |
 |---|---|
@@ -325,7 +325,7 @@ User docs: [vulnerability-scanning.md](../vulnerability-scanning.md); internals:
 **Known limits.** npm dependencies that are ranges and Maven properties are not resolved; at most 1000 findings per version; an image is
 scanned per platform manifest, not per index.
 
-### P8 — Admin REST API
+### P8 — Admin REST API — DONE
 
 | Item | Note |
 |---|---|
