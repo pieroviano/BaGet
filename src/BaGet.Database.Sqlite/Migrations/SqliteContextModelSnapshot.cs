@@ -164,6 +164,38 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("ApiKeyRepositories");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ArtifactUsage", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastUsed")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ArtifactUsages");
+                });
+
             modelBuilder.Entity("BaGet.Core.BaGetUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1361,6 +1393,122 @@ namespace BaGet.Database.Sqlite.Migrations
                         .IsUnique();
 
                     b.ToTable("Repositories");
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionHold", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("RetentionHolds");
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionPolicy", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CacheLimitBytes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CollectGarbage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("KeepLast")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastRun")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NamePatterns")
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("OlderThanDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("PrereleaseOnly")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RepositoryKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ScheduleHours")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ScheduleStart")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UntaggedAfterDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("UnusedDays")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectKey");
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.ToTable("RetentionPolicies");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

@@ -79,6 +79,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 		docs\npm-registry.md = docs\npm-registry.md
 		docs\remote-repositories.md = docs\remote-repositories.md
 		docs\repositories.md = docs\repositories.md
+		docs\retention.md = docs\retention.md
 		docs\ui-coverage.md = docs\ui-coverage.md
 		docs\virtual-repositories.md = docs\virtual-repositories.md
 	EndProjectSection

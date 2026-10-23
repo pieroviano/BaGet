@@ -17,7 +17,8 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | P3 Format layer + npm | **Format layer done** (track `p3-format`, [formats.md](../formats.md)); **local npm registry done** (track `p3-npm`, [npm-registry.md](../npm-registry.md)); **remote and virtual npm done** (track `p3-npm-remote`, see *As built: remote and virtual npm* under P3). P3 is complete | `cf8cd41`..`da27c53` (format `cf8cd41`,`173c5a3`; npm `dd56089`..`62881d0`; remote/virtual `2f2a951`..`da27c53`); `IFormatModule`, NuGet on it, `Npm` format, npm tables (migration x4), Clients rig; `NpmRegistryService`, `NpmController`, npm pages, real-npm tests |
 | P4 Maven | **Done**: local (track `p4-maven`), remote (Central proxy) and virtual (track `p4-maven-remote`); see [maven-repositories.md](../maven-repositories.md); Gradle not tested | `c97d37a` (remote/virtual), `769bd3e`, integration `7ff8c17`; branches `wt/p4-maven`, `wt/p4-maven-remote` |
 | P5 Docker / OCI | **Done**: streaming storage (B2, track `p5-storage`, [formats.md](../formats.md#streaming-storage-b2), `6bf588a`, `b06565f`); local registry (track `p5-oci`, [docker-registry.md](../docker-registry.md), `f9bdd3e`..`49b2124`); remote, virtual and garbage collection (track `p5-oci-remote`, `9bd42b6`..`9f639e5`) | see *As built* under P5 |
-| P6-P10 | Not started | No retention, scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
+| P6 Retention and cleanup | **Done** (track `p6-retention`, [retention.md](../retention.md)); see *As built* under P6 | branch `wt/p6-retention` |
+| P7-P10 | Not started | No scanning, `/api/v1`, replication, `AddDataProtection` or health endpoints exist |
 
 ## Blocking — resolve before coding
 
@@ -261,6 +262,22 @@ User documentation: [Docker registry](../docker-registry.md).
 |---|---|
 | Policies per repository or project: keep last N versions, delete older than X, prerelease/snapshot-only, unused for X days (last download), remote cache size cap, untagged Docker manifests | `RetentionPolicies` table; per-format hooks from `IFormatModule` |
 | Dry run report, schedule, audit, respects legal hold | Background worker; write gate aware |
+
+#### As built: retention (track `p6-retention`)
+
+User documentation: [Retention and cleanup](../retention.md).
+
+| Item | As built |
+|---|---|
+| Tables | `RetentionPolicies` (one repository **or** one project, rules as columns, schedule), `RetentionHolds` (repository-scoped, empty version = whole artifact), `ArtifactUsages` (repository-scoped last-download time); migration `AddRetention` x4, `has-pending-model-changes` clean on all four; self-contained (integration regenerates it if `p7-scan`'s lands first) |
+| Rules | keep newest N, older than D, unused for D days, prerelease only, remote cache limit, untagged Docker manifests, Docker GC after; a version is deleted when **any** rule selects it and no hold covers it (`RetentionEvaluator`, pure) |
+| One code path | `RetentionEngine.RunAsync(policy, dryRun)` plans through the evaluator and a real run deletes exactly the plan (holds re-read before each deletion); tests assert dry-run items == deleted items per format |
+| Hooks | `IFormatRetentionHooks` implemented for NuGet (hard delete), npm (`PurgeAsync`), Maven (`PurgeAsync`), Docker (tag = version; untagged manifests via `ListUnreferencedAsync`); the interface gained `ListUnreferencedAsync`, `GetSizeAsync`, `Canonical` (default methods) |
+| Downloads | only NuGet counted them; `ArtifactUsageRecorder` now records last use for all four formats (in-memory, flushed in batches) |
+| Schedule | `RetentionWorker` (hosted, every minute) starts due policies, waits while the gate is closed; `RetentionJobs` runs one policy at a time in the background and keeps the last report |
+| UI | `/admin/retention` (list, create), `/admin/retention/{id}` (edit, dry run, run now, report, delete), `/admin/retention/holds`; menu entry *Retention*; `docs/ui-coverage.md` rows |
+| Audit | `retention.*` entries in the access audit (same save as the change) and `IAdminAudit` for runs |
+| Deviations | (1) Policies also name `NamePatterns` (a glob filter) and `CollectGarbage`/`ScheduleHours`, which the sketch left implicit. (2) A Docker "version" is a tag; untagged-manifest age counts from the push (`OciManifest.Created`), as no untag time is stored. (3) The Docker dry run's GC reports the state before the run's own deletions. (4) NuGet package size is read from the store (cache limit only). (5) Holds govern retention only, not manual deletes. (6) No CLI command (the plan asked for none); service + UI only |
 
 ### P7 — Vulnerability scanning (D7)
 

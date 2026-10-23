@@ -164,6 +164,16 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton<AdminJobService>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IAdminOperation, DownloadsImportOperation>());
         services.TryAddScoped<IAbuseReportAdministration, AbuseReportAdministration>();
+
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatRetentionHooks, NuGetRetentionHooks>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatRetentionHooks, NpmRetentionHooks>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatRetentionHooks, MavenRetentionHooks>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatRetentionHooks, DockerRetentionHooks>());
+        services.TryAddSingleton<ArtifactUsageRecorder>();
+        services.TryAddScoped<RetentionEngine>();
+        services.TryAddScoped<IRetentionAdministration, RetentionAdministration>();
+        services.TryAddSingleton<RetentionJobs>();
+        services.AddHostedService<RetentionWorker>();
         services.TryAddScoped<StatisticsService>();
 
         services.TryAddTransient<IAuthenticationService, ApiKeyAuthenticationService>();

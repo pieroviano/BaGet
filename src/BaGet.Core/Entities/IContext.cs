@@ -107,6 +107,15 @@ public interface IContext
 
     DbSet<AccessAuditEntry>? AccessAuditEntries { get; set; }
 
+    /// <summary>The retention policies; see <see cref="RetentionPolicy"/>. Not repository-scoped.</summary>
+    DbSet<RetentionPolicy>? RetentionPolicies { get; set; }
+
+    /// <summary>The legal holds; see <see cref="RetentionHold"/>. Repository-scoped.</summary>
+    DbSet<RetentionHold>? RetentionHolds { get; set; }
+
+    /// <summary>When versions were last downloaded; see <see cref="ArtifactUsage"/>. Repository-scoped.</summary>
+    DbSet<ArtifactUsage>? ArtifactUsages { get; set; }
+
     /// <summary>
     /// Identity's users. Declared here so that account services can query them through
     /// the same context as everything else.

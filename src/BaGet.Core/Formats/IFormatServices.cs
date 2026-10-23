@@ -85,18 +85,46 @@ public interface IFormatSearchProvider : IFormatService
 public sealed record FormatVersion(string Name, string Version, DateTime Published, DateTime? LastDownloaded, long? Size, bool Prerelease);
 
 /// <summary>
-/// What retention (phase P6) needs from a format: list what is stored and delete one version, in the repository of the request.
-/// No format implements it yet; the interface fixes the shape so the engine can be written once.
+/// What retention (phase P6) needs from a format: list what is stored and delete one version, in the repository of the request
+/// (the retention engine runs each repository in its own scope). Implemented for NuGet, npm, Maven and Docker. Deleting is the
+/// administrator's cleanup, not a user action: no caller is checked, but the maintenance gate is (<see cref="MaintenanceException"/> is
+/// never swallowed by the engine).
 /// </summary>
 public interface IFormatRetentionHooks : IFormatService
 {
-    /// <summary>Every stored version of the repository.</summary>
+    /// <summary>
+    /// Every stored version of the repository that a policy may delete (a Docker tag is a version of its image). A virtual
+    /// repository stores nothing and has none.
+    /// </summary>
     Task<IReadOnlyList<FormatVersion>> ListVersionsAsync(CancellationToken cancellationToken);
 
-    /// <summary>Deletes one version for good (metadata and files).</summary>
+    /// <summary>
+    /// Deletes one version for good (metadata and files). The name and version are the ones <see cref="ListVersionsAsync"/> or
+    /// <see cref="ListUnreferencedAsync"/> returned.
+    /// </summary>
     Task DeleteVersionAsync(string name, string version, CancellationToken cancellationToken);
-}
 
+    /// <summary>
+    /// Things the format stores that no version points at, which only the "untagged" rule considers (Docker manifests without a
+    /// tag, index or referrer relationship; <see cref="FormatVersion.Version"/> is their digest). Default: none.
+    /// </summary>
+    Task<IReadOnlyList<FormatVersion>> ListUnreferencedAsync(CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<FormatVersion>>(Array.Empty<FormatVersion>());
+
+    /// <summary>
+    /// Bytes stored for one version, when <see cref="FormatVersion.Size"/> was left null by the listing because measuring is costly
+    /// (NuGet reads the package, Docker adds its layers); null when unknown. Only the remote cache limit asks.
+    /// </summary>
+    Task<long?> GetSizeAsync(string name, string version, CancellationToken cancellationToken)
+        => Task.FromResult<long?>(null);
+
+    /// <summary>
+    /// The name and version in the form the listing uses (NuGet: normalized version; a legal hold is stored this way), or null
+    /// when they are not valid for the format. An empty or null <paramref name="version"/> stays empty (every version). Default: trimmed as given.
+    /// </summary>
+    (string Name, string Version)? Canonical(string name, string? version)
+        => string.IsNullOrWhiteSpace(name) ? null : (name.Trim(), version?.Trim() ?? string.Empty);
+}
 /// <summary>A third-party component of an artifact, named the way a vulnerability database names it.</summary>
 /// <param name="Ecosystem">The OSV ecosystem: <c>NuGet</c>, <c>npm</c>, <c>Maven</c>.</param>
 /// <param name="Name">The component name in that ecosystem.</param>

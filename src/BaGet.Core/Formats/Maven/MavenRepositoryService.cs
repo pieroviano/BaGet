@@ -30,6 +30,7 @@ public class MavenRepositoryService : IMavenRepository
     private readonly MaintenanceGate _gate;
     private readonly ILogger<MavenRepositoryService> _logger;
     private readonly IOptionsSnapshot<MavenOptions>? _options;
+    private readonly ArtifactUsageRecorder? _usage;
     private MavenRepositorySettings? _settings;
 
     /// <param name="context">The database.</param>
@@ -40,6 +41,7 @@ public class MavenRepositoryService : IMavenRepository
     /// <param name="gate">The read-only gate, checked before a file is stored or removed.</param>
     /// <param name="logger">The logger.</param>
     /// <param name="options">The <c>Maven:*</c> options.</param>
+    /// <param name="usage">Notes downloads for the retention rules; null records nothing.</param>
     public MavenRepositoryService(
         IContext context,
         IStorageService storage,
@@ -48,8 +50,10 @@ public class MavenRepositoryService : IMavenRepository
         SystemTime time,
         MaintenanceGate gate,
         ILogger<MavenRepositoryService> logger,
-        IOptionsSnapshot<MavenOptions>? options = null)
+        IOptionsSnapshot<MavenOptions>? options = null,
+        ArtifactUsageRecorder? usage = null)
     {
+        _usage = usage;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -151,6 +155,9 @@ public class MavenRepositoryService : IMavenRepository
 
         var stream = await _storage.GetAsync(StoragePath(coordinate.GroupId, coordinate.ArtifactId, coordinate.Version!, file.FileName!), cancellationToken).ConfigureAwait(false);
         if (stream == null) return null;
+
+        // For the retention rules: the version was just downloaded.
+        _usage?.Touch(_repository.Current.Key, MavenNames.ArtifactName(coordinate.GroupId, coordinate.ArtifactId), coordinate.Version);
 
         return new MavenDownload(stream, file.Size, MavenNames.ContentTypeOf(LastExtension(file.Extension!)), file.FileName!, Utc(file.Created))
         {

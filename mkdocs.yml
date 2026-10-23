@@ -48,6 +48,7 @@ nav:
   - npm registry: npm-registry.md
   - Maven repositories: maven-repositories.md
   - Docker registry: docker-registry.md
+  - Retention and cleanup: retention.md
   - Remote repositories: remote-repositories.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md

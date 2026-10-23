@@ -15,13 +15,19 @@ public class PackageService : IPackageService
     private readonly IUpstreamClient _upstream;
     private readonly IPackageIndexingService _indexer;
     private readonly ILogger<PackageService> _logger;
+    private readonly IRepositoryContext? _repository;
+    private readonly ArtifactUsageRecorder? _usage;
 
     public PackageService(
         IPackageDatabase db,
         IUpstreamClient upstream,
         IPackageIndexingService indexer,
-        ILogger<PackageService> logger)
+        ILogger<PackageService> logger,
+        IRepositoryContext? repository = null,
+        ArtifactUsageRecorder? usage = null)
     {
+        _repository = repository;
+        _usage = usage;
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _upstream = upstream ?? throw new ArgumentNullException(nameof(upstream));
         _indexer = indexer ?? throw new ArgumentNullException(nameof(indexer));
@@ -141,6 +147,9 @@ public class PackageService : IPackageService
     public async Task AddDownloadAsync(string packageId, NuGetVersion version, CancellationToken cancellationToken)
     {
         await _db.AddDownloadAsync(packageId, version, cancellationToken);
+
+        // When the version was last downloaded, for the retention rules (kept in memory, written in batches).
+        _usage?.Touch((_repository?.Current ?? RepositoryInfo.Default).Key, packageId, version.ToNormalizedString());
 
         BaGetDiagnostics.Downloads.Add(1);
     }

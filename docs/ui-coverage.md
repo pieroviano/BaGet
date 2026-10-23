@@ -80,7 +80,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Remote Docker: pull through (`GET`/`HEAD` of manifests, layers, tags) | REST | `/docker-images` (the cached images, pull commands), `/docker-images/{image}` | read |
 | Virtual Docker repository: create, members, order, deploy repository, *Where would an image come from?* (image, tag or digest) | service | Repositories > *New virtual repository* (format Docker); RepositoryEdit members and preview | Admin |
 | Virtual Docker: pull from the first member, merged tags, push to the deploy repository | REST | `/docker-images` (the members' images merged), `/docker-images/{image}` | read / Deploy |
-| Docker garbage collection of a repository (dry run, run) | service (`IOciGarbageCollector`) | Admin Operations: *Docker garbage collection: dry run* and *Docker garbage collection* per local or remote Docker repository | Admin, audited |
+| Docker garbage collection of a repository (dry run, run) | service (`IOciGarbageCollector`) | Admin Operations: *Docker garbage collection: dry run* and *Docker garbage collection* per local or remote Docker repository; scheduled by a retention policy (*Collect garbage*) | Admin, audited |
 
 ## Repositories (Admin)
 
@@ -136,6 +136,10 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Telemetry settings, status, connection test | service | Admin Settings (telemetry section) | Admin + Password |
 | Statistics | service | `/statistics` | read |
 | Read-only gate banner | MaintenanceGate | every page | - |
+| Retention policies: create, change, enable, delete (rules, name patterns, schedule) per repository or project | service (`IRetentionAdministration`) | Admin Retention (`/admin/retention`, `/admin/retention/{id}`) | Admin + Password, audited |
+| Retention: dry run (what a run would delete), run now, last report, scheduled runs | service (`RetentionEngine`, `RetentionJobs`, `RetentionWorker`) | Admin Retention > policy: *Dry run* (no password), *Run now* (Password); the schedule field | Admin (+ Password), audited, 503 while read-only (run) |
+| Legal holds: place, list, lift (artifact or one version) | service (`IRetentionAdministration`) | Admin Retention > Legal holds (`/admin/retention/holds`) | Admin, lifting asks Password, audited |
+| Download times (last download per version, for the *unused* rule) | in memory (`ArtifactUsageRecorder`) | shown as *Last download* in a retention report | Admin |
 
 ## Not in the UI, on purpose
 

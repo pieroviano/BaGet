@@ -68,6 +68,12 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public const int MaxOciMediaTypeLength = OciNames.MaxMediaTypeLength;
     public const int MaxOciUploadReferenceLength = 128;
     public const int MaxOciStorageUploadIdLength = 512;
+    // Retention: the longest Maven group:artifact (200 + 1 + 128) fits; with the version the unique indexes stay within SQL Server's and MySQL's key limits.
+    public const int MaxRetentionNameLength = RetentionLimits.MaxNameLength;
+    public const int MaxRetentionVersionLength = RetentionLimits.MaxVersionLength;
+    public const int MaxRetentionReasonLength = RetentionLimits.MaxReasonLength;
+    public const int MaxRetentionPatternsLength = RetentionLimits.MaxPatternsLength;
+    public const int MaxRetentionResultLength = RetentionLimits.MaxResultLength;
     public const int MaxProjectNameLength = 64;
     public const int MaxProjectDisplayNameLength = 256;
 
@@ -147,6 +153,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<PermissionGrant>? PermissionGrants { get; set; }
     public DbSet<ProjectMember>? ProjectMembers { get; set; }
     public DbSet<AccessAuditEntry>? AccessAuditEntries { get; set; }
+    public DbSet<RetentionPolicy>? RetentionPolicies { get; set; }
+    public DbSet<RetentionHold>? RetentionHolds { get; set; }
+    public DbSet<ArtifactUsage>? ArtifactUsages { get; set; }
 
     public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -228,6 +237,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<PermissionGrant>(BuildPermissionGrantEntity);
         builder.Entity<ProjectMember>(BuildProjectMemberEntity);
         builder.Entity<AccessAuditEntry>(BuildAccessAuditEntryEntity);
+        builder.Entity<RetentionPolicy>(BuildRetentionPolicyEntity);
+        builder.Entity<RetentionHold>(BuildRetentionHoldEntity);
+        builder.Entity<ArtifactUsage>(BuildArtifactUsageEntity);
 
         // Repository isolation: a query in one repository never sees another's rows. The filter reads the
         // context's current repository per query.
@@ -241,6 +253,8 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<MavenArtifact>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<OciRepository>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
         builder.Entity<OciBlob>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<RetentionHold>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
+        builder.Entity<ArtifactUsage>().HasQueryFilter(e => e.RepositoryKey == CurrentRepositoryKey);
 
         // The column default is what the upgrade migration gives every row that predates repositories: they
         // belong to the default repository.
@@ -254,6 +268,41 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<MavenArtifact>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<OciRepository>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<OciBlob>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<RetentionHold>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+        builder.Entity<ArtifactUsage>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+    }
+
+    private void BuildRetentionPolicyEntity(EntityTypeBuilder<RetentionPolicy> policy)
+    {
+        policy.HasKey(p => p.Key);
+        policy.HasIndex(p => p.Name).IsUnique();
+        policy.HasIndex(p => p.RepositoryKey);
+        policy.HasIndex(p => p.ProjectKey);
+
+        policy.Property(p => p.Name).HasMaxLength(MaxAccessNameLength).IsRequired();
+        policy.Property(p => p.NamePatterns).HasMaxLength(MaxRetentionPatternsLength);
+        policy.Property(p => p.LastResult).HasMaxLength(MaxRetentionResultLength);
+    }
+
+    private void BuildRetentionHoldEntity(EntityTypeBuilder<RetentionHold> hold)
+    {
+        hold.HasKey(h => h.Key);
+        hold.HasIndex(h => new { h.RepositoryKey, h.Name, h.Version }).IsUnique();
+
+        hold.Property(h => h.Name).HasMaxLength(MaxRetentionNameLength).IsRequired();
+        // Empty = every version, so the column is never null (a unique index treats nulls as distinct on some engines).
+        hold.Property(h => h.Version).HasMaxLength(MaxRetentionVersionLength).IsRequired();
+        hold.Property(h => h.Reason).HasMaxLength(MaxRetentionReasonLength);
+        hold.Property(h => h.CreatedBy).HasMaxLength(MaxAccountNameLength);
+    }
+
+    private void BuildArtifactUsageEntity(EntityTypeBuilder<ArtifactUsage> usage)
+    {
+        usage.HasKey(u => u.Key);
+        usage.HasIndex(u => new { u.RepositoryKey, u.Name, u.Version }).IsUnique();
+
+        usage.Property(u => u.Name).HasMaxLength(MaxRetentionNameLength).IsRequired();
+        usage.Property(u => u.Version).HasMaxLength(MaxRetentionVersionLength).IsRequired();
     }
 
     private void BuildNpmPackageEntity(EntityTypeBuilder<NpmPackage> package)

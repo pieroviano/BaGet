@@ -178,6 +178,11 @@ public class RepositoryAdministration : IRepositoryAdministration
             await module.StagePurgeAsync(_context, key, cancellationToken).ConfigureAwait(false);
         }
 
+        // Retention history of a repository that no longer exists: its policies, legal holds and download times.
+        _context.RetentionPolicies!.RemoveRange(await _context.RetentionPolicies!.Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.RetentionHolds!.RemoveRange(await _context.RetentionHolds!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        _context.ArtifactUsages!.RemoveRange(await _context.ArtifactUsages!.IgnoreQueryFilters().Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
+
         // A key limited to this repository would otherwise be left with no limit, which means every repository: a key
         // limited to several only loses this one, one limited to this alone has no use left and is deleted.
         var limits = await _context.ApiKeyRepositories!.Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false);

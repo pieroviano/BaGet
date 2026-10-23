@@ -29,6 +29,7 @@ public partial class OciRegistryService : IOciRegistry
     private readonly MaintenanceGate _gate;
     private readonly ILogger<OciRegistryService> _logger;
     private readonly IOptionsSnapshot<OciOptions>? _options;
+    private readonly ArtifactUsageRecorder? _usage;
 
     /// <param name="context">The database.</param>
     /// <param name="storage">Where blobs are kept; it must stream (<see cref="IStreamingStorageService"/>).</param>
@@ -37,6 +38,7 @@ public partial class OciRegistryService : IOciRegistry
     /// <param name="gate">The read-only gate, checked before anything is stored or removed.</param>
     /// <param name="logger">The logger.</param>
     /// <param name="options">The <c>Oci:*</c> options.</param>
+    /// <param name="usage">Notes downloads for the retention rules; null records nothing.</param>
     public OciRegistryService(
         IContext context,
         IStorageService storage,
@@ -44,8 +46,10 @@ public partial class OciRegistryService : IOciRegistry
         SystemTime time,
         MaintenanceGate gate,
         ILogger<OciRegistryService> logger,
-        IOptionsSnapshot<OciOptions>? options = null)
+        IOptionsSnapshot<OciOptions>? options = null,
+        ArtifactUsageRecorder? usage = null)
     {
+        _usage = usage;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -187,6 +191,9 @@ public partial class OciRegistryService : IOciRegistry
                               where t.ImageKey == row.Key && t.Name == reference
                               select m).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         }
+
+        // For the retention rules: the tag or digest was just pulled.
+        if (manifest != null) _usage?.Touch(_repository.Current.Key, image, reference);
 
         return manifest == null
             ? null

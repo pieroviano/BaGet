@@ -177,6 +177,40 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("ApiKeyRepositories");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ArtifactUsage", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("LastUsed")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("nvarchar(340)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ArtifactUsages");
+                });
+
             modelBuilder.Entity("BaGet.Core.BaGetUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1443,6 +1477,126 @@ namespace BaGet.Database.SqlServer.Migrations
                         .IsUnique();
 
                     b.ToTable("Repositories");
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionHold", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("nvarchar(340)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("RetentionHolds");
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionPolicy", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<long?>("CacheLimitBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("CollectGarbage")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("KeepLast")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("LastRun")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("NamePatterns")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int?>("OlderThanDays")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("PrereleaseOnly")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RepositoryKey")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ScheduleHours")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ScheduleStart")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UntaggedAfterDays")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UnusedDays")
+                        .HasColumnType("int");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectKey");
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.ToTable("RetentionPolicies");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

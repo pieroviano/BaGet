@@ -58,6 +58,12 @@ public class NullContext : IContext
 
     public DbSet<OciBlobLink>? OciBlobLinks { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<RetentionPolicy>? RetentionPolicies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<RetentionHold>? RetentionHolds { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<ArtifactUsage>? ArtifactUsages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<OciUpload>? OciUploads { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

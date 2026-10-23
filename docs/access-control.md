@@ -140,7 +140,7 @@ server is read-only for maintenance.
 | `/admin/projects`, `/admin/projects/{name}` | create; assign repositories (a repository is in one project); members with a role (user or group); the project's own targets; delete (keeps the repositories) |
 | `/admin/users/{name}` | the user's groups (add/remove), project roles and **effective permissions per repository**, each with the targets and roles that grant them; a package ID box applies include/exclude patterns |
 | `/admin/repositories/{name}` | adds who effectively holds Read, Annotate, Deploy, Delete and Manage, the project and the anonymous-read switch |
-| `/admin/audit` | the audit log, newest first (200 at most), filtered by actor, subject and UTC dates (`yyyy-MM-dd`, inclusive) |
+| `/admin/audit` | the audit log, newest first (200 at most), filtered by actor, subject and UTC dates (`yyyy-MM-dd`, inclusive); also lists the [retention](retention.md) policy, hold and run entries (`retention.*`) |
 | `/account/access` | your own effective permissions in each repository where you hold something (nothing is shown about repositories you cannot use), with the reasons; a package ID box |
 
 **Project administrators** (role *Admin*) are admitted to their own project's page and to its targets, with the limits

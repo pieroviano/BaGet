@@ -178,6 +178,40 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.ToTable("ApiKeyRepositories");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ArtifactUsage", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("LastUsed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("character varying(340)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ArtifactUsages");
+                });
+
             modelBuilder.Entity("BaGet.Core.BaGetUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1435,6 +1469,126 @@ namespace BaGet.Database.PostgreSql.Migrations
                         .IsUnique();
 
                     b.ToTable("Repositories");
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionHold", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("character varying(340)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("RetentionHolds");
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionPolicy", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<long?>("CacheLimitBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("CollectGarbage")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("KeepLast")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("LastRun")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("NamePatterns")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<int?>("OlderThanDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("PrereleaseOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RepositoryKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ScheduleHours")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ScheduleStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UntaggedAfterDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UnusedDays")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectKey");
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.ToTable("RetentionPolicies");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>

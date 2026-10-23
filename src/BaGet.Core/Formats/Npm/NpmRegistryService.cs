@@ -56,6 +56,7 @@ public class NpmRegistryService : INpmRegistry
     private readonly SystemTime _time;
     private readonly MaintenanceGate _gate;
     private readonly IOptionsSnapshot<NpmOptions>? _options;
+    private readonly ArtifactUsageRecorder? _usage;
     private readonly ILogger<NpmRegistryService> _logger;
 
     /// <param name="context">The database.</param>
@@ -67,6 +68,7 @@ public class NpmRegistryService : INpmRegistry
     /// <param name="gate">The read-only gate, checked before a tarball is stored.</param>
     /// <param name="logger">The logger.</param>
     /// <param name="options">The <c>Npm:*</c> options.</param>
+    /// <param name="usage">Notes downloads for the retention rules; null records nothing.</param>
     public NpmRegistryService(
         IContext context,
         IStorageService storage,
@@ -76,8 +78,10 @@ public class NpmRegistryService : INpmRegistry
         SystemTime time,
         MaintenanceGate gate,
         ILogger<NpmRegistryService> logger,
-        IOptionsSnapshot<NpmOptions>? options = null)
+        IOptionsSnapshot<NpmOptions>? options = null,
+        ArtifactUsageRecorder? usage = null)
     {
+        _usage = usage;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -249,6 +253,9 @@ public class NpmRegistryService : INpmRegistry
         try
         {
             var content = await _storage.GetAsync(StoragePath(name, version), cancellationToken).ConfigureAwait(false);
+
+            // For the retention rules: the version was just downloaded.
+            _usage?.Touch(_repository.Current.Key, name, version);
 
             return new NpmTarball(content, row.TarballSize, row.Integrity!);
         }

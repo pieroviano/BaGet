@@ -39,7 +39,7 @@ What a format does per request is a scoped service beside the module, found with
 |---|---|---|
 | `IFormatIndexer` (deploy) | npm P3 | `NuGetFormatIndexer` over `IPackageIndexingService`; npm has none (publishing needs the caller, so it is `INpmRegistry.PublishAsync`) |
 | `IFormatSearchProvider` | npm P3 | `NuGetFormatSearchProvider` over `ISearchService`; `NpmFormatSearchProvider` over `INpmRegistry.SearchAsync` |
-| `IFormatRetentionHooks` | P6 | not yet |
+| `IFormatRetentionHooks` | P6 | `NuGetRetentionHooks`; npm, Maven and Docker have theirs (`NpmRetentionHooks`, `MavenRetentionHooks`, `DockerRetentionHooks`); used by the [retention engine](retention.md) |
 | `IFormatScanner` | P7 | not yet |
 
 Routes go through `BaGetEndpointBuilder.MapRoute(..., format: module.Format)` with a pattern starting `"{RoutePrefix}/…"`; it
