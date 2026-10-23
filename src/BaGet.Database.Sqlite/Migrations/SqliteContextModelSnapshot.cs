@@ -1215,6 +1215,10 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.Property<int>("Severity")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("VersionRange")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
@@ -1509,6 +1513,144 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.HasIndex("RepositoryKey");
 
                     b.ToTable("RetentionPolicies");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdvisoryUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Component")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ComponentVersion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FixedVersion")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ResultKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VulnerabilityId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ResultKey");
+
+                    b.ToTable("ScanFindings");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanPolicy", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BlockDeploySeverity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BlockDownloadSeverity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("BlockUnscanned")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RepositoryKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("WarnSeverity")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ProjectKey")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryKey")
+                        .IsUnique();
+
+                    b.ToTable("ScanPolicies");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Attempted")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FindingCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Highest")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime?>("ScannedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Scanner")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ScanResults");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
@@ -1839,6 +1981,15 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
+                {
+                    b.HasOne("BaGet.Core.ScanResult", null)
+                        .WithMany("Findings")
+                        .HasForeignKey("ResultKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
                 {
                     b.HasOne("BaGet.Core.Package", "Package")
@@ -1912,6 +2063,11 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.Navigation("TargetFrameworks");
 
                     b.Navigation("Vulnerabilities");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.Navigation("Findings");
                 });
 #pragma warning restore 612, 618
         }

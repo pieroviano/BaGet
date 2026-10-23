@@ -1287,6 +1287,10 @@ namespace BaGet.Database.MySql.Migrations
                     b.Property<int>("Severity")
                         .HasColumnType("int");
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
                     b.Property<string>("VersionRange")
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
@@ -1595,6 +1599,150 @@ namespace BaGet.Database.MySql.Migrations
                     b.HasIndex("RepositoryKey");
 
                     b.ToTable("RetentionPolicies");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("AdvisoryUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("Component")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("varchar(400)");
+
+                    b.Property<string>("ComponentVersion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("FixedVersion")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("ResultKey")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("VulnerabilityId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ResultKey");
+
+                    b.ToTable("ScanFindings");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanPolicy", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<int?>("BlockDeploySeverity")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BlockDownloadSeverity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("BlockUnscanned")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RepositoryKey")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("WarnSeverity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ProjectKey")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryKey")
+                        .IsUnique();
+
+                    b.ToTable("ScanPolicies");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Attempted")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("FindingCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Highest")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("varchar(400)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime?>("ScannedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Scanner")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ScanResults");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
@@ -1931,6 +2079,15 @@ namespace BaGet.Database.MySql.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
+                {
+                    b.HasOne("BaGet.Core.ScanResult", null)
+                        .WithMany("Findings")
+                        .HasForeignKey("ResultKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
                 {
                     b.HasOne("BaGet.Core.Package", "Package")
@@ -2004,6 +2161,11 @@ namespace BaGet.Database.MySql.Migrations
                     b.Navigation("TargetFrameworks");
 
                     b.Navigation("Vulnerabilities");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.Navigation("Findings");
                 });
 #pragma warning restore 612, 618
         }

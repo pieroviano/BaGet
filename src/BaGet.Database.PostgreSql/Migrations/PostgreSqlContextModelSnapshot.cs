@@ -1281,6 +1281,10 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.Property<int>("Severity")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("VersionRange")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -1589,6 +1593,150 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.HasIndex("RepositoryKey");
 
                     b.ToTable("RetentionPolicies");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("AdvisoryUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Component")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("ComponentVersion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FixedVersion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ResultKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("VulnerabilityId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ResultKey");
+
+                    b.ToTable("ScanFindings");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanPolicy", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<int?>("BlockDeploySeverity")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BlockDownloadSeverity")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("BlockUnscanned")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int?>("ProjectKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RepositoryKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("WarnSeverity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ProjectKey")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryKey")
+                        .IsUnique();
+
+                    b.ToTable("ScanPolicies");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<DateTime>("Attempted")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("FindingCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Highest")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<int>("RepositoryKey")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime?>("ScannedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Scanner")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("RepositoryKey", "Name", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ScanResults");
                 });
 
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
@@ -1925,6 +2073,15 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
+                {
+                    b.HasOne("BaGet.Core.ScanResult", null)
+                        .WithMany("Findings")
+                        .HasForeignKey("ResultKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.TargetFramework", b =>
                 {
                     b.HasOne("BaGet.Core.Package", "Package")
@@ -1998,6 +2155,11 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.Navigation("TargetFrameworks");
 
                     b.Navigation("Vulnerabilities");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.Navigation("Findings");
                 });
 #pragma warning restore 612, 618
         }
