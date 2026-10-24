@@ -68,7 +68,7 @@ who may delete a version still can. Placing a hold needs no password; lifting on
 
 Creating, changing and deleting a policy, placing and lifting a hold, and every run are written to the
 [access audit](access-control.md#admin-pages) (`/admin/audit`, actions `retention.*`) and to the admin audit log
-(`IAdminAudit`; runs are `retention.run` / `retention.dry-run`, the scheduler's actor is `scheduler`).
+(`IAdminAudit`; runs are `retention.run` / `retention.dry-run`; a run the read-only gate interrupts is still audited as `retention.run` with "Interrupted" and what was deleted so far, the scheduler's actor is `scheduler`).
 
 ## Deleting a repository
 

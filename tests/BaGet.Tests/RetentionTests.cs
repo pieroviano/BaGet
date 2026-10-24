@@ -30,6 +30,9 @@ public class RetentionTests : IDisposable
     private readonly BaGetApplication _app;
     private int _seed;
 
+    // Set by a test: the maintenance gate closes after this many successful deletions (0 = never).
+    private int CloseGateAfterDeletions;
+
     public RetentionTests(ITestOutputHelper output)
     {
         _app = new BaGetApplication(
@@ -43,6 +46,10 @@ public class RetentionTests : IDisposable
             {
                 services.AddSingleton<SystemTime>(_clock);
                 services.AddSingleton<IAdminAudit>(_audit);
+                services.AddTransient<IPackageDeletionService>(sp => new GateClosingDeletion(
+                    ActivatorUtilities.CreateInstance<PackageDeletionService>(sp),
+                    sp.GetRequiredService<MaintenanceGate>(),
+                    () => CloseGateAfterDeletions));
             });
     }
 
@@ -783,6 +790,58 @@ public class RetentionTests : IDisposable
         Assert.Equal(new[] { due.Key }, await worker.RunDueAsync(Token));
         _clock.Advance(TimeSpan.FromHours(48));
         Assert.Contains(later.Key, await worker.RunDueAsync(Token));
+    }
+
+    [Fact]
+    public async Task AGateThatClosesDuringARunStillAuditsTheDeletionsAlreadyMade()
+    {
+        await PushNuGetAsync("Cut.Lib", "1.0.0");
+        await PushNuGetAsync("Cut.Lib", "2.0.0");
+        await PushNuGetAsync("Cut.Lib", "3.0.0");
+        _clock.Advance(TimeSpan.FromDays(10));
+        var policy = await SaveAsync(Input("cut", olderThan: 1));
+        var gate = _app.Services.GetRequiredService<MaintenanceGate>();
+        CloseGateAfterDeletions = 1;
+
+        try
+        {
+            await Assert.ThrowsAsync<MaintenanceException>(() => RunAsync(policy, dryRun: false));
+        }
+        finally
+        {
+            gate.Open();
+        }
+
+        Assert.Equal(2, (await StoredAsync("default", RepositoryFormat.NuGet)).Length);
+        var entry = Assert.Single(_audit.Entries, e => e.Action == "retention.run");
+        Assert.Equal("tester", entry.Actor);
+        Assert.Contains("interrupted", entry.Details, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Deleted 1 version(s)", entry.Details);
+    }
+
+    private sealed class GateClosingDeletion : IPackageDeletionService
+    {
+        private readonly IPackageDeletionService _inner;
+        private readonly MaintenanceGate _gate;
+        private readonly Func<int> _after;
+
+        public GateClosingDeletion(IPackageDeletionService inner, MaintenanceGate gate, Func<int> after)
+        {
+            _inner = inner;
+            _gate = gate;
+            _after = after;
+        }
+
+        public Task<bool> TryDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
+            => _inner.TryDeletePackageAsync(id, version, cancellationToken);
+
+        public async Task<bool> TryHardDeletePackageAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
+        {
+            var done = await _inner.TryHardDeletePackageAsync(id, version, cancellationToken);
+            if (done && _after() > 0) _gate.Close("test");
+
+            return done;
+        }
     }
 
     [Fact]

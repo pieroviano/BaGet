@@ -68,7 +68,11 @@ public class ScanningOptions
     /// <summary>Pull over plain HTTP (<c>--insecure</c>), for a registry without TLS.</summary>
     public bool TrivyInsecure { get; set; }
 
-    /// <summary>The user name Trivy logs in with when the registry needs credentials (accounts enabled).</summary>
+    /// <summary>
+    /// The user name Trivy logs in with when the registry needs credentials (accounts enabled). Also what identifies the scanner's own
+    /// pull to the scan gate: without it the pull is recognised from the scans running in this process only, so a deployment with several
+    /// nodes must set it.
+    /// </summary>
     public string? TrivyRegistryUser { get; set; }
 
     /// <summary>The API key Trivy logs in with (passed through the environment, never on the command line).</summary>

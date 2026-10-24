@@ -5,6 +5,7 @@ namespace BaGet.Core;
 /// <summary>
 /// The container images being scanned right now, process-wide: the scanner pulls the image through this registry, and that pull must
 /// not be refused as "unscanned" (see <see cref="IScanGate.IsScannerPullAsync"/>).
+/// In memory per process: a multi-node deployment must set <see cref="ScanningOptions.TrivyRegistryUser"/> instead.
 /// </summary>
 internal static class ScanInFlight
 {

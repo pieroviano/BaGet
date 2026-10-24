@@ -67,7 +67,7 @@ public sealed class RetentionEngine
     /// <param name="actor">Who asked (the user name, or <c>scheduler</c>), for the audit trail.</param>
     /// <param name="cancellationToken">A token to cancel the run.</param>
     /// <exception cref="InvalidOperationException">There is no such policy, or a real run of a disabled one.</exception>
-    /// <exception cref="MaintenanceException">A real run while the server is read-only.</exception>
+    /// <exception cref="MaintenanceException">A real run while the server is read-only, or one the gate closed on; the deletions already made are audited first.</exception>
     public async Task<RetentionReport> RunAsync(int policyKey, bool dryRun, string? actor, CancellationToken cancellationToken)
     {
         if (_context is NullContext) throw new InvalidOperationException("Retention needs a relational database.");
@@ -87,19 +87,32 @@ public sealed class RetentionEngine
         // Downloads recorded in memory so far count for the "unused" rules.
         if (_usage != null) await _usage.FlushAsync(_scopes, cancellationToken).ConfigureAwait(false);
 
-        foreach (var repository in await TargetsAsync(policy, cancellationToken).ConfigureAwait(false))
+        try
         {
-            var part = new RetentionRepositoryReport { Repository = repository.Name, Format = repository.Format };
-            report.Repositories.Add(part);
-            try
+            foreach (var repository in await TargetsAsync(policy, cancellationToken).ConfigureAwait(false))
             {
-                await RunRepositoryAsync(policy, repository, dryRun, part, cancellationToken).ConfigureAwait(false);
+                var part = new RetentionRepositoryReport { Repository = repository.Name, Format = repository.Format };
+                report.Repositories.Add(part);
+                try
+                {
+                    await RunRepositoryAsync(policy, repository, dryRun, part, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e) when (e is not OperationCanceledException and not MaintenanceException)
+                {
+                    _logger.LogError(e, "Retention policy {Policy} failed on repository {Repository}", policy.Name, repository.Name);
+                    part.Error = $"{e.GetType().Name}: {e.Message}";
+                }
             }
-            catch (Exception e) when (e is not OperationCanceledException and not MaintenanceException)
-            {
-                _logger.LogError(e, "Retention policy {Policy} failed on repository {Repository}", policy.Name, repository.Name);
-                part.Error = $"{e.GetType().Name}: {e.Message}";
-            }
+        }
+        catch (MaintenanceException) when (!dryRun)
+        {
+            // The gate closed mid-run: what was already deleted must not go unaudited. The bookkeeping row may be unwritable now
+            // (RecordRunAsync tolerates that); the refusal still propagates.
+            report.Finished = _time.UtcNow;
+            _audit.Record(actor, "retention.run", $"policy {policy.Name}", "Interrupted by the read-only gate. " + report.Summary);
+            await RecordRunAsync(policy, started, report, actor, cancellationToken).ConfigureAwait(false);
+
+            throw;
         }
 
         report.Finished = _time.UtcNow;

@@ -21,7 +21,7 @@ an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension
 | Test (one class or method) | add `--filter-class "*UploadPageTests"` or `--filter-method "*Name"` (xUnit v3 filters; VSTest `--filter` is gone) |
 | Run | `cd src/BaGet && dotnet run -p:GeneratePackageOnBuild=false` |
 
-Baseline: **3434 tests** (P8 and the review fixes included, no Docker: 3325 passed, 97 skipped, 12 failed = `TelemetryExportTests` x3, `TelemetrySettingsPageTests` x8 and the `DatabaseCopyTests` span test below) across `BaGet.Core.Tests` (988), `BaGet.Tests` (2045),
+Baseline: **3435 tests** (P8 and the review fixes included, no Docker: 3327 passed, 97 skipped, 11 failed = `TelemetryExportTests` x3, `TelemetrySettingsPageTests` x8; the `DatabaseCopyTests` span test below fails in some full runs too) across `BaGet.Core.Tests` (988), `BaGet.Tests` (2046),
 `BaGet.Protocol.Tests` (118), `BaGet.Azure.Tests` (107), `BaGet.Web.Tests` (58),
 `BaGet.Protocol.Samples.Tests` (8), `BaGet.Database.Tests` (20), `BaGet.Telemetry.Tests` (6), `BaGet.Clients.Tests` (44, Docker), `BaGet.Storage.Tests` (40, Docker; the GCS emulator is a single-threaded Python server that drops reused connections, so its tests use a no-reuse HTTP handler; one GCS test still failed in 1 of 3 full-suite runs before that, rerun the class if it recurs). On a machine with a local Jaeger
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
@@ -171,7 +171,7 @@ catalog entries, owners, validations and abuse reports are purged with it, and s
 registered with `TryAddEnumerable`, collected by `FormatRegistry`, which refuses a duplicate format / route prefix / storage folder or a claim on `repos`)
 *describes* a format: `RoutePrefix`, `FeedPath`, `CreatableKinds`, `StorageFolders`, `CreateFields` + `CreateSettings`, `RepositoryLinks`, and
 `CountArtifactsAsync` / `GetUsageAsync` / `StagePurgeAsync` (what `RepositoryAdministration` lists and refuses/purges on delete). What it does per request is
-scoped `IFormatService`s (`IFormatIndexer`, `IFormatSearchProvider` implemented by NuGet; `IFormatRetentionHooks` interface only; `IFormatScanner` implemented by all four formats, see *Vulnerability scanning*) found with
+scoped `IFormatService`s (`IFormatIndexer`, `IFormatSearchProvider` implemented by NuGet; `IFormatRetentionHooks` and `IFormatScanner` implemented by all four formats, see *Vulnerability scanning*) found with
 `GetFormatService<T>(format)`. `NuGetFormatModule` is the NuGet refactor (no behaviour change). `RepositoryService.CreateAsync` asks the module (unknown format or
 kind -> `NotSupportedException`; a `fields` overload for module-specific create forms). Format routes go through `BaGetEndpointBuilder.MapRoute(..., format:)`.
 `NpmFormatModule` is registered (`CreatableKinds` local and remote, `SupportsVirtual`; a module's `SupportsVirtual` is the only thing that lets `IVirtualRepositoryAdministration.CreateAsync(..., format)` create a virtual repository of its format), so `Npm` repositories can be created: tables `NpmPackages` (repository-scoped), `NpmVersions`, `NpmDistTags`
