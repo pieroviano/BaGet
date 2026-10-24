@@ -50,6 +50,7 @@ nav:
   - Docker registry: docker-registry.md
   - Retention and cleanup: retention.md
   - Remote repositories: remote-repositories.md
+  - Replication: replication.md
   - Virtual repositories: virtual-repositories.md
   - Access control: access-control.md
   - Vulnerability scanning: vulnerability-scanning.md

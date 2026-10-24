@@ -20,7 +20,8 @@ implementation run** (worktrees, review). Do not implement the whole plan in one
 | P6 Retention and cleanup | **Done** (track `p6-retention`, [retention.md](../retention.md)); see *As built* under P6 | `115f126`..`26ffa42` |
 | P7 Vulnerability scanning | **Done** (track `p7-scan`, [vulnerability-scanning.md](../vulnerability-scanning.md)); see *As built* under P7 | `9781745`..`974a659` (migration regenerated after `AddRetention`) |
 | P8 Admin REST API | **Done** (track `p8-api`, [admin-api.md](../admin-api.md)); see *As built* under P8 | `d872c34`..`0d64b6b` |
-| P9-P10 | Not started | No replication, `AddDataProtection` or health endpoints exist |
+| P9 Replication | **Done** (track `p9-replication`, [replication.md](../replication.md)); see *As built* under P9 | branch `wt/p9-replication` |
+| P10 | Not started | No `AddDataProtection` or health endpoints exist; P9 left the `IJobLease` seam |
 
 ## Blocking — resolve before coding
 
@@ -357,6 +358,18 @@ scanned per platform manifest, not per index.
 | Item | Note |
 |---|---|
 | Push (on deploy and scheduled) and pull replication between BaGet instances per repository; delete propagation optional; resumable; conflict = target wins unless configured | Uses P8's API + format protocols. Replication log table |
+
+**As built (track `p9-replication`).** Blocking checks: none assigned to P9. Docs: [replication.md](../replication.md), CLAUDE.md *Replication*, ui-coverage rows.
+
+| Item | As built / deviation from the sketch |
+|---|---|
+| Tables | `ReplicationConfigs`, `ReplicationRuns` (the log), `ReplicationItems` (a ledger so delete propagation removes only what replication copied); migration `AddReplication` x4, `has-pending-model-changes` clean. The ledger index is **not unique** (SQL Server/MySQL collations are case-insensitive, a Docker tag is not) |
+| Protocols | NuGet `PUT api/v2/package`, flat container; npm publish/packument; Maven file `PUT`/`GET`/`DELETE` (item = file, so a version converges over runs); Docker OCI (`HEAD`/`POST ?digest=`/`PUT manifests`). The inventory is the only P8 call (`/api/v1/replication/inventory/{repository}`), hence the peer key is an administrator's `admin:api` key |
+| Credential | peer key protected with `IRemoteCredentialProtector` (`RemoteSettingsCodec.ProtectSecret`), bearer to the peer's origin, dropped when the address changes, never returned or logged; addresses checked with `RemoteAddressPolicy` (save, test, and every connection) |
+| Resume | not a special mode: a run plans from what both sides hold, each copied item is recorded at once, so a new run continues; the log links it (`ResumedFrom`) |
+| P10 seam | `IJobLease.TryAcquireAsync(job)` (`InProcessJobLease` default) wraps every run and the orphan sweep of `Running` rows; P10 registers a shared implementation |
+| Deploy trigger | `ReplicationDeployInterceptor` (EF) rather than hooks in each service, so every path that stores an artifact counts; 5 s quiet period |
+| Not done | no CLI command (the pages and API cover it); referrers/untagged Docker manifests and moved npm dist-tags without a new version are not replicated; no bandwidth limit |
 
 ### P10 — High availability (D6)
 

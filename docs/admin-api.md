@@ -26,7 +26,7 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 |---|---|
 | remote repository create / save / test / purge, anonymous read of a remote repository | yes |
 | access changes: grants, patterns, memberships, deletes; user create/promote/demote/group/key revoke | yes |
-| retention policy create / save / run / delete, lift a hold; scanning policy; operation that deletes (`RequiresConfirmation`) | yes |
+| retention policy create / save / run / delete, lift a hold; replication create / save / test / run / resume / delete; scanning policy; operation that deletes (`RequiresConfirmation`) | yes |
 | create empty group / target / project, rename group, virtual members, repository delete, dry run, place a hold, start a scan | no (as the pages) |
 
 ## Conventions
@@ -49,6 +49,7 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 | `/users` | list, create, administrator flag, groups, keys, effective access |
 | `/operations` | list, start, status (catalog rebuild, downloads import, Docker GC, vulnerability scan…) |
 | `/retention` | `policies` (CRUD, `dry-run`, `run`), `holds` |
+| `/replication` | `configs` (CRUD, `run`, `resume`, `stop`, `runs`), `test`, `runs/{key}`, `inventory/{repository}` (what a peer calls) |
 | `/scanning` | overview, per-repository dashboard / results / policy / scan, per-project policy |
 
 ## Not offered over the API

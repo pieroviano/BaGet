@@ -155,6 +155,9 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Retention: dry run (what a run would delete), run now, last report, scheduled runs | service (`RetentionEngine`, `RetentionJobs`, `RetentionWorker`) | Admin Retention > policy: *Dry run* (no password), *Run now* (Password); the schedule field | Admin (+ Password), audited, 503 while read-only (run) |
 | Legal holds: place, list, lift (artifact or one version) | service (`IRetentionAdministration`) | Admin Retention > Legal holds (`/admin/retention/holds`) | Admin, lifting asks Password, audited |
 | Download times (last download per version, for the *unused* rule) | in memory (`ArtifactUsageRecorder`) | shown as *Last download* in a retention report | Admin |
+| Replication configurations: create, change, enable, delete (local repository, push or pull, peer address and repository, peer API key, schedule, on deploy, delete propagation, conflict rule) | service (`IReplicationAdministration`) | Admin Replication (`/admin/replication`, `/admin/replication/{id}`) | Admin + Password, audited |
+| Replication: test connection, run now, resume an interrupted or failed run, stop, log of runs (status, counts, first failures and conflicts) | service (`ReplicationEngine`, `ReplicationJobs`, `ReplicationWorker`) | Admin Replication > configuration: *Test connection*, *Run now*, *Resume* (Password), *Stop*, the log table | Admin (+ Password), audited, 503 while read-only |
+| Replication inventory (what a repository holds, for a peer to compare) | service (`IReplicationInventory`) | Admin Replication > configuration: *the local repository holds N items* | Admin |
 
 ## Administration REST API (`/api/v1`)
 
@@ -215,6 +218,18 @@ Every operation below has the page that offers the same operation and the same g
 | Start a dry run of a policy: the report of what a run would delete (nothing is deleted) | REST `POST /api/v1/retention/policies/{key}/dry-run` | `/Admin/RetentionPolicy` | Admin key |
 | Show the last run (or dry run) of a policy with its report | REST `GET /api/v1/retention/policies/{key}/run` | `/Admin/RetentionPolicy` | Admin key |
 | Start a run of a policy: the versions it selects are deleted | REST `POST /api/v1/retention/policies/{key}/run` | `/Admin/RetentionPolicy` | Admin key + password |
+| List replications with their last run | REST `GET /api/v1/replication/configs` | `/Admin/Replication` | Admin key |
+| Create a replication | REST `POST /api/v1/replication/configs` | `/Admin/Replication` | Admin key + password |
+| Show a replication | REST `GET /api/v1/replication/configs/{key}` | `/Admin/ReplicationConfig` | Admin key |
+| Replace a replication's settings | REST `PUT /api/v1/replication/configs/{key}` | `/Admin/ReplicationConfig` | Admin key + password |
+| Delete a replication with its log (what it copied stays where it is) | REST `DELETE /api/v1/replication/configs/{key}` | `/Admin/ReplicationConfig` | Admin key + password |
+| Test the connection to a peer with the given settings (nothing is saved; a stored key is used while the address is unchanged) | REST `POST /api/v1/replication/test` | `/Admin/ReplicationConfig` | Admin key + password |
+| Start a run of a replication | REST `POST /api/v1/replication/configs/{key}/run` | `/Admin/ReplicationConfig` | Admin key + password |
+| Start a run that continues the last interrupted or failed run of a replication | REST `POST /api/v1/replication/configs/{key}/resume` | `/Admin/ReplicationConfig` | Admin key + password |
+| Ask the running replication to stop (it ends as interrupted and can be resumed) | REST `POST /api/v1/replication/configs/{key}/stop` | `/Admin/ReplicationConfig` | Admin key |
+| List the runs of a replication, newest first (status, counts, the first failures and conflicts) | REST `GET /api/v1/replication/configs/{key}/runs` | `/Admin/ReplicationConfig` | Admin key |
+| Show one run of the replication log | REST `GET /api/v1/replication/runs/{key}` | `/Admin/ReplicationConfig` | Admin key |
+| List what a repository holds in the form replication compares (what a peer asks; summary=true: only the count) | REST `GET /api/v1/replication/inventory/{repository}` | `/Admin/ReplicationConfig` | Admin key |
 | Show whether scanning is on and every repository's numbers and policy | REST `GET /api/v1/scanning` | `/Admin/Scanning` | Admin key |
 | Show a project's scanning policy | REST `GET /api/v1/scanning/projects/{name}/policy` | `/Admin/ScanProject` | Admin key |
 | Set a project's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/projects/{name}/policy` | `/Admin/ScanProject` | Admin key + password |

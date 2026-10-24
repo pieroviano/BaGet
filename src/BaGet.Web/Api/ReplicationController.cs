@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,7 @@ public sealed class ReplicationRequest
     public string? Repository { get; set; }
 
     /// <summary><c>Push</c> (this repository to the peer) or <c>Pull</c>.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ReplicationDirection Direction { get; set; }
 
     /// <summary>The peer server's base address.</summary>
@@ -47,6 +49,7 @@ public sealed class ReplicationRequest
     public bool PropagateDeletes { get; set; }
 
     /// <summary><c>TargetWins</c> or <c>SourceWins</c>.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ReplicationConflict Conflict { get; set; }
 
     internal ReplicationInput ToInput(int key)
@@ -189,10 +192,10 @@ public class ReplicationController : AdminApiController
     }
 
     /// <summary>One run.</summary>
-    [HttpGet("runs/{runKey:int}")]
+    [HttpGet("runs/{key:int}")]
     [ApiOperation("Show one run of the replication log", "/Admin/ReplicationConfig", Response = typeof(ReplicationRun))]
-    public async Task<IActionResult> GetRun(int runKey)
-        => await Replication.GetRunAsync(runKey, Cancellation) is { } run ? Respond(run) : ApiProblems.NotFound($"replication run {runKey}");
+    public async Task<IActionResult> GetRun(int key)
+        => await Replication.GetRunAsync(key, Cancellation) is { } run ? Respond(run) : ApiProblems.NotFound($"replication run {key}");
 
     /// <summary>What a repository holds.</summary>
     [HttpGet("inventory/{repository}")]

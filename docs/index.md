@@ -20,7 +20,7 @@ You can run BaGet Extension on your preferred platform:
 
 ## Repositories
 
-One server can hold several [repositories](repositories.md), each with its own feed at `/r/{name}/v3/index.json`; `default` stays at `/`. Repositories have a [format](formats.md): NuGet, and [npm registries](npm-registry.md) (`npm publish` / `install`, dist-tags, deprecate, unpublish, `npm login`) [Maven repositories](maven-repositories.md) (`mvn deploy`, snapshots, checksums, release/snapshot policy) and a [Docker registry](docker-registry.md) (`docker login` / `push` / `pull`, multi-platform images, referrers). A [remote repository](remote-repositories.md) caches another NuGet feed, npm registry, Maven repository or Docker registry such as registry.npmjs.org or Docker Hub (credentials, cache periods, offline mode, purge); a [virtual repository](virtual-repositories.md) puts several of them behind one URL (first match wins, merged search and packuments, uploads to a chosen member). [Retention policies](retention.md) delete old versions on a schedule (keep the newest N, by age, unused, remote cache size, untagged Docker manifests) with a dry run and legal holds.
+One server can hold several [repositories](repositories.md), each with its own feed at `/r/{name}/v3/index.json`; `default` stays at `/`. Repositories have a [format](formats.md): NuGet, and [npm registries](npm-registry.md) (`npm publish` / `install`, dist-tags, deprecate, unpublish, `npm login`) [Maven repositories](maven-repositories.md) (`mvn deploy`, snapshots, checksums, release/snapshot policy) and a [Docker registry](docker-registry.md) (`docker login` / `push` / `pull`, multi-platform images, referrers). A [remote repository](remote-repositories.md) caches another NuGet feed, npm registry, Maven repository or Docker registry such as registry.npmjs.org or Docker Hub (credentials, cache periods, offline mode, purge); a [virtual repository](virtual-repositories.md) puts several of them behind one URL (first match wins, merged search and packuments, uploads to a chosen member). [Retention policies](retention.md) delete old versions on a schedule (keep the newest N, by age, unused, remote cache size, untagged Docker manifests) with a dry run and legal holds. [Replication](replication.md) copies a local repository to or from a repository of another BaGet server (push or pull, on deploy and on a schedule, resumable, any format).
 
 ## Access control
 
@@ -36,7 +36,7 @@ per-repository or per-project policy can warn or refuse downloads and deploys wi
 
 ## Administration REST API
 
-`/api/v1` does everything the administrator pages do (repositories, access model, users, operations, retention, scanning) for
+`/api/v1` does everything the administrator pages do (repositories, access model, users, operations, retention, scanning, replication) for
 scripts, with an administrator's API key and OpenAPI 3: [administration REST API](admin-api.md).
 
 ## What BaGet Extension serves
