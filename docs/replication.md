@@ -35,6 +35,8 @@ peer clears the record of what was copied.
 Layers and tarballs are streamed (spooled to temporary files), never held in memory. A blob the receiver holds is not sent.
 Referrers and untagged manifests travel only when a copied index names them.
 
+A **pull** is subject to the receiving repository's [scanning policy](vulnerability-scanning.md) like a push: a NuGet package or Docker image that reaches the *block deploy* threshold is not kept (a failed item with the reason in the run's detail). npm and Maven pulls are checked by the same rule.
+
 ## Runs, log, interruption
 
 A run lists both sides (`GET /api/v1/replication/inventory/{repository}` on the peer), plans (copy what the target lacks,

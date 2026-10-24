@@ -24,9 +24,11 @@ public sealed class DockerReplicator : IFormatReplicator
 
     private readonly IContext _context;
     private readonly IOciRegistry _registry;
+    private readonly IScanGate _scanGate;
 
-    public DockerReplicator(IContext context, IOciRegistry registry)
+    public DockerReplicator(IContext context, IOciRegistry registry, IScanGate scanGate)
     {
+        _scanGate = scanGate ?? throw new ArgumentNullException(nameof(scanGate));
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
@@ -130,13 +132,30 @@ public sealed class DockerReplicator : IFormatReplicator
             }
 
             var reference = ReferenceEquals(manifest, root) ? item.Version : manifest.Digest;
+            OciManifestPut put;
             try
             {
-                await _registry.PutManifestAsync(item.Name, reference, manifest.MediaType, manifest.Content, cancellationToken).ConfigureAwait(false);
+                put = await _registry.PutManifestAsync(item.Name, reference, manifest.MediaType, manifest.Content, cancellationToken).ConfigureAwait(false);
             }
             catch (OciException e)
             {
                 throw new ReplicationItemException($"Storing {item} failed: {e.Message}", inner: e);
+            }
+
+            // The same rule as a push to the registry: an image is judged once stored (and a scan queued when nothing refuses it), and a
+            // refused one is taken back. Indexes, signatures and other artifacts are not images.
+            if (OciNames.ImageManifestTypes.Contains(manifest.MediaType, StringComparer.Ordinal) && put.SubjectDigest == null)
+            {
+                try
+                {
+                    await _scanGate.CheckStoredAsync(item.Name, put.Digest, cancellationToken).ConfigureAwait(false);
+                }
+                catch (ScanBlockedException e)
+                {
+                    await OciPushUndo.UndoAsync(_registry, item.Name, reference, put).ConfigureAwait(false);
+
+                    throw new ReplicationItemException($"The scanning policy refused {item}: {e.Message}", inner: e);
+                }
             }
 
             received += manifest.Content.Length;

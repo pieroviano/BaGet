@@ -200,8 +200,10 @@ public sealed class ReplicationJobs
     /// <param name="actor">Who started it.</param>
     /// <param name="resumedFrom">The interrupted or failed run being continued, or null.</param>
     /// <param name="refusal">Why it was not started.</param>
+    /// <param name="notRun">Called when the run was accepted here but never ran because another node holds the configuration's lease
+    /// (the caller puts back what it had consumed to start the run, e.g. a deploy notice).</param>
     /// <exception cref="MaintenanceException">The server is read-only.</exception>
-    public bool TryStart(int configKey, string trigger, string? actor, int? resumedFrom, out string? refusal)
+    public bool TryStart(int configKey, string trigger, string? actor, int? resumedFrom, out string? refusal, Action? notRun = null)
     {
         _gate.ThrowIfClosed();
 
@@ -230,6 +232,7 @@ public sealed class ReplicationJobs
                 if (lease == null)
                 {
                     status.Refusal = "Another node is running this replication.";
+                    notRun?.Invoke();
 
                     return;
                 }
@@ -358,7 +361,11 @@ public sealed class ReplicationWorker : BackgroundService
             var trigger = deployed.Contains(config.RepositoryKey) && config.OnDeploy && config.Direction == ReplicationDirection.Push ? "deploy" : "schedule";
             try
             {
-                if (_jobs.TryStart(config.Key, trigger, "scheduler", null, out _))
+                // A deploy notice is consumed by TakeQuiet; it must survive a run that does not happen, here (already running) or on
+                // another node that holds the lease (that run may have listed its inventory before the deploy).
+                var repositoryKey = config.RepositoryKey;
+                Action? notRun = trigger == "deploy" ? () => _trigger.Notify(repositoryKey) : null;
+                if (_jobs.TryStart(config.Key, trigger, "scheduler", null, out _, notRun))
                 {
                     started.Add(config.Key);
                 }

@@ -33,6 +33,17 @@ public class HaOptions
     public string KeyPrefix { get; set; } = "baget";
 
     /// <summary>
+    /// Path of a PFX certificate (with private key) that encrypts the data protection key ring stored in the database. Every node needs
+    /// the same certificate. Without it the keys that protect remote-repository passwords and replication peer keys are plain XML in the
+    /// same database as those secrets, so set it (the node logs a warning at start otherwise).
+    /// </summary>
+    public string? KeyCertificatePath { get; set; }
+
+    /// <summary>The password of the PFX at <see cref="KeyCertificatePath"/>, if it has one.</summary>
+    [SensitiveSetting]
+    public string? KeyCertificatePassword { get; set; }
+
+    /// <summary>
     /// How long a job lease or the read-only gate of a node that stopped answering stays held. The holder renews it every third of
     /// this, so a crashed node frees its jobs within this time. Default 30 seconds, at least 3.
     /// </summary>

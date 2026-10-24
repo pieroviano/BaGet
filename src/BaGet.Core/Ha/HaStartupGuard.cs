@@ -39,7 +39,15 @@ public sealed class HaStartupGuard : IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         var problems = _rules.Check(_ha.Value, _database.Value, _storage.Value);
-        if (problems.Count == 0) return Task.CompletedTask;
+        if (problems.Count == 0)
+        {
+            if (_ha.Value.Enabled && string.IsNullOrWhiteSpace(_ha.Value.KeyCertificatePath))
+            {
+                _logger.LogWarning("High availability: the data protection keys are stored unencrypted in the database, next to the passwords and peer keys they protect. Set Ha:KeyCertificatePath (a PFX every node holds).");
+            }
+
+            return Task.CompletedTask;
+        }
 
         foreach (var problem in problems) _logger.LogCritical("High availability: {Problem}", problem);
 

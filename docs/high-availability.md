@@ -25,6 +25,8 @@ A node that breaks a rule logs it at critical level and does not start (`HaStart
 | `Ha:KeyPrefix` | `baget` | Prefix of every Redis key, so clusters can share a Redis |
 | `Ha:LeaseDuration` | `00:00:30` | A lease or gate of a node that stopped answering frees after this; holders renew every third of it (min 3 s) |
 | `Ha:SyncInterval` | `00:00:02` | Heartbeat and pick-up of what other nodes changed (min 100 ms) |
+| `Ha:KeyCertificatePath` | empty | PFX (with private key, the same on every node) that encrypts the data protection keys stored in the database. **Set it**: without it the keys sit as plain XML next to the secrets they protect (remote passwords, replication peer keys) and the node logs a warning at start |
+| `Ha:KeyCertificatePassword` | empty | Password of that PFX; sensitive |
 
 They are on **Server settings > Ha** (connection string masked). Give every node the same database, storage, `Ha:KeyPrefix`
 and Redis. `Ha:NodeName` may differ or be left empty.
@@ -38,7 +40,7 @@ Every singleton or static holding state (B4), by where it lives in a cluster:
 | Read-only gate | `MaintenanceGate` | **Shared.** `Close` is published to Redis (key `gate`, renewed by the closing node, freed if it dies); every node refuses writes. Only the closing node reopens it. `CloseUntilRestart` (after a database copy) stays on its node: **restart every node** after a copy |
 | Database copy progress | `DatabaseCopyService` | **Shared status.** The copy runs on the node that accepted it; the others show its progress and refuse a second copy |
 | Contact-owners limit, password-reset limits | `ContactRateLimiter`, `PasswordResetRateLimiter` | **Shared** (Redis keys with expiry; the client cap is a fixed window) |
-| Data protection keys (cookies, antiforgery, protected remote and replication credentials) | key ring | **Shared** in table `DataProtectionKeys`, one application name. Credentials protected before HA was enabled used the old key ring: enter them again |
+| Data protection keys (cookies, antiforgery, protected remote and replication credentials) | key ring | **Shared** in table `DataProtectionKeys`, one application name. Credentials protected before HA was enabled used the old key ring: enter them again. Encrypt the ring with `Ha:KeyCertificatePath` |
 | Access model | `AccessModelCache`, `AccessModelVersion` | **Per-node cache, shared invalidation.** A committed change bumps a Redis counter; the others reload within `Ha:SyncInterval` (30 s at the latest) |
 | Job leases | `IJobLease` | **Shared** (`ClusterJobLease`); see below |
 | Scans in progress | `ScanInFlight` | **Shared marker** per image (so the scanner's pull is recognised on whichever node receives it) |

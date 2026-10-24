@@ -911,6 +911,7 @@ with `Ha:Enabled` on SQLite, Azure Table, the file system store or without `Ha:C
 | `Ha:ConnectionString` | empty | Redis connection string (sensitive) |
 | `Ha:NodeName` | machine name + suffix | Name on the Cluster page |
 | `Ha:KeyPrefix` | `baget` | Prefix of every Redis key |
+| `Ha:KeyCertificatePath` / `Ha:KeyCertificatePassword` | empty | PFX that encrypts the data protection keys kept in the database (same on every node; password sensitive). Unset = keys stored unencrypted, warned at start. See [High availability](high-availability.md) |
 | `Ha:LeaseDuration` | `00:00:30` | How long a lease of a stopped node holds (min 3 s) |
 | `Ha:SyncInterval` | `00:00:02` | Heartbeat and pick-up interval (min 100 ms) |
 

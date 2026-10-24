@@ -619,7 +619,7 @@ public class OciController : Controller
             }
             catch (ScanBlockedException)
             {
-                await UndoRefusedPushAsync(path.Image, path.Reference!, put);
+                await OciPushUndo.UndoAsync(_registry, path.Image, path.Reference!, put);
 
                 throw;
             }
@@ -631,25 +631,6 @@ public class OciController : Controller
         Response.Headers.ContentLength = 0;
 
         return new StatusCodeResult(StatusCodes.Status201Created);
-    }
-
-    // A refused push leaves nothing behind: a manifest that was new is removed, and a tag the push created or moved (also onto a
-    // manifest the image already held) goes back to where it pointed.
-    private async Task UndoRefusedPushAsync(string image, string reference, OciManifestPut put)
-    {
-        var ct = CancellationToken.None;
-        if (put.Created) await _registry.DeleteManifestAsync(image, put.Digest, ct);
-        if (OciNames.LooksLikeDigest(reference)) return;
-
-        if (put.PreviousDigest == null)
-        {
-            await _registry.DeleteTagAsync(image, reference, ct);
-        }
-        else if (!string.Equals(put.PreviousDigest, put.Digest, StringComparison.Ordinal))
-        {
-            var previous = await _registry.GetManifestAsync(image, put.PreviousDigest, ct);
-            if (previous != null) await _registry.PutManifestAsync(image, reference, previous.MediaType, previous.Content, ct);
-        }
     }
 
     // ---- deletes ----------------------------------------------------------------------------------------------------

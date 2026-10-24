@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using BaGet.Core;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
@@ -30,7 +34,23 @@ internal static class HaServiceCollectionExtensions
         });
         services.Replace(ServiceDescriptor.Singleton<IJobLease, ClusterJobLease>());
 
-        services.AddDataProtection().SetApplicationName("BaGet");
+        var protection = services.AddDataProtection().SetApplicationName("BaGet");
+        if (!string.IsNullOrWhiteSpace(ha.KeyCertificatePath))
+        {
+            // The key ring sits in the same database as the secrets it protects: encrypt it with a certificate every node holds.
+            X509Certificate2 certificate;
+            try
+            {
+                certificate = X509CertificateLoader.LoadPkcs12FromFile(ha.KeyCertificatePath, string.IsNullOrEmpty(ha.KeyCertificatePassword) ? null : ha.KeyCertificatePassword);
+            }
+            catch (Exception e) when (e is CryptographicException or IOException or UnauthorizedAccessException)
+            {
+                throw new InvalidOperationException($"The certificate named by 'Ha:KeyCertificatePath' could not be loaded: {e.Message}", e);
+            }
+
+            protection.ProtectKeysWithCertificate(certificate);
+        }
+
         services.AddOptions<KeyManagementOptions>()
             .Configure<IServiceScopeFactory>((options, scopes) => options.XmlRepository = new DatabaseXmlRepository(scopes));
 

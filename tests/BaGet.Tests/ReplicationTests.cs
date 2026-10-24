@@ -555,6 +555,29 @@ public class ReplicationTests : IDisposable
     }
 
     [Fact]
+    public async Task ADeployNoticeIsKeptWhenAnotherNodeHoldsTheLeaseSoTheNextPassPushesIt()
+    {
+        var key = await _h.CreateAsync(onDeploy: true);
+        var worker = _h.Local.App.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>().OfType<ReplicationWorker>().Single();
+        var jobs = _h.Local.App.Services.GetRequiredService<ReplicationJobs>();
+        var lease = _h.Local.App.Services.GetRequiredService<IJobLease>();
+
+        await using (await lease.TryAcquireAsync(ReplicationJobs.LeaseName(key), Token))
+        {
+            await AddNuGetAsync(_h.Local, "Contoso.Lib", "1.0.0");
+
+            // Started here, but another node holds the lease: nothing was pushed and the news must survive.
+            Assert.Equal(new[] { key }, await worker.RunDueAsync(TimeSpan.Zero, Token));
+            await jobs.WaitAsync(key);
+            Assert.Equal("Another node is running this replication.", jobs.Get(key)!.Refusal);
+        }
+
+        Assert.Equal(new[] { key }, await worker.RunDueAsync(TimeSpan.Zero, Token));
+        await jobs.WaitAsync(key);
+        Assert.Single((await _h.InventoryAsync(_h.Peer)).Items);
+    }
+
+    [Fact]
     public async Task ADeployToAnotherRepositoryDoesNotStartThePush()
     {
         await _h.Local.App.CreateRepositoryAsync("other", Token);

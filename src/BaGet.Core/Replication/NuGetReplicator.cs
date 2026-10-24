@@ -25,14 +25,17 @@ public sealed class NuGetReplicator : IFormatReplicator
     private readonly IPackageSubmissionService _submissions;
     private readonly IPackageDeletionService _deletion;
     private readonly MaintenanceGate _gate;
+    private readonly IScanGate _scanGate;
 
     public NuGetReplicator(
         IContext context,
         IPackageStorageService storage,
         IPackageSubmissionService submissions,
         IPackageDeletionService deletion,
-        MaintenanceGate gate)
+        MaintenanceGate gate,
+        IScanGate scanGate)
     {
+        _scanGate = scanGate ?? throw new ArgumentNullException(nameof(scanGate));
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _submissions = submissions ?? throw new ArgumentNullException(nameof(submissions));
@@ -85,6 +88,23 @@ public sealed class NuGetReplicator : IFormatReplicator
         await using var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var file = await ReplicationTransfer.SpoolAsync(body, cancellationToken).ConfigureAwait(false);
         var length = file.Length;
+
+        // A push checks the scanning policy before it stores; a pull must refuse the same packages.
+        if (_scanGate.Enabled && await _scanGate.BlocksDeploysAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var components = NuGetScanComponents.TryRead(file);
+            if (components != null)
+            {
+                try
+                {
+                    await _scanGate.CheckDeployAsync(components, cancellationToken).ConfigureAwait(false);
+                }
+                catch (ScanBlockedException e)
+                {
+                    throw new ReplicationItemException($"The scanning policy refused {item}: {e.Message}", inner: e);
+                }
+            }
+        }
 
         var result = await _submissions.SubmitAsync(file, cancellationToken).ConfigureAwait(false);
         switch (result)
