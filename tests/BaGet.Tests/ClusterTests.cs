@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -174,7 +175,7 @@ public class ClusterTests : IDisposable
     }
 
     [Fact]
-    public async Task ReadyAlsoChecksTheSharedStoreOfAClusterNodeAndTurnsUnhealthyWithoutIt()
+    public async Task ReadyReportsTheSharedStoreOfAClusterNodeButStaysReadyWithoutIt()
     {
         var c = Cluster();
         using var client = c.One.CreateClient();
@@ -190,7 +191,7 @@ public class ClusterTests : IDisposable
 
         using var broken = await client.GetAsync("/health/ready", Token);
         var text = await broken.Content.ReadAsStringAsync(Token);
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, broken.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, broken.StatusCode);
         Assert.Contains("\"cluster\":\"Unhealthy\"", text);
         // The body names checks and results only.
         Assert.DoesNotContain("not-used-by-the-in-memory-store", text);
@@ -404,6 +405,22 @@ public class ClusterTests : IDisposable
         Assert.Equal("secret", read);
         using var scope = c.One.Services.CreateScope();
         Assert.True(await scope.ServiceProvider.GetRequiredService<IContext>().DataProtectionKeys!.AnyAsync(Token));
+    }
+
+    [Fact]
+    public async Task ANewDataProtectionKeyIsStoredWhileTheReadOnlyGateIsClosed()
+    {
+        var c = Cluster();
+        using var scope = c.One.Services.CreateScope();
+        var before = await scope.ServiceProvider.GetRequiredService<IContext>().DataProtectionKeys!.CountAsync(Token);
+        c.One.Services.GetRequiredService<MaintenanceGate>().Close("copying");
+
+        // Without the exemption this throws MaintenanceException: sign-in and antiforgery could not get a key while the cluster is read-only.
+        c.One.Services.GetRequiredService<IKeyManager>().CreateNewKey(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
+
+        Assert.Equal(before + 1, await scope.ServiceProvider.GetRequiredService<IContext>().DataProtectionKeys!.CountAsync(Token));
+        // The gate still refuses the application's own writes.
+        Assert.True(c.One.Services.GetRequiredService<MaintenanceGate>().IsClosed);
     }
 
     [Fact]

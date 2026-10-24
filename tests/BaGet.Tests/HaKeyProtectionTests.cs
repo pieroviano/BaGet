@@ -42,17 +42,22 @@ public class HaKeyProtectionTests : IDisposable
         return path;
     }
 
-    private static List<string> StoredKeysFor(Dictionary<string, string?> settings)
+    private static ServiceProvider ProviderOver(Dictionary<string, string?> settings, MemoryXmlRepository repository)
     {
         settings["Ha:Enabled"] = "true";
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
-        var repository = new MemoryXmlRepository();
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddBaGetHa(configuration);
         services.PostConfigure<KeyManagementOptions>(o => o.XmlRepository = repository);
 
-        using var provider = services.BuildServiceProvider();
+        return services.BuildServiceProvider();
+    }
+
+    private static List<string> StoredKeysFor(Dictionary<string, string?> settings)
+    {
+        var repository = new MemoryXmlRepository();
+        using var provider = ProviderOver(settings, repository);
         provider.GetRequiredService<IKeyManager>().CreateNewKey(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
 
         return repository.Elements.Select(e => e.ToString()).ToList();
@@ -67,13 +72,31 @@ public class HaKeyProtectionTests : IDisposable
     }
 
     [Fact]
-    public void WithACertificateTheStoredKeysAreEncryptedAndStillUsable()
+    public void WithACertificateTheStoredKeysAreEncrypted()
     {
         var path = WriteCertificate("secret");
         var stored = StoredKeysFor(new Dictionary<string, string?> { { "Ha:KeyCertificatePath", path }, { "Ha:KeyCertificatePassword", "secret" } });
 
         Assert.Contains(stored, x => x.Contains("EncryptedData", StringComparison.Ordinal));
         Assert.DoesNotContain(stored, x => x.Contains("<value>", StringComparison.Ordinal) && x.Contains("masterKey", StringComparison.Ordinal) && !x.Contains("EncryptedData", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void KeysEncryptedWithTheCertificateAreDecryptedByAnotherNodeHoldingIt()
+    {
+        var path = WriteCertificate("secret");
+        var settings = new Dictionary<string, string?> { { "Ha:KeyCertificatePath", path }, { "Ha:KeyCertificatePassword", "secret" } };
+        var repository = new MemoryXmlRepository();
+
+        string protectedText;
+        using (var first = ProviderOver(new Dictionary<string, string?>(settings), repository))
+        {
+            protectedText = first.GetRequiredService<IDataProtectionProvider>().CreateProtector("test").Protect("secret-value");
+        }
+
+        Assert.Contains(repository.Elements, e => e.ToString().Contains("EncryptedData", StringComparison.Ordinal));
+        using var second = ProviderOver(new Dictionary<string, string?>(settings), repository);
+        Assert.Equal("secret-value", second.GetRequiredService<IDataProtectionProvider>().CreateProtector("test").Unprotect(protectedText));
     }
 
     [Fact]

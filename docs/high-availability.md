@@ -10,7 +10,7 @@ single node needs no Redis and behaves exactly as before.
 | A shared database: SQL Server, PostgreSQL or MySQL | every node reads and writes the same rows; the data protection keys live there | SQLite (a file on one machine), Azure Table |
 | Shared storage: S3, Azure Blob, Google Cloud, Aliyun OSS | every node serves the same files | the file system (`Storage:Type` `Filesystem`) |
 | Redis (any 6+), reachable from every node | leases, the read-only gate, rate limits | `Ha:ConnectionString` empty |
-| A balancer that probes `/health/ready` | a node that cannot reach its database, storage or Redis leaves rotation | - |
+| A balancer that probes `/health/ready` | a node that cannot reach its database or storage leaves rotation (Redis is reported only) | - |
 
 A node that breaks a rule logs it at critical level and does not start (`HaStartupGuard`, and `ValidateStartupOptions` before the host starts).
 
@@ -40,7 +40,7 @@ Every singleton or static holding state (B4), by where it lives in a cluster:
 | Read-only gate | `MaintenanceGate` | **Shared.** `Close` is published to Redis (key `gate`, renewed by the closing node, freed if it dies); every node refuses writes. Only the closing node reopens it. `CloseUntilRestart` (after a database copy) stays on its node: **restart every node** after a copy |
 | Database copy progress | `DatabaseCopyService` | **Shared status.** The copy runs on the node that accepted it; the others show its progress and refuse a second copy |
 | Contact-owners limit, password-reset limits | `ContactRateLimiter`, `PasswordResetRateLimiter` | **Shared** (Redis keys with expiry; the client cap is a fixed window) |
-| Data protection keys (cookies, antiforgery, protected remote and replication credentials) | key ring | **Shared** in table `DataProtectionKeys`, one application name. Credentials protected before HA was enabled used the old key ring: enter them again. Encrypt the ring with `Ha:KeyCertificatePath` |
+| Data protection keys (cookies, antiforgery, protected remote and replication credentials) | key ring | **Shared** in table `DataProtectionKeys`, one application name. Credentials protected before HA was enabled used the old key ring: enter them again. Encrypt the ring with `Ha:KeyCertificatePath`. A key is written through a context the read-only gate does not block, so sign-in keeps working while the cluster is read-only |
 | Access model | `AccessModelCache`, `AccessModelVersion` | **Per-node cache, shared invalidation.** A committed change bumps a Redis counter; the others reload within `Ha:SyncInterval` (30 s at the latest) |
 | Job leases | `IJobLease` | **Shared** (`ClusterJobLease`); see below |
 | Scans in progress | `ScanInFlight` | **Shared marker** per image (so the scanner's pull is recognised on whichever node receives it) |
@@ -77,7 +77,7 @@ holder renews it (every third). A node that cannot reach Redis **skips** the job
 | Endpoint | Answer |
 |---|---|
 | `GET /health/live` | `200 Healthy` while the process answers |
-| `GET /health/ready` | `200` or `503` with `{"status", "checks": {"database", "storage", "cluster"}}`; `cluster` (the Redis ping) appears only with HA; checked at most every 5 s |
+| `GET /health/ready` | `200` or `503` with `{"status", "checks": {"database", "storage", "cluster"}}`; `503` only when `database` or `storage` fails. `cluster` (the Redis ping) appears only with HA and is **reported, never a cause of `503`** (a node keeps serving without Redis); checked at most every 5 s |
 
 The storage check writes and deletes a one-byte object under `health/`. The body never carries a message or a connection
 string. Readiness ignores the read-only gate: a node refusing writes still serves reads.
@@ -90,8 +90,8 @@ and by whom, whether the cluster is read-only and why, and this node's health ch
 ## Redis down
 
 Nodes keep serving. Leases are refused (jobs wait), the gate and access model stop propagating (the access model still reloads
-every 30 s), the rate limiters of a node fail their page with an error until Redis returns, and `/health/ready` turns `503`
-(`cluster`), which takes the node out of a balancer that uses it.
+every 30 s) and the rate limiters of a node fail their page with an error until Redis returns. `/health/ready` stays `200` (a Redis
+outage would otherwise take every node out of rotation at once); `cluster` shows `Unhealthy` in its body and on the Cluster page.
 
 ## Tests
 

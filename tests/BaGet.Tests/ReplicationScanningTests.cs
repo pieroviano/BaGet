@@ -181,6 +181,197 @@ public class ReplicationScanningTests : IAsyncLifetime
         Assert.Equal(good.ManifestDigest, kept!.Digest);
     }
 
+    [Fact]
+    public async Task ARefusedSourceWinsReplacementKeepsTheLocalMavenFile()
+    {
+        await _h.Local.App.CreateMavenRepositoryAsync("libs", cancellationToken: Token);
+        await _h.Peer.App.CreateMavenRepositoryAsync("libs", cancellationToken: Token);
+        const string path = "org/acme/lib/1.0/lib-1.0.pom";
+        await DeployMavenAsync(_h.Local, "libs", path, Pom(null));
+        await DeployMavenAsync(_h.Peer, "libs", path, Pom("<dependency><groupId>org.bad</groupId><artifactId>bad</artifactId><version>2.3.4</version></dependency>"));
+        _osv.Add("Maven", "org.bad:bad", "2.3.4", "GHSA-maven-replace", "HIGH", "2.3.5");
+        var before = (await _h.InventoryAsync(_h.Local, "libs")).Items.Single().Digest;
+        await BlockDeploysAsync("libs");
+        var key = await _h.CreateAsync("m", "libs", "libs", ReplicationDirection.Pull, conflict: ReplicationConflict.SourceWins);
+
+        var run = await _h.RunAsync(key);
+
+        Assert.Equal(1, run.Failures);
+        Assert.Equal(0, run.Transferred);
+        Assert.Contains("GHSA-maven-replace", run.Detail);
+        Assert.Equal(before, (await _h.InventoryAsync(_h.Local, "libs")).Items.Single().Digest);
+    }
+
+    [Fact]
+    public async Task ARefusedNuGetReplacingPullKeepsTheLocalPackage()
+    {
+        // NuGet items carry no digest, so the planner never asks for a replacement; the replicator's own contract is still that a
+        // refused replacement keeps the stored package.
+        await _h.Local.App.AddPackageAsync(TestPackages.Build("Same.Pkg", "1.0.0", dependencies: new[] { ("Newtonsoft.Json", "[13.0.1,)") }), Token);
+        await _h.Peer.App.AddPackageAsync(TestPackages.Build("Same.Pkg", "1.0.0", dependencies: new[] { ("Newtonsoft.Json", "[9.0.1,)") }), Token);
+        _osv.Add("NuGet", "Newtonsoft.Json", "9.0.1", "GHSA-json-replace", "HIGH", "13.0.1");
+        await BlockDeploysAsync(Repository.DefaultName);
+
+        var refused = await _h.Local.WithAsync(async services =>
+        {
+            var replicator = services.GetFormatService<IFormatReplicator>(RepositoryFormat.NuGet)!;
+            using var peer = services.GetRequiredService<IReplicationPeerFactory>().Create(ReplicationHarness.PeerAddress, Repository.DefaultName, _h.PeerKey);
+            var item = (await replicator.ListAsync(Token)).Single();
+
+            return await Assert.ThrowsAsync<ReplicationItemException>(() => replicator.PullReplacingAsync(item, peer, Token));
+        });
+
+        Assert.Contains("GHSA-json-replace", refused.Message);
+        Assert.Single((await _h.InventoryAsync(_h.Local)).Items);
+    }
+
+    [Fact]
+    public async Task ASourceWinsPushMovesADockerTagWithoutDeletingAtThePeerFirst()
+    {
+        await _h.Local.App.CreateDockerRepositoryAsync("img", cancellationToken: Token);
+        await _h.Peer.App.CreateDockerRepositoryAsync("img", cancellationToken: Token);
+        var local = OciTestImage.Create("local");
+        await PushImageAsync(_h.Local, "svc", "latest", local);
+        await PushImageAsync(_h.Peer, "svc", "latest", OciTestImage.Create("peer"));
+        var key = await _h.CreateAsync("d", "img", "img", ReplicationDirection.Push, conflict: ReplicationConflict.SourceWins);
+
+        var run = await _h.RunAsync(key);
+
+        Assert.True(run.Failures == 0, run.Detail);
+        Assert.Equal(1, run.Transferred);
+        Assert.Equal(local.ManifestDigest, (await _h.InventoryAsync(_h.Peer, "img")).Items.Single().Digest);
+        lock (_h.PeerRequests) Assert.DoesNotContain(_h.PeerRequests, r => r.StartsWith("DELETE ", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ThePeerKeyIsNeverSentToARedirectTarget()
+    {
+        using var target = new Listener(_ => (200, null));
+        using var origin = new Listener(_ => (302, target.Url + "stolen"));
+        using var http = new System.Net.Http.HttpClient(new System.Net.Http.SocketsHttpHandler { AllowAutoRedirect = false });
+        using var peer = new ReplicationPeer(http, new Uri(origin.Url), "default", ownsClient: false, apiKey: "peer-secret-key");
+
+        var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, peer.Feed("v3/index.json"));
+        peer.AddCredentials(request);
+        using var response = await peer.SendAsync(request, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, Token);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("peer-secret-key", Assert.Single(origin.Seen).Key);
+        Assert.Null(Assert.Single(target.Seen).Key);
+    }
+
+    [Fact]
+    public async Task ThePeerKeyFollowsARedirectWithinThePeersOwnOrigin()
+    {
+        using var origin = new Listener(path => path.EndsWith("/moved", StringComparison.Ordinal) ? (200, null) : (302, "moved"));
+        using var http = new System.Net.Http.HttpClient(new System.Net.Http.SocketsHttpHandler { AllowAutoRedirect = false });
+        using var peer = new ReplicationPeer(http, new Uri(origin.Url), "default", ownsClient: false, apiKey: "peer-secret-key");
+
+        var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, peer.Feed("v3/index.json"));
+        peer.AddCredentials(request);
+        using var response = await peer.SendAsync(request, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, Token);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, origin.Seen.Count);
+        Assert.All(origin.Seen, s => Assert.Equal("peer-secret-key", s.Key));
+    }
+
+    [Fact]
+    public async Task APeerBuiltByTheFactoryDoesNotFollowRedirectsItself()
+    {
+        using var target = new Listener(_ => (200, null));
+        using var origin = new Listener(_ => (302, target.Url + "x"));
+        using var peer = new ReplicationPeerFactory(new RemoteHttpClientFactory()).Create(origin.Url, "default", "peer-secret-key");
+
+        // A GET carrying the key header: the factory's client must not follow the redirect on its own (the manual follow strips the key).
+        var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, peer.Feed("v3/index.json"));
+        peer.AddCredentials(request);
+        using var response = await peer.SendAsync(request, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, Token);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Null(Assert.Single(target.Seen).Key);
+        Assert.Null(target.Seen[0].Authorization);
+    }
+
+    /// <summary>A loopback HTTP server that records the key header and the Authorization header of each request.</summary>
+    private sealed class Listener : IDisposable
+    {
+        private readonly System.Net.HttpListener _listener = new();
+        private readonly Func<string, (int Status, string? Location)> _respond;
+
+        public Listener(Func<string, (int Status, string? Location)> respond)
+        {
+            _respond = respond;
+            int port;
+            for (var attempt = 0; ; attempt++)
+            {
+                var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+                probe.Start();
+                port = ((System.Net.IPEndPoint)probe.LocalEndpoint).Port;
+                probe.Stop();
+                try
+                {
+                    _listener.Prefixes.Clear();
+                    _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+                    _listener.Start();
+                    break;
+                }
+                catch (System.Net.HttpListenerException) when (attempt < 5)
+                {
+                }
+            }
+
+            Url = $"http://127.0.0.1:{port}/";
+            _ = Task.Run(LoopAsync);
+        }
+
+        public string Url { get; }
+
+        public List<(string? Key, string? Authorization)> Seen { get; } = new();
+
+        private async Task LoopAsync()
+        {
+            while (_listener.IsListening)
+            {
+                System.Net.HttpListenerContext context;
+                try
+                {
+                    context = await _listener.GetContextAsync();
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+
+                lock (Seen) Seen.Add((context.Request.Headers["X-NuGet-ApiKey"], context.Request.Headers["Authorization"]));
+                var (status, location) = _respond(context.Request.Url!.AbsolutePath);
+                context.Response.StatusCode = status;
+                if (location != null) context.Response.RedirectLocation = location;
+                context.Response.Close();
+            }
+        }
+
+        public void Dispose() => _listener.Close();
+    }
+
+    private static string Pom(string? dependency) => $"""
+        <project>
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>org.acme</groupId>
+          <artifactId>lib</artifactId>
+          <version>1.0</version>
+          <dependencies>{dependency}</dependencies>
+        </project>
+        """;
+
+    private static async Task DeployMavenAsync(AdminApiHarness side, string repository, string path, string content)
+    {
+        using var scope = await side.App.CreateRepositoryScopeAsync(repository, Token);
+        var maven = scope.ServiceProvider.GetRequiredService<MavenRepositoryService>();
+        var result = await maven.PutAsync(BaGetPrincipal.Superuser, MavenNames.ParsePath(path)!, new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(content)), Token);
+        Assert.True(result.Succeeded, result.Message);
+    }
+
     private static async Task PublishNpmAsync(AdminApiHarness side, NpmTarballFile tarball)
     {
         using var request = NpmTestPackages.Json(System.Net.Http.HttpMethod.Put, NpmTestPackages.Path("/r/web/npm/", tarball.Name), NpmTestPackages.PublishBody(tarball), AdminApiHarness.GlobalKey);

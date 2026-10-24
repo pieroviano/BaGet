@@ -50,6 +50,9 @@ public sealed class DockerReplicator : IFormatReplicator
             .ToList();
     }
 
+    /// <summary>A tag is moved by the manifest <c>PUT</c>, so a replacing push deletes nothing at the peer first.</summary>
+    public bool PushReplacesInPlace => true;
+
     private static Uri Url(ReplicationPeer peer, ReplicaItem item, string tail) => peer.Root($"v2/{Uri.EscapeDataString(peer.Repository)}/{item.Name}/{tail}");
 
     /// <inheritdoc/>
@@ -97,7 +100,7 @@ public sealed class DockerReplicator : IFormatReplicator
 
     private async Task<long> PushBlobAsync(ReplicaItem item, ReplicationPeer peer, string digest, CancellationToken cancellationToken)
     {
-        using (var head = await peer.Http.SendAsync(new HttpRequestMessage(HttpMethod.Head, Url(peer, item, "blobs/" + digest)), HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
+        using (var head = await peer.SendAsync(new HttpRequestMessage(HttpMethod.Head, Url(peer, item, "blobs/" + digest)), HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
         {
             if (head.IsSuccessStatusCode) return 0;
         }

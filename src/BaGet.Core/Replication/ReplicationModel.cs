@@ -87,6 +87,13 @@ public interface IFormatReplicator : IFormatService
         return await PullAsync(item, peer, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Whether <see cref="PushAsync"/> replaces the peer's copy of an item in place (<c>SourceWins</c> on a push). A Docker tag does:
+    /// the manifest <c>PUT</c> moves it. NuGet, npm and Maven peers refuse to overwrite a stored version or release file, so the engine
+    /// deletes the peer's copy first (default <see langword="false"/>), and a peer that then refuses the item stays without it until the next run.
+    /// </summary>
+    bool PushReplacesInPlace => false;
+
     /// <summary>Deletes the item from the local repository for good.</summary>
     Task DeleteLocalAsync(ReplicaItem item, CancellationToken cancellationToken);
 
@@ -128,6 +135,69 @@ public sealed class ReplicationPeer : IDisposable
     /// <summary>The server's base address, ending with a slash.</summary>
     public Uri Server { get; }
 
+    /// <summary>The header that carries the peer's key for the protocols that read it from their own header (NuGet).</summary>
+    internal const string ApiKeyHeader = "X-NuGet-ApiKey";
+
+    /// <summary>
+    /// Adds the peer's key to <paramref name="request"/> (a NuGet request, which reads it from its own header) in <see cref="ApiKeyHeader"/>, only when the request goes to the peer's own origin;
+    /// any other origin gets no credential and an existing one is removed.
+    /// </summary>
+    public void AddCredentials(HttpRequestMessage request)
+    {
+        if (request == null) throw new ArgumentNullException(nameof(request));
+
+        request.Headers.Remove(ApiKeyHeader);
+        if (ApiKey != null && request.RequestUri != null && SameOrigin(request.RequestUri)) request.Headers.TryAddWithoutValidation(ApiKeyHeader, ApiKey);
+    }
+
+    private bool SameOrigin(Uri uri) => uri.IsAbsoluteUri
+        && string.Equals(uri.Scheme, Server.Scheme, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(uri.Host, Server.Host, StringComparison.OrdinalIgnoreCase)
+        && uri.Port == Server.Port;
+
+    /// <summary>The redirects a GET or HEAD follows by hand.</summary>
+    internal const int MaxRedirects = 5;
+
+    /// <summary>
+    /// Sends <paramref name="request"/> to the peer. The client does not follow redirects (the factory builds it that way), so a
+    /// credential can never be carried to a redirect target: a GET or HEAD redirect is followed here, getting the credential header
+    /// only when the target is the peer's own origin; any other redirect, or a redirect of a request with a body, is returned as is
+    /// (and fails as a non-success answer).
+    /// </summary>
+    public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completion, CancellationToken cancellationToken)
+    {
+        if (request == null) throw new ArgumentNullException(nameof(request));
+
+        // Only a request that asked for the key header (the NuGet protocol's) gets it; the others authenticate in the client's handler.
+        var withKey = request.Headers.Contains(ApiKeyHeader);
+        if (withKey) AddCredentials(request);
+        var response = await Http.SendAsync(request, completion, cancellationToken).ConfigureAwait(false);
+        for (var hops = 0; hops < MaxRedirects; hops++)
+        {
+            var location = response.Headers.Location;
+            var redirect = (int)response.StatusCode is 301 or 302 or 303 or 307 or 308;
+            if (!redirect || location == null || request.Content != null || (request.Method != HttpMethod.Get && request.Method != HttpMethod.Head)) break;
+
+            var target = request.RequestUri != null && !location.IsAbsoluteUri ? new Uri(request.RequestUri, location) : location;
+            if (!target.IsAbsoluteUri || (target.Scheme != Uri.UriSchemeHttp && target.Scheme != Uri.UriSchemeHttps)) break;
+            // Never from https to http.
+            if (request.RequestUri != null && request.RequestUri.Scheme == Uri.UriSchemeHttps && target.Scheme == Uri.UriSchemeHttp) break;
+
+            response.Dispose();
+            var next = new HttpRequestMessage(request.Method, target);
+            foreach (var header in request.Headers)
+            {
+                if (!string.Equals(header.Key, ApiKeyHeader, StringComparison.OrdinalIgnoreCase) && !string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase)) next.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            if (withKey) AddCredentials(next);
+            request = next;
+            response = await Http.SendAsync(request, completion, cancellationToken).ConfigureAwait(false);
+        }
+
+        return response;
+    }
+
     /// <summary>The peer's repository.</summary>
     public string Repository { get; }
 
@@ -147,7 +217,7 @@ public sealed class ReplicationPeer : IDisposable
     public async Task<ReplicationInventory> GetInventoryAsync(bool summary, CancellationToken cancellationToken)
     {
         var url = Root("api/v1/replication/inventory/" + Uri.EscapeDataString(Repository) + (summary ? "?summary=true" : string.Empty));
-        using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var response = await SendAsync(new HttpRequestMessage(HttpMethod.Get, url), HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             throw new ReplicationItemException(response.StatusCode switch

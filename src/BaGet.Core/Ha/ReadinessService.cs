@@ -15,17 +15,18 @@ namespace BaGet.Core;
 /// <param name="Name"><c>database</c>, <c>storage</c> or <c>cluster</c>.</param>
 /// <param name="Healthy">Whether it answered.</param>
 /// <param name="Detail">A short, credential-free note (the exception type when it failed).</param>
-public sealed record HealthProbe(string Name, bool Healthy, string? Detail);
+/// <param name="Informational">The probe is reported but a failure does not make the node unready (the shared store: a node keeps serving without it).</param>
+public sealed record HealthProbe(string Name, bool Healthy, string? Detail, bool Informational = false);
 
 /// <summary>The result of the readiness check.</summary>
 /// <param name="CheckedAt">When it ran (UTC).</param>
 /// <param name="Probes">Each probe.</param>
 public sealed record ReadinessReport(DateTime CheckedAt, IReadOnlyList<HealthProbe> Probes)
 {
-    /// <summary>Every probe answered.</summary>
-    public bool IsReady => Probes.All(p => p.Healthy);
+    /// <summary>Every probe that decides readiness answered (an informational probe, the shared store, never takes the node out of rotation).</summary>
+    public bool IsReady => Probes.All(p => p.Healthy || p.Informational);
 
-    /// <summary>The failing probes as one line, or null.</summary>
+    /// <summary>The failing probes (informational ones too) as one line, or null.</summary>
     public string? Problem
     {
         get
@@ -39,7 +40,8 @@ public sealed record ReadinessReport(DateTime CheckedAt, IReadOnlyList<HealthPro
 
 /// <summary>
 /// What <c>/health/ready</c> and the cluster page report: whether this node can serve. It reaches the database (a connection), the
-/// storage (writes and deletes a one-byte probe object) and, in a cluster, the shared store. The answer is kept for
+/// storage (writes and deletes a one-byte probe object) and, in a cluster, the shared store, which is only <i>reported</i>
+/// (<see cref="HealthProbe.Informational"/>): a node keeps serving without Redis, so a Redis outage must not take every node out of rotation at once. The answer is kept for
 /// <see cref="CacheFor"/>, so a load balancer polling every second costs one check per interval. Readiness never depends on the
 /// read-only gate (a node refusing writes still serves reads).
 /// </summary>
@@ -84,7 +86,7 @@ public sealed class ReadinessService
                 await ProbeAsync("database", DatabaseAsync, cancellationToken).ConfigureAwait(false),
                 await ProbeAsync("storage", StorageAsync, cancellationToken).ConfigureAwait(false),
             };
-            if (_cluster.IsEnabled) probes.Add(await ProbeAsync("cluster", ClusterAsync, cancellationToken).ConfigureAwait(false));
+            if (_cluster.IsEnabled) probes.Add(await ProbeAsync("cluster", ClusterAsync, cancellationToken, informational: true).ConfigureAwait(false));
 
             return _last = new ReadinessReport(DateTime.UtcNow, probes);
         }
@@ -94,20 +96,20 @@ public sealed class ReadinessService
         }
     }
 
-    private async Task<HealthProbe> ProbeAsync(string name, Func<CancellationToken, Task<string?>> probe, CancellationToken cancellationToken)
+    private async Task<HealthProbe> ProbeAsync(string name, Func<CancellationToken, Task<string?>> probe, CancellationToken cancellationToken, bool informational = false)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(10));
         try
         {
-            return new HealthProbe(name, true, await probe(timeout.Token).ConfigureAwait(false));
+            return new HealthProbe(name, true, await probe(timeout.Token).ConfigureAwait(false), informational);
         }
         catch (Exception e) when (e is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             // The type only: a message can carry a connection string.
             _logger.LogWarning("Readiness probe {Probe} failed: {Error}", name, e.GetType().Name);
 
-            return new HealthProbe(name, false, e is OperationCanceledException ? "timeout" : e.GetType().Name);
+            return new HealthProbe(name, false, e is OperationCanceledException ? "timeout" : e.GetType().Name, informational);
         }
     }
 

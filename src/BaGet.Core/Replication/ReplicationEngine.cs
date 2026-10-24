@@ -58,7 +58,7 @@ public sealed class ReplicationPeerFactory : IReplicationPeerFactory
         };
         var uri = settings.UrlOrNull ?? throw new ReplicationException("The peer URL must be an absolute http or https address.");
 
-        return new ReplicationPeer(_http.Create(settings), uri, peerRepository, ownsClient: true, apiKey: string.IsNullOrEmpty(apiKey) ? null : apiKey);
+        return new ReplicationPeer(_http.CreateProbe(settings), uri, peerRepository, ownsClient: true, apiKey: string.IsNullOrEmpty(apiKey) ? null : apiKey);
     }
 }
 
@@ -272,8 +272,9 @@ public sealed class ReplicationEngine
             AddDetail(detail, $"conflict: {item} is held differently on both sides; the {(push ? "peer" : "local")} copy is replaced");
 
             // A pull replaces the local copy only once the peer's item is fetched and accepted (PullReplacingAsync), so a refusal
-            // (scanning policy, integrity) or a transport failure keeps what was there. A push deletes at the peer first.
-            if (push && !await TryAsync(item, "delete", () => DeleteTargetAsync(replicator, peer, push, item, cancellationToken), run, detail).ConfigureAwait(false)) continue;
+            // (scanning policy, integrity) or a transport failure keeps what was there. A push moves a Docker tag in place and
+            // deletes at the peer first for the formats whose peers refuse to overwrite (IFormatReplicator.PushReplacesInPlace).
+            if (push && !replicator.PushReplacesInPlace && !await TryAsync(item, "delete", () => DeleteTargetAsync(replicator, peer, push, item, cancellationToken), run, detail).ConfigureAwait(false)) continue;
 
             await CopyAsync(config, replicator, peer, push, item, ledger, run, detail, cancellationToken, replace: true).ConfigureAwait(false);
             await StepAsync().ConfigureAwait(false);

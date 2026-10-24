@@ -71,7 +71,7 @@ public sealed class NuGetReplicator : IFormatReplicator
         var length = file.Length;
 
         var request = new HttpRequestMessage(HttpMethod.Put, peer.Feed("api/v2/package")) { Content = ReplicationTransfer.Binary(file) };
-        if (peer.ApiKey != null) request.Headers.TryAddWithoutValidation("X-NuGet-ApiKey", peer.ApiKey);
+        peer.AddCredentials(request);
         await ReplicationTransfer.SendAsync(peer, request, "push", item, cancellationToken).ConfigureAwait(false);
 
         return length;
@@ -138,7 +138,7 @@ public sealed class NuGetReplicator : IFormatReplicator
     public async Task DeletePeerAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, peer.Feed($"api/v2/package/{Uri.EscapeDataString(item.Name)}/{Uri.EscapeDataString(item.Version)}"));
-        if (peer.ApiKey != null) request.Headers.TryAddWithoutValidation("X-NuGet-ApiKey", peer.ApiKey);
+        peer.AddCredentials(request);
         await ReplicationTransfer.SendAsync(peer, request, "delete", item, cancellationToken, allowNotFound: true).ConfigureAwait(false);
     }
 }

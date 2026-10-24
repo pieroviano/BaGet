@@ -16,7 +16,7 @@ format, through that format's own protocol. Everything is in **Admin > Replicati
 | On deploy | push only: a few seconds after the last package/version/file/tag stored in the local repository, a run starts |
 | Repeat every N minutes | schedule, counted from the later of the last run and the moment it was set |
 | Delete propagation | delete at the target what **this replication copied** and the source has since deleted; nothing else is ever deleted |
-| Conflict | both sides hold the item with different content: **target wins** (kept, logged) or **source wins** (target's deleted, source's copied) |
+| Conflict | both sides hold the item with different content: **target wins** (kept, logged) or **source wins** (source's copied over the target's; a push deletes the peer's copy first except for Docker, see below) |
 
 The key is stored protected (the remote-repository password mechanism) and sent as a bearer token to the peer's address
 only; no page, API answer, log or audit entry shows it. Changing the peer's address drops the stored key unless a new one
@@ -35,9 +35,11 @@ peer clears the record of what was copied.
 Layers and tarballs are streamed (spooled to temporary files), never held in memory. A blob the receiver holds is not sent.
 Referrers and untagged manifests travel only when a copied index names them.
 
+The peer's API key goes to the peer's own origin only: the connection does not follow redirects by itself, and a `GET`/`HEAD` redirect is followed by BaGet with the key only when the target is the same origin (never from https to http); other redirects fail the item.
+
 A **pull** is subject to the receiving repository's [scanning policy](vulnerability-scanning.md) like a push: a NuGet package or Docker image that reaches the *block deploy* threshold is not kept (a failed item with the reason in the run's detail). npm and Maven pulls are checked by the same rule.
 
-With *source wins*, a pull **replaces** the local copy only after the peer's item is fetched and accepted (integrity, scanning policy): a refused or failed replacement keeps what was there (a Docker tag simply moves, and a refused image puts the previous manifest back). A push still deletes at the peer first, so a peer that then refuses the item is left without it until the next run.
+With *source wins*, a pull **replaces** the local copy only after the peer's item is fetched and accepted (integrity, scanning policy): a refused or failed replacement keeps what was there (a Docker tag simply moves, and a refused image puts the previous manifest back). A push moves a Docker tag in place (the manifest `PUT`), so nothing is deleted at the peer first. For NuGet, npm and Maven the peer refuses to overwrite a stored version or release file (`409`), so a push deletes the peer's copy first and a peer that then refuses the item (scanning policy) is left without it until the next run.
 
 ## Runs, log, interruption
 

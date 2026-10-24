@@ -94,8 +94,8 @@
             {
                 <tr data-check="@probe.Name">
                     <td>@probe.Name</td>
-                    <td><span class="label @(probe.Healthy ? "label-success" : "label-danger")">@(probe.Healthy ? "healthy" : "unhealthy")</span></td>
-                    <td>@probe.Detail</td>
+                    <td><span class="label @(probe.Healthy ? "label-success" : (probe.Informational ? "label-warning" : "label-danger"))">@(probe.Healthy ? "healthy" : "unhealthy")</span></td>
+                    <td>@probe.Detail@(probe.Informational ? " (reported only: does not affect readiness)" : "")</td>
                 </tr>
             }
         </tbody>

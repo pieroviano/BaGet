@@ -20,7 +20,7 @@ internal static class ReplicationTransfer
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         configure?.Invoke(request);
-        var response = await peer.Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        var response = await peer.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         try
         {
             await ReplicationPeer.EnsureAsync(response, "download", item).ConfigureAwait(false);
@@ -60,7 +60,7 @@ internal static class ReplicationTransfer
     {
         using (request)
         {
-            using var response = await peer.Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            using var response = await peer.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             if (allowNotFound && response.StatusCode == System.Net.HttpStatusCode.NotFound) return;
 
             await ReplicationPeer.EnsureAsync(response, what, item).ConfigureAwait(false);

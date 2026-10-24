@@ -177,7 +177,7 @@ public sealed class NpmReplicator : IFormatReplicator
     public async Task DeletePeerAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
     {
         JsonObject packument;
-        using (var response = await peer.Http.GetAsync(peer.Feed("npm/" + Key(item.Name) + "?write=true"), cancellationToken).ConfigureAwait(false))
+        using (var response = await peer.SendAsync(new HttpRequestMessage(HttpMethod.Get, peer.Feed("npm/" + Key(item.Name) + "?write=true")), HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
         {
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return;
 
