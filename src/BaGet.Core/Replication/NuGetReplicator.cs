@@ -78,7 +78,14 @@ public sealed class NuGetReplicator : IFormatReplicator
     }
 
     /// <inheritdoc/>
-    public async Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    public Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullCoreAsync(item, peer, replace: false, cancellationToken);
+
+    /// <summary>Downloads and judges the package (scanning policy) first; only then removes the local copy and submits the peer's.</summary>
+    public Task<long> PullReplacingAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullCoreAsync(item, peer, replace: true, cancellationToken);
+
+    private async Task<long> PullCoreAsync(ReplicaItem item, ReplicationPeer peer, bool replace, CancellationToken cancellationToken)
     {
         _gate.ThrowIfClosed();
 
@@ -105,6 +112,8 @@ public sealed class NuGetReplicator : IFormatReplicator
                 }
             }
         }
+
+        if (replace) await DeleteLocalAsync(item, cancellationToken).ConfigureAwait(false);
 
         var result = await _submissions.SubmitAsync(file, cancellationToken).ConfigureAwait(false);
         switch (result)

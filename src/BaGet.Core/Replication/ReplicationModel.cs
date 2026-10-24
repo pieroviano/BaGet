@@ -73,6 +73,20 @@ public interface IFormatReplicator : IFormatService
     /// <exception cref="ReplicationItemException">The item could not be fetched or stored.</exception>
     Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Replaces the local copy of the item with the peer's (<c>SourceWins</c> on a pull). A format that cannot overwrite in place must
+    /// fetch and judge the peer's item (integrity, scanning policy) <b>before</b> it removes the local copy, so a refused or failed
+    /// replacement leaves the local copy as it was. The default (delete, then <see cref="PullAsync"/>) is only for a format that cannot do so.
+    /// </summary>
+    /// <returns>Bytes of content received.</returns>
+    /// <exception cref="ReplicationItemException">The item could not be fetched or stored.</exception>
+    async Task<long> PullReplacingAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    {
+        await DeleteLocalAsync(item, cancellationToken).ConfigureAwait(false);
+
+        return await PullAsync(item, peer, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Deletes the item from the local repository for good.</summary>
     Task DeleteLocalAsync(ReplicaItem item, CancellationToken cancellationToken);
 

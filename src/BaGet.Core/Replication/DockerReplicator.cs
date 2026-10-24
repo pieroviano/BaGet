@@ -222,6 +222,13 @@ public sealed class DockerReplicator : IFormatReplicator
         return spooled.Length;
     }
 
+    /// <summary>
+    /// A tag is not immutable: pulling the peer's manifest moves it, and a refused image puts the previous manifest back
+    /// (<see cref="OciPushUndo"/>), so nothing is deleted first.
+    /// </summary>
+    public Task<long> PullReplacingAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullAsync(item, peer, cancellationToken);
+
     /// <inheritdoc/>
     public async Task DeleteLocalAsync(ReplicaItem item, CancellationToken cancellationToken)
         => await _registry.DeleteTagAsync(item.Name, item.Version, cancellationToken).ConfigureAwait(false);

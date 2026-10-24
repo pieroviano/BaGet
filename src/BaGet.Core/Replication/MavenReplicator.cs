@@ -64,7 +64,14 @@ public sealed class MavenReplicator : IFormatReplicator
     }
 
     /// <inheritdoc/>
-    public async Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    public Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullCoreAsync(item, peer, replace: false, cancellationToken);
+
+    /// <summary>Fetches and judges the file (checksum, scanning policy) first; only then deletes the local copy and stores the peer's.</summary>
+    public Task<long> PullReplacingAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullCoreAsync(item, peer, replace: true, cancellationToken);
+
+    private async Task<long> PullCoreAsync(ReplicaItem item, ReplicationPeer peer, bool replace, CancellationToken cancellationToken)
     {
         var (group, artifact) = Split(item);
         var relative = MavenNames.ClientPath(group, artifact, item.Version, item.Part);
@@ -83,6 +90,20 @@ public sealed class MavenReplicator : IFormatReplicator
             {
                 throw new ReplicationItemException($"The file {item} arrived with another SHA-256 than the peer announced; it was not stored.");
             }
+        }
+
+        if (replace)
+        {
+            try
+            {
+                await _repository.PreflightReplacementAsync(path, spooled, cancellationToken).ConfigureAwait(false);
+            }
+            catch (ScanBlockedException e)
+            {
+                throw new ReplicationItemException($"The scanning policy refused {item}: {e.Message}", inner: e);
+            }
+
+            await DeleteLocalAsync(item, cancellationToken).ConfigureAwait(false);
         }
 
         var result = await _repository.PutAsync(BaGetPrincipal.Superuser, path, spooled, cancellationToken).ConfigureAwait(false);

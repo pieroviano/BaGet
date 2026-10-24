@@ -270,9 +270,12 @@ public sealed class ReplicationEngine
         {
             run.Conflicts++;
             AddDetail(detail, $"conflict: {item} is held differently on both sides; the {(push ? "peer" : "local")} copy is replaced");
-            if (!await TryAsync(item, "delete", () => DeleteTargetAsync(replicator, peer, push, item, cancellationToken), run, detail).ConfigureAwait(false)) continue;
 
-            await CopyAsync(config, replicator, peer, push, item, ledger, run, detail, cancellationToken).ConfigureAwait(false);
+            // A pull replaces the local copy only once the peer's item is fetched and accepted (PullReplacingAsync), so a refusal
+            // (scanning policy, integrity) or a transport failure keeps what was there. A push deletes at the peer first.
+            if (push && !await TryAsync(item, "delete", () => DeleteTargetAsync(replicator, peer, push, item, cancellationToken), run, detail).ConfigureAwait(false)) continue;
+
+            await CopyAsync(config, replicator, peer, push, item, ledger, run, detail, cancellationToken, replace: true).ConfigureAwait(false);
             await StepAsync().ConfigureAwait(false);
         }
 
@@ -308,12 +311,15 @@ public sealed class ReplicationEngine
         Dictionary<ReplicaItem, ReplicationItem> ledger,
         ReplicationRun run,
         List<string> detail,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool replace = false)
     {
         long bytes = 0;
         if (!await TryAsync(item, push ? "push" : "pull", async () => bytes = push
                 ? await replicator.PushAsync(item, peer, cancellationToken).ConfigureAwait(false)
-                : await replicator.PullAsync(item, peer, cancellationToken).ConfigureAwait(false), run, detail).ConfigureAwait(false))
+                : replace
+                    ? await replicator.PullReplacingAsync(item, peer, cancellationToken).ConfigureAwait(false)
+                    : await replicator.PullAsync(item, peer, cancellationToken).ConfigureAwait(false), run, detail).ConfigureAwait(false))
         {
             return;
         }

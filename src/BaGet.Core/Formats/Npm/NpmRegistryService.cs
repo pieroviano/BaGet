@@ -558,6 +558,29 @@ public class NpmRegistryService : INpmRegistry
 
     // ---- publish --------------------------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// What <see cref="PublishAsync"/> would decide from the tarball alone (the same scanning check), without storing anything: a
+    /// replication that replaces a stored version asks first, so a refusal cannot cost the copy it was to replace.
+    /// </summary>
+    /// <exception cref="ScanBlockedException">The scanning policy refuses the package.</exception>
+    internal async Task PreflightReplacementAsync(string name, string version, JsonObject manifest, Stream tarball, string? integrity, CancellationToken cancellationToken)
+    {
+        tarball.Position = 0;
+        var (_, actual, _) = await HashAsync(tarball, cancellationToken).ConfigureAwait(false);
+        if (integrity != null && !string.Equals(integrity, actual, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("The tarball does not match the integrity (sha512) the peer announced.");
+        }
+
+        tarball.Position = 0;
+        var inner = await NpmTarballReader.ReadPackageJsonAsync(tarball, cancellationToken).ConfigureAwait(false);
+        tarball.Position = 0;
+        if (inner == null || _scanGate == null || !_scanGate.Enabled || !await _scanGate.BlocksDeploysAsync(cancellationToken).ConfigureAwait(false)) return;
+
+        var components = NpmScanComponents.Of(name, version, inner).Union(NpmScanComponents.Of(name, version, manifest)).ToList();
+        await _scanGate.CheckDeployAsync(components, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <inheritdoc/>
     public async Task<NpmResult> PublishAsync(BaGetPrincipal? caller, NpmPublication publication, CancellationToken cancellationToken)
     {

@@ -420,6 +420,31 @@ public class MavenRepositoryService : IMavenRepository
 
     // ---- writes ---------------------------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// The scanning check <see cref="PutAsync"/> would make for this file, without storing anything: a replication that replaces a
+    /// stored file asks first, so a refusal cannot cost the copy it was to replace.
+    /// </summary>
+    /// <exception cref="ScanBlockedException">The scanning policy refuses the file.</exception>
+    internal async Task PreflightReplacementAsync(MavenRequestPath path, Stream content, CancellationToken cancellationToken)
+    {
+        if (path.Kind == MavenPathKind.Metadata || path.ChecksumAlgorithm != null || path.Candidates.Count == 0) return;
+        if (_scanGate == null || !_scanGate.Enabled || !await _scanGate.BlocksDeploysAsync(cancellationToken).ConfigureAwait(false)) return;
+
+        var coordinate = path.Candidates[0];
+        var parts = MavenNames.ParseFileName(coordinate.ArtifactId, coordinate.Version!, path.BaseName);
+        if (parts == null) return;
+
+        MavenPomInfo? pom = null;
+        if (parts.Classifier == null && parts.Extension == "pom" && content.Length <= MavenPom.MaxBytes)
+        {
+            content.Position = 0;
+            pom = MavenPom.TryParse(content);
+            content.Position = 0;
+        }
+
+        await _scanGate.CheckDeployAsync(MavenScanComponents.Of(coordinate.GroupId, coordinate.ArtifactId, coordinate.Version!, pom), cancellationToken).ConfigureAwait(false);
+    }
+
     /// <inheritdoc/>
     public async Task<MavenResult> PutAsync(BaGetPrincipal? caller, MavenRequestPath path, Stream content, CancellationToken cancellationToken)
     {

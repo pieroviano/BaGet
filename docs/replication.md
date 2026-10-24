@@ -37,6 +37,8 @@ Referrers and untagged manifests travel only when a copied index names them.
 
 A **pull** is subject to the receiving repository's [scanning policy](vulnerability-scanning.md) like a push: a NuGet package or Docker image that reaches the *block deploy* threshold is not kept (a failed item with the reason in the run's detail). npm and Maven pulls are checked by the same rule.
 
+With *source wins*, a pull **replaces** the local copy only after the peer's item is fetched and accepted (integrity, scanning policy): a refused or failed replacement keeps what was there (a Docker tag simply moves, and a refused image puts the previous manifest back). A push still deletes at the peer first, so a peer that then refuses the item is left without it until the next run.
+
 ## Runs, log, interruption
 
 A run lists both sides (`GET /api/v1/replication/inventory/{repository}` on the peer), plans (copy what the target lacks,

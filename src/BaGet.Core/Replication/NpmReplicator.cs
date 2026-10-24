@@ -95,7 +95,14 @@ public sealed class NpmReplicator : IFormatReplicator
     }
 
     /// <inheritdoc/>
-    public async Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    public Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullCoreAsync(item, peer, replace: false, cancellationToken);
+
+    /// <summary>Fetches and judges the version (integrity, scanning policy) first; only then purges the local copy and stores the peer's.</summary>
+    public Task<long> PullReplacingAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+        => PullCoreAsync(item, peer, replace: true, cancellationToken);
+
+    private async Task<long> PullCoreAsync(ReplicaItem item, ReplicationPeer peer, bool replace, CancellationToken cancellationToken)
     {
         JsonObject packument;
         using (var response = await ReplicationTransfer.GetAsync(peer, peer.Feed("npm/" + Key(item.Name)), item, cancellationToken, r => r.Headers.TryAddWithoutValidation("Accept", "application/json")).ConfigureAwait(false))
@@ -124,6 +131,24 @@ public sealed class NpmReplicator : IFormatReplicator
 
             var dist = manifest["dist"] as JsonObject;
             var integrity = item.Digest.Length > 0 ? item.Digest : dist?["integrity"] is JsonValue i && i.TryGetValue<string>(out var text) ? text : null;
+            if (replace)
+            {
+                try
+                {
+                    await _registry.PreflightReplacementAsync(item.Name, item.Version, (JsonObject)manifest.DeepClone(), spooled, integrity, cancellationToken).ConfigureAwait(false);
+                }
+                catch (ScanBlockedException e)
+                {
+                    throw new ReplicationItemException($"The scanning policy refused {item}: {e.Message}", inner: e);
+                }
+                catch (InvalidDataException e)
+                {
+                    throw new ReplicationItemException($"Storing {item} failed: {e.Message}", inner: e);
+                }
+
+                await DeleteLocalAsync(item, cancellationToken).ConfigureAwait(false);
+            }
+
             var result = await _registry.PublishAsync(
                 BaGetPrincipal.Superuser,
                 new NpmPublication(item.Name, item.Version, (JsonObject)manifest.DeepClone(), publishTag, spooled, integrity),
