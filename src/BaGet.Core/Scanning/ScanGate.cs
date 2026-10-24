@@ -118,6 +118,7 @@ public sealed class ScanGate : IScanGate
     private readonly IContext _context;
     private readonly IVirtualRepositories _virtuals;
     private readonly ILogger<ScanGate> _logger;
+    private readonly ClusterRuntime? _cluster;
 
     public ScanGate(
         IScanService scans,
@@ -128,8 +129,10 @@ public sealed class ScanGate : IScanGate
         ScanQueue queue,
         IContext context,
         IVirtualRepositories virtuals,
-        ILogger<ScanGate> logger)
+        ILogger<ScanGate> logger,
+        ClusterRuntime? cluster = null)
     {
+        _cluster = cluster;
         _scans = scans ?? throw new ArgumentNullException(nameof(scans));
         _policies = policies ?? throw new ArgumentNullException(nameof(policies));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -161,7 +164,7 @@ public sealed class ScanGate : IScanGate
             return callerName != null && string.Equals(callerName, user.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
-        if (!ScanInFlight.Contains(_repository.Current.Key, name, version)) return false;
+        if (!await ScanInFlight.ContainsAsync(_repository.Current.Key, name, version, _cluster?.Store, cancellationToken).ConfigureAwait(false)) return false;
 
         // Any client could be the one pulling during the scan, so only the unscanned case (the "block unscanned" check) is lifted.
         var result = await _scans.FindAsync(name, version, cancellationToken).ConfigureAwait(false);

@@ -83,6 +83,7 @@ public sealed class AdminJobService
     private readonly SystemTime _time;
     private readonly ILogger<AdminJobService> _logger;
     private readonly IHostApplicationLifetime? _lifetime;
+    private readonly IJobLease? _lease;
     private readonly ConcurrentDictionary<(string, string), AdminJobStatus> _status = new();
     private readonly ConcurrentDictionary<(string, string), Task> _running = new();
     private readonly object _lock = new();
@@ -94,8 +95,10 @@ public sealed class AdminJobService
         SystemTime time,
         ILogger<AdminJobService> logger,
         MaintenanceGate? gate = null,
-        IHostApplicationLifetime? lifetime = null)
+        IHostApplicationLifetime? lifetime = null,
+        IJobLease? lease = null)
     {
+        _lease = lease;
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _operations = operations ?? throw new ArgumentNullException(nameof(operations));
         _audit = audit ?? throw new ArgumentNullException(nameof(audit));
@@ -139,6 +142,15 @@ public sealed class AdminJobService
         }
 
         var key = Key(operation, repository.Name);
+
+        // One run per operation and repository in the whole cluster, not only in this process.
+        var held = _lease.Acquire($"operation:{operation}:{key.Item2}");
+        if (held == null)
+        {
+            refusal = $"{definition.Title} is already running on {repository.Name} (on another node).";
+            return false;
+        }
+
         var status = new AdminJobStatus
         {
             Operation = definition.Name,
@@ -152,6 +164,7 @@ public sealed class AdminJobService
         {
             if (_running.ContainsKey(key))
             {
+                held.Release();
                 refusal = $"{definition.Title} is already running on {repository.Name}.";
                 return false;
             }
@@ -178,6 +191,7 @@ public sealed class AdminJobService
             finally
             {
                 _running.TryRemove(key, out _);
+                try { await held.DisposeAsync(); } catch (Exception) { /* the lease expires by itself */ }
                 completion.SetResult(true);
             }
 

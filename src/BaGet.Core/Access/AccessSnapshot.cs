@@ -346,7 +346,17 @@ public sealed class AccessModelVersion
 
     public long Current => Interlocked.Read(ref _current);
 
-    public void Bump() => Interlocked.Increment(ref _current);
+    /// <summary>Called after <see cref="Bump"/> so a cluster can tell the other nodes (they reload their snapshot).</summary>
+    internal Action? Publisher { get; set; }
+
+    public void Bump()
+    {
+        Interlocked.Increment(ref _current);
+        Publisher?.Invoke();
+    }
+
+    /// <summary>A change another node made: reload here, without telling the cluster again.</summary>
+    internal void BumpFromCluster() => Interlocked.Increment(ref _current);
 }
 
 /// <summary>The singleton that owns the current <see cref="AccessSnapshot"/>.</summary>

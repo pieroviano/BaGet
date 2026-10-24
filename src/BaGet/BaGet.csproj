@@ -37,6 +37,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="$(SerilogSinksFilePackageVersion)" />
     <PackageReference Include="Serilog.Sinks.EventLog" Version="$(SerilogSinksEventLogPackageVersion)" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="$(SerilogSinksOpenTelemetryPackageVersion)" />
+    <PackageReference Include="StackExchange.Redis" Version="$(StackExchangeRedisPackageVersion)" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryPackageVersion)" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryPackageVersion)" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryPackageVersion)" />

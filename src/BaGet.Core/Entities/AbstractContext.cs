@@ -172,6 +172,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<ReplicationConfig>? ReplicationConfigs { get; set; }
     public DbSet<ReplicationRun>? ReplicationRuns { get; set; }
     public DbSet<ReplicationItem>? ReplicationItems { get; set; }
+    public DbSet<DataProtectionKeyEntry>? DataProtectionKeys { get; set; }
 
     public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -262,6 +263,11 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<ReplicationConfig>(BuildReplicationConfigEntity);
         builder.Entity<ReplicationRun>(BuildReplicationRunEntity);
         builder.Entity<ReplicationItem>(BuildReplicationItemEntity);
+        builder.Entity<DataProtectionKeyEntry>(key =>
+        {
+            key.HasKey(k => k.Key);
+            key.Property(k => k.FriendlyName).HasMaxLength(DataProtectionKeyEntry.MaxNameLength);
+        });
 
         // Repository isolation: a query in one repository never sees another's rows. The filter reads the
         // context's current repository per query.

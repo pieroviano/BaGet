@@ -74,8 +74,20 @@ public class DatabaseCopyService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>The latest progress.</summary>
-    public DatabaseCopyStatus Status { get { lock (_lock) return _status; } }
+    /// <summary>The latest progress. In a cluster, the progress of a copy running on another node when this node has none of its own.</summary>
+    public DatabaseCopyStatus Status
+    {
+        get
+        {
+            lock (_lock) return _status != DatabaseCopyStatus.Idle ? _status : (RemoteStatus ?? _status);
+        }
+    }
+
+    /// <summary>This node's own progress (what the cluster sync publishes).</summary>
+    internal DatabaseCopyStatus LocalStatus { get { lock (_lock) return _status; } }
+
+    /// <summary>The progress another node published (set by <see cref="ClusterSyncService"/>), or null.</summary>
+    internal DatabaseCopyStatus? RemoteStatus { get; set; }
 
     /// <summary>
     /// Test seam: runs after each batch is saved, with the table and the rows of it copied so far. An
@@ -114,7 +126,7 @@ public class DatabaseCopyService
 
         lock (_lock)
         {
-            if (_status.IsActive)
+            if (_status.IsActive || RemoteStatus is { IsActive: true })
             {
                 refusal = "Another database copy is already running.";
                 return false;

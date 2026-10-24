@@ -134,6 +134,9 @@ public interface IContext
     /// <summary>What replication copied; see <see cref="ReplicationItem"/>. Not repository-scoped.</summary>
     DbSet<ReplicationItem>? ReplicationItems { get; set; }
 
+    /// <summary>The ASP.NET Core data protection key ring when <c>Ha:Enabled</c>; see <see cref="DataProtectionKeyEntry"/>. Not repository-scoped.</summary>
+    DbSet<DataProtectionKeyEntry>? DataProtectionKeys { get; set; }
+
     /// <summary>
     /// Identity's users. Declared here so that account services can query them through
     /// the same context as everything else.

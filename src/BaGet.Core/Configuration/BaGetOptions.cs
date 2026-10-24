@@ -93,4 +93,6 @@ public class BaGetOptions
     public ValidationOptions? Validation { get; set; }
 
     public TelemetryOptions? Telemetry { get; set; }
+
+    public HaOptions? Ha { get; set; }
 }

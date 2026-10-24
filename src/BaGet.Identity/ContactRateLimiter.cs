@@ -12,6 +12,8 @@ namespace BaGet.Identity;
 /// The state is in memory, so it is per process: it resets on restart and each instance of a
 /// scaled-out deployment counts separately. That bounds spam well enough for a feed's
 /// size and keeps the feature free of schema changes. Time comes from <see cref="SystemTime"/>.
+/// In a cluster (<c>Ha:Enabled</c>) the allowance is a key in the shared store instead (expiring after <see cref="Window"/>), so
+/// the nodes count together.
 /// </remarks>
 public class ContactRateLimiter
 {
@@ -21,7 +23,15 @@ public class ContactRateLimiter
     private readonly ConcurrentDictionary<(string Sender, string PackageId), DateTime> _last = new();
     private readonly object _gate = new object();
 
-    public ContactRateLimiter(SystemTime time) => _time = time ?? throw new ArgumentNullException(nameof(time));
+    private readonly IClusterStore? _shared;
+
+    public ContactRateLimiter(SystemTime time, ClusterRuntime? cluster = null)
+    {
+        _time = time ?? throw new ArgumentNullException(nameof(time));
+        _shared = cluster?.Store;
+    }
+
+    private static string SharedKey(string senderId, string? packageId) => "limit:contact:" + senderId + ":" + packageId?.ToLowerInvariant();
 
     /// <summary>
     /// Takes the sender's allowance for the package, or returns false when it was used less
@@ -29,6 +39,8 @@ public class ContactRateLimiter
     /// </summary>
     public bool TryAcquire(string senderId, string? packageId)
     {
+        if (_shared != null) return _shared.SetIfAbsent(SharedKey(senderId, packageId), "1", Window);
+
         var now = _time.UtcNow;
         var key = (senderId, packageId?.ToLowerInvariant());
 
@@ -55,6 +67,13 @@ public class ContactRateLimiter
     /// </summary>
     public void Release(string senderId, string? packageId)
     {
+        if (_shared != null)
+        {
+            _shared.Delete(SharedKey(senderId, packageId));
+
+            return;
+        }
+
         #pragma warning disable CS8620
         lock (_gate) _last.TryRemove((senderId, packageId?.ToLowerInvariant()), out _);
         #pragma warning restore CS8620

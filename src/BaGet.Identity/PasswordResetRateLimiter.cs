@@ -25,7 +25,9 @@ namespace BaGet.Identity;
 /// and a client's count only ever drops with age, which can make the limiter more permissive
 /// for that client, never block an account. Like <see cref="ContactRateLimiter"/> the state is in
 /// memory: per process, reset on restart. The caller answers identically whether or not a request
-/// was allowed.
+/// was allowed. In a cluster (<c>Ha:Enabled</c>) the account allowance is a key in the shared store (expiring after <see cref="Window"/>)
+/// and the client count a shared counter that starts its <see cref="Window"/> at the first request (a fixed window, where the in-memory
+/// one slides), so the nodes count together.
 /// </para>
 /// </remarks>
 public class PasswordResetRateLimiter
@@ -49,7 +51,13 @@ public class PasswordResetRateLimiter
         }
     }
 
-    public PasswordResetRateLimiter(SystemTime time) => _time = time ?? throw new ArgumentNullException(nameof(time));
+    private readonly IClusterStore? _shared;
+
+    public PasswordResetRateLimiter(SystemTime time, ClusterRuntime? cluster = null)
+    {
+        _time = time ?? throw new ArgumentNullException(nameof(time));
+        _shared = cluster?.Store;
+    }
 
     /// <summary>
     /// Takes the allowance, or returns false when the target was mailed less than
@@ -57,6 +65,8 @@ public class PasswordResetRateLimiter
     /// </summary>
     public bool TryAcquire(string client, string target)
     {
+        if (_shared != null) return TryAcquireShared(client, target);
+
         var now = _time.UtcNow;
 
         lock (_gate)
@@ -72,6 +82,23 @@ public class PasswordResetRateLimiter
 
             return true;
         }
+    }
+
+    private bool TryAcquireShared(string client, string target)
+    {
+        var shared = _shared!;
+        var targetKey = "limit:reset:target:" + target;
+        if (!shared.SetIfAbsent(targetKey, "1", Window)) return false;
+
+        if (shared.Increment("limit:reset:client:" + client, Window) > MaxPerClient)
+        {
+            // The client used its requests up: nothing was mailed, so the account keeps its allowance.
+            shared.Delete(targetKey);
+
+            return false;
+        }
+
+        return true;
     }
 
     private void Expire(DateTime now)

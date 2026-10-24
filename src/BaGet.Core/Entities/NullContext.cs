@@ -76,6 +76,8 @@ public class NullContext : IContext
 
     public DbSet<ReplicationItem>? ReplicationItems { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<DataProtectionKeyEntry>? DataProtectionKeys { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<OciUpload>? OciUploads { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
+using BaGet.Ha;
 using BaGet.Identity;
 using BaGet.Telemetry;
 using BaGet.Web;
@@ -475,6 +476,10 @@ public partial class Program
         services.AddBaGetOptions<IISServerOptions>(nameof(IISServerOptions));
         services.AddBaGetWebApplication(ConfigureBaGetApplication);
         services.AddBaGetAccounts(configuration);
+
+        // Cluster mode (Ha:Enabled): Redis, cluster-wide leases and the data protection keys in the database. After the BaGet
+        // services, so the shared lease replaces the in-process one.
+        services.AddBaGetHa(configuration);
 
         // You can swap between implementations of subsystems like storage and search using BaGet's configuration.
         // Each subsystem's implementation has a provider that reads the configuration to determine if it should be

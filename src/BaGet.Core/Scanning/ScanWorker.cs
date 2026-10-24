@@ -61,9 +61,11 @@ public sealed class ScanWorker : BackgroundService
     private readonly ScanQueue _queue;
     private readonly IServiceScopeFactory _scopes;
     private readonly ILogger<ScanWorker> _logger;
+    private readonly IJobLease? _lease;
 
-    public ScanWorker(ScanQueue queue, IServiceScopeFactory scopes, ILogger<ScanWorker> logger)
+    public ScanWorker(ScanQueue queue, IServiceScopeFactory scopes, ILogger<ScanWorker> logger, IJobLease? lease = null)
     {
+        _lease = lease;
         _queue = queue ?? throw new ArgumentNullException(nameof(queue));
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -143,6 +145,10 @@ public sealed class ScanWorker : BackgroundService
 
     private async Task SweepAsync(CancellationToken cancellationToken)
     {
+        // The scheduled rescan runs on one node of a cluster at a time (the queue of just-stored versions stays per node).
+        await using var sweep = await _lease.AcquireAsync("scan:sweep", cancellationToken).ConfigureAwait(false);
+        if (sweep == null) return;
+
         using var root = _scopes.CreateScope();
         var options = root.ServiceProvider.GetRequiredService<IOptionsSnapshot<ScanningOptions>>().Value;
         if (!options.Enabled || options.RescanInterval <= TimeSpan.Zero) return;

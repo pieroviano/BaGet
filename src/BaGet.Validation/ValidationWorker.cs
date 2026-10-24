@@ -18,9 +18,13 @@ public class ValidationWorker : BackgroundService
     private readonly IServiceScopeFactory _scopes;
     private readonly IValidationQueue _queue;
     private readonly ILogger<ValidationWorker> _logger;
+    private readonly IJobLease? _lease;
+    private readonly ClusterRuntime? _cluster;
 
-    public ValidationWorker(IServiceScopeFactory scopes, IValidationQueue queue, ILogger<ValidationWorker> logger)
+    public ValidationWorker(IServiceScopeFactory scopes, IValidationQueue queue, ILogger<ValidationWorker> logger, IJobLease? lease = null, ClusterRuntime? cluster = null)
     {
+        _lease = lease;
+        _cluster = cluster;
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _queue = queue ?? throw new ArgumentNullException(nameof(queue));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,10 +37,19 @@ public class ValidationWorker : BackgroundService
 
         await RequeuePendingAsync(stoppingToken);
 
+        // A node that died mid-validation leaves its submission pending with nobody to resume it until a restart; in a cluster the
+        // survivors offer every pending submission again now and then (a submission already done is skipped by the runner).
+        if (_cluster?.IsEnabled == true) _ = RequeueRegularlyAsync(stoppingToken);
+
         await foreach (var submissionId in _queue.DequeueAllAsync(stoppingToken))
         {
             try
             {
+                // Every node queues the pending submissions when it starts and the one that took a push queues it: only one node validates
+                // a submission at a time. A node that finds it taken skips it (the holder finishes it, or the periodic requeue offers it again).
+                await using var held = await _lease.AcquireAsync("validation:" + submissionId, stoppingToken);
+                if (held == null) continue;
+
                 using var scope = _scopes.CreateScope();
                 var runner = scope.ServiceProvider.GetRequiredService<PackageValidationRunner>();
 
@@ -74,6 +87,24 @@ public class ValidationWorker : BackgroundService
         catch (OperationCanceledException)
         {
             // Shutting down: the submission stays pending and is re-queued at the next start.
+        }
+    }
+
+    /// <summary>How often a cluster node offers the pending submissions again.</summary>
+    internal static TimeSpan ClusterRequeueInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    private async Task RequeueRegularlyAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(ClusterRequeueInterval, cancellationToken);
+                await RequeuePendingAsync(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 

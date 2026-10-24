@@ -53,12 +53,14 @@ public sealed class RetentionJobs
     private readonly MaintenanceGate _gate;
     private readonly ILogger<RetentionJobs> _logger;
     private readonly IHostApplicationLifetime? _lifetime;
+    private readonly IJobLease? _lease;
     private readonly ConcurrentDictionary<int, RetentionJobStatus> _status = new();
     private readonly ConcurrentDictionary<int, Task> _running = new();
     private readonly object _lock = new();
 
-    public RetentionJobs(IServiceScopeFactory scopes, SystemTime time, MaintenanceGate gate, ILogger<RetentionJobs> logger, IHostApplicationLifetime? lifetime = null)
+    public RetentionJobs(IServiceScopeFactory scopes, SystemTime time, MaintenanceGate gate, ILogger<RetentionJobs> logger, IHostApplicationLifetime? lifetime = null, IJobLease? lease = null)
     {
+        _lease = lease;
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _time = time ?? throw new ArgumentNullException(nameof(time));
         _gate = gate ?? throw new ArgumentNullException(nameof(gate));
@@ -79,12 +81,26 @@ public sealed class RetentionJobs
     {
         if (!dryRun) _gate.ThrowIfClosed();
 
+        // One run per policy in the whole cluster (a dry run changes nothing and takes no lease).
+        IAsyncDisposable? held = null;
+        if (!dryRun)
+        {
+            held = _lease.Acquire($"retention:policy:{policyKey}");
+            if (held == null)
+            {
+                refusal = "This policy is already running (on another node).";
+
+                return false;
+            }
+        }
+
         var status = new RetentionJobStatus { PolicyKey = policyKey, DryRun = dryRun, State = RetentionJobState.Running, Actor = actor, Started = _time.UtcNow };
         var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (_lock)
         {
             if (_running.ContainsKey(policyKey))
             {
+                held?.Release();
                 refusal = "This policy is already running.";
 
                 return false;
@@ -112,6 +128,11 @@ public sealed class RetentionJobs
             finally
             {
                 _running.TryRemove(policyKey, out _);
+                if (held != null)
+                {
+                    try { await held.DisposeAsync().ConfigureAwait(false); } catch (Exception) { /* the lease expires by itself */ }
+                }
+
                 completion.SetResult(true);
             }
         });
@@ -148,9 +169,11 @@ public sealed class RetentionWorker : BackgroundService
     private readonly MaintenanceGate _gate;
     private readonly SystemTime _time;
     private readonly ILogger<RetentionWorker> _logger;
+    private readonly IJobLease? _lease;
 
-    public RetentionWorker(IServiceScopeFactory scopes, RetentionJobs jobs, ArtifactUsageRecorder usage, MaintenanceGate gate, SystemTime time, ILogger<RetentionWorker> logger)
+    public RetentionWorker(IServiceScopeFactory scopes, RetentionJobs jobs, ArtifactUsageRecorder usage, MaintenanceGate gate, SystemTime time, ILogger<RetentionWorker> logger, IJobLease? lease = null)
     {
+        _lease = lease;
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _jobs = jobs ?? throw new ArgumentNullException(nameof(jobs));
         _usage = usage ?? throw new ArgumentNullException(nameof(usage));
@@ -194,6 +217,10 @@ public sealed class RetentionWorker : BackgroundService
     {
         await _usage.FlushAsync(_scopes, cancellationToken).ConfigureAwait(false);
         if (_gate.IsClosed) return Array.Empty<int>();
+
+        // One scheduling pass in the whole cluster: the node holding this lease starts the due policies and waits for them.
+        await using var pass = await _lease.AcquireAsync("retention:schedule", cancellationToken).ConfigureAwait(false);
+        if (pass == null) return Array.Empty<int>();
 
         List<RetentionPolicy> due;
         using (var scope = _scopes.CreateScope())

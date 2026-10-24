@@ -328,6 +328,26 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("CatalogLeafs");
                 });
 
+            modelBuilder.Entity("BaGet.Core.DataProtectionKeyEntry", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("DataProtectionKeys");
+                });
+
             modelBuilder.Entity("BaGet.Core.Group", b =>
                 {
                     b.Property<int>("Key")

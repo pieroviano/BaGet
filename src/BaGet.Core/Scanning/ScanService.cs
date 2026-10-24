@@ -26,6 +26,7 @@ public sealed class ScanService : IScanService
     private readonly SystemTime _time;
     private readonly MaintenanceGate _gate;
     private readonly ILogger<ScanService> _logger;
+    private readonly ClusterRuntime? _cluster;
 
     public ScanService(
         IContext context,
@@ -36,8 +37,10 @@ public sealed class ScanService : IScanService
         ITrivyRunner trivy,
         SystemTime time,
         MaintenanceGate gate,
-        ILogger<ScanService> logger)
+        ILogger<ScanService> logger,
+        ClusterRuntime? cluster = null)
     {
+        _cluster = cluster;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _services = services ?? throw new ArgumentNullException(nameof(services));
@@ -146,7 +149,7 @@ public sealed class ScanService : IScanService
                     return null;
                 }
 
-                using var inFlight = ScanInFlight.Begin(Repository.Key, name, version);
+                using var inFlight = ScanInFlight.Begin(Repository.Key, name, version, _cluster?.Store);
                 hits = await _trivy.ScanImageAsync(Options, Options.TrivyRegistryHost!.Trim().TrimEnd('/') + "/" + Repository.Name + "/" + reference, cancellationToken).ConfigureAwait(false);
             }
         }

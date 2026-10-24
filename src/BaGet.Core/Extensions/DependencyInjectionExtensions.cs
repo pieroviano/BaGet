@@ -82,6 +82,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<SiteOptions>(nameof(BaGetOptions.Site));
         services.AddBaGetOptions<ValidationOptions>(nameof(BaGetOptions.Validation));
         services.AddBaGetOptions<TelemetryOptions>(nameof(BaGetOptions.Telemetry));
+        services.AddBaGetOptions<HaOptions>(nameof(BaGetOptions.Ha));
         services.AddBaGetOptions<SerilogOptions>("Serilog");
         services.AddBaGetOptions<SearchOptions>(nameof(BaGetOptions.Search));
         services.AddBaGetOptions<StorageOptions>(nameof(BaGetOptions.Storage));
@@ -94,6 +95,13 @@ public static partial class DependencyInjectionExtensions
 
         services.TryAddSingleton<ISearchResponseBuilder, SearchResponseBuilder>();
         services.TryAddSingleton<NuGetClient>();
+        // Cluster mode (Ha:Enabled): the startup check runs first, the rest only does something when a store is registered.
+        services.TryAddSingleton<HaBackendRules>();
+        services.AddHostedService<HaStartupGuard>();
+        services.TryAddSingleton<ClusterRuntime>();
+        services.TryAddSingleton<ReadinessService>();
+        services.TryAddSingleton<IClusterStatusService, ClusterStatusService>();
+        services.AddHostedService<ClusterSyncService>();
         services.TryAddSingleton<MaintenanceGate>();
         services.TryAddSingleton<DatabaseCopyService>();
         services.AddHostedService<DatabaseCopyWorker>();

@@ -125,6 +125,7 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
     private readonly MaintenanceGate _gate;
     private readonly ILogger<OciGarbageCollector> _logger;
     private readonly IOptionsSnapshot<OciOptions>? _options;
+    private readonly ClusterRuntime? _cluster;
 
     public OciGarbageCollector(
         IContext context,
@@ -133,8 +134,10 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
         SystemTime time,
         MaintenanceGate gate,
         ILogger<OciGarbageCollector> logger,
-        IOptionsSnapshot<OciOptions>? options = null)
+        IOptionsSnapshot<OciOptions>? options = null,
+        ClusterRuntime? cluster = null)
     {
+        _cluster = cluster;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -227,7 +230,13 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
         var survivors = blobs.Where(b => !doomedKeys.Contains(b.Key)).Select(b => b.Digest!).ToHashSet(StringComparer.Ordinal);
         var orphanFiles = new List<string>();
         string? note = null;
-        if (_storage is not IListableStorageService listable)
+        if (_cluster?.IsEnabled == true)
+        {
+            // The in-process commit fence below cannot see a blob another node is storing, so a listing could take a file whose row is
+            // about to be written. In a cluster the step is skipped rather than risk a layer.
+            note = "Files without a row were not looked for: other nodes of the cluster may be storing blobs, which this node cannot see.";
+        }
+        else if (_storage is not IListableStorageService listable)
         {
             note = "The storage provider cannot list files, so files without a row were not looked for.";
         }

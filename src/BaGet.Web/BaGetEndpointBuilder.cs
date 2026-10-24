@@ -85,6 +85,28 @@ public class BaGetEndpointBuilder
         MapMavenRoutes(endpoints);
         MapOciRoutes(endpoints);
         MapAdminApiRoutes(endpoints);
+        MapHealthRoutes(endpoints);
+    }
+
+    /// <summary>
+    /// <c>/health/live</c> (the process answers: always 200) and <c>/health/ready</c> (<see cref="ReadinessService"/>: the database, the
+    /// storage and, in a cluster, the shared store; 503 when one fails) for a load balancer. Anonymous and carrying no repository, so they
+    /// are not repository routes; the body names each check and whether it passed, never a connection string or message.
+    /// </summary>
+    public void MapHealthRoutes(IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("health/live", () => Results.Text("Healthy", "text/plain"));
+        endpoints.MapGet("health/ready", async (ReadinessService readiness, HttpContext context) =>
+        {
+            var report = await readiness.CheckAsync(force: false, context.RequestAborted);
+            var body = new
+            {
+                status = report.IsReady ? "Healthy" : "Unhealthy",
+                checks = report.Probes.ToDictionary(p => p.Name, p => p.Healthy ? "Healthy" : "Unhealthy"),
+            };
+
+            return Results.Json(body, statusCode: report.IsReady ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
+        });
     }
 
     /// <summary>

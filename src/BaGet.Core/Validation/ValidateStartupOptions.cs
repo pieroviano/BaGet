@@ -15,6 +15,8 @@ public class ValidateStartupOptions
     private readonly IOptions<MirrorOptions> _mirror;
     private readonly IOptions<SiteOptions> _site;
     private readonly ILogger<ValidateStartupOptions> _logger;
+    private readonly IOptions<HaOptions>? _ha;
+    private readonly HaBackendRules? _haRules;
 
     public ValidateStartupOptions(
         IOptions<BaGetOptions> root,
@@ -22,8 +24,12 @@ public class ValidateStartupOptions
         IOptions<StorageOptions> storage,
         IOptions<MirrorOptions> mirror,
         IOptions<SiteOptions> site,
-        ILogger<ValidateStartupOptions> logger)
+        ILogger<ValidateStartupOptions> logger,
+        IOptions<HaOptions>? ha = null,
+        HaBackendRules? haRules = null)
     {
+        _ha = ha;
+        _haRules = haRules;
         _root = root ?? throw new ArgumentNullException(nameof(root));
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _storage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -43,6 +49,14 @@ public class ValidateStartupOptions
             _ = _storage.Value;
             _ = _mirror.Value;
             _ = _site.Value;
+
+            // A cluster node on a local database or storage would diverge from the others: refuse before anything starts.
+            if (_ha != null && _haRules != null)
+            {
+                var problems = _haRules.Check(_ha.Value, _database.Value, _storage.Value);
+                foreach (var problem in problems) _logger.LogError("High availability: {Problem}", problem);
+                if (problems.Count > 0) return false;
+            }
 
             return true;
         }

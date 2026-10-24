@@ -72,6 +72,9 @@
     <OpenTelemetryPackageVersion>1.20.0</OpenTelemetryPackageVersion>
     <OpenTelemetryEntityFrameworkCorePackageVersion>1.20.0-beta.1</OpenTelemetryEntityFrameworkCorePackageVersion>
     <SerilogSinksOpenTelemetryPackageVersion>4.2.0</SerilogSinksOpenTelemetryPackageVersion>
+    <!-- Redis for cluster mode (Ha:Enabled), host only (src/BaGet/Ha). Depends on Microsoft.Extensions.Logging.Abstractions >= 6, which the
+         9.0.21 pins satisfy (checked: no NU1605/NU1608/NU1107). -->
+    <StackExchangeRedisPackageVersion>2.13.17</StackExchangeRedisPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == ''">

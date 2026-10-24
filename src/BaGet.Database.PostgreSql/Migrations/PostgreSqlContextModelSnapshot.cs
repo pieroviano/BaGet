@@ -328,6 +328,26 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.ToTable("CatalogLeafs");
                 });
 
+            modelBuilder.Entity("BaGet.Core.DataProtectionKeyEntry", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("DataProtectionKeys");
+                });
+
             modelBuilder.Entity("BaGet.Core.Group", b =>
                 {
                     b.Property<int>("Key")

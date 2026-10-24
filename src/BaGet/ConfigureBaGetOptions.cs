@@ -149,6 +149,7 @@ public class ConfigureBaGetOptions
         }
 
         if (options.Telemetry != null) failures.AddRange(options.Telemetry.Validate());
+        if (options.Ha != null) failures.AddRange(options.Ha.Validate());
 
         if (failures.Any()) return ValidateOptionsResult.Fail(failures);
 

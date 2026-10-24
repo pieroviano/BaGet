@@ -310,6 +310,24 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("CatalogLeafs");
                 });
 
+            modelBuilder.Entity("BaGet.Core.DataProtectionKeyEntry", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FriendlyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("DataProtectionKeys");
+                });
+
             modelBuilder.Entity("BaGet.Core.Group", b =>
                 {
                     b.Property<int>("Key")

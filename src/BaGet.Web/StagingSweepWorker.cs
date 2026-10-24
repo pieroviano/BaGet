@@ -28,9 +28,11 @@ public class StagingSweepWorker : BackgroundService
 
     private readonly IServiceScopeFactory _scopes;
     private readonly ILogger<StagingSweepWorker> _logger;
+    private readonly IJobLease? _lease;
 
-    public StagingSweepWorker(IServiceScopeFactory scopes, ILogger<StagingSweepWorker> logger)
+    public StagingSweepWorker(IServiceScopeFactory scopes, ILogger<StagingSweepWorker> logger, IJobLease? lease = null)
     {
+        _lease = lease;
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -53,6 +55,10 @@ public class StagingSweepWorker : BackgroundService
 
             try
             {
+                // One sweep at a time in a cluster: the nodes share the store.
+                await using var sweep = await _lease.AcquireAsync("staging:sweep", stoppingToken);
+                if (sweep == null) continue;
+
                 // Each repository stages under a prefix of its own, so each is swept in a scope pinned to it.
                 IReadOnlyList<RepositoryInfo> repositories;
                 using (var listing = _scopes.CreateScope())
