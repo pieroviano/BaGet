@@ -198,6 +198,7 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton<IJobLease, InProcessJobLease>();
         services.TryAddSingleton<IReplicationPeerFactory, ReplicationPeerFactory>();
         services.TryAddScoped<ReplicationEngine>();
+        services.TryAddScoped<IReplicationInventory, ReplicationInventoryService>();
         services.TryAddScoped<IReplicationAdministration, ReplicationAdministration>();
         services.TryAddSingleton<ReplicationTrigger>();
         services.TryAddSingleton<ReplicationJobs>();

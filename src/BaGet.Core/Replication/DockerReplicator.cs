@@ -181,7 +181,12 @@ public sealed class DockerReplicator : IFormatReplicator
 
     private async Task<long> PullBlobAsync(ReplicaItem item, ReplicationPeer peer, string digest, CancellationToken cancellationToken)
     {
-        if (await _registry.GetBlobInfoAsync(item.Name, digest, cancellationToken).ConfigureAwait(false) != null) return 0;
+        // A first pull of an image: the image does not exist locally yet, so it holds no blob.
+        if (await _registry.ImageExistsAsync(item.Name, cancellationToken).ConfigureAwait(false)
+            && await _registry.GetBlobInfoAsync(item.Name, digest, cancellationToken).ConfigureAwait(false) != null)
+        {
+            return 0;
+        }
 
         using var response = await ReplicationTransfer.GetAsync(peer, Url(peer, item, "blobs/" + digest), item, cancellationToken).ConfigureAwait(false);
         await using var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
