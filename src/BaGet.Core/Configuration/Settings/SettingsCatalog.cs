@@ -92,6 +92,7 @@ public class SettingsCatalog
         ["Storage"] = "storage",
         ["Search"] = "search",
         ["Database"] = "database-configuration",
+        ["Ha"] = "high-availability",
         ["IISServerOptions"] = "iis-server-options",
         ["PathBase"] = "listening-address",
         ["Urls"] = "listening-address",

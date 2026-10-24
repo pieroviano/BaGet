@@ -202,7 +202,7 @@ public static partial class DependencyInjectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, NpmReplicator>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, MavenReplicator>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, DockerReplicator>());
-        // The seam P10 replaces with a cluster-wide lease; this one holds a lease in this process only.
+        // The in-process lease of a single node; with Ha:Enabled the host replaces it with ClusterJobLease (a lease in the shared store).
         services.TryAddSingleton<IJobLease, InProcessJobLease>();
         services.TryAddSingleton<IReplicationPeerFactory, ReplicationPeerFactory>();
         services.TryAddScoped<ReplicationEngine>();

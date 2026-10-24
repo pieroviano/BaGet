@@ -199,7 +199,7 @@ public sealed class ReplicationPeer : IDisposable
 
 /// <summary>
 /// The seam that lets a background job run once cluster-wide. Replication takes the lease named after a configuration before every
-/// run; phase P10 replaces the in-process default with a shared lock (Redis, the database) so two nodes do not run the same job at once.
+/// run; the in-process default (a single node) is replaced by <see cref="ClusterJobLease"/> (a lease in the shared store) when <c>Ha:Enabled</c>, so two nodes do not run the same job at once. Retention, scanning, the staging sweep, validation and the admin operations take leases through the same service.
 /// </summary>
 public interface IJobLease
 {

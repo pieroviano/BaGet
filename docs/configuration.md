@@ -893,8 +893,26 @@ in-memory gate (`MaintenanceGate`). It is not a setting and is never saved: a re
 
 - After a job that needs a restart (a successful database copy) the gate is closed **until restart**: writes accepted
   before the restart would land in the old database and be lost.
+- In a cluster ([High availability](high-availability.md)) a closure made by `Close` (a running copy) is shared by every node
+  and held by the node that made it; the until-restart closure stays on its own node (restart them all).
 - Every write goes through EF `SaveChanges`, which an interceptor checks; a context built with
   `MaintenanceGate.AllowWrites(optionsBuilder)` is exempt, so the job holding the gate can write to its own target.
+
+## High availability
+
+`Ha:*` runs several nodes behind a load balancer; it is off by default and every key needs a restart. A node refuses to start
+with `Ha:Enabled` on SQLite, Azure Table, the file system store or without `Ha:ConnectionString`. See
+[High availability](high-availability.md) for the keys, what is shared and the health endpoints.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Ha:Enabled` | `false` | Cluster mode |
+| `Ha:Backend` | `Redis` | The only backend |
+| `Ha:ConnectionString` | empty | Redis connection string (sensitive) |
+| `Ha:NodeName` | machine name + suffix | Name on the Cluster page |
+| `Ha:KeyPrefix` | `baget` | Prefix of every Redis key |
+| `Ha:LeaseDuration` | `00:00:30` | How long a lease of a stopped node holds (min 3 s) |
+| `Ha:SyncInterval` | `00:00:02` | Heartbeat and pick-up interval (min 100 ms) |
 
 ## Moving to another database
 

@@ -157,6 +157,9 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Download times (last download per version, for the *unused* rule) | in memory (`ArtifactUsageRecorder`) | shown as *Last download* in a retention report | Admin |
 | Replication configurations: create, change, enable, delete (local repository, push or pull, peer address and repository, peer API key, schedule, on deploy, delete propagation, conflict rule) | service (`IReplicationAdministration`) | Admin Replication (`/admin/replication`, `/admin/replication/{id}`) | Admin + Password, audited |
 | Replication: test connection, run now, resume an interrupted or failed run, stop, log of runs (status, counts, first failures and conflicts) | service (`ReplicationEngine`, `ReplicationJobs`, `ReplicationWorker`) | Admin Replication > configuration: *Test connection*, *Run now*, *Resume* (Password), *Stop*, the log table | Admin (+ Password), audited, 503 while read-only |
+| Cluster status: nodes with health and read-only state, job leases and their holder, the shared store, this node's health checks (database, storage, shared store) | service (`IClusterStatusService`, `ReadinessService`) | Admin Cluster (`/admin/cluster`, *Check again*) | Admin |
+| High availability settings (`Ha:*`: enable, Redis connection string, node name, key prefix, lease and sync intervals), restart-required marks | settings | Admin Settings > Ha | Admin + Password |
+| Health probes for a load balancer: `/health/live`, `/health/ready` (database, storage, shared store) | REST (anonymous, no detail in the body) | Admin Cluster > *This node's health checks* shows the same checks with their detail | - |
 | Replication inventory (what a repository holds, for a peer to compare) | service (`IReplicationInventory`) | Admin Replication > configuration: *the local repository holds N items* | Admin |
 
 ## Administration REST API (`/api/v1`)
