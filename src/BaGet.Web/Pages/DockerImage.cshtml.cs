@@ -38,6 +38,10 @@ public class DockerImageModel : PageModel
     [BindProperty(SupportsGet = true, Name = "digest")]
     public string? Digest { get; set; }
 
+    /// <summary>Narrows the referrers to one artifact type (<c>?artifactType=</c>), like <c>GET referrers/{digest}?artifactType=</c>; empty keeps them all.</summary>
+    [BindProperty(SupportsGet = true, Name = "artifactType")]
+    public string? ArtifactType { get; set; }
+
     /// <summary>The image, or null when there is none of that name.</summary>
     public OciImageInfo? Info { get; private set; }
 
@@ -89,7 +93,7 @@ public class DockerImageModel : PageModel
 
         if (Selected != null)
         {
-            Referrers = await _registry.GetReferrersAsync(Image!, Selected.Summary.Digest, null, cancellationToken) ?? Array.Empty<OciDescriptor>();
+            Referrers = await _registry.GetReferrersAsync(Image!, Selected.Summary.Digest, string.IsNullOrWhiteSpace(ArtifactType) ? null : ArtifactType.Trim(), cancellationToken) ?? Array.Empty<OciDescriptor>();
         }
 
         (Host, _) = _urls.GetOciRegistryHost();

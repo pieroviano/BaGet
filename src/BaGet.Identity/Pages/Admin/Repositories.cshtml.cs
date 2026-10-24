@@ -64,6 +64,9 @@ public class RepositoriesModel : RepositoryPageModel
             ? Url.Page(link.Page, new { repo = repository.IsDefault ? null : repository.Name }) ?? string.Empty
             : RepositoryFeedUrl.BaseFor(HttpContext, repository.Name) + link.Path;
 
+    /// <summary>Every format this server knows, for the list filter.</summary>
+    public IReadOnlyList<IFormatModule> AllFormats => Formats.Modules.ToList();
+
     /// <summary>The formats a remote repository can be created for (their module lists <see cref="RepositoryKind.Remote"/>).</summary>
     public IReadOnlyList<IFormatModule> RemoteFormats => Formats.Modules.Where(m => m.CreatableKinds.Contains(RepositoryKind.Remote)).ToList();
 
@@ -77,8 +80,29 @@ public class RepositoriesModel : RepositoryPageModel
     /// <summary>The format to keep selected after a refused creation.</summary>
     public string? Format { get; private set; }
 
-    /// <summary>Lists the repositories.</summary>
-    public async Task OnGetAsync(CancellationToken cancellationToken) => await LoadAsync(cancellationToken);
+    /// <summary>The format the list is narrowed to (<c>?format=</c>, a format name such as <c>Npm</c>), or null. Read on GET only: a create form posts its own <c>format</c>.</summary>
+    public string? FilterFormat { get; private set; }
+
+    /// <summary>The kind the list is narrowed to (<c>?kind=</c>: Local, Remote or Virtual), or null.</summary>
+    public string? FilterKind { get; private set; }
+
+    /// <summary>The name fragment the list is narrowed to (<c>?q=</c>), or null.</summary>
+    public string? FilterName { get; private set; }
+
+    /// <summary>
+    /// Lists the repositories, narrowed by <c>format</c>, <c>kind</c> and <c>q</c> (a name fragment) like
+    /// <c>GET /api/v1/repositories</c>, through <see cref="RepositorySummaryFilter"/>.
+    /// </summary>
+    public async Task OnGetAsync(CancellationToken cancellationToken)
+    {
+        string? Query(string key) => string.IsNullOrWhiteSpace(Request.Query[key]) ? null : Request.Query[key].ToString().Trim();
+        FilterFormat = Query("format");
+        FilterKind = Query("kind");
+        FilterName = Query("q");
+
+        await LoadAsync(cancellationToken);
+        Repositories = RepositorySummaryFilter.Apply(Repositories, FilterFormat, FilterKind, FilterName).ToList();
+    }
 
     /// <summary>Creates a local NuGet repository.</summary>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)

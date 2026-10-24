@@ -67,7 +67,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 |---|---|---|---|
 | Version check `GET /v2/` | REST | machine-only handshake (the browse page shows the registry address and `docker login`) | none (401 challenge) |
 | Token service `GET /v2/token` (`docker login`) | REST | machine-only; Account API keys creates the key used as the password; the browse page shows the login, `curl` and daemon snippets | API key / anonymous |
-| Pull: blobs (ranges), manifests, tag list, referrers | REST | `/docker-images` (browse, search), `/docker-images/{image}` (tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, referrers such as signatures and SBOMs, the document) | Read |
+| Pull: blobs (ranges), manifests, tag list, referrers (`?artifactType=` filter: the *Referrers* form on `?digest=`) | REST | `/docker-images` (browse, search), `/docker-images/{image}` (tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, referrers such as signatures and SBOMs, the document) | Read |
 | Push: upload sessions (monolithic, chunked, mount), manifests | REST | machine-only (Docker CLI); the browse and image pages show the push, `buildx` and pull commands | Deploy |
 | Delete a tag | REST (`DELETE manifests/{tag}`) | DockerManage | Delete + Password |
 | Delete a manifest (with its tags) | REST (`DELETE manifests/{digest}`) | DockerManage | Delete + Password |
@@ -101,6 +101,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
 | List, counts, feed URL, links per format | service | Admin Repositories | Admin |
+| Filter the list by name fragment, format and kind (`?q=`, `?format=`, `?kind=`; the REST list's parameters, one rule `RepositorySummaryFilter`) | REST `GET /api/v1/repositories` | Admin Repositories: filter form | Admin |
 | Create local NuGet / npm / Maven / Docker | service | Repositories create forms | Admin |
 | Create remote (URL, credentials, cache periods, offline) | service | Repositories remote form, RepositoryEdit | Admin + Password |
 | Create virtual, members, order, upload target | service | Repositories virtual form, RepositoryEdit | Admin |
@@ -248,6 +249,17 @@ Every operation below has the page that offers the same operation and the same g
 | Remove a user from a group | REST `DELETE /api/v1/users/{name}/groups/{group}` | `/Admin/UserDetail` | Admin key + password |
 | Add a user to a group | REST `PUT /api/v1/users/{name}/groups/{group}` | `/Admin/UserDetail` | Admin key + password |
 | Revoke one of a user's API keys | REST `DELETE /api/v1/users/{name}/keys/{key}` | `/Admin/UserDetail` | Admin key + password |
+
+## Audit method and gaps closed
+
+Standing rule: `UiCoverageInventoryTests` (controller, Razor page, CLI command each need a row) and `AdminApiAccessTests` (each REST operation names an existing page). The last full audit compared, one by one: every controller route, every `IFormatModule`/administration/service method an operator reaches, every CLI command and option, every registered options type (the Settings catalog is built from `AddBaGetOptions`, so a new section appears by itself), every Razor page `OnPost*` handler, and the query parameters of each REST list and protocol endpoint with the page that serves it.
+
+| Gap found | Closed by |
+|---|---|
+| REST repository list filters by format, kind and name; the page listed everything | Admin Repositories filter form (shared `RepositorySummaryFilter`) |
+| OCI referrers API filters by `artifactType`; the image page showed all referrers | *Referrers* filter form on the manifest page |
+
+No other operation lacked a page or a field. Items the UI cannot do are listed below.
 
 ## Not in the UI, on purpose
 

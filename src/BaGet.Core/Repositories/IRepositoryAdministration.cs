@@ -32,6 +32,23 @@ public sealed record RepositorySummary(
 }
 
 /// <summary>
+/// The one rule that narrows a repository list by format, kind or a name fragment, shared by the Repositories page and
+/// <c>GET /api/v1/repositories</c> so the two cannot answer differently.
+/// </summary>
+public static class RepositorySummaryFilter
+{
+    /// <summary>
+    /// Keeps the repositories whose format name and kind name equal <paramref name="format"/> and <paramref name="kind"/>
+    /// (ignoring case) and whose name contains <paramref name="nameFragment"/> (ignoring case); an empty filter keeps everything.
+    /// </summary>
+    public static IEnumerable<RepositorySummary> Apply(IEnumerable<RepositorySummary> repositories, string? format, string? kind, string? nameFragment)
+        => repositories
+            .Where(r => string.IsNullOrEmpty(format) || string.Equals(r.Format.ToString(), format, StringComparison.OrdinalIgnoreCase))
+            .Where(r => string.IsNullOrEmpty(kind) || string.Equals(r.Kind.ToString(), kind, StringComparison.OrdinalIgnoreCase))
+            .Where(r => string.IsNullOrEmpty(nameFragment) || r.Name.Contains(nameFragment, StringComparison.OrdinalIgnoreCase));
+}
+
+/// <summary>
 /// Lists, edits and deletes repositories (creating goes through <see cref="IRepositoryService.CreateAsync(string, RepositoryFormat, RepositoryKind, RemoteRepositorySettings?, CancellationToken)"/>). What the
 /// administrator pages use; writes go through the database context, so they are refused while the
 /// <see cref="MaintenanceGate"/> is closed.

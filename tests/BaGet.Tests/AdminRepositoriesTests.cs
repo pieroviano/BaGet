@@ -108,6 +108,35 @@ public class AdminRepositoriesTests : IDisposable
     }
 
     [Fact]
+    public async Task TheListFiltersByNameFormatAndKindLikeTheRestList()
+    {
+        await CreateAsync("alpha");
+        await CreateAsync("beta");
+        Assert.NotNull(await FindAsync("beta"));
+
+        var byName = await _admin.GetPageAsync("admin/repositories?q=ALP");
+        Assert.Contains("data-repository=\"alpha\"", byName);
+        Assert.DoesNotContain("data-repository=\"beta\"", byName);
+        Assert.DoesNotContain("data-repository=\"default\"", byName);
+
+        var byFormat = await _admin.GetPageAsync("admin/repositories?format=npm");
+        Assert.DoesNotContain("data-repository=\"alpha\"", byFormat);
+        Assert.DoesNotContain("data-repository=\"default\"", byFormat);
+
+        var byKind = await _admin.GetPageAsync("admin/repositories?kind=Local&format=NuGet");
+        Assert.Contains("data-repository=\"alpha\"", byKind);
+        Assert.Contains("data-repository=\"beta\"", byKind);
+        Assert.Contains("data-repository=\"default\"", byKind);
+
+        var remote = await _admin.GetPageAsync("admin/repositories?kind=remote");
+        Assert.DoesNotContain("data-repository=\"alpha\"", remote);
+
+        // The filter form is on the page and keeps what was typed.
+        Assert.Contains("id=\"repositories-filter\"", byName);
+        Assert.Contains("value=\"ALP\"", byName);
+    }
+
+    [Fact]
     public async Task CreatingARepositoryListsItWithAPerRepositoryFeedAddress()
     {
         using var created = await CreateAsync("second");

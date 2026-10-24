@@ -213,10 +213,7 @@ public class RepositoriesController : AdminApiController
     public async Task<IActionResult> List(string? format, string? kind, string? q, int? page, int? pageSize)
     {
         var all = await _administration.ListAsync(Cancellation);
-        var filtered = all
-            .Where(r => string.IsNullOrEmpty(format) || string.Equals(r.Format.ToString(), format, StringComparison.OrdinalIgnoreCase))
-            .Where(r => string.IsNullOrEmpty(kind) || string.Equals(r.Kind.ToString(), kind, StringComparison.OrdinalIgnoreCase))
-            .Where(r => string.IsNullOrEmpty(q) || r.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
+        var filtered = RepositorySummaryFilter.Apply(all, format, kind, q)
             .Select(Dto)
             .ToList();
 

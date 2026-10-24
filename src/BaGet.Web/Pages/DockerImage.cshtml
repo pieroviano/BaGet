@@ -134,9 +134,21 @@
             </tbody>
         </table>
 
-        @if (Model.Referrers.Count > 0)
+        @if (Model.Referrers.Count > 0 || !string.IsNullOrWhiteSpace(Model.ArtifactType))
         {
             <h2>Referrers</h2>
+            <form method="get" class="form-inline" id="docker-referrers-filter">
+                <input type="hidden" name="digest" value="@selected.Summary.Digest" />
+                <input type="text" name="artifactType" value="@Model.ArtifactType" class="form-control" placeholder="Artifact type" autocomplete="off" />
+                <button type="submit" class="btn btn-default">Filter</button>
+                @if (!string.IsNullOrWhiteSpace(Model.ArtifactType))
+                {
+                    <a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@selected.Summary.Digest">Clear</a>
+                }
+            </form>
+        }
+        @if (Model.Referrers.Count > 0)
+        {
             <table class="table table-condensed" id="docker-referrers">
                 <thead><tr><th>Manifest</th><th>Artifact type</th><th>Size</th></tr></thead>
                 <tbody>

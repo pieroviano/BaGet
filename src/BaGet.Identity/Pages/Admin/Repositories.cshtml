@@ -19,6 +19,29 @@
 
     <p class="help-block"><a id="formats-link" href="@Url.Page("/Admin/Formats")">Package formats</a> this server can host.</p>
 
+    <form method="get" class="form-inline" id="repositories-filter" style="margin-bottom: 10px;">
+        <input type="text" name="q" value="@Model.FilterName" class="form-control" placeholder="Name contains" autocomplete="off" />
+        <select name="format" class="form-control">
+            <option value="">Any format</option>
+            @foreach (var module in Model.AllFormats)
+            {
+                <option value="@module.Format" selected="@string.Equals(Model.FilterFormat, module.Format.ToString(), StringComparison.OrdinalIgnoreCase)">@module.Format</option>
+            }
+        </select>
+        <select name="kind" class="form-control">
+            <option value="">Any kind</option>
+            @foreach (var kind in new[] { "Local", "Remote", "Virtual" })
+            {
+                <option value="@kind" selected="@string.Equals(Model.FilterKind, kind, StringComparison.OrdinalIgnoreCase)">@kind</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-default">Filter</button>
+        @if (Model.FilterName != null || Model.FilterFormat != null || Model.FilterKind != null)
+        {
+            <a href="@Url.Page("/Admin/Repositories")">Clear</a>
+        }
+    </form>
+
     <table class="table" id="repositories-table">
         <thead>
             <tr><th>Name</th><th>Type</th><th>Packages</th><th>Feed</th><th></th></tr>

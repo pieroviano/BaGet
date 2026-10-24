@@ -224,6 +224,36 @@ public class DockerPagesTests : IDisposable
     }
 
     [Fact]
+    public async Task TheReferrersCanBeFilteredByArtifactTypeLikeTheReferrersApi()
+    {
+        var subject = await PushAsync("team/app", "1.0", "subject");
+        var sbom = OciTestImage.Create("sbom", subject: subject.ManifestDigest, artifactType: "application/vnd.example.sbom");
+        var signature = OciTestImage.Create("sig", subject: subject.ManifestDigest, artifactType: "application/vnd.example.signature");
+        using (var client = Client())
+        {
+            foreach (var (image, tag) in new[] { (sbom, "sbom"), (signature, "sig") })
+            {
+                await PushBlobAsync(client, "team/app", image.Config);
+                foreach (var layer in image.Layers) await PushBlobAsync(client, "team/app", layer);
+                await PutManifestAsync(client, "team/app", tag, image.Manifest);
+            }
+        }
+
+        var all = await _anonymous.GetPageAsync($"r/reg/docker-images/team/app?digest={subject.ManifestDigest}");
+        Assert.Contains($"data-referrer=\"{sbom.ManifestDigest}\"", all);
+        Assert.Contains($"data-referrer=\"{signature.ManifestDigest}\"", all);
+
+        var filtered = await _anonymous.GetPageAsync($"r/reg/docker-images/team/app?digest={subject.ManifestDigest}&artifactType=application/vnd.example.sbom");
+        Assert.Contains($"data-referrer=\"{sbom.ManifestDigest}\"", filtered);
+        Assert.DoesNotContain($"data-referrer=\"{signature.ManifestDigest}\"", filtered);
+        Assert.Contains("id=\"docker-referrers-filter\"", filtered);
+
+        var none = await _anonymous.GetPageAsync($"r/reg/docker-images/team/app?digest={subject.ManifestDigest}&artifactType=application/vnd.example.other");
+        Assert.DoesNotContain("data-referrer=", none);
+        Assert.Contains("id=\"docker-referrers-filter\"", none);
+    }
+
+    [Fact]
     public async Task AnIndexPageListsItsPlatformsAndLinksToTheirManifests()
     {
         var amd64 = await PushAsync("team/app", "amd64", "amd", architecture: "amd64");
