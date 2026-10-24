@@ -287,6 +287,20 @@ public class ReplicationPagesTests : IDisposable
     }
 
     [Fact]
+    public async Task ADisabledReplicationIsNotStartedByThePageOrTheApi()
+    {
+        var key = await _h.CreateAsync("off", enabled: false);
+
+        using (await PostAsync(key, "Run")) { }
+        Assert.Contains("is disabled: enable it first", await _admin.GetPageAsync($"admin/replication/{key}"));
+        Assert.Empty(await _h.RunsAsync(key));
+
+        var api = await _h.Local.PostAsync($"/api/v1/replication/configs/{key}/run", password: Password);
+        Assert.Equal(HttpStatusCode.Conflict, api.Status);
+        Assert.False(_h.Local.App.Services.GetRequiredService<ReplicationJobs>().IsRunning(key));
+    }
+
+    [Fact]
     public async Task TheInventoryEndpointListsWhatARepositoryHoldsForAPeer()
     {
         await _h.Local.App.AddPackageAsync(TestPackages.Build("Inv.Lib", "1.2.3"), Token);

@@ -96,25 +96,28 @@ public class ReplicationConfigModel : ReplicationPageModel
     /// <summary>Starts a run.</summary>
     public async Task<IActionResult> OnPostRunAsync(string? password, CancellationToken cancellationToken)
     {
-        if (await Replication.GetAsync(Key, cancellationToken) == null) return NotFound();
+        var view = await Replication.GetAsync(Key, cancellationToken);
+        if (view == null) return NotFound();
 
-        return await ActAsync(password, confirm: true, () => Start("manual", null), () => RedirectToPage(new { key = Key }));
+        return await ActAsync(password, confirm: true, () => Start(view.Config, "manual", null), () => RedirectToPage(new { key = Key }));
     }
 
     /// <summary>Starts a run that continues the last interrupted or failed one.</summary>
     public async Task<IActionResult> OnPostResumeAsync(string? password, CancellationToken cancellationToken)
     {
-        if (await Replication.GetAsync(Key, cancellationToken) == null) return NotFound();
+        var view = await Replication.GetAsync(Key, cancellationToken);
+        if (view == null) return NotFound();
 
         var runs = await Replication.ListRunsAsync(Key, 1, cancellationToken);
         var last = runs.FirstOrDefault();
         var resume = last != null && last.Status is ReplicationRunStatus.Failed or ReplicationRunStatus.Interrupted ? last.Key : (int?)null;
 
-        return await ActAsync(password, confirm: true, () => Start("resume", resume), () => RedirectToPage(new { key = Key }));
+        return await ActAsync(password, confirm: true, () => Start(view.Config, "resume", resume), () => RedirectToPage(new { key = Key }));
     }
 
-    private Task<string> Start(string trigger, int? resumedFrom)
+    private Task<string> Start(ReplicationConfig config, string trigger, int? resumedFrom)
     {
+        if (!config.Enabled) throw new ReplicationException($"The replication '{config.Name}' is disabled: enable it first.");
         if (!Jobs.TryStart(Key, trigger, Actor, resumedFrom, out var refusal)) throw new ReplicationException(refusal ?? "The run was not started.");
 
         return Task.FromResult("The replication started; the log below shows its progress.");

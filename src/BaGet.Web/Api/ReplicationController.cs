@@ -154,8 +154,10 @@ public class ReplicationController : AdminApiController
     private async Task<IActionResult> StartAsync(int key, string trigger, bool resume)
     {
         ThrowIfClosed();
-        if (await Replication.GetAsync(key, Cancellation) == null) return ApiProblems.NotFound($"replication {key}");
+        var view = await Replication.GetAsync(key, Cancellation);
+        if (view == null) return ApiProblems.NotFound($"replication {key}");
         if (await RequireConfirmationAsync() is { } refusal) return refusal;
+        if (!view.Config.Enabled) return ApiProblems.Conflict("The replication is disabled: enable it first.");
 
         int? resumedFrom = null;
         if (resume)
