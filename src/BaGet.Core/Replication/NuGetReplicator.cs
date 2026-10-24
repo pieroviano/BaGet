@@ -1,0 +1,115 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using NuGet.Versioning;
+
+namespace BaGet.Core;
+
+/// <summary>
+/// NuGet's <see cref="IFormatReplicator"/>. Items are package versions (id compared without regard to case, version normalized). A push
+/// is the protocol's <c>PUT api/v2/package</c> with the peer's key in <c>X-NuGet-ApiKey</c>; a pull downloads the flat-container
+/// <c>.nupkg</c> and submits it through the same pipeline a push uses (validation included). NuGet keeps no content digest, so two
+/// servers holding the same id and version are taken to hold the same package (versions are immutable) and a conflict cannot be detected.
+/// Deleting at the peer is the protocol's <c>DELETE api/v2/package/{id}/{version}</c>, which honours the peer's
+/// <c>PackageDeletionBehavior</c> (an unlist leaves the version there).
+/// </summary>
+public sealed class NuGetReplicator : IFormatReplicator
+{
+    private readonly IContext _context;
+    private readonly IPackageStorageService _storage;
+    private readonly IPackageSubmissionService _submissions;
+    private readonly IPackageDeletionService _deletion;
+    private readonly MaintenanceGate _gate;
+
+    public NuGetReplicator(
+        IContext context,
+        IPackageStorageService storage,
+        IPackageSubmissionService submissions,
+        IPackageDeletionService deletion,
+        MaintenanceGate gate)
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+        _submissions = submissions ?? throw new ArgumentNullException(nameof(submissions));
+        _deletion = deletion ?? throw new ArgumentNullException(nameof(deletion));
+        _gate = gate ?? throw new ArgumentNullException(nameof(gate));
+    }
+
+    /// <inheritdoc/>
+    public RepositoryFormat Format => RepositoryFormat.NuGet;
+
+    /// <inheritdoc/>
+    public StringComparer NameComparer => StringComparer.OrdinalIgnoreCase;
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<ReplicaItem>> ListAsync(CancellationToken cancellationToken)
+    {
+        var rows = await _context.Packages!.AsNoTracking()
+            .Select(p => new { p.Id, p.NormalizedVersionString })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        return rows
+            .Select(r => new ReplicaItem(r.Id!, r.NormalizedVersionString!, string.Empty, 0, string.Empty))
+            .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ThenBy(i => i.Version, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> PushAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    {
+        using var stored = await _storage.GetPackageStreamAsync(item.Name, NuGetVersion.Parse(item.Version), cancellationToken).ConfigureAwait(false)
+            ?? throw new ReplicationItemException($"The package {item} is listed but its file is not in the store.");
+        using var file = await ReplicationTransfer.SpoolAsync(stored, cancellationToken).ConfigureAwait(false);
+        var length = file.Length;
+
+        var request = new HttpRequestMessage(HttpMethod.Put, peer.Feed("api/v2/package")) { Content = ReplicationTransfer.Binary(file) };
+        if (peer.ApiKey != null) request.Headers.TryAddWithoutValidation("X-NuGet-ApiKey", peer.ApiKey);
+        await ReplicationTransfer.SendAsync(peer, request, "push", item, cancellationToken).ConfigureAwait(false);
+
+        return length;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> PullAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    {
+        _gate.ThrowIfClosed();
+
+        var id = item.Name.ToLowerInvariant();
+        var version = item.Version.ToLowerInvariant();
+        using var response = await ReplicationTransfer.GetAsync(peer, peer.Feed($"v3/package/{Uri.EscapeDataString(id)}/{Uri.EscapeDataString(version)}/{Uri.EscapeDataString(id)}.{Uri.EscapeDataString(version)}.nupkg"), item, cancellationToken).ConfigureAwait(false);
+        await using var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var file = await ReplicationTransfer.SpoolAsync(body, cancellationToken).ConfigureAwait(false);
+        var length = file.Length;
+
+        var result = await _submissions.SubmitAsync(file, cancellationToken).ConfigureAwait(false);
+        switch (result)
+        {
+            case PackageIndexingResult.Success:
+            case PackageIndexingResult.Accepted:
+                return length;
+
+            case PackageIndexingResult.PackageAlreadyExists:
+                throw new ReplicationItemException($"The package {item} exists already.", conflict: true);
+
+            default:
+                throw new ReplicationItemException($"The package {item} from the peer is not a valid package.");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task DeleteLocalAsync(ReplicaItem item, CancellationToken cancellationToken)
+        => await _deletion.TryHardDeletePackageAsync(item.Name, NuGetVersion.Parse(item.Version), cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public async Task DeletePeerAsync(ReplicaItem item, ReplicationPeer peer, CancellationToken cancellationToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, peer.Feed($"api/v2/package/{Uri.EscapeDataString(item.Name)}/{Uri.EscapeDataString(item.Version)}"));
+        if (peer.ApiKey != null) request.Headers.TryAddWithoutValidation("X-NuGet-ApiKey", peer.ApiKey);
+        await ReplicationTransfer.SendAsync(peer, request, "delete", item, cancellationToken, allowNotFound: true).ConfigureAwait(false);
+    }
+}

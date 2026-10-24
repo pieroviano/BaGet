@@ -1432,6 +1432,187 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.ToTable("ProjectMembers");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ReplicationConfig", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("Conflict")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("LastRun")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<bool>("OnDeploy")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PeerRepository")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PeerUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<bool>("PropagateDeletes")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ProtectedApiKey")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<int>("RepositoryKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ScheduleMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ScheduleStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.ToTable("ReplicationConfigs");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationItem", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("ConfigKey")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Digest")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("character varying(340)");
+
+                    b.Property<string>("Part")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("Synced")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ConfigKey", "Name", "Version", "Part");
+
+                    b.ToTable("ReplicationItems");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationRun", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("Actor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<long>("Bytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ConfigKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Conflicts")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Deleted")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<int>("Examined")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Failures")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("Finished")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ResumedFrom")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Skipped")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Started")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Transferred")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Trigger")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ConfigKey", "Started");
+
+                    b.ToTable("ReplicationRuns");
+                });
+
             modelBuilder.Entity("BaGet.Core.Repository", b =>
                 {
                     b.Property<int>("Key")

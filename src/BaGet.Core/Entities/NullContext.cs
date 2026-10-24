@@ -70,6 +70,12 @@ public class NullContext : IContext
 
     public DbSet<ArtifactUsage>? ArtifactUsages { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+    public DbSet<ReplicationConfig>? ReplicationConfigs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<ReplicationRun>? ReplicationRuns { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public DbSet<ReplicationItem>? ReplicationItems { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
     public DbSet<OciUpload>? OciUploads { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public DbSet<Repository>? Repositories { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

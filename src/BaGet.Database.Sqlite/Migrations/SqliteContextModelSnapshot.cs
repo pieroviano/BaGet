@@ -1358,6 +1358,181 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.ToTable("ProjectMembers");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ReplicationConfig", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Conflict")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastRun")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("OnDeploy")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PeerRepository")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PeerUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("PropagateDeletes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ProtectedApiKey")
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RepositoryKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ScheduleMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ScheduleStart")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.ToTable("ReplicationConfigs");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationItem", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ConfigKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Digest")
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Part")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Synced")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ConfigKey", "Name", "Version", "Part");
+
+                    b.ToTable("ReplicationItems");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationRun", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Actor")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Bytes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ConfigKey")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Conflicts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Deleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Examined")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Failures")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("Finished")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ResumedFrom")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Skipped")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Started")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Transferred")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Trigger")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ConfigKey", "Started");
+
+                    b.ToTable("ReplicationRuns");
+                });
+
             modelBuilder.Entity("BaGet.Core.Repository", b =>
                 {
                     b.Property<int>("Key")

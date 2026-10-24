@@ -189,6 +189,19 @@ public static partial class DependencyInjectionExtensions
         services.TryAddScoped<IRetentionAdministration, RetentionAdministration>();
         services.TryAddSingleton<RetentionJobs>();
         services.AddHostedService<RetentionWorker>();
+
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, NuGetReplicator>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, NpmReplicator>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, MavenReplicator>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IFormatReplicator, DockerReplicator>());
+        // The seam P10 replaces with a cluster-wide lease; this one holds a lease in this process only.
+        services.TryAddSingleton<IJobLease, InProcessJobLease>();
+        services.TryAddSingleton<IReplicationPeerFactory, ReplicationPeerFactory>();
+        services.TryAddScoped<ReplicationEngine>();
+        services.TryAddScoped<IReplicationAdministration, ReplicationAdministration>();
+        services.TryAddSingleton<ReplicationTrigger>();
+        services.TryAddSingleton<ReplicationJobs>();
+        services.AddHostedService<ReplicationWorker>();
         services.TryAddScoped<StatisticsService>();
 
         services.TryAddTransient<IAuthenticationService, ApiKeyAuthenticationService>();

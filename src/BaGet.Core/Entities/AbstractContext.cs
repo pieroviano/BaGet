@@ -14,7 +14,7 @@ namespace BaGet.Core;
 /// Identity's tables live in the same database as the packages, so a deployment keeps
 /// one database. They are created by a migration whether or not accounts are enabled.
 /// </remarks>
-public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, IContext where TContext : DbContext
+public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, IContext, IRepositoryScopedContext where TContext : DbContext
 {
     public const int DefaultMaxStringLength = 4000;
 
@@ -125,6 +125,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     /// </summary>
     protected int CurrentRepositoryKey => RepositoryScope.Current.Key;
 
+    /// <summary>The repository this context works in now (what <see cref="ReplicationDeployInterceptor"/> reports a deploy for).</summary>
+    public int ScopeRepositoryKey => CurrentRepositoryKey;
+
     public DbSet<Package>? Packages { get; set; }
     public DbSet<PackageDependency>? PackageDependencies { get; set; }
     public DbSet<PackageType>? PackageTypes { get; set; }
@@ -166,6 +169,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     public DbSet<RetentionPolicy>? RetentionPolicies { get; set; }
     public DbSet<RetentionHold>? RetentionHolds { get; set; }
     public DbSet<ArtifactUsage>? ArtifactUsages { get; set; }
+    public DbSet<ReplicationConfig>? ReplicationConfigs { get; set; }
+    public DbSet<ReplicationRun>? ReplicationRuns { get; set; }
+    public DbSet<ReplicationItem>? ReplicationItems { get; set; }
 
     public Task<int> SaveChangesAsync() => SaveChangesAsync(default);
 
@@ -253,6 +259,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<RetentionPolicy>(BuildRetentionPolicyEntity);
         builder.Entity<RetentionHold>(BuildRetentionHoldEntity);
         builder.Entity<ArtifactUsage>(BuildArtifactUsageEntity);
+        builder.Entity<ReplicationConfig>(BuildReplicationConfigEntity);
+        builder.Entity<ReplicationRun>(BuildReplicationRunEntity);
+        builder.Entity<ReplicationItem>(BuildReplicationItemEntity);
 
         // Repository isolation: a query in one repository never sees another's rows. The filter reads the
         // context's current repository per query.
@@ -310,6 +319,46 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         hold.Property(h => h.Version).HasMaxLength(MaxRetentionVersionLength).IsRequired();
         hold.Property(h => h.Reason).HasMaxLength(MaxRetentionReasonLength);
         hold.Property(h => h.CreatedBy).HasMaxLength(MaxAccountNameLength);
+    }
+
+    private void BuildReplicationConfigEntity(EntityTypeBuilder<ReplicationConfig> config)
+    {
+        config.HasKey(c => c.Key);
+        config.HasIndex(c => c.Name).IsUnique();
+        config.HasIndex(c => c.RepositoryKey);
+
+        config.Property(c => c.Name).HasMaxLength(MaxAccessNameLength).IsRequired();
+        config.Property(c => c.PeerUrl).HasMaxLength(ReplicationLimits.MaxUrlLength).IsRequired();
+        config.Property(c => c.PeerRepository).HasMaxLength(ReplicationLimits.MaxPartLength).IsRequired();
+        config.Property(c => c.ProtectedApiKey).HasMaxLength(ReplicationLimits.MaxSecretLength);
+        config.Property(c => c.LastResult).HasMaxLength(ReplicationLimits.MaxResultLength);
+        config.Property(c => c.Direction).HasConversion<int>();
+        config.Property(c => c.Conflict).HasConversion<int>();
+    }
+
+    private void BuildReplicationRunEntity(EntityTypeBuilder<ReplicationRun> run)
+    {
+        run.HasKey(r => r.Key);
+        run.HasIndex(r => new { r.ConfigKey, r.Started });
+
+        run.Property(r => r.Trigger).HasMaxLength(32);
+        run.Property(r => r.Actor).HasMaxLength(MaxAccountNameLength);
+        run.Property(r => r.Error).HasMaxLength(ReplicationLimits.MaxResultLength);
+        run.Property(r => r.Detail).HasMaxLength(ReplicationLimits.MaxDetailLength);
+        run.Property(r => r.Status).HasConversion<int>();
+    }
+
+    private void BuildReplicationItemEntity(EntityTypeBuilder<ReplicationItem> item)
+    {
+        item.HasKey(i => i.Key);
+        // Not unique: names compare differently per engine collation (a Docker tag is case-sensitive), the ledger is kept unique by the engine.
+        item.HasIndex(i => new { i.ConfigKey, i.Name, i.Version, i.Part });
+
+        item.Property(i => i.Name).HasMaxLength(ReplicationLimits.MaxNameLength).IsRequired();
+        item.Property(i => i.Version).HasMaxLength(ReplicationLimits.MaxVersionLength).IsRequired();
+        // Empty = not a Maven file, so the column is never null (a unique index treats nulls as distinct on some engines).
+        item.Property(i => i.Part).HasMaxLength(ReplicationLimits.MaxPartLength).IsRequired();
+        item.Property(i => i.Digest).HasMaxLength(ReplicationLimits.MaxDigestLength);
     }
 
     private void BuildArtifactUsageEntity(EntityTypeBuilder<ArtifactUsage> usage)

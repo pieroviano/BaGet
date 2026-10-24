@@ -265,6 +265,18 @@ public sealed class RemoteSettingsCodec
     }
 
     /// <summary>
+    /// Protects a secret that is not a repository password (a replication peer's API key) with the same protector.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">No data protection is configured on this host.</exception>
+    public string ProtectSecret(string secret)
+        => (_protector ?? throw new InvalidOperationException("Credentials cannot be stored: no data protection is configured on this host."))
+            .Protect(secret ?? throw new ArgumentNullException(nameof(secret)));
+
+    /// <summary>The secret <see cref="ProtectSecret"/> stored, or null when it cannot be unprotected (keys lost) or there is no protector.</summary>
+    public string? TryUnprotectSecret(string? protectedValue)
+        => string.IsNullOrEmpty(protectedValue) || _protector == null ? null : _protector.TryUnprotect(protectedValue);
+
+    /// <summary>
     /// Reads stored JSON. The password is unprotected; one that cannot be (keys lost) reads as absent rather than
     /// failing the repository.
     /// </summary>

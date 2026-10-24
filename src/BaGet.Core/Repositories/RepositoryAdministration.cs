@@ -186,6 +186,16 @@ public class RepositoryAdministration : IRepositoryAdministration
         _context.ScanResults!.RemoveRange(await _context.ScanResults!.IgnoreQueryFilters().Where(r => r.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.ScanPolicies!.RemoveRange(await _context.ScanPolicies!.Where(p => p.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false));
 
+        // Its replications go with it: configurations, their log and their ledger.
+        var replications = await _context.ReplicationConfigs!.Where(c => c.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (replications.Count > 0)
+        {
+            var replicationKeys = replications.Select(c => c.Key).ToList();
+            _context.ReplicationRuns!.RemoveRange(await _context.ReplicationRuns!.Where(r => replicationKeys.Contains(r.ConfigKey)).ToListAsync(cancellationToken).ConfigureAwait(false));
+            _context.ReplicationItems!.RemoveRange(await _context.ReplicationItems!.Where(i => replicationKeys.Contains(i.ConfigKey)).ToListAsync(cancellationToken).ConfigureAwait(false));
+            _context.ReplicationConfigs!.RemoveRange(replications);
+        }
+
         // A key limited to this repository would otherwise be left with no limit, which means every repository: a key
         // limited to several only loses this one, one limited to this alone has no use left and is deleted.
         var limits = await _context.ApiKeyRepositories!.Where(e => e.RepositoryKey == key).ToListAsync(cancellationToken).ConfigureAwait(false);

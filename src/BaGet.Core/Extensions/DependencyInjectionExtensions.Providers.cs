@@ -85,13 +85,16 @@ public static partial class DependencyInjectionExtensions
         services.TryAddSingleton<MaintenanceSaveChangesInterceptor>();
         services.TryAddSingleton<AccessModelVersion>();
         services.TryAddSingleton<AccessModelSaveChangesInterceptor>();
+        services.TryAddSingleton<ReplicationTrigger>();
+        services.TryAddSingleton<ReplicationDeployInterceptor>();
 
         services.AddDbContext<TContext>((provider, options) =>
         {
             configureContext(provider, options);
             options.AddInterceptors(
                 provider.GetRequiredService<MaintenanceSaveChangesInterceptor>(),
-                provider.GetRequiredService<AccessModelSaveChangesInterceptor>());
+                provider.GetRequiredService<AccessModelSaveChangesInterceptor>(),
+                provider.GetRequiredService<ReplicationDeployInterceptor>());
         });
 
         services.AddProvider<IContext>((provider, config) =>

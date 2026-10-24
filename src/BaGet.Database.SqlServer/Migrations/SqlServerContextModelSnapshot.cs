@@ -1440,6 +1440,187 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("ProjectMembers");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ReplicationConfig", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("Conflict")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("LastRun")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("OnDeploy")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PeerRepository")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PeerUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<bool>("PropagateDeletes")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProtectedApiKey")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<int>("RepositoryKey")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ScheduleMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ScheduleStart")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryKey");
+
+                    b.ToTable("ReplicationConfigs");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationItem", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<int>("ConfigKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Digest")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(340)
+                        .HasColumnType("nvarchar(340)");
+
+                    b.Property<string>("Part")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("Synced")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ConfigKey", "Name", "Version", "Part");
+
+                    b.ToTable("ReplicationItems");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationRun", b =>
+                {
+                    b.Property<int>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Key"));
+
+                    b.Property<string>("Actor")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<long>("Bytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ConfigKey")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Conflicts")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Deleted")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int>("Examined")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Failures")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("Finished")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ResumedFrom")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Skipped")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Started")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Transferred")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Trigger")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("ConfigKey", "Started");
+
+                    b.ToTable("ReplicationRuns");
+                });
+
             modelBuilder.Entity("BaGet.Core.Repository", b =>
                 {
                     b.Property<int>("Key")

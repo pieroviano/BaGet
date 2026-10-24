@@ -125,6 +125,15 @@ public interface IContext
     /// <summary>When versions were last downloaded; see <see cref="ArtifactUsage"/>. Repository-scoped.</summary>
     DbSet<ArtifactUsage>? ArtifactUsages { get; set; }
 
+    /// <summary>The replication configurations; see <see cref="ReplicationConfig"/>. Not repository-scoped.</summary>
+    DbSet<ReplicationConfig>? ReplicationConfigs { get; set; }
+
+    /// <summary>The replication log; see <see cref="ReplicationRun"/>. Not repository-scoped.</summary>
+    DbSet<ReplicationRun>? ReplicationRuns { get; set; }
+
+    /// <summary>What replication copied; see <see cref="ReplicationItem"/>. Not repository-scoped.</summary>
+    DbSet<ReplicationItem>? ReplicationItems { get; set; }
+
     /// <summary>
     /// Identity's users. Declared here so that account services can query them through
     /// the same context as everything else.
