@@ -235,8 +235,10 @@ public sealed class ClusterSyncService : BackgroundService
 
     private async Task SyncAccessAsync(IClusterStore store, CancellationToken cancellationToken)
     {
+        // No counter yet (no node has changed the access model) reads as 0.
         var value = await store.GetAsync(ClusterRuntime.Keys.AccessVersion, cancellationToken).ConfigureAwait(false);
-        if (value == null || !long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seen)) return;
+        var seen = 0L;
+        if (value != null && !long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out seen)) return;
 
         var previous = Interlocked.Exchange(ref _accessSeen, seen);
         // The first read only learns where the counter is.
