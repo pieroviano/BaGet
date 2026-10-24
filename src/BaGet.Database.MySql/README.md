@@ -1,6 +1,6 @@
 # Extension.BaGet.Database.MySql
 
-The MySQL database provider of [BaGet Extension](https://pieroviano.github.io/BaGet/), built on `Pomelo.EntityFrameworkCore.MySql`.
+The MySQL database provider of [BaGet Extension](https://pieroviano.github.io/BaGet/), built on `Microting.EntityFrameworkCore.MySql` (a maintained Pomelo fork).
 
 ```powershell
 dotnet add package Extension.BaGet.Database.MySql
@@ -42,7 +42,7 @@ BaGet applies pending migrations itself when it starts.
 
 - List migrations without a server: `dotnet ef migrations list --context MySqlContext`.
 - Never run `dotnet ef migrations remove --no-build`: with a stale assembly it deleted the previous migration. Delete the generated files by hand and restore the model snapshot from `HEAD`.
-- Entity Framework is pinned to 9.0.21, not 10 (`Pomelo.EntityFrameworkCore.MySql` has no EF 10 release); all four providers move together.
+- Entity Framework is 10.0.13; the MySQL provider is `Microting.EntityFrameworkCore.MySql`; all four providers move together.
 
 ## Schema notes
 

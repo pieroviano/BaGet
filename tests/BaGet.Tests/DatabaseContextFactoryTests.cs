@@ -79,7 +79,7 @@ public class DatabaseContextFactoryTests : IDisposable
             "Server=127.0.0.1;Port=1;Database=x;User=u",
             new DatabaseOptions { MySqlServerVersion = "10.11.0-mariadb" });
 
-        Assert.Equal("Pomelo.EntityFrameworkCore.MySql", context.Database.ProviderName);
+        Assert.Equal("Microting.EntityFrameworkCore.MySql", context.Database.ProviderName);
     }
 
     [Fact]

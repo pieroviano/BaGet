@@ -456,7 +456,7 @@ either (`TelemetryExportTests.NeitherQueryValuesNorHeadersReach...`). **SDK quir
 resource) has an internal setter, so `ReloadableExporter.Adopt` sets it by reflection on the inner exporter, and the batch
 processor's `DroppedCount` is read by reflection; both degrade (empty resource, 0) if the SDK changes. Versions are levers in
 `src/Directory.Build.props` (`OpenTelemetryPackageVersion` 1.20.0 needs Options/Configuration 10.0.0, which restores cleanly
-beside the 9.0.21 pins because the Web SDK shared framework supplies them; 1.13.x would avoid that but has known
+beside the EF 10 / Extensions 10.0.13 pins; 1.13.x would avoid that but has known
 vulnerabilities; `OpenTelemetry.Instrumentation.EntityFrameworkCore` exists only as prerelease, `1.20.0-beta.1`, and is
 behind the live `Traces:Database`). Tests: `InMemoryTelemetry` (replaces `ITelemetryExporterFactory` through the harness's
 `configureServices`; telemetry is off in the harness unless a test enables it, saving through `SettingsService` so the
@@ -525,12 +525,12 @@ files from `wwwroot/_content/BaGet.Web` (e.g. BaGet.Service).
 All shared versions are single levers in `src/Directory.Build.props`; provider projects must read them
 rather than pinning literals (divergence there once resolved an EF 8 request to EF 10).
 
-**Entity Framework is pinned to 9.0.21 and must not be raised to 10.** `Pomelo.EntityFrameworkCore.MySql`
-has no EF 10 release; its 9.0.0 constrains `Microsoft.EntityFrameworkCore.Relational` to
-`[9.0.0, 9.0.999]`. Raising EF breaks MySQL at runtime (`MethodNotFound` on
-`AbstractionsStrings.ArgumentIsEmpty`) and turns an `NU1608` warning into a hard `NU1107`. All four
-providers move together. `Microsoft.Extensions.*` tracks EF (9.0.21) because holding it lower is an
-`NU1605` downgrade error.
+**Entity Framework is 10.0.13** (`MicrosoftEntityFrameworkCorePackageVersion`, Identity's stores, `Microsoft.Extensions.*`,
+Npgsql 10.0.3). MySQL uses `Microting.EntityFrameworkCore.MySql` 10.0.13 (a maintained fork of Pomelo, which stalled at EF 9; same
+API, namespaces `Microting.EntityFrameworkCore.MySql.*`, provider name `Microting.EntityFrameworkCore.MySql`); it constrains
+`Microsoft.EntityFrameworkCore.Relational` to `[10.0.13, 10.0.999]`, so all four providers move together and EF must not be
+raised past that range until Microting releases. `Microsoft.Extensions.*` tracks EF because holding it lower is an `NU1605`
+downgrade error. `BaGet.Database.SqlServer` pins `System.Security.Cryptography.Pkcs` 10.0.13 (SqlClient's 9.0.11 is NU1902/NU1903).
 
 ## Migrations
 

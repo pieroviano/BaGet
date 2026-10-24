@@ -13,7 +13,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="$(PomeloEntityFrameworkCorePackageVersion)" />
+    <PackageReference Include="Microting.EntityFrameworkCore.MySql" Version="$(MicrotingEntityFrameworkCoreMySqlPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

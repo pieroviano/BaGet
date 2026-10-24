@@ -407,7 +407,7 @@ scanned per platform manifest, not per index.
 | Storage providers without streaming append | B2. A provider that can't is refused for Docker repositories |
 | Four DB providers × many migrations | Each phase's migrations generated and verified on all four (CLAUDE.md *Migrations*); engine tests (`BaGet.Database.Tests`) extended |
 | Licensing of vulnerability data | B5; attribution in docs/UI |
-| EF 9 pin (Pomelo) | No phase may raise EF; Redis/OCI libraries checked against the `Microsoft.Extensions` 9.0.21 pin like OpenTelemetry was |
+| EF version (Microting MySQL) | EF is 10.0.13 (Pomelo replaced by the Microting fork); Redis/OCI libraries checked against the `Microsoft.Extensions` 10.0.13 pin like OpenTelemetry was |
 
 ## Out of scope
 

@@ -1,7 +1,7 @@
 using System;
 using BaGet.Core;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Microting.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace BaGet.Database.MySql;
 

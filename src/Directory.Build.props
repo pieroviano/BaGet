@@ -42,22 +42,19 @@
     <MicrosoftAspNetCorePackageVersion>10.0.13</MicrosoftAspNetCorePackageVersion>
 
     <!--
-      Entity Framework is held at 9.x because Pomelo.EntityFrameworkCore.MySql has no release
-      that supports Entity Framework 10: its latest, 9.0.0, constrains
-      Microsoft.EntityFrameworkCore.Relational to [9.0.0, 9.0.999]. Every provider must move
-      together, so each one reads its version from here rather than pinning its own.
+      Entity Framework 10. The MySQL provider is Microting.EntityFrameworkCore.MySql, a maintained fork of
+      Pomelo (which stalled at EF 9): 10.0.13 constrains Microsoft.EntityFrameworkCore.Relational to
+      [10.0.13, 10.0.999]. Every provider must move together, so each one reads its version from here
+      rather than pinning its own.
     -->
-    <MicrosoftEntityFrameworkCorePackageVersion>9.0.21</MicrosoftEntityFrameworkCorePackageVersion>
-    <!-- Identity's EF stores depend on EF Core, so this tracks the EF version, not ASP.NET Core's. -->
-    <MicrosoftAspNetCoreIdentityEntityFrameworkCorePackageVersion>9.0.21</MicrosoftAspNetCoreIdentityEntityFrameworkCorePackageVersion>
-    <NpgsqlEntityFrameworkCorePackageVersion>9.0.4</NpgsqlEntityFrameworkCorePackageVersion>
-    <PomeloEntityFrameworkCorePackageVersion>9.0.0</PomeloEntityFrameworkCorePackageVersion>
+    <MicrosoftEntityFrameworkCorePackageVersion>10.0.13</MicrosoftEntityFrameworkCorePackageVersion>
+    <!-- Identity's EF stores depend on EF Core, so this tracks the EF version. -->
+    <MicrosoftAspNetCoreIdentityEntityFrameworkCorePackageVersion>10.0.13</MicrosoftAspNetCoreIdentityEntityFrameworkCorePackageVersion>
+    <NpgsqlEntityFrameworkCorePackageVersion>10.0.3</NpgsqlEntityFrameworkCorePackageVersion>
+    <MicrotingEntityFrameworkCoreMySqlPackageVersion>10.0.13</MicrotingEntityFrameworkCoreMySqlPackageVersion>
 
-    <!--
-      Entity Framework 9.0.21 depends on Microsoft.Extensions.* 9.0.21, so holding these at
-      8.0.0 is a package downgrade (NU1605) and will not restore.
-    -->
-    <MicrosoftExtensionsPackageVersion>9.0.21</MicrosoftExtensionsPackageVersion>
+    <!-- Entity Framework 10 depends on Microsoft.Extensions.* 10.0.x, so lower pins are a downgrade (NU1605). -->
+    <MicrosoftExtensionsPackageVersion>10.0.13</MicrosoftExtensionsPackageVersion>
     <NuGetPackageVersion>6.10.0</NuGetPackageVersion>
     <!-- SMTP client for BaGet.Identity's email sender; MIT. -->
     <MailKitPackageVersion>4.18.1</MailKitPackageVersion>
@@ -70,7 +67,7 @@
     <SerilogSinksFilePackageVersion>7.0.0</SerilogSinksFilePackageVersion>
     <SerilogSinksEventLogPackageVersion>4.0.0</SerilogSinksEventLogPackageVersion>
     <!-- OpenTelemetry export in the host (src/BaGet) only. 1.20.x depends on Microsoft.Extensions.Options/Configuration 10.0.0, which
-         restores cleanly next to the 9.0.21 pins because the Web SDK shared framework supplies them (checked: no NU1605/NU1608/NU1107).
+         matches the EF 10 / Microsoft.Extensions 10.0.13 pins.
          The 1.13 line avoids that but carries known vulnerabilities (NU1902). The EF Core instrumentation is prerelease only. -->
     <OpenTelemetryPackageVersion>1.20.0</OpenTelemetryPackageVersion>
     <OpenTelemetryEntityFrameworkCorePackageVersion>1.20.0-beta.1</OpenTelemetryEntityFrameworkCorePackageVersion>
