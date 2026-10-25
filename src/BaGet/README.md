@@ -1,6 +1,6 @@
 # Extension.BaGet
 
-The host of [BaGet Extension](https://pieroviano.github.io/BaGet/), a lightweight NuGet and symbol server. It
+The host of [BaGet Extension](https://pieroviano.github.io/BaGet/), a lightweight NuGet, npm, Maven and Docker registry and symbol server. It
 wires every other package together and serves the [NuGet service APIs](https://learn.microsoft.com/nuget/api/overview);
 most of the logic lives in `Extension.BaGet.Core`.
 
@@ -25,6 +25,7 @@ Without arguments it applies database migrations and starts the server on `http:
 | `import downloads [-r <repo>]` | Imports nuget.org's download counts for the packages of a repository (default `default`) |
 | `catalog rebuild [-r <repo>]` | Appends the catalog entries missing for the packages of a repository (default `default`), for example packages pushed before the catalog existed |
 | `account reset-password <user> [--email <address>]` | Sets a generated password, switches off two-factor and lifts lockout; `--email` sets and confirms an address. Needs `Accounts:Enabled` |
+| `account promote <user>` / `account demote <user>` | Makes a user an administrator / removes the flag (the last administrator cannot be demoted). Needs `Accounts:Enabled` |
 
 Settings saved from the UI go to `appsettings.Overrides.json` (path: `SettingsOverridesPath`), applied after
 `appsettings*.json` and before environment variables and the command line.
