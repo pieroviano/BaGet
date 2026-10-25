@@ -44,6 +44,7 @@ nav:
     - Google cloud: installation/gcp.md
     - Alibaba cloud: installation/aliyun.md
     - Windows IIS proxy: installation/iis-proxy.md
+  - User manual: user-manual.md
   - Configuration: configuration.md
   - Repositories: repositories.md
   - Package formats: formats.md
