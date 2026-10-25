@@ -9,7 +9,6 @@ using BaGet.Web;
 using BaGet.Web.V2;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet;
@@ -24,11 +23,8 @@ public static class IServiceCollectionExtensions
             .AddRouting(options => options.LowercaseUrls = true)
             .AddControllers(options =>
             {
-                // The one read check of every repository page (404 when the caller may not see the repository).
-                options.Filters.Add<RepositoryPageFilter>();
-
-                // The same check for the controller actions that replace pages (actions marked [RepositoryPage]), and the
-                // /r/{repo}/ twin of their routes (the counterpart of RepositoryPageRouteConvention below).
+                // The one read check of every repository page (404 when the caller may not see the repository): the controller
+                // actions marked [RepositoryPage], and the /r/{repo}/ twin of their routes.
                 options.Filters.Add<RepositoryActionFilter>();
                 options.Conventions.Add(new RouteNotForLinksConvention());
                 options.Conventions.Add(new RepositoryActionRouteConvention());
@@ -52,14 +48,9 @@ public static class IServiceCollectionExtensions
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
 
-        services.AddRazorPages(options =>
-        {
-            // Add /packages route to the Index page
-            options.Conventions.AddPageRoute("/Index", "/packages");
-
-            // Every repository page also at /r/{repo}/� (must come after the alias so it gets a twin as well).
-            options.Conventions.Add(new RepositoryPageRouteConvention());
-        });
+        // BaGet ships no Razor Page (every screen is a controller action, see Compat/ for the obsolete page models), but a host's
+        // own pages and the Pages/ forwarding views keep working, so Razor Pages stays registered.
+        services.AddRazorPages();
 
         // Page links stay inside the repository being browsed (see RepositoryUrlHelper).
         services.AddSingleton<Microsoft.AspNetCore.Mvc.Routing.IUrlHelperFactory, RepositoryUrlHelperFactory>();

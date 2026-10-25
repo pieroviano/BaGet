@@ -18,7 +18,7 @@
 
     <p class="help-block">
         A target says which repositories and package IDs its grants apply to. A grant gives a user, a
-        <a asp-page="/Admin/Groups">group</a> or an organization some of Read, Annotate, Deploy, Delete and Manage.
+        <a asp-controller="AdminGroups" asp-action="Index">group</a> or an organization some of Read, Annotate, Deploy, Delete and Manage.
         Package ownership still applies inside Deploy, Delete, Annotate and Manage. Server administrators hold every action.
     </p>
 
@@ -31,7 +31,7 @@
             {
                 <tr data-target="@target.Name">
                     <td>
-                        <a href="@Url.Page("/Admin/PermissionDetail", new { name = target.Name })">@target.Name</a>
+                        <a href="@Url.Action("Detail", "AdminPermissions", new { name = target.Name })">@target.Name</a>
                         @if (target.IsBuiltIn)
                         {
                             <span class="label label-info">Built-in</span>
@@ -44,7 +44,7 @@
                     <td>
                         @if (target.ProjectName != null)
                         {
-                            <a href="@Url.Page("/Admin/ProjectDetail", new { name = target.ProjectName })">@target.ProjectName</a>
+                            <a href="@Url.Action("Detail", "AdminProjects", new { name = target.ProjectName })">@target.ProjectName</a>
                         }
                     </td>
                     <td>@target.GrantCount</td>
@@ -84,6 +84,6 @@
     </p>
     <form method="post" id="restore-form">
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("restorePassword")" />
-        <button type="submit" class="btn btn-default" asp-page="/Admin/Permissions" asp-page-handler="RestoreBuiltIns">Restore built-in groups and targets</button>
+        <button type="submit" class="btn btn-default" asp-controller="AdminPermissions" asp-action="Index" asp-route-handler="RestoreBuiltIns">Restore built-in groups and targets</button>
     </form>
 </div>

@@ -20,7 +20,7 @@
         A policy deletes old versions from a repository, or from every repository of a project: keep the newest N, delete by age,
         by lack of downloads, trim a remote cache, remove untagged Docker manifests. Open a policy for a <strong>dry run</strong>
         (the exact list a run would delete), to run it now, or to set a schedule. Versions under a
-        <a href="@Url.Page("/Admin/RetentionHolds")">legal hold</a> are never deleted.
+        <a href="@Url.Action("Holds", "AdminRetention")">legal hold</a> are never deleted.
     </p>
 
     <table class="table" id="retention-table">
@@ -33,7 +33,7 @@
                 var policy = view.Policy;
                 <tr data-policy="@policy.Name">
                     <td>
-                        <a href="@Url.Page("/Admin/RetentionPolicy", new { key = policy.Key })">@policy.Name</a>
+                        <a href="@Url.Action("Policy", "AdminRetention", new { key = policy.Key })">@policy.Name</a>
                         @if (!policy.Enabled) { <span class="label label-default">disabled</span> }
                     </td>
                     <td>

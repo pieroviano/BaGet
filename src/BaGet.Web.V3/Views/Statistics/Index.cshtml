@@ -29,7 +29,7 @@
                         @foreach (var package in Model.Statistics.TopPackages??[])
                         {
                             <tr>
-                                <td><a asp-page="/Package" asp-route-id="@package.Id">@package.Id</a></td>
+                                <td><a asp-controller="Package" asp-action="Show" asp-route-id="@package.Id">@package.Id</a></td>
                                 <td>@package.Downloads.ToString("N0")</td>
                             </tr>
                         }
@@ -44,7 +44,7 @@
                         @foreach (var package in Model.Statistics.RecentVersions??[])
                         {
                             <tr>
-                                <td><a asp-page="/Package" asp-route-id="@package.Id" asp-route-version="@package.Version">@package.Id @package.Version</a></td>
+                                <td><a asp-controller="Package" asp-action="Show" asp-route-id="@package.Id" asp-route-version="@package.Version">@package.Id @package.Version</a></td>
                                 <td>@package.Published?.ToString("yyyy-MM-dd")</td>
                             </tr>
                         }

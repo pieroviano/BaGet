@@ -64,7 +64,7 @@
             }
 
             <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this account? This cannot be undone.');">Delete @Model.Name</button>
-            <a class="btn btn-default" href="@Url.Page("/Admin/Users")">Cancel</a>
+            <a class="btn btn-default" href="@Url.Action("Index", "AdminUsers")">Cancel</a>
         </form>
     }
 </div>

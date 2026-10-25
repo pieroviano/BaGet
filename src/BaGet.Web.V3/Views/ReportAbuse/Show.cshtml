@@ -10,7 +10,7 @@
 
     <p>
         You are reporting
-        <a asp-page="/Package" asp-route-id="@Model.Id" asp-route-version="@Model.Version">@Model.Id @Model.Version</a>.
+        <a asp-controller="Package" asp-action="Show" asp-route-id="@Model.Id" asp-route-version="@Model.Version">@Model.Id @Model.Version</a>.
     </p>
 
     @if (Model.Submitted)

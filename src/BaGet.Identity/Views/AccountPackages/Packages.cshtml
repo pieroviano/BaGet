@@ -10,7 +10,7 @@
     @if (Model.IsEmpty)
     {
         <p id="my-packages-empty">
-            You do not own any package yet. <a asp-page="/Upload">Upload one</a>, or push with
+            You do not own any package yet. <a asp-controller="Upload" asp-action="Index">Upload one</a>, or push with
             <code>dotnet nuget push</code> - the ID you push first becomes yours.
         </p>
     }

@@ -34,7 +34,7 @@
             You administer
             @foreach (var project in Model.AdministeredProjects)
             {
-                <a href="@Url.Page("/Admin/ProjectDetail", new { name = project })" class="access-project">@project</a>
+                <a href="@Url.Action("Detail", "AdminProjects", new { name = project })" class="access-project">@project</a>
             }
         </p>
     }

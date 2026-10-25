@@ -17,8 +17,8 @@
     }
 
     <p class="help-block">
-        A group is a set of users. <a asp-page="/Admin/Permissions">Permission targets</a> and
-        <a asp-page="/Admin/Projects">project roles</a> grant access to groups instead of to each user.
+        A group is a set of users. <a asp-controller="AdminPermissions" asp-action="Index">Permission targets</a> and
+        <a asp-controller="AdminProjects" asp-action="Index">project roles</a> grant access to groups instead of to each user.
     </p>
 
     <table class="table" id="groups-table">
@@ -30,7 +30,7 @@
             {
                 <tr data-group="@group.Name">
                     <td>
-                        <a href="@Url.Page("/Admin/GroupDetail", new { name = group.Name })">@group.Name</a>
+                        <a href="@Url.Action("Detail", "AdminGroups", new { name = group.Name })">@group.Name</a>
                         @if (group.IsBuiltIn)
                         {
                             <span class="label label-info">Built-in</span>

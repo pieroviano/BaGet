@@ -8,7 +8,7 @@
     <h1>@Model.Account?.UserName</h1>
     <hr class="breadcrumb-divider" />
 
-    <p><a asp-page="/Admin/Users">Back to users</a></p>
+    <p><a asp-controller="AdminUsers" asp-action="Index">Back to users</a></p>
 
     @if (Model.Message != null)
     {
@@ -31,7 +31,7 @@
         </table>
         @if (Model.Account?.PendingApproval == true)
         {
-            <form method="post" id="approve-form" asp-page="/Admin/UserDetail" asp-page-handler="Approve">
+            <form method="post" id="approve-form" asp-controller="AdminUsers" asp-action="Detail" asp-route-handler="Approve">
                 @if (Model.HasPassword)
                 {
                     <div class="form-group">
@@ -89,7 +89,7 @@
                                 <td>@Model.DescribeRepositories(key)</td>
                                 <td>@key.Created.ToString("yyyy-MM-dd")</td>
                                 <td>@(key.Expires?.ToString("yyyy-MM-dd") ?? "Never")</td>
-                                <td><button type="submit" class="btn btn-danger btn-xs" asp-page="/Admin/UserDetail" asp-page-handler="RevokeKey" name="key" value="@key.Key">Revoke</button></td>
+                                <td><button type="submit" class="btn btn-danger btn-xs" asp-controller="AdminUsers" asp-action="Detail" asp-route-handler="RevokeKey" name="key" value="@key.Key">Revoke</button></td>
                             </tr>
                         }
                     </tbody>
@@ -127,8 +127,8 @@
                             @foreach (var group in Model.Groups)
                             {
                                 <tr>
-                                    <td><a href="@Url.Page("/Admin/GroupDetail", new { name = group })">@group</a></td>
-                                    <td><button type="submit" class="btn btn-danger btn-xs" asp-page="/Admin/UserDetail" asp-page-handler="RemoveGroup" name="group" value="@group">Remove</button></td>
+                                    <td><a href="@Url.Action("Detail", "AdminGroups", new { name = group })">@group</a></td>
+                                    <td><button type="submit" class="btn btn-danger btn-xs" asp-controller="AdminUsers" asp-action="Detail" asp-route-handler="RemoveGroup" name="group" value="@group">Remove</button></td>
                                 </tr>
                             }
                         </tbody>
@@ -140,7 +140,7 @@
             <form method="post" class="form-inline" id="add-group-form">
                 <input type="text" name="group" class="form-control" placeholder="Group name" autocomplete="off" />
                 <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@(new BaGet.Identity.Pages.Admin.ConfirmPasswordView("addGroupPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Context.Request.Path.ToString()))" />
-                <button type="submit" class="btn btn-primary" asp-page="/Admin/UserDetail" asp-page-handler="AddGroup">Add to group</button>
+                <button type="submit" class="btn btn-primary" asp-controller="AdminUsers" asp-action="Detail" asp-route-handler="AddGroup">Add to group</button>
             </form>
         </section>
 
@@ -157,7 +157,7 @@
                         @foreach (var role in Model.ProjectRoles)
                         {
                             <tr>
-                                <td><a href="@Url.Page("/Admin/ProjectDetail", new { name = role.Project })">@role.Project</a></td>
+                                <td><a href="@Url.Action("Detail", "AdminProjects", new { name = role.Project })">@role.Project</a></td>
                                 <td>@role.Role</td>
                                 <td>@role.Via</td>
                             </tr>

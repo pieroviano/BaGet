@@ -46,7 +46,7 @@
 
     @if (canScan)
     {
-        <form method="post" asp-page="/Packages/Scan" class="form-inline" id="scan-now-form">
+        <form method="post" asp-controller="ScanArtifact" asp-action="Index" class="form-inline" id="scan-now-form">
             <input type="hidden" name="Name" value="@Model.Name" />
             <input type="hidden" name="Version" value="@Model.Version" />
             <input type="hidden" name="ReturnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />

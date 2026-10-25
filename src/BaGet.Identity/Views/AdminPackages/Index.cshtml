@@ -43,12 +43,12 @@
         <ul class="pager">
             @if (Model.PageNumber > 1)
             {
-                <li class="previous"><a asp-page="/Admin/Packages" asp-route-p="@(Model.PageNumber - 1)">Previous</a></li>
+                <li class="previous"><a asp-controller="AdminPackages" asp-action="Index" asp-route-p="@(Model.PageNumber - 1)">Previous</a></li>
             }
             <li>Page @Model.PageNumber of @Model.PageCount</li>
             @if (Model.PageNumber < Model.PageCount)
             {
-                <li class="next"><a asp-page="/Admin/Packages" asp-route-p="@(Model.PageNumber + 1)">Next</a></li>
+                <li class="next"><a asp-controller="AdminPackages" asp-action="Index" asp-route-p="@(Model.PageNumber + 1)">Next</a></li>
             }
         </ul>
     }

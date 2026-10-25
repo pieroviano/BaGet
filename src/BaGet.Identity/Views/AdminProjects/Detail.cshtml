@@ -8,7 +8,7 @@
     <h1>Project @project?.Name</h1>
     <hr class="breadcrumb-divider" />
 
-    <p><a asp-page="/Admin/Projects">Back to projects</a></p>
+    <p><a asp-controller="AdminProjects" asp-action="Index">Back to projects</a></p>
 
     @if (Model.Message != null)
     {
@@ -36,11 +36,11 @@
                         @foreach (var repository in Model.Project!.Repositories)
                         {
                             <tr data-repository="@repository">
-                                <td><a href="@Url.Page("/Admin/RepositoryEdit", new { name = repository })">@repository</a></td>
+                                <td><a href="@Url.Action("Edit", "AdminRepositories", new { name = repository })">@repository</a></td>
                                 <td>
                                     @if (Model.IsServerAdministrator)
                                     {
-                                        <button type="submit" class="btn btn-danger btn-xs" asp-page="/Admin/ProjectDetail" asp-route-name="@Model.Name" asp-page-handler="UnassignRepository" name="repository" value="@repository">Remove from project</button>
+                                        <button type="submit" class="btn btn-danger btn-xs" asp-controller="AdminProjects" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="UnassignRepository" name="repository" value="@repository">Remove from project</button>
                                     }
                                 </td>
                             </tr>
@@ -64,7 +64,7 @@
                     }
                 </select>
                 <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("assignPassword")" />
-                <button type="submit" class="btn btn-primary" asp-page="/Admin/ProjectDetail" asp-route-name="@Model.Name" asp-page-handler="AssignRepository">Add to project</button>
+                <button type="submit" class="btn btn-primary" asp-controller="AdminProjects" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="AssignRepository">Add to project</button>
                 <span class="help-block">A repository is in at most one project: adding it here takes it out of another.</span>
             </form>
         }
@@ -74,7 +74,7 @@
     {
         <section id="project-section-scanning">
             <h2>Scanning policy</h2>
-            <p>The vulnerability scanning policy of the project (warn, block download, block deploy) applies to its repositories that have none of their own. <a asp-page="/Admin/ScanProject" asp-route-name="@project?.Name" id="project-scanning-link">Edit the scanning policy</a>.</p>
+            <p>The vulnerability scanning policy of the project (warn, block download, block deploy) applies to its repositories that have none of their own. <a asp-controller="AdminScanning" asp-action="Project" asp-route-name="@project?.Name" id="project-scanning-link">Edit the scanning policy</a>.</p>
         </section>
     }
 
@@ -98,7 +98,7 @@
                                 <td>@member.Role</td>
                                 <td>
                                     <button type="submit" class="btn btn-danger btn-xs"
-                                            formaction="@Url.Page("/Admin/ProjectDetail", "RemoveMember", new { name = project!.Name, type = member.PrincipalType, principalId = member.PrincipalId })">Remove</button>
+                                            formaction="@Url.Action("Detail", "AdminProjects", new { name = project!.Name, type = member.PrincipalType, principalId = member.PrincipalId, handler = "RemoveMember" })">Remove</button>
                                 </td>
                             </tr>
                         }
@@ -124,7 +124,7 @@
                 </select>
             </div>
             <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("memberPassword")" />
-            <button type="submit" class="btn btn-primary" asp-page="/Admin/ProjectDetail" asp-route-name="@Model.Name" asp-page-handler="SetMember">Set role</button>
+            <button type="submit" class="btn btn-primary" asp-controller="AdminProjects" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="SetMember">Set role</button>
         </form>
     </section>
 
@@ -142,7 +142,7 @@
                     @foreach (var target in Model.Project!.Targets)
                     {
                         <tr>
-                            <td><a href="@Url.Page("/Admin/PermissionDetail", new { name = target.Name })">@target.Name</a></td>
+                            <td><a href="@Url.Action("Detail", "AdminPermissions", new { name = target.Name })">@target.Name</a></td>
                             <td><code>@BaGet.Identity.Mvc.AccessSupport.Join(target.RepositoryPatterns)</code></td>
                             <td>@target.GrantCount</td>
                         </tr>
@@ -159,7 +159,7 @@
                 <input id="target-name" name="targetName" type="text" class="form-control" value="@Model.TargetName" maxlength="@BaGet.Core.AccessNames.MaxLength" autocomplete="off" />
             </div>
             <partial name="~/Views/Shared/_PatternFields.cshtml" model="@Model.Fields" />
-            <button type="submit" class="btn btn-primary" asp-page="/Admin/ProjectDetail" asp-route-name="@Model.Name" asp-page-handler="CreateTarget">Create target</button>
+            <button type="submit" class="btn btn-primary" asp-controller="AdminProjects" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="CreateTarget">Create target</button>
         </form>
     </section>
 
@@ -170,7 +170,7 @@
             <p class="help-block">Removes the project, its members and its permission targets with their grants. The repositories stay.</p>
             <form method="post" id="delete-form">
                 <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
-                <button type="submit" class="btn btn-danger" asp-page="/Admin/ProjectDetail" asp-route-name="@Model.Name" asp-page-handler="Delete">Delete project</button>
+                <button type="submit" class="btn btn-danger" asp-controller="AdminProjects" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="Delete">Delete project</button>
             </form>
         </section>
     }

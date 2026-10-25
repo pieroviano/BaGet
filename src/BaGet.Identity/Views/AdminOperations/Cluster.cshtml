@@ -12,7 +12,7 @@
         <div class="alert alert-info" role="alert" id="cluster-off">
             This server runs alone (<code>Ha:Enabled</code> is off). To run several nodes behind a load balancer see
             <a href="https://pieroviano.github.io/BaGet/high-availability/">High availability</a>; the settings are in the <em>Ha</em> section of
-            <a href="@Url.Page("/Admin/Settings")">Server settings</a> and need a restart.
+            <a href="@Url.Action("Index", "AdminSettings")">Server settings</a> and need a restart.
         </div>
     }
     else
@@ -83,7 +83,7 @@
     }
 
     <h2>This node's health checks</h2>
-    <p class="help-block">The same checks as <code>/health/ready</code>, checked @Model.Status.Readiness.CheckedAt.ToString("u"). <a href="@Url.Page("/Admin/Cluster", new { refresh = true })" id="cluster-refresh">Check again</a></p>
+    <p class="help-block">The same checks as <code>/health/ready</code>, checked @Model.Status.Readiness.CheckedAt.ToString("u"). <a href="@Url.Action("Cluster", "AdminOperations", new { refresh = true })" id="cluster-refresh">Check again</a></p>
     <table class="table" id="cluster-health">
         <thead>
             <tr><th>Check</th><th>Result</th><th>Detail</th></tr>

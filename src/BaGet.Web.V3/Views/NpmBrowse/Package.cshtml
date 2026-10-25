@@ -8,7 +8,7 @@
 {
     <div class="col-sm-12" id="npm-package-missing">
         <h2>Oops, package not found...</h2>
-        <p>This registry has no package '@Model.Id'. <a asp-page="/NpmPackages">Browse the packages</a>.</p>
+        <p>This registry has no package '@Model.Id'. <a asp-controller="NpmBrowse" asp-action="Packages">Browse the packages</a>.</p>
     </div>
     return;
 }
@@ -137,7 +137,7 @@
                         @foreach (var version in package.Versions.Reverse())
                         {
                             <tr data-version="@version.Version" class="@(version.Version == selected.Version ? "active" : "")">
-                                <td><a asp-page="/NpmPackage" asp-route-id="@package.Name" asp-route-version="@version.Version">@version.Version</a></td>
+                                <td><a asp-controller="NpmBrowse" asp-action="Package" asp-route-id="@package.Name" asp-route-version="@version.Version">@version.Version</a></td>
                                 <td title="@version.Published.ToString("u")">@version.Published.Humanize()</td>
                                 <td>@version.TarballSize.Bytes().Humanize()</td>
                                 <td>@string.Join(", ", package.DistTags.Where(t => t.Value == version.Version).Select(t => t.Key))</td>
@@ -161,7 +161,7 @@
                         {
                             <tr data-tag="@tag.Key">
                                 <td><code>@tag.Key</code></td>
-                                <td><a asp-page="/NpmPackage" asp-route-id="@package.Name" asp-route-version="@tag.Value">@tag.Value</a></td>
+                                <td><a asp-controller="NpmBrowse" asp-action="Package" asp-route-id="@package.Name" asp-route-version="@tag.Value">@tag.Value</a></td>
                             </tr>
                         }
                     </tbody>
@@ -191,7 +191,7 @@
                 <ul class="list-unstyled" id="npm-owners">
                     @foreach (var owner in Model.Owners)
                     {
-                        <li><a href="@Url.Page("/Profiles/Profile", new { name = owner, repo = (string?)null })">@owner</a></li>
+                        <li><a href="@Url.Action("Profile", "Profile", new { name = owner, repo = (string?)null })">@owner</a></li>
                     }
                 </ul>
             </div>
@@ -201,7 +201,7 @@
         {
             <div>
                 <h2>Manage</h2>
-                <p><a asp-page="/Packages/NpmManage" asp-route-id="@package.Name" id="npm-manage-link">Manage this package</a></p>
+                <p><a asp-controller="NpmManage" asp-action="Index" asp-route-id="@package.Name" id="npm-manage-link">Manage this package</a></p>
             </div>
         }
     </aside>

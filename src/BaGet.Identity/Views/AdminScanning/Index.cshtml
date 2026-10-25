@@ -11,7 +11,7 @@
         @if (!Model.Options.Enabled)
         {
             <div class="alert alert-warning" role="alert" id="scanning-disabled">
-                Scanning is turned off. Turn on <code>Scanning:Enabled</code> in the <a asp-page="/Admin/Settings">server settings</a> to scan artifacts, show findings and enforce policies. Scanning calls OSV.dev (or reads an offline copy of its data), so it is off by default.
+                Scanning is turned off. Turn on <code>Scanning:Enabled</code> in the <a asp-controller="AdminSettings" asp-action="Index">server settings</a> to scan artifacts, show findings and enforce policies. Scanning calls OSV.dev (or reads an offline copy of its data), so it is off by default.
             </div>
         }
         else
@@ -23,7 +23,7 @@
             </p>
         }
         <p class="help-block">
-            Advisory data comes from <a href="https://osv.dev" rel="noopener noreferrer" target="_blank">OSV.dev</a> and is licensed per source (mostly CC-BY 4.0, such as the GitHub Advisory Database); every advisory in the pages links to its source. Container image findings come from Trivy. The options are in the <a asp-page="/Admin/Settings">server settings</a>.
+            Advisory data comes from <a href="https://osv.dev" rel="noopener noreferrer" target="_blank">OSV.dev</a> and is licensed per source (mostly CC-BY 4.0, such as the GitHub Advisory Database); every advisory in the pages links to its source. Container image findings come from Trivy. The options are in the <a asp-controller="AdminSettings" asp-action="Index">server settings</a>.
         </p>
     </section>
 
@@ -37,7 +37,7 @@
                 @foreach (var row in Model.Repositories)
                 {
                     <tr data-repository="@row.Repository.Name">
-                        <td><a asp-page="/Admin/ScanRepository" asp-route-name="@row.Repository.Name">@row.Repository.Name</a></td>
+                        <td><a asp-controller="AdminScanning" asp-action="Repository" asp-route-name="@row.Repository.Name">@row.Repository.Name</a></td>
                         <td>@row.Repository.Format (@row.Repository.Kind)</td>
                         @if (!row.Summary.Engine.Available)
                         {
@@ -79,7 +79,7 @@
             <ul id="scanning-project-list">
                 @foreach (var project in Model.Projects)
                 {
-                    <li data-project="@project.Project.Name"><a asp-page="/Admin/ScanProject" asp-route-name="@project.Project.Name">@project.Project.Name</a> @(project.HasPolicy ? "(policy set)" : "(no policy)")</li>
+                    <li data-project="@project.Project.Name"><a asp-controller="AdminScanning" asp-action="Project" asp-route-name="@project.Project.Name">@project.Project.Name</a> @(project.HasPolicy ? "(policy set)" : "(no policy)")</li>
                 }
             </ul>
         }

@@ -17,7 +17,12 @@ namespace BaGet.Web;
 /// leaves it (the header switcher's "default" entry). This is why the twin is a selector of the same page and not
 /// a second <c>AddPageRoute</c> page route: that makes generation ambiguous (empty <c>href</c>s).
 /// </para>
+/// <para>
+/// <b>Obsolete, not registered any more:</b> BaGet ships no Razor Page. The <c>r/{repo}/</c> twin of a controller action comes from
+/// <see cref="RepositoryActionRouteConvention"/> (actions marked <c>[RepositoryPage]</c>). The type can still be applied to a host's own pages.
+/// </para>
 /// </summary>
+[Obsolete("BaGet has no Razor Pages any more; repository actions get their twin from RepositoryActionRouteConvention. Will be removed in the next major version.")]
 public class RepositoryPageRouteConvention : IPageRouteModelConvention
 {
     /// <summary>

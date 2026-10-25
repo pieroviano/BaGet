@@ -173,7 +173,7 @@ else
                                     @foreach (var dependency in group.Dependencies)
                                     {
                                         <li>
-                                            <a asp-page="/Package"
+                                            <a asp-controller="Package" asp-action="Show"
                                                asp-route-id="@dependency.PackageId"
                                                asp-route-version="@null">
                                                 @dependency.PackageId
@@ -211,7 +211,7 @@ else
                                         {
                                             <tr>
                                                 <td>
-                                                    <a href="@Url.Page("/Package", new { package.Id })">@package.Id</a>
+                                                    <a href="@Url.Action("Show", "Package", new { package.Id })">@package.Id</a>
                                                     <div>@package.Description</div>
                                                 </td>
                                                 <td>
@@ -244,7 +244,7 @@ else
                                     var alwaysShow = Json.Serialize(i < DefaultVisibleVersions);
 
                                     <tr class="@(version.Selected ? "bg-info" : "")" x-show="showAll || @alwaysShow">
-                                        <td><a asp-page="/Package" asp-route-id="@Model.Package?.Id" asp-route-version="@version.Version">@version.Version?.ToNormalizedString()</a></td>
+                                        <td><a asp-controller="Package" asp-action="Show" asp-route-id="@Model.Package?.Id" asp-route-version="@version.Version">@version.Version?.ToNormalizedString()</a></td>
                                         <td>@version.Downloads.ToString("N0")</td>
                                         <td>@version.LastUpdated.ToShortDateString()</td>
                                     </tr>
@@ -332,7 +332,7 @@ else
                     {
                         <li>
                             <i class="ms-Icon ms-Icon--Flag" aria-hidden="true"></i>
-                            <a asp-page="/ReportAbuse" asp-route-id="@Model.Package?.Id" asp-route-version="@Model.Package?.NormalizedVersionString">Report package</a>
+                            <a asp-controller="ReportAbuse" asp-action="Show" asp-route-id="@Model.Package?.Id" asp-route-version="@Model.Package?.NormalizedVersionString">Report package</a>
                         </li>
                     }
                 </ul>
@@ -364,7 +364,7 @@ else
                         {
                             <li class="owner">
                                 <partial name="_Avatar" model="new AvatarModel(owner ?? string.Empty, Model.OwnerAvatars?.GetValueOrDefault(owner), 32)" />
-                                <a href="@Url.Page("/Profiles/Profile", new { name = owner })">@owner</a>
+                                <a href="@Url.Action("Profile", "Profile", new { name = owner })">@owner</a>
                             </li>
                         }
                         @if (User.Identity?.IsAuthenticated == true)

@@ -8,7 +8,7 @@
 {
     <div class="col-sm-12" id="maven-artifact-missing">
         <h2>Oops, artifact not found...</h2>
-        <p>This repository has no @(Model.Info == null ? "artifact '" + Model.Group + ":" + Model.Artifact + "'" : "version '" + Model.Version + "' of " + Model.Info.Name). <a asp-page="/MavenArtifacts">Browse the artifacts</a>.</p>
+        <p>This repository has no @(Model.Info == null ? "artifact '" + Model.Group + ":" + Model.Artifact + "'" : "version '" + Model.Version + "' of " + Model.Info.Name). <a asp-controller="MavenBrowse" asp-action="Artifacts">Browse the artifacts</a>.</p>
     </div>
     return;
 }
@@ -169,7 +169,7 @@
                         @foreach (var version in info.Versions)
                         {
                             <tr data-version="@version.Version" class="@(version.Version == summary.Version ? "active" : "")">
-                                <td><a asp-page="/MavenArtifact" asp-route-group="@info.GroupId" asp-route-artifact="@info.ArtifactId" asp-route-version="@version.Version">@version.Version</a></td>
+                                <td><a asp-controller="MavenBrowse" asp-action="Artifact" asp-route-group="@info.GroupId" asp-route-artifact="@info.ArtifactId" asp-route-version="@version.Version">@version.Version</a></td>
                                 <td title="@version.Modified.ToString("u")">@version.Modified.Humanize()</td>
                                 <td>@version.FileCount</td>
                                 <td>@version.Size.Bytes().Humanize()</td>
@@ -211,7 +211,7 @@
                 <ul class="list-unstyled" id="maven-owners">
                     @foreach (var owner in Model.Owners)
                     {
-                        <li><a href="@Url.Page("/Profiles/Profile", new { name = owner, repo = (string?)null })">@owner</a></li>
+                        <li><a href="@Url.Action("Profile", "Profile", new { name = owner, repo = (string?)null })">@owner</a></li>
                     }
                 </ul>
             </div>
@@ -221,7 +221,7 @@
         {
             <div>
                 <h2>Manage</h2>
-                <p><a asp-page="/Packages/MavenManage" asp-route-group="@info.GroupId" asp-route-artifact="@info.ArtifactId" asp-route-version="@summary.Version" id="maven-manage-link">Manage this artifact</a></p>
+                <p><a asp-controller="MavenManage" asp-action="Index" asp-route-group="@info.GroupId" asp-route-artifact="@info.ArtifactId" asp-route-version="@summary.Version" id="maven-manage-link">Manage this artifact</a></p>
             </div>
         }
     </aside>

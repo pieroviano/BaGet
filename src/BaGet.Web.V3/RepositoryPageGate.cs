@@ -10,10 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Web;
 
 /// <summary>
-/// What a repository page requires of the repository it is served in. Built from the lists of a Razor Page
-/// (<see cref="RepositoryPageFilter"/>) or from the attribute of a controller action
-/// (<c>BaGet.Identity.Mvc.RepositoryPageAttribute</c>, <see cref="RepositoryActionFilter"/>), and judged by one
-/// <see cref="RepositoryPageGate"/>, so the two programming models cannot answer differently.
+/// What a repository page requires of the repository it is served in. Built from the attribute of a controller action
+/// (<c>BaGet.Identity.Mvc.RepositoryPageAttribute</c>, <see cref="RepositoryActionFilter"/>) and judged by <see cref="RepositoryPageGate"/>.
 /// </summary>
 /// <param name="Format">The format the page belongs to, or null when it serves every format.</param>
 /// <param name="Upload">The caller needs the right to publish rather than Read, and a virtual repository continues in its deploy repository.</param>
@@ -31,6 +29,9 @@ internal sealed record RepositoryPageRule(RepositoryFormat? Format, bool Upload,
 /// </summary>
 internal static class RepositoryPageGate
 {
+    /// <summary><see cref="HttpContext.Items"/> key holding the virtual repository the request asked for, when it was moved to its deploy repository (the upload pages).</summary>
+    public const string RequestedVirtualItemKey = "BaGet.RequestedVirtualRepository";
+
     /// <summary>
     /// Judges a request for a repository page. Returns the result that answers it (404, a redirect, a challenge), or null when the
     /// page may run; the upload of a virtual repository leaves null after switching the request to the deploy repository.
@@ -126,7 +127,7 @@ internal static class RepositoryPageGate
                     return new NotFoundResult();
                 }
 
-                httpContext.Items[RepositoryPageFilter.RequestedVirtualItemKey] = repository;
+                httpContext.Items[RequestedVirtualItemKey] = repository;
                 services.GetRequiredService<IRepositoryContext>().Use(target);
             }
         }

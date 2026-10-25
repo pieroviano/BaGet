@@ -9,7 +9,7 @@
     <h1>npm packages</h1>
     <hr class="breadcrumb-divider" />
 
-    <form action="@Url.Page("/NpmPackages")" method="get" class="home-search" id="npm-search-form">
+    <form action="@Url.Action("Packages", "NpmBrowse")" method="get" class="home-search" id="npm-search-form">
         <div class="input-group">
             <input type="text" name="q" value="@Model.Query" class="form-control" autocomplete="off" placeholder="Search npm packages by name..." />
             <span class="input-group-btn">
@@ -23,7 +23,7 @@
     <p id="npm-registry-url">
         Registry: <code>@Model.RegistryUrl</code>
         &middot; <code>npm config set registry @Model.RegistryUrl</code>
-        &middot; <a asp-page="/NpmUpload">Upload a package</a>
+        &middot; <a asp-controller="NpmBrowse" asp-action="Upload">Upload a package</a>
     </p>
 
     @if (Model.Result.Hits.Count == 0)
@@ -32,7 +32,7 @@
             <h2>Oops, nothing here...</h2>
             <p>
                 @(string.IsNullOrWhiteSpace(Model.Query) ? "This registry holds no package yet." : "No package name contains that text.")
-                Publish one with <code>npm publish --registry=@Model.RegistryUrl</code>, or <a asp-page="/NpmUpload">upload a tarball</a>.
+                Publish one with <code>npm publish --registry=@Model.RegistryUrl</code>, or <a asp-controller="NpmBrowse" asp-action="Upload">upload a tarball</a>.
             </p>
         </div>
     }
@@ -46,7 +46,7 @@
                 <div class="search-result package-card" data-package="@hit.Name">
                     <div class="card-body">
                         <div class="card-heading">
-                            <a asp-page="/NpmPackage" asp-route-id="@hit.Name" class="package-title">@hit.Name</a>
+                            <a asp-controller="NpmBrowse" asp-action="Package" asp-route-id="@hit.Name" class="package-title">@hit.Name</a>
                         </div>
                         <ul class="info">
                             @if (hit.Version != null)
@@ -75,12 +75,12 @@
                 <ul class="pager">
                     @if (Model.PageIndex > 1)
                     {
-                        <li><a href="@Url.Page("/NpmPackages", new { q = Model.Query, p = Model.PageIndex - 1 })">Previous</a></li>
+                        <li><a href="@Url.Action("Packages", "NpmBrowse", new { q = Model.Query, p = Model.PageIndex - 1 })">Previous</a></li>
                     }
 
                     @if (Model.HasNext)
                     {
-                        <li><a href="@Url.Page("/NpmPackages", new { q = Model.Query, p = Model.PageIndex + 1 })">Next</a></li>
+                        <li><a href="@Url.Action("Packages", "NpmBrowse", new { q = Model.Query, p = Model.PageIndex + 1 })">Next</a></li>
                     }
                 </ul>
             </nav>

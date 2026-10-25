@@ -14,11 +14,11 @@
         Options.Value, Accounts.Value, Context.RequestServices.GetService<BaGet.Core.MaintenanceGate>());
 
     // The repository this page shows. Links in the header stay inside it ("r/{name}/" in front), and a page that acts
-    // on a repository (RepositoryPageRouteConvention) offers the switcher when more than one is readable. The list
+    // on a repository ([RepositoryPage]) offers the switcher when more than one is readable. The list
     // comes from IRepositoryAccess, the one place that decides who sees which repository.
     var repository = RepositoryContext.Current;
     var repositoryPrefix = repository.PathPrefix;
-    // An npm repository has its own pages (RepositoryPageRouteConvention.PageFormats): the header leads to them.
+    // An npm repository has its own pages ([RepositoryPage(Format = ...)]): the header leads to them.
     var isNpm = repository.Format == BaGet.Core.RepositoryFormat.Npm;
     var hasOwnPages = repository.Format != BaGet.Core.RepositoryFormat.NuGet;
     // The path under the repository that lists its packages: the format's own browse page, or NuGet's (the front page when asked for the brand).
@@ -29,10 +29,8 @@
         BaGet.Core.RepositoryFormat.Docker => "docker-images",
         _ => nuGet,
     };
-    // A repository page is a Razor Page of the static list or a controller action marked [RepositoryPage].
-    var isRepositoryPage = (ViewContext.ActionDescriptor is Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor pageDescriptor
-            && BaGet.Web.RepositoryPageRouteConvention.RepositoryPages.Contains(pageDescriptor.ViewEnginePath, StringComparer.OrdinalIgnoreCase))
-        || ViewContext.ActionDescriptor.EndpointMetadata.OfType<BaGet.Identity.Mvc.RepositoryPageAttribute>().Any();
+    // A repository page is a controller action marked [RepositoryPage].
+    var isRepositoryPage = ViewContext.ActionDescriptor.EndpointMetadata.OfType<BaGet.Identity.Mvc.RepositoryPageAttribute>().Any();
     IReadOnlyList<BaGet.Core.RepositoryInfo> switchable = Array.Empty<BaGet.Core.RepositoryInfo>();
     if (isRepositoryPage && RepositoryAccess.SupportsMultipleRepositories)
     {
@@ -144,49 +142,49 @@
                                         <span>@User.Identity.Name</span> <span class="caret"></span>
                                     </a>
                                     <ul class="dropdown-menu">
-                                        <li><a href="@Url.Page("/Account/Profile")">Profile</a></li>
-                                        <li><a href="@Url.Page("/Account/Settings")">Account settings</a></li>
-                                        <li><a href="@Url.Page("/Account/ApiKeys")">API keys</a></li>
-                                        <li><a href="@Url.Page("/Account/Packages")">My packages</a></li>
-                                        <li><a href="@Url.Page("/Account/Organizations")">Organizations</a></li>
-                                        <li><a href="@Url.Page("/Account/Access")">My access</a></li>
+                                        <li><a href="@Url.Action("MyProfile", "AccountPackages")">Profile</a></li>
+                                        <li><a href="@Url.Action("Settings", "AccountSettings")">Account settings</a></li>
+                                        <li><a href="@Url.Action("ApiKeysIndex", "AccountSettings")">API keys</a></li>
+                                        <li><a href="@Url.Action("Packages", "AccountPackages")">My packages</a></li>
+                                        <li><a href="@Url.Action("Organizations", "AccountOrganizations")">Organizations</a></li>
+                                        <li><a href="@Url.Action("Access", "AccountPackages")">My access</a></li>
                                         @if (canUpload)
                                         {
-                                            <li><a href="@Url.Page("/Upload")">Upload package</a></li>
+                                            <li><a href="@Url.Action("Index", "Upload")">Upload package</a></li>
                                         }
                                         @if (isAdministrator)
                                         {
                                             <li role="separator" class="divider"></li>
-                                            <li><a href="@Url.Page("/Admin/Settings")">Server settings</a></li>
-                                            <li><a href="@Url.Page("/Admin/Users")">Users</a></li>
-                                            <li><a href="@Url.Page("/Admin/Organizations")">Organizations</a></li>
-                                            <li><a href="@Url.Page("/Admin/Packages")">Packages</a></li>
-                                            <li><a href="@Url.Page("/Admin/Repositories")">Repositories</a></li>
-                                            <li><a href="@Url.Page("/Admin/Formats")">Package formats</a></li>
-                                            <li><a href="@Url.Page("/Admin/Groups")">Groups</a></li>
-                                            <li><a href="@Url.Page("/Admin/Permissions")">Permission targets</a></li>
-                                            <li><a href="@Url.Page("/Admin/Projects")">Projects</a></li>
-                                            <li><a href="@Url.Page("/Admin/Audit")">Access audit</a></li>
-                                            <li><a href="@Url.Page("/Admin/Operations")">Operations</a></li>
-                                            <li><a href="@Url.Page("/Admin/Cluster")">Cluster</a></li>
-                                            <li><a href="@Url.Page("/Admin/Retention")">Retention</a></li>
-                                            <li><a href="@Url.Page("/Admin/Replication")">Replication</a></li>
-                                            <li><a href="@Url.Page("/Admin/Scanning")">Vulnerability scanning</a></li>
-                                            <li><a href="@Url.Page("/Admin/Api")">REST API</a></li>
-                                            <li><a href="@Url.Page("/Admin/Validation")">Validation queue</a></li>
-                                            <li><a href="@Url.Page("/Admin/Abuse")">Abuse reports</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminSettings")">Server settings</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminUsers")">Users</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminOrganizations")">Organizations</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminPackages")">Packages</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminRepositories")">Repositories</a></li>
+                                            <li><a href="@Url.Action("Formats", "AdminOperations")">Package formats</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminGroups")">Groups</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminPermissions")">Permission targets</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminProjects")">Projects</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminAudit")">Access audit</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminOperations")">Operations</a></li>
+                                            <li><a href="@Url.Action("Cluster", "AdminOperations")">Cluster</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminRetention")">Retention</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminReplication")">Replication</a></li>
+                                            <li><a href="@Url.Action("Index", "AdminScanning")">Vulnerability scanning</a></li>
+                                            <li><a href="@Url.Action("Index", "ApiCatalog")">REST API</a></li>
+                                            <li><a href="@Url.Action("Validation", "AdminOperations")">Validation queue</a></li>
+                                            <li><a href="@Url.Action("Abuse", "AdminOperations")">Abuse reports</a></li>
                                         }
                                         <li role="separator" class="divider"></li>
-                                        <li><a href="@Url.Page("/Account/Logout")">Sign out</a></li>
+                                        <li><a href="@Url.Action("Logout", "Account")">Sign out</a></li>
                                     </ul>
                                 </li>
                             }
                             else
                             {
-                                <li role="presentation"><a href="@Url.Page("/Account/Login")" role="tab"><span>Sign in</span></a></li>
+                                <li role="presentation"><a href="@Url.Action("Login", "Account")" role="tab"><span>Sign in</span></a></li>
                                 @if (Accounts.Value.AllowRegistration)
                                 {
-                                    <li role="presentation"><a href="@Url.Page("/Account/Register")" role="tab"><span>Register</span></a></li>
+                                    <li role="presentation"><a href="@Url.Action("Register", "Account")" role="tab"><span>Register</span></a></li>
                                 }
                             }
                         </ul>
@@ -203,7 +201,7 @@
         {
             <div class="search-band">
                 <div class="container search-container">
-                    <form action="@Url.Page("/Index")" method="get">
+                    <form action="@Url.Action("Index", "Home")" method="get">
                         <div class="input-group">
                             <input type="text"
                                    name="q"
@@ -258,11 +256,11 @@
                 <li><a href="https://github.com/loic-sharma/BaGet" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                 @if (!string.IsNullOrWhiteSpace(Site.Value.TermsOfUsePath))
                 {
-                    <li><a href="@Url.Page("/Terms")" id="footer-terms">Terms of Use</a></li>
+                    <li><a href="@Url.Action("Terms", "Legal")" id="footer-terms">Terms of Use</a></li>
                 }
                 @if (!string.IsNullOrWhiteSpace(Site.Value.PrivacyPolicyPath))
                 {
-                    <li><a href="@Url.Page("/Privacy")" id="footer-privacy">Privacy Policy</a></li>
+                    <li><a href="@Url.Action("Privacy", "Legal")" id="footer-privacy">Privacy Policy</a></li>
                 }
             </ul>
             <p class="footer-powered"><a href="https://pieroviano.github.io/BaGet/" target="_blank" rel="noopener noreferrer">BaGet Extension</a></p>

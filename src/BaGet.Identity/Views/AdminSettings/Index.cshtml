@@ -180,7 +180,7 @@
                                             <td>
                                                 @if (entry.InOverridesFile)
                                                 {
-                                                    <form method="post" asp-page="/Admin/Settings" asp-page-handler="RemoveLogLevel" class="form-inline">
+                                                    <form method="post" asp-controller="AdminSettings" asp-action="Index" asp-route-handler="RemoveLogLevel" class="form-inline">
                                                         <input type="hidden" name="source" value="@entry.Source" />
                                                         @if (Model.HasPassword)
                                                         {
@@ -195,7 +195,7 @@
                                     </tbody>
                                 </table>
                             }
-                            <form method="post" asp-page="/Admin/Settings" asp-page-handler="SetLogLevel" class="form-inline" id="log-level-form">
+                            <form method="post" asp-controller="AdminSettings" asp-action="Index" asp-route-handler="SetLogLevel" class="form-inline" id="log-level-form">
                                 <div class="form-group">
                                     <label for="log-level-source">Source</label>
                                     <input id="log-level-source" name="source" class="form-control" placeholder="Microsoft.AspNetCore" maxlength="@BaGet.Core.LogLevelOverrides.MaxSourceLength" required />

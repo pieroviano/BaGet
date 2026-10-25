@@ -15,7 +15,7 @@ namespace BaGet.Web;
 /// <c>repo</c>) only to links that target the <i>same</i> page, so <c>Url.Page("/Upload")</c>,
 /// <c>asp-page="/Package"</c> and <c>RedirectToPage("/Packages/Manage")</c> on a <c>/r/second/…</c> page would
 /// otherwise drop the prefix and leave the repository. This helper adds the request's <c>repo</c> as an explicit route
-/// value to every link to a repository page (<see cref="RepositoryPageRouteConvention.RepositoryPages"/>) that does
+/// value to every link to a repository page (a page whose action is marked <see cref="BaGet.Identity.Mvc.RepositoryPageAttribute"/>) that does
 /// not name one itself. An explicit value always wins, and <c>repo = null</c> is the way to leave for the default
 /// repository. A link to any other page is untouched, so no stray <c>?repo=</c> appears on it.
 /// <para>
@@ -138,8 +138,7 @@ public class RepositoryUrlHelper : IUrlHelper
     // Page() has already turned a relative page name into an absolute one (UrlHelperBase.NormalizeRouteValuesForPage),
     // so the value is compared as MVC knows pages.
     private bool IsRepositoryPage(string pageName)
-        => RepositoryPageRouteConvention.RepositoryPages.Contains(pageName, StringComparer.OrdinalIgnoreCase)
-           || _actions?.IsRepositoryPage(pageName) == true;
+        => _actions?.IsRepositoryPage(pageName) == true;
 }
 
 /// <summary>

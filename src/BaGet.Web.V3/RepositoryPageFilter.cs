@@ -18,14 +18,19 @@ namespace BaGet.Web;
 /// package (<c>{id}</c>) is checked against that package too (<see cref="IRepositoryAccess.CanReadPackageAsync"/>). The check
 /// itself is <see cref="RepositoryPageGate"/>, shared with <see cref="RepositoryActionFilter"/> (the controller actions that
 /// replace pages), so the two programming models answer alike.
+/// <para>
+/// <b>Obsolete, not registered any more:</b> BaGet ships no Razor Page, so nothing runs this filter. The check of the controller actions that
+/// replaced the pages is <see cref="RepositoryActionFilter"/> (driven by <c>[RepositoryPage]</c>). The type stays for code that references it.
+/// </para>
 /// </summary>
+[Obsolete("BaGet has no Razor Pages any more; repository actions are checked by RepositoryActionFilter. Will be removed in the next major version.")]
 public class RepositoryPageFilter : IAsyncPageFilter
 {
     /// <summary>
     /// <see cref="Microsoft.AspNetCore.Http.HttpContext.Items"/> key holding the virtual repository the request asked
     /// for, when it was redirected to that repository's deploy repository (the Upload page); absent otherwise.
     /// </summary>
-    public const string RequestedVirtualItemKey = "BaGet.RequestedVirtualRepository";
+    public const string RequestedVirtualItemKey = RepositoryPageGate.RequestedVirtualItemKey;
 
     // Pages that read or change what one repository owns (owners, abuse reports, per-repository statistics, package
     // management): a virtual repository has none of its own, so they answer 404 there. Its packages are managed in the

@@ -37,13 +37,13 @@
 
     @if (Model.EmailIsConfigured)
     {
-        <p><a asp-page="/Account/ForgotPassword">Forgot password?</a></p>
+        <p><a asp-controller="Account" asp-action="ForgotPassword">Forgot password?</a></p>
     }
 
     @if (Model.HasExternalProvider)
     {
         <hr />
-        <form method="post" asp-page="/Account/Login" asp-page-handler="External">
+        <form method="post" asp-controller="Account" asp-action="Login" asp-route-handler="External">
             <input type="hidden" asp-for="ReturnUrl" />
             <button type="submit" class="btn btn-default">Sign in with @Model.ExternalProviderName</button>
         </form>
@@ -52,6 +52,6 @@
     @if (Model.AllowRegistration)
     {
         <hr />
-        <p>No account? <a asp-page="/Account/Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a>.</p>
+        <p>No account? <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a>.</p>
     }
 </div>

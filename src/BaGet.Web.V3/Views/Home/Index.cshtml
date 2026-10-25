@@ -37,7 +37,7 @@
 {
     <div class="home-hero">
         <h1>Find and share packages</h1>
-        <form action="@Url.Page("/Index")" method="get" class="home-search">
+        <form action="@Url.Action("Index", "Home")" method="get" class="home-search">
             <div class="input-group input-group-lg">
                 <input type="text"
                        name="q"
@@ -56,9 +56,9 @@
             </div>
         </form>
         <p class="home-links">
-            <a asp-page="/Index" asp-route-q="">Browse all packages</a>
+            <a asp-controller="Home" asp-action="Index" asp-route-q="">Browse all packages</a>
             <span aria-hidden="true">&middot;</span>
-            <a asp-page="/Upload">Upload a package</a>
+            <a asp-controller="Upload" asp-action="Index">Upload a package</a>
         </p>
     </div>
 
@@ -164,7 +164,7 @@
         <p>
             It looks like there's no package here to see. Take a look below for useful links.
         </p>
-        <p><a asp-page="/Upload">Upload a package</a></p>
+        <p><a asp-controller="Upload" asp-action="Index">Upload a package</a></p>
         <p><a href="https://pieroviano.github.io/BaGet/" target="_blank" rel="noopener noreferrer">BaGet Extension documentation</a></p>
         <p><a href="https://github.com/loic-sharma/BaGet/issues" target="_blank" rel="noopener noreferrer">BaGet issues</a></p>
     </div>
@@ -187,7 +187,7 @@ else
             </div>
             <div class="card-body">
                 <div class="card-heading">
-                    <a asp-page="/Package"
+                    <a asp-controller="Package" asp-action="Show"
                        asp-route-id="@package.PackageId"
                        class="package-title">
                         @package.PackageId
@@ -197,7 +197,7 @@ else
                         <span class="card-owners">by
                             @for (var i = 0; i < owners.Count; i++)
                             {
-                                <a href="@Url.Page("/Profiles/Profile", new { name = owners[i] })">@owners[i]</a>@(i < owners.Count - 1 ? ", " : "")
+                                <a href="@Url.Action("Profile", "Profile", new { name = owners[i] })">@owners[i]</a>@(i < owners.Count - 1 ? ", " : "")
                             }
                         </span>
                     }
@@ -369,7 +369,7 @@ else
         if (page == 1) page = null;
         if (sortBy == SearchSort.Relevance || !Model.CanSort) sortBy = null;
 
-        return Url.Page("/Index", new
+        return Url.Action("Index", "Home", new
         {
             q = Model.Query,
             p = page,

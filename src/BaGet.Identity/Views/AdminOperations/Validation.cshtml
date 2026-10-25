@@ -63,12 +63,12 @@
                                 }
                             </td>
                             <td>
-                                <button type="submit" class="btn btn-default btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Page("/Admin/Validation", "Retry")">Retry</button>
+                                <button type="submit" class="btn btn-default btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Action("Validation", "AdminOperations", new { handler = "Retry" })">Retry</button>
                                 @if (submission.State == BaGet.Core.ValidationSubmissionState.Quarantined)
                                 {
-                                    <button type="submit" class="btn btn-warning btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Page("/Admin/Validation", "Release")"
+                                    <button type="submit" class="btn btn-warning btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Action("Validation", "AdminOperations", new { handler = "Release" })"
                                             onclick="return confirm('Index this package although validation failed?');">Release</button>
-                                    <button type="submit" class="btn btn-danger btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Page("/Admin/Validation", "Reject")"
+                                    <button type="submit" class="btn btn-danger btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Action("Validation", "AdminOperations", new { handler = "Reject" })"
                                             onclick="return confirm('Delete this package? This cannot be undone.');">Reject</button>
                                 }
                             </td>

@@ -33,7 +33,7 @@
                 var config = view.Config;
                 <tr data-replication="@config.Name">
                     <td>
-                        <a href="@Url.Page("/Admin/ReplicationConfig", new { key = config.Key })">@config.Name</a>
+                        <a href="@Url.Action("Config", "AdminReplication", new { key = config.Key })">@config.Name</a>
                         @if (!config.Enabled) { <span class="label label-default">disabled</span> }
                     </td>
                     <td>@(view.Repository ?? "(gone)")@(view.Format is { } format ? " (" + format + ")" : "")</td>

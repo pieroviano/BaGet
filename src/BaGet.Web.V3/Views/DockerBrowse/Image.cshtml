@@ -12,7 +12,7 @@
         <hr class="breadcrumb-divider" />
         <p>
             There is no image <code>@Model.Image</code> in this repository@(Model.IsRemote ? " yet: an image of the upstream is cached the first time it is pulled" : "").
-            <a asp-page="/DockerImages">Browse the images</a>.
+            <a asp-controller="DockerBrowse" asp-action="Images">Browse the images</a>.
         </p>
     </div>
 
@@ -24,7 +24,7 @@
     <div class="col-sm-12" id="docker-manifest-missing">
         <h1>Manifest not found</h1>
         <hr class="breadcrumb-divider" />
-        <p>The image <a asp-page="/DockerImage" asp-route-image="@Model.Info.Name">@Model.Info.Name</a> has no manifest <code>@Model.Digest</code>.</p>
+        <p>The image <a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@Model.Info.Name">@Model.Info.Name</a> has no manifest <code>@Model.Digest</code>.</p>
     </div>
 
     return;
@@ -37,7 +37,7 @@
 
 <div class="col-sm-12" id="docker-image" data-package="@info.Name">
     <h1>
-        <a asp-page="/DockerImage" asp-route-image="@info.Name">@info.Name</a>
+        <a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name">@info.Name</a>
         @if (selected != null)
         {
             <small>manifest <code>@selected.Summary.Digest.Substring(0, 19)</code></small>
@@ -52,7 +52,7 @@
         updated <span title="@info.Modified.ToString("u")">@info.Modified.Humanize()</span>.
         @if (Model.CanManage)
         {
-            <a asp-page="/Packages/DockerManage" asp-route-image="@info.Name" id="docker-manage-link">Manage</a>
+            <a asp-controller="DockerManage" asp-action="Index" asp-route-image="@info.Name" id="docker-manage-link">Manage</a>
         }
     </p>
 
@@ -77,7 +77,7 @@
                     {
                         <tr data-tag="@tag.Name">
                             <td><code>@tag.Name</code></td>
-                            <td><a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@tag.Digest"><code>@tag.Digest.Substring(0, 19)...</code></a></td>
+                            <td><a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name" asp-route-digest="@tag.Digest"><code>@tag.Digest.Substring(0, 19)...</code></a></td>
                             <td title="@tag.Updated.ToString("u")">@tag.Updated.Humanize()</td>
                         </tr>
                     }
@@ -92,7 +92,7 @@
                 @foreach (var manifest in info.Manifests)
                 {
                     <tr data-digest="@manifest.Digest">
-                        <td><a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@manifest.Digest"><code>@manifest.Digest.Substring(0, 19)...</code></a></td>
+                        <td><a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name" asp-route-digest="@manifest.Digest"><code>@manifest.Digest.Substring(0, 19)...</code></a></td>
                         <td>@(manifest.IsIndex ? "index (multi-platform)" : manifest.ArtifactType != null && !manifest.ArtifactType.Contains("image.config") ? manifest.ArtifactType : "image")</td>
                         <td>@(manifest.Platform ?? "")</td>
                         <td>@string.Join(", ", manifest.Tags)</td>
@@ -126,7 +126,7 @@
                 }
                 @if (selected.Summary.SubjectDigest != null)
                 {
-                    <tr><th>Subject</th><td><a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@selected.Summary.SubjectDigest"><code>@selected.Summary.SubjectDigest</code></a></td></tr>
+                    <tr><th>Subject</th><td><a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name" asp-route-digest="@selected.Summary.SubjectDigest"><code>@selected.Summary.SubjectDigest</code></a></td></tr>
                 }
                 <tr><th>Tags</th><td>@(selected.Summary.Tags.Count == 0 ? "none" : string.Join(", ", selected.Summary.Tags))</td></tr>
                 <tr><th>Pushed</th><td title="@selected.Summary.Created.ToString("u")">@selected.Summary.Created.Humanize()</td></tr>
@@ -142,7 +142,7 @@
                 <button type="submit" class="btn btn-default">Filter</button>
                 @if (!string.IsNullOrWhiteSpace(Model.ArtifactType))
                 {
-                    <a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@selected.Summary.Digest">Clear</a>
+                    <a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name" asp-route-digest="@selected.Summary.Digest">Clear</a>
                 }
             </form>
         }
@@ -154,7 +154,7 @@
                     @foreach (var referrer in Model.Referrers)
                     {
                         <tr data-referrer="@referrer.Digest">
-                            <td><a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@referrer.Digest"><code>@referrer.Digest.Substring(0, 19)...</code></a></td>
+                            <td><a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name" asp-route-digest="@referrer.Digest"><code>@referrer.Digest.Substring(0, 19)...</code></a></td>
                             <td>@(referrer.ArtifactType ?? referrer.MediaType)</td>
                             <td>@referrer.Size.ToString("N0") bytes</td>
                         </tr>
@@ -176,7 +176,7 @@
                             <td>
                                 @if (platform.Present)
                                 {
-                                    <a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@platform.Digest"><code>@platform.Digest.Substring(0, 19)...</code></a>
+                                    <a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@info.Name" asp-route-digest="@platform.Digest"><code>@platform.Digest.Substring(0, 19)...</code></a>
                                 }
                                 else
                                 {

@@ -19,7 +19,7 @@
         <li>
             Send an <strong>administrator's API key with the <code>admin:api</code> scope</strong> as <code>Authorization: Bearer &lt;key&gt;</code>
             (or the key as the Basic password, or <code>X-NuGet-ApiKey</code>). Create one under
-            <a href="@Url.Page("/Account/ApiKeys")">API keys</a>; the scope is offered to administrators only, the key must not be limited to
+            <a href="@Url.Action("ApiKeysIndex", "AccountSettings")">API keys</a>; the scope is offered to administrators only, the key must not be limited to
             repositories, and it stops working the moment its owner is no longer an administrator.
         </li>
         <li>Or the server's global <code>ApiKey</code>, when one is configured.</li>

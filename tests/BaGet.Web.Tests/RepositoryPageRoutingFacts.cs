@@ -1,3 +1,5 @@
+// The obsolete page convention is still public API (a host can apply it to its own pages), so it keeps its tests.
+#pragma warning disable CS0618
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;

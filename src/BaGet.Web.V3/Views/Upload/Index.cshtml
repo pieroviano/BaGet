@@ -8,7 +8,7 @@
 @{
     ViewData["Title"] = "Upload package";
 
-    var baseUrl = Url.PageLink("/Index");
+    var baseUrl = Url.ActionLink("Index", "Home");
     var publishUrl = _url.GetPackagePublishResourceUrl();
     var serviceIndexUrl = _url.GetServiceIndexUrl();
 
@@ -25,7 +25,7 @@
     // For a virtual repository RepositoryPageFilter has already moved the request to its deploy repository: 'target' is
     // where the package is stored, 'requested' the repository the visitor chose.
     var target = _repositoryContext.Current;
-    var requested = Context.Items[RepositoryPageFilter.RequestedVirtualItemKey] as RepositoryInfo ?? target;
+    var requested = Context.Items[RepositoryPageGate.RequestedVirtualItemKey] as RepositoryInfo ?? target;
     IReadOnlyList<RepositoryInfo> writable = Array.Empty<RepositoryInfo>();
     if (!Model.IsReadOnlyMode && _repositoryAccess.SupportsMultipleRepositories)
     {
@@ -50,7 +50,7 @@
                 }
                 else
                 {
-                    <a href="@Url.Page("/Upload", new { repo = option.IsDefault ? null : option.Name, id = Model.Id })" data-repository="@option.Name">@option.Name</a>
+                    <a href="@Url.Action("Index", "Upload", new { repo = option.IsDefault ? null : option.Name, id = Model.Id })" data-repository="@option.Name">@option.Name</a>
                 }
                 @(option == writable[^1] ? "" : " | ")
             }
@@ -72,7 +72,7 @@
 
             @if (Model.Published != null && await _repositoryAccess.CanReadPackageAsync(User, target, Model.Published.Id!, Context.RequestAborted))
             {
-                <a asp-page="/Package"
+                <a asp-controller="Package" asp-action="Show"
                    asp-route-id="@Model.Published.Id"
                    asp-route-version="@Model.Published.Version">View it</a><text>.</text>
             }
@@ -98,14 +98,14 @@
     else if (Model.AccountsEnabled && !Model.SignedIn)
     {
         <p id="upload-sign-in">
-            <a href="~/account/login?returnUrl=@Uri.EscapeDataString(Url.Page("/Upload") ?? string.Empty)">Sign in</a>
+            <a href="~/account/login?returnUrl=@Uri.EscapeDataString(Url.Action("Index", "Upload") ?? string.Empty)">Sign in</a>
             to upload a package through the browser. You can push with the commands below at
             any time, with an API key.
         </p>
     }
     else if (Model.RetryToken != null)
     {
-        <form method="post" asp-page-handler="Submit" id="upload-retry" x-data="{ accepted: false }">
+        <form method="post" asp-route-handler="Submit" id="upload-retry" x-data="{ accepted: false }">
             <input type="hidden" name="token" value="@Model.RetryToken" />
             <div class="form-group">
                 <label for="retryApiKey">API key</label>
@@ -118,7 +118,7 @@
                 </label>
             </div>
             <button type="submit" class="btn btn-primary" x-bind:disabled="!accepted">Publish</button>
-            <button type="submit" class="btn btn-default" formaction="@Url.Page("/Upload", "Cancel")">
+            <button type="submit" class="btn btn-default" formaction="@Url.Action("Index", "Upload", new { handler = "Cancel" })">
                 Discard this upload
             </button>
         </form>
@@ -219,7 +219,7 @@
 
         <hr />
 
-        <form method="post" asp-page-handler="Submit" x-data="{ accepted: false }">
+        <form method="post" asp-route-handler="Submit" x-data="{ accepted: false }">
             <input type="hidden" name="token" value="@staged.Token" />
 
             @if (Model.NeedsApiKey)
@@ -252,7 +252,7 @@
             @* In this same form, so that discarding is authenticated by the one API key
                field above rather than a second copy of it: cancelling is owner-checked, as
                publishing is. *@
-            <button type="submit" class="btn btn-default" formaction="@Url.Page("/Upload", "Cancel")">
+            <button type="submit" class="btn btn-default" formaction="@Url.Action("Index", "Upload", new { handler = "Cancel" })">
                 Discard this upload
             </button>
         </form>
@@ -268,7 +268,7 @@
             </p>
         }
 
-        <form method="post" asp-page-handler="Stage" enctype="multipart/form-data">
+        <form method="post" asp-route-handler="Stage" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="package">Package</label>
                 <input type="file" id="package" name="package" accept=".nupkg,.snupkg" required />
@@ -313,7 +313,7 @@
             <p id="upload-api-key-note">
                 Accounts are enabled, so a push must carry an API key: add
                 <code>-k &lt;your API key&gt;</code> to the command. Create one on the
-                <a href="@Url.Page("/Account/ApiKeys")">API keys</a> page.
+                <a href="@Url.Action("ApiKeysIndex", "AccountSettings")">API keys</a> page.
             </p>
         }
 

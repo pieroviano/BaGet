@@ -16,7 +16,7 @@
         <div class="alert alert-danger" role="alert" id="repositories-error">@Model.Error</div>
     }
 
-    <p class="help-block"><a id="formats-link" href="@Url.Page("/Admin/Formats")">Package formats</a> this server can host.</p>
+    <p class="help-block"><a id="formats-link" href="@Url.Action("Formats", "AdminOperations")">Package formats</a> this server can host.</p>
 
     <form method="get" class="form-inline" id="repositories-filter" style="margin-bottom: 10px;">
         <input type="text" name="q" value="@Model.FilterName" class="form-control" placeholder="Name contains" autocomplete="off" />
@@ -37,7 +37,7 @@
         <button type="submit" class="btn btn-default">Filter</button>
         @if (Model.FilterName != null || Model.FilterFormat != null || Model.FilterKind != null)
         {
-            <a href="@Url.Page("/Admin/Repositories")">Clear</a>
+            <a href="@Url.Action("Index", "AdminRepositories")">Clear</a>
         }
     </form>
 
@@ -72,11 +72,11 @@
                             <a class="repository-@link.Id" href="@Model.LinkUrl(repository, link)">@link.Label</a>
                             <span> | </span>
                         }
-                        <a href="@Url.Page("/Admin/RepositoryEdit", new { name = repository.Name })">Edit</a>
+                        <a href="@Url.Action("Edit", "AdminRepositories", new { name = repository.Name })">Edit</a>
                         @if (!repository.IsDefault)
                         {
                             <span> | </span>
-                            <a href="@Url.Page("/Admin/RepositoryDelete", new { name = repository.Name })">Delete</a>
+                            <a href="@Url.Action("DeleteRepository", "AdminRepositories", new { name = repository.Name })">Delete</a>
                         }
                     </td>
                 </tr>
@@ -105,7 +105,7 @@
         @foreach (var module in Model.OtherFormats)
         {
             <h2>New @module.DisplayName repository</h2>
-            <form method="post" asp-page="/Admin/Repositories" asp-page-handler="Format" id="format-create-form-@module.Format.ToString().ToLowerInvariant()">
+            <form method="post" asp-controller="AdminRepositories" asp-action="Index" asp-route-handler="Format" id="format-create-form-@module.Format.ToString().ToLowerInvariant()">
                 <input type="hidden" name="format" value="@module.Format" />
                 <div class="form-group">
                     <label for="format-name-@module.Format">Name</label>
@@ -151,7 +151,7 @@
             package answers, version lists and search merge them (an npm package's dist-tags and a Maven artifact's <code>latest</code> and <code>release</code> follow the member order), and uploads go
             to the member you pick as the deploy repository. Created empty; you add the members on its page.
         </p>
-        <form method="post" asp-page="/Admin/Repositories" asp-page-handler="Virtual" class="form-inline" id="virtual-create-form">
+        <form method="post" asp-controller="AdminRepositories" asp-action="Index" asp-route-handler="Virtual" class="form-inline" id="virtual-create-form">
             <div class="form-group">
                 <label for="virtual-format">Format</label>
                 <select id="virtual-format" name="format" class="form-control">
@@ -181,7 +181,7 @@
             Verdaccio, Artifactory...; Maven: Maven Central, Artifactory, Nexus...): a package not stored here is fetched from the upstream
             the first time it is requested. Clients cannot push to it.
         </p>
-        <form method="post" asp-page="/Admin/Repositories" asp-page-handler="Remote" id="remote-create-form">
+        <form method="post" asp-controller="AdminRepositories" asp-action="Index" asp-route-handler="Remote" id="remote-create-form">
             <div class="form-group">
                 <label for="remote-format">Format</label>
                 <select id="remote-format" name="format" class="form-control">

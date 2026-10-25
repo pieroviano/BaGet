@@ -37,13 +37,12 @@ internal sealed class UiActionMap
         return false;
     }
 
-    /// <summary>Whether page <paramref name="page"/> is served at <c>/r/{repo}/…</c> too (a Razor Page of the static list, or a repository action).</summary>
+    /// <summary>Whether page <paramref name="page"/> is served at <c>/r/{repo}/…</c> too (its action is marked <see cref="RepositoryPageAttribute"/>).</summary>
     public bool IsRepositoryPage(string page)
     {
         var snapshot = Current();
 
-        return RepositoryPageRouteConvention.RepositoryPages.Contains(page, StringComparer.OrdinalIgnoreCase)
-               || snapshot.RepositoryLegacyPages.Contains(page);
+        return snapshot.RepositoryLegacyPages.Contains(page);
     }
 
     /// <summary>Whether the action <paramref name="controller"/>.<paramref name="action"/> is marked <see cref="RepositoryPageAttribute"/>.</summary>

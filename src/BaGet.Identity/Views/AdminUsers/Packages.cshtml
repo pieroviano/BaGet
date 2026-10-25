@@ -7,7 +7,7 @@
     <h1>Packages of @Model.Name</h1>
     <hr class="breadcrumb-divider" />
 
-    <p><a asp-page="/Admin/Users">Back to users</a></p>
+    <p><a asp-controller="AdminUsers" asp-action="Index">Back to users</a></p>
 
     @if (Model.Packages.Count == 0)
     {

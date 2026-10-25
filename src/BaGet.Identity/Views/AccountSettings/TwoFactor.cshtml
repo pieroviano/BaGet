@@ -32,7 +32,7 @@
         <p>Two-factor authentication is <strong>on</strong>. You have @Model.RecoveryCodesLeft recovery codes left.</p>
 
         <h2>Turn off</h2>
-        <form method="post" asp-page="/Account/TwoFactor" asp-page-handler="Disable">
+        <form method="post" asp-controller="AccountSettings" asp-action="TwoFactor" asp-route-handler="Disable">
             @if (Model.HasPassword)
             {
                 <div class="form-group">
@@ -49,7 +49,7 @@
 
         <h2>Reset the authenticator</h2>
         <p>Use this if you lost the device. It turns two-factor authentication off and gives you a new key to set up again.</p>
-        <form method="post" asp-page="/Account/TwoFactor" asp-page-handler="Reset">
+        <form method="post" asp-controller="AccountSettings" asp-action="TwoFactor" asp-route-handler="Reset">
             @if (Model.HasPassword)
             {
                 <div class="form-group">
@@ -73,7 +73,7 @@
         </ol>
         <div id="qrcode" style="max-width: 240px;">@Html.Raw(Model.QrCodeSvg)</div>
         <p>Key: <kbd>@Model.SharedKey</kbd></p>
-        <form method="post" asp-page="/Account/TwoFactor" asp-page-handler="Enable">
+        <form method="post" asp-controller="AccountSettings" asp-action="TwoFactor" asp-route-handler="Enable">
             <div class="form-group">
                 <label for="code">Verification code</label>
                 <input id="code" name="code" class="form-control" autocomplete="one-time-code" inputmode="numeric" />

@@ -29,7 +29,7 @@
             @foreach (var project in Model.Projects)
             {
                 <tr data-project="@project.Name">
-                    <td><a href="@Url.Page("/Admin/ProjectDetail", new { name = project.Name })">@project.Name</a></td>
+                    <td><a href="@Url.Action("Detail", "AdminProjects", new { name = project.Name })">@project.Name</a></td>
                     <td>@project.DisplayName</td>
                     <td>@project.RepositoryCount</td>
                     <td>@project.MemberCount</td>

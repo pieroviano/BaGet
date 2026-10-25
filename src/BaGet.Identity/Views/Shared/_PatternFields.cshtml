@@ -18,7 +18,7 @@
 <div class="form-group form-inline">
     <label for="testPackage">Test a package ID</label>
     <input id="testPackage" name="testPackage" type="text" class="form-control" value="@Model.TestPackage" placeholder="Contoso.Lib" autocomplete="off" />
-    <button type="submit" class="btn btn-default" asp-page-handler="Preview" id="preview-button">Preview</button>
+    <button type="submit" class="btn btn-default" asp-route-handler="Preview" id="preview-button">Preview</button>
 </div>
 
 @if (Model.Preview != null)

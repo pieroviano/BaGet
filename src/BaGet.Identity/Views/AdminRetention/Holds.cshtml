@@ -6,7 +6,7 @@
 <div class="col-sm-12">
     <h1>Legal holds</h1>
     <hr class="breadcrumb-divider" />
-    <p><a href="@Url.Page("/Admin/Retention")">Retention policies</a></p>
+    <p><a href="@Url.Action("Index", "AdminRetention")">Retention policies</a></p>
 
     @if (Model.Message != null)
     {
@@ -50,7 +50,7 @@
                     <td>@hold.Reason</td>
                     <td>@hold.Created.ToString("u")@(hold.CreatedBy != null ? " by " + hold.CreatedBy : "")</td>
                     <td>
-                        <form method="post" asp-page="/Admin/RetentionHolds" asp-page-handler="Remove">
+                        <form method="post" asp-controller="AdminRetention" asp-action="Holds" asp-route-handler="Remove">
                             <input type="hidden" name="key" value="@hold.Key" />
                             <input type="hidden" name="repository" value="@Model.Repository" />
                             <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("hold-password-" + hold.Key)" />
@@ -67,7 +67,7 @@
     }
 
     <h2>Place a hold</h2>
-    <form method="post" asp-page="/Admin/RetentionHolds" asp-page-handler="Add" id="hold-add-form">
+    <form method="post" asp-controller="AdminRetention" asp-action="Holds" asp-route-handler="Add" id="hold-add-form">
         <input type="hidden" name="repository" value="@Model.Repository" />
         <div class="form-group">
             <label for="hold-repository">Repository</label>

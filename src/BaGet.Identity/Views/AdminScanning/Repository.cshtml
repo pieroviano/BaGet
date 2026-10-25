@@ -9,7 +9,7 @@
     <h1>Vulnerabilities <small>@Model.Name</small></h1>
     <hr class="breadcrumb-divider" />
 
-    <p><a asp-page="/Admin/Scanning">Back to scanning</a></p>
+    <p><a asp-controller="AdminScanning" asp-action="Index">Back to scanning</a></p>
 
     @if (Model.Message != null)
     {
@@ -48,7 +48,7 @@
 
         @if (summary.Engine.Available)
         {
-            <form method="post" asp-page="/Admin/ScanRepository" asp-page-handler="Scan" asp-route-name="@Model.Name" id="scan-repository-form">
+            <form method="post" asp-controller="AdminScanning" asp-action="Repository" asp-route-name="@Model.Name" asp-route-handler="Scan" id="scan-repository-form">
                 <button type="submit" class="btn btn-default" id="scan-repository-button">Scan the whole repository now</button>
             </form>
         }
@@ -101,11 +101,11 @@
             <p>
                 @if (Model.PageNumber > 1)
                 {
-                    <a asp-page="/Admin/ScanRepository" asp-route-name="@Model.Name" asp-route-min="@Model.MinSeverity" asp-route-p="@(Model.PageNumber - 1)">Previous</a>
+                    <a asp-controller="AdminScanning" asp-action="Repository" asp-route-name="@Model.Name" asp-route-min="@Model.MinSeverity" asp-route-p="@(Model.PageNumber - 1)">Previous</a>
                 }
                 @if (Model.HasMore)
                 {
-                    <a asp-page="/Admin/ScanRepository" asp-route-name="@Model.Name" asp-route-min="@Model.MinSeverity" asp-route-p="@(Model.PageNumber + 1)">Next</a>
+                    <a asp-controller="AdminScanning" asp-action="Repository" asp-route-name="@Model.Name" asp-route-min="@Model.MinSeverity" asp-route-p="@(Model.PageNumber + 1)">Next</a>
                 }
             </p>
         }
@@ -119,14 +119,14 @@
         }
         else if (Model.Effective.From == BaGet.Core.ScanPolicyScope.Project)
         {
-            <p id="scan-policy-effective">The policy of the project <a asp-page="/Admin/ScanProject" asp-route-name="@Model.Effective.Name">@Model.Effective.Name</a> applies. A policy saved here replaces it for this repository.</p>
+            <p id="scan-policy-effective">The policy of the project <a asp-controller="AdminScanning" asp-action="Project" asp-route-name="@Model.Effective.Name">@Model.Effective.Name</a> applies. A policy saved here replaces it for this repository.</p>
         }
         else
         {
             <p id="scan-policy-effective">This repository has its own policy@(Model.Own?.ModifiedBy != null ? " (saved by " + Model.Own.ModifiedBy + ")" : "").</p>
         }
 
-        <form method="post" asp-page="/Admin/ScanRepository" asp-page-handler="Policy" asp-route-name="@Model.Name" id="scan-policy-form">
+        <form method="post" asp-controller="AdminScanning" asp-action="Repository" asp-route-name="@Model.Name" asp-route-handler="Policy" id="scan-policy-form">
             <partial name="~/Views/Shared/_ScanPolicyForm.cshtml" model="Model.PolicyForm" />
             <button type="submit" class="btn btn-primary">Save the policy</button>
         </form>

@@ -18,7 +18,7 @@
             @if (Model.DeployedName != null && Model.DeployedName.Contains(':') && Model.DeployedVersion != null)
             {
                 var parts = Model.DeployedName.Split(':', 2);
-                <a asp-page="/MavenArtifact" asp-route-group="@parts[0]" asp-route-artifact="@parts[1]" asp-route-version="@Model.DeployedVersion">View it</a><text>.</text>
+                <a asp-controller="MavenBrowse" asp-action="Artifact" asp-route-group="@parts[0]" asp-route-artifact="@parts[1]" asp-route-version="@Model.DeployedVersion">View it</a><text>.</text>
             }
         </div>
     }
@@ -39,7 +39,7 @@
     else if (Model.AccountsEnabled && !Model.SignedIn)
     {
         <p id="upload-sign-in">
-            <a href="~/account/login?returnUrl=@Uri.EscapeDataString(Url.Page("/MavenUpload") ?? string.Empty)">Sign in</a>
+            <a href="~/account/login?returnUrl=@Uri.EscapeDataString(Url.Action("Upload", "MavenBrowse") ?? string.Empty)">Sign in</a>
             to upload an artifact through the browser. You can deploy with <code>mvn deploy</code> at any time, with an API key.
         </p>
     }

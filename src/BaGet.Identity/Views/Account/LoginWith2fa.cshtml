@@ -25,6 +25,6 @@
     </form>
     <p>
         Lost the device?
-        <a asp-page="/Account/LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">Use a recovery code</a>.
+        <a asp-controller="Account" asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">Use a recovery code</a>.
     </p>
 </div>

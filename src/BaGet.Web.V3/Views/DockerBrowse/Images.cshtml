@@ -9,7 +9,7 @@
     <h1>Docker images</h1>
     <hr class="breadcrumb-divider" />
 
-    <form action="@Url.Page("/DockerImages")" method="get" class="home-search" id="docker-search-form">
+    <form action="@Url.Action("Images", "DockerBrowse")" method="get" class="home-search" id="docker-search-form">
         <div class="input-group">
             <input type="text" name="q" value="@Model.Query" class="form-control" autocomplete="off" placeholder="Search by image name..." />
             <span class="input-group-btn">
@@ -52,7 +52,7 @@
                 <div class="search-result package-card" data-package="@image.Name">
                     <div class="card-body">
                         <div class="card-heading">
-                            <a asp-page="/DockerImage" asp-route-image="@image.Name" class="package-title">@image.Name</a>
+                            <a asp-controller="DockerBrowse" asp-action="Image" asp-route-image="@image.Name" class="package-title">@image.Name</a>
                         </div>
                         <ul class="info">
                             <li><span><i class="ms-Icon ms-Icon--Tag"></i> @image.Tags tag@(image.Tags == 1 ? "" : "s")</span></li>
@@ -75,12 +75,12 @@
                 <ul class="pager">
                     @if (Model.PageIndex > 1)
                     {
-                        <li><a href="@Url.Page("/DockerImages", new { q = Model.Query, p = Model.PageIndex - 1 })">Previous</a></li>
+                        <li><a href="@Url.Action("Images", "DockerBrowse", new { q = Model.Query, p = Model.PageIndex - 1 })">Previous</a></li>
                     }
 
                     @if (Model.HasNext)
                     {
-                        <li><a href="@Url.Page("/DockerImages", new { q = Model.Query, p = Model.PageIndex + 1 })">Next</a></li>
+                        <li><a href="@Url.Action("Images", "DockerBrowse", new { q = Model.Query, p = Model.PageIndex + 1 })">Next</a></li>
                     }
                 </ul>
             </nav>
@@ -98,7 +98,7 @@
     }
 
     <p>
-        Sign in with your user name and an API key as the password (<a href="@Url.Page("/Account/ApiKeys")">create one</a>); Docker then asks the registry for a short-lived token for each image. The image name starts with the repository (<code>@Model.RepositoryName</code>).
+        Sign in with your user name and an API key as the password (<a href="@Url.Action("ApiKeysIndex", "AccountSettings")">create one</a>); Docker then asks the registry for a short-lived token for each image. The image name starts with the repository (<code>@Model.RepositoryName</code>).
     </p>
     <div class="tabbed-info" x-data="{ active: 0 }">
         <ul class="nav">

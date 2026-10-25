@@ -26,7 +26,7 @@ namespace BaGet.Web;
 public class RepositoryActionRouteConvention : IApplicationModelConvention
 {
     /// <summary>Order of the repository twin of a route; below the default 0 so it wins when it can be filled in.</summary>
-    public const int TwinOrder = RepositoryPageRouteConvention.TwinOrder;
+    public const int TwinOrder = -1;
 
     /// <inheritdoc/>
     public void Apply(ApplicationModel application)

@@ -11,11 +11,11 @@
     <p>
         @if (Model.IsServerAdministrator)
         {
-            <a asp-page="/Admin/Permissions">Back to permission targets</a>
+            <a asp-controller="AdminPermissions" asp-action="Index">Back to permission targets</a>
         }
         else if (target?.ProjectName != null)
         {
-            <a href="@Url.Page("/Admin/ProjectDetail", new { name = target.ProjectName })">Back to project @target.ProjectName</a>
+            <a href="@Url.Action("Detail", "AdminProjects", new { name = target.ProjectName })">Back to project @target.ProjectName</a>
         }
     </p>
 
@@ -30,7 +30,7 @@
 
     @if (target?.ProjectName != null)
     {
-        <p id="target-project">Project target of <a href="@Url.Page("/Admin/ProjectDetail", new { name = target.ProjectName })">@target.ProjectName</a>: it applies only to that project's repositories.</p>
+        <p id="target-project">Project target of <a href="@Url.Action("Detail", "AdminProjects", new { name = target.ProjectName })">@target.ProjectName</a>: it applies only to that project's repositories.</p>
     }
     <p class="help-block">Saving patterns, changing grants and deleting the target ask for your password again. Package ownership still applies inside Deploy, Delete, Annotate and Manage.</p>
 
@@ -39,7 +39,7 @@
         <form method="post" id="patterns-form">
             <partial name="~/Views/Shared/_PatternFields.cshtml" model="@Model.Fields" />
             <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("patternsPassword")" />
-            <button type="submit" class="btn btn-primary" asp-page="/Admin/PermissionDetail" asp-route-name="@Model.Name" asp-page-handler="Save">Save patterns</button>
+            <button type="submit" class="btn btn-primary" asp-controller="AdminPermissions" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="Save">Save patterns</button>
         </form>
     </section>
 
@@ -66,9 +66,9 @@
                                     <td>@((grant.Actions & action) == action ? "yes" : "")</td>
                                 }
                                 <td>
-                                    <a class="btn btn-default btn-xs" href="@Url.Page("/Admin/PermissionDetail", new { name = target!.Name, principalType = grant.PrincipalType, principalName = grant.Principal.Substring(grant.Principal.IndexOf(' ') + 1) })#grant-form">Edit</a>
+                                    <a class="btn btn-default btn-xs" href="@Url.Action("Detail", "AdminPermissions", new { name = target!.Name, principalType = grant.PrincipalType, principalName = grant.Principal.Substring(grant.Principal.IndexOf(' ') + 1) })#grant-form">Edit</a>
                                     <button type="submit" class="btn btn-danger btn-xs"
-                                            formaction="@Url.Page("/Admin/PermissionDetail", "RemoveGrant", new { name = target!.Name, type = grant.PrincipalType, principalId = grant.PrincipalId })">Remove</button>
+                                            formaction="@Url.Action("Detail", "AdminPermissions", new { name = target!.Name, type = grant.PrincipalType, principalId = grant.PrincipalId, handler = "RemoveGrant" })">Remove</button>
                                 </td>
                             </tr>
                         }
@@ -97,7 +97,7 @@
                 }
             </div>
             <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("grantPassword")" />
-            <button type="submit" class="btn btn-primary" asp-page="/Admin/PermissionDetail" asp-route-name="@Model.Name" asp-page-handler="SetGrant">Set grant</button>
+            <button type="submit" class="btn btn-primary" asp-controller="AdminPermissions" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="SetGrant">Set grant</button>
         </form>
     </section>
 
@@ -106,7 +106,7 @@
         <p class="help-block">Removes the target and its grants@(target?.IsBuiltIn == true ? ". It is a built-in default: Restore built-in groups and targets on the permission targets page brings it back." : ".")</p>
         <form method="post" id="delete-form">
             <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
-            <button type="submit" class="btn btn-danger" asp-page="/Admin/PermissionDetail" asp-route-name="@Model.Name" asp-page-handler="Delete">Delete target</button>
+            <button type="submit" class="btn btn-danger" asp-controller="AdminPermissions" asp-action="Detail" asp-route-name="@Model.Name" asp-route-handler="Delete">Delete target</button>
         </form>
     </section>
 </div>

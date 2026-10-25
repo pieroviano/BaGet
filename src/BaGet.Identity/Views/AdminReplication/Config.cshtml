@@ -8,7 +8,7 @@
 <div class="col-sm-12">
     <h1>@config.Name</h1>
     <hr class="breadcrumb-divider" />
-    <p><a href="@Url.Page("/Admin/Replication")">All replications</a></p>
+    <p><a href="@Url.Action("Index", "AdminReplication")">All replications</a></p>
 
     @if (Model.Message != null)
     {
@@ -36,7 +36,7 @@
     <h2>Run</h2>
     <div class="row">
         <div class="col-sm-4">
-            <form method="post" asp-page="/Admin/ReplicationConfig" asp-route-key="@Model.Key" asp-page-handler="Run" id="replication-run-form">
+            <form method="post" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Run" id="replication-run-form">
                 <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-run-password")" />
                 <button type="submit" class="btn btn-danger" disabled="@running">Run now</button>
                 <span class="help-block">Copies what the target lacks. Skips what it holds.</span>
@@ -45,7 +45,7 @@
         <div class="col-sm-4">
             @if (Model.Resumable != null)
             {
-                <form method="post" asp-page="/Admin/ReplicationConfig" asp-route-key="@Model.Key" asp-page-handler="Resume" id="replication-resume-form">
+                <form method="post" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Resume" id="replication-resume-form">
                     <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-resume-password")" />
                     <button type="submit" class="btn btn-warning" disabled="@running">Resume run @Model.Resumable.Key</button>
                     <span class="help-block">Run @Model.Resumable.Key ended @Model.Resumable.Status.ToString().ToLowerInvariant(); a new run continues from what is in place.</span>
@@ -53,7 +53,7 @@
             }
         </div>
         <div class="col-sm-4">
-            <form method="post" asp-page="/Admin/ReplicationConfig" asp-route-key="@Model.Key" asp-page-handler="Stop" id="replication-stop-form">
+            <form method="post" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Stop" id="replication-stop-form">
                 <button type="submit" class="btn btn-default" disabled="@(!running)">Stop</button>
                 <span class="help-block">The run ends as interrupted and can be resumed.</span>
             </form>
@@ -104,16 +104,16 @@
     }
 
     <h2>Settings</h2>
-    <form method="post" asp-page="/Admin/ReplicationConfig" asp-route-key="@Model.Key" asp-page-handler="Save" id="replication-edit-form" autocomplete="off">
+    <form method="post" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Save" id="replication-edit-form" autocomplete="off">
         <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "edit", Model.View.HasApiKey))" />
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-edit-password")" />
         <button type="submit" class="btn btn-primary">Save</button>
-        <button type="submit" class="btn btn-default" asp-page="/Admin/ReplicationConfig" asp-route-key="@Model.Key" asp-page-handler="Test" id="replication-test-button">Test connection</button>
+        <button type="submit" class="btn btn-default" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Test" id="replication-test-button">Test connection</button>
         <span class="help-block">Test connection uses the values typed above (a stored key only while the peer address is unchanged) and saves nothing.</span>
     </form>
 
     <h2>Delete the replication</h2>
-    <form method="post" asp-page="/Admin/ReplicationConfig" asp-route-key="@Model.Key" asp-page-handler="Delete" id="replication-delete-form">
+    <form method="post" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Delete" id="replication-delete-form">
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-delete-password")" />
         <button type="submit" class="btn btn-danger">Delete replication</button>
         <span class="help-block">Its log and its record of what it copied go; what it copied stays where it is.</span>

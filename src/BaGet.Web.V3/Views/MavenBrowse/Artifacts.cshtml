@@ -9,7 +9,7 @@
     <h1>Maven artifacts</h1>
     <hr class="breadcrumb-divider" />
 
-    <form action="@Url.Page("/MavenArtifacts")" method="get" class="home-search" id="maven-search-form">
+    <form action="@Url.Action("Artifacts", "MavenBrowse")" method="get" class="home-search" id="maven-search-form">
         <div class="input-group">
             <input type="text" name="q" value="@Model.Query" class="form-control" autocomplete="off" placeholder="Search by group, artifact, name or description..." />
             <span class="input-group-btn">
@@ -25,7 +25,7 @@
         @if (Model.Kind == BaGet.Core.RepositoryKind.Local)
         {
             <text>&middot; accepts <strong id="maven-policy">@(Model.Settings.Policy switch { BaGet.Core.MavenPolicy.Releases => "releases", BaGet.Core.MavenPolicy.Snapshots => "snapshots", _ => "releases and snapshots" })</strong>@(Model.Settings.AllowRedeploy ? ", releases may be redeployed" : "")
-            &middot; <a asp-page="/MavenUpload">Upload an artifact</a></text>
+            &middot; <a asp-controller="MavenBrowse" asp-action="Upload">Upload an artifact</a></text>
         }
         else if (Model.Kind == BaGet.Core.RepositoryKind.Remote)
         {
@@ -45,7 +45,7 @@
                 @(string.IsNullOrWhiteSpace(Model.Query) ? "This repository holds no artifact yet." : "No artifact matches that text.")
                 @if (Model.Kind == BaGet.Core.RepositoryKind.Local)
                 {
-                    <text>Deploy one with <code>mvn deploy</code> (see below), or <a asp-page="/MavenUpload">upload files</a>.</text>
+                    <text>Deploy one with <code>mvn deploy</code> (see below), or <a asp-controller="MavenBrowse" asp-action="Upload">upload files</a>.</text>
                 }
                 else if (Model.Kind == BaGet.Core.RepositoryKind.Remote)
                 {
@@ -64,7 +64,7 @@
                 <div class="search-result package-card" data-package="@hit.CoordinateName">
                     <div class="card-body">
                         <div class="card-heading">
-                            <a asp-page="/MavenArtifact" asp-route-group="@hit.GroupId" asp-route-artifact="@hit.ArtifactId" class="package-title">@hit.GroupId:@hit.ArtifactId</a>
+                            <a asp-controller="MavenBrowse" asp-action="Artifact" asp-route-group="@hit.GroupId" asp-route-artifact="@hit.ArtifactId" class="package-title">@hit.GroupId:@hit.ArtifactId</a>
                         </div>
                         <ul class="info">
                             @if (hit.Version != null)
@@ -89,12 +89,12 @@
                 <ul class="pager">
                     @if (Model.PageIndex > 1)
                     {
-                        <li><a href="@Url.Page("/MavenArtifacts", new { q = Model.Query, p = Model.PageIndex - 1 })">Previous</a></li>
+                        <li><a href="@Url.Action("Artifacts", "MavenBrowse", new { q = Model.Query, p = Model.PageIndex - 1 })">Previous</a></li>
                     }
 
                     @if (Model.HasNext)
                     {
-                        <li><a href="@Url.Page("/MavenArtifacts", new { q = Model.Query, p = Model.PageIndex + 1 })">Next</a></li>
+                        <li><a href="@Url.Action("Artifacts", "MavenBrowse", new { q = Model.Query, p = Model.PageIndex + 1 })">Next</a></li>
                     }
                 </ul>
             </nav>
