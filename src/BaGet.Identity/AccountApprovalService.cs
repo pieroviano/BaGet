@@ -20,6 +20,9 @@ public enum AccountApprovalResult
 
     /// <summary>There is no such user.</summary>
     UserNotFound,
+
+    /// <summary>The account changed or was deleted while it was being approved; nothing was approved.</summary>
+    Conflict,
 }
 
 /// <summary>
@@ -44,7 +47,7 @@ public class AccountApprovalService
     public Task<int> CountPendingAsync(CancellationToken cancellationToken)
         => _context.Users.CountAsync(u => u.PendingApproval, cancellationToken);
 
-    /// <summary>Enables the user, who can then sign in.</summary>
+    /// <summary>Enables the user, who can then sign in. A racing delete or edit of the same user is <see cref="AccountApprovalResult.Conflict"/>.</summary>
     /// <param name="userName">The user to enable.</param>
     /// <param name="actor">Who asks, for the log.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -58,7 +61,10 @@ public class AccountApprovalService
         var result = await _users.UpdateAsync(user); // the concurrency stamp rejects a racing edit of the same user
         if (!result.Succeeded)
         {
-            throw new InvalidOperationException(string.Join(" ", result.Errors.Select(e => e.Description)));
+            // A racing delete or edit (concurrency failure): the account is gone or different, so report it, don't crash.
+            _logger.LogWarning("{Actor} could not approve {User}: {Errors}", actor, user.UserName, string.Join(" ", result.Errors.Select(e => e.Code)));
+
+            return AccountApprovalResult.Conflict;
         }
 
         _logger.LogWarning("{Actor} approved the account {User}", actor, user.UserName);

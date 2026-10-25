@@ -110,7 +110,7 @@ public class AdministratorService
             && await _context.Users.AnyAsync(u => u.Id == id && u.IsAdministrator, cancellationToken);
     }
 
-    /// <summary>Makes the user an administrator.</summary>
+    /// <summary>Makes the user an administrator, and approves the account if it was waiting for approval.</summary>
     /// <param name="userName">The user to promote.</param>
     /// <param name="actor">Who asks, for the log.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -156,10 +156,14 @@ public class AdministratorService
     {
         var user = string.IsNullOrWhiteSpace(userName) ? null : await _users.FindByNameAsync(userName.Trim());
         if (user == null) return AdministratorChange.UserNotFound;
-        if (user.IsAdministrator == value) return AdministratorChange.Unchanged;
+        // An administrator is by definition approved: promotion also enables an account that waits for approval
+        // (Accounts:RequireApproval), else a recovery could leave the only administrator unable to sign in.
+        var approves = value && user.PendingApproval;
+        if (user.IsAdministrator == value && !approves) return AdministratorChange.Unchanged;
         if (!value && await IsLastAdministratorAsync(user, cancellationToken)) return AdministratorChange.LastAdministrator;
 
         user.IsAdministrator = value;
+        if (value) user.PendingApproval = false;
         var result = await _users.UpdateAsync(user); // the concurrency stamp rejects a racing edit of the same user
         if (!result.Succeeded)
         {

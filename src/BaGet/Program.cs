@@ -135,6 +135,38 @@ public partial class Program
                 });
             });
 
+            account.Command("approve", approve =>
+            {
+                approve.Description = "Enable a self-registered account that waits for approval (Accounts:RequireApproval), so it can sign in.";
+                var userName = approve.Argument("user", "The user name.").IsRequired();
+                approve.OnExecuteAsync(async cancellationToken =>
+                {
+                    using var scope = app.Services.CreateScope();
+                    var approvals = scope.ServiceProvider.GetService<AccountApprovalService>();
+                    if (approvals == null)
+                    {
+                        Console.Error.WriteLine("Accounts are not enabled (\"Accounts:Enabled\").");
+                        return 1;
+                    }
+
+                    switch (await approvals.ApproveAsync(userName.Value, "command line", cancellationToken))
+                    {
+                        case AccountApprovalResult.UserNotFound:
+                            Console.Error.WriteLine($"There is no user named \"{userName.Value}\".");
+                            return 1;
+                        case AccountApprovalResult.Conflict:
+                            Console.Error.WriteLine($"{userName.Value} was changed or removed meanwhile, so nothing was approved. Run the command again.");
+                            return 1;
+                        case AccountApprovalResult.NotPending:
+                            Console.WriteLine($"{userName.Value} is not waiting for approval.");
+                            return 0;
+                        default:
+                            Console.WriteLine($"{userName.Value} was approved and can sign in.");
+                            return 0;
+                    }
+                });
+            });
+
             foreach (var (name, promote) in new[] { ("promote", true), ("demote", false) })
             {
                 account.Command(name, change =>

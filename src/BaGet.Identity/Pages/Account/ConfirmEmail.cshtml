@@ -13,6 +13,10 @@
         <div class="alert alert-success" role="alert">
             @(Model.EmailChanged ? "Your email address has been changed." : "Thank you, your email address is confirmed.")
         </div>
+        @if (Model.PendingApproval)
+        {
+            <p id="confirm-awaiting-approval">An administrator must still enable your account before you can sign in.</p>
+        }
         <p><a asp-page="/Account/Login">Sign in</a></p>
     }
     else

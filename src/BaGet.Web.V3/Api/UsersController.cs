@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Web.Api;
 
 /// <summary>A user in a list.</summary>
-public sealed record UserDto(string UserName, string? Email, DateTime Created, bool IsAdministrator);
+public sealed record UserDto(string UserName, string? Email, DateTime Created, bool IsAdministrator, bool PendingApproval = false);
 
 /// <summary>An API key without its secret or hash.</summary>
 public sealed record ApiKeyDto(int Key, string? Description, IReadOnlyList<string> Scopes, string? PackageGlobPattern, DateTime Created, DateTime? Expires, string Repositories);
@@ -234,5 +234,5 @@ public class UsersController : AdminApiController
         return Done();
     }
 
-    private static UserDto ToDto(BaGetUser user) => new(user.UserName ?? string.Empty, user.Email, user.Created, user.IsAdministrator);
+    private static UserDto ToDto(BaGetUser user) => new(user.UserName ?? string.Empty, user.Email, user.Created, user.IsAdministrator, user.PendingApproval);
 }

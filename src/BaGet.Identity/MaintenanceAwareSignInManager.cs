@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Authentication;
@@ -44,6 +45,31 @@ public class MaintenanceAwareSignInManager : SignInManager<BaGetUser>
     /// </summary>
     public override async Task<bool> CanSignInAsync(BaGetUser user)
         => !user.PendingApproval && await base.CanSignInAsync(user);
+
+    /// <summary>
+    /// For an account awaiting approval Identity answers "not allowed" before it looks at the password or the lockout,
+    /// which would let anyone guess passwords without limit and learn from the answer which one is right. Here the
+    /// lockout is honoured first (a locked-out account answers "locked out" whatever the password), a wrong password
+    /// is a counted failed attempt (a write, so refused while the gate is closed like any failed sign-in), and only
+    /// the right one answers "not allowed". Nothing about the password is learned from a locked-out account.
+    /// </summary>
+    public override async Task<SignInResult> CheckPasswordSignInAsync(BaGetUser user, string password, bool lockoutOnFailure)
+    {
+        if (user is not { PendingApproval: true }) return await base.CheckPasswordSignInAsync(user!, password, lockoutOnFailure);
+
+        if (await UserManager.IsLockedOutAsync(user)) return SignInResult.LockedOut;
+
+        if (await UserManager.CheckPasswordAsync(user, password)) return SignInResult.NotAllowed;
+
+        if (UserManager.SupportsUserLockout && lockoutOnFailure)
+        {
+            var counted = await UserManager.AccessFailedAsync(user);
+            if (!counted.Succeeded) throw new InvalidOperationException("The failed attempt could not be recorded.");
+            if (await UserManager.IsLockedOutAsync(user)) return SignInResult.LockedOut;
+        }
+
+        return SignInResult.Failed;
+    }
 
     /// <summary>Resets the failed-attempt counter, unless the gate is closed (a write it would refuse).</summary>
     protected override Task ResetLockout(BaGetUser user)

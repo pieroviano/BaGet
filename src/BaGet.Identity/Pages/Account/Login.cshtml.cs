@@ -61,13 +61,12 @@ public class LoginModel : AccountPageModel
             return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl, RememberMe });
         }
 
-        if (result.IsNotAllowed && await FindPendingAsync() is { } pending)
+        if (result.IsNotAllowed && await FindPendingAsync() is not null)
         {
-            // The refusal comes before the password is checked, so it must not read like an unconfirmed email (which
-            // would tell anyone that this name is registered): explain it to the right password only.
-            Error = await UserManager.CheckPasswordAsync(pending, Password!)
-                ? PendingMessage
-                : "The user name or password is incorrect.";
+            // For an account awaiting approval the sign-in manager answers "not allowed" only to the right password
+            // (a wrong one is a counted failure, a locked-out account answers "locked out"), so this message is
+            // shown to the right password only and never reads like an unconfirmed email.
+            Error = PendingMessage;
 
             return Page();
         }

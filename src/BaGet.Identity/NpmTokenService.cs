@@ -55,7 +55,14 @@ public class NpmTokenService : INpmTokenService
 
         var result = await _signIn.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
         if (result.IsLockedOut) return new NpmLoginResult(null, "The account is locked out: try again later.", LockedOut: true);
-        if (result.IsNotAllowed) return new NpmLoginResult(null, "The account may not sign in yet: confirm its email address first.");
+        if (result.IsNotAllowed)
+        {
+            // For an account awaiting approval the sign-in manager answers "not allowed" to the right password only
+            // (a wrong one is a counted failure), so this explanation reveals nothing to a guesser.
+            return new NpmLoginResult(null, user.PendingApproval
+                ? "The account is waiting for an administrator to enable it."
+                : "The account may not sign in yet: confirm its email address first.");
+        }
         if (!result.Succeeded) return new NpmLoginResult(null, Bad);
 
         if (await _users.GetTwoFactorEnabledAsync(user))

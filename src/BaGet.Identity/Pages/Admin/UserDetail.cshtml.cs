@@ -83,6 +83,43 @@ public class UserDetailModel : AdminPageModel
         return Page();
     }
 
+    /// <summary>
+    /// Enables an account that waits for approval (<c>Accounts:RequireApproval</c>), like the Users page's Approve: the
+    /// administrator's password is asked again and the gate must be open.
+    /// </summary>
+    public async Task<IActionResult> OnPostApproveAsync(string? password, CancellationToken cancellationToken)
+    {
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var user = string.IsNullOrEmpty(Name) ? null : await UserManager.FindByNameAsync(Name);
+        if (user == null) return NotFound();
+
+        var current = await UserManager.GetUserAsync(User);
+        if (current == null) return Challenge();
+
+        if (!await IsConfirmedAsync(current, password))
+        {
+            Error = "The confirmation is incorrect, so nothing was changed.";
+        }
+        else
+        {
+            switch (await HttpContext.RequestServices.GetRequiredService<AccountApprovalService>().ApproveAsync(user.UserName, current.UserName, cancellationToken))
+            {
+                case AccountApprovalResult.Approved:
+                    Message = $"{user.UserName} was approved and can sign in.";
+                    break;
+                case AccountApprovalResult.NotPending:
+                    Message = $"{user.UserName} was not waiting for approval.";
+                    break;
+                default:
+                    Error = $"{user.UserName} was changed or removed meanwhile, so nothing was approved.";
+                    break;
+            }
+        }
+
+        return RedirectToPage("/Admin/UserDetail", new { name = user.UserName });
+    }
+
     /// <summary>Revokes one of the account's API keys.</summary>
     public async Task<IActionResult> OnPostRevokeKeyAsync(int key, string? password, CancellationToken cancellationToken)
     {

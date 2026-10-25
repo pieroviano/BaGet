@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BaGet.Web\BaGet.Web.csproj" />
+    <ProjectReference Include="..\..\src\BaGet.Web.V3\BaGet.Web.V3.csproj" />
   </ItemGroup>
 
 </Project>

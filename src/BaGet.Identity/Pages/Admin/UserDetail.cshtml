@@ -27,8 +27,27 @@
             <tr><th>Email</th><td>@(Model.Account?.Email ?? "None")</td></tr>
             <tr><th>Created</th><td>@Model.Account?.Created.ToString("yyyy-MM-dd")</td></tr>
             <tr><th>Role</th><td>@(Model.Account?.IsAdministrator == true ? "Administrator" : "User")</td></tr>
+            <tr><th>Status</th><td id="user-status">@(Model.Account?.PendingApproval == true ? "Awaiting approval: cannot sign in" : "Active")</td></tr>
             <tr><th>Packages</th><td>@Model.OwnedPackageIds owned (<a href="@(userUrl + "/packages")">list</a>)</td></tr>
         </table>
+        @if (Model.Account?.PendingApproval == true)
+        {
+            <form method="post" id="approve-form" asp-page-handler="Approve">
+                @if (Model.HasPassword)
+                {
+                    <div class="form-group">
+                        <label for="approvePassword">Your password</label>
+                        <input id="approvePassword" name="password" type="password" class="form-control" autocomplete="current-password" />
+                        <span class="help-block">Approving asks for your password again.</span>
+                    </div>
+                }
+                else
+                {
+                    <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/UserDetail"))" />
+                }
+                <button type="submit" class="btn btn-primary">Approve</button>
+            </form>
+        }
     </section>
 
     <section id="user-section-organizations">

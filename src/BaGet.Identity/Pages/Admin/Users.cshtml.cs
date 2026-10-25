@@ -134,6 +134,9 @@ public class UsersModel : AdminPageModel
             case AccountApprovalResult.NotPending:
                 Message = $"{userName} was not waiting for approval.";
                 break;
+            case AccountApprovalResult.Conflict:
+                Error = $"{userName} was changed or removed meanwhile, so nothing was approved. Reload the list.";
+                break;
             default:
                 Error = "There is no user with that name.";
                 break;

@@ -105,11 +105,13 @@ public class RegisterModel : AccountPageModel
                 await EmailSender.SendConfirmationLinkAsync(user, user.Email, link);
                 #pragma warning restore CS8604
                 ConfirmationSent = true;
+                AwaitingApproval = user.PendingApproval;
             }
             catch (Exception)
             {
                 // The account exists; "Forgot password" mails a link that also confirms the address.
-                ModelState.AddModelError(string.Empty, "Your account was created, but we could not send the confirmation email. Use \"Forgot password\" to get a link later.");
+                ModelState.AddModelError(string.Empty, "Your account was created, but we could not send the confirmation email. Use \"Forgot password\" to get a link later."
+                    + (user.PendingApproval ? " An administrator must also enable your account before you can sign in." : string.Empty));
             }
 
             return Page();
