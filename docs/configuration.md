@@ -314,10 +314,10 @@ Who may change a package:
 
 With `Accounts:RequireApproval` on, `/account/register` creates the account but does not sign the user in, and no route
 (password, two-factor, external provider, API key) works for it until an administrator approves it. The user is told to
-wait (also when email is configured: the confirmation mail and the confirmation page repeat that approval is needed). A
+wait (also when email is configured: the registration result page and the email confirmation page say approval is needed; the confirmation mail does not). A
 sign-in attempt with the right password says the account awaits approval; a wrong password gets the usual "incorrect"
 message and counts as a failed attempt, so a pending account locks out like any other and a locked-out one answers
-"locked" whatever the password (names and passwords are not revealed). `npm login` follows the same rule.
+"locked" whatever the password (passwords are not revealed; a "locked" answer shows the name exists, as for every account). `npm login` follows the same rule.
 
 - **Approve:** `/admin/users` shows an "Awaiting approval" label and a count, and `/admin/users/{name}` the status; *Approve* (on either page) asks for your password and is refused with `503` while the read-only gate is closed. The approval is logged at Warning. Command line: `baget account approve <user>`.
 - **Promotion approves:** making a user an administrator (`account promote`, `Accounts:InitialAdministrators`, the Users page, the REST API) also approves the account, so a recovery never leaves the only administrator unable to sign in.

@@ -63,9 +63,9 @@ public class MaintenanceAwareSignInManager : SignInManager<BaGetUser>
 
         if (UserManager.SupportsUserLockout && lockoutOnFailure)
         {
+            // Like Identity: an attempt that could not be recorded (a concurrent update) is a plain failure.
             var counted = await UserManager.AccessFailedAsync(user);
-            if (!counted.Succeeded) throw new InvalidOperationException("The failed attempt could not be recorded.");
-            if (await UserManager.IsLockedOutAsync(user)) return SignInResult.LockedOut;
+            if (counted.Succeeded && await UserManager.IsLockedOutAsync(user)) return SignInResult.LockedOut;
         }
 
         return SignInResult.Failed;
