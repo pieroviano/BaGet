@@ -270,6 +270,8 @@ public class AccessAdministration : IAccessAdministration
         var row = await GroupAsync(group, cancellationToken).ConfigureAwait(false);
         if (row.IsBuiltIn) throw new AccessModelException($"Membership of the built-in group '{row.Name}' is implicit.");
         if (string.IsNullOrEmpty(userId)) throw new AccessModelException("A user is required.");
+        // GroupMember.UserId is a foreign key to the users table: say so instead of failing the save.
+        if (!await _context.Users.AnyAsync(u => u.Id == userId, cancellationToken).ConfigureAwait(false)) throw new AccessModelException("There is no such user.");
 
         if (await _context.GroupMembers!.AnyAsync(m => m.GroupKey == row.Key && m.UserId == userId, cancellationToken).ConfigureAwait(false)) return;
 

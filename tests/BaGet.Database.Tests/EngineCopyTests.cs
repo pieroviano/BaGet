@@ -192,8 +192,10 @@ public class EngineCopyTests
             PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "1.0" } },
             TargetFrameworks = new List<TargetFramework>(),
         });
-        // "default" (key 1) is created by the AddRepositories migration; "second" gets key 2.
+        // "default" (key 1) is created by the AddRepositories migration; "second" gets key 2. Saved first: the packages
+        // that name key 2 have a foreign key to it, and EF cannot order the inserts by a key it has not been given yet.
         context.Set<Repository>().Add(new Repository { Name = "second", Created = published });
+        await context.SaveChangesAsync();
 
         context.Set<Package>().AddRange(packages);
         var organizations = new List<Organization>

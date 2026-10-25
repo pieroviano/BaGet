@@ -403,6 +403,10 @@ public class PackageDatabaseTests
                     .Options);
             _context.Database.EnsureCreated();
 
+            // EnsureCreated runs no migration, so the default repository the packages belong to is added here.
+            _context.Repositories?.Add(new Repository { Key = Repository.DefaultKey, Name = Repository.DefaultName, Created = DateTime.UtcNow });
+            _context.SaveChanges();
+
             _context.Packages?.Add(CreatePackage("Package", "1.0.0"));
             _context.Packages?.Add(CreatePackage("Unlisted.Package", "1.0.0", listed: false));
             _context.SaveChanges();

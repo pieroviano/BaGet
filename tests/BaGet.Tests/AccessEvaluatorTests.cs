@@ -40,6 +40,15 @@ public class AccessEvaluatorTests : IDisposable
     private static BaGetPrincipal User(string id, bool administrator = false)
         => new(id, id, isSuperuser: false, ApiKeyScopes.All, "*", administrator);
 
+    // Group membership names a user row (UserId is a foreign key); the tests' principals use the name as id.
+    private Task AddUsersAsync(params string[] ids) => WithAsync(async (_, _, context) =>
+    {
+        foreach (var id in ids) context.Users.Add(new BaGetUser { Id = id, UserName = id, NormalizedUserName = id.ToUpperInvariant() });
+        await context.SaveChangesAsync(_token);
+
+        return 0;
+    });
+
     private static readonly RepositoryInfo Default = RepositoryInfo.Default;
     private static readonly RepositoryInfo SecondRepo = new(2, Second, RepositoryFormat.NuGet, RepositoryKind.Local);
 
@@ -117,6 +126,7 @@ public class AccessEvaluatorTests : IDisposable
             await a.SetGrantAsync("second deploy", PrincipalType.Group, await GroupKeyAsync("builders"), AccessAction.Deploy, "test", _token);
         });
         var bob = User("bob");
+        await AddUsersAsync("bob");
 
         Assert.False(await AllowedAsync(bob, SecondRepo, "Any.Lib", AccessAction.Deploy));
 
@@ -285,6 +295,7 @@ public class AccessEvaluatorTests : IDisposable
     [Fact]
     public async Task EveryChangeIsAudited()
     {
+        await AddUsersAsync("u");
         await AdministerAsync(async a =>
         {
             await a.CreateGroupAsync("g", null, "root", _token);
@@ -317,6 +328,7 @@ public class AccessEvaluatorTests : IDisposable
     [Fact]
     public async Task DeletingAGroupRemovesItsMembersGrantsAndProjectRoles()
     {
+        await AddUsersAsync("u");
         await AdministerAsync(async a =>
         {
             await a.CreateGroupAsync("g", null, null, _token);
@@ -367,6 +379,7 @@ public class AccessEvaluatorTests : IDisposable
     [Fact]
     public async Task ACheckAgainstFiftyTargetsAndTwentyGroupsCostsMicroseconds()
     {
+        await AddUsersAsync("bench");
         await AdministerAsync(async a =>
         {
             for (var g = 0; g < 20; g++) await a.CreateGroupAsync("group-" + g, null, null, _token);

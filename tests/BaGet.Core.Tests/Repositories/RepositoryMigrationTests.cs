@@ -177,6 +177,7 @@ public class RepositoryMigrationTests : IDisposable
             await context.RunMigrationsAsync(token);
         }
 
+        InsertRow("Repositories", new Dictionary<string, object> { ["Key"] = 2, ["Name"] = "second", ["Format"] = "NuGet", ["Kind"] = "Local", ["AnonymousRead"] = 1, ["Created"] = "2020-01-01 00:00:00" });
         InsertRow("Packages", new Dictionary<string, object> { ["Id"] = "P", ["Version"] = "1.0.0", ["RepositoryKey"] = 1 });
         InsertRow("Packages", new Dictionary<string, object> { ["Id"] = "P", ["Version"] = "1.0.0", ["RepositoryKey"] = 2 });
 
