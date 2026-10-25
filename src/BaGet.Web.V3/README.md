@@ -37,7 +37,7 @@ new BaGetEndpointBuilder().MapEndpoints(app);
 
 Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup`). Hosts on the generic host can call
 `hostBuilder.UseBaGet(configure)` instead of `AddBaGetWebApplication`. The complete reference host is
-`Program.ConfigureServices` / `ConfigurePipeline` in `Extension.BaGet`.
+`Program.BuildApplication` in `Extension.BaGet` (`AddBaGetHost` / `UseBaGetPipeline`, under `src/BaGet/Hosting`).
 
 | Item | Role |
 |---|---|

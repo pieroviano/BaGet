@@ -25,13 +25,15 @@ Dependencies point inwards: every project references `BaGet.Core`; only the host
 
 ## Startup — `src/BaGet/Program.cs`
 
+`Program` holds `Main` and `BuildApplication`; each step is an extension method in `src/BaGet/Hosting/`.
+
 | Step | What happens |
 |---|---|
-| `Main` | McMaster `CommandLineApplication`: `import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password/promote/demote`; the default command runs migrations (while `RunMigrationsAtStartup` is on), promotes initial administrators and runs the host. Unknown arguments pass through to the host. |
-| `ConfigureConfiguration` | `BAGET_CONFIG_ROOT` base path; inserts `appsettings.Overrides.json` (written by the Settings page) after `appsettings*.json`, before environment variables and the command line. |
-| `ConfigureServices` | Options binding and validation (`AddBaGetOptions<T>`), web app, accounts, provider registration (`app.AddXyz()` per subsystem). |
+| `Main` | McMaster `CommandLineApplication`: `import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password/promote/demote/approve` (`AddBaGetCommands`); the default command runs migrations (while `RunMigrationsAtStartup` is on), promotes initial administrators and runs the host. Unknown arguments pass through to the host. |
+| `AddBaGetSettingsOverrides` | `BAGET_CONFIG_ROOT` base path; inserts `appsettings.Overrides.json` (written by the Settings page) after `appsettings*.json`, before environment variables and the command line. |
+| `AddBaGetHost` | Options binding and validation (`AddBaGetOptions<T>`), web app, accounts, provider registration (`app.AddXyz()` per subsystem). |
 | `AddBaGetWebApplication` | Registers controllers, Razor Pages (`/packages` is also routed to the index page; every repository page also at `/r/{repo}/…`, see below), the catalog and validation services and `StagingSweepWorker`; `AddBaGetApplicationParts` adds every BaGet assembly with controllers or pages (`Web`, `Web.V2`, `Catalog`, `Validation`, `Identity`) as an MVC application part, so a host built without the Web SDK (e.g. a worker service calling `BaGet.Program.Main`) still serves them. A new such assembly must be added there. |
-| `ConfigurePipeline` | Middleware (below), then `BaGetEndpointBuilder.MapEndpoints`. |
+| `UseBaGetPipeline` | Middleware (below), then `BaGetEndpointBuilder.MapEndpoints`. |
 
 Some configuration is read **while registering services** (e.g. `Accounts:Enabled`, `Email`, provider types),
 so those settings need a restart; options read through `IOptionsSnapshot` apply live.
@@ -64,7 +66,7 @@ and takes the first non-null answer; each provider decides from configuration.
 | Search (`ISearchService`, `ISearchIndexer`) | `Search:Type` | Database, AzureSearch, Null |
 
 New implementation: register a provider in `DependencyInjectionExtensions.Providers.cs` and an `app.AddXyz()`
-in `Program.ConfigureBaGetApplication`.
+in `HostServiceCollectionExtensions.AddBaGetProviders` (`src/BaGet/Hosting`).
 
 ## Endpoints
 

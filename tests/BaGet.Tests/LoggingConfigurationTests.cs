@@ -81,7 +81,7 @@ public class LoggingConfigurationTests : IDisposable
             { "Serilog:WriteTo:2:Args:path", "not-a-file" },
         });
 
-        Program.ResolveLogFilePaths(configuration, root);
+        configuration.ResolveLogFilePaths(root);
 
         Assert.Equal(Path.Combine(root, "logs", "named-.log"), configuration["Serilog:WriteTo:File:Args:path"]);
         Assert.Equal(Path.Combine(root, "logs", "array-.log"), configuration["Serilog:WriteTo:0:Args:path"]);
@@ -104,7 +104,7 @@ public class LoggingConfigurationTests : IDisposable
             { "Serilog:WriteTo:3:Name", "File" },
         });
 
-        Program.DisableSinks(configuration);
+        configuration.DisableSinks();
 
         Assert.Equal("", configuration["Serilog:WriteTo:Console:Name"]);
         Assert.Equal("File", configuration["Serilog:WriteTo:File:Name"]);
@@ -233,7 +233,7 @@ public class LoggingConfigurationTests : IDisposable
         var sink = new CapturingSink();
         var loggerConfiguration = new LoggerConfiguration();
 
-        Program.ApplyDefaultMinimumLevels(loggerConfiguration);
+        loggerConfiguration.ApplyDefaultMinimumLevels();
         loggerConfiguration.ReadFrom.Configuration(configuration).WriteTo.Sink(sink);
         sink.Logger = loggerConfiguration.CreateLogger();
         return sink;

@@ -149,7 +149,7 @@ public class PathBaseIntegrationTests : IDisposable
     [InlineData("/nuget/feed", "/nuget/feed")]
     public void NormalizePathBaseMapsConfiguredValues(string? configured, string expected)
     {
-        Assert.Equal(expected, BaGet.Program.NormalizePathBase(configured).Value ?? "");
+        Assert.Equal(expected, configured.NormalizePathBase().Value ?? "");
     }
 
     public void Dispose()

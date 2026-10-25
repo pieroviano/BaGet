@@ -106,17 +106,19 @@ Storage, database, search and indexing are each resolved through `IProvider<TSer
 the first non-null, each provider deciding from configuration (`Database:Type`, `Storage:Type`,
 `Search:Type`). To add an implementation, register a provider in
 `src/BaGet.Core/Extensions/DependencyInjectionExtensions.Providers.cs` and an
-`app.AddXyz()` in `Program.ConfigureBaGetApplication` — do not resolve concrete types directly.
+`app.AddXyz()` in `HostServiceCollectionExtensions.AddBaGetProviders` (`src/BaGet/Hosting`) — do not resolve concrete types directly.
 
 ### Entry point: minimal hosting
 
-`src/BaGet/Program.cs` holds everything (there is no `Startup`): `BuildApplication` runs
-`ConfigureConfiguration` / `ConfigureWebHost` / `ConfigureServices`, then `ConfigurePipeline`.
+`src/BaGet/Program.cs` is the entry point (there is no `Startup`); its building blocks are extension methods in `internal static` classes under
+`src/BaGet/Hosting/`. `BuildApplication` runs `AddBaGetSettingsOverrides` / `AddBaGetLogging` / `AddBaGetTelemetry` / `ConfigureBaGetWebHost` /
+`AddBaGetHost`, then `UseBaGetPipeline`; `Main` adds the commands with `AddBaGetCommands` (`HostCommandLineExtensions`) and runs
+`BootstrapAdministratorsAsync` before the host.
 `Main` wraps it in a McMaster `CommandLineApplication` (`import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password|promote|demote|approve <user>`), which
 is configured to **collect unrecognised arguments** so host arguments like `--environment` pass
 through.
 
-**Settings overrides file.** `ConfigureConfiguration` inserts `appsettings.Overrides.json` (path from
+**Settings overrides file.** `AddBaGetSettingsOverrides` (`HostConfigurationExtensions`) inserts `appsettings.Overrides.json` (path from
 `SettingsOverridesPath`, default in the content root / `BAGET_CONFIG_ROOT`) after the last `appsettings*.json`
 source and before environment variables and the command line. `SettingsService` /
 `SettingsOverridesStore` (`BaGet.Core`) write it; `AddBaGetOptions` records every options type as a
@@ -412,7 +414,7 @@ duplicates in unique indexes and keys (columns `NOCASE`/`citext`/`*_ci`, else th
 
 ### Logging
 
-The host (and only the host) uses Serilog: `Program.ConfigureLogging` clears the Microsoft providers and calls
+The host (and only the host) uses Serilog: `AddBaGetLogging` (`HostLoggingExtensions`) clears the Microsoft providers and calls
 `AddSerilog(... ReadFrom.Configuration ... , writeToProviders: true)`, so the `Serilog` section of `appsettings.json`
 is the one source of truth for levels and sinks (`SerilogOptions` lists `MinimumLevel:Default` and `EventLog:*` on the Settings page; `MinimumLevel:Override` levels have their own *Log levels per source* panel there (`SettingsService.GetLogLevelOverrides`/`SetLogLevelOverrideAsync`, rules in `LogLevelOverrides`: remove only what the overrides file holds); sinks stay file/env only) (Console, File `logs/baget-.log`, resolved against the content
 root / `BAGET_CONFIG_ROOT` for every File sink by `ResolveLogFilePaths`). `ApplyDefaultMinimumLevels` sets a code floor
@@ -439,7 +441,7 @@ records the exception type only (`Fail`). `TelemetryOptions` (`Telemetry:*`, liv
 (`Validate()`, called from `ConfigureBaGetOptions`). Tests listen with `DiagnosticsCapture` (linked into `BaGet.Tests`);
 the sources are process-wide, so tests that count measurements join its `Diagnostics` collection (runs alone).
 
-**Export (host only, `src/BaGet/Telemetry`).** `AddBaGetTelemetry` (called from `BuildApplication` next to `ConfigureLogging`)
+**Export (host only, `src/BaGet/Telemetry`).** `AddBaGetTelemetry` (called from `BuildApplication` next to `AddBaGetLogging`)
 always builds the providers; whether anything is exported is decided live from `IOptionsMonitor<TelemetryOptions>`
 (`AddBaGetOptions` has no change token, so it registers a `ConfigurationChangeTokenSource` for `Telemetry`):
 `DynamicSampler` drops everything unless `Enabled` and a traces endpoint are set, then `ParentBased(TraceIdRatio)`;
@@ -447,7 +449,7 @@ always builds the providers; whether anything is exported is decided live from `
 real OTLP exporter in a `SwappableHolder<T>` (lease counted: a swap never waits for or cuts an export, the old exporter is
 disposed once after its last lease, `ForceFlush` / `Shutdown` reach the current one) and rebuild only when
 `TelemetryEndpoints.Key` changes (endpoint, protocol, headers, timeout, level), since every configuration reload fires
-`OnChange`. Off = no inner exporter, no connection. Logs are a Serilog sink (added in `ConfigureLogging`), **not** an
+`OnChange`. Off = no inner exporter, no connection. Logs are a Serilog sink (added in `AddBaGetLogging`), **not** an
 `ILoggerProvider` (`writeToProviders` would export each event twice); it carries `TraceId`/`SpanId`, applies
 `Logs:MinimumLevel`, ignores `Grpc.Net.Client` / `System.Net.Http` events (feedback loop) and sees only what the Serilog
 levels let through. Traces use `Otlp:Endpoint`; metrics and logs only their own endpoint (Jaeger takes traces only); with
