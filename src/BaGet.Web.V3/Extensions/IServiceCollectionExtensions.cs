@@ -6,7 +6,7 @@ using BaGet.Core;
 using BaGet.Identity;
 using BaGet.Validation;
 using BaGet.Web;
-using BaGet.Web.V2;
+using BaGet.Web.V2.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;

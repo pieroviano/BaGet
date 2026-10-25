@@ -5,8 +5,10 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using BaGet.Web.V2.Controllers;
+using BaGet.Web.V2.Models;
 
-namespace BaGet.Web.V2;
+namespace BaGet.Web.V2.Services;
 
 /// <summary>
 /// Writes the Atom documents the NuGet V2 protocol is built on.

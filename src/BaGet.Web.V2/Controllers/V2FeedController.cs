@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Web.V2.Models;
+using BaGet.Web.V2.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 using NuGet.Versioning;
 
-namespace BaGet.Web.V2;
+namespace BaGet.Web.V2.Controllers;
 
 /// <summary>
 /// The NuGet V2 (OData) feed, for clients that cannot speak V3: "nuget list",

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BaGet.Core;
 
-namespace BaGet.Web.V2;
+namespace BaGet.Web.V2.Models;
 
 /// <summary>
 /// A package as the V2 protocol describes it. The V2 entity carries a flatter set of
