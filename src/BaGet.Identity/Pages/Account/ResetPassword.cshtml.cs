@@ -1,75 +1,42 @@
-using System.Linq;
-using System.ComponentModel.DataAnnotations;
+using System;
 using System.Threading.Tasks;
+using BaGet.Identity.ViewModels;
+using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Pages.Account;
 
+/// <summary>
+/// The page model of the reset-password page (the target of the link in a reset email) when it was a Razor Page.
+/// </summary>
+/// <remarks>
+/// Kept as a shim (no breaking change of the public API); <c>AccountController</c> serves <c>/account/resetpassword</c> and delegates
+/// to the same <c>ResetPasswordWorkflow</c>.
+/// </remarks>
+[Obsolete("The reset-password screen is served by AccountController; this page model has no page any more and will be removed in the next major version.")]
 public class ResetPasswordModel : AccountPageModel
 {
-    private const string InvalidLink = "This link is invalid, expired or already used.";
+    private readonly ResetPasswordViewModel _state = new ResetPasswordViewModel();
 
     protected override bool RequiresEmail => true;
 
     [BindProperty(SupportsGet = true)]
-    public string? UserId { get; set; }
+    public string? UserId { get => _state.UserId; set => _state.UserId = value; }
 
     [BindProperty(SupportsGet = true)]
-    public string? Code { get; set; }
+    public string? Code { get => _state.Code; set => _state.Code = value; }
 
     [BindProperty]
-    [Required]
-    [DataType(DataType.Password)]
-    [Display(Name = "New password")]
-    public string? Password { get; set; }
+    public string? Password { get => _state.Password; set => _state.Password = value; }
 
     [BindProperty]
-    [Required]
-    [DataType(DataType.Password)]
-    [Display(Name = "Confirm password")]
-    [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
-    public string? ConfirmPassword { get; set; }
+    public string? ConfirmPassword { get => _state.ConfirmPassword; set => _state.ConfirmPassword = value; }
 
-    public string? Error { get; private set; }
+    public string? Error => _state.Error;
 
-    public bool LinkIsUsable => !string.IsNullOrEmpty(UserId) && !string.IsNullOrEmpty(Code);
+    public bool LinkIsUsable => _state.LinkIsUsable;
 
-    public void OnGet()
-    {
-        if (!LinkIsUsable) Error = "This link is invalid.";
-    }
+    public void OnGet() => new ResetPasswordWorkflow(Screen).Show(_state);
 
-    public async Task<IActionResult> OnPostAsync()
-    {
-        if (!ModelState.IsValid) return Page();
-
-        #pragma warning disable CS8604
-        var user = LinkIsUsable ? await UserManager.FindByIdAsync(UserId) : null;
-        #pragma warning restore CS8604
-        var token = LinkIsUsable ? DecodeToken(Code) : null;
-        if (user == null || token == null)
-        {
-            Error = InvalidLink;
-            return Page();
-        }
-
-        #pragma warning disable CS8604
-        var result = await UserManager.ResetPasswordAsync(user, token, Password);
-        #pragma warning restore CS8604
-        if (!result.Succeeded)
-        {
-            Error = result.Errors.Any(e => e.Code == nameof(Microsoft.AspNetCore.Identity.IdentityErrorDescriber.InvalidToken))
-                ? InvalidLink
-                : Describe(result);
-            return Page();
-        }
-
-        // The link went to this address and was followed, which confirms it.
-        if (!user.EmailConfirmed && !string.IsNullOrEmpty(user.Email))
-        {
-            await UserManager.ConfirmEmailAsync(user, await UserManager.GenerateEmailConfirmationTokenAsync(user));
-        }
-
-        return RedirectToPage("/Account/Login");
-    }
+    public async Task<IActionResult> OnPostAsync() => OutcomeResult(await new ResetPasswordWorkflow(Screen).PostAsync(_state));
 }

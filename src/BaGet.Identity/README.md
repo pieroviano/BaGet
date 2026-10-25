@@ -44,6 +44,8 @@ The web UI is moving from Razor Pages to controllers and views without changing 
 | `UiControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`), `RequestedHandler` |
 | `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | The controller counterparts of the page-model bases (`AccountPageModel`, `AdminPageModel`, `AccessPageModel`, `RepositoryPageModel`, `RetentionPageModel`, `ReplicationPageModel`) with the same checks in the same order; the page-model bases remain for pages not migrated yet and for compatibility |
 
+Migrated: the account screens. `AccountController` (sign-in side), `AccountSettingsController` (settings, two-factor, API keys), `AccountOrganizationsController`, `AccountPackagesController` (my packages, my access, own profile) and `ProfileController` replace the `Pages/Account` and `Pages/Profiles` pages. Their rules live in `Workflows/` (`internal`, one per screen, built from an `AccountScreen`), shared with the `[Obsolete]` page-model shims that keep every public type; view models are in `ViewModels/`, views in `Views/Account*` and `Views/Profile`. `RequiresEmailAttribute` / `RequiresSignInAttribute` set the base checks per action.
+
 Partials and the layout live in `Views/Shared` (the old `Pages/...` paths forward to them); a host overrides a view with its own
 `Views/<Controller>/<Action>.cshtml`.
 

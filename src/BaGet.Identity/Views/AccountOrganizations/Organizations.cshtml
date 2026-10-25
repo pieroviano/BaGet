@@ -1,5 +1,4 @@
-@page
-@model BaGet.Identity.Pages.Account.OrganizationsModel
+@model BaGet.Identity.ViewModels.OrganizationsViewModel
 @{
     ViewData["Title"] = "Organizations";
 }
@@ -25,7 +24,7 @@
                         <td>
                             @if (organization.IsAdmin || member.UserName == User.Identity?.Name)
                             {
-                                <form method="post" asp-page-handler="RemoveMember">
+                                <form method="post" asp-page="/Account/Organizations" asp-page-handler="RemoveMember">
                                     <input type="hidden" name="organization" value="@organization.Name" />
                                     <input type="hidden" name="userName" value="@member.UserName" />
                                     <button type="submit" class="btn btn-default btn-xs">Remove</button>
@@ -39,7 +38,7 @@
 
         @if (organization.IsAdmin)
         {
-            <form method="post" asp-page-handler="AddMember" class="form-inline">
+            <form method="post" asp-page="/Account/Organizations" asp-page-handler="AddMember" class="form-inline">
                 <input type="hidden" name="organization" value="@organization.Name" />
                 <input type="text" name="userName" class="form-control" placeholder="User name" />
                 <label><input type="checkbox" name="isAdmin" value="true" /> Administrator</label>
@@ -49,7 +48,7 @@
     }
 
     <h2>Create an organization</h2>
-    <form method="post" asp-page-handler="Create" class="form-inline">
+    <form method="post" asp-page="/Account/Organizations" asp-page-handler="Create" class="form-inline">
         <input type="text" name="name" class="form-control" placeholder="Name" />
         <button type="submit" class="btn btn-primary">Create</button>
     </form>

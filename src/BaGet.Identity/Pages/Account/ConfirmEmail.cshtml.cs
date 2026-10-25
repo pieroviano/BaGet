@@ -1,50 +1,33 @@
+using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+using BaGet.Identity.ViewModels;
+using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Pages.Account;
 
 /// <summary>
-/// The target of the links in confirmation emails: a new account's address, or, when
+/// The page model of the target of the links in confirmation emails when it was a Razor Page: a new account's address, or, when
 /// <c>email</c> is present, a change of address.
 /// </summary>
+/// <remarks>
+/// Kept as a shim (no breaking change of the public API); <c>AccountController</c> serves <c>/account/confirmemail</c> and delegates to
+/// the same <c>ConfirmEmailWorkflow</c>.
+/// </remarks>
+[Obsolete("The email confirmation is served by AccountController; this page model has no page any more and will be removed in the next major version.")]
 public class ConfirmEmailModel : AccountPageModel
 {
+    private readonly ConfirmEmailViewModel _state = new ConfirmEmailViewModel();
+
     protected override bool RequiresEmail => true;
 
-    public bool Succeeded { get; private set; }
+    public bool Succeeded => _state.Succeeded;
 
-    public bool EmailChanged { get; private set; }
+    public bool EmailChanged => _state.EmailChanged;
 
     /// <summary>Whether the account still waits for an administrator (<c>Accounts:RequireApproval</c>) after the confirmation.</summary>
-    public bool PendingApproval { get; private set; }
+    public bool PendingApproval => _state.PendingApproval;
 
     public async Task<IActionResult> OnGetAsync(string userId, string code, string email)
-    {
-        var user = string.IsNullOrEmpty(userId) ? null : await UserManager.FindByIdAsync(userId);
-        var token = string.IsNullOrEmpty(code) ? null : DecodeToken(code);
-        if (user == null || token == null) return Page();
-
-        IdentityResult result;
-        if (string.IsNullOrEmpty(email))
-        {
-            result = await UserManager.ConfirmEmailAsync(user, token);
-        }
-        else
-        {
-            result = await UserManager.ChangeEmailAsync(user, email, token);
-            EmailChanged = result.Succeeded;
-        }
-
-        Succeeded = result.Succeeded;
-        PendingApproval = Succeeded && user.PendingApproval;
-
-        // The security stamp changed with the address; keep the session of the same user.
-        if (Succeeded && User.Identity?.IsAuthenticated == true && UserManager.GetUserId(User) == user.Id)
-        {
-            await SignInManager.RefreshSignInAsync(user);
-        }
-
-        return Page();
-    }
+        => OutcomeResult(await new ConfirmEmailWorkflow(Screen).ConfirmAsync(_state, userId, code, email));
 }

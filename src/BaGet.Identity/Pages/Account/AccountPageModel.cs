@@ -76,6 +76,14 @@ public abstract class AccountPageModel : PageModel
         base.OnPageHandlerExecuting(context);
     }
 
+    private AccountScreen? _screen;
+
+    /// <summary>The request as the account workflows see it (the shims of the migrated pages delegate to them).</summary>
+    internal AccountScreen Screen => _screen ??= new AccountScreen(HttpContext, Url, ModelState);
+
+    /// <summary>Turns a workflow's decision into this page model's result (the shims of the migrated pages).</summary>
+    internal IActionResult OutcomeResult(ScreenOutcome outcome) => outcome.ToResult(Url, () => Page());
+
     /// <summary>
     /// Only follow a local return URL, so a sign-in link cannot redirect elsewhere.
     /// </summary>

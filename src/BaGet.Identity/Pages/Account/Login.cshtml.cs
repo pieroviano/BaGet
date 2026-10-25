@@ -1,34 +1,35 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Core;
+using BaGet.Identity.ViewModels;
+using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity.Pages.Account;
 
+/// <summary>
+/// The page model of the sign-in page when it was a Razor Page.
+/// </summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <c>AccountController</c> serves <c>/account/login</c> and delegates to the same <c>LoginWorkflow</c>.
+/// </remarks>
+[Obsolete("The sign-in screen is served by AccountController; this page model has no page any more and will be removed in the next major version.")]
 public class LoginModel : AccountPageModel
 {
-    [BindProperty]
-    [Required]
-    [Display(Name = "User name")]
-    public string? UserName { get; set; }
+    private readonly LoginViewModel _state = new LoginViewModel();
 
     [BindProperty]
-    [Required]
-    [DataType(DataType.Password)]
-    public string? Password { get; set; }
+    public string? UserName { get => _state.UserName; set => _state.UserName = value; }
 
     [BindProperty]
-    [Display(Name = "Remember me")]
-    public bool RememberMe { get; set; }
+    public string? Password { get => _state.Password; set => _state.Password = value; }
+
+    [BindProperty]
+    public bool RememberMe { get => _state.RememberMe; set => _state.RememberMe = value; }
 
     [BindProperty(SupportsGet = true)]
-    public string? ReturnUrl { get; set; }
+    public string? ReturnUrl { get => _state.ReturnUrl; set => _state.ReturnUrl = value; }
 
     public bool AllowRegistration => Accounts.AllowRegistration;
 
@@ -36,239 +37,24 @@ public class LoginModel : AccountPageModel
 
     public string ExternalProviderName => Accounts.OpenIdConnect.DisplayName;
 
-    public string? Error { get; set; }
+    public string? Error { get => _state.Error; set => _state.Error = value; }
 
-    public string? Notice { get; set; }
+    public string? Notice { get => _state.Notice; set => _state.Notice = value; }
+
+    public bool EmailIsConfigured => EmailConfigured;
 
     public void OnGet()
     {
     }
 
-    public async Task<IActionResult> OnPostAsync()
-    {
-        if (!ModelState.IsValid) return Page();
+    public async Task<IActionResult> OnPostAsync() => OutcomeResult(await new LoginWorkflow(Screen).PostAsync(_state));
 
-        #pragma warning disable CS8604
-        var result = await SignInManager.PasswordSignInAsync(UserName, Password, RememberMe, lockoutOnFailure: true);
-        #pragma warning restore CS8604
-        if (result.Succeeded)
-        {
-            return RedirectToLocal(ReturnUrl);
-        }
-
-        if (result.RequiresTwoFactor)
-        {
-            return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl, RememberMe });
-        }
-
-        if (result.IsNotAllowed && await FindPendingAsync() is not null)
-        {
-            // For an account awaiting approval the sign-in manager answers "not allowed" only to the right password
-            // (a wrong one is a counted failure, a locked-out account answers "locked out"), so this message is
-            // shown to the right password only and never reads like an unconfirmed email.
-            Error = PendingMessage;
-
-            return Page();
-        }
-
-        Error = result.IsLockedOut
-            ? "The account is locked after too many failed attempts. Try again later."
-            : result.IsNotAllowed
-                ? "Confirm your email address before signing in. Use the link we sent you, or reset your password."
-                : "The user name or password is incorrect.";
-
-        return Page();
-    }
-
-    private const string PendingMessage = "Your account is waiting for an administrator to enable it. Try again once it has been approved.";
-
-    private async Task<BaGetUser?> FindPendingAsync()
-    {
-        if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(Password)) return null;
-
-        var user = await UserManager.FindByNameAsync(UserName);
-
-        return user is { PendingApproval: true } ? user : null;
-    }
-
-    public bool EmailIsConfigured => EmailConfigured;
-
-    public IActionResult OnPostExternal()
-    {
-        if (!HasExternalProvider) return NotFound();
-
-        var callback = Url.Page("/Account/Login", "Callback", new { ReturnUrl });
-        var properties = SignInManager.ConfigureExternalAuthenticationProperties(
-            AccountsServiceCollectionExtensions.OpenIdConnectScheme,
-            callback);
-
-        return Challenge(properties, AccountsServiceCollectionExtensions.OpenIdConnectScheme);
-    }
+    public IActionResult OnPostExternal() => OutcomeResult(new LoginWorkflow(Screen).External(_state));
 
     /// <summary>
     /// The provider has signed the user in. The first time, an account is created for
     /// them: the provider is the gate, so this does not depend on AllowRegistration.
     /// </summary>
     public async Task<IActionResult> OnGetCallbackAsync(CancellationToken cancellationToken)
-    {
-        var info = await SignInManager.GetExternalLoginInfoAsync();
-        if (info == null)
-        {
-            Error = "The external sign-in failed.";
-            return Page();
-        }
-
-        var result = await SignInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
-        if (result.Succeeded)
-        {
-            return RedirectToLocal(ReturnUrl);
-        }
-
-        if (result.RequiresTwoFactor)
-        {
-            return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl });
-        }
-
-        if (result.IsLockedOut)
-        {
-            Error = "The account is locked after too many failed attempts. Try again later.";
-            return Page();
-        }
-
-        if (result.IsNotAllowed)
-        {
-            // This provider login already belongs to an account, which cannot sign in yet
-            // (its email is unconfirmed). Never make another account for it.
-            var existing = await UserManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-            if (existing is { PendingApproval: true })
-            {
-                Error = PendingMessage;
-
-                return Page();
-            }
-
-            if (existing != null && await TrySendConfirmationAsync(existing))
-            {
-                Notice = "Confirm your email address before signing in. We sent you a new confirmation link.";
-            }
-            else
-            {
-                Error = "Confirm your email address before signing in. Use the link we sent you, or reset your password.";
-            }
-
-            return Page();
-        }
-
-        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-        if (EmailConfigured && string.IsNullOrWhiteSpace(email))
-        {
-            Error = "The external account has no email address, which this server needs to confirm accounts.";
-            return Page();
-        }
-
-        var name = await ChooseUserNameAsync(info.Principal, cancellationToken);
-        if (name == null)
-        {
-            Error = "The external account has no usable name.";
-            return Page();
-        }
-
-        var user = new BaGetUser
-        {
-            UserName = name,
-            Email = email,
-
-            // Only an address the provider vouches for is confirmed; any other must be
-            // proven by following a link, like one typed into the registration form.
-            EmailConfirmed = !string.IsNullOrWhiteSpace(email) && ProviderVerifiedEmail(info.Principal),
-            Created = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow,
-            PendingApproval = Accounts.RequireApproval,
-        };
-
-        var created = await UserManager.CreateAsync(user);
-        if (created.Succeeded)
-        {
-            created = await UserManager.AddLoginAsync(user, info);
-        }
-
-        if (!created.Succeeded)
-        {
-            // Do not leave an account behind that has no login to reach it.
-            if (user.Id != null && await UserManager.FindByIdAsync(user.Id) != null) await UserManager.DeleteAsync(user);
-
-            Error = string.Join(" ", created.Errors.Select(e => e.Description));
-            return Page();
-        }
-
-        if (user.PendingApproval)
-        {
-            // Approval does not replace the address check: send the link now, so approving is the last step.
-            if (EmailConfigured && !user.EmailConfirmed) await TrySendConfirmationAsync(user);
-
-            Notice = "Your account was created. An administrator must enable it before you can sign in.";
-
-            return Page();
-        }
-
-        if (EmailConfigured && !user.EmailConfirmed)
-        {
-            Notice = await TrySendConfirmationAsync(user)
-                ? "Your account was created. Confirm your email address with the link we sent you, then sign in again."
-                : "Your account was created, but we could not send the confirmation email. Use \"Forgot password\" to get a link later.";
-            return Page();
-        }
-
-        await SignInManager.SignInAsync(user, isPersistent: false);
-
-        return RedirectToLocal(ReturnUrl);
-    }
-
-    private static bool ProviderVerifiedEmail(ClaimsPrincipal principal)
-        => bool.TryParse(principal.FindFirstValue("email_verified"), out var verified) && verified;
-
-    private async Task<bool> TrySendConfirmationAsync(BaGetUser user)
-    {
-        if (!EmailConfigured || string.IsNullOrEmpty(user.Email) || user.EmailConfirmed) return false;
-
-        try
-        {
-            var token = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            var link = PageLink("/Account/ConfirmEmail", new { userId = user.Id, code = EncodeToken(token) });
-            await EmailSender.SendConfirmationLinkAsync(user, user.Email, link);
-
-            return true;
-        }
-        catch (Exception e)
-        {
-            HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LoginModel>>()
-                .LogError(e, "Could not send a confirmation link.");
-
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// The provider's preferred user name, else the email's local part, made unique
-    /// across users and organizations by a numeric suffix.
-    /// </summary>
-    private async Task<string?> ChooseUserNameAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
-    {
-        var candidate = principal.FindFirstValue("preferred_username")
-                        ?? principal.FindFirstValue(ClaimTypes.Email)?.Split('@')[0]
-                        ?? principal.FindFirstValue(ClaimTypes.Name);
-
-        if (string.IsNullOrWhiteSpace(candidate)) return null;
-
-        var allowed = UserManager.Options.User.AllowedUserNameCharacters;
-        candidate = new string(candidate.Where(c => allowed.Contains(c)).ToArray());
-        if (candidate.Length == 0) return null;
-
-        var name = candidate;
-        for (var suffix = 2; await Ownership.AccountExistsAsync(name, cancellationToken); suffix++)
-        {
-            name = candidate + suffix;
-        }
-
-        return name;
-    }
+        => OutcomeResult(await new LoginWorkflow(Screen).CallbackAsync(_state, cancellationToken));
 }

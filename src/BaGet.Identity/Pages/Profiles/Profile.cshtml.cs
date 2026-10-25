@@ -1,108 +1,43 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Pages.Account;
+using BaGet.Identity.ViewModels;
+using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Pages.Profiles;
 
 /// <summary>
-/// A user's or an organization's public page: the packages it owns.
+/// The page model of a user's or an organization's public page when it was a Razor Page: the packages it owns.
 /// </summary>
+/// <remarks>
+/// Kept as a shim (no breaking change of the public API); <c>ProfileController</c> serves <c>/profiles/{name}</c> (and under
+/// <c>/r/{repo}/</c>) and delegates to the same <c>ProfileWorkflow</c>.
+/// </remarks>
+[Obsolete("The profile screen is served by ProfileController; this page model has no page any more and will be removed in the next major version.")]
 public class ProfileModel : AccountPageModel
 {
+    private readonly ProfileViewModel _state = new ProfileViewModel();
+
     [BindProperty(SupportsGet = true)]
-    public string? Name { get; set; }
+    public string? Name { get => _state.Name; set => _state.Name = value; }
 
-    public bool IsOrganization { get; private set; }
+    public bool IsOrganization => _state.IsOrganization;
 
-    public IReadOnlyList<PackageDownloads> Packages { get; private set; } = Array.Empty<PackageDownloads>();
+    public IReadOnlyList<PackageDownloads> Packages => _state.Packages;
 
-    public IReadOnlyList<string?> Members { get; private set; } = Array.Empty<string>();
+    public IReadOnlyList<string?> Members => _state.Members;
 
-    public bool IsCurrentUser { get; private set; }
+    public bool IsCurrentUser => _state.IsCurrentUser;
 
     /// <summary>
     /// The account's avatar address, or null when Gravatar is off.
     /// </summary>
-    public string? AvatarUrl { get; private set; }
+    public string? AvatarUrl => _state.AvatarUrl;
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
-    {
-        var context = HttpContext.RequestServices.GetRequiredService<IContext>();
-        #pragma warning disable CS8604
-        var user = await UserManager.FindByNameAsync(Name);
-        #pragma warning restore CS8604
-
-        IReadOnlyList<string?> ids;
-        if (user != null)
-        {
-            Name = user.UserName;
-            IsCurrentUser = User.Identity?.IsAuthenticated == true && UserManager.GetUserId(User) == user.Id;
-
-            // Only the packages owned in the user's own name: an organization's are on its page.
-            #pragma warning disable CS8602
-            var lowerName = user.UserName.ToLowerInvariant();
-            #pragma warning disable CS8604
-            ids = await context.PackageOwners
-                .AsNoTracking()
-                .Where(o => o.OwnerName.ToLower() == lowerName)
-                .Select(o => o.PackageId)
-                .ToListAsync(cancellationToken);
-            #pragma warning restore CS8602, CS8604
-        }
-        else
-        {
-            var members = await Ownership.GetMembersAsync(Name, cancellationToken);
-            var lowerName = Name.ToLowerInvariant();
-            #pragma warning disable CS8602, CS8604
-            var organization = await context.Organizations.AsNoTracking().FirstOrDefaultAsync(o => o.Name.ToLower() == lowerName, cancellationToken);
-            #pragma warning restore CS8602, CS8604
-            if (organization == null) return NotFound();
-
-            Name = organization.Name;
-            IsOrganization = true;
-
-            var memberIds = members.Select(m => m.UserId).ToList();
-            Members = await context.Users
-                .AsNoTracking()
-                .Where(u => memberIds.Contains(u.Id))
-                .Select(u => u.UserName)
-                .OrderBy(n => n)
-                .ToListAsync(cancellationToken);
-
-            #pragma warning disable CS8602, CS8604
-            ids = await context.PackageOwners
-                .AsNoTracking()
-                .Where(o => o.OwnerName.ToLower() == lowerName)
-                .Select(o => o.PackageId)
-                .ToListAsync(cancellationToken);
-            #pragma warning restore CS8602, CS8604
-        }
-
-        var avatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
-            .GetUrlsAsync(new[] { Name }, 64, cancellationToken);
-        #pragma warning disable CS8620
-        AvatarUrl = avatars.GetValueOrDefault(Name);
-        #pragma warning restore CS8620
-
-        #pragma warning disable CS8602
-        var lowerIds = ids.Select(i => i.ToLowerInvariant()).Distinct().ToList();
-        #pragma warning disable CS8604
-        Packages = await context.Packages
-            .AsNoTracking()
-            .Where(p => lowerIds.Contains(p.Id.ToLower()))
-            .GroupBy(p => p.Id)
-            .Select(g => new PackageDownloads { Id = g.Key, Downloads = g.Sum(p => p.Downloads) })
-            .OrderBy(p => p.Id)
-            .ToListAsync(cancellationToken);
-        #pragma warning restore CS8602, CS8604
-
-        return Page();
-    }
+        => OutcomeResult(await new ProfileWorkflow(Screen).ShowAsync(_state, cancellationToken));
 }

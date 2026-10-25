@@ -1,5 +1,4 @@
-@page
-@model BaGet.Identity.Pages.Account.SettingsModel
+@model BaGet.Identity.ViewModels.SettingsViewModel
 @{
     ViewData["Title"] = "Account settings";
 }
@@ -62,7 +61,7 @@
             <span class="label @(Model.EmailConfirmed ? "label-success" : "label-warning")">@(Model.EmailConfirmed ? "confirmed" : "unconfirmed")</span>
         }
     </p>
-    <form method="post" asp-page-handler="ChangeEmail">
+    <form method="post" asp-page="/Account/Settings" asp-page-handler="ChangeEmail">
         <div class="form-group">
             <label for="newEmail">New email address</label>
             <input id="newEmail" name="newEmail" type="email" class="form-control" autocomplete="email" />
@@ -86,7 +85,7 @@
     </form>
 
     <h2>Password</h2>
-    <form method="post" asp-page-handler="ChangePassword">
+    <form method="post" asp-page="/Account/Settings" asp-page-handler="ChangePassword">
         @if (Model.HasPassword)
         {
             <div class="form-group">
@@ -117,7 +116,7 @@
         This removes your account, your API keys and your organization memberships, and cannot be undone.
         You cannot delete it while you are the only owner of a package.
     </p>
-    <form method="post" asp-page-handler="Delete">
+    <form method="post" asp-page="/Account/Settings" asp-page-handler="Delete">
         @if (Model.HasPassword)
         {
             <div class="form-group">

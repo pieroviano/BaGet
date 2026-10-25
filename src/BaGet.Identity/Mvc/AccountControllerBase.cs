@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
@@ -65,13 +66,15 @@ public abstract class AccountControllerBase : UiControllerBase
             return;
         }
 
-        if (RequiresEmail && !EmailConfigured)
+        var metadata = context.ActionDescriptor.EndpointMetadata ?? (System.Collections.Generic.IList<object>)Array.Empty<object>();
+
+        if ((RequiresEmail || metadata.OfType<RequiresEmailAttribute>().Any()) && !EmailConfigured)
         {
             context.Result = NotFound();
             return;
         }
 
-        if (RequiresSignIn && User.Identity?.IsAuthenticated != true)
+        if ((RequiresSignIn || metadata.OfType<RequiresSignInAttribute>().Any()) && User.Identity?.IsAuthenticated != true)
         {
             context.Result = Challenge();
             return;
@@ -79,6 +82,15 @@ public abstract class AccountControllerBase : UiControllerBase
 
         base.OnActionExecuting(context);
     }
+
+    private AccountScreen? _screen;
+
+    /// <summary>The request as the account workflows see it.</summary>
+    internal AccountScreen Screen => _screen ??= new AccountScreen(HttpContext, Url, ModelState);
+
+    /// <summary>Turns a workflow's decision into this controller's action result; <paramref name="view"/> renders the screen.</summary>
+    internal IActionResult Respond(ScreenOutcome outcome, string view, object? model = null)
+        => outcome.ToResult(Url, () => View(view, model));
 
     /// <summary>Only follow a local return URL, so a sign-in link cannot redirect elsewhere.</summary>
     protected IActionResult RedirectToLocal(string? returnUrl)

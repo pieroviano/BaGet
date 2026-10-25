@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.ViewModels;
+using BaGet.Identity.Workflows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
@@ -16,63 +18,38 @@ namespace BaGet.Identity.Pages.Account;
 /// the repositories the user may read (<see cref="IRepositoryAccess"/>); a repository where
 /// the user owns nothing is not listed.
 /// </summary>
+/// <remarks>
+/// The page is served by <c>AccountPackagesController</c> (it delegates to <c>AccountPackagesWorkflow</c>), so the page model's
+/// members are obsolete. The class itself is not: <see cref="OwnedPackage"/>, <see cref="RepositoryPackages"/>,
+/// <see cref="Summarise"/> and <see cref="ListVersionsAsync"/> are shared with the administrators' package pages and stay until
+/// those move.
+/// </remarks>
 public class PackagesModel : AccountPageModel
 {
+    private const string Superseded = "The My packages screen is served by AccountPackagesController; this member has no page any more and will be removed in the next major version.";
+
+    private readonly AccountPackagesViewModel _state = new AccountPackagesViewModel();
+
     protected override bool RequiresSignIn => true;
 
     /// <summary>The owned packages of each repository that has any, <c>default</c> first.</summary>
-    public IReadOnlyList<RepositoryPackages> Groups { get; private set; } = Array.Empty<RepositoryPackages>();
+    [Obsolete(Superseded)]
+    public IReadOnlyList<RepositoryPackages> Groups => _state.Groups;
 
     /// <summary>Whether the user owns nothing in any repository.</summary>
-    public bool IsEmpty => Groups.Count == 0;
+    [Obsolete(Superseded)]
+    public bool IsEmpty => _state.IsEmpty;
 
     /// <summary>
     /// Whether the list needs repository headings: more than the default repository holds packages of the user.
     /// </summary>
-    public bool ShowRepositoryNames => Groups.Any(g => !g.Repository.IsDefault);
+    [Obsolete(Superseded)]
+    public bool ShowRepositoryNames => _state.ShowRepositoryNames;
 
+    /// <summary>Lists the packages the user owns (the page itself is <c>AccountPackagesController.Packages</c>).</summary>
+    [Obsolete(Superseded)]
     public async Task OnGetAsync(CancellationToken cancellationToken)
-    {
-        var access = HttpContext.RequestServices.GetRequiredService<IRepositoryAccess>();
-        var scopes = HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>();
-        var userId = UserManager.GetUserId(User);
-        var groups = new List<RepositoryPackages>();
-
-        foreach (var repository in await access.ReadableAsync(User, cancellationToken))
-        {
-            // A scope pinned to the repository: ownership and packages are repository-scoped tables.
-            using var scope = scopes.CreateRepositoryScope(repository);
-
-            // Ownership, not the package table, decides what is listed: an ID whose every
-            // version was deleted is still the user's, and hiding it would hide the page
-            // where its owners are managed.
-            var ids = await scope.ServiceProvider.GetRequiredService<PackageOwnershipService>().GetOwnedPackageIdsAsync(
-                userId,
-                User.Identity?.Name,
-                cancellationToken);
-
-            if (ids == null || ids.Count == 0) continue;
-
-            if (repository.Format == RepositoryFormat.Npm)
-            {
-                groups.Add(new RepositoryPackages(repository, await SummariseNpmAsync(scope.ServiceProvider.GetRequiredService<INpmRegistry>(), ids, cancellationToken)));
-                continue;
-            }
-
-            if (repository.Format == RepositoryFormat.Maven)
-            {
-                groups.Add(new RepositoryPackages(repository, await SummariseMavenAsync(scope.ServiceProvider.GetRequiredService<IMavenRepository>(), ids, cancellationToken)));
-                continue;
-            }
-
-            groups.Add(new RepositoryPackages(
-                repository,
-                Summarise(ids, await ListVersionsAsync(
-                    scope.ServiceProvider.GetRequiredService<IContext>(), ids, cancellationToken))));
-        }
-
-        Groups = groups;
-    }
+        => await new AccountPackagesWorkflow(Screen).ShowAsync(_state, cancellationToken);
 
     /// <summary>
     /// Every owned ID's versions, in one query, projected to the four columns the page

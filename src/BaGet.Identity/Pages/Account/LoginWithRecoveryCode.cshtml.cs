@@ -1,47 +1,32 @@
-using System.ComponentModel.DataAnnotations;
+using System;
 using System.Threading.Tasks;
+using BaGet.Identity.ViewModels;
+using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Pages.Account;
 
 /// <summary>
-/// Second step of signing in with a recovery code instead of an authenticator code. Each
-/// code works once.
+/// The page model of the second step of signing in with a recovery code when it was a Razor Page. Each code works once.
 /// </summary>
+/// <remarks>
+/// Kept as a shim (no breaking change of the public API); <c>AccountController</c> serves <c>/account/loginwithrecoverycode</c> and
+/// delegates to the same <c>RecoveryCodeLoginWorkflow</c>.
+/// </remarks>
+[Obsolete("The recovery code step is served by AccountController; this page model has no page any more and will be removed in the next major version.")]
 public class LoginWithRecoveryCodeModel : AccountPageModel
 {
+    private readonly RecoveryCodeLoginViewModel _state = new RecoveryCodeLoginViewModel();
+
     [BindProperty]
-    [Required]
-    [Display(Name = "Recovery code")]
-    public string? RecoveryCode { get; set; }
+    public string? RecoveryCode { get => _state.RecoveryCode; set => _state.RecoveryCode = value; }
 
     [BindProperty(SupportsGet = true)]
-    public string? ReturnUrl { get; set; }
+    public string? ReturnUrl { get => _state.ReturnUrl; set => _state.ReturnUrl = value; }
 
-    public string? Error { get; private set; }
+    public string? Error => _state.Error;
 
-    public async Task<IActionResult> OnGetAsync()
-    {
-        if (await SignInManager.GetTwoFactorAuthenticationUserAsync() == null) return RedirectToPage("/Account/Login");
+    public async Task<IActionResult> OnGetAsync() => OutcomeResult(await new RecoveryCodeLoginWorkflow(Screen).ShowAsync());
 
-        return Page();
-    }
-
-    public async Task<IActionResult> OnPostAsync()
-    {
-        if (await SignInManager.GetTwoFactorAuthenticationUserAsync() == null) return RedirectToPage("/Account/Login");
-        if (!ModelState.IsValid) return Page();
-
-        #pragma warning disable CS8604
-        var result = await SignInManager.TwoFactorRecoveryCodeSignInAsync(RecoveryCode?.Replace(" ", string.Empty));
-        #pragma warning restore CS8604
-
-        if (result.Succeeded) return RedirectToLocal(ReturnUrl);
-
-        Error = result.IsLockedOut
-            ? "The account is locked after too many failed attempts. Try again later."
-            : "The recovery code is not valid, or was already used.";
-
-        return Page();
-    }
+    public async Task<IActionResult> OnPostAsync() => OutcomeResult(await new RecoveryCodeLoginWorkflow(Screen).PostAsync(_state));
 }
