@@ -34,7 +34,7 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 ## Screens: MVC controllers and views
 
 Every screen is a controller action and a view; the package ships **no `@page` file**. URLs, `?handler=` form posts, page names (`asp-page`,
-`Url.Page`, `RedirectToPage`) and every public type are unchanged from the Razor Pages era (plan: `docs/plans/razor-pages-to-mvc.md`);
+`Url.Page`, `RedirectToPage`) and every public type are unchanged from the Razor Pages era;
 the old page models are `[Obsolete]` shims in `Compat/Pages/` (removed in the next major version) over the same workflows.
 
 | Folder / type | Role |

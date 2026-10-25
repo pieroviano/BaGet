@@ -18,7 +18,7 @@ namespace BaGet.Identity.Mvc;
 /// <see cref="RepositoryPageAttribute"/>.
 /// </summary>
 /// <remarks>
-/// <para><b>How to migrate a page</b> (details in <c>docs/plans/razor-pages-to-mvc.md</c>): the page's
+/// <para><b>How to migrate a page</b>: the page's
 /// <c>@page "/x"</c> becomes <c>[Route("x")]</c>; <c>OnGet</c> becomes <c>[HttpGet, HttpHead, PageHandler]</c>; <c>OnPostX</c>
 /// becomes <c>[HttpPost, PageHandler("X")]</c> taking <c>[FromForm]</c>/<c>[FromQuery]</c> parameters instead of
 /// <c>[BindProperty]</c>; <c>return Page()</c> becomes <c>return View("Name", model)</c>; <c>[TempData]</c> properties stay

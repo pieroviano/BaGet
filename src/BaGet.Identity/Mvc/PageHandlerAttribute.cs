@@ -95,7 +95,8 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
         var verb = routeContext.HttpContext.Request.Method;
         if (HttpMethods.IsHead(verb)) verb = HttpMethods.Get;
 
-        var page = PageOf(controllerAction.MethodInfo);
+        // A descriptor built by hand may have no method: it then belongs to the whole controller.
+        var page = controllerAction.MethodInfo is { } method ? PageOf(method) : string.Empty;
 
         return !Siblings.GetOrAdd(controllerAction.ControllerTypeInfo.AsType(), NamedHandlersOf)
             .Any(h => (page.Length == 0 || h.Page.Length == 0 || h.Page == page)
