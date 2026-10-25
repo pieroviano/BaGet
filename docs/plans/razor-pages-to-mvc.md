@@ -27,6 +27,15 @@ What the snapshots record: **ui-routes** = per page name: lower-cased route temp
 | ReportAbuse | GET takes route values only (a bound model would show "required" errors on a plain GET); POST binds `ReportAbuseViewModel` |
 | Tests | `IndexModelFacts`/`PackageModelFacts` -> `IndexWorkflowFacts`/`PackageWorkflowFacts` + one shim smoke test each |
 
+### Wave 2, track mvc-admin-policies (done): Retention*, Scanning/Scan*, Replication*
+
+| Point | Result |
+|---|---|
+| Controllers | `AdminRetentionController` (`RetentionControllerBase`), `AdminScanningController` (`AccessControllerBase`), `AdminReplicationController` (`ReplicationControllerBase`); views in `Views/Admin{Retention,Scanning,Replication}/` |
+| Workflows | `RetentionWorkflow`, `ScanningWorkflow`, `ReplicationWorkflow` over `PolicyWorkflow : AdminWorkflow` (`ActAsync` mirrors the base; `ShowAsync` fills the confirmation inputs and means "render"); view models share `PolicyViewModel` (Message/Error, flashed by `Flash`) |
+| Shims | page models forward to the workflow; the inherited `Repositories`/`ProjectNames` and `Message`/`Error` of the page bases are refilled after each handler; `RetentionPageModel`/`ReplicationPageModel` are `[Obsolete]` |
+| Forms | `Form.*` binds with `[Bind(Prefix = "Form")]`; named-handler-only screens get an `[ImplicitPageHandler]` action; `asp-page-handler` forms also carry `asp-page` and `asp-route-key` |
+
 ### Wave 1, track mvc-manage (done): `Packages/*`
 
 | Point | Result |
