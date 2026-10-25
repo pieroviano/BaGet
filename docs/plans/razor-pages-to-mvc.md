@@ -1,7 +1,29 @@
 # Plan: Razor Pages → MVC (controllers + views), no breaking changes
 
-Status: **planned** (not started). Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
+Status: **wave 0 (`mvc-infra`) done** on `wt/mvc-infra`; waves 1-3 planned. Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
 `merge --ff-only` per track, max 5 agents at once (Sonnet implements, Opus reviews).
+
+### Wave 0 results
+
+| Check | Result |
+|---|---|
+| 1. `@addTagHelper *, BaGet.Web` | **Was broken**: `NavLinkTagHelper` did not apply (no `active` class on any header link; build and pages gave no error). Fixed to `BaGet.Web.V3` in its own commit, `NavLinkRenderingTests` |
+| 2. Contract snapshots | Committed on the unmigrated pages (`437fb8b`): `tests/BaGet.Tests/Contracts/{ui-routes,ui-forms,public-api}.txt` (LF, `.gitattributes`), tests `UiRouteContractTests`, `UiFormContractTests`, `PublicApiSnapshotTests`. Regenerate only with `BAGET_UPDATE_CONTRACTS=1` and only for a reviewed contract change |
+| 3. Razor Pages behaviours | Verified (tests): unknown `?handler=` renders the page with its default handler (`/stats?handler=NoSuchHandler` = 200; a named handler of another HTTP method does not hide the default); HEAD is answered by the GET handler; a POST without antiforgery token is 400 for **every** form of every page (`EveryPostWithoutAnAntiforgeryTokenIsRefused`, 3 callers). Page-model `OnPageHandlerExecuting` overrides run before the global `RepositoryPageFilter` (the model filter has order `int.MinValue`); controllers behave the same, so the bases override `OnActionExecuting`/`OnActionExecutionAsync` |
+
+What the snapshots record: **ui-routes** = per page name: lower-cased route template (twins, `/packages` alias, catch-alls, constraints), route order, `METHOD:handler` list (HEAD folded into GET; a controller action reports the same lines through `[LegacyPage]` + `[PageHandler]`).
+**ui-forms** = for `anonymous`/`user`/`admin` and ~190 addresses (every page, plus `/r/{repo}/` in a repository of each format, a remote, a virtual, a private and an unknown one): status, redirect target, `<title>`, every `<form>` (method, action with `?handler=`, field names/types, antiforgery token), every link to a BaGet page. Texts, hidden values, tokens, dates, ids are not recorded.
+**public-api** = one line per public type, base type, interface and public/protected member of `BaGet.Web.V3` and `BaGet.Identity`; a migration may add lines, never remove or change one.
+
+### How to migrate a page (for tracks of waves 1-3)
+
+1. **Logic first.** Move the page model's logic into `internal sealed class <Feature>Workflow` (scoped) so the controller and the `[Obsolete]` shim of the page model both call it. Keep the page model class (name, namespace, public constructor, properties, handler methods) as the shim; mark it and its `*Model` helpers `[Obsolete("... removed in the next major version")]`. Delete the `.cshtml` (`@page`).
+2. **Controller.** `public sealed class AdminUsersController : AdminControllerBase` (pick the base from `Mvc/`: `UiControllerBase` for public screens, `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase`), in `BaGet.Identity/Controllers` or `BaGet.Web.V3/Controllers`. Put `[Route("same/template/as/@page")]` on the action (or controller), `[LegacyPage("/Admin/Users")]` (the exact old view engine path) on every action of that page, `[RepositoryPage(...)]` for pages of `RepositoryPageRouteConvention.RepositoryPages` (Format, NotOnVirtual, NotOnRemote, Upload, FrontPage from the old lists in `RepositoryPageFilter`/`PageFormats`).
+3. **Actions.** `OnGet` = `[HttpGet, HttpHead, PageHandler]`; `OnGetX` = `[HttpGet, PageHandler("X")]`; `OnPost` = `[HttpPost, PageHandler]`; `OnPostX` = `[HttpPost, PageHandler("X")]`. The default handler of a page that has named handlers **must** carry `[PageHandler]`. `[BindProperty]` becomes `[FromForm]`/`[FromQuery]` parameters (a `[BindProperty(SupportsGet = true)]` is a `[FromRoute]`/`[FromQuery]` parameter). Public helper methods of a controller base or controller must be `[NonAction]` or static/protected, else they become routable.
+4. **Views.** `git mv Pages/X.cshtml Views/<Controller>/<Action>.cshtml`; `@page`/`@model XModel` becomes `@model <ViewModel>` (view models in `ViewModels/`, public if a partial uses them); `asp-page` and `asp-page-handler` may stay (the legacy page mapping resolves them to the action, same URL and `?handler=`) or become `asp-controller`/`asp-action` with `asp-route-handler`. `return Page()` becomes `return View("<Name>", model)`; `[TempData]` properties stay properties of the controller. Partials are in `Views/Shared` (reference them as `~/Views/Shared/_X.cshtml`).
+5. **Never change** a route, a form field name, a handler name, an `asp-page` name, an antiforgery check, or a gate (`ThrowIfClosed`, password confirmation, admin/project-admin check, 404 rules). The three snapshots must pass unchanged; if one must change, stop and report why.
+6. **Tests.** Existing HTTP tests drive URLs and stay as they are. Retarget `tests/BaGet.Web.Tests/Pages/*ModelFacts.cs` to the workflow and keep one smoke test of the shim. `UiCoverageInventoryTests` and `AdminApiAccessTests` already resolve pages through `[LegacyPage]`.
+7. **Docs** of the changed behaviour in the same commit (XML docs, `docs/ui-coverage.md` only if a capability moves, READMEs).
 
 ## Decisions (user)
 

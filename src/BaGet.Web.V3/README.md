@@ -44,6 +44,8 @@ Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup
 | `AddBaGetWebApplication` | MVC, Razor Pages, `IUrlGenerator`, core services, catalog, validation; registers every BaGet controller assembly as an application part, so hosts without the Web SDK work |
 | `BaGetEndpointBuilder.MapEndpoints` | Maps the V3, V2, catalog and validation routes, each at `/` (default repository) and `/r/{repo}/` |
 | `RepositoryPageRouteConvention` / `RepositoryUrlHelperFactory` | Serve the repository pages (list, package, statistics, upload, ...) also at `/r/{repo}/…` and keep their links inside the repository; `RepositoryPageFilter` asks `IRepositoryAccess` |
+| `RepositoryActionRouteConvention` / `RepositoryActionFilter` | The same for the controller actions that replace Razor Pages (`[RepositoryPage]`): the `/r/{repo}/` twin of every route, and the one repository check (`RepositoryPageGate`, shared with `RepositoryPageFilter`) |
+| `LegalController`, `Views/` | The first pages served by a controller (`/terms`, `/privacy`); `Views/Shared` holds the layout and partials every page and view uses (the old `Pages/Shared` paths forward to it); a host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
 | `RepositoryResolutionMiddleware` | Turns the `{repo}` route value into `IRepositoryContext`; unknown repository: `404`, never the default |
 | `MaintenanceMiddleware` | Maps `MaintenanceException` (a write refused while `MaintenanceGate` in `Extension.BaGet.Core` is closed, e.g. during a database copy) to `503` + `Retry-After` |
 | `IUrlGenerator` | Builds every absolute URL the server returns |

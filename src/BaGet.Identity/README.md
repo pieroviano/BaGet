@@ -31,6 +31,22 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 | `Email:Smtp:*` | Optional SMTP for confirmation and password-reset mail (MailKit) |
 | `Site:PublicUrl` | Required for email links; without it email is suppressed |
 
+## Screens: Razor Pages and MVC controllers
+
+The web UI is moving from Razor Pages to controllers and views without changing a URL, form, link or public type (plan:
+`docs/plans/razor-pages-to-mvc.md`). `BaGet.Identity.Mvc` holds what a UI controller builds on:
+
+| Type | Role |
+|---|---|
+| `PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
+| `LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving, navigation and `ApiOperation.UiPage` use it |
+| `RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
+| `UiControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`), `RequestedHandler` |
+| `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | The controller counterparts of the page-model bases (`AccountPageModel`, `AdminPageModel`, `AccessPageModel`, `RepositoryPageModel`, `RetentionPageModel`, `ReplicationPageModel`) with the same checks in the same order; the page-model bases remain for pages not migrated yet and for compatibility |
+
+Partials and the layout live in `Views/Shared` (the old `Pages/...` paths forward to them); a host overrides a view with its own
+`Views/<Controller>/<Action>.cshtml`.
+
 ## Links
 
 [Configuration](https://pieroviano.github.io/BaGet/configuration/) · [Source](https://github.com/pieroviano/BaGet)

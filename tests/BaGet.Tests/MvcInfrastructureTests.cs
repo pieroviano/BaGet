@@ -210,6 +210,15 @@ public class MvcInfrastructureTests : IDisposable
     }
 
     [Fact]
+    public async Task TheControllersOwnCheckRunsBeforeTheRepositoryCheck_AsThePageModelsDid()
+    {
+        // The controller answers 418 before the repository check would answer 404 (npm repository, NuGet page).
+        using var response = await _anonymous.GetAsync("r/web/test-ui/order");
+
+        Assert.Equal((HttpStatusCode)418, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ARedirectToAPageNameFollowsTheControllerActionThatReplacedIt()
     {
         using var response = await _anonymous.GetAsync("r/second/test-ui/repo/redirect");
@@ -280,4 +289,15 @@ public sealed class TestRepositoryController : UiControllerBase
 
     [HttpGet("redirect")]
     public IActionResult Redirect() => RedirectToPage("/Test/RepoPage");
+}
+
+/// <summary>A repository page whose own check answers first (the order a page model's check had before the repository filter).</summary>
+[Route("test-ui/order")]
+[RepositoryPage]
+public sealed class TestOrderController : UiControllerBase
+{
+    public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context) => context.Result = StatusCode(418);
+
+    [HttpGet]
+    public IActionResult Index() => Content("never");
 }
