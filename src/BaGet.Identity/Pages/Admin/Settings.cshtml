@@ -117,7 +117,7 @@
                                 @foreach (var f in g)
                                 {
                                     ViewData["Siblings"] = s;
-                                    <partial name="_SettingField" model="f" view-data="ViewData" />
+                                    <partial name="~/Views/Shared/_SettingField.cshtml" model="f" view-data="ViewData" />
                                 }
                             </fieldset>
                         }
@@ -145,7 +145,7 @@
                         }
                         else
                         {
-                            <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
+                            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
                         }
                         <button type="submit" class="btn btn-primary">Save @title</button>
                         @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && Model.TelemetrySignals != null)
@@ -216,7 +216,7 @@
                                 }
                                 else
                                 {
-                                    <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
+                                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
                                 }
                                 <button type="submit" class="btn btn-primary" id="log-level-save">Set level</button>
                             </form>

@@ -61,8 +61,8 @@
 
     <h2>New replication</h2>
     <form method="post" id="replication-create-form" autocomplete="off">
-        <partial name="~/Pages/Admin/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "new", false))" />
-        <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-create-password")" />
+        <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "new", false))" />
+        <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-create-password")" />
         <button type="submit" class="btn btn-primary">Create</button>
     </form>
 </div>

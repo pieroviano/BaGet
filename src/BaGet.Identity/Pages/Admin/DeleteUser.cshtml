@@ -60,7 +60,7 @@
             }
             else
             {
-                <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/admin/users/" + Uri.EscapeDataString(Model.Name??string.Empty
+                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/admin/users/" + Uri.EscapeDataString(Model.Name??string.Empty
                     ) + "/delete"))" />
             }
 

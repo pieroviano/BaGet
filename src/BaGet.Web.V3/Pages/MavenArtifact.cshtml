@@ -38,7 +38,7 @@
             }
         </div>
 
-        <partial name="_ScanFindings" model="new ScanFindingsView(info.Name, summary.Version)" />
+        <partial name="~/Views/Shared/_ScanFindings.cshtml" model="new ScanFindingsView(info.Name, summary.Version)" />
 
         <div class="tabbed-info" x-data="{ active: 0 }">
             <ul class="nav">

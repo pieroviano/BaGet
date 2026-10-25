@@ -65,8 +65,8 @@
 
     <h2>New policy</h2>
     <form method="post" id="retention-create-form">
-        <partial name="~/Pages/Admin/_RetentionPolicyFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.RetentionFieldsView(Model.Form, Model.Repositories, Model.ProjectNames, "new"))" />
-        <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("retention-create-password")" />
+        <partial name="~/Views/Shared/_RetentionPolicyFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.RetentionFieldsView(Model.Form, Model.Repositories, Model.ProjectNames, "new"))" />
+        <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("retention-create-password")" />
         <button type="submit" class="btn btn-primary">Create</button>
     </form>
 </div>

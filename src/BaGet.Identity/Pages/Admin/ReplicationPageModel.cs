@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Pages.Admin;
@@ -93,19 +94,9 @@ public abstract class ReplicationPageModel : AccessPageModel
     /// <summary>Loads <see cref="Repositories"/>.</summary>
     protected async Task LoadChoicesAsync(CancellationToken cancellationToken)
     {
-        Repositories = (await HttpContext.RequestServices.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken))
-            .Where(r => r.Kind == RepositoryKind.Local).OrderBy(r => r.Name, StringComparer.Ordinal).ToList();
+        Repositories = await AccessSupport.ReplicationRepositoriesAsync(HttpContext.RequestServices, cancellationToken);
     }
 
     /// <summary>The schedule and triggers of a configuration in a few words.</summary>
-    public static string Describe(ReplicationConfig c)
-    {
-        var parts = new List<string> { c.Direction == ReplicationDirection.Push ? "push" : "pull" };
-        if (c.OnDeploy) parts.Add("on deploy");
-        parts.Add(c.ScheduleMinutes is int minutes ? "every " + minutes + " min" : "manual");
-        if (c.PropagateDeletes) parts.Add("deletes follow");
-        parts.Add(c.Conflict == ReplicationConflict.SourceWins ? "source wins" : "target wins");
-
-        return string.Join(", ", parts);
-    }
+    public static string Describe(ReplicationConfig c) => AccessSupport.DescribeReplication(c);
 }

@@ -1,4 +1,5 @@
 using System;
+using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -59,21 +60,35 @@ public class NavLinkTagHelper : TagHelper
     private bool IsActiveLink()
     {
         var httpContext = _accessor.HttpContext;
-        var pageDescriptor = httpContext?.GetEndpoint()?.Metadata.GetMetadata<PageActionDescriptor>();
+        var metadata = httpContext?.GetEndpoint()?.Metadata;
+        if (metadata == null) return false;
 
-        if (pageDescriptor == null) return false;
-        if (pageDescriptor.AreaName != null) return false;
+        // The page of the endpoint: a Razor Page's view engine path, or the page name a controller action carries after the page
+        // moved to a controller (LegacyPageAttribute); an area page is never the current one.
+        string? pagePath;
+        var pageDescriptor = metadata.GetMetadata<PageActionDescriptor>();
+        if (pageDescriptor != null)
+        {
+            if (pageDescriptor.AreaName != null) return false;
+            pagePath = pageDescriptor.ViewEnginePath;
+        }
+        else
+        {
+            pagePath = metadata.GetMetadata<LegacyPageAttribute>()?.PageName;
+        }
+
+        if (pagePath == null) return false;
 
         // When the link names a page, that name alone decides whether it is active.
         // Falling through to the path check below would light up every nav link on the
         // pages that check covers.
         if (!string.IsNullOrEmpty(Page))
         {
-            return pageDescriptor.ViewEnginePath == Page;
+            return pagePath == Page;
         }
 
         // The packages link names no page: both "/" and "/packages" render the index.
-        if (pageDescriptor.ViewEnginePath != IndexPage) return false;
+        if (pagePath != IndexPage) return false;
 
         // Routing is case-insensitive and tolerates a trailing slash, so the comparison
         // must be too.

@@ -90,7 +90,7 @@
                 {
                     <div class="alert alert-warning" role="alert" id="remote-insecure">The upstream URL is not https: the credentials travel unencrypted.</div>
                 }
-                <partial name="~/Pages/Admin/_RemoteFields.cshtml" for="Remote" />
+                <partial name="~/Views/Shared/_RemoteFields.cshtml" for="Remote" />
 
                 @if (Model.TestResult != null)
                 {
@@ -106,7 +106,7 @@
 
         @if (Model.RemoteDetail != null)
         {
-            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("savePassword")" />
+            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("savePassword")" />
         }
         <button type="submit" class="btn btn-primary">Save</button>
         <a class="btn btn-default" href="@Url.Page("/Admin/Repositories")">Cancel</a>
@@ -352,7 +352,7 @@
             </p>
 
             <form method="post" asp-page-handler="Purge" id="remote-purge-form">
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePassword")" />
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Delete every cached package of this repository? They are fetched again when requested.');">Purge cache</button>
                 <span class="help-block">Deletes the stored packages and forgets the remembered answers.</span>
             </form>
@@ -366,7 +366,7 @@
                     <label for="purge-package-version">@Model.VersionWord</label>
                     <input id="purge-package-version" name="packageVersion" type="text" class="form-control" value="@Model.PackageVersion" placeholder="all versions" autocomplete="off" />
                 </div>
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePackagePassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePackagePassword")" />
                 <button type="submit" class="btn btn-default">Purge package</button>
             </form>
         </section>

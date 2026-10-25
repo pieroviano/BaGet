@@ -27,6 +27,11 @@ public static class IServiceCollectionExtensions
                 // The one read check of every repository page (404 when the caller may not see the repository).
                 options.Filters.Add<RepositoryPageFilter>();
 
+                // The same check for the controller actions that replace pages (actions marked [RepositoryPage]), and the
+                // /r/{repo}/ twin of their routes (the counterpart of RepositoryPageRouteConvention below).
+                options.Filters.Add<RepositoryActionFilter>();
+                options.Conventions.Add(new RepositoryActionRouteConvention());
+
                 // The read check of every protocol route (401 for anonymous callers, 404 without Read access).
                 options.Filters.Add<RepositoryReadFilter>();
 
@@ -57,6 +62,9 @@ public static class IServiceCollectionExtensions
 
         // Page links stay inside the repository being browsed (see RepositoryUrlHelper).
         services.AddSingleton<Microsoft.AspNetCore.Mvc.Routing.IUrlHelperFactory, RepositoryUrlHelperFactory>();
+
+        // Which controller action replaces which page, so links to a page that moved to a controller keep resolving.
+        services.AddSingleton<UiActionMap>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();

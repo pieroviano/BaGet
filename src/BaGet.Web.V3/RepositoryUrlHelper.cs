@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Web;
 
@@ -17,22 +18,67 @@ namespace BaGet.Web;
 /// value to every link to a repository page (<see cref="RepositoryPageRouteConvention.RepositoryPages"/>) that does
 /// not name one itself. An explicit value always wins, and <c>repo = null</c> is the way to leave for the default
 /// repository. A link to any other page is untouched, so no stray <c>?repo=</c> appears on it.
+/// <para>
+/// The same holds for links to controller actions that are repository pages (<c>Url.Action</c>, <c>asp-action</c>,
+/// <c>RedirectToAction</c> to an action marked <see cref="BaGet.Identity.Mvc.RepositoryPageAttribute"/>).
+/// </para>
+/// <para>
+/// <b>Legacy page names.</b> A link to a page that is a Razor Page no more (<c>Url.Page("/Admin/Users")</c>, <c>asp-page</c>,
+/// <c>RedirectToPage</c>, in BaGet's views, a host's views or a redirect) is resolved to the controller action that carries
+/// <see cref="BaGet.Identity.Mvc.LegacyPageAttribute"/> with that name (<see cref="UiActionMap"/>), keeping <c>handler</c> (as
+/// <c>?handler=</c>, like a page) and every other route value, so a page can move to a controller without any link changing.
+/// </para>
 /// </summary>
 public class RepositoryUrlHelper : IUrlHelper
 {
     private readonly IUrlHelper _inner;
+    private readonly UiActionMap? _actions;
 
     /// <param name="inner">MVC's own helper for the same context (the endpoint-routing one), which does the work.</param>
     public RepositoryUrlHelper(IUrlHelper inner)
+        : this(inner, null)
+    {
+    }
+
+    internal RepositoryUrlHelper(IUrlHelper inner, UiActionMap? actions)
     {
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+        _actions = actions;
     }
 
     /// <inheritdoc/>
     public ActionContext ActionContext => _inner.ActionContext;
 
     /// <inheritdoc/>
-    public string? Action(UrlActionContext actionContext) => _inner.Action(actionContext);
+    public string? Action(UrlActionContext actionContext)
+    {
+        if (actionContext == null) throw new ArgumentNullException(nameof(actionContext));
+
+        if (_actions != null && ActionContext.RouteData.Values.TryGetValue(Routes.RepositoryRouteKey, out var repo) && repo is string name)
+        {
+            var values = actionContext.Values as RouteValueDictionary
+                ?? (actionContext.Values == null ? new RouteValueDictionary() : new RouteValueDictionary(actionContext.Values));
+
+            // A missing controller or action is the current one, as MVC's own helper reads it.
+            var controller = actionContext.Controller ?? Convert.ToString(ActionContext.RouteData.Values["controller"], System.Globalization.CultureInfo.InvariantCulture);
+            var action = actionContext.Action ?? Convert.ToString(ActionContext.RouteData.Values["action"], System.Globalization.CultureInfo.InvariantCulture);
+            if (!values.ContainsKey(Routes.RepositoryRouteKey) && controller != null && action != null && _actions.IsRepositoryAction(controller, action))
+            {
+                values[Routes.RepositoryRouteKey] = name;
+                actionContext = new UrlActionContext
+                {
+                    Action = actionContext.Action,
+                    Controller = actionContext.Controller,
+                    Values = values,
+                    Protocol = actionContext.Protocol,
+                    Host = actionContext.Host,
+                    Fragment = actionContext.Fragment,
+                };
+            }
+        }
+
+        return _inner.Action(actionContext);
+    }
 
     /// <inheritdoc/>
     public string? Content(string? contentPath) => _inner.Content(contentPath);
@@ -51,21 +97,39 @@ public class RepositoryUrlHelper : IUrlHelper
         var values = routeContext.Values as RouteValueDictionary
             ?? (routeContext.Values == null ? new RouteValueDictionary() : new RouteValueDictionary(routeContext.Values));
 
-        if (routeContext.RouteName == null
-            && !values.ContainsKey(Routes.RepositoryRouteKey)
-            && values.TryGetValue("page", out var page) && page is string pageName
-            && ActionContext.RouteData.Values.TryGetValue(Routes.RepositoryRouteKey, out var repo) && repo is string name
-            && IsRepositoryPage(pageName))
+        if (routeContext.RouteName == null && values.TryGetValue("page", out var page) && page is string pageName)
         {
-            values[Routes.RepositoryRouteKey] = name;
-            routeContext = new UrlRouteContext
+            var changed = false;
+
+            if (!values.ContainsKey(Routes.RepositoryRouteKey)
+                && ActionContext.RouteData.Values.TryGetValue(Routes.RepositoryRouteKey, out var repo) && repo is string name
+                && IsRepositoryPage(pageName))
             {
-                RouteName = routeContext.RouteName,
-                Values = values,
-                Protocol = routeContext.Protocol,
-                Host = routeContext.Host,
-                Fragment = routeContext.Fragment,
-            };
+                values[Routes.RepositoryRouteKey] = name;
+                changed = true;
+            }
+
+            // A page that is a controller action now: the same URL, found through the action that replaced it.
+            if (_actions != null && _actions.TryResolveLegacyPage(pageName, out var target))
+            {
+                values.Remove("page");
+                values["controller"] = target.Controller;
+                values["action"] = target.Action;
+                if (values.TryGetValue("handler", out var handler) && string.IsNullOrEmpty(handler as string)) values.Remove("handler");
+                changed = true;
+            }
+
+            if (changed)
+            {
+                routeContext = new UrlRouteContext
+                {
+                    RouteName = routeContext.RouteName,
+                    Values = values,
+                    Protocol = routeContext.Protocol,
+                    Host = routeContext.Host,
+                    Fragment = routeContext.Fragment,
+                };
+            }
         }
 
         return _inner.RouteUrl(routeContext);
@@ -73,8 +137,9 @@ public class RepositoryUrlHelper : IUrlHelper
 
     // Page() has already turned a relative page name into an absolute one (UrlHelperBase.NormalizeRouteValuesForPage),
     // so the value is compared as MVC knows pages.
-    private static bool IsRepositoryPage(string pageName)
-        => RepositoryPageRouteConvention.RepositoryPages.Contains(pageName, StringComparer.OrdinalIgnoreCase);
+    private bool IsRepositoryPage(string pageName)
+        => RepositoryPageRouteConvention.RepositoryPages.Contains(pageName, StringComparer.OrdinalIgnoreCase)
+           || _actions?.IsRepositoryPage(pageName) == true;
 }
 
 /// <summary>
@@ -99,7 +164,7 @@ public class RepositoryUrlHelperFactory : IUrlHelperFactory
             return helper;
         }
 
-        helper = new RepositoryUrlHelper(_default.GetUrlHelper(context));
+        helper = new RepositoryUrlHelper(_default.GetUrlHelper(context), context.HttpContext.RequestServices.GetService<UiActionMap>());
         items[typeof(RepositoryUrlHelper)] = helper;
 
         return helper;

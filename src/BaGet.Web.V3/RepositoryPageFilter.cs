@@ -15,7 +15,9 @@ namespace BaGet.Web;
 /// page answers 404 to a signed-in user (the same answer as an unknown repository, so nothing says that a private one
 /// exists) and sends a visitor who is not signed in to sign in, when the host has accounts. <see cref="IRepositoryAccess"/>
 /// is backed by the access model (<see cref="IAccessEvaluator"/>); no page repeats the check. A page whose route names a
-/// package (<c>{id}</c>) is checked against that package too (<see cref="IRepositoryAccess.CanReadPackageAsync"/>).
+/// package (<c>{id}</c>) is checked against that package too (<see cref="IRepositoryAccess.CanReadPackageAsync"/>). The check
+/// itself is <see cref="RepositoryPageGate"/>, shared with <see cref="RepositoryActionFilter"/> (the controller actions that
+/// replace pages), so the two programming models answer alike.
 /// </summary>
 public class RepositoryPageFilter : IAsyncPageFilter
 {
@@ -49,6 +51,9 @@ public class RepositoryPageFilter : IAsyncPageFilter
         "/Packages/MavenManage",
     };
 
+    // The upload pages need the right to publish, not Read, and continue in a virtual repository's deploy repository.
+    private static readonly string[] UploadPages = { "/Upload", "/NpmUpload", "/MavenUpload" };
+
     /// <inheritdoc/>
     public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) => Task.CompletedTask;
 
@@ -58,118 +63,18 @@ public class RepositoryPageFilter : IAsyncPageFilter
         if (context.ActionDescriptor is PageActionDescriptor page
             && RepositoryPageRouteConvention.RepositoryPages.Contains(page.ViewEnginePath, StringComparer.OrdinalIgnoreCase))
         {
-            var services = context.HttpContext.RequestServices;
-            var repository = services.GetRequiredService<IRepositoryContext>().Current;
-            var access = services.GetRequiredService<IRepositoryAccess>();
+            var path = page.ViewEnginePath;
+            var rule = new RepositoryPageRule(
+                Format: RepositoryPageRouteConvention.FormatOf(path),
+                Upload: UploadPages.Contains(path, StringComparer.OrdinalIgnoreCase),
+                NotOnVirtual: NotOnVirtual.Contains(path, StringComparer.OrdinalIgnoreCase),
+                NotOnRemote: NotOnRemote.Contains(path, StringComparer.OrdinalIgnoreCase),
+                FrontPage: string.Equals(path, "/Index", StringComparison.OrdinalIgnoreCase));
 
-            // A page of one package ({id} in its route) also needs Read on that package, so the include/exclude
-            // patterns of the caller's grants hide it as they hide its registration and content.
-            var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
-            if (repository.Format == RepositoryFormat.Npm && !string.IsNullOrEmpty(packageId))
+            var result = await RepositoryPageGate.CheckAsync(context.HttpContext, context.RouteData, rule);
+            if (result != null)
             {
-                // The access patterns see the decoded name (the patterns ignore case), so @acme%2fSecret cannot reach a page that
-                // the pattern for @acme/secret hides.
-                if (!NpmNames.TryParseLookup(packageId, out var npmName, out _))
-                {
-                    context.Result = new NotFoundResult();
-                    return;
-                }
-
-                packageId = npmName;
-            }
-
-            if (repository.Format == RepositoryFormat.Maven
-                && context.RouteData.Values.TryGetValue("group", out var group) && group is string mavenGroup
-                && context.RouteData.Values.TryGetValue("artifact", out var artifact) && artifact is string mavenArtifact)
-            {
-                // A Maven page names its artifact by group and artifact; the access patterns see group:artifact.
-                if (!MavenNames.IsValidGroupId(mavenGroup) || !MavenNames.IsValidArtifactId(mavenArtifact))
-                {
-                    context.Result = new NotFoundResult();
-                    return;
-                }
-
-                packageId = MavenNames.ArtifactName(mavenGroup, mavenArtifact);
-            }
-
-            if (repository.Format == RepositoryFormat.Docker
-                && context.RouteData.Values.TryGetValue("image", out var image) && image is string dockerImage)
-            {
-                // A Docker page names its image in the address; the access patterns see the (lower-case) image name, as the registry routes do.
-                if (!OciNames.IsValidImage(dockerImage))
-                {
-                    context.Result = new NotFoundResult();
-                    return;
-                }
-
-                packageId = dockerImage;
-            }
-
-            // The upload pages show no package data of the repository, so they need the right to publish
-            // (IRepositoryAccess.CanWriteAsync), not Read: a Deploy-only drop box is usable.
-            var isUpload = string.Equals(page.ViewEnginePath, "/Upload", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(page.ViewEnginePath, "/NpmUpload", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(page.ViewEnginePath, "/MavenUpload", StringComparison.OrdinalIgnoreCase);
-            var allowed = isUpload
-                ? await access.CanWriteAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
-                : string.IsNullOrEmpty(packageId)
-                ? await access.CanReadAsync(context.HttpContext.User, repository, context.HttpContext.RequestAborted)
-                : await access.CanReadPackageAsync(context.HttpContext.User, repository, packageId, context.HttpContext.RequestAborted);
-
-            if (allowed && RepositoryPageRouteConvention.FormatOf(page.ViewEnginePath) is { } pageFormat && repository.Format != pageFormat)
-            {
-                // The page belongs to another format. The front page of a repository is where its address (/r/name/) and the
-                // header lead, so it sends the visitor to the format's own browse page; anything else is not there.
-                var browse = string.Equals(page.ViewEnginePath, "/Index", StringComparison.OrdinalIgnoreCase)
-                    ? services.GetRequiredService<FormatRegistry>().Find(repository.Format)?.RepositoryLinks(repository)
-                        .FirstOrDefault(l => l.Id == "browse" && l.Page != null)
-                    : null;
-                context.Result = browse == null
-                    ? new NotFoundResult()
-                    : new RedirectToPageResult(browse.Page, new { repo = repository.IsDefault ? null : repository.Name });
-                return;
-            }
-
-            if (allowed && repository.Kind == RepositoryKind.Remote && NotOnRemote.Contains(page.ViewEnginePath, StringComparer.OrdinalIgnoreCase))
-            {
-                context.Result = new NotFoundResult();
-                return;
-            }
-
-            if (allowed && repository.Kind == RepositoryKind.Virtual)
-            {
-                if (NotOnVirtual.Contains(page.ViewEnginePath, StringComparer.OrdinalIgnoreCase))
-                {
-                    context.Result = new NotFoundResult();
-                    return;
-                }
-
-                // An upload to a virtual repository is an upload to the repository it deploys to: from here on the request
-                // works in that one (staging, ownership, publishing), exactly as the push endpoint does.
-                if (isUpload)
-                {
-                    var target = await services.GetRequiredService<IVirtualRepositories>()
-                        .DeployTargetAsync(repository, context.HttpContext.RequestAborted);
-                    if (target == null)
-                    {
-                        context.Result = new NotFoundResult();
-                        return;
-                    }
-
-                    context.HttpContext.Items[RequestedVirtualItemKey] = repository;
-                    services.GetRequiredService<IRepositoryContext>().Use(target);
-                }
-            }
-
-            if (!allowed)
-            {
-                // A visitor who is not signed in is sent to sign in (when the host has accounts) - they may be allowed
-                // once they are; a signed-in user without Read gets 404, so nothing says the repository exists.
-                var schemes = services.GetRequiredService<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>();
-                context.Result = context.HttpContext.User.Identity?.IsAuthenticated != true
-                    && await schemes.GetDefaultChallengeSchemeAsync() != null
-                    ? new ChallengeResult()
-                    : new NotFoundResult();
+                context.Result = result;
                 return;
             }
         }

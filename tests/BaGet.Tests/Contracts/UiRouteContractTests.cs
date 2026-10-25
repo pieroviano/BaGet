@@ -47,8 +47,8 @@ public class UiRouteContractTests : IDisposable
     {
         using var client = _app.CreateClient();
 
-        using var plain = await client.GetAsync("/stats");
-        using var unknown = await client.GetAsync("/stats?handler=NoSuchHandler");
+        using var plain = await client.GetAsync("/stats", TestContext.Current.CancellationToken);
+        using var unknown = await client.GetAsync("/stats?handler=NoSuchHandler", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, plain.StatusCode);
         Assert.Equal(HttpStatusCode.OK, unknown.StatusCode);
@@ -59,7 +59,7 @@ public class UiRouteContractTests : IDisposable
     {
         using var client = _app.CreateClient();
 
-        using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, "/stats"));
+        using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, "/stats"), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

@@ -60,7 +60,7 @@
             <label for="target-name">Name</label>
             <input id="target-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.AccessNames.MaxLength" autocomplete="off" />
         </div>
-        <partial name="~/Pages/Admin/_PatternFields.cshtml" model="@Model.Fields" />
+        <partial name="~/Views/Shared/_PatternFields.cshtml" model="@Model.Fields" />
         @if (Model.Projects.Count > 0)
         {
             <div class="form-group">
@@ -84,7 +84,7 @@
         a server without an access model. If you deleted them, this brings back the missing ones.
     </p>
     <form method="post" id="restore-form">
-        <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("restorePassword")" />
+        <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("restorePassword")" />
         <button type="submit" class="btn btn-default" asp-page-handler="RestoreBuiltIns">Restore built-in groups and targets</button>
     </form>
 </div>

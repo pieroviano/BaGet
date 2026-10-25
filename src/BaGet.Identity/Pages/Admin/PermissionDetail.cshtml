@@ -38,8 +38,8 @@
     <section id="target-section-patterns">
         <h2>Patterns</h2>
         <form method="post" id="patterns-form">
-            <partial name="~/Pages/Admin/_PatternFields.cshtml" model="@Model.Fields" />
-            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("patternsPassword")" />
+            <partial name="~/Views/Shared/_PatternFields.cshtml" model="@Model.Fields" />
+            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("patternsPassword")" />
             <button type="submit" class="btn btn-primary" asp-page-handler="Save">Save patterns</button>
         </form>
     </section>
@@ -75,7 +75,7 @@
                         }
                     </tbody>
                 </table>
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("grantsPassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("grantsPassword")" />
             </form>
         }
 
@@ -97,7 +97,7 @@
                     <label class="checkbox-inline"><input type="checkbox" name="actions" value="@action" checked="@((Model.FormActions & action) == action)" /> @action</label>
                 }
             </div>
-            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("grantPassword")" />
+            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("grantPassword")" />
             <button type="submit" class="btn btn-primary" asp-page-handler="SetGrant">Set grant</button>
         </form>
     </section>
@@ -106,7 +106,7 @@
         <h2>Delete</h2>
         <p class="help-block">Removes the target and its grants@(target?.IsBuiltIn == true ? ". It is a built-in default: Restore built-in groups and targets on the permission targets page brings it back." : ".")</p>
         <form method="post" id="delete-form">
-            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
+            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
             <button type="submit" class="btn btn-danger" asp-page-handler="Delete">Delete target</button>
         </form>
     </section>

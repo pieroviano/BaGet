@@ -61,7 +61,7 @@
                                 <input type="hidden" name="repository" value="@row.Repository.Name" />
                                 @if (row.Operation.RequiresConfirmation)
                                 {
-                                    <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation($"password-{row.Operation.Name}-{row.Repository.Name}")" />
+                                    <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation($"password-{row.Operation.Name}-{row.Repository.Name}")" />
                                 }
                                 <button type="submit" class="btn btn-default btn-xs" @(running ? "disabled" : "")>Run</button>
                             </form>

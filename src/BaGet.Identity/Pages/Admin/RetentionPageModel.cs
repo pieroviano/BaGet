@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Pages.Admin;
@@ -108,24 +109,10 @@ public abstract class RetentionPageModel : AccessPageModel
     /// <summary>Loads <see cref="Repositories"/> and <see cref="ProjectNames"/>.</summary>
     protected async Task LoadChoicesAsync(CancellationToken cancellationToken)
     {
-        Repositories = (await HttpContext.RequestServices.GetRequiredService<IRepositoryService>().ListAsync(cancellationToken))
-            .Where(r => r.Kind != RepositoryKind.Virtual).OrderBy(r => r.Name, StringComparer.Ordinal).ToList();
-        ProjectNames = (await AccessAdmin.ListProjectsAsync(cancellationToken)).Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        Repositories = await AccessSupport.RetentionRepositoriesAsync(HttpContext.RequestServices, cancellationToken);
+        ProjectNames = await AccessSupport.ProjectNamesAsync(HttpContext.RequestServices, cancellationToken);
     }
 
     /// <summary>The rules of a policy in one line, for the lists.</summary>
-    public static string Describe(RetentionPolicy p)
-    {
-        var rules = new List<string>();
-        if (p.KeepLast is int keep) rules.Add($"keep the newest {keep}");
-        if (p.OlderThanDays is int age) rules.Add($"older than {age} d");
-        if (p.UnusedDays is int unused) rules.Add($"unused for {unused} d");
-        if (p.CacheLimitBytes is long cache) rules.Add($"cache over {RetentionReport.FormatBytes(cache)}");
-        if (p.UntaggedAfterDays is int untagged) rules.Add($"untagged for {untagged} d");
-        if (p.CollectGarbage) rules.Add("garbage collection");
-        var text = rules.Count == 0 ? "no rule" : string.Join(", ", rules);
-        if (p.PrereleaseOnly) text += " (prerelease only)";
-
-        return text;
-    }
+    public static string Describe(RetentionPolicy p) => AccessSupport.DescribeRetention(p);
 }

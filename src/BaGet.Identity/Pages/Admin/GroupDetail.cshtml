@@ -52,7 +52,7 @@
                 {
                     <p>The group has no members.</p>
                 }
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("membersPassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("membersPassword")" />
             </form>
 
             <h3>Add members</h3>
@@ -80,7 +80,7 @@
                                 }
                             </tbody>
                         </table>
-                        <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("addMemberPassword")" />
+                        <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("addMemberPassword")" />
                     </form>
                 }
             }
@@ -124,7 +124,7 @@
             <h2>Delete</h2>
             <p class="help-block">Removes the group, its members and every grant and project role that names it.</p>
             <form method="post" id="delete-form">
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
                 <button type="submit" class="btn btn-danger" asp-page-handler="Delete">Delete group</button>
             </form>
         </section>

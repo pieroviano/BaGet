@@ -38,7 +38,7 @@
     <div class="row">
         <div class="col-sm-4">
             <form method="post" asp-page-handler="Run" id="replication-run-form">
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-run-password")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-run-password")" />
                 <button type="submit" class="btn btn-danger" disabled="@running">Run now</button>
                 <span class="help-block">Copies what the target lacks. Skips what it holds.</span>
             </form>
@@ -47,7 +47,7 @@
             @if (Model.Resumable != null)
             {
                 <form method="post" asp-page-handler="Resume" id="replication-resume-form">
-                    <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-resume-password")" />
+                    <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-resume-password")" />
                     <button type="submit" class="btn btn-warning" disabled="@running">Resume run @Model.Resumable.Key</button>
                     <span class="help-block">Run @Model.Resumable.Key ended @Model.Resumable.Status.ToString().ToLowerInvariant(); a new run continues from what is in place.</span>
                 </form>
@@ -106,8 +106,8 @@
 
     <h2>Settings</h2>
     <form method="post" asp-page-handler="Save" id="replication-edit-form" autocomplete="off">
-        <partial name="~/Pages/Admin/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "edit", Model.View.HasApiKey))" />
-        <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-edit-password")" />
+        <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "edit", Model.View.HasApiKey))" />
+        <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-edit-password")" />
         <button type="submit" class="btn btn-primary">Save</button>
         <button type="submit" class="btn btn-default" asp-page-handler="Test" id="replication-test-button">Test connection</button>
         <span class="help-block">Test connection uses the values typed above (a stored key only while the peer address is unchanged) and saves nothing.</span>
@@ -115,7 +115,7 @@
 
     <h2>Delete the replication</h2>
     <form method="post" asp-page-handler="Delete" id="replication-delete-form">
-        <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-delete-password")" />
+        <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-delete-password")" />
         <button type="submit" class="btn btn-danger">Delete replication</button>
         <span class="help-block">Its log and its record of what it copied go; what it copied stays where it is.</span>
     </form>

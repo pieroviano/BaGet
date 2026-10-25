@@ -50,7 +50,7 @@
                 </table>
                 @if (Model.IsServerAdministrator)
                 {
-                    <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("repositoriesPassword")" />
+                    <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("repositoriesPassword")" />
                 }
             </form>
         }
@@ -64,7 +64,7 @@
                         <option value="@repository">@repository</option>
                     }
                 </select>
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("assignPassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("assignPassword")" />
                 <button type="submit" class="btn btn-primary" asp-page-handler="AssignRepository">Add to project</button>
                 <span class="help-block">A repository is in at most one project: adding it here takes it out of another.</span>
             </form>
@@ -105,7 +105,7 @@
                         }
                     </tbody>
                 </table>
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("membersPassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("membersPassword")" />
             </form>
         }
 
@@ -124,7 +124,7 @@
                     }
                 </select>
             </div>
-            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("memberPassword")" />
+            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("memberPassword")" />
             <button type="submit" class="btn btn-primary" asp-page-handler="SetMember">Set role</button>
         </form>
     </section>
@@ -159,7 +159,7 @@
                 <label for="target-name">Name</label>
                 <input id="target-name" name="targetName" type="text" class="form-control" value="@Model.TargetName" maxlength="@BaGet.Core.AccessNames.MaxLength" autocomplete="off" />
             </div>
-            <partial name="~/Pages/Admin/_PatternFields.cshtml" model="@Model.Fields" />
+            <partial name="~/Views/Shared/_PatternFields.cshtml" model="@Model.Fields" />
             <button type="submit" class="btn btn-primary" asp-page-handler="CreateTarget">Create target</button>
         </form>
     </section>
@@ -170,7 +170,7 @@
             <h2>Delete</h2>
             <p class="help-block">Removes the project, its members and its permission targets with their grants. The repositories stay.</p>
             <form method="post" id="delete-form">
-                <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
                 <button type="submit" class="btn btn-danger" asp-page-handler="Delete">Delete project</button>
             </form>
         </section>

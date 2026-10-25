@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -79,14 +80,7 @@ public abstract class AccountPageModel : PageModel
     /// Only follow a local return URL, so a sign-in link cannot redirect elsewhere.
     /// </summary>
     protected IActionResult RedirectToLocal(string? returnUrl)
-    {
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-        {
-            return LocalRedirect(returnUrl);
-        }
-
-        return LocalRedirect(Url.Content("~/"));
-    }
+        => LocalRedirect(AccountSupport.LocalTarget(Url, returnUrl));
 
     /// <summary>
     /// Identity's tokens carry characters that do not survive a URL, so they travel encoded.
@@ -95,50 +89,22 @@ public abstract class AccountPageModel : PageModel
         => PasswordResetLinkSender.EncodeToken(token);
 
     protected static string? DecodeToken(string? code)
-    {
-        try
-        {
-            #pragma warning disable CS8604
-            return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
-            #pragma warning restore CS8604
-        }
-        catch (FormatException)
-        {
-            return null;
-        }
-    }
+        => AccountSupport.DecodeToken(code);
 
     /// <summary>
     /// An absolute link to an account page, for an email. Built only from <c>Site:PublicUrl</c>,
     /// never from the request's host or scheme: see <see cref="EmailLinkPolicy"/>.
     /// </summary>
     protected string PageLink(string page, object values)
-    {
-        var services = HttpContext.RequestServices;
-        var publicUrl = services.GetRequiredService<IOptions<SiteOptions>>().Value.PublicUrl;
-
-        if (EmailLinkPolicy.TryParsePublicUrl(publicUrl, out var root))
-        {
-            // The path includes the request's path base, which the public URL replaces.
-            var path = Url.Page(page, pageHandler: null, values: values) ?? string.Empty;
-            if (Request.PathBase.HasValue && path.StartsWith(Request.PathBase.Value, StringComparison.OrdinalIgnoreCase))
-            {
-                path = path.Substring(Request.PathBase.Value.Length);
-            }
-
-            return root?.GetLeftPart(UriPartial.Path).TrimEnd('/') + path;
-        }
-
-        throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
-    }
+        => AccountSupport.PageLink(HttpContext, Url, page, values);
 
     /// <summary>
     /// How long a sign-in with the external provider counts as proof of presence for a
     /// sensitive action.
     /// </summary>
-    public static readonly TimeSpan ReauthenticationWindow = TimeSpan.FromMinutes(5);
+    public static readonly TimeSpan ReauthenticationWindow = AccountSupport.ReauthenticationWindow;
 
-    internal const string ReauthenticatedItem = "baget.reauthenticated";
+    internal const string ReauthenticatedItem = AccountSupport.ReauthenticatedItem;
 
     /// <summary>
     /// The check behind every sensitive action (change email, set a password, delete the
@@ -147,29 +113,12 @@ public abstract class AccountPageModel : PageModel
     /// would not know, so it must have signed in again with its provider a moment ago:
     /// see <see cref="ReauthenticateModel"/>.
     /// </summary>
-    #pragma warning disable CS8604
-    protected async Task<bool> IsConfirmedAsync(BaGetUser? user, string? password)
-        => await UserManager.HasPasswordAsync(user)
-            ? await UserManager.CheckPasswordAsync(user, password ?? string.Empty)
-            : await HasReauthenticatedRecentlyAsync();
-    #pragma warning restore CS8604
+    protected Task<bool> IsConfirmedAsync(BaGetUser? user, string? password)
+        => AccountSupport.IsConfirmedAsync(UserManager, HttpContext, user, password);
 
-    protected async Task<bool> HasReauthenticatedRecentlyAsync()
-    {
-        var authentication = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-        if (authentication?.Properties == null
-            || !authentication.Properties.Items.TryGetValue(ReauthenticatedItem, out var value)
-            || !long.TryParse(value, out var ticks)
-            || ticks < DateTime.MinValue.Ticks || ticks > DateTime.MaxValue.Ticks)
-        {
-            return false;
-        }
-
-        var age = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow - new DateTime(ticks, DateTimeKind.Utc);
-
-        return age >= TimeSpan.Zero && age <= ReauthenticationWindow;
-    }
+    protected Task<bool> HasReauthenticatedRecentlyAsync()
+        => AccountSupport.HasReauthenticatedRecentlyAsync(HttpContext);
 
     protected static string Describe(IdentityResult result)
-        => string.Join(" ", System.Linq.Enumerable.Select(result.Errors, e => e.Description));
+        => AccountSupport.Describe(result);
 }

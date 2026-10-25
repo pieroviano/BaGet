@@ -60,7 +60,7 @@
                 @foreach (var user in Model.Users)
                 {
                     <tr>
-                        <td><partial name="_Avatar" model="new BaGet.Core.AvatarModel(user.UserName ?? string.Empty, user.AvatarUrl ?? string.Empty, 24)" /></td>
+                        <td><partial name="~/Views/Shared/_Avatar.cshtml" model="new BaGet.Core.AvatarModel(user.UserName ?? string.Empty, user.AvatarUrl ?? string.Empty, 24)" /></td>
                         <td><a href="@Url.Content("~/admin/users/" + Uri.EscapeDataString(user.UserName ?? string.Empty))">@user.UserName</a></td>
                         <td>@user.Email</td>
                         <td>@user.Created.ToString("yyyy-MM-dd")</td>
@@ -129,7 +129,7 @@
         }
         else
         {
-            <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Users"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Users"))" />
         }
     </form>
 
@@ -165,7 +165,7 @@
         }
         else
         {
-            <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Users"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Users"))" />
         }
         <button type="submit" class="btn btn-primary" asp-page-handler="Create" id="create-user-button">Create user</button>
     </form>

@@ -39,7 +39,7 @@ else
                 </h1>
             </div>
 
-            <partial name="_ScanFindings" model="new ScanFindingsView(Model.Package!.Id!, Model.Package.NormalizedVersionString!)" />
+            <partial name="~/Views/Shared/_ScanFindings.cshtml" model="new ScanFindingsView(Model.Package!.Id!, Model.Package.NormalizedVersionString!)" />
 
             @* Every install pane is rendered by the server. Without JavaScript they stack and the tab links jump to them. *@
             <div class="tabbed-info" x-data="{ active: 0 }">
@@ -362,7 +362,7 @@ else
                         @foreach (var owner in Model.Owners)
                         {
                             <li class="owner">
-                                <partial name="_Avatar" model="new AvatarModel(owner ?? string.Empty, Model.OwnerAvatars?.GetValueOrDefault(owner), 32)" />
+                                <partial name="~/Views/Shared/_Avatar.cshtml" model="new AvatarModel(owner ?? string.Empty, Model.OwnerAvatars?.GetValueOrDefault(owner), 32)" />
                                 <a href="@Url.Page("/Profiles/Profile", new { name = owner })">@owner</a>
                             </li>
                         }

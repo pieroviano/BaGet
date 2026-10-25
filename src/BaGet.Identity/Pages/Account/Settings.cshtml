@@ -80,7 +80,7 @@
         }
         else
         {
-            <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
         }
         <button type="submit" class="btn btn-primary">Change email</button>
     </form>
@@ -104,7 +104,7 @@
         </div>
         @if (!Model.HasPassword)
         {
-            <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
         }
         <button type="submit" class="btn btn-primary">@(Model.HasPassword ? "Change password" : "Set password")</button>
     </form>
@@ -127,7 +127,7 @@
         }
         else
         {
-            <partial name="_Reauthenticate" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
         }
         <button type="submit" class="btn btn-danger">Delete my account</button>
     </form>

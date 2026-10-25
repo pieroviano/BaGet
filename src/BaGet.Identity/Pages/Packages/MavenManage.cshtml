@@ -137,7 +137,7 @@
         }
         else
         {
-            <partial name="~/Pages/Account/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/MavenManage", new { group = info.GroupId, artifact = info.ArtifactId }) ?? string.Empty))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/MavenManage", new { group = info.GroupId, artifact = info.ArtifactId }) ?? string.Empty))" />
         }
 
         <button type="submit" asp-page-handler="DeleteArtifact" asp-route-group="@info.GroupId" asp-route-artifact="@info.ArtifactId" class="btn btn-danger" id="maven-delete-artifact"

@@ -34,7 +34,7 @@
                 <span class="text-danger"> The last attempt failed: @Model.Result.Error</span>
             }
         </p>
-        <partial name="~/Pages/Packages/_ScanFindingsTable.cshtml" model="Model.Result" />
+        <partial name="~/Views/Shared/_ScanFindingsTable.cshtml" model="Model.Result" />
     }
 
     @if (Model.Engine is not { Available: false })

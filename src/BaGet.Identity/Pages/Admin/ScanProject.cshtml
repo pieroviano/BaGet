@@ -35,7 +35,7 @@
     }
 
     <form method="post" asp-page-handler="Policy" asp-route-name="@Model.Name" id="scan-project-form">
-        <partial name="~/Pages/Admin/_ScanPolicyForm.cshtml" model="Model.PolicyForm" />
+        <partial name="~/Views/Shared/_ScanPolicyForm.cshtml" model="Model.PolicyForm" />
         <button type="submit" class="btn btn-primary">Save the policy</button>
     </form>
     <p class="help-block">Saving asks for your password again. A policy with everything off removes it.</p>

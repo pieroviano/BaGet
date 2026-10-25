@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
@@ -23,7 +24,9 @@ public sealed class ScanBlockedFilter : IExceptionFilter
         var format = context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<RepositoryRouteMetadata>()?.Format ?? RepositoryFormat.NuGet;
         var reason = blocked.Message;
 
-        if (context.ActionDescriptor is PageActionDescriptor)
+        // A screen of the web UI: a Razor Page, or a controller action that replaced one (it carries its page name).
+        if (context.ActionDescriptor is PageActionDescriptor
+            || context.ActionDescriptor.EndpointMetadata.OfType<BaGet.Identity.Mvc.LegacyPageAttribute>().Any())
         {
             var encoded = WebUtility.HtmlEncode(reason);
             context.Result = new ContentResult

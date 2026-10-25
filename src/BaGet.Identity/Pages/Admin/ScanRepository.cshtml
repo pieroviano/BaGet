@@ -128,7 +128,7 @@
         }
 
         <form method="post" asp-page-handler="Policy" asp-route-name="@Model.Name" id="scan-policy-form">
-            <partial name="~/Pages/Admin/_ScanPolicyForm.cshtml" model="Model.PolicyForm" />
+            <partial name="~/Views/Shared/_ScanPolicyForm.cshtml" model="Model.PolicyForm" />
             <button type="submit" class="btn btn-primary">Save the policy</button>
         </form>
         <p class="help-block">Saving asks for your password again. A policy with everything off removes it. The thresholds are Low, Moderate, High and Critical as the advisory source rates them (an unrated finding counts as Moderate).</p>

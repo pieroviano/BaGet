@@ -197,7 +197,7 @@
                 <label for="remote-name">Name</label>
                 <input id="remote-name" name="name" type="text" class="form-control" value="@Model.Name" maxlength="@BaGet.Core.RepositoryNames.MaxLength" autocomplete="off" />
             </div>
-            <partial name="~/Pages/Admin/_RemoteFields.cshtml" for="Remote" />
+            <partial name="~/Views/Shared/_RemoteFields.cshtml" for="Remote" />
             <div class="form-group">
                 <label for="remote-anonymous-read">Who may read it</label>
                 <select id="remote-anonymous-read" name="anonymousRead" class="form-control">
@@ -210,7 +210,7 @@
                     anonymously readable unless that is intended.
                 </span>
             </div>
-            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("createRemotePassword")" />
+            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("createRemotePassword")" />
             <button type="submit" class="btn btn-primary">Create remote repository</button>
         </form>
     }

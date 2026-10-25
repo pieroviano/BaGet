@@ -54,7 +54,7 @@
                         <form method="post" asp-page-handler="Remove">
                             <input type="hidden" name="key" value="@hold.Key" />
                             <input type="hidden" name="repository" value="@Model.Repository" />
-                            <partial name="~/Pages/Admin/_ConfirmPassword.cshtml" model="@Model.Confirmation("hold-password-" + hold.Key)" />
+                            <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("hold-password-" + hold.Key)" />
                             <button type="submit" class="btn btn-default btn-xs">Lift hold</button>
                         </form>
                     </td>

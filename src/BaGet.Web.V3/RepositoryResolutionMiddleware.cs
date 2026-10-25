@@ -45,7 +45,10 @@ public class RepositoryResolutionMiddleware
         // the pages of every format exist under /r/{repo}/, and RepositoryPageFilter decides which of them a repository has
         // (it needs the caller's rights for that, and redirects the front page of an npm repository to its own).
         var endpoint = context.GetEndpoint();
-        var isPage = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor>() != null;
+        // A page is a Razor Page or a controller action that replaced one (it carries its page name).
+        var isPage = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor>() != null
+            || endpoint?.Metadata.GetMetadata<BaGet.Identity.Mvc.LegacyPageAttribute>() != null
+            || endpoint?.Metadata.GetMetadata<BaGet.Identity.Mvc.RepositoryPageAttribute>() != null;
         var metadata = endpoint?.Metadata.GetMetadata<RepositoryRouteMetadata>();
         var format = metadata?.Format ?? RepositoryFormat.NuGet;
 
