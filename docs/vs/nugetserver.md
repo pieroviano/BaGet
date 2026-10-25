@@ -16,13 +16,13 @@ that serves a folder of packages over HTTP (OData). **It is deprecated**: the re
 | Push auth | One shared API key (`apiKey`, `requireApiKey`) | Global key, or accounts with scoped expiring keys (on by default) |
 | Accounts / owners | No | Users, organizations, package owners, OpenID Connect, 2FA |
 | Delete | Delete, or delist via `enableDelisting` | Unlist (default) or hard delete; relist |
-| Mirroring | No | Optional read-through from one upstream |
+| Mirroring | No | Remote repositories and optional read-through mirror |
 | Storage | Folder (`packagesPath`) | FileSystem, Azure Blob, S3, GCS, Aliyun OSS |
 | Database | None (folder scan) | SQLite, SQL Server, PostgreSQL, MySQL, Azure Table |
 | Search | OData queries (V2 only) | V3 search; package ID substring match |
 | Web UI | Feed home page only | Search, details, upload, manage, stats |
 | Validation / signing | No | Opt-in validation and repository signing |
-| Scale / HA | Not documented | Single instance in practice |
+| Scale / HA | Not documented | Single node, or [high availability](../high-availability.md) |
 | Licence / cost | Apache-2.0, free | MIT, free |
 
 ## When to choose which

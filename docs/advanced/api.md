@@ -2,7 +2,7 @@
 
 BaGet Extension implements the [NuGet V3 API](https://learn.microsoft.com/nuget/api/overview); clients find
 every resource through the service index at `/v3/index.json`. This page lists what it serves, and
-the endpoints BaGet Extension adds of its own.
+the endpoints BaGet Extension adds of its own. Every NuGet route below also exists under `/r/{name}/` for a named [repository](../repositories.md) (`/r/{name}/v3/index.json`); a repository of another format answers `404` on a route of a different format.
 
 ## Service index resources
 
@@ -56,9 +56,21 @@ any database write answers `503` with `Retry-After`.
 | `GET /v3/repository-signatures/{fingerprint}.crt` | the repository signing certificate |
 | `GET /api/v2`, `/api/v2/$metadata`, `/api/v2/Packages()`, `/api/v2/Packages(Id='..',Version='..')`, `/api/v2/FindPackagesById()`, `/api/v2/Search()` | V2 feed; `404` when `Feeds:EnableV2` is `false`, while push, delete and relist under `/api/v2/package` and `/api/v2/symbol` are unaffected |
 
+## Other formats
+
+| Format | Routes (under `/r/{name}/` unless noted) | Docs |
+| --- | --- | --- |
+| npm | `npm/{package}` (packument `GET`, publish `PUT`, `…/-rev/{rev}`), `npm/{package}/-/{file}` (tarball), `npm/-/package/{package}/dist-tags[/{tag}]`, `npm/-/v1/search`, `npm/-/ping`, `npm/-/whoami`, `npm/-/v1/login`, `npm/-/user/{userKey}` (`PUT` login), `npm/-/user/token/{token}` (`DELETE` logout), `npm/-/npm/v1/security/advisories/bulk`, `npm/-/npm/v1/security/audits/quick`; a scoped name is `@scope%2fname` or `@{scope}/{pkg}` | [npm registry](../npm-registry.md) |
+| Maven | `maven/{**path}`: `GET`/`HEAD` read, `PUT` deploy, `DELETE` | [Maven repositories](../maven-repositories.md) |
+| Docker (OCI Distribution Spec 1.1) | at the **server root**: `/v2/`, `/v2/token`, `/v2/{repo}/{image…}/blobs/…`, `manifests/…`, `tags/list`, `referrers/…`; `{repo}` is the BaGet repository | [Docker registry](../docker-registry.md) |
+
+## Health
+
+`GET /health/live` answers `200` while the process runs; `GET /health/ready` answers `200` or `503` with the name of each check (database, storage; the shared store is reported only). Both are anonymous, see [High availability](../high-availability.md).
+
 ## Administration
 
-Repositories, the access model, users, operations, retention and scanning are administered under `/api/v1` with an administrator's
+Repositories, the access model, users, operations, retention, scanning and replication are administered under `/api/v1` with an administrator's
 `admin:api` key; see [Administration REST API](../admin-api.md) and its OpenAPI document `GET /api/v1/openapi.json`.
 
 ## Deprecation and vulnerabilities
@@ -136,6 +148,13 @@ Pages marked "accounts" answer `404` while `Accounts:Enabled` is `false`; "sign-
 | `/admin/repositories`, `/admin/repositories/{name}`, `/admin/repositories/{name}/delete` | administrators: list, create, edit and delete repositories, see [Repositories](../repositories.md) |
 | `/admin/groups`, `/admin/groups/{name}`, `/admin/permissions`, `/admin/permissions/{name}`, `/admin/projects`, `/admin/projects/{name}`, `/admin/audit`, `/admin/access-unavailable` | administrators (projects and their targets also their project administrators): groups, permission targets, projects, access audit, see [Access control](../access-control.md#admin-pages) |
 | `/account/access` | accounts, sign-in: your effective permissions per repository |
+| `/npm-packages`, `/npm-upload`, `/maven-artifacts`, `/maven-upload`, `/docker-images` (and the package, artifact and image detail pages) | the browse and upload pages of the npm, Maven and Docker repositories, also at `/r/{name}/…`; a page of another format answers `404` |
+| `/admin/formats`, `/admin/operations`, `/admin/validation`, `/admin/abuse`, `/admin/cluster` | administrators: format modules, background operations, validation and abuse queues, cluster nodes and health |
+| `/admin/retention`, `/admin/retention/{key}`, `/admin/retention/holds` | administrators: retention policies, dry run, legal holds |
+| `/admin/replication`, `/admin/replication/{key}` | administrators: replication configurations and the run log |
+| `/admin/api` | administrators: the catalog of the [administration REST API](../admin-api.md) |
+
+[UI coverage](../ui-coverage.md) maps every capability to its page.
 | `/admin/settings` | administrators: edit settings (saved to `appsettings.Overrides.json`), see the [Settings page](../configuration.md#settings-page) and [moving to another database](../configuration.md#moving-to-another-database); `404` if the overrides store is unavailable |
 | `/admin/settings?handler=CopyStatus` | administrators: JSON progress of the database copy (`phase`, `active`, `finished`, `succeeded`, `restartRequired`, table and row counters, `message`, `errors`) |
 

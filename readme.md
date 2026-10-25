@@ -2,7 +2,7 @@
 
 ![Build status]
 
-A lightweight [NuGet] and [symbol] server.
+A [NuGet], npm, Maven and Docker registry and [symbol] server.
 
 <p align="center">
   <img width="100%" src="docs/BaGetSite.png">
@@ -28,13 +28,20 @@ The screenshot above shows the upstream project's UI, not the current one.
 ## Features
 
 * **Cross-platform**: runs on Windows, macOS, and Linux!
-* **Cloud native**: supports [Docker], [Azure], [AWS], [Google Cloud], [Alibaba Cloud]
+* **Cloud native**: runs in [Docker], [Azure], [AWS], [Google Cloud], [Alibaba Cloud]
 * **Four databases**: SQLite, SQL Server, PostgreSQL and MySQL, plus Azure Table Storage
+* **Repositories and formats**: several [repositories] per server (`/r/{name}/`), each NuGet, [npm], [Maven] or [Docker registry] (OCI)
+* **Remote and virtual repositories**: [cache an upstream] (NuGet, npm, Maven, Docker; offline mode, purge) and [merge several repositories] behind one URL
 * **Offline support**: [mirror a NuGet server] to speed up builds and enable offline downloads
 * **NuGet V3 protocol**, including the catalog, vulnerability info, deprecation, report abuse and package details templates
 * **NuGet V2 (OData) feed** for `nuget list`, older clients and PowerShellGet (on by default; `Feeds:EnableV2=false` turns it off)
 * **Accounts** (on by default; `Accounts:Enabled=false` restores the global `ApiKey` alone; while `ApiKey` is empty, pushes need a user API key): sign-in, OpenID Connect, package owners, organizations and scoped, expiring API keys
+* **Access control**: groups, permission targets, project roles, private repositories and an audit log ([access control])
 * **Validation pipeline** (opt-in): packages are checked before they are served, and can be repository signed
+* **Retention**, **vulnerability scanning** (OSV.dev, Trivy; opt-in) and **replication** between BaGet servers: [retention], [scanning], [replication]
+* **High availability** (opt-in): several nodes on one database, object store and Redis ([high availability])
+* **Administration REST API** (`/api/v1`, OpenAPI 3) and admin pages for everything the API does: [admin API]
+* **OpenTelemetry export** (traces, metrics, logs; needs an OTLP endpoint) and a live Settings page
 * **Web UI**: package pages (with "Open in NuGet Package Explorer", web and desktop), owner management pages, profiles, statistics and abuse reports
 
 [Build status]: https://img.shields.io/github/actions/workflow/status/pieroviano/BaGet/main.yml?branch=main
@@ -53,3 +60,15 @@ The screenshot above shows the upstream project's UI, not the current one.
 [Alibaba Cloud]: docs/installation/aliyun.md
 
 [Mirror a NuGet server]: docs/configuration.md#enable-read-through-caching
+[Repositories]: docs/repositories.md
+[npm]: docs/npm-registry.md
+[Maven]: docs/maven-repositories.md
+[Cache an upstream]: docs/remote-repositories.md
+[Merge several repositories]: docs/virtual-repositories.md
+[Access control]: docs/access-control.md
+[Retention]: docs/retention.md
+[Scanning]: docs/vulnerability-scanning.md
+[Replication]: docs/replication.md
+[High availability]: docs/high-availability.md
+[Admin API]: docs/admin-api.md
+[Docker registry]: docs/docker-registry.md

@@ -4,20 +4,20 @@
 
 | Feature | Nexus Repository | BaGet Extension |
 |---|---|---|
-| Formats | 27 formats (Maven, npm, Docker, PyPI, NuGet, ...) | NuGet only (`.nupkg`, `.snupkg`) |
+| Formats | 27 formats (Maven, npm, Docker, PyPI, NuGet, ...) | NuGet, npm, Maven and Docker repositories (local, remote, virtual); `.nupkg`, `.snupkg`, tarballs, Maven files, OCI images |
 | NuGet V3 | Yes | Yes: `/v3/index.json`; registration not paged |
 | NuGet V2 | Yes | Yes: `/api/v2` OData, on by default (`Feeds:EnableV2`); `$filter`/`$orderby`/`$select`/`$expand` ignored |
 | Symbols | `.snupkg` and Symbol Server protocol on proxy, hosted, group (new in 3.95.0) | Yes: `.snupkg` push, download endpoint; Portable PDB only |
-| Proxy / upstream cache | Proxy repositories | Optional pull-through mirror (`Mirror:Enabled`, off by default); one upstream; copy is indexed permanently; search does not query upstream |
+| Proxy / upstream cache | Proxy repositories | [Remote repositories](../remote-repositories.md): per-repository upstream (NuGet, npm, Maven, Docker), credentials, cache periods, offline mode, purge; stored copies are permanent until purged; search does not query upstream |
 | Virtual / group feeds | Group repositories (proxy + hosted + groups) behind one URL | [Virtual repositories](../virtual-repositories.md): ordered members (local, remote, nested virtual) behind one URL; uploads go to a chosen member |
-| Multiple feeds | Many repositories per instance | One feed per instance |
-| Private (authenticated) reads | Yes: anonymous access can be disabled (default anonymous role is read-only) | Not supported: read routes are open |
-| Permissions model | Roles and privileges per repository; content selectors (path-based) | Package ownership (first pusher, owners, organizations); no per-feed read permissions |
+| Multiple feeds | Many repositories per instance | Many [repositories](../repositories.md) per instance (`/r/{name}/`) |
+| Private (authenticated) reads | Yes: anonymous access can be disabled (default anonymous role is read-only) | Yes: `AnonymousRead` per repository; a private one answers `401` + Basic challenge |
+| Permissions model | Roles and privileges per repository; content selectors (path-based) | [Access control](../access-control.md): private repositories, groups, permission targets, project roles; anonymous read per repository; Basic auth or API key for reads; package ownership on top |
 | Accounts / API keys | Users, NuGet API keys (NuGet API-Key realm); user tokens Pro only | Accounts (on in shipped config), OpenID Connect, TOTP 2FA, scoped expiring API keys, global `ApiKey` |
 | Storage / DB backends | File (all editions); S3 (Community per feature matrix); Azure/GCS Pro only; H2 (default since 3.71) or PostgreSQL | File system, Azure Blob, S3, Google Cloud, Aliyun OSS; SQLite, SQL Server, PostgreSQL, MySQL, Azure Table |
 | UI | Web UI (browse, admin, security) | Search, details, upload, stats, package management, account pages |
 | Deployment | Self-hosted (Community: self-hosted only); Pro also Cloud | Self-hosted .NET 10 (Windows/Linux/macOS), Docker, IIS |
-| HA / scale-out | Pro and Pro+ only (needs external PostgreSQL and shared S3/Azure blob storage) | No documented multi-instance support |
+| HA / scale-out | Pro and Pro+ only (needs external PostgreSQL and shared S3/Azure blob storage) | [High availability](../high-availability.md): several nodes on one database, object store and Redis (not on SQLite, the file system store or Azure Table) |
 | Licence / cost | Community free with usage limits; Pro/Pro+ paid | MIT, free; you pay only infrastructure |
 
 Editions (Sonatype tiers page): Community Edition, Pro, Pro+.
@@ -30,10 +30,10 @@ Editions (Sonatype tiers page): Community Edition, Pro, Pro+.
 
 ## When to choose which
 
-- Nexus: one manager for several formats, group repositories, authenticated reads, per-repository roles, and a free tier that fits small usage.
-- BaGet Extension: a NuGet-only feed with no usage cap, simple self-hosted deployment, and owner-based publishing with scoped API keys.
-- Nexus Community: when private reads or group feeds are required and stay under 40,000 components / 100,000 requests per day; BaGet Extension has neither feature.
-- Nexus Pro: when HA is required; BaGet Extension has no documented HA.
+- Nexus: more formats (PyPI, Conan, ...), vendor support, SSO and malware/policy features in Pro.
+- BaGet Extension: NuGet, npm, Maven and Docker with remote and virtual repositories, access control, retention, scanning, replication and HA, with no usage cap and no licence cost.
+- Nexus: when you need a format BaGet Extension lacks or vendor support.
+- BaGet Extension: when NuGet, npm, Maven and Docker are enough and you want HA without a paid tier.
 
 ## Sources
 

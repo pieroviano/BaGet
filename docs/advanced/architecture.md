@@ -1,25 +1,27 @@
 # Architecture
 
 BaGet Extension is one ASP.NET Core (`net10.0`) host serving the NuGet V3 protocol, an optional V2 feed, a
-symbol server and a Razor Pages UI. Storage, database and search are pluggable and chosen from configuration
-at runtime.
+symbol server, npm, Maven and Docker (OCI) registries, an administration REST API and a Razor Pages UI.
+Storage, database and search are pluggable and chosen from configuration at runtime.
 
 ## Projects
 
 | Project | Role |
 |---|---|
 | `BaGet` | Host and CLI entry point: `Program.cs` (configuration, services, pipeline, commands) |
-| `BaGet.Core` | Domain: entities, `IContext`, `IPackageDatabase`, storage, search, indexing, mirroring, options, settings, maintenance gate, database copy |
-| `BaGet.Web` | V3 controllers, Razor Pages, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` |
+| `BaGet.Core` | Domain: entities, `IContext`, `IPackageDatabase`, storage, search, indexing, remote/virtual repositories, format modules (`Formats`: NuGet, npm, Maven, Docker), access model, retention, scanning, replication, operations, high availability (`Ha`), telemetry, options, settings, maintenance gate, database copy |
+| `BaGet.Web` | V3, npm, Maven and OCI controllers, the `/api/v1` administration API (`Api`), Razor Pages, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` |
 | `BaGet.Web.V2` | Legacy V2 OData/Atom feed (`Feeds:EnableV2`) |
-| `BaGet.Identity` | Accounts, API keys, ownership, administrators, account, package-management and admin pages (`Accounts:Enabled`) |
+| `BaGet.Identity` | Accounts, API keys, ownership, administrators, access-model, retention, replication, scanning and other admin pages (`Accounts:Enabled`) |
 | `BaGet.Catalog` | V3 catalog resource, writer and rebuild |
 | `BaGet.Validation` | Validation queue and worker, validators, repository signing (`Validation:Enabled`) |
 | `BaGet.Database.{Sqlite,SqlServer,PostgreSql,MySql}` | One EF Core `IContext` and migrations per provider |
 | `BaGet.Azure`, `BaGet.Aws`, `BaGet.Gcp`, `BaGet.Aliyun` | Cloud storage (Azure Blob, S3, Google Cloud, Aliyun OSS), Azure Table database and Azure Search |
 | `BaGet.Protocol` | Standalone NuGet V3 **client** library (shipped as a package; used for mirroring) |
 
-Dependencies point inwards: every project references `BaGet.Core`; only the host references everything.
+Dependencies point inwards: every project references `BaGet.Core`; only the host references everything. The host also holds the telemetry export (`src/BaGet/Telemetry`) and the Redis cluster store (`src/BaGet/Ha`).
+
+`BaGet.Identity` cannot reference `BaGet.Validation` or `BaGet.Catalog`; it reaches them through `BaGet.Core` interfaces.
 
 ## Startup — `src/BaGet/Program.cs`
 
@@ -69,6 +71,11 @@ in `Program.ConfigureBaGetApplication`.
 | Area | Paths |
 |---|---|
 | Service index | `v3/index.json` |
+| npm registry | `r/{repo}/npm/…` (packuments, tarballs, dist-tags, search, login, audit) |
+| Maven | `r/{repo}/maven/{**path}` (`GET`/`HEAD`/`PUT`/`DELETE`) |
+| Docker (OCI) | `v2/`, `v2/token`, `v2/{repo}/{image…}/blobs\|manifests\|tags\|referrers/…` at the server root |
+| Administration API | `api/v1/…`, `api/v1/openapi.json` ([Administration REST API](../admin-api.md)) |
+| Health | `health/live`, `health/ready` |
 | Publish | `api/v2/package` (PUT push, DELETE delete/unlist, POST relist), `api/v2/symbol` |
 | Content | `v3/package/{id}/index.json`, `…/{version}/{id}.{version}.nupkg`, `….nuspec`, `…/readme`, `…/icon` |
 | Metadata | `v3/registration/{id}/index.json`, `v3/registration/{id}/{version}.json` |
@@ -119,6 +126,29 @@ offline mode, the metadata and negative cache periods and stale-on-error, and re
 Deletion follows `PackageDeletionBehavior`: `Unlist` (hide) or `HardDelete` (rows and files).
 Administrators can always hard-delete from the UI.
 
+## Formats, remote and virtual repositories
+
+| Piece | Job |
+|---|---|
+| `IFormatModule` / `FormatRegistry` (`BaGet.Core/Formats`) | Describes a format (`NuGet`, `Npm`, `Maven`, `Docker`): route prefix, creatable kinds, storage folders, create fields, usage and purge. Per-request work is in scoped `IFormatService`s; see [Formats](../formats.md) |
+| `INpmRegistry`, `IMavenRepository`, `IOciRegistry` | Forward per call by `IRepositoryContext.Current.Kind` to the local, remote or virtual implementation |
+| Remote (`RepositoryKind.Remote`) | Upstream in `Repository.Settings`; `RemoteUpstreamClient`, `RemoteRepositoryState`; see [Remote repositories](../remote-repositories.md) |
+| Virtual (`RepositoryKind.Virtual`) | Ordered members, one deploy repository; see [Virtual repositories](../virtual-repositories.md) |
+
+## Access model
+
+`BaGet.Core/Access`: groups, permission targets (repository and package globs), project roles and an audit log; `IAccessEvaluator` decides
+(`Read`, `Annotate`, `Deploy`, `Delete`, `Manage`), `RepositoryReadFilter` / `RepositoryPageFilter` enforce Read. See [Access control](../access-control.md).
+
+## Retention, scanning, replication, high availability
+
+| Subsystem | Code | Docs |
+|---|---|---|
+| Retention | `BaGet.Core/Retention` (`RetentionEvaluator`, `RetentionEngine`, `RetentionWorker`) | [Retention](../retention.md) |
+| Vulnerability scanning | `BaGet.Core/Scanning` (`IScanService`, `IScanGate`, OSV and Trivy, `ScanWorker`) | [Vulnerability scanning](../vulnerability-scanning.md) |
+| Replication | `BaGet.Core/Replication` (`ReplicationEngine`, `IFormatReplicator`, `ReplicationWorker`) | [Replication](../replication.md) |
+| High availability | `BaGet.Core/Ha` (`IClusterStore`, `ClusterJobLease`, `ClusterSyncService`), Redis in `src/BaGet/Ha` | [High availability](../high-availability.md) |
+
 ## Authentication and authorization
 
 | Piece | Behaviour |
@@ -161,6 +191,10 @@ under `repos/{name}/` for other repositories.
 |---|---|---|
 | `ValidationWorker` | `BaGet.Validation` | Runs queued validations, then indexes or rejects |
 | `StagingSweepWorker` | `BaGet.Web` | Deletes expired browser-upload staging |
+| `RetentionWorker` | `BaGet.Core` | Starts due retention schedules, flushes download usage |
+| `ScanWorker` | `BaGet.Core` | Scans queued artifacts and sweeps repositories (`Scanning:*`) |
+| `ReplicationWorker` | `BaGet.Core` | Starts due and deploy-triggered replications |
+| `ClusterSyncService` | `BaGet.Core` | Heartbeat and shared gate / access model / copy status (`Ha:Enabled`) |
 | `DatabaseCopyWorker` | `BaGet.Core` | Runs the queued database copy |
 | `BackgroundEmailService` | `BaGet.Identity` | Sends queued email (confirmation, reset, contact owners) |
 
@@ -206,6 +240,9 @@ what startup validation checks (`Database/Storage/Search:Type`).
 | `BaGet.Tests` | Integration: `BaGetApplication : WebApplicationFactory<Program>` — real pipeline over HTTP, SQLite in a temp directory, `SystemTime` fixed to 2020-01-01Z |
 | `BaGet.Protocol.Tests`, `BaGet.Protocol.Samples.Tests` | Client library |
 | `BaGet.Web.Tests`, `BaGet.Azure.Tests` | Web helpers, Azure providers |
+| `BaGet.Storage.Tests` | Streaming storage contract per cloud provider on emulator containers; skipped without Docker |
+| `BaGet.Clients.Tests` | Real `npm`, `mvn` and `docker` clients against the running server; skipped without Docker |
+| `BaGet.Ha.Tests` | Redis cluster store on a container; skipped without Docker |
 | `BaGet.Telemetry.Tests` | Telemetry export against Jaeger and an OpenTelemetry Collector containers (traces, metrics, logs, dead and stalled endpoints); skipped without Docker |
 | `BaGet.Database.Tests` | Database copy between every pair of SQLite / SQL Server / PostgreSQL / MySQL on Testcontainers servers; skipped without Docker |
 

@@ -18,7 +18,7 @@ Manager UI or `nuget sources`.
 | Push auth | File-system permissions only | Global key, or accounts with scoped keys |
 | Owners / accounts | No | Yes |
 | Symbols | Not confirmed | Yes, portable PDBs only |
-| Mirroring nuget.org | No | Optional read-through |
+| Mirroring nuget.org | No | Optional read-through ([remote repositories](../remote-repositories.md)) |
 | Storage | Folder or share | Folder, Azure Blob, S3, GCS, Aliyun OSS |
 | Remote / internet access | Network share only | HTTP(S) |
 | Setup / cost | Minimal | Run a .NET 10 service and a database |

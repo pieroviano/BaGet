@@ -13,12 +13,12 @@ Gallery code (self-hosting is possible but not simple; the
 
 | Feature | nuget.org | BaGet Extension |
 | --- | --- | --- |
-| Visibility | Public; no private packages | Public or internal; reads are never authenticated (no private reads) |
+| Visibility | Public; no private packages | Public or internal; private repositories with Basic auth or API key reads ([access control](../access-control.md)) |
 | V3 (push, restore, search, autocomplete, registration) | Yes | Yes (registration not paged) |
 | V2 (OData) | Yes | Yes, on by default (`Feeds:EnableV2`); `$skip`/`$top`, `searchTerm`, `id`, `includePrerelease`, `semVerLevel`; `$filter`/`$orderby`/`$select`/`$expand` ignored |
 | Symbols (`.snupkg`) | Yes | Yes, portable PDBs only |
 | Catalog | Yes | Yes, relational DB only (`catalog rebuild` to backfill) |
-| Vulnerability info | Yes | Manual entry through the [API](../advanced/api.md); no advisory import |
+| Vulnerability info | Yes | Manual entry through the [API](../advanced/api.md), plus [scanning](../vulnerability-scanning.md) against OSV.dev (online or offline copy), off by default |
 | Deprecation | Yes | Manual (API or manage page) |
 | Accounts, organizations, owners | Yes (Microsoft/Entra login) | Yes, on by default (`Accounts:Enabled=true` in shipped settings); optional OpenID Connect |
 | API keys | Yes: scoped (glob), expiring; new keys max 30 days since 2026-08-17, older keys expire 2026-11-01 | Global `ApiKey`, plus scoped expiring per-account keys (on with accounts) |
@@ -28,14 +28,14 @@ Gallery code (self-hosting is possible but not simple; the
 | Repository signing | Yes | Opt-in (needs a certificate) |
 | Package size limit | 250 MB | About 2 GB for push and upload (multipart limit); IIS 250 MB |
 | Deletion | Generally not supported ([policy](https://learn.microsoft.com/en-us/nuget/nuget-org/policies/deleting-packages)) | Unlist (default) or hard delete; overwrite off by default |
-| Mirroring | n/a | Optional read-through from one upstream; search does not query it |
+| Mirroring | n/a | [Remote repositories](../remote-repositories.md) (per repository) and the optional `Mirror:Enabled` mirror; search does not query upstream |
 | Download statistics | Not re-verified | Totals plus `/stats` page; no per-day |
 | Search | Full index | Package ID substring only (`Database`), or Azure Search |
 | Administration | Admin-only Settings page (edits settings, marks restart-required ones); copy of all data between SQLite, SQL Server, PostgreSQL and MySQL behind a read-only gate; optional SMTP email |
 | Web UI | Full Gallery | Search, details, upload, manage, stats, account |
 | Storage / DB | Azure (Blob, SQL, Search, CDN) | FileSystem, Azure Blob, S3, GCS, Aliyun OSS; SQLite, SQL Server, PostgreSQL, MySQL, Azure Table |
 | Platform | Azure-hosted service | .NET 10, Windows/Linux/macOS, Docker, IIS |
-| Scale / HA | Global, CDN-backed | Single instance in practice; multi-instance not documented |
+| Scale / HA | Global, CDN-backed | Single node, or several with [high availability](../high-availability.md) (database, object store and Redis shared) |
 | Licence / cost | Free service; Gallery code Apache-2.0 | MIT, self-hosted, infrastructure cost only |
 
 ## Architecture

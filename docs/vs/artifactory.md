@@ -4,20 +4,20 @@
 
 | Feature | Artifactory | BaGet Extension |
 |---|---|---|
-| Formats | Multi-format (Maven, npm, Docker, PyPI, NuGet, ...) | NuGet only (`.nupkg`, `.snupkg`) |
+| Formats | Multi-format (Maven, npm, Docker, PyPI, NuGet, ...) | NuGet, npm, Maven and Docker repositories (local, remote, virtual); `.nupkg`, `.snupkg`, tarballs, Maven files, OCI images |
 | NuGet V3 | Yes: `/api/nuget/v3/<repo>/index.json`; PackageBaseAddress only on repos with *Enforce Layout* (fixed at creation) | Yes: `/v3/index.json`; registration not paged |
 | NuGet V2 | Yes: `/api/nuget/<repo>` | Yes: `/api/v2` OData, on by default (`Feeds:EnableV2`); `$filter`/`$orderby`/`$select`/`$expand` ignored |
 | Symbols | Local, remote and virtual symbol repos; `.snupkg`; Microsoft PDB v7 and Portable PDB | Yes: `.snupkg` push, download endpoint; Portable PDB only |
-| Proxy / upstream cache | Remote repos (nuget.org or another Artifactory); cached on demand | [Remote repositories](../remote-repositories.md): per-repository upstream (V3 or V2), Basic credentials, metadata and negative cache periods, offline mode, pass-through or stored copies, test connection, purge; plus the optional `Mirror:Enabled` mirror for the default repository. Stored copies are permanent until purged; search does not query upstream |
+| Proxy / upstream cache | Remote repos (nuget.org or another Artifactory); cached on demand | [Remote repositories](../remote-repositories.md): per-repository upstream (NuGet V3 or V2, npm, Maven, Docker), credentials, metadata and negative cache periods, offline mode, pass-through or stored copies, test connection, purge; plus the optional `Mirror:Enabled` mirror for the default repository. Stored copies are permanent until purged; search does not query upstream |
 | Virtual / group feeds | Virtual repos combine local and remote behind one URL; push allowed | [Virtual repositories](../virtual-repositories.md): ordered members (local, remote, nested virtual), first match answers, versions and search merged, uploads to a default deploy repository, only readable members used; no merged catalog, no per-member path rules |
-| Multiple feeds | Many repositories per instance | One feed per instance |
-| Private (authenticated) reads | Yes: anonymous access configurable (JFrog recommends off; anonymous removed from default permissions since 7.84.3); *Force Authentication* per repo | Not supported: read routes are open |
-| Permissions model | Permission targets (repos + users/groups); Permissions V2 from 7.77.2; project RBAC | Package ownership (first pusher, owners, organizations); no per-feed read permissions |
+| Multiple feeds | Many repositories per instance | Many [repositories](../repositories.md) per instance (`/r/{name}/`), each with its own format and access |
+| Private (authenticated) reads | Yes: anonymous access configurable (JFrog recommends off; anonymous removed from default permissions since 7.84.3); *Force Authentication* per repo | Yes: `AnonymousRead` per repository; a private one answers `401` + Basic challenge (`404` without Read) |
+| Permissions model | Permission targets (repos + users/groups); Permissions V2 from 7.77.2; project RBAC | [Access control](../access-control.md): private repositories, groups, permission targets, project roles; anonymous read per repository; Basic auth or API key for reads; package ownership on top |
 | Accounts / API keys | Users, groups, access tokens; API key as `user:key` in NuGet clients | Accounts (on in shipped config), OpenID Connect, TOTP 2FA, scoped expiring API keys, global `ApiKey` |
 | Storage / DB backends | Filestore: file system, S3, Azure Blob, GCS, NFS; DB: PostgreSQL (default since 7.84.7), MySQL, MariaDB, MSSQL, Oracle, Derby (not for production) | File system, Azure Blob, S3, Google Cloud, Aliyun OSS; SQLite, SQL Server, PostgreSQL, MySQL, Azure Table |
 | UI | Admin and browse UI | Search, details, upload, stats, package management, account pages |
 | Deployment | JFrog-hosted SaaS or self-managed | Self-hosted .NET 10 (Windows/Linux/macOS), Docker, IIS |
-| HA / scale-out | Self-managed HA listed under Enterprise X; SaaS Enterprise X 99.9% uptime | No documented multi-instance support |
+| HA / scale-out | Self-managed HA listed under Enterprise X; SaaS Enterprise X 99.9% uptime | [High availability](../high-availability.md): several nodes on one database, object store and Redis (not on SQLite, the file system store or Azure Table) |
 | Licence / cost | Commercial, see below | MIT, free; you pay only infrastructure |
 
 Artifactory editions and pricing (pricing page):
@@ -33,10 +33,10 @@ Artifactory editions and pricing (pricing page):
 
 ## When to choose which
 
-- Artifactory: one manager for several formats (Maven, npm, Docker, NuGet), virtual repos, authenticated reads, per-repo permissions, vendor-backed HA.
-- BaGet Extension: a NuGet-only feed with no licence cost, a simple self-hosted deployment, and owner-based publishing with scoped API keys.
-- Artifactory: when private reads or several feeds are mandatory; BaGet Extension has neither.
-- BaGet Extension: when a free NuGet feed is the whole requirement; Artifactory NuGet has no free edition found.
+- Artifactory: more formats (PyPI, Conan, ...), vendor-backed HA and support, JFrog Xray, a mature ecosystem.
+- BaGet Extension: NuGet, npm, Maven and Docker with local, remote and virtual repositories, access control, retention, [vulnerability scanning](../vulnerability-scanning.md) (OSV, Trivy), [replication](../replication.md) and HA, with no licence cost and a simple self-hosted deployment.
+- Artifactory: when you need a format BaGet Extension lacks or a vendor SLA.
+- BaGet Extension: when NuGet, npm, Maven and Docker cover the need and a free, MIT-licensed server is wanted.
 
 ## Sources
 
