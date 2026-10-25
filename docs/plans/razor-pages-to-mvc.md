@@ -1,6 +1,6 @@
 # Plan: Razor Pages → MVC (controllers + views), no breaking changes
 
-Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; wave 1 track `mvc-formats-ui` implemented (Upload, Npm*, Maven*, Docker* pages; workflows are per page, see its commit); waves 1-3 otherwise planned. Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
+Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; **wave 1 done: mvc-browse, mvc-formats-ui, mvc-account, mvc-manage, mvc-admin-core (6cc7b61..HEAD of main, merged ff; full run 3655 tests, only the 11 known Telemetry failures)**; waves 2-3 planned. Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
 `merge --ff-only` per track, max 5 agents at once (Sonnet implements, Opus reviews).
 
 ### Wave 0 results
