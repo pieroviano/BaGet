@@ -7,6 +7,7 @@ using BaGet.Identity;
 using BaGet.Validation;
 using BaGet.Web.Application;
 using BaGet.Web;
+using BaGet.Web.OpenApi;
 using BaGet.Web.V2.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
@@ -49,7 +50,10 @@ public static class IServiceCollectionExtensions
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
 
-        // BaGet ships no Razor Page (every screen is a controller action), but a host's own pages keep working (and find BaGet's layout in Views/Shared), so Razor Pages stays registered.
+        // The ui / v1 / protocols OpenAPI documents (served to administrators only, see BaGetEndpointBuilder.MapApiDocumentation).
+        services.AddBaGetOpenApi();
+
+        // BaGet ships no Razor Page (every screen is a controller action), but a host's own pages (which find BaGet's layout in Views/Shared) keep working, so Razor Pages stays registered.
         services.AddRazorPages();
 
         // Page links stay inside the repository being browsed (see RepositoryUrlHelper).

@@ -75,6 +75,10 @@
     <!-- Redis for cluster mode (Ha:Enabled), host only (src/BaGet/Ha). Depends on Microsoft.Extensions.Logging.Abstractions >= 6, which the
          9.0.21 pins satisfy (checked: no NU1605/NU1608/NU1107). -->
     <StackExchangeRedisPackageVersion>2.13.17</StackExchangeRedisPackageVersion>
+    <!-- OpenAPI documents (ui, v1, protocols) and the Scalar viewer, in BaGet.Web.V3. OpenApi 10.0.13 = the shared framework / EF pins (no NU1605);
+         Scalar 2.17.14 = latest 2.x published at least two weeks before it was chosen (2026-10-06). -->
+    <MicrosoftAspNetCoreOpenApiPackageVersion>10.0.13</MicrosoftAspNetCoreOpenApiPackageVersion>
+    <ScalarAspNetCorePackageVersion>2.17.14</ScalarAspNetCorePackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == ''">

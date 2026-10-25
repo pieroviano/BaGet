@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Constraints;
+using Scalar.AspNetCore;
 
 namespace BaGet;
 
@@ -85,6 +86,7 @@ public class BaGetEndpointBuilder
         MapMavenRoutes(endpoints);
         MapOciRoutes(endpoints);
         MapAdminApiRoutes(endpoints);
+        MapApiDocumentation(endpoints);
         MapHealthRoutes(endpoints);
     }
 
@@ -118,6 +120,30 @@ public class BaGetEndpointBuilder
     /// administrator's API key.
     /// </summary>
     public void MapAdminApiRoutes(IEndpointRouteBuilder endpoints) => endpoints.MapControllers();
+
+    /// <summary>
+    /// The OpenAPI documents (<c>/openapi/ui.json</c>, <c>/openapi/v1.json</c>, <c>/openapi/protocols.json</c>), the alias
+    /// <c>/api/v1/openapi.json</c> (the <c>v1</c> document) and the Scalar viewer at <c>/scalar</c>. Everything is mapped in one group
+    /// whose filter answers 404 to anyone but an administrator (<see cref="BaGet.Web.OpenApi.ApiDocumentationAccess"/>). Not
+    /// repository routes: no <see cref="RepositoryRouteMetadata"/>, no <c>r/{repo}/</c> twin.
+    /// </summary>
+    public void MapApiDocumentation(IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup(string.Empty);
+        group.AddEndpointFilter(async (context, next) =>
+            await BaGet.Web.OpenApi.ApiDocumentationAccess.IsAllowedAsync(context.HttpContext, context.HttpContext.RequestAborted)
+                ? await next(context)
+                : Results.NotFound());
+
+        group.MapOpenApi("/openapi/{documentName}.json");
+        // No {documentName} in the pattern: the default document, v1 (the administration API).
+        group.MapOpenApi(BaGet.Web.Api.ApiCatalog.Root + "/openapi.json");
+        group.MapScalarApiReference(BaGet.Web.OpenApi.ApiDocuments.ScalarPath, options =>
+        {
+            options.WithTitle("BaGet API");
+            foreach (var name in BaGet.Web.OpenApi.ApiDocuments.All) options.AddDocument(name, routePattern: BaGet.Web.OpenApi.ApiDocuments.JsonPath(name));
+        });
+    }
 
     /// <summary>
     /// The OCI Distribution Spec (<see cref="RepositoryFormat.Docker"/>), which a client addresses at the server root: <c>/v2/</c>

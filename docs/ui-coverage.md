@@ -179,7 +179,7 @@ Every operation below has the page that offers the same operation and the same g
 | Rename a group | REST `PATCH /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key |
 | Remove a user from a group | REST `DELETE /api/v1/groups/{name}/members/{user}` | `/Admin/GroupDetail` | Admin key + password |
 | Add a user to a group | REST `PUT /api/v1/groups/{name}/members/{user}` | `/Admin/GroupDetail` | Admin key + password |
-| Download the OpenAPI 3 description of this API | REST `GET /api/v1/openapi.json` | `/Admin/Api` | Admin key |
+| Download the OpenAPI 3 description of this API (also `/openapi/{ui,v1,protocols}.json`, browsed at `/scalar`) | REST `GET /api/v1/openapi.json` | `/Admin/Api` | Admin key or admin cookie |
 | List the operations this server offers, the repositories each applies to and their last runs | REST `GET /api/v1/operations` | `/Admin/Operations` | Admin key |
 | Show the last run of an operation on a repository | REST `GET /api/v1/operations/{operation}/repositories/{repository}` | `/Admin/Operations` | Admin key |
 | Start an operation on a repository (one that deletes data asks for the password) | REST `POST /api/v1/operations/{operation}/repositories/{repository}` | `/Admin/Operations` | Admin key + password |

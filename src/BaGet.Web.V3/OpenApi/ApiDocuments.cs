@@ -1,0 +1,125 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
+
+namespace BaGet.Web.OpenApi;
+
+/// <summary>
+/// The OpenAPI documents of the server (<c>Microsoft.AspNetCore.OpenApi</c>), served at <c>/openapi/{name}.json</c> and browsed with
+/// Scalar at <c>/scalar</c>, for administrators only (<see cref="ApiDocumentationAccess"/>).
+/// </summary>
+public static class ApiDocuments
+{
+    /// <summary>The screens' JSON twins, <c>/api/ui</c> (filled by the controllers under that prefix as they appear).</summary>
+    public const string Ui = "ui";
+
+    /// <summary>The administration REST API, <c>/api/v1</c>.</summary>
+    public const string V1 = "v1";
+
+    /// <summary>The package protocols (NuGet, npm, Maven, Docker), read from the mapped endpoints.</summary>
+    public const string Protocols = "protocols";
+
+    /// <summary>Every document name, in the order Scalar lists them.</summary>
+    public static readonly IReadOnlyList<string> All = new[] { Ui, V1, Protocols };
+
+    /// <summary>The path prefix whose attribute-routed actions make up the <see cref="Ui"/> document.</summary>
+    public const string UiPrefix = "api/ui";
+
+    /// <summary>The path of the Scalar viewer.</summary>
+    public const string ScalarPath = "/scalar";
+
+    /// <summary>The path of the JSON of a document.</summary>
+    public static string JsonPath(string name) => "/openapi/" + name + ".json";
+
+    /// <summary>Registers the three documents (written as OpenAPI 3.0, which every client generator reads).</summary>
+    public static IServiceCollection AddBaGetOpenApi(this IServiceCollection services)
+    {
+        services.AddOpenApi(Ui, options => Configure(options, "BaGet UI API",
+            "The JSON twin of every screen of the web UI (/api/ui). Cookie callers send the antiforgery token of GET /api/ui/antiforgery on writes; API-key callers do not.",
+            description => IsUnder(description, UiPrefix)));
+        services.AddOpenApi(V1, options => Configure(options, "BaGet administration API",
+            "Administers repositories, projects, users, groups, permission targets, retention, scanning and operations. "
+            + "Send an administrator's API key with the admin:api scope as 'Authorization: Bearer <key>' (or the server's global ApiKey). "
+            + "Operations that need confirmation also take the key owner's password in the X-Confirm-Password header.",
+            description => IsUnder(description, "api/v1")));
+        services.AddOpenApi(Protocols, options =>
+        {
+            Configure(options, "BaGet package protocols",
+                "The NuGet, symbol, npm, Maven and Docker (OCI) routes of the server. Every route exists at its plain path (the default repository) and under /r/{repo}/.",
+                _ => false);
+            options.AddDocumentTransformer<ProtocolsDocumentTransformer>();
+        });
+
+        return services;
+    }
+
+    private static void Configure(OpenApiOptions options, string title, string description, Func<ApiDescription, bool> include)
+    {
+        options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
+        options.ShouldInclude = include;
+        options.AddDocumentTransformer((document, _, _) =>
+        {
+            document.Info = new OpenApiInfo { Title = title, Version = "1.0.0", Description = description };
+            document.Components ??= new OpenApiComponents();
+            document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+            document.Components.SecuritySchemes["bearer"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "bearer", Description = "An API key." };
+            document.Components.SecuritySchemes["basic"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "basic", Description = "The API key as the password." };
+            document.Components.SecuritySchemes["apiKey"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Header, Name = "X-NuGet-ApiKey", Description = "An API key." };
+            document.Components.SecuritySchemes["cookie"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Cookie, Name = ".BaGet.Session", Description = "The browser session (only /api/ui; unsafe methods also need the antiforgery header)." };
+            document.Security = new List<OpenApiSecurityRequirement>
+            {
+                new() { [new OpenApiSecuritySchemeReference("bearer", document)] = new List<string>() },
+                new() { [new OpenApiSecuritySchemeReference("basic", document)] = new List<string>() },
+                new() { [new OpenApiSecuritySchemeReference("apiKey", document)] = new List<string>() },
+                new() { [new OpenApiSecuritySchemeReference("cookie", document)] = new List<string>() },
+            };
+
+            return Task.CompletedTask;
+        });
+    }
+
+    private static bool IsUnder(ApiDescription description, string prefix)
+    {
+        var path = description.RelativePath ?? string.Empty;
+
+        return path.Equals(prefix, StringComparison.OrdinalIgnoreCase) || path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+/// <summary>
+/// Who may read the documents and Scalar (decision D7): a signed-in server administrator, or an administrator's API key with the
+/// <c>admin:api</c> scope that is not limited to repositories, or the server's global <c>ApiKey</c> (only when one is configured: an
+/// open server with no key makes nobody an administrator). Anyone else gets 404, so the endpoints are not even visible.
+/// </summary>
+public static class ApiDocumentationAccess
+{
+    /// <summary>True when the request's caller may read the API documentation.</summary>
+    public static async Task<bool> IsAllowedAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        var services = http.RequestServices;
+        var resolver = services.GetRequiredService<RequestPrincipalResolver>();
+
+        // A key (Basic password, Bearer, X-NuGet-ApiKey) is judged like the /api/v1 check; it never falls back to the cookie when it
+        // authenticates but is not enough.
+        var key = await resolver.ResolveForWriteAsync(http, cancellationToken).ConfigureAwait(false);
+        if (key != null)
+        {
+            if (key.IsSuperuser) return !string.IsNullOrEmpty(services.GetRequiredService<IOptionsSnapshot<BaGetOptions>>().Value.ApiKey);
+
+            return key.IsAdministrator && key.HasScope(ApiKeyScopes.Admin) && key.RepositoryKeys == null;
+        }
+
+        // The browser session of a server administrator (a plain GET: nothing is changed, so the cookie is safe here).
+        var session = await resolver.ResolveAsync(http, cancellationToken).ConfigureAwait(false);
+
+        return session is { IsSuperuser: false, IsAdministrator: true };
+    }
+}

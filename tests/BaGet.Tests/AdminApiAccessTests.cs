@@ -188,7 +188,7 @@ public class AdminApiAccessTests : IDisposable
     {
         var answer = await _api.GetAsync("/api/v1/openapi.json");
         Assert.Equal(HttpStatusCode.OK, answer.Status);
-        Assert.Equal("3.0.3", answer.Json["openapi"]!.GetValue<string>());
+        Assert.StartsWith("3.0", answer.Json["openapi"]!.GetValue<string>());
 
         var provider = _api.App.Services.GetRequiredService<IActionDescriptorCollectionProvider>();
         Assert.Empty(ApiCatalog.Undescribed(provider));

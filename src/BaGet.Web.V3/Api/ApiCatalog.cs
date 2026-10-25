@@ -34,8 +34,9 @@ public sealed record ApiEndpoint(string Method, string Path, string Tag, ApiOper
 public sealed record ApiParameter(string Name, string In, Type Type, bool Required);
 
 /// <summary>
-/// What the administration API offers, read from its controllers: one <see cref="ApiEndpoint"/> per action. The OpenAPI document, the
-/// <c>/admin/api</c> page and the UI-coverage test all read this one list, so they cannot differ from the code.
+/// What the administration API offers, read from its controllers: one <see cref="ApiEndpoint"/> per action. The <c>/admin/api</c> page and
+/// the UI-coverage test read this one list, so they cannot differ from the code. The served OpenAPI document is built by
+/// <c>Microsoft.AspNetCore.OpenApi</c> (<see cref="BaGet.Web.OpenApi.ApiDocuments"/>); <see cref="OpenApi"/> is kept only for source compatibility.
 /// </summary>
 public static class ApiCatalog
 {
@@ -116,10 +117,12 @@ public static class ApiCatalog
                || type == typeof(DateTimeOffset) || type == typeof(Guid);
     }
 
-    /// <summary>The OpenAPI 3.0 document of the API.</summary>
+    /// <summary>The OpenAPI 3.0 document of the API, written by the former in-house generator.</summary>
+    /// <remarks>Obsolete: the server serves the document built by <c>Microsoft.AspNetCore.OpenApi</c> at <c>/openapi/v1.json</c>; nothing in the server calls this.</remarks>
     /// <param name="endpoints">The operations (<see cref="Endpoints"/>).</param>
     /// <param name="serverUrl">The address the API is served at (<c>https://host/base</c>), or null to leave <c>servers</c> out.</param>
     /// <param name="version">The version of the document.</param>
+    [Obsolete("The server serves the Microsoft.AspNetCore.OpenApi document at /openapi/v1.json; this in-house generator is no longer used.")]
     public static JsonObject OpenApi(IReadOnlyList<ApiEndpoint> endpoints, string? serverUrl, string version)
     {
         var schemas = new JsonObject();

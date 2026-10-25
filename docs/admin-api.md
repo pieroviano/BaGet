@@ -2,7 +2,7 @@
 
 `/api/v1` does what the administrator pages do, for scripts. One operation, one page: every endpoint is listed in
 [UI coverage](ui-coverage.md) with its page, and the pages and the API call the same services, so rules cannot differ.
-The OpenAPI 3 document is `GET /api/v1/openapi.json`; the signed-in list is the **REST API** page (`/admin/api`).
+The OpenAPI 3 document is `GET /api/v1/openapi.json` (also `/openapi/v1.json`); the signed-in list is the **REST API** page (`/admin/api`). See [OpenAPI and Scalar](#openapi-and-scalar).
 
 ## Authentication
 
@@ -51,6 +51,18 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 | `/retention` | `policies` (CRUD, `dry-run`, `run`), `holds` |
 | `/replication` | `configs` (list, show, create, replace, delete, `run`, `resume`, `stop`, `runs`), `test`, `runs/{key}`, `inventory/{repository}` (what a peer calls; its key needs `admin:api`) |
 | `/scanning` | overview, per-repository dashboard / results / policy / scan, per-project policy |
+
+## OpenAPI and Scalar
+
+Built with `Microsoft.AspNetCore.OpenApi`, written as OpenAPI 3.0, browsed with [Scalar](https://scalar.com) at **`/scalar`**.
+
+| Document | Address | Holds |
+|---|---|---|
+| `v1` | `/openapi/v1.json`, alias `/api/v1/openapi.json` | this API (`/api/v1`) |
+| `ui` | `/openapi/ui.json` | the JSON twins of the screens (`/api/ui`); fills as screens get one |
+| `protocols` | `/openapi/protocols.json` | NuGet, symbol, npm, Maven and Docker routes, plain and `/r/{repo}/`, read from the mapped endpoints (paths, methods, route parameters, format; bodies are the protocols' own) |
+
+**Who:** administrators only. A signed-in server administrator (cookie), an administrator's `admin:api` key (not limited to repositories) or the global `ApiKey` (when one is configured) get `200`; everyone else, anonymous included, gets `404`. Scalar's own files are gated the same way. The documents never contain keys or secrets.
 
 ## Not offered over the API
 

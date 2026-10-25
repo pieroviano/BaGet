@@ -11,7 +11,8 @@
 
     <p class="help-block">
         Everything on the administration pages can be done over HTTP at <code id="api-base">@Model.ApiBase</code>, for scripts and
-        automation. The OpenAPI 3 description is at <a id="api-openapi" href="@Model.OpenApiUrl"><code>@Model.OpenApiUrl</code></a>.
+        automation. The OpenAPI 3 description is at <a id="api-openapi" href="@Model.OpenApiUrl"><code>@Model.OpenApiUrl</code></a>; the documents of the UI API and of the package protocols are at
+        <code>/openapi/ui.json</code> and <code>/openapi/protocols.json</code>, and <code id="api-scalar">/scalar</code> browses all three (administrators only).
     </p>
 
     <h3>Authenticate</h3>
