@@ -65,7 +65,7 @@ holder renews it (every third). A node that cannot reach Redis **skips** the job
 |---|---|
 | Retention schedule pass (all due policies) | `retention:schedule` |
 | A retention run, scheduled or from the page | `retention:policy:{key}` (a dry run takes none) |
-| Replication run, resume, orphan sweep | `replication:{config key}` (P9) |
+| Replication run, resume, orphan sweep | `replication:{config key}` |
 | Admin operation (catalog rebuild, import downloads, Docker GC, vulnerability scan) | `operation:{name}:{repository}` |
 | Scheduled vulnerability rescan | `scan:sweep` |
 | Abandoned-upload sweep | `staging:sweep` |
