@@ -92,6 +92,7 @@ public sealed record RetentionFieldsView(RetentionPolicyForm Form, IReadOnlyList
 /// services and the lists the forms choose from. A <see cref="RetentionException"/> is an <see cref="AccessModelException"/>, so
 /// <c>ActAsync</c> turns it into the page's <c>Error</c>.
 /// </summary>
+[Obsolete("The retention/replication screens are controllers now; use RetentionControllerBase. This page model base has no page left and will be removed in the next major version.")]
 public abstract class RetentionPageModel : AccessPageModel
 {
     /// <summary>Policies and legal holds.</summary>

@@ -1,5 +1,4 @@
-@page "/admin/scanning/{name}"
-@model BaGet.Identity.Pages.Admin.ScanRepositoryModel
+@model BaGet.Identity.ViewModels.ScanRepositoryViewModel
 @{
     ViewData["Title"] = "Vulnerabilities of " + Model.Name;
     var summary = Model.Summary!;
@@ -49,7 +48,7 @@
 
         @if (summary.Engine.Available)
         {
-            <form method="post" asp-page-handler="Scan" asp-route-name="@Model.Name" id="scan-repository-form">
+            <form method="post" asp-page="/Admin/ScanRepository" asp-page-handler="Scan" asp-route-name="@Model.Name" id="scan-repository-form">
                 <button type="submit" class="btn btn-default" id="scan-repository-button">Scan the whole repository now</button>
             </form>
         }
@@ -127,7 +126,7 @@
             <p id="scan-policy-effective">This repository has its own policy@(Model.Own?.ModifiedBy != null ? " (saved by " + Model.Own.ModifiedBy + ")" : "").</p>
         }
 
-        <form method="post" asp-page-handler="Policy" asp-route-name="@Model.Name" id="scan-policy-form">
+        <form method="post" asp-page="/Admin/ScanRepository" asp-page-handler="Policy" asp-route-name="@Model.Name" id="scan-policy-form">
             <partial name="~/Views/Shared/_ScanPolicyForm.cshtml" model="Model.PolicyForm" />
             <button type="submit" class="btn btn-primary">Save the policy</button>
         </form>

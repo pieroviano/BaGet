@@ -1,5 +1,4 @@
-@page "/admin/retention"
-@model BaGet.Identity.Pages.Admin.RetentionModel
+@model BaGet.Identity.ViewModels.RetentionViewModel
 @{
     ViewData["Title"] = "Retention";
 }
@@ -42,7 +41,7 @@
                         else if (view.Project != null) { <span>project @view.Project (@view.Targets repositories)</span> }
                         else { <span class="text-muted">nothing (its repository or project is gone)</span> }
                     </td>
-                    <td>@BaGet.Identity.Pages.Admin.RetentionPageModel.Describe(policy)</td>
+                    <td>@RetentionControllerBase.Describe(policy)</td>
                     <td>@(policy.ScheduleHours is int hours ? "every " + hours + " h" : "manual")</td>
                     <td>
                         @if (policy.LastRun is DateTime last)

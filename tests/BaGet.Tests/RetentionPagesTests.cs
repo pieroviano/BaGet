@@ -316,4 +316,16 @@ public class RetentionPagesTests : IDisposable
         Assert.Equal(HttpStatusCode.Redirect, run.StatusCode);
         Assert.Contains("The policy is disabled", page);
     }
+
+    [Fact]
+    public async Task AFlashMessageIsShownOnceAfterTheRedirect()
+    {
+        var key = await CreatePolicyAsync("once");
+
+        using var first = await _admin.GetAsync($"admin/retention/{key}");
+        using var second = await _admin.GetAsync($"admin/retention/{key}");
+
+        Assert.Contains("retention-message", await first.Content.ReadAsStringAsync(Token));
+        Assert.DoesNotContain("retention-message", await second.Content.ReadAsStringAsync(Token));
+    }
 }

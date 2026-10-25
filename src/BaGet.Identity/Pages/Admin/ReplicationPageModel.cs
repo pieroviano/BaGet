@@ -80,6 +80,7 @@ public sealed record ReplicationFieldsView(ReplicationForm Form, IReadOnlyList<R
 /// configuration can name. A <see cref="ReplicationException"/> is an <see cref="AccessModelException"/>, so <c>ActAsync</c> turns it into
 /// the page's <c>Error</c>.
 /// </summary>
+[Obsolete("The retention/replication screens are controllers now; use ReplicationControllerBase. This page model base has no page left and will be removed in the next major version.")]
 public abstract class ReplicationPageModel : AccessPageModel
 {
     /// <summary>Configurations and their log.</summary>

@@ -1,5 +1,4 @@
-@page "/admin/replication"
-@model BaGet.Identity.Pages.Admin.ReplicationModel
+@model BaGet.Identity.ViewModels.ReplicationViewModel
 @{
     ViewData["Title"] = "Replication";
 }
@@ -39,7 +38,7 @@
                     </td>
                     <td>@(view.Repository ?? "(gone)")@(view.Format is { } format ? " (" + format + ")" : "")</td>
                     <td>@config.PeerUrl <small class="text-muted">repository @config.PeerRepository</small></td>
-                    <td>@BaGet.Identity.Pages.Admin.ReplicationPageModel.Describe(config)</td>
+                    <td>@ReplicationControllerBase.Describe(config)</td>
                     <td>
                         @if (config.LastRun is DateTime last)
                         {
