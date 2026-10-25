@@ -42,7 +42,7 @@
                         {
                             <tr>
                                 <td><a href="@Url.Page("/Admin/UserDetail", new { name = member.UserName })">@member.UserName</a></td>
-                                <td><button type="submit" class="btn btn-danger btn-xs" asp-page="/Admin/GroupDetail" asp-page-handler="RemoveMember" name="userId" value="@member.UserId">Remove</button></td>
+                                <td><button type="submit" class="btn btn-danger btn-xs" asp-page="/Admin/GroupDetail" asp-route-name="@Model.Name" asp-page-handler="RemoveMember" name="userId" value="@member.UserId">Remove</button></td>
                             </tr>
                         }
                     </tbody>
@@ -74,7 +74,7 @@
                                 {
                                     <tr>
                                         <td>@user.UserName</td>
-                                        <td><button type="submit" class="btn btn-primary btn-xs" asp-page="/Admin/GroupDetail" asp-page-handler="AddMember" name="userId" value="@user.UserId">Add</button></td>
+                                        <td><button type="submit" class="btn btn-primary btn-xs" asp-page="/Admin/GroupDetail" asp-route-name="@Model.Name" asp-page-handler="AddMember" name="userId" value="@user.UserId">Add</button></td>
                                     </tr>
                                 }
                             </tbody>
@@ -89,7 +89,7 @@
             <h2>Rename</h2>
             <form method="post" class="form-inline" id="rename-form">
                 <input type="text" name="newName" value="@group?.Name" class="form-control" maxlength="@BaGet.Core.AccessNames.MaxLength" />
-                <button type="submit" class="btn btn-default" asp-page="/Admin/GroupDetail" asp-page-handler="Rename">Rename</button>
+                <button type="submit" class="btn btn-default" asp-page="/Admin/GroupDetail" asp-route-name="@Model.Name" asp-page-handler="Rename">Rename</button>
             </form>
         </section>
     }
@@ -124,7 +124,7 @@
             <p class="help-block">Removes the group, its members and every grant and project role that names it.</p>
             <form method="post" id="delete-form">
                 <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("deletePassword")" />
-                <button type="submit" class="btn btn-danger" asp-page="/Admin/GroupDetail" asp-page-handler="Delete">Delete group</button>
+                <button type="submit" class="btn btn-danger" asp-page="/Admin/GroupDetail" asp-route-name="@Model.Name" asp-page-handler="Delete">Delete group</button>
             </form>
         </section>
     }

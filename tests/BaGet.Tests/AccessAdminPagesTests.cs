@@ -87,6 +87,36 @@ public class AccessAdminPagesTests : IDisposable
     private async Task<IReadOnlyList<AccessAuditEntry>> AuditAsync() => await WithAsync((a, _) => a.AuditAsync(500, _token));
 
     [Fact]
+    public async Task DetailButtonsKeepTheirTargetWhenAnotherHandlerRenderedTheScreen()
+    {
+        await WithAsync(async (a, _) =>
+        {
+            await a.CreateGroupAsync("team", null, "test", _token);
+            await a.CreateTargetAsync("t1", new[] { "*" }, null, null, null, "test", _token);
+            await a.CreateProjectAsync("shop", null, "test", _token);
+            return 0;
+        });
+
+        // Screens rendered by a handler other than the GET one (preview, refused change): every button still posts to
+        // its own handler of the same address (the ambient {name} is not carried to a link to another action).
+        using var preview = await _admin.PostAsync("admin/permissions/t1", new Dictionary<string, string>
+        {
+            { "repositoryPatterns", "*" }, { "includePatterns", "" }, { "excludePatterns", "" }, { "testPackage", "" },
+        }, action: "admin/permissions/t1?handler=Preview");
+        var permissions = await preview.Content.ReadAsStringAsync(_token);
+        foreach (var handler in new[] { "Save", "SetGrant", "Delete" })
+            Assert.Contains($"formaction=\"/admin/permissions/t1?handler={handler}\"", permissions);
+
+        using var projectPreview = await _admin.PostAsync("admin/projects/shop", new Dictionary<string, string>
+        {
+            { "targetName", "x" }, { "repositoryPatterns", "*" }, { "includePatterns", "" }, { "excludePatterns", "" }, { "testPackage", "" },
+        }, action: "admin/projects/shop?handler=Preview");
+        var projects = await projectPreview.Content.ReadAsStringAsync(_token);
+        foreach (var handler in new[] { "AssignRepository", "SetMember", "CreateTarget", "Delete" })
+            Assert.Contains($"formaction=\"/admin/projects/shop?handler={handler}\"", projects);
+    }
+
+    [Fact]
     public async Task OnlyAdministratorsSeeTheAccessPagesAndAnonymousVisitorsAreSentToSignIn()
     {
         await WithAsync(async (a, _) =>
