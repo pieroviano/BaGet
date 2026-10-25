@@ -1,7 +1,7 @@
 # Extension.BaGet.Identity
 
 User accounts, package owners, organizations and per-user API keys for
-[BaGet Extension](https://pieroviano.github.io/BaGet/), with their Razor pages (sign-in, profile, API keys, admin).
+[BaGet Extension](https://pieroviano.github.io/BaGet/), with their screens (sign-in, profile, API keys, admin), served by MVC controllers and views.
 
 ```powershell
 dotnet add package Extension.BaGet.Identity
@@ -31,35 +31,25 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 | `Email:Smtp:*` | Optional SMTP for confirmation and password-reset mail (MailKit) |
 | `Site:PublicUrl` | Required for email links; without it email is suppressed |
 
-## Screens: Razor Pages and MVC controllers
+## Screens: MVC controllers and views
 
-The web UI is moving from Razor Pages to controllers and views without changing a URL, form, link or public type (plan:
-`docs/plans/razor-pages-to-mvc.md`). `BaGet.Identity.Mvc` holds what a UI controller builds on:
+Every screen is a controller action and a view; the package ships **no `@page` file**. URLs, `?handler=` form posts, page names (`asp-page`,
+`Url.Page`, `RedirectToPage`) and every public type are unchanged from the Razor Pages era (plan: `docs/plans/razor-pages-to-mvc.md`);
+the old page models are `[Obsolete]` shims in `Compat/Pages/` (removed in the next major version) over the same workflows.
 
-| Type | Role |
+| Folder / type | Role |
 |---|---|
-| `PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
-| `LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving, navigation and `ApiOperation.UiPage` use it |
-| `ImplicitPageHandlerAttribute` | Marks the default `[PageHandler]` action that answers a verb the page had no handler for (a form posted to the page's own URL): it renders the screen; not a handler of the route contract |
-| `RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
-| `UiControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`), `RequestedHandler` |
-| `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | The controller counterparts of the page-model bases (`AccountPageModel`, `AdminPageModel`, `AccessPageModel`, `RepositoryPageModel`, `RetentionPageModel`, `ReplicationPageModel`) with the same checks in the same order; the page-model bases remain for pages not migrated yet and for compatibility |
+| `Controllers/` | One controller per feature: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication` |
+| `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths forward to them). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
+| `Workflows/`, `ViewModels/` | The logic (`internal` `*Workflow`, shared by controller and shim) and the models the views read |
+| `Mvc/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
+| `Mvc/LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving; navigation, `ApiOperation.UiPage` and the coverage tests use it |
+| `Mvc/ImplicitPageHandlerAttribute` | Marks the default `[PageHandler]` action that answers a form posted to the screen's own URL: it renders the screen; not a handler of the route contract |
+| `Mvc/RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
+| `Mvc/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (admin or project-admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in the order the page-model bases ran them. The page-model bases (`AccountPageModel`, `AdminPageModel`, `AccessPageModel`, `RepositoryPageModel`, `RetentionPageModel`, `ReplicationPageModel`) remain `[Obsolete]` for compatibility |
 
-Migrated: the account screens. `AccountController` (sign-in side), `AccountSettingsController` (settings, two-factor, API keys), `AccountOrganizationsController`, `AccountPackagesController` (my packages, my access, own profile) and `ProfileController` replace the `Pages/Account` and `Pages/Profiles` pages. Their rules live in `Workflows/` (`internal`, one per screen, built from an `AccountScreen`), shared with the `[Obsolete]` page-model shims that keep every public type; view models are in `ViewModels/`, views in `Views/Account*` and `Views/Profile`. `RequiresEmailAttribute` / `RequiresSignInAttribute` set the base checks per action.
-
-Migrated screens keep their logic in an `internal` workflow (`Workflows/`) that the controller and the obsolete page-model shim both run; the package-management screens (`Packages/*`) are `PackageManageController`, `NpmManageController`, `MavenManageController`, `DockerManageController`, `ContactOwnersController`, `ScanArtifactController` and `ValidationStatusPageController`.
-
-Migrated admin screens (wave 1): `AdminUsersController` (Users, UserDetail, DeleteUser, UserPackages), `AdminOrganizationsController`,
-`AdminSettingsController`, `AdminPackagesController`, `AdminOperationsController` (Operations, Validation, Abuse, Cluster, Formats,
-AccessUnavailable); controllers in `Controllers/`, views in `Views/<Controller>/`, view models in `ViewModels/`, the logic in internal
-`Workflows/*Workflow` (shared with the obsolete page models in `Pages/Admin`, kept as shims). `AdminControllerBase.Flash(model)` carries
-`Message`/`Error` across a redirect (the old `[TempData]` properties).
-
-Wave 2: `AdminRepositoriesController` (Repositories with its create handlers, RepositoryEdit with its 11 handlers, RepositoryDelete) over
-`RepositoriesWorkflow` / `RepositoryEditWorkflow` / `RepositoryDeleteWorkflow`; `RepositoryPageModel` and the three page models are `[Obsolete]` shims.
-
-Partials and the layout live in `Views/Shared` (the old `Pages/...` paths forward to them); a host overrides a view with its own
-`Views/<Controller>/<Action>.cshtml`.
+In a view, link with `asp-controller` / `asp-action` (and `asp-route-handler="X"` for a named handler); an MVC view has no ambient page, so each
+handler form names its controller and action. `AdminControllerBase.Flash(model)` carries `Message`/`Error` across a redirect.
 
 ## Links
 

@@ -1,6 +1,6 @@
 # Extension.BaGet.Web
 
-The NuGet V3 server endpoints and Razor Pages UI of [BaGet Extension](https://pieroviano.github.io/BaGet/). Use it
+The NuGet V3 server endpoints and controller/view UI of [BaGet Extension](https://pieroviano.github.io/BaGet/). Use it
 to embed BaGet in your own ASP.NET Core host.
 
 ```powershell
@@ -41,11 +41,12 @@ Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup
 
 | Item | Role |
 |---|---|
-| `AddBaGetWebApplication` | MVC, Razor Pages, `IUrlGenerator`, core services, catalog, validation; registers every BaGet controller assembly as an application part, so hosts without the Web SDK work |
+| `AddBaGetWebApplication` | MVC (controllers and views; Razor Pages stay registered for a host's own pages), `IUrlGenerator`, core services, catalog, validation; registers every BaGet controller assembly as an application part, so hosts without the Web SDK work |
 | `BaGetEndpointBuilder.MapEndpoints` | Maps the V3, V2, catalog and validation routes, each at `/` (default repository) and `/r/{repo}/` |
-| `RepositoryPageRouteConvention` / `RepositoryUrlHelperFactory` | Serve the repository pages (list, package, statistics, upload, ...) also at `/r/{repo}/…` and keep their links inside the repository; `RepositoryPageFilter` asks `IRepositoryAccess` |
-| `RepositoryActionRouteConvention` / `RepositoryActionFilter` | The same for the controller actions that replace Razor Pages (`[RepositoryPage]`): the `/r/{repo}/` twin of every route, and the one repository check (`RepositoryPageGate`, shared with `RepositoryPageFilter`) |
-| `LegalController`, `Views/` | The first pages served by a controller (`/terms`, `/privacy`); `Views/Shared` holds the layout and partials every page and view uses (the old `Pages/Shared` paths forward to it; the layout and `_Avatar`/`_ScanFindings` are referenced by name so a host copy overrides them); a host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
+| `RepositoryActionRouteConvention` / `RepositoryActionFilter` | The controller actions marked `[RepositoryPage]` (list, package, statistics, upload, ...): the `/r/{repo}/` twin of every route, and the one repository check (`RepositoryPageGate`, which asks `IRepositoryAccess`) |
+| `RepositoryUrlHelperFactory` | Keeps links inside the repository being browsed (adds the request's `repo` to links to repository pages, and resolves a legacy page name such as `/Admin/Users` to its controller action) |
+| `Controllers/`, `Views/`, `Workflows/`, `ViewModels/` | The UI: `HomeController`, `PackageController`, `StatisticsController`, `ReportAbuseController`, `ApiCatalogController`, `LegalController`, `UploadController`, `NpmBrowseController`, `MavenBrowseController`, `DockerBrowseController`; each view is `Views/<Controller>/<Action>.cshtml`. `Views/Shared` holds the layout and partials (the layout and `_Avatar`/`_ScanFindings` are referenced by name, so a host copy in its own `Views/Shared` or `Pages/Shared` overrides them); a host overrides a view with its own `Views/<Controller>/<Action>.cshtml`. There is no `@page` file; `Pages/` keeps only forwarding views for hosts that reference the old paths, and `Compat/Pages/` the `[Obsolete]` page models (removed in the next major version) |
+| `RepositoryPageRouteConvention`, `RepositoryPageFilter` | `[Obsolete]`, no longer registered (nothing in BaGet is a Razor Page); the convention can still twin a host's own pages |
 | `RepositoryResolutionMiddleware` | Turns the `{repo}` route value into `IRepositoryContext`; unknown repository: `404`, never the default |
 | `MaintenanceMiddleware` | Maps `MaintenanceException` (a write refused while `MaintenanceGate` in `Extension.BaGet.Core` is closed, e.g. during a database copy) to `503` + `Retry-After` |
 | `IUrlGenerator` | Builds every absolute URL the server returns |

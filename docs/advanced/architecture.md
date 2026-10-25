@@ -1,7 +1,7 @@
 # Architecture
 
 BaGet Extension is one ASP.NET Core (`net10.0`) host serving the NuGet V3 protocol, an optional V2 feed, a
-symbol server, npm, Maven and Docker (OCI) registries, an administration REST API and a Razor Pages UI.
+symbol server, npm, Maven and Docker (OCI) registries, an administration REST API and an MVC (controllers and views) UI.
 Storage, database and search are pluggable and chosen from configuration at runtime.
 
 ## Projects
@@ -10,7 +10,7 @@ Storage, database and search are pluggable and chosen from configuration at runt
 |---|---|
 | `BaGet` | Host and CLI entry point: `Program.cs` (configuration, services, pipeline, commands) |
 | `BaGet.Core` | Domain: entities, `IContext`, `IPackageDatabase`, storage, search, indexing, remote/virtual repositories, format modules (`Formats`: NuGet, npm, Maven, Docker), access model, retention, scanning, replication, operations, high availability (`Ha`), telemetry, options, settings, maintenance gate, database copy |
-| `BaGet.Web` | V3, npm, Maven and OCI controllers, the `/api/v1` administration API (`Api`), Razor Pages, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` |
+| `BaGet.Web` | V3, npm, Maven and OCI controllers, the `/api/v1` administration API (`Api`), the UI controllers and views, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` |
 | `BaGet.Web.V2` | Legacy V2 OData/Atom feed (`Feeds:EnableV2`) |
 | `BaGet.Identity` | Accounts, API keys, ownership, administrators, access-model, retention, replication, scanning and other admin pages (`Accounts:Enabled`) |
 | `BaGet.Catalog` | V3 catalog resource, writer and rebuild |
@@ -32,7 +32,7 @@ Dependencies point inwards: every project references `BaGet.Core`; only the host
 | `Main` | McMaster `CommandLineApplication`: `import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password/promote/demote/approve` (`AddBaGetCommands`); the default command runs migrations (while `RunMigrationsAtStartup` is on), promotes initial administrators and runs the host. Unknown arguments pass through to the host. |
 | `AddBaGetSettingsOverrides` | `BAGET_CONFIG_ROOT` base path; inserts `appsettings.Overrides.json` (written by the Settings page) after `appsettings*.json`, before environment variables and the command line. |
 | `AddBaGetHost` | Options binding and validation (`AddBaGetOptions<T>`), web app, accounts, provider registration (`app.AddXyz()` per subsystem). |
-| `AddBaGetWebApplication` | Registers controllers, Razor Pages (`/packages` is also routed to the index page; every repository page also at `/r/{repo}/…`, see below), the catalog and validation services and `StagingSweepWorker`; `AddBaGetApplicationParts` adds every BaGet assembly with controllers or pages (`Web`, `Web.V2`, `Catalog`, `Validation`, `Identity`) as an MVC application part, so a host built without the Web SDK (e.g. a worker service calling `BaGet.Program.Main`) still serves them. A new such assembly must be added there. |
+| `AddBaGetWebApplication` | Registers controllers and views (`/packages` is also routed to the home action; every repository page also at `/r/{repo}/…`, see below; Razor Pages stay registered for a host's own pages, BaGet ships none), the catalog and validation services and `StagingSweepWorker`; `AddBaGetApplicationParts` adds every BaGet assembly with controllers or pages (`Web`, `Web.V2`, `Catalog`, `Validation`, `Identity`) as an MVC application part, so a host built without the Web SDK (e.g. a worker service calling `BaGet.Program.Main`) still serves them. A new such assembly must be added there. |
 | `UseBaGetPipeline` | Middleware (below), then `BaGetEndpointBuilder.MapEndpoints`. |
 
 Some configuration is read **while registering services** (e.g. `Accounts:Enabled`, `Email`, provider types),
@@ -49,9 +49,10 @@ HostFiltering → (Dev: exception page, status code pages) → ForwardedHeaders 
 - Endpoints are named constants in `Routes.cs`, mapped in `BaGetEndpointBuilder.MapEndpoints`; absolute URLs come only from `IUrlGenerator`.
 - Every protocol route exists at `/` (the `default` repository) and under `/r/{repo}/`; `RepositoryResolutionMiddleware`
   selects the repository from the route (`404` if unknown) and `IUrlGenerator` keeps advertised URLs inside it.
-- The repository pages (`RepositoryPageRouteConvention.RepositoryPages`) get an `r/{repo}/` twin of each Razor Pages selector;
-  `RepositoryUrlHelper` adds the request's `repo` to links to those pages (ASP.NET Core would drop it between different pages).
-  `IRepositoryAccess` decides which repositories the switcher, the upload picker and `RepositoryPageFilter` offer.
+- The repository pages (controller actions marked `[RepositoryPage]`) get an `r/{repo}/` twin of each route (`RepositoryActionRouteConvention`);
+  `RepositoryUrlHelper` adds the request's `repo` to links to those actions (ASP.NET Core would drop it between different actions) and resolves
+  a legacy page name (`/Admin/Users`, `LegacyPageAttribute`) to its action. `IRepositoryAccess` decides which repositories the switcher, the
+  upload picker and `RepositoryActionFilter` offer.
 - `MaintenanceMiddleware` turns a `MaintenanceException` into `503` + `Retry-After`.
 
 ## Runtime provider selection
@@ -140,7 +141,7 @@ Administrators can always hard-delete from the UI.
 ## Access model
 
 `BaGet.Core/Access`: groups, permission targets (repository and package globs), project roles and an audit log; `IAccessEvaluator` decides
-(`Read`, `Annotate`, `Deploy`, `Delete`, `Manage`), `RepositoryReadFilter` / `RepositoryPageFilter` enforce Read. See [Access control](../access-control.md).
+(`Read`, `Annotate`, `Deploy`, `Delete`, `Manage`), `RepositoryReadFilter` / `RepositoryActionFilter` enforce Read. See [Access control](../access-control.md).
 
 ## Retention, scanning, replication, high availability
 

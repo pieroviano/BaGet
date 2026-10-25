@@ -4,7 +4,7 @@ Every operation the server offers (REST, CLI, service) is reachable from the web
 This page maps each capability to its page. Pages in repository scope also exist as `/r/{name}/...`. "Admin" = an
 administrator signed in (others get 404). "Password" = the administrator's password (or a fresh external sign-in) is
 asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed) and, on package pages, refuses in
-`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, Razor page or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none.
+`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, UI action (page name from `[LegacyPage]`) or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none.
 
 ## NuGet protocol (per repository)
 
@@ -253,7 +253,7 @@ Every operation below has the page that offers the same operation and the same g
 
 ## Audit method and gaps closed
 
-Standing rule: `UiCoverageInventoryTests` (controller, Razor page, CLI command each need a row) and `AdminApiAccessTests` (each REST operation names an existing page). The last full audit compared, one by one: every controller route, every `IFormatModule`/administration/service method an operator reaches, every CLI command and option, every registered options type (the Settings catalog is built from `AddBaGetOptions`, so a new section appears by itself), every Razor page `OnPost*` handler, and the query parameters of each REST list and protocol endpoint with the page that serves it.
+Standing rule: `UiCoverageInventoryTests` (controller, UI action, CLI command each need a row) and `AdminApiAccessTests` (each REST operation names an existing page). The last full audit compared, one by one: every controller route, every `IFormatModule`/administration/service method an operator reaches, every CLI command and option, every registered options type (the Settings catalog is built from `AddBaGetOptions`, so a new section appears by itself), every `?handler=` action, and the query parameters of each REST list and protocol endpoint with the page that serves it.
 
 | Gap found | Closed by |
 |---|---|

@@ -1,6 +1,6 @@
 # Plan: Razor Pages → MVC (controllers + views), no breaking changes
 
-Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; **wave 1 done: mvc-browse, mvc-formats-ui, mvc-account, mvc-manage, mvc-admin-core (6cc7b61..HEAD of main, merged ff; full run 3655 tests, only the 11 known Telemetry failures)**; **wave 2 done: mvc-admin-access, mvc-admin-repos, mvc-admin-policies (92e5e3f..e0126f9, merged ff; BaGet.Tests 2212 run, only the known failures)**; wave 3 planned. Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
+Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; **wave 1 done: mvc-browse, mvc-formats-ui, mvc-account, mvc-manage, mvc-admin-core (6cc7b61..HEAD of main, merged ff; full run 3655 tests, only the 11 known Telemetry failures)**; **wave 2 done: mvc-admin-access, mvc-admin-repos, mvc-admin-policies (92e5e3f..e0126f9, merged ff; BaGet.Tests 2212 run, only the known failures)**; **wave 3 done: mvc-finish**. **Status: implemented.** Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
 `merge --ff-only` per track, max 5 agents at once (Sonnet implements, Opus reviews).
 
 ### Wave 0 results
@@ -14,6 +14,15 @@ Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; **wave 1 
 What the snapshots record: **ui-routes** = per page name: lower-cased route template (twins, `/packages` alias, catch-alls, constraints), route order, `METHOD:handler` list (HEAD folded into GET; a controller action reports the same lines through `[LegacyPage]` + `[PageHandler]`).
 **ui-forms** = for `anonymous`/`user`/`admin` and ~190 addresses (every page, plus `/r/{repo}/` in a repository of each format, a remote, a virtual, a private and an unknown one): status, redirect target, `<title>`, every `<form>` (method, action with `?handler=`, field names/types, antiforgery token), every link to a BaGet page. Texts, hidden values, tokens, dates, ids are not recorded.
 **public-api** = one line per public type, base type, interface and public/protected member of `BaGet.Web.V3` and `BaGet.Identity`; a migration may add lines, never remove or change one.
+
+### Wave 3 results: mvc-finish
+
+| Point | Result |
+|---|---|
+| Registrations removed | `RepositoryPageFilter` and `RepositoryPageRouteConvention` (+ the `/packages` page alias) are no longer registered; both types are `[Obsolete]`. `AddRazorPages()` stays (D2). `RepositoryUrlHelper`/`UiActionMap` take repository pages from `[RepositoryPage]` only; `RepositoryPageGate.RequestedVirtualItemKey` is the internal home of the key (the filter's public const equals it) |
+| Shims | every `*.cshtml.cs` / `*Model.cs` moved to `Compat/Pages/<same subfolder>/` (`Foo.cshtml.cs` became `FooModel.cs`); no `@page` file and no `.cshtml.cs` left. `Pages/` keeps `_ViewImports`, `_ViewStart` and the forwarding partials/layout |
+| Views | all `asp-page`/`asp-page-handler`/`Url.Page` of BaGet's views converted to `asp-controller`/`asp-action`/`asp-route-handler`/`Url.Action` (`handler` after the other route values: query order is in `ui-forms.txt`). Left on purpose: `nav-link` anchors in `_Layout` (`NavLinkTagHelper` reads `asp-page`), `FormatLink.Page`, `ApiOperation.UiPage`, `BrowsePage` (page names as public data); C# `RedirectToPage`/`PageLink` also stay (legacy mapping is kept) |
+| Docs | CLAUDE.md (UI section rewritten, repository pages, filters), `docs/advanced/architecture.md`, `docs/formats.md`, `docs/ui-coverage.md`, `src/BaGet.Web.V3/README.md`, `src/BaGet.Identity/README.md` |
 
 ### Wave 1 results: mvc-browse
 

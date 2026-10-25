@@ -44,9 +44,9 @@ What a format does per request is a scoped service beside the module, found with
 
 Routes go through `BaGetEndpointBuilder.MapRoute(..., format: module.Format)` with a pattern starting `"{RoutePrefix}/…"`; it
 registers the default and `r/{repo}/` variants and tags the endpoint (`RepositoryRouteMetadata.Format`). Unmarked endpoints are
-NuGet's. **Razor Pages** are served under `/r/{repo}/` for every repository and decide per page: `RepositoryPageRouteConvention.PageFormats`
-names the format of a page (NuGet unless listed; the npm pages `/NpmPackages`, `/NpmPackage`, `/NpmUpload`, `/Packages/NpmManage`, the Maven pages `/MavenArtifacts`, `/MavenArtifact`, `/MavenUpload`, `/Packages/MavenManage`, the Docker pages `/DockerImages`, `/DockerImage`, `/Packages/DockerManage`; `/Packages/Scan` serves every format via `AnyFormatPages`),
-and `RepositoryPageFilter` answers 404 for a page of another format, except that the NuGet front page of a repository of another format
+NuGet's. **Repository pages** (controller actions marked `[RepositoryPage]`) are served under `/r/{repo}/` for every repository and decide per page: `[RepositoryPage(Format = …)]`
+names the format of a page (NuGet unless set; the npm pages `/NpmPackages`, `/NpmPackage`, `/NpmUpload`, `/Packages/NpmManage`, the Maven pages `/MavenArtifacts`, `/MavenArtifact`, `/MavenUpload`, `/Packages/MavenManage`, the Docker pages `/DockerImages`, `/DockerImage`, `/Packages/DockerManage`; `/Packages/Scan` serves every format via `AnyFormat = true`),
+and `RepositoryActionFilter` answers 404 for a page of another format, except that the NuGet front page of a repository of another format
 redirects to the module's `browse` link. The upload picker, header switcher, My packages, API-key repository
 limits and the access-model listings now cover every format (the `Format == NuGet` filters are gone). A virtual repository
 is of one format and so are its members; a remote repository speaks the format's own upstream protocol (`RemoteProtocol`:
