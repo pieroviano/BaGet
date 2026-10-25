@@ -5,7 +5,7 @@
 }
 
 <div class="col-sm-12">
-    <h1 id="profile-name"><partial name="~/Views/Shared/_Avatar.cshtml" model="new BaGet.Core.AvatarModel(Model.Name ?? string.Empty, Model.AvatarUrl ?? string.Empty, 64)" /> @Model.Name</h1>
+    <h1 id="profile-name"><partial name="_Avatar" model="new BaGet.Core.AvatarModel(Model.Name ?? string.Empty, Model.AvatarUrl ?? string.Empty, 64)" /> @Model.Name</h1>
     <hr class="breadcrumb-divider" />
 
     @if (Model.IsOrganization)

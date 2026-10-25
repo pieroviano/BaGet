@@ -35,7 +35,7 @@
             </h1>
         </div>
 
-        <partial name="~/Views/Shared/_ScanFindings.cshtml" model="new ScanFindingsView(package.Name, selected.Version)" />
+        <partial name="_ScanFindings" model="new ScanFindingsView(package.Name, selected.Version)" />
 
         @if (selected.Deprecated != null)
         {

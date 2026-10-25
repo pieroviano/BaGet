@@ -59,7 +59,7 @@
 
     @if (selected != null && !selected.Summary.IsIndex)
     {
-        <partial name="~/Views/Shared/_ScanFindings.cshtml" model="new ScanFindingsView(info.Name, selected.Summary.Digest)" />
+        <partial name="_ScanFindings" model="new ScanFindingsView(info.Name, selected.Summary.Digest)" />
     }
 
     @if (selected == null)
