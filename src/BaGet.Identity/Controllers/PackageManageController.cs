@@ -11,12 +11,11 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The owners' screen for a package ID (<c>/packages/{id}/manage</c>, also at <c>/r/{repo}/…</c>): owners, versions, deprecation,
 /// vulnerabilities, symbols and abuse reports. It replaces the <c>/Packages/Manage</c> Razor Page (same URLs, same
-/// <c>?handler=</c> forms, same gates); the logic is <see cref="ManageWorkflow"/>, shared with the obsolete <c>ManageModel</c>.
+/// <c>?handler=</c> forms, same gates); the logic is <see cref="ManageWorkflow"/>.
 /// </summary>
 /// <remarks>
 /// <see cref="LegacyPageAttribute"/> sits on the actions, not on the class: the fallback <c>NoHandler</c> is not a page handler.
-/// The ownership / administrator check runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter, as the
-/// page model's check did.
+/// The ownership / administrator check runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter.
 /// </remarks>
 [Route("packages/{id}/manage")]
 [RepositoryPage(NotOnVirtual = true)]

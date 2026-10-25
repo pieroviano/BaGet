@@ -33,20 +33,19 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 
 ## Screens: MVC controllers and views
 
-Every screen is a controller action and a view; the package ships **no `@page` file**. URLs, `?handler=` form posts, page names (`asp-page`,
-`Url.Page`, `RedirectToPage`) and every public type are unchanged from the Razor Pages era;
-the old page models are `[Obsolete]` shims in `Compat/Pages/` (removed in the next major version) over the same workflows.
+Every screen is a controller action and a view; the package ships **no `@page` file**. URLs, `?handler=` form posts and page names (`asp-page`,
+`Url.Page`, `RedirectToPage`) are unchanged from the Razor Pages era. The old page-model types (`LoginModel`, `UsersModel`, `AccountPageModel`, ...) were removed (breaking for code that referenced them).
 
 | Folder / type | Role |
 |---|---|
 | `Controllers/` | One controller per feature: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication` |
 | `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths forward to them). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
-| `Workflows/`, `ViewModels/` | The logic (`internal` `*Workflow`, shared by controller and shim) and the models the views read |
+| `Workflows/`, `ViewModels/` | The logic (`internal` `*Workflow`, run by the controllers) and the models the views read |
 | `Mvc/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
 | `Mvc/LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving; navigation, `ApiOperation.UiPage` and the coverage tests use it |
 | `Mvc/ImplicitPageHandlerAttribute` | Marks the default `[PageHandler]` action that answers a form posted to the screen's own URL: it renders the screen; not a handler of the route contract |
 | `Mvc/RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
-| `Mvc/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (admin or project-admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in the order the page-model bases ran them. The page-model bases (`AccountPageModel`, `AdminPageModel`, `AccessPageModel`, `RepositoryPageModel`, `RetentionPageModel`, `ReplicationPageModel`) remain `[Obsolete]` for compatibility |
+| `Mvc/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (admin or project-admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in a fixed order |
 
 In a view, link with `asp-controller` / `asp-action` (and `asp-route-handler="X"` for a named handler); an MVC view has no ambient page, so each
 handler form names its controller and action. `AdminControllerBase.Flash(model)` carries `Message`/`Error` across a redirect.

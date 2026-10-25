@@ -12,9 +12,7 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Identity.Workflows;
 
 /// <summary>
-/// The logic of a package-management screen (<c>Packages/*</c>), independent of the programming model: the MVC controller that
-/// serves the screen and the obsolete page model that used to (a shim kept for the public API) both run the same workflow, so
-/// the two cannot diverge. A workflow lives for one request and is built from its <see cref="HttpContext"/>; services are resolved
+/// The logic of a package-management screen (<c>Packages/*</c>), run by the MVC controller that serves the screen. A workflow lives for one request and is built from its <see cref="HttpContext"/>; services are resolved
 /// per request because they exist only while accounts are enabled.
 /// </summary>
 /// <remarks>

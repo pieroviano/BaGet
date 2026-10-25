@@ -22,8 +22,7 @@ namespace BaGet.Identity.Workflows;
 /// with the stored password when the origin is unchanged). A virtual repository shows and edits its members (add, remove, move up or
 /// down), its deploy repository, and previews where a package version would come from
 /// (<see cref="IVirtualRepositoryAdministration.PreviewAsync(string, string, string, CancellationToken)"/>); those edits are saved at
-/// once, refused with 503 while the gate is closed. Shared by <c>AdminRepositoriesController</c> and the obsolete
-/// <c>RepositoryEditModel</c>.
+/// once, refused with 503 while the gate is closed. Used by <c>AdminRepositoriesController</c>.
 /// </summary>
 internal sealed class RepositoryEditWorkflow : AdminWorkflow
 {

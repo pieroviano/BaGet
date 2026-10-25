@@ -12,7 +12,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The logic of the Docker front page: the images whose name contains the text (only those the visitor may read) and the commands
-/// that point Docker at the registry. Shared by <c>DockerBrowseController</c> and the obsolete <see cref="DockerImagesModel"/>.
+/// that point Docker at the registry. Used by <c>DockerBrowseController</c>.
 /// </summary>
 internal sealed class DockerImagesWorkflow
 {
@@ -80,7 +80,7 @@ internal sealed class DockerImagesWorkflow
 
 /// <summary>
 /// The logic of the page of one Docker image: its tags, manifests and, with a digest, one manifest in full. Shared by
-/// <c>DockerBrowseController</c> and the obsolete <see cref="DockerImageModel"/>.
+/// <c>DockerBrowseController</c>.
 /// </summary>
 internal sealed class DockerImageWorkflow
 {

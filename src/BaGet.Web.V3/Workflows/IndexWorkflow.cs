@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Routing;
 namespace BaGet.Web;
 
 /// <summary>
-/// The logic of the front page and the package list, shared by <see cref="HomeController"/> and the obsolete <see cref="IndexModel"/>.
+/// The logic of the front page and the package list, used by <see cref="HomeController"/>.
 /// </summary>
 public sealed class IndexWorkflow
 {

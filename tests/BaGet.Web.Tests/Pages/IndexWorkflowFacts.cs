@@ -68,20 +68,4 @@ public class IndexWorkflowFacts
         Assert.Equal("bar", _capturedRequest.Framework);
         Assert.Equal("Hello world", _capturedRequest.Query);
     }
-
-    [Fact]
-    #pragma warning disable CS0618
-    public async Task TheObsoletePageModelShimStillWorks()
-    {
-        var shim = new IndexModel(_searchService, new StatisticsService(new NullContext())) { PageIndex = 3, Query = "x" };
-
-        await shim.OnGetAsync(_cancellation);
-
-        #pragma warning disable CS8602
-        Assert.Equal(40, _capturedRequest.Skip);
-        #pragma warning restore CS8602
-        Assert.Equal("x", _capturedRequest.Query);
-        Assert.False(shim.IsHome);
-    }
-    #pragma warning restore CS0618
 }

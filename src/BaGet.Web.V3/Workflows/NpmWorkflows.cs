@@ -14,7 +14,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The logic of the npm front page: the packages whose name contains the text, listed only when the visitor may open their pages.
-/// Shared by <c>NpmBrowseController</c> and the obsolete <see cref="NpmPackagesModel"/>.
+/// Used by <c>NpmBrowseController</c>.
 /// </summary>
 internal sealed class NpmPackagesWorkflow
 {
@@ -51,7 +51,7 @@ internal sealed class NpmPackagesWorkflow
 
 /// <summary>
 /// The logic of the page of one npm package: its readme, versions, dist-tags, owners and install commands. Shared by
-/// <c>NpmBrowseController</c> and the obsolete <see cref="NpmPackageModel"/>.
+/// <c>NpmBrowseController</c>.
 /// </summary>
 internal sealed class NpmPackageWorkflow
 {
@@ -121,7 +121,7 @@ internal sealed class NpmPackageWorkflow
 
 /// <summary>
 /// The logic of the npm upload page: publishing a tarball through <see cref="INpmRegistry.PublishTarballAsync"/>, the call
-/// <c>npm publish</c> ends in. Shared by <c>NpmBrowseController</c> and the obsolete <see cref="NpmUploadModel"/>.
+/// <c>npm publish</c> ends in. Used by <c>NpmBrowseController</c>.
 /// </summary>
 internal sealed class NpmUploadWorkflow
 {

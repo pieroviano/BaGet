@@ -8,8 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Base of the retention screens (policies, a policy's report, legal holds): the controller counterpart of
-/// <c>RetentionPageModel</c>. The access screens' rules (administrators only, 404 for anyone else, redirect where there is no
+/// Base of the retention screens (policies, a policy's report, legal holds). The access screens' rules (administrators only, 404 for anyone else, redirect where there is no
 /// relational database, 503 on a POST while the server is read-only), with the retention services and the lists the forms choose
 /// from. A <see cref="RetentionException"/> is an <see cref="AccessModelException"/>, so <c>ActAsync</c> turns it into the screen's
 /// <c>Error</c>.

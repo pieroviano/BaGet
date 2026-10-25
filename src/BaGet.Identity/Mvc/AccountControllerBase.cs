@@ -11,11 +11,11 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Shared by the account screens: the controller counterpart of <c>AccountPageModel</c>. The screens are always compiled in, but
+/// Shared by the account screens. The screens are always compiled in, but
 /// answer 404 while accounts are disabled, so their services are resolved per request rather than injected: they are only
 /// registered when accounts are enabled.
 /// <para>
-/// <see cref="OnActionExecuting"/> reproduces the page model's check, in the same order: accounts enabled (else 404), mail
+/// <see cref="OnActionExecuting"/> checks, in this order: accounts enabled (else 404), mail
 /// configured when <see cref="RequiresEmail"/> (else 404), signed in when <see cref="RequiresSignIn"/> (else a challenge, which
 /// sends the visitor to sign in). It is checked here rather than with <c>[Authorize]</c> because while accounts are disabled
 /// there is no scheme to challenge with and the screen must answer 404 instead.

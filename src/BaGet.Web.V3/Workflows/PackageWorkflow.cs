@@ -16,7 +16,7 @@ using NuGet.Versioning;
 namespace BaGet.Web;
 
 /// <summary>
-/// The logic of the package page, shared by <see cref="PackageController"/> and the obsolete <see cref="PackageModel"/>: finds the
+/// The logic of the package page, shared by <see cref="PackageController"/>: finds the
 /// version to show (the requested one, else the newest listed) and gathers what the page displays.
 /// </summary>
 public sealed class PackageWorkflow

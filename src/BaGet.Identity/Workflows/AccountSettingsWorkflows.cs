@@ -16,7 +16,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// Change password, change email, delete the account. Each form posts to its own handler and takes its fields as parameters,
-/// so one form's rules never block another's. Shared by <c>AccountSettingsController</c> and the obsolete <c>SettingsModel</c>.
+/// so one form's rules never block another's. Used by <c>AccountSettingsController</c>.
 /// </summary>
 internal sealed class SettingsWorkflow
 {
@@ -180,7 +180,7 @@ internal sealed class SettingsWorkflow
 
 /// <summary>
 /// Authenticator-app (TOTP) two-factor authentication: set up with a QR code, recovery codes shown once, turn off, or start over
-/// with a new key. Shared by <c>AccountSettingsController</c> and the obsolete <c>TwoFactorModel</c>.
+/// with a new key. Used by <c>AccountSettingsController</c>.
 /// </summary>
 internal sealed class TwoFactorWorkflow
 {
@@ -339,7 +339,7 @@ internal sealed class TwoFactorWorkflow
 }
 
 /// <summary>
-/// The user's API keys: list, create, revoke. Shared by <c>AccountSettingsController</c> and the obsolete <c>ApiKeysModel</c>.
+/// The user's API keys: list, create, revoke. Used by <c>AccountSettingsController</c>.
 /// </summary>
 internal sealed class ApiKeysWorkflow
 {

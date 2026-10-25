@@ -41,7 +41,7 @@ public class OpenRepositoryAccessTests
     [Fact]
     public async Task OffersRepositoriesOfEveryFormat()
     {
-        // The pages of a repository decide per format (RepositoryPageFilter); the listing is the same for every format.
+        // The pages of a repository decide per format (RepositoryPageGate); the listing is the same for every format.
         var npm = new RepositoryInfo(9, "packages-js", RepositoryFormat.Npm, RepositoryKind.Local);
         var access = Access(true, RepositoryInfo.Default, npm);
 

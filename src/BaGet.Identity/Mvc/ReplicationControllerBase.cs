@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Base of the replication screens: the controller counterpart of <c>ReplicationPageModel</c>. The access screens' rules
+/// Base of the replication screens. The access screens' rules
 /// (administrators only, 404 for anyone else, redirect where there is no relational database, 503 on a POST while the server is
 /// read-only), with the replication services and the repositories a configuration can name. A <see cref="ReplicationException"/>
 /// is an <see cref="AccessModelException"/>, so <c>ActAsync</c> turns it into the screen's <c>Error</c>.

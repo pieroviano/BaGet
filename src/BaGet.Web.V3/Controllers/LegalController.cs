@@ -11,8 +11,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The Terms of Use (<c>/terms</c>) and Privacy Policy (<c>/privacy</c>) pages: the operator-supplied Markdown files
-/// (<c>Site:TermsOfUsePath</c>, <c>Site:PrivacyPolicyPath</c>), 404 while a file is not configured or does not exist. The
-/// first Razor Pages migrated to a controller (it replaces <c>LegalPageModel</c>, now an obsolete shim): same URLs, same
+/// (<c>Site:TermsOfUsePath</c>, <c>Site:PrivacyPolicyPath</c>), 404 while a file is not configured or does not exist. Same URLs, same
 /// <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>), views in <c>Views/Legal/</c>.
 /// </summary>
 public sealed class LegalController : UiControllerBase

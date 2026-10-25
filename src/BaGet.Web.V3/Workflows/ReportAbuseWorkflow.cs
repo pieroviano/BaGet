@@ -25,7 +25,7 @@ public enum ReportAbuseOutcome
 /// <summary>
 /// The logic of the report-abuse page: records a report against a package version, for its owners and the administrator. Works for any
 /// ID and version (a client expands the report abuse template from whatever it is looking at). Shared by
-/// <see cref="ReportAbuseController"/> and the obsolete <see cref="ReportAbuseModel"/>.
+/// <see cref="ReportAbuseController"/>.
 /// </summary>
 public sealed class ReportAbuseWorkflow
 {

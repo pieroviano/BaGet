@@ -9,7 +9,7 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// <em>Scan now</em> for one version of an artifact of any format (<c>/scan-artifact</c>, also at <c>/r/{repo}/…</c>). It replaces
 /// the <c>/Packages/Scan</c> Razor Page (same URL, same form fields, same gates: signed in, the Manage action on the artifact);
-/// the logic is <see cref="ScanWorkflow"/>, shared with the obsolete <c>ScanModel</c>.
+/// the logic is <see cref="ScanWorkflow"/>.
 /// </summary>
 [Route("scan-artifact")]
 [LegacyPage("/Packages/Scan")]

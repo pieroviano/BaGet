@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 namespace BaGet.Web;
 
 /// <summary>
-/// Makes the controller actions that replace Razor Pages reachable at <c>/r/{repo}/…</c> as well as at their own route: the
-/// counterpart of <see cref="RepositoryPageRouteConvention"/> for actions marked <see cref="RepositoryPageAttribute"/> (on the
+/// Makes the controller actions that replaced Razor Pages reachable at <c>/r/{repo}/…</c> as well as at their own route, for actions marked <see cref="RepositoryPageAttribute"/> (on the
 /// action or on its controller). Every route of such an action (the controller's <c>[Route]</c> combined with the action's own
 /// template, aliases included) gets a twin prefixed with <see cref="Routes.RepositoryPathPrefix"/>.
 /// <para>

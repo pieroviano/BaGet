@@ -18,7 +18,7 @@ namespace BaGet.Identity.Workflows;
 /// signed-in user (the session's principal, never a typed key), so the screen can do what the same user's API key could through the
 /// repository routes and no more: the access model and ownership apply identically. Opening it takes ownership (directly or
 /// through an organization) or administration; deleting also asks for the password again, since it cannot be undone. Works in
-/// the request's repository. Served by <c>MavenManageController</c>; the obsolete <c>MavenManageModel</c> runs the same code.
+/// the request's repository. Served by <c>MavenManageController</c>.
 /// </summary>
 internal sealed class MavenManageWorkflow : PackageWorkflowBase
 {

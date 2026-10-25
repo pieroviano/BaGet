@@ -12,8 +12,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// Deletes a repository with no packages, and its history rows. The default repository cannot be deleted. A repository that still
 /// holds packages is refused (delete the packages first), and so is one that a virtual repository lists as a member (remove it there
-/// first). Refused with 503 while the <see cref="MaintenanceGate"/> is closed. Shared by <c>AdminRepositoriesController</c> and the
-/// obsolete <c>RepositoryDeleteModel</c>.
+/// first). Refused with 503 while the <see cref="MaintenanceGate"/> is closed. Used by <c>AdminRepositoriesController</c>.
 /// </summary>
 internal sealed class RepositoryDeleteWorkflow : AdminWorkflow
 {

@@ -8,8 +8,7 @@ namespace BaGet.Identity.ViewModels;
 
 /// <summary>
 /// Shared shape of the policy screens (retention, scanning, replication): the password confirmation partial's inputs and the
-/// outcome of the last action, which <c>AdminControllerBase.Flash</c> carries across a redirect (<c>[TempData] Message</c> / <c>Error</c>
-/// on the page models).
+/// outcome of the last action, which <c>AdminControllerBase.Flash</c> carries across a redirect.
 /// </summary>
 public abstract class PolicyViewModel : ConfirmationModel, IFlashModel
 {

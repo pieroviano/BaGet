@@ -11,10 +11,10 @@ using Xunit;
 namespace BaGet.Tests.Contracts;
 
 /// <summary>
-/// Contract 3 of the Razor Pages to MVC migration (decision D1: every public C# type stays): the public and protected surface
+/// The public-API contract of the web UI: the public and protected surface
 /// of <c>BaGet.Web.V3</c> and <c>BaGet.Identity</c> is listed in <c>Contracts/public-api.txt</c>, one line per type, base
-/// type, interface and member. After a migration the actual surface must be a <b>superset</b> of the snapshot: members and
-/// types may be added, none may be removed or change signature (an [Obsolete] attribute is allowed). Razor-generated view
+/// type, interface and member. The actual surface must be a <b>superset</b> of the snapshot: members and
+/// types may be added, none may be removed or change signature (a removal is a breaking change: regenerate the snapshot on purpose). Razor-generated view
 /// classes are not public API.
 /// </summary>
 public class PublicApiSnapshotTests
@@ -46,7 +46,7 @@ public class PublicApiSnapshotTests
 
         Assert.True(
             missing.Count == 0,
-            $"{missing.Count} public API entries of the snapshot are gone or changed (a shim must keep every type and member):{Environment.NewLine}  "
+            $"{missing.Count} public API entries of the snapshot are gone or changed (a removal is a breaking change):{Environment.NewLine}  "
             + string.Join(Environment.NewLine + "  ", missing.Take(40)));
     }
 

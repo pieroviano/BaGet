@@ -85,35 +85,3 @@ public sealed class RetentionPolicyForm
 /// <param name="Projects">The projects to choose from.</param>
 /// <param name="IdPrefix">Prefix of the element ids, so two forms on one page do not clash.</param>
 public sealed record RetentionFieldsView(RetentionPolicyForm Form, IReadOnlyList<RepositoryInfo> Repositories, IReadOnlyList<string> Projects, string IdPrefix);
-
-/// <summary>
-/// Base of the retention pages (policies, a policy's report, legal holds): the access pages' rules (administrators only, 404 for
-/// anyone else, redirect where there is no relational database, 503 on a POST while the server is read-only), with the retention
-/// services and the lists the forms choose from. A <see cref="RetentionException"/> is an <see cref="AccessModelException"/>, so
-/// <c>ActAsync</c> turns it into the page's <c>Error</c>.
-/// </summary>
-[Obsolete("The retention/replication screens are controllers now; use RetentionControllerBase. This page model base has no page left and will be removed in the next major version.")]
-public abstract class RetentionPageModel : AccessPageModel
-{
-    /// <summary>Policies and legal holds.</summary>
-    protected IRetentionAdministration Retention => HttpContext.RequestServices.GetRequiredService<IRetentionAdministration>();
-
-    /// <summary>Runs policies in the background and keeps their last report.</summary>
-    protected RetentionJobs Jobs => HttpContext.RequestServices.GetRequiredService<RetentionJobs>();
-
-    /// <summary>The repositories a policy or hold can name (virtual ones store nothing), by name.</summary>
-    public IReadOnlyList<RepositoryInfo> Repositories { get; private set; } = Array.Empty<RepositoryInfo>();
-
-    /// <summary>The names of the projects a policy can name.</summary>
-    public IReadOnlyList<string> ProjectNames { get; private set; } = Array.Empty<string>();
-
-    /// <summary>Loads <see cref="Repositories"/> and <see cref="ProjectNames"/>.</summary>
-    protected async Task LoadChoicesAsync(CancellationToken cancellationToken)
-    {
-        Repositories = await AccessSupport.RetentionRepositoriesAsync(HttpContext.RequestServices, cancellationToken);
-        ProjectNames = await AccessSupport.ProjectNamesAsync(HttpContext.RequestServices, cancellationToken);
-    }
-
-    /// <summary>The rules of a policy in one line, for the lists.</summary>
-    public static string Describe(RetentionPolicy p) => AccessSupport.DescribeRetention(p);
-}

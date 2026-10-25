@@ -11,9 +11,9 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The delete tools of a Docker image (<c>/docker-manage/{**image}</c>, also at <c>/r/{repo}/…</c>): delete a tag, a manifest, the
 /// unused layers or the whole image. It replaces the <c>/Packages/DockerManage</c> Razor Page (same URLs, same <c>?handler=</c>
-/// forms, same gates); the logic is <see cref="DockerManageWorkflow"/>, shared with the obsolete <c>DockerManageModel</c>. The
+/// forms, same gates); the logic is <see cref="DockerManageWorkflow"/>. The
 /// image-name / repository-kind / Delete-permission check runs in <see cref="OnActionExecutionAsync"/>, before the global
-/// repository filter, as the page model's did.
+/// repository filter.
 /// </summary>
 [Route("docker-manage/{**image}")]
 [RepositoryPage(Format = RepositoryFormat.Docker, NotOnVirtual = true)]

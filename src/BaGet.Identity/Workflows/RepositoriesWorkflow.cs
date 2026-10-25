@@ -17,7 +17,7 @@ namespace BaGet.Identity.Workflows;
 /// <see cref="RemoteRepositorySettings"/>) or virtual (an ordered group of members, filled in on its edit screen), of any format
 /// whose module offers the kind; the name is validated by <see cref="RepositoryNames"/>. Creating is refused with 503 while the
 /// <see cref="MaintenanceGate"/> is closed. Creating a remote repository, which can carry credentials, asks for the administrator's
-/// password again. Shared by <c>AdminRepositoriesController</c> and the obsolete <c>RepositoriesModel</c>.
+/// password again. Used by <c>AdminRepositoriesController</c>.
 /// </summary>
 internal sealed class RepositoriesWorkflow : AdminWorkflow
 {

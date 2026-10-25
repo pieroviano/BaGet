@@ -16,7 +16,7 @@ namespace BaGet.Identity.Workflows;
 /// collection) started as background jobs for a chosen repository (503 while the <see cref="MaintenanceGate"/> is closed, recorded
 /// with <see cref="IAdminAudit"/>); the validation queue across every repository (retry, release, reject); the abuse reports of
 /// every repository (resolve, reopen); and the read-only formats and cluster status. Shared by <c>AdminOperationsController</c>
-/// and the obsolete <c>OperationsModel</c>, <c>ValidationModel</c>, <c>AbuseModel</c>, <c>FormatsModel</c> and <c>ClusterModel</c>.
+///.
 /// </summary>
 internal sealed class OperationsWorkflow : AdminWorkflow
 {

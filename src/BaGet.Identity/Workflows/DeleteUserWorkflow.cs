@@ -13,8 +13,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// An administrator deleting another account: what goes, what happens to the organizations and to the package IDs only that user
 /// owned (leave them without owners, or delete them with all their versions), then a password confirmation. Never the
-/// administrator's own account, and never the last administrator. Shared by <c>AdminUsersController</c> and the obsolete
-/// <c>DeleteUserModel</c>.
+/// administrator's own account, and never the last administrator. Used by <c>AdminUsersController</c>.
 /// </summary>
 internal sealed class DeleteUserWorkflow : AdminWorkflow
 {

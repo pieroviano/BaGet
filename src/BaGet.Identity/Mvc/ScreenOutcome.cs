@@ -6,8 +6,7 @@ namespace BaGet.Identity.Mvc;
 
 /// <summary>
 /// What an account workflow decided, independent of the programming model that runs it: show the screen again, or leave for
-/// somewhere. <see cref="ToResult"/> turns it into the same <see cref="IActionResult"/> a page model handler or a controller
-/// action would have returned, so the workflow holds the rules and the host holds only the plumbing.
+/// somewhere. <see cref="ToResult"/> turns it into the same <see cref="IActionResult"/> a controller action returns, so the workflow holds the rules and the host holds only the plumbing.
 /// </summary>
 internal sealed class ScreenOutcome
 {

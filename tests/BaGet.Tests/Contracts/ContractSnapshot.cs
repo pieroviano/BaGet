@@ -9,8 +9,7 @@ namespace BaGet.Tests.Contracts;
 
 /// <summary>
 /// Compares generated text with a committed snapshot under <c>tests/BaGet.Tests/Contracts/</c>. The snapshots are the
-/// definition of "not breaking" for the Razor Pages to MVC migration: they are generated
-/// once on the unmigrated code and a migration track must never edit them to make a test pass. Set the environment variable
+/// definition of "not breaking" for the web UI (routes, forms, public API): a change never edits them to make a test pass. Set the environment variable
 /// <c>BAGET_UPDATE_CONTRACTS=1</c> to (re)write a snapshot, which is only legitimate for a deliberate, reviewed contract change.
 /// </summary>
 internal static class ContractSnapshot

@@ -16,7 +16,7 @@ namespace BaGet.Identity.Workflows;
 /// Where a pushed package stands in validation: for each version of the ID, its newest submission and the verdict and message of
 /// every step. The screen counterpart of <c>GET v3/package/{id}/{version}/validation</c>, gated the same way: a signed-in user
 /// who may push or manage the ID (an administrator holds both). Nothing is written. Served by
-/// <c>ValidationStatusPageController</c>; the obsolete <c>ValidationStatusModel</c> runs the same code.
+/// <c>ValidationStatusPageController</c>.
 /// </summary>
 internal sealed class ValidationStatusWorkflow : PackageWorkflowBase
 {

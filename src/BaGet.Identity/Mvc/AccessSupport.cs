@@ -10,8 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// The parts of the access, retention and replication screens that do not depend on the programming model, shared by the page
-/// bases (<c>AccessPageModel</c>, <c>RetentionPageModel</c>, <c>ReplicationPageModel</c>) and the controller bases
+/// The parts of the access, retention and replication screens , used by the controller bases
 /// (<see cref="AccessControllerBase"/>, <see cref="RetentionControllerBase"/>, <see cref="ReplicationControllerBase"/>).
 /// </summary>
 internal static class AccessSupport

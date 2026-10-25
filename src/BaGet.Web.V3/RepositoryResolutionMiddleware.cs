@@ -42,7 +42,7 @@ public class RepositoryResolutionMiddleware
         });
 
         // The format the matched route speaks; endpoints a host maps itself are NuGet's. A Razor Page is no protocol route:
-        // the pages of every format exist under /r/{repo}/, and RepositoryPageFilter decides which of them a repository has
+        // the pages of every format exist under /r/{repo}/, and RepositoryPageGate decides which of them a repository has
         // (it needs the caller's rights for that, and redirects the front page of an npm repository to its own).
         var endpoint = context.GetEndpoint();
         // A page is a Razor Page or a controller action that replaced one (it carries its page name).

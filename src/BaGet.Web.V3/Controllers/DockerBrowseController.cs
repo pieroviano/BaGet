@@ -12,7 +12,7 @@ namespace BaGet.Web;
 /// <summary>
 /// The web pages of a Docker repository: the image list (<c>/docker-images</c>) and one image
 /// (<c>/docker-images/{image}</c>, <c>?digest=</c> for a manifest). They replace the Razor Pages <c>DockerImages</c> and
-/// <c>DockerImage</c> (their page models are obsolete shims over the same workflows): same URLs, same <c>asp-page</c> names
+/// <c>DockerImage</c>: same URLs, same <c>asp-page</c> names
 /// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository and,
 /// for the image page, on the image; 404 in a repository that is not Docker's). Views are in <c>Views/DockerBrowse/</c>.
 /// </summary>

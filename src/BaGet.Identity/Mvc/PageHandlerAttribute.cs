@@ -30,8 +30,7 @@ namespace BaGet.Identity.Mvc;
 /// are ambiguous, as two <c>OnPostApprove</c> methods would be.
 /// </summary>
 /// <remarks>
-/// How to migrate: a page model's <c>OnGetCopyStatus</c> becomes <c>[HttpGet, PageHandler("CopyStatus")] CopyStatus()</c>, its
-/// <c>OnPost</c> becomes <c>[HttpPost, PageHandler] Post()</c> (or just <c>[HttpPost]</c> when no sibling has a name). Forms keep
+/// Usage: <c>[HttpGet, PageHandler("CopyStatus")] CopyStatus()</c> answers <c>?handler=CopyStatus</c>, and <c>[HttpPost, PageHandler] Post()</c> (or just <c>[HttpPost]</c> when no sibling has a name). Forms keep
 /// <c>asp-page-handler="Approve"</c> (the legacy page mapping, see <see cref="LegacyPageAttribute"/>) or use
 /// <c>asp-route-handler="Approve"</c> with <c>asp-controller</c>/<c>asp-action</c>: both render <c>?handler=Approve</c>.
 /// </remarks>

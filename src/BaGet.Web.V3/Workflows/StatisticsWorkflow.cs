@@ -5,7 +5,7 @@ using BaGet.Core;
 
 namespace BaGet.Web;
 
-/// <summary>The logic of the statistics page, shared by <see cref="StatisticsController"/> and the obsolete <see cref="StatisticsModel"/>.</summary>
+/// <summary>The logic of the statistics page, used by <see cref="StatisticsController"/>.</summary>
 public sealed class StatisticsWorkflow
 {
     private readonly StatisticsService _statistics;

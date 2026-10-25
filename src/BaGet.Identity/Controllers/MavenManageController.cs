@@ -11,9 +11,8 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The owners' screen for a Maven artifact (<c>/maven-manage/{group}/{artifact}</c>, also at <c>/r/{repo}/…</c>): owners, versions,
 /// the files of the chosen version, deletion and snapshot clean-up. It replaces the <c>/Packages/MavenManage</c> Razor Page (same
-/// URLs, same <c>?handler=</c> forms, same gates); the logic is <see cref="MavenManageWorkflow"/>, shared with the obsolete
-/// <c>MavenManageModel</c>. The coordinates / repository-kind / ownership check runs in <see cref="OnActionExecutionAsync"/>,
-/// before the global repository filter, as the page model's did.
+/// URLs, same <c>?handler=</c> forms, same gates); the logic is <see cref="MavenManageWorkflow"/>. The coordinates / repository-kind / ownership check runs in <see cref="OnActionExecutionAsync"/>,
+/// before the global repository filter.
 /// </summary>
 [Route("maven-manage/{group}/{artifact}")]
 [RepositoryPage(Format = RepositoryFormat.Maven, NotOnVirtual = true, NotOnRemote = true)]

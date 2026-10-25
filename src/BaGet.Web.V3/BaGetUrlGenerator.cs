@@ -168,7 +168,7 @@ public class BaGetUrlGenerator : IUrlGenerator
     // These two are templates for the client to expand, not URLs for a specific
     // package, so the placeholders are returned verbatim. Routing them through
     // LinkGenerator would percent-encode the braces.
-    // The package and report-abuse pages exist under every repository (RepositoryPageRouteConvention), so each
+    // The package and report-abuse pages exist under every repository (RepositoryActionRouteConvention), so each
     // repository advertises its own: AbsoluteUrl adds the "r/{name}/" prefix.
     public string? GetPackageDetailsUriTemplate()
     {

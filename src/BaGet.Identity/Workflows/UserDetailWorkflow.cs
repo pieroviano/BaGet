@@ -16,7 +16,7 @@ namespace BaGet.Identity.Workflows;
 /// One account as an administrator sees it: the details, its API keys (revocable), its organizations and a link to its packages,
 /// and the access model's view of it (groups, project roles, effective permissions per repository). Revoking a key, approving the
 /// account and changing group membership ask for the administrator's password and are refused with 503 while the
-/// <see cref="MaintenanceGate"/> is closed. Shared by <c>AdminUsersController</c> and the obsolete <c>UserDetailModel</c>.
+/// <see cref="MaintenanceGate"/> is closed. Used by <c>AdminUsersController</c>.
 /// </summary>
 internal sealed class UserDetailWorkflow : AdminWorkflow
 {

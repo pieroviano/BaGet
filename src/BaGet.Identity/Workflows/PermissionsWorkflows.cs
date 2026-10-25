@@ -13,8 +13,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// The permission targets list (rules saying which repositories and package IDs their grants apply to) and the new-target form. The
-/// patterns can be previewed before saving. Administrators only. Shared by <c>AdminPermissionsController</c> and the obsolete
-/// <c>PermissionsModel</c>.
+/// patterns can be previewed before saving. Administrators only. Used by <c>AdminPermissionsController</c>.
 /// </summary>
 internal sealed class PermissionsWorkflow : AccessWorkflow
 {
@@ -89,7 +88,7 @@ internal sealed class PermissionsWorkflow : AccessWorkflow
 /// One permission target: its repository and package patterns (with a preview of the repositories they match and a test box for
 /// package IDs), and the grants: which users, groups or organizations hold which of Read, Annotate, Deploy, Delete and Manage
 /// through it. Editing patterns, setting or removing a grant and deleting the target ask for the password again. Shared by
-/// <c>AdminPermissionsController</c> and the obsolete <c>PermissionDetailModel</c>.
+/// <c>AdminPermissionsController</c>.
 /// </summary>
 internal sealed class PermissionDetailWorkflow : AccessWorkflow
 {

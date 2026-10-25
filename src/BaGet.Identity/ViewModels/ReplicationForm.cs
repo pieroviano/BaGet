@@ -73,31 +73,3 @@ public sealed class ReplicationForm
 /// <param name="IdPrefix">Prefix of the element ids, so two forms on one page do not clash.</param>
 /// <param name="HasApiKey">Whether a key is stored (the field then says so).</param>
 public sealed record ReplicationFieldsView(ReplicationForm Form, IReadOnlyList<RepositoryInfo> Repositories, string IdPrefix, bool HasApiKey);
-
-/// <summary>
-/// Base of the replication pages: the access pages' rules (administrators only, 404 for anyone else, redirect where there is no
-/// relational database, 503 on a POST while the server is read-only), with the replication services and the repositories a
-/// configuration can name. A <see cref="ReplicationException"/> is an <see cref="AccessModelException"/>, so <c>ActAsync</c> turns it into
-/// the page's <c>Error</c>.
-/// </summary>
-[Obsolete("The retention/replication screens are controllers now; use ReplicationControllerBase. This page model base has no page left and will be removed in the next major version.")]
-public abstract class ReplicationPageModel : AccessPageModel
-{
-    /// <summary>Configurations and their log.</summary>
-    protected IReplicationAdministration Replication => HttpContext.RequestServices.GetRequiredService<IReplicationAdministration>();
-
-    /// <summary>Runs replications in the background.</summary>
-    protected ReplicationJobs Jobs => HttpContext.RequestServices.GetRequiredService<ReplicationJobs>();
-
-    /// <summary>The local repositories a replication can name (remote and virtual ones are not replicated), by name.</summary>
-    public IReadOnlyList<RepositoryInfo> Repositories { get; private set; } = Array.Empty<RepositoryInfo>();
-
-    /// <summary>Loads <see cref="Repositories"/>.</summary>
-    protected async Task LoadChoicesAsync(CancellationToken cancellationToken)
-    {
-        Repositories = await AccessSupport.ReplicationRepositoriesAsync(HttpContext.RequestServices, cancellationToken);
-    }
-
-    /// <summary>The schedule and triggers of a configuration in a few words.</summary>
-    public static string Describe(ReplicationConfig c) => AccessSupport.DescribeReplication(c);
-}

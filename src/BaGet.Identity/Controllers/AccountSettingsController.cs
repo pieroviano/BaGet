@@ -9,8 +9,7 @@ namespace BaGet.Identity.Controllers;
 
 /// <summary>
 /// The signed-in user's own settings: account settings (email, password, delete the account), two-factor authentication and API
-/// keys. It replaces the Razor Pages <c>Account/Settings</c>, <c>Account/TwoFactor</c> and <c>Account/ApiKeys</c> (obsolete page
-/// models remain as shims): same URLs, same <c>?handler=</c> forms, same <c>asp-page</c> names. Every action needs a signed-in
+/// keys. It replaces the Razor Pages <c>Account/Settings</c>, <c>Account/TwoFactor</c> and <c>Account/ApiKeys</c>: same URLs, same <c>?handler=</c> forms, same <c>asp-page</c> names. Every action needs a signed-in
 /// user (a visitor is challenged, 404 while accounts are off). The rules live in the workflows of <c>BaGet.Identity.Workflows</c>.
 /// </summary>
 public sealed class AccountSettingsController : AccountControllerBase

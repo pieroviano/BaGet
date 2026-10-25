@@ -15,7 +15,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// The projects list (groups of repositories with their own administrators) and the new-project form. Administrators see every
 /// project and create new ones; a project's administrators see the projects they administer. Shared by
-/// <c>AdminProjectsController</c> and the obsolete <c>ProjectsModel</c>.
+/// <c>AdminProjectsController</c>.
 /// </summary>
 internal sealed class ProjectsWorkflow : AccessWorkflow
 {
@@ -71,7 +71,7 @@ internal sealed class ProjectsWorkflow : AccessWorkflow
 /// One project: its repositories (assigned by server administrators), its members with their roles, and the permission targets that
 /// apply only to its repositories. Server administrators and the project's own administrators manage members and targets; only
 /// server administrators assign repositories and delete the project. Member changes and deletions ask for the password again.
-/// Shared by <c>AdminProjectsController</c> and the obsolete <c>ProjectDetailModel</c>.
+/// Used by <c>AdminProjectsController</c>.
 /// </summary>
 internal sealed class ProjectDetailWorkflow : AccessWorkflow
 {
@@ -207,7 +207,7 @@ internal sealed class ProjectDetailWorkflow : AccessWorkflow
 /// <summary>
 /// The access audit log: one entry per change to groups, memberships, permission targets, grants, projects, the repositories' project
 /// and anonymous-read switch, newest first, filtered by who made the change, what it was done to and the dates (UTC,
-/// <c>yyyy-MM-dd</c>, both inclusive). Read only. Shared by <c>AdminAuditController</c> and the obsolete <c>AuditModel</c>.
+/// <c>yyyy-MM-dd</c>, both inclusive). Read only. Used by <c>AdminAuditController</c>.
 /// </summary>
 internal sealed class AuditWorkflow : AccessWorkflow
 {

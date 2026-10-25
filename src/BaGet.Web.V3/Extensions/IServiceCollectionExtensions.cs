@@ -48,8 +48,7 @@ public static class IServiceCollectionExtensions
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
 
-        // BaGet ships no Razor Page (every screen is a controller action, see Compat/ for the obsolete page models), but a host's
-        // own pages and the Pages/ forwarding views keep working, so Razor Pages stays registered.
+        // BaGet ships no Razor Page (every screen is a controller action), but a host's own pages and the Pages/ forwarding views keep working, so Razor Pages stays registered.
         services.AddRazorPages();
 
         // Page links stay inside the repository being browsed (see RepositoryUrlHelper).
@@ -58,7 +57,7 @@ public static class IServiceCollectionExtensions
         // Which controller action replaces which page, so links to a page that moved to a controller keep resolving.
         services.AddSingleton<UiActionMap>();
 
-        // The logic of the controllers that replaced the format and upload pages (shared with their obsolete page-model shims).
+        // The logic of the controllers that replaced the format and upload pages.
         services.AddScoped<NpmPackagesWorkflow>();
         services.AddScoped<NpmPackageWorkflow>();
         services.AddScoped<NpmUploadWorkflow>();
@@ -82,7 +81,7 @@ public static class IServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();
 
-        // The logic of the browse screens, shared by their controllers and the obsolete page-model shims.
+        // The logic of the browse screens, used by their controllers.
         services.AddScoped<IndexWorkflow>();
         services.AddScoped<PackageWorkflow>();
         services.AddScoped<StatisticsWorkflow>();

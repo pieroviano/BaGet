@@ -9,7 +9,7 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// Where a pushed package stands in validation (<c>/packages/{id}/validation</c>, also at <c>/r/{repo}/…</c>): the newest submission
 /// of each version and its steps. It replaces the <c>/Packages/ValidationStatus</c> Razor Page (same URL, same gates); the logic is
-/// <see cref="ValidationStatusWorkflow"/>, shared with the obsolete <c>ValidationStatusModel</c>.
+/// <see cref="ValidationStatusWorkflow"/>.
 /// </summary>
 [Route("packages/{id}/validation")]
 [LegacyPage("/Packages/ValidationStatus")]

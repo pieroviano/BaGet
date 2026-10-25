@@ -13,14 +13,10 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Identity.Workflows;
 
 /// <summary>
-/// The logic of an administrator screen, independent of the programming model: the controller (<c>AdminControllerBase</c>) and the
-/// obsolete page-model shim (<c>AdminPageModel</c>) of the same screen both build one workflow per request and call it, so the rules
-/// cannot diverge. It is created by hand with the request's <see cref="HttpContext"/> and URL helper (a page model's public
-/// constructor cannot take services); its services are resolved per request, as the base classes do, because they exist only while
+/// The logic of an administrator screen, the controller (<c>AdminControllerBase</c>) builds one workflow per request and calls it. It is created by hand with the request's <see cref="HttpContext"/> and URL helper; its services are resolved per request, as the base classes do, because they exist only while
 /// accounts are enabled.
 /// <para>
-/// A handler returns the result the page model's handler returned, except that <c>Page()</c> is <c>null</c> ("render the screen"):
-/// the caller turns null into <c>View(...)</c> or <c>Page()</c>. Every gate (<c>ThrowIfClosed</c>, password confirmation, 404 rules)
+/// A handler returns the action result, except that a screen to render is <c>null</c>: the caller turns null into <c>View(...)</c>. Every gate (<c>ThrowIfClosed</c>, password confirmation, 404 rules)
 /// is in the workflow, so a caller cannot skip it. The administrator check itself stays in the base class that runs first.
 /// </para>
 /// </summary>

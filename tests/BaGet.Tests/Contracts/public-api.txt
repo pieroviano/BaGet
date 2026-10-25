@@ -223,154 +223,6 @@ BaGet.Identity BaGet.Identity.PackageOwnershipService::System.Threading.Tasks.Ta
 BaGet.Identity BaGet.Identity.PackageOwnershipService::System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<System.String>> GetOwnedPackageIdsAsync(System.String userId, System.String userName, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity BaGet.Identity.PackageOwnershipService::System.Threading.Tasks.Task<System.Int32> CountOwnedPackageIdsAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity BaGet.Identity.PackageOwnershipService::ctor(BaGet.Core.IContext context, BaGet.Core.SystemTime time)
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::System.Boolean ModelAvailable { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.RepositoryAccessRow> Rows { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::System.Collections.Generic.IReadOnlyList<System.String> AdministeredProjects { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::System.String Package { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.AccessModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::BaGet.Core.AccountsOptions Accounts { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::BaGet.Identity.ApiKeyService ApiKeys { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::BaGet.Identity.PackageOwnershipService Ownership { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::Microsoft.AspNetCore.Identity.IEmailSender<BaGet.Core.BaGetUser> EmailSender { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> SignInManager { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> UserManager { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::Microsoft.AspNetCore.Mvc.IActionResult RedirectToLocal(System.String returnUrl)
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::System.Boolean EmailConfigured { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::System.Boolean RequiresEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::System.String PageLink(System.String page, System.Object values)
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::System.Threading.Tasks.Task<System.Boolean> HasReauthenticatedRecentlyAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::System.Threading.Tasks.Task<System.Boolean> IsConfirmedAsync(BaGet.Core.BaGetUser user, System.String password)
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::static System.String DecodeToken(System.String code)
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::static System.String Describe(Microsoft.AspNetCore.Identity.IdentityResult result)
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::static System.String EncodeToken(System.String token)
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::static System.TimeSpan ReauthenticationWindow
-BaGet.Identity BaGet.Identity.Pages.Account.AccountPageModel::virtual System.Void OnPageHandlerExecuting(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context)
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ApiKey> Keys { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RepositoryInfo> Repositories { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Collections.Generic.IReadOnlyList<System.String> AllScopes { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Collections.Generic.List<System.Int32> RepositoryKeys { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Collections.Generic.List<System.String> Scopes { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Nullable<System.Int32> ExpiresInDays { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.String CreatedKey { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.String DescribeRepositories(BaGet.Core.ApiKey key)
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.String Description { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.String PackageGlobPattern { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostCreateAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRevokeAsync(System.Int32 key, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.ApiKeysModel::static System.String Describe(BaGet.Core.ApiKey key)
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel::System.Boolean EmailChanged { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel::System.Boolean PendingApproval { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel::System.Boolean RequiresEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel::System.Boolean Succeeded { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.String userId, System.String code, System.String email)
-BaGet.Identity BaGet.Identity.Pages.Account.ConfirmEmailModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel::System.Boolean RequiresEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel::System.Boolean Sent { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel::System.String Identifier { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel::System.Void OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.ForgotPasswordModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::Microsoft.AspNetCore.Mvc.IActionResult OnPostExternal()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Boolean AllowRegistration { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Boolean EmailIsConfigured { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Boolean HasExternalProvider { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Boolean RememberMe { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.String ExternalProviderName { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.String Notice { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.String Password { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.String ReturnUrl { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.String UserName { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetCallbackAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::System.Void OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::System.Boolean RememberMe { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::System.String Code { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::System.String ReturnUrl { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWith2faModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel::System.String RecoveryCode { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel::System.String ReturnUrl { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel::System.Void OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.LogoutModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel::Microsoft.AspNetCore.Mvc.IActionResult OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.MyProfileModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel.OrganizationView::System.Boolean IsAdmin { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel.OrganizationView::System.Collections.Generic.IReadOnlyList<System.ValueTuple<System.String,System.Boolean>> Members { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel.OrganizationView::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel.OrganizationView::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Account.OrganizationsModel.OrganizationView> Organizations { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddMemberAsync(System.String organization, System.String userName, System.Boolean isAdmin, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostCreateAsync(System.String name, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveMemberAsync(System.String organization, System.String userName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.OrganizationsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
 BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.OwnedPackage::System.Boolean LatestVersionIsListed { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.OwnedPackage::System.Int32 VersionCount { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.OwnedPackage::System.Int64 Downloads { get; set; }
@@ -387,23 +239,6 @@ BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.RepositoryPackages::ct
 BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.RepositoryPackages::virtual System.Boolean Equals(System.Object obj)
 BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.RepositoryPackages::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel.RepositoryPackages::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel::System.Boolean IsEmpty { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel::System.Boolean ShowRepositoryNames { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Account.PackagesModel.RepositoryPackages> Groups { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.PackagesModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::System.String ReturnUrl { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetCallbackAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::System.Void OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView implements System.IEquatable<BaGet.Identity.Pages.Account.ReauthenticateView>
 BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView::System.Boolean Available { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView::System.Boolean Done { get; set; }
@@ -418,117 +253,6 @@ BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView::virtual System.B
 BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
 BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Account.ReauthenticateView::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.Boolean AwaitingApproval { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.Boolean ConfirmationSent { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.Boolean EmailRequired { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.String ConfirmPassword { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.String Email { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.String Password { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.String ReturnUrl { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.String UserName { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::System.Void OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.RegisterModel::virtual System.Void OnPageHandlerExecuting(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context)
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.Boolean LinkIsUsable { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.Boolean RequiresEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.String Code { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.String ConfirmPassword { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.String Password { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.String UserId { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::System.Void OnGet()
-BaGet.Identity BaGet.Identity.Pages.Account.ResetPasswordModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::BaGet.Identity.DeletionBlockers Blockers { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Boolean CanSendEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Boolean EmailConfirmed { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.String Email { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostChangeEmailAsync(System.String newEmail, System.String password)
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostChangePasswordAsync(System.String currentPassword, System.String newPassword, System.String confirmPassword)
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Account.SettingsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Boolean TwoFactorEnabled { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Collections.Generic.IReadOnlyList<System.String> RecoveryCodes { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Int32 RecoveryCodesLeft { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.String QrCodeSvg { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.String SharedKey { get; }
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDisableAsync(System.String password)
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostEnableAsync(System.String code)
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostResetAsync(System.String password)
-BaGet.Identity BaGet.Identity.Pages.Account.TwoFactorModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.Boolean All { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.Boolean IsSupported { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.AbuseReportSummary> Items { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostReopenAsync(System.Int32 key, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostResolveAsync(System.Int32 key, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.AbuseModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::BaGet.Core.IAccessAdministration AccessAdmin { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::BaGet.Core.IAccessEvaluator Evaluator { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::BaGet.Identity.Pages.Admin.ConfirmPasswordView Confirmation(System.String id)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.Boolean IsServerAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.String Actor { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.String CurrentUserId { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.Threading.Tasks.Task<BaGet.Identity.Pages.Admin.PatternPreview> PreviewAsync(System.String[] repositoryPatterns, System.String[] includePatterns, System.String[] excludePatterns, System.String testPackage, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ActAsync(System.String password, System.Boolean confirm, System.Func<System.Threading.Tasks.Task<System.String>> change, System.Func<Microsoft.AspNetCore.Mvc.IActionResult> redirect)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::static BaGet.Core.AccessAction ParseActions(System.Collections.Generic.IEnumerable<System.String> names)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::static BaGet.Core.AccessAction[] AllActions
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::static System.String Join(System.Collections.Generic.IEnumerable<System.String> patterns)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::static System.String Lines(System.Collections.Generic.IEnumerable<System.String> patterns)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::static System.String Words(BaGet.Core.AccessAction actions)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::virtual System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessPageModel::virtual System.Threading.Tasks.Task<System.Boolean> AuthorizeAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessUnavailableModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessUnavailableModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessUnavailableModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessUnavailableModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AccessUnavailableModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow implements System.IEquatable<BaGet.Identity.Pages.Admin.AdminPackageRow>
 BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow::BaGet.Identity.Pages.Account.PackagesModel.OwnedPackage Package { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow::System.Collections.Generic.IReadOnlyList<System.String> Owners { get; set; }
@@ -543,34 +267,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow::virtual System.Boolea
 BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
 BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.AdminPackageRow::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel::BaGet.Identity.AdministratorService Administrators { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.AdminPageModel::virtual System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.AccessAuditEntry> Entries { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.String ActorFilter { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.String FilterError { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.String From { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.String Subject { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.String To { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.AuditModel::static const System.Int32 PageSize
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel::BaGet.Core.ClusterStatus Status { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel::System.Threading.Tasks.Task OnGetAsync(System.Boolean refresh, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ClusterModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView implements System.IEquatable<BaGet.Identity.Pages.Admin.ConfirmPasswordView>
 BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView::System.Boolean CanReauthenticate { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView::System.Boolean HasPassword { get; set; }
@@ -587,112 +283,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView::virtual System.Bo
 BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
 BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.ConfirmPasswordView::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::BaGet.Identity.AdminDeletionPreview Preview { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Boolean IsReadOnlyMode { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Boolean LastAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.String SoleOwned { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.DeleteUserModel::static const System.String ReadOnlyMessage
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row implements System.IEquatable<BaGet.Identity.Pages.Admin.FormatsModel.Row>
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::BaGet.Core.IFormatModule Module { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::BaGet.Identity.Pages.Admin.FormatsModel.Row <Clone>$()
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::System.Boolean Equals(BaGet.Identity.Pages.Admin.FormatsModel.Row other)
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::System.Collections.Generic.IReadOnlyList<System.String> Capabilities { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::System.Int32 Repositories { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::System.Void Deconstruct(ref BaGet.Core.IFormatModule Module, ref System.Int32 Repositories, ref System.Collections.Generic.IReadOnlyList<System.String> Capabilities)
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::ctor(BaGet.Core.IFormatModule Module, System.Int32 Repositories, System.Collections.Generic.IReadOnlyList<System.String> Capabilities)
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::virtual System.Boolean Equals(System.Object obj)
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::virtual System.Int32 GetHashCode()
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel.Row::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.FormatsModel.Row> Rows { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.FormatsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::BaGet.Core.GroupDetails Group { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.GroupMemberInfo> Found { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.String Q { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddMemberAsync(System.String userId, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveMemberAsync(System.String userId, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRenameAsync(System.String newName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupDetailModel::static const System.Int32 SearchSize
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.GroupSummary> Groups { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel::System.String Description { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.GroupsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row implements System.IEquatable<BaGet.Identity.Pages.Admin.OperationsModel.Row>
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::BaGet.Core.AdminJobStatus Status { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::BaGet.Core.IAdminOperation Operation { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::BaGet.Core.RepositoryInfo Repository { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::BaGet.Identity.Pages.Admin.OperationsModel.Row <Clone>$()
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::System.Boolean Equals(BaGet.Identity.Pages.Admin.OperationsModel.Row other)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::System.Void Deconstruct(ref BaGet.Core.IAdminOperation Operation, ref BaGet.Core.RepositoryInfo Repository, ref BaGet.Core.AdminJobStatus Status)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::ctor(BaGet.Core.IAdminOperation Operation, BaGet.Core.RepositoryInfo Repository, BaGet.Core.AdminJobStatus Status)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::virtual System.Boolean Equals(System.Object obj)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::virtual System.Int32 GetHashCode()
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel.Row::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::BaGet.Identity.Pages.Admin.ConfirmPasswordView Confirmation(System.String id)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.Boolean AnyRunning { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.OperationsModel.Row> Rows { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String operation, System.String repository, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OperationsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::BaGet.Core.Organization Organization { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::BaGet.Identity.Pages.Admin.ConfirmPasswordView Confirmation(System.String id)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.OrganizationMemberRow> Members { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Int32 OwnedPackageIds { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddMemberAsync(System.String userName, System.Boolean isAdmin, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveMemberAsync(System.String userName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRenameAsync(System.String newName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSetAdminAsync(System.String userName, System.Boolean isAdmin, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationDetailModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow implements System.IEquatable<BaGet.Identity.Pages.Admin.OrganizationMemberRow>
 BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow::System.Boolean IsAdmin { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow::System.String UserName { get; set; }
@@ -706,24 +296,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow::virtual System.
 BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
 BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationMemberRow::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.OrganizationSummary> Organizations { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.OrganizationsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::System.Boolean ShowRepository { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.AdminPackageRow> Packages { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::System.Int32 PageCount { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::System.Int32 PageNumber { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.PackagesModel::static const System.Int32 PageSize
 BaGet.Identity BaGet.Identity.Pages.Admin.PatternFieldsView implements System.IEquatable<BaGet.Identity.Pages.Admin.PatternFieldsView>
 BaGet.Identity BaGet.Identity.Pages.Admin.PatternFieldsView::BaGet.Identity.Pages.Admin.PatternFieldsView <Clone>$()
 BaGet.Identity BaGet.Identity.Pages.Admin.PatternFieldsView::BaGet.Identity.Pages.Admin.PatternPreview Preview { get; set; }
@@ -748,83 +320,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.PatternPreview::ctor(System.Collection
 BaGet.Identity BaGet.Identity.Pages.Admin.PatternPreview::virtual System.Boolean Equals(System.Object obj)
 BaGet.Identity BaGet.Identity.Pages.Admin.PatternPreview::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.PatternPreview::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::BaGet.Core.AccessAction FormActions { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::BaGet.Core.PrincipalType PrincipalType { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::BaGet.Core.TargetDetails Target { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::BaGet.Identity.Pages.Admin.PatternFieldsView Fields { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::BaGet.Identity.Pages.Admin.PatternPreview Preview { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.String ExcludePatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.String IncludePatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.String PrincipalName { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.String RepositoryPatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.String TestPackage { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPreviewAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveGrantAsync(BaGet.Core.PrincipalType type, System.String principalId, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSaveAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSetGrantAsync(System.String[] actions, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionDetailModel::virtual System.Threading.Tasks.Task<System.Boolean> AuthorizeAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::BaGet.Identity.Pages.Admin.PatternFieldsView Fields { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::BaGet.Identity.Pages.Admin.PatternPreview Preview { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ProjectSummary> Projects { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.TargetSummary> Targets { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.String ExcludePatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.String IncludePatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.String Project { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.String RepositoryPatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.String TestPackage { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPreviewAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRestoreBuiltInsAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.PermissionsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::BaGet.Core.ProjectDetails Project { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::BaGet.Identity.Pages.Admin.PatternFieldsView Fields { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::BaGet.Identity.Pages.Admin.PatternPreview Preview { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Collections.Generic.IReadOnlyList<System.String> Assignable { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.String ExcludePatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.String IncludePatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.String RepositoryPatterns { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.String TargetName { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.String TestPackage { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAssignRepositoryAsync(System.String repository, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostCreateTargetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPreviewAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveMemberAsync(BaGet.Core.PrincipalType type, System.String principalId, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSetMemberAsync(BaGet.Core.PrincipalType type, System.String principalName, BaGet.Core.ProjectRole role, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostUnassignRepositoryAsync(System.String repository, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectDetailModel::virtual System.Threading.Tasks.Task<System.Boolean> AuthorizeAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ProjectSummary> Projects { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::System.String DisplayName { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ProjectsModel::virtual System.Threading.Tasks.Task<System.Boolean> AuthorizeAsync(System.Threading.CancellationToken cancellationToken)
 BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::BaGet.Core.RemoteProtocol Protocol { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::BaGet.Core.RemoteRepositorySettings ToSettings()
 BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::BaGet.Core.RepositoryFormat Format { get; set; }
@@ -841,27 +336,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::System.String Url { g
 BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::System.String Username { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.RemoteFormModel::static BaGet.Identity.Pages.Admin.RemoteFormModel From(BaGet.Core.RemoteRepositoryDetail detail)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel extends BaGet.Identity.Pages.Admin.ReplicationPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::BaGet.Core.ReplicationConfigView View { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::BaGet.Core.ReplicationJobStatus Job { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::BaGet.Core.ReplicationRun Resumable { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::BaGet.Core.ReplicationTestResult Test { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::BaGet.Identity.Pages.Admin.ReplicationForm Form { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Boolean Running { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ReplicationRun> Runs { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Int32 Key { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Nullable<System.Int32> LocalItems { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostResumeAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRunAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSaveAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostStopAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostTestAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationConfigModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationFieldsView implements System.IEquatable<BaGet.Identity.Pages.Admin.ReplicationFieldsView>
 BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationFieldsView::BaGet.Identity.Pages.Admin.ReplicationFieldsView <Clone>$()
 BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationFieldsView::BaGet.Identity.Pages.Admin.ReplicationForm Form { get; set; }
@@ -889,117 +363,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationForm::System.String PeerUrl
 BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationForm::System.String Repository { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationForm::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationForm::static BaGet.Identity.Pages.Admin.ReplicationForm From(BaGet.Core.ReplicationConfigView view)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel extends BaGet.Identity.Pages.Admin.ReplicationPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel::BaGet.Identity.Pages.Admin.ReplicationForm Form { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ReplicationConfigView> Replications { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel::BaGet.Core.IReplicationAdministration Replication { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel::BaGet.Core.ReplicationJobs Jobs { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RepositoryInfo> Repositories { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel::System.Threading.Tasks.Task LoadChoicesAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ReplicationPageModel::static System.String Describe(BaGet.Core.ReplicationConfig c)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel extends BaGet.Identity.Pages.Admin.RepositoryPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::BaGet.Identity.Pages.Admin.RemoteFormModel Remote { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Boolean CanCreate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Boolean TakesUploads(BaGet.Core.RepositorySummary repository)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.FormatLink> LinksOf(BaGet.Core.RepositorySummary repository)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.IFormatModule> AllFormats { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.IFormatModule> OtherFormats { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.IFormatModule> RemoteFormats { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.IFormatModule> VirtualFormats { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RepositorySummary> Repositories { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String FeedUrl(BaGet.Core.RepositorySummary repository)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String FilterFormat { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String FilterKind { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String FilterName { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String Format { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String LinkUrl(BaGet.Core.RepositorySummary repository, BaGet.Core.FormatLink link)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostFormatAsync(System.String format, System.Boolean anonymousRead = True, System.Threading.CancellationToken cancellationToken = null)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoteAsync(System.String password, System.String anonymousRead, System.String format = null, System.Threading.CancellationToken cancellationToken = null)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostVirtualAsync(System.String format = null, System.Boolean anonymousRead = True, System.Threading.CancellationToken cancellationToken = null)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoriesModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::BaGet.Core.RepositorySummary Repository { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::System.Collections.Generic.IReadOnlyList<System.String> ReferencedBy { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryDeleteModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel extends BaGet.Identity.Pages.Admin.RepositoryPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.MavenRepositorySettings MavenSettings { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.RemoteCacheOverview Cache { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.RemoteConnectionResult TestResult { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.RemoteRepositoryDetail MirrorRepository { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.RemoteRepositoryDetail RemoteDetail { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.RepositoryAccessSummary Access { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.RepositorySummary Repository { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.ResolutionPreview Preview { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Core.VirtualRepositoryDetail VirtualDetail { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::BaGet.Identity.Pages.Admin.RemoteFormModel Remote { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Boolean AnonymousRead { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Boolean MirrorActive { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RepositoryInfo> MemberCandidates { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Collections.Generic.IReadOnlyList<System.String> ReferencedBy { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String BrowsePage { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String FeedUrl { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String PackageId { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String PackageLabel { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String PackageVersion { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String PackageWord { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String PreviewPackageId { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String PreviewVersion { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.String VersionWord { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddMemberAsync(System.String member, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeployAsync(System.String deploy, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostMavenSettingsAsync(System.String policy, System.String redeploy, System.String snapshotBuilds, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostMoveMemberAsync(System.String member, System.String direction, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPreviewAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPurgeAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPurgePackageAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveMemberAsync(System.String member, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostTestAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryEditModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::BaGet.Identity.Pages.Admin.ConfirmPasswordView Confirmation(System.String id)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::System.Threading.Tasks.Task LoadConfirmationAsync()
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::System.Threading.Tasks.Task<System.Boolean> ConfirmedAsync(System.String password)
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RepositoryPageModel::static const System.String NotConfirmed
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView implements System.IEquatable<BaGet.Identity.Pages.Admin.RetentionFieldsView>
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView::BaGet.Identity.Pages.Admin.RetentionFieldsView <Clone>$()
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView::BaGet.Identity.Pages.Admin.RetentionPolicyForm Form { get; set; }
@@ -1012,40 +375,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView::ctor(BaGet.Identi
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView::virtual System.Boolean Equals(System.Object obj)
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionFieldsView::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel extends BaGet.Identity.Pages.Admin.RetentionPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RetentionHoldView> Holds { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.String HoldName { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.String HoldRepository { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.String HoldVersion { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.String Reason { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.String Repository { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveAsync(System.Int32 key, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionHoldsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel extends BaGet.Identity.Pages.Admin.RetentionPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel::BaGet.Identity.Pages.Admin.RetentionPolicyForm Form { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RetentionPolicyView> Policies { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::BaGet.Core.IRetentionAdministration Retention { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::BaGet.Core.RetentionJobs Jobs { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.RepositoryInfo> Repositories { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::System.Collections.Generic.IReadOnlyList<System.String> ProjectNames { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::System.Threading.Tasks.Task LoadChoicesAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPageModel::static System.String Describe(BaGet.Core.RetentionPolicy p)
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::BaGet.Core.RetentionPolicyInput ToInput(System.Int32 key)
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::System.Boolean CollectGarbage { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::System.Boolean Enabled { get; set; }
@@ -1062,21 +391,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::System.String Sco
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::System.String ScopeName { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyForm::static BaGet.Identity.Pages.Admin.RetentionPolicyForm From(BaGet.Core.RetentionPolicyView view)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel extends BaGet.Identity.Pages.Admin.RetentionPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::BaGet.Core.RetentionJobStatus Status { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::BaGet.Core.RetentionPolicyView View { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::BaGet.Identity.Pages.Admin.RetentionPolicyForm Form { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Boolean Running { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Int32 Key { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDryRunAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRunAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSaveAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.RetentionPolicyModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFields::BaGet.Core.ScanPolicyValues ToValues()
 BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFields::System.Boolean BlockUnscanned { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFields::System.String BlockDeploy { get; set; }
@@ -1095,135 +409,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFormView::ctor(BaGet.Identit
 BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFormView::virtual System.Boolean Equals(System.Object obj)
 BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFormView::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.ScanPolicyFormView::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::BaGet.Core.ProjectDetails Project { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::BaGet.Core.ScanPolicy Own { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::BaGet.Identity.Pages.Admin.ScanPolicyFormView PolicyForm { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPolicyAsync(System.String warn, System.String blockDownload, System.String blockDeploy, System.Boolean blockUnscanned, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanProjectModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::BaGet.Core.AdminJobStatus Job { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::BaGet.Core.EffectiveScanPolicy Effective { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::BaGet.Core.RepositoryInfo Repository { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::BaGet.Core.ScanPolicy Own { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::BaGet.Core.ScanSummary Summary { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::BaGet.Identity.Pages.Admin.ScanPolicyFormView PolicyForm { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Boolean HasMore { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ScanResult> Findings { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Int32 MinSeverity { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Int32 PageNumber { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.String PackageUrl(BaGet.Core.ScanResult result)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPolicyAsync(System.String warn, System.String blockDownload, System.String blockDeploy, System.Boolean blockUnscanned, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostScanAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanRepositoryModel::static const System.Int32 PageSize
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel extends BaGet.Identity.Pages.Admin.AccessPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow implements System.IEquatable<BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow>
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::BaGet.Core.ProjectSummary Project { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow <Clone>$()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::System.Boolean Equals(BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow other)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::System.Boolean HasPolicy { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::System.Void Deconstruct(ref BaGet.Core.ProjectSummary Project, ref System.Boolean HasPolicy)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::ctor(BaGet.Core.ProjectSummary Project, System.Boolean HasPolicy)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::virtual System.Boolean Equals(System.Object obj)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::virtual System.Int32 GetHashCode()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow implements System.IEquatable<BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow>
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::BaGet.Core.EffectiveScanPolicy Policy { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::BaGet.Core.RepositoryInfo Repository { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::BaGet.Core.ScanSummary Summary { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow <Clone>$()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::System.Boolean Equals(BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow other)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::System.Void Deconstruct(ref BaGet.Core.RepositoryInfo Repository, ref BaGet.Core.ScanSummary Summary, ref BaGet.Core.EffectiveScanPolicy Policy)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::ctor(BaGet.Core.RepositoryInfo Repository, BaGet.Core.ScanSummary Summary, BaGet.Core.EffectiveScanPolicy Policy)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::virtual System.Boolean Equals(System.Object obj)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::virtual System.Int32 GetHashCode()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel::BaGet.Core.ScanningOptions Options { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel::System.Boolean TrivyConfigured { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow> Projects { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow> Repositories { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ScanningModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::BaGet.Core.DatabaseCopyStatus CopyStatus { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::BaGet.Core.TelemetryTestOutcome TelemetryTest { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::Microsoft.AspNetCore.Mvc.IActionResult OnGetCopyStatus()
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Boolean CanCopyDatabase { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Boolean HostExportsTelemetry { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Boolean SelectionLocked { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.LogLevelOverride> LogLevels { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.TelemetrySignalReport> TelemetrySignals { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<System.Linq.IGrouping<System.String,BaGet.Core.SettingState>> Sections { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<System.String> CopyTargetTypes { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<System.String> Errors { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<System.String> LogLevelNames { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Collections.Generic.IReadOnlyList<System.String> PendingRestart { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.String ErrorSection { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.String LoadError { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.String OverridesPath { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.String SectionId(System.String key)
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.String SelectedId { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.String section = null)
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String section, System.String password)
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveLogLevelAsync(System.String source, System.String password)
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSetLogLevelAsync(System.String source, System.String level, System.String password)
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostTestTelemetryAsync(System.String password)
-BaGet.Identity BaGet.Identity.Pages.Admin.SettingsModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::BaGet.Core.BaGetUser Account { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Boolean ModelAvailable { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ApiKey> Keys { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.Organization> Organizations { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.UserProjectRole> ProjectRoles { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.RepositoryAccessRow> Access { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Collections.Generic.IReadOnlyList<System.String> Groups { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Int32 OwnedPackageIds { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.String DescribeRepositories(BaGet.Core.ApiKey key)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.String Package { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddGroupAsync(System.String group, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostApproveAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveGroupAsync(System.String group, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRevokeKeyAsync(System.Int32 key, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserDetailModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.AdminPackageRow> Packages { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UserPackagesModel::ctor()
 BaGet.Identity BaGet.Identity.Pages.Admin.UserRow implements System.IEquatable<BaGet.Identity.Pages.Admin.UserRow>
 BaGet.Identity BaGet.Identity.Pages.Admin.UserRow::System.Boolean IsAdministrator { get; set; }
 BaGet.Identity BaGet.Identity.Pages.Admin.UserRow::System.Boolean PendingApproval { get; set; }
@@ -1241,236 +426,6 @@ BaGet.Identity BaGet.Identity.Pages.Admin.UserRow::virtual System.Boolean Equals
 BaGet.Identity BaGet.Identity.Pages.Admin.UserRow::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
 BaGet.Identity BaGet.Identity.Pages.Admin.UserRow::virtual System.Int32 GetHashCode()
 BaGet.Identity BaGet.Identity.Pages.Admin.UserRow::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean CanAct(BaGet.Identity.Pages.Admin.UserRow row)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean CanEmailResetLink { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean CanInvite { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean GeneratedForNewUser { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Admin.UserRow> Users { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Int32 PageCount { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Int32 PageNumber { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Int32 PendingCount { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.String CurrentUserName { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.String GeneratedFor { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.String GeneratedPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.String Q { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostApproveAsync(System.String userName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostCreateAsync(System.String newUserName, System.String newEmail, System.String newPassword, System.Boolean invite, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDemoteAsync(System.String userName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPromoteAsync(System.String userName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostResetPasswordAsync(System.String userName, System.String password, System.String resetEmail, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSendResetLinkAsync(System.String userName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::static System.String MaskEmail(System.String email)
-BaGet.Identity BaGet.Identity.Pages.Admin.UsersModel::static const System.Int32 PageSize
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Boolean IsSupported { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.ValidationSubmissionSummary> Submissions { get; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.String Error { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRejectAsync(System.String submissionId, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostReleaseAsync(System.String submissionId, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRetryAsync(System.String submissionId, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Admin.ValidationModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Boolean CopyToSelf { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Boolean RequiresEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Boolean SenderHasEmail { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Boolean Sent { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.String Error { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.String Id { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.String Message { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.String PackageId { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.ContactOwnersModel::static const System.Int32 MaxMessageLength
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::BaGet.Core.OciImageInfo Info { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Boolean Failed { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.String Image { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteImageAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteManifestAsync(System.String digest, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteTagAsync(System.String tag, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostPruneAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.DockerManageModel::virtual System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::BaGet.Core.PackageDeletionBehavior DeletionBehavior { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean ActingAsAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean DeletionIsPermanent { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean HasValidation { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean IsAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean IsReadOnlyMode { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean IsVerified { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Boolean SymbolsSupported { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Collections.Generic.IReadOnlyDictionary<System.String,System.Collections.Generic.IReadOnlyList<BaGet.Core.SymbolReference>> Symbols { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.AbuseReport> Reports { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.Package> Versions { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageOwner> Owners { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Collections.Generic.IReadOnlyList<System.String> SeverityNames { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.String DeleteCaption { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.String DeleteLabel { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.String Id { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddOwnerAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddVulnerabilityAsync(System.String version, System.String advisoryUrl, System.Int32 severity, System.String versionRange, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteAsync(System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteSymbolsAsync(System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeprecateAsync(System.String version, System.Collections.Generic.List<System.String> reasons, System.String message, System.String alternatePackageId, System.String alternateVersionRange, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostHardDeleteAllAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostHardDeleteAsync(System.String version, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRelistAsync(System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveOwnerAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveVulnerabilityAsync(System.String version, System.Int32 key, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostResolveReportAsync(System.Int32 key, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSetVerifiedAsync(System.Boolean verified, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostUndeprecateAsync(System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostUnlistAsync(System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.ManageModel::virtual System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::BaGet.Core.MavenArtifactInfo Info { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::BaGet.Core.MavenVersionDetail Selected { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean ActingAsAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean Failed { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean IsAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageOwner> Owners { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.String Artifact { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.String Group { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.String Name { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.String Version { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddOwnerAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostCleanupAsync(System.String version, System.String keep, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteArtifactAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteFileAsync(System.String fileName, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeleteVersionAsync(System.String version, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveOwnerAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.MavenManageModel::virtual System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::BaGet.Core.NpmPackageInfo Package { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean ActingAsAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean CanReauthenticate { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean Failed { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean HasPassword { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean IsAdministrator { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean Reauthenticated { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageOwner> Owners { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.String Id { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.String RegistryUrl { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAddOwnerAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostDeprecateAsync(System.String version, System.String message, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveOwnerAsync(System.String ownerName, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostRemoveTagAsync(System.String tag, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSetTagAsync(System.String tag, System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostUndeprecateAsync(System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostUnpublishAllAsync(System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostUnpublishAsync(System.String version, System.String password, System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::System.TimeSpan UnpublishWindow { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.NpmManageModel::virtual System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::BaGet.Core.ScanEngineStatus Engine { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::BaGet.Core.ScanResult Result { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.Boolean Failed { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.String BackUrl { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.String Message { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.String ReturnUrl { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.String Version { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ScanModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission implements System.IEquatable<BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission>
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission <Clone>$()
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::System.Boolean Equals(BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission other)
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageValidation> Steps { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::System.String Status { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::System.String SubmissionId { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::System.String Version { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::System.Void Deconstruct(ref System.String Version, ref System.String SubmissionId, ref System.String Status, ref System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageValidation> Steps)
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::ctor(System.String Version, System.String SubmissionId, System.String Status, System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageValidation> Steps)
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::virtual System.Boolean Equals(System.Object obj)
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::virtual System.Int32 GetHashCode()
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission::virtual System.String ToString()
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel::System.Boolean RequiresSignIn { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission> Submissions { get; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel::System.String Id { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Packages.ValidationStatusModel::ctor()
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel extends BaGet.Identity.Pages.Account.AccountPageModel
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.Boolean IsCurrentUser { get; }
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.Boolean IsOrganization { get; }
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageDownloads> Packages { get; }
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.Collections.Generic.IReadOnlyList<System.String> Members { get; }
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.String AvatarUrl { get; }
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.String Name { get; set; }
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Identity BaGet.Identity.Pages.Profiles.ProfileModel::ctor()
 BaGet.Identity BaGet.Identity.PasswordResetLinkSender::System.Threading.Tasks.Task SendAsync(System.String userId, System.String template, System.Threading.CancellationToken cancellationToken = null)
 BaGet.Identity BaGet.Identity.PasswordResetLinkSender::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.IEmailSender<BaGet.Core.BaGetUser> sender, Microsoft.Extensions.Logging.ILogger<BaGet.Identity.PasswordResetLinkSender> logger)
 BaGet.Identity BaGet.Identity.PasswordResetLinkSender::static System.Boolean TryEnqueue(System.IServiceProvider requestServices, System.String userId, System.String template)
@@ -1543,90 +498,22 @@ BaGet.Identity type BaGet.Identity.OrganizationSummary [class]
 BaGet.Identity type BaGet.Identity.OwnerChangeResult [enum]
 BaGet.Identity type BaGet.Identity.OwnershipAuthorizationService [class]
 BaGet.Identity type BaGet.Identity.PackageOwnershipService [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.AccessModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.AccountPageModel [abstract class]
-BaGet.Identity type BaGet.Identity.Pages.Account.ApiKeysModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.ConfirmEmailModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.ForgotPasswordModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.LoginModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.LoginWith2faModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.LoginWithRecoveryCodeModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.LogoutModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.MyProfileModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.OrganizationsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.OrganizationsModel.OrganizationView [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.PackagesModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Account.PackagesModel.OwnedPackage [class]
 BaGet.Identity type BaGet.Identity.Pages.Account.PackagesModel.RepositoryPackages [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Account.ReauthenticateModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Account.ReauthenticateView [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.RegisterModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.ResetPasswordModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.SettingsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Account.TwoFactorModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.AbuseModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.AccessPageModel [abstract class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.AccessUnavailableModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.AdminPackageRow [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.AdminPageModel [abstract class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.AuditModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ClusterModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.ConfirmPasswordView [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.DeleteUserModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.FormatsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.FormatsModel.Row [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.GroupDetailModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.GroupsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.OperationsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.OperationsModel.Row [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.OrganizationDetailModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.OrganizationMemberRow [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.OrganizationsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.PackagesModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.PatternFieldsView [sealed class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.PatternPreview [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.PermissionDetailModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.PermissionsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ProjectDetailModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ProjectsModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.RemoteFormModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ReplicationConfigModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.ReplicationFieldsView [sealed class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.ReplicationForm [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ReplicationModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ReplicationPageModel [abstract class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RepositoriesModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RepositoryDeleteModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RepositoryEditModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RepositoryPageModel [abstract class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.RetentionFieldsView [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RetentionHoldsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RetentionModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RetentionPageModel [abstract class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.RetentionPolicyForm [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.RetentionPolicyModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.ScanPolicyFields [sealed class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.ScanPolicyFormView [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ScanProjectModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ScanRepositoryModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ScanningModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ScanningModel.ProjectRow [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ScanningModel.RepositoryRow [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.SettingsModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.UserDetailModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.UserPackagesModel [class]
 BaGet.Identity type BaGet.Identity.Pages.Admin.UserRow [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.UsersModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Admin.ValidationModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.ContactOwnersModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.DockerManageModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.ManageModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.MavenManageModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.NpmManageModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.ScanModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.ValidationStatusModel [class]
-BaGet.Identity type BaGet.Identity.Pages.Packages.ValidationStatusModel.Submission [sealed class]
-BaGet.Identity type BaGet.Identity.Pages.Profiles.ProfileModel [class]
 BaGet.Identity type BaGet.Identity.PasswordResetLinkSender [class]
 BaGet.Identity type BaGet.Identity.PasswordResetRateLimiter [class]
 BaGet.Identity type BaGet.Identity.RepositoryAccessRow [sealed class]
@@ -2263,39 +1150,6 @@ BaGet.Web.V3 BaGet.Web.DeprecationRequest::System.String AlternatePackageId { ge
 BaGet.Web.V3 BaGet.Web.DeprecationRequest::System.String AlternateVersionRange { get; set; }
 BaGet.Web.V3 BaGet.Web.DeprecationRequest::System.String Message { get; set; }
 BaGet.Web.V3 BaGet.Web.DeprecationRequest::ctor()
-BaGet.Web.V3 BaGet.Web.DockerImageModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.DockerImageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.DockerImageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.DockerImageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.DockerImageModel::BaGet.Core.OciImageInfo Info { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::BaGet.Core.OciManifestDetail Selected { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.Boolean CanManage { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.Boolean IsRemote { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.OciDescriptor> Referrers { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.String ArtifactType { get; set; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.String Digest { get; set; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.String Host { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.String Image { get; set; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.String RegistryUrl { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.String RepositoryName { get; }
-BaGet.Web.V3 BaGet.Web.DockerImageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.DockerImageModel::ctor(BaGet.Core.IOciRegistry registry, BaGet.Core.IUrlGenerator urls, BaGet.Core.IRepositoryContext repository)
-BaGet.Web.V3 BaGet.Web.DockerImagesModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.DockerImagesModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.DockerImagesModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.DockerImagesModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::BaGet.Core.OciImagePage Result { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.Boolean HasNext { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.Boolean IsHttp { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.Boolean IsRemote { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.Boolean IsVirtual { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.Int32 PageIndex { get; set; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.String Host { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.String Query { get; set; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.String RepositoryName { get; }
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::ctor(BaGet.Core.IOciRegistry registry, BaGet.Core.IUrlGenerator urls, BaGet.Core.IRepositoryAccess access, BaGet.Core.IRepositoryContext repository)
-BaGet.Web.V3 BaGet.Web.DockerImagesModel::static const System.Int32 ResultsPerPage
 BaGet.Web.V3 BaGet.Web.DockerSnippets::static System.Collections.Generic.IReadOnlyList<System.String> InsecureRegistry(System.String host)
 BaGet.Web.V3 BaGet.Web.DockerSnippets::static System.Collections.Generic.IReadOnlyList<System.String> Push(System.String host, System.String repository, System.String image, System.String tag = latest)
 BaGet.Web.V3 BaGet.Web.DockerSnippets::static System.String BuildxPush(System.String host, System.String repository, System.String image, System.String tag = latest)
@@ -2313,66 +1167,8 @@ BaGet.Web.V3 BaGet.Web.IApplicationBuilderExtensions::static Microsoft.AspNetCor
 BaGet.Web.V3 BaGet.Web.IHostExtensions::static Microsoft.Extensions.Hosting.IHostBuilder UseBaGet(Microsoft.Extensions.Hosting.IHostBuilder host, System.Action<BaGet.Core.BaGetApplication> configure)
 BaGet.Web.V3 BaGet.Web.IHostExtensions::static System.Boolean ValidateStartupOptions(Microsoft.Extensions.Hosting.IHost host)
 BaGet.Web.V3 BaGet.Web.IHostExtensions::static System.Threading.Tasks.Task RunMigrationsAsync(Microsoft.Extensions.Hosting.IHost host, System.Threading.CancellationToken cancellationToken = null)
-BaGet.Web.V3 BaGet.Web.IndexModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.IndexModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.IndexModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.IndexModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.IndexModel::BaGet.Core.FeedStatistics Totals { get; }
-BaGet.Web.V3 BaGet.Web.IndexModel::BaGet.Core.SearchSort SortBy { get; set; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Boolean CanSort { get; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Boolean IsHome { get; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Boolean Prerelease { get; set; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Collections.Generic.IReadOnlyCollection<BaGet.Core.SearchSort> SupportedSorts { get; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Collections.Generic.IReadOnlyDictionary<System.String,System.DateTime> LastUpdated { get; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Collections.Generic.IReadOnlyList<BaGet.Protocol.Models.SearchResult> Packages { get; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Int32 PageIndex { get; set; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.String Framework { get; set; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.String PackageType { get; set; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.String Query { get; set; }
-BaGet.Web.V3 BaGet.Web.IndexModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.IndexModel::ctor(BaGet.Core.ISearchService search, BaGet.Core.StatisticsService statistics)
-BaGet.Web.V3 BaGet.Web.IndexModel::static const System.Int32 ResultsPerPage
-BaGet.Web.V3 BaGet.Web.LegalPageModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.LegalPageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.LegalPageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.LegalPageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.LegalPageModel::Microsoft.AspNetCore.Html.HtmlString Content { get; }
-BaGet.Web.V3 BaGet.Web.LegalPageModel::System.String ConfiguredPath { get; }
-BaGet.Web.V3 BaGet.Web.LegalPageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.LegalPageModel::ctor(Microsoft.Extensions.Hosting.IHostEnvironment environment)
 BaGet.Web.V3 BaGet.Web.MaintenanceMiddleware::System.Threading.Tasks.Task Invoke(Microsoft.AspNetCore.Http.HttpContext context)
 BaGet.Web.V3 BaGet.Web.MaintenanceMiddleware::ctor(Microsoft.AspNetCore.Http.RequestDelegate next, Microsoft.Extensions.Logging.ILogger<BaGet.Web.MaintenanceMiddleware> logger)
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::BaGet.Core.MavenArtifactInfo Info { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::BaGet.Core.MavenVersionDetail Selected { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.Boolean CanManage { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.Collections.Generic.IReadOnlyList<System.String> Owners { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.String Artifact { get; set; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.String FileUrl(System.String fileName)
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.String Group { get; set; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.String RepositoryName { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.String RepositoryUrl { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.String Version { get; set; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.MavenArtifactModel::ctor(BaGet.Core.IMavenRepository maven, BaGet.Core.IUrlGenerator urls, BaGet.Core.IRepositoryContext repository)
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::BaGet.Core.MavenRepositorySettings Settings { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::BaGet.Core.MavenSearchPage Result { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::BaGet.Core.RepositoryKind Kind { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::System.Boolean HasNext { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::System.Int32 PageIndex { get; set; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::System.String Query { get; set; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::System.String RepositoryName { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::System.String RepositoryUrl { get; }
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::ctor(BaGet.Core.IMavenRepository maven, BaGet.Core.IUrlGenerator urls, BaGet.Core.IRepositoryAccess access, BaGet.Core.IRepositoryContext repository)
-BaGet.Web.V3 BaGet.Web.MavenArtifactsModel::static const System.Int32 ResultsPerPage
 BaGet.Web.V3 BaGet.Web.MavenController extends Microsoft.AspNetCore.Mvc.Controller
 BaGet.Web.V3 BaGet.Web.MavenController implements Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 BaGet.Web.V3 BaGet.Web.MavenController implements Microsoft.AspNetCore.Mvc.Filters.IAsyncActionFilter
@@ -2383,27 +1179,6 @@ BaGet.Web.V3 BaGet.Web.MavenController::System.Threading.Tasks.Task<Microsoft.As
 BaGet.Web.V3 BaGet.Web.MavenController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Put(System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.MavenController::ctor(BaGet.Core.IMavenRepository maven, BaGet.Web.RequestPrincipalResolver principals, BaGet.Core.IRepositoryContext repository, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.MavenOptions> mavenOptions, BaGet.Core.IAccessEvaluator access, BaGet.Core.IScanGate scanGate = null)
 BaGet.Web.V3 BaGet.Web.MavenController::virtual System.Void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
-BaGet.Web.V3 BaGet.Web.MavenUploadModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.MavenUploadModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.MavenUploadModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.MavenUploadModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::BaGet.Core.MavenDeployment Posted { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::BaGet.Core.MavenRepositorySettings Settings { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean AccountsEnabled { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean CanUpload { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean Failed { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean IsReadOnlyMode { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean NeedsApiKey { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean NothingCanAuthenticate { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Boolean SignedIn { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.String DeployedName { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.String DeployedVersion { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.String Message { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.String RepositoryName { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.String RepositoryUrl { get; }
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.String groupId, System.String artifactId, System.String version, System.String packaging, System.String classifier, Microsoft.AspNetCore.Http.IFormFile file, Microsoft.AspNetCore.Http.IFormFile pom, System.String apiKey, System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.MavenUploadModel::ctor(Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, BaGet.Core.IAuthenticationService authentication, BaGet.Core.IMavenRepository maven, BaGet.Core.IUrlGenerator urls, BaGet.Core.IRepositoryContext repository)
 BaGet.Web.V3 BaGet.Web.NavLinkTagHelper extends Microsoft.AspNetCore.Razor.TagHelpers.TagHelper
 BaGet.Web.V3 BaGet.Web.NavLinkTagHelper implements Microsoft.AspNetCore.Razor.TagHelpers.ITagHelper
 BaGet.Web.V3 BaGet.Web.NavLinkTagHelper implements Microsoft.AspNetCore.Razor.TagHelpers.ITagHelperComponent
@@ -2434,52 +1209,7 @@ BaGet.Web.V3 BaGet.Web.NpmController::System.Threading.Tasks.Task<Microsoft.AspN
 BaGet.Web.V3 BaGet.Web.NpmController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Whoami(System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.NpmController::ctor(BaGet.Core.INpmRegistry registry, BaGet.Web.RequestPrincipalResolver principals, BaGet.Core.IRepositoryContext repository, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.NpmOptions> npmOptions, BaGet.Core.IUrlGenerator urls, BaGet.Core.IAccessEvaluator access, BaGet.Core.INpmTokenService tokens = null, BaGet.Core.IScanGate scanGate = null)
 BaGet.Web.V3 BaGet.Web.NpmController::virtual System.Void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
-BaGet.Web.V3 BaGet.Web.NpmPackageModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.NpmPackageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.NpmPackageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.NpmPackageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::BaGet.Core.NpmPackageInfo Package { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::BaGet.Core.NpmVersionInfo Selected { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::Microsoft.AspNetCore.Html.HtmlString Readme { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.Boolean CanManage { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.Collections.Generic.IReadOnlyList<System.String> Owners { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.Collections.Generic.IReadOnlyList<System.String> SelectedTags { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.String Id { get; set; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.String RegistryUrl { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.String RequestedVersion { get; set; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.String TarballUrl { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.NpmPackageModel::ctor(BaGet.Core.INpmRegistry registry, BaGet.Core.IUrlGenerator urls)
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::BaGet.Core.NpmSearchPage Result { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::System.Boolean HasNext { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::System.Int32 PageIndex { get; set; }
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::System.String Query { get; set; }
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::System.String RegistryUrl { get; }
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::ctor(BaGet.Core.INpmRegistry registry, BaGet.Core.IUrlGenerator urls, BaGet.Core.IRepositoryAccess access, BaGet.Core.IRepositoryContext repository)
-BaGet.Web.V3 BaGet.Web.NpmPackagesModel::static const System.Int32 ResultsPerPage
 BaGet.Web.V3 BaGet.Web.NpmRouteNames::static System.String FromRouteValues(Microsoft.AspNetCore.Routing.RouteValueDictionary values)
-BaGet.Web.V3 BaGet.Web.NpmUploadModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.NpmUploadModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.NpmUploadModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.NpmUploadModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean AccountsEnabled { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean CanUpload { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean Failed { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean IsReadOnlyMode { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean NeedsApiKey { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean NothingCanAuthenticate { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Boolean SignedIn { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.String Message { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.String PublishedName { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.String RegistryUrl { get; }
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(Microsoft.AspNetCore.Http.IFormFile package, System.String tag, System.String apiKey, System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::System.Void OnGet()
-BaGet.Web.V3 BaGet.Web.NpmUploadModel::ctor(Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, BaGet.Core.IAuthenticationService authentication, BaGet.Core.INpmRegistry registry, BaGet.Core.IUrlGenerator urls)
 BaGet.Web.V3 BaGet.Web.OciAuthorizationFilter implements Microsoft.AspNetCore.Mvc.Filters.IAsyncResourceFilter
 BaGet.Web.V3 BaGet.Web.OciAuthorizationFilter implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
 BaGet.Web.V3 BaGet.Web.OciAuthorizationFilter::System.Threading.Tasks.Task OnResourceExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.ResourceExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.ResourceExecutionDelegate next)
@@ -2563,43 +1293,6 @@ BaGet.Web.V3 BaGet.Web.PackageMetadataController implements System.IDisposable
 BaGet.Web.V3 BaGet.Web.PackageMetadataController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Core.BaGetRegistrationIndexResponse>> RegistrationIndexAsync(System.String id, System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.PackageMetadataController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Protocol.Models.RegistrationLeafResponse>> RegistrationLeafAsync(System.String id, System.String version, System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.PackageMetadataController::ctor(BaGet.Core.IPackageMetadataService metadata)
-BaGet.Web.V3 BaGet.Web.PackageModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.PackageModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.PackageModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.PackageModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel implements System.IEquatable<BaGet.Web.PackageModel.VersionModel>
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::NuGet.Versioning.NuGetVersion Version { get; set; }
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::System.Boolean Selected { get; set; }
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::System.DateTime LastUpdated { get; set; }
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::System.Int64 Downloads { get; set; }
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::System.Type EqualityContract { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::ctor()
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::ctor(BaGet.Web.PackageModel.VersionModel original)
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::virtual BaGet.Web.PackageModel.VersionModel <Clone>$()
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::virtual System.Boolean Equals(BaGet.Web.PackageModel.VersionModel other)
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::virtual System.Boolean Equals(System.Object obj)
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::virtual System.Int32 GetHashCode()
-BaGet.Web.V3 BaGet.Web.PackageModel.VersionModel::virtual System.String ToString()
-BaGet.Web.V3 BaGet.Web.PackageModel::BaGet.Core.Package Package { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::Microsoft.AspNetCore.Html.HtmlString Readme { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Boolean Found { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Boolean IsDotnetTemplate { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Boolean IsDotnetTool { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Collections.Generic.IReadOnlyDictionary<System.String,System.String> OwnerAvatars { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.PackageDependent> UsedBy { get; set; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Collections.Generic.IReadOnlyList<BaGet.Web.DependencyGroupModel> DependencyGroups { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Collections.Generic.IReadOnlyList<BaGet.Web.PackageModel.VersionModel> Versions { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Collections.Generic.IReadOnlyList<System.String> Owners { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.DateTime LastUpdated { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Int64 TotalDownloads { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.String IconUrl { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.String LicenseUrl { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.String ManageUrl { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.String PackageDownloadUrl { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.String PackageExplorerUrl { get; }
-BaGet.Web.V3 BaGet.Web.PackageModel::System.Threading.Tasks.Task OnGetAsync(System.String id, System.String version, System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.PackageModel::ctor(BaGet.Core.IPackageService packages, BaGet.Core.IPackageContentService content, BaGet.Core.ISearchService search, BaGet.Core.IUrlGenerator url)
 BaGet.Web.V3 BaGet.Web.PackagePublishController extends Microsoft.AspNetCore.Mvc.Controller
 BaGet.Web.V3 BaGet.Web.PackagePublishController implements Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 BaGet.Web.V3 BaGet.Web.PackagePublishController implements Microsoft.AspNetCore.Mvc.Filters.IAsyncActionFilter
@@ -2609,22 +1302,6 @@ BaGet.Web.V3 BaGet.Web.PackagePublishController::System.Threading.Tasks.Task Upl
 BaGet.Web.V3 BaGet.Web.PackagePublishController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Delete(System.String id, System.String version, System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.PackagePublishController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Relist(System.String id, System.String version, System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.PackagePublishController::ctor(BaGet.Core.IAuthenticationService authentication, BaGet.Core.IPackageSubmissionService submissions, BaGet.Core.IPackageDatabase packages, BaGet.Core.IPackageDeletionService deletionService, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Logging.ILogger<BaGet.Web.PackagePublishController> logger, BaGet.Core.PackageChangeNotifier notifier, BaGet.Core.IPackageAuthorizationService authorization, BaGet.Core.IScanGate scanGate)
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel extends BaGet.Identity.Pages.Admin.AdminPageModel
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel::System.Collections.Generic.IReadOnlyList<BaGet.Web.Api.ApiEndpoint> Endpoints { get; }
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel::System.String ApiBase { get; }
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel::System.String ConfirmHeader { get; }
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel::System.String OpenApiUrl { get; }
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel::System.Void OnGet()
-BaGet.Web.V3 BaGet.Web.Pages.Admin.ApiModel::ctor()
-BaGet.Web.V3 BaGet.Web.PrivacyModel extends BaGet.Web.LegalPageModel
-BaGet.Web.V3 BaGet.Web.PrivacyModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.PrivacyModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.PrivacyModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.PrivacyModel::System.String ConfiguredPath { get; }
-BaGet.Web.V3 BaGet.Web.PrivacyModel::ctor(Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> site, Microsoft.Extensions.Hosting.IHostEnvironment environment)
 BaGet.Web.V3 BaGet.Web.RazorExtensions::static System.String ToMetric(System.Int64 value)
 BaGet.Web.V3 BaGet.Web.ReadmeMarkdown::static Microsoft.AspNetCore.Html.HtmlString ToHtml(System.String markdown)
 BaGet.Web.V3 BaGet.Web.ReadmeMarkdown::static Microsoft.AspNetCore.Html.HtmlString ToSafeHtml(System.String markdown)
@@ -2637,36 +1314,6 @@ BaGet.Web.V3 BaGet.Web.RemoteRepositoryReadOnlyAttribute implements Microsoft.As
 BaGet.Web.V3 BaGet.Web.RemoteRepositoryReadOnlyAttribute implements Microsoft.AspNetCore.Mvc.Filters.IResultFilter
 BaGet.Web.V3 BaGet.Web.RemoteRepositoryReadOnlyAttribute::ctor()
 BaGet.Web.V3 BaGet.Web.RemoteRepositoryReadOnlyAttribute::virtual System.Void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.Boolean CanReport { get; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.Boolean Submitted { get; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.String Details { get; set; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.String Id { get; set; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.String Reason { get; set; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.String ReporterEmail { get; set; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.String Version { get; set; }
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::System.Void OnGet()
-BaGet.Web.V3 BaGet.Web.ReportAbuseModel::ctor(BaGet.Core.IContext context, BaGet.Core.SystemTime time)
-BaGet.Web.V3 BaGet.Web.RepositoryPageFilter implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.RepositoryPageFilter implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.RepositoryPageFilter::System.Threading.Tasks.Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
-BaGet.Web.V3 BaGet.Web.RepositoryPageFilter::System.Threading.Tasks.Task OnPageHandlerSelectionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerSelectedContext context)
-BaGet.Web.V3 BaGet.Web.RepositoryPageFilter::ctor()
-BaGet.Web.V3 BaGet.Web.RepositoryPageFilter::static const System.String RequestedVirtualItemKey
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention implements Microsoft.AspNetCore.Mvc.ApplicationModels.IPageConvention
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention implements Microsoft.AspNetCore.Mvc.ApplicationModels.IPageRouteModelConvention
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::System.Void Apply(Microsoft.AspNetCore.Mvc.ApplicationModels.PageRouteModel model)
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::ctor()
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::ctor(System.Collections.Generic.IEnumerable<System.String> pages)
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::static System.Collections.Generic.IReadOnlyCollection<System.String> AnyFormatPages
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::static System.Collections.Generic.IReadOnlyCollection<System.String> RepositoryPages
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::static System.Collections.Generic.IReadOnlyDictionary<System.String,BaGet.Core.RepositoryFormat> PageFormats
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::static System.Nullable<BaGet.Core.RepositoryFormat> FormatOf(System.String viewEnginePath)
-BaGet.Web.V3 BaGet.Web.RepositoryPageRouteConvention::static const System.Int32 TwinOrder
 BaGet.Web.V3 BaGet.Web.RepositoryReadFilter implements Microsoft.AspNetCore.Mvc.Filters.IAsyncResourceFilter
 BaGet.Web.V3 BaGet.Web.RepositoryReadFilter implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
 BaGet.Web.V3 BaGet.Web.RepositoryReadFilter::System.Threading.Tasks.Task OnResourceExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.ResourceExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.ResourceExecutionDelegate next)
@@ -2797,13 +1444,6 @@ BaGet.Web.V3 BaGet.Web.StagingSweepWorker implements Microsoft.Extensions.Hostin
 BaGet.Web.V3 BaGet.Web.StagingSweepWorker implements System.IDisposable
 BaGet.Web.V3 BaGet.Web.StagingSweepWorker::ctor(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopes, Microsoft.Extensions.Logging.ILogger<BaGet.Web.StagingSweepWorker> logger, BaGet.Core.IJobLease lease = null)
 BaGet.Web.V3 BaGet.Web.StagingSweepWorker::virtual System.Threading.Tasks.Task ExecuteAsync(System.Threading.CancellationToken stoppingToken)
-BaGet.Web.V3 BaGet.Web.StatisticsModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.StatisticsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.StatisticsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.StatisticsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.StatisticsModel::BaGet.Core.FeedStatistics Statistics { get; }
-BaGet.Web.V3 BaGet.Web.StatisticsModel::System.Threading.Tasks.Task OnGetAsync(System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.StatisticsModel::ctor(BaGet.Core.StatisticsService statistics)
 BaGet.Web.V3 BaGet.Web.SymbolController extends Microsoft.AspNetCore.Mvc.Controller
 BaGet.Web.V3 BaGet.Web.SymbolController implements Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 BaGet.Web.V3 BaGet.Web.SymbolController implements Microsoft.AspNetCore.Mvc.Filters.IAsyncActionFilter
@@ -2812,48 +1452,6 @@ BaGet.Web.V3 BaGet.Web.SymbolController implements System.IDisposable
 BaGet.Web.V3 BaGet.Web.SymbolController::System.Threading.Tasks.Task Upload(System.Threading.CancellationToken cancellationToken)
 BaGet.Web.V3 BaGet.Web.SymbolController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Get(System.String file, System.String key)
 BaGet.Web.V3 BaGet.Web.SymbolController::ctor(BaGet.Core.IAuthenticationService authentication, BaGet.Core.ISymbolIndexingService indexer, BaGet.Core.ISymbolStorageService storage, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Logging.ILogger<BaGet.Web.SymbolController> logger, BaGet.Core.IPackageAuthorizationService authorization)
-BaGet.Web.V3 BaGet.Web.TermsModel extends BaGet.Web.LegalPageModel
-BaGet.Web.V3 BaGet.Web.TermsModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.TermsModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.TermsModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.TermsModel::System.String ConfiguredPath { get; }
-BaGet.Web.V3 BaGet.Web.TermsModel::ctor(Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> site, Microsoft.Extensions.Hosting.IHostEnvironment environment)
-BaGet.Web.V3 BaGet.Web.UploadModel extends Microsoft.AspNetCore.Mvc.RazorPages.PageModel
-BaGet.Web.V3 BaGet.Web.UploadModel implements Microsoft.AspNetCore.Mvc.Filters.IAsyncPageFilter
-BaGet.Web.V3 BaGet.Web.UploadModel implements Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata
-BaGet.Web.V3 BaGet.Web.UploadModel implements Microsoft.AspNetCore.Mvc.Filters.IPageFilter
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::Microsoft.AspNetCore.Html.HtmlString Readme { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.Boolean IsSymbolPackage { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.Boolean TargetPackageExists { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.Collections.Generic.IReadOnlyList<BaGet.Web.DependencyGroupModel> DependencyGroups { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.Collections.Generic.IReadOnlyList<System.String> Authors { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.Collections.Generic.IReadOnlyList<System.String> SymbolFiles { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String Description { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String Id { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String License { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String LicenseUrl { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String TargetPackageMessage { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String Token { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::System.String Version { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel.StagedUpload::ctor()
-BaGet.Web.V3 BaGet.Web.UploadModel::BaGet.Web.UploadModel.StagedUpload Published { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::BaGet.Web.UploadModel.StagedUpload Staged { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean AccountsEnabled { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean CanUpload { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean Failed { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean IsReadOnlyMode { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean NeedsApiKey { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean NothingCanAuthenticate { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Boolean SignedIn { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.String Id { get; set; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.String Message { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.String NoApiKeyExplanation { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.String RetryToken { get; }
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostCancelAsync(System.String token, System.String apiKey, System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostStageAsync(Microsoft.AspNetCore.Http.IFormFile package, System.String apiKey, System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostSubmitAsync(System.String token, System.String apiKey, System.Boolean acceptTerms, System.Threading.CancellationToken cancellationToken)
-BaGet.Web.V3 BaGet.Web.UploadModel::System.Void OnGet()
-BaGet.Web.V3 BaGet.Web.UploadModel::ctor(Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, BaGet.Core.IAuthenticationService authentication, BaGet.Core.IPackageAuthorizationService authorization, BaGet.Core.IPackageSubmissionService submissions, BaGet.Core.ISymbolIndexingService symbols, BaGet.Core.IPackageStagingService staging, BaGet.Core.IPackageDatabase packages, Microsoft.Extensions.Logging.ILogger<BaGet.Web.UploadModel> logger, BaGet.Core.IScanGate scanGate)
 BaGet.Web.V3 BaGet.Web.VulnerabilityController extends Microsoft.AspNetCore.Mvc.Controller
 BaGet.Web.V3 BaGet.Web.VulnerabilityController implements Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 BaGet.Web.V3 BaGet.Web.VulnerabilityController implements Microsoft.AspNetCore.Mvc.Filters.IAsyncActionFilter
@@ -2943,25 +1541,15 @@ BaGet.Web.V3 type BaGet.Web.BasicCredentials [static class]
 BaGet.Web.V3 type BaGet.Web.DependencyGroupModel [class]
 BaGet.Web.V3 type BaGet.Web.DependencyModel [class]
 BaGet.Web.V3 type BaGet.Web.DeprecationRequest [class]
-BaGet.Web.V3 type BaGet.Web.DockerImageModel [class]
-BaGet.Web.V3 type BaGet.Web.DockerImagesModel [class]
 BaGet.Web.V3 type BaGet.Web.DockerSnippets [static class]
 BaGet.Web.V3 type BaGet.Web.HttpRequestExtensions [static class]
 BaGet.Web.V3 type BaGet.Web.IApplicationBuilderExtensions [static class]
 BaGet.Web.V3 type BaGet.Web.IHostExtensions [static class]
-BaGet.Web.V3 type BaGet.Web.IndexModel [class]
-BaGet.Web.V3 type BaGet.Web.LegalPageModel [abstract class]
 BaGet.Web.V3 type BaGet.Web.MaintenanceMiddleware [class]
-BaGet.Web.V3 type BaGet.Web.MavenArtifactModel [class]
-BaGet.Web.V3 type BaGet.Web.MavenArtifactsModel [class]
 BaGet.Web.V3 type BaGet.Web.MavenController [class]
-BaGet.Web.V3 type BaGet.Web.MavenUploadModel [class]
 BaGet.Web.V3 type BaGet.Web.NavLinkTagHelper [class]
 BaGet.Web.V3 type BaGet.Web.NpmController [class]
-BaGet.Web.V3 type BaGet.Web.NpmPackageModel [class]
-BaGet.Web.V3 type BaGet.Web.NpmPackagesModel [class]
 BaGet.Web.V3 type BaGet.Web.NpmRouteNames [static class]
-BaGet.Web.V3 type BaGet.Web.NpmUploadModel [class]
 BaGet.Web.V3 type BaGet.Web.OciAuthorizationFilter [class]
 BaGet.Web.V3 type BaGet.Web.OciCaller [sealed class]
 BaGet.Web.V3 type BaGet.Web.OciCallerResolver [class]
@@ -2973,17 +1561,10 @@ BaGet.Web.V3 type BaGet.Web.PackageContentController [class]
 BaGet.Web.V3 type BaGet.Web.PackageDependencies [static class]
 BaGet.Web.V3 type BaGet.Web.PackageMetadataAdminController [class]
 BaGet.Web.V3 type BaGet.Web.PackageMetadataController [class]
-BaGet.Web.V3 type BaGet.Web.PackageModel [class]
-BaGet.Web.V3 type BaGet.Web.PackageModel.VersionModel [class]
 BaGet.Web.V3 type BaGet.Web.PackagePublishController [class]
-BaGet.Web.V3 type BaGet.Web.Pages.Admin.ApiModel [class]
-BaGet.Web.V3 type BaGet.Web.PrivacyModel [class]
 BaGet.Web.V3 type BaGet.Web.RazorExtensions [static class]
 BaGet.Web.V3 type BaGet.Web.ReadmeMarkdown [static class]
 BaGet.Web.V3 type BaGet.Web.RemoteRepositoryReadOnlyAttribute [sealed class]
-BaGet.Web.V3 type BaGet.Web.ReportAbuseModel [class]
-BaGet.Web.V3 type BaGet.Web.RepositoryPageFilter [class]
-BaGet.Web.V3 type BaGet.Web.RepositoryPageRouteConvention [class]
 BaGet.Web.V3 type BaGet.Web.RepositoryReadFilter [class]
 BaGet.Web.V3 type BaGet.Web.RepositoryResolutionMiddleware [class]
 BaGet.Web.V3 type BaGet.Web.RepositoryRouteMetadata [sealed class]
@@ -2997,11 +1578,7 @@ BaGet.Web.V3 type BaGet.Web.ScanFindingsView [sealed class]
 BaGet.Web.V3 type BaGet.Web.SearchController [class]
 BaGet.Web.V3 type BaGet.Web.ServiceIndexController [class]
 BaGet.Web.V3 type BaGet.Web.StagingSweepWorker [class]
-BaGet.Web.V3 type BaGet.Web.StatisticsModel [class]
 BaGet.Web.V3 type BaGet.Web.SymbolController [class]
-BaGet.Web.V3 type BaGet.Web.TermsModel [class]
-BaGet.Web.V3 type BaGet.Web.UploadModel [class]
-BaGet.Web.V3 type BaGet.Web.UploadModel.StagedUpload [class]
 BaGet.Web.V3 type BaGet.Web.VulnerabilityController [class]
 BaGet.Web.V3 type BaGet.Web.VulnerabilityPageEntry [class]
 BaGet.Web.V3 type BaGet.Web.VulnerabilityPageItem [class]

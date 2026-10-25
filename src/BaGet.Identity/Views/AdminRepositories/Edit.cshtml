@@ -395,7 +395,7 @@
                 </p>
                 <table class="table" id="repository-access">
                     <tbody>
-                        @foreach (var action in BaGet.Identity.Pages.Admin.AccessPageModel.AllActions)
+                        @foreach (var action in BaGet.Identity.Mvc.AccessSupport.AllActions)
                         {
                             var who = Model.Access.Who(action);
                             var remoteDeploy = action == BaGet.Core.AccessAction.Deploy && Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote;

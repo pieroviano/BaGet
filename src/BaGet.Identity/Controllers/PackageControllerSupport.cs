@@ -7,12 +7,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace BaGet.Identity.Controllers;
 
-/// <summary>What the package-management controllers share: reading the request the way the page models' bound properties did.</summary>
+/// <summary>What the package-management controllers share: reading the request.</summary>
 internal static class PackageControllerSupport
 {
     /// <summary>
-    /// The name of the handler about to run (<c>[PageHandler("Unlist")]</c> gives <c>Unlist</c>; the default handler null): what a
-    /// page model's <c>HandlerMethod.Name</c> was, for the administrator audit line.
+    /// The name of the handler about to run (<c>[PageHandler("Unlist")]</c> gives <c>Unlist</c>; the default handler null): for the administrator audit line.
     /// </summary>
     public static string? HandlerName(ActionExecutingContext context)
         => (context.ActionDescriptor as ControllerActionDescriptor)?.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name;
@@ -21,7 +20,7 @@ internal static class PackageControllerSupport
     public static string? Route(ActionExecutingContext context, string key)
         => context.RouteData.Values.TryGetValue(key, out var value) ? value as string : null;
 
-    /// <summary>A form field of a POST, else a query string value: how a page model's <c>SupportsGet</c> property was bound.</summary>
+    /// <summary>A form field of a POST, else a query string value: how the screens read their input.</summary>
     public static string? FormOrQuery(ActionExecutingContext context, string key)
     {
         var request = context.HttpContext.Request;

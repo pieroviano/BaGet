@@ -7,7 +7,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// The second step of signing in with an authenticator code: the password was right and a half-signed-in cookie says who, but
-/// nothing is granted until the code is too. Shared by <c>AccountController</c> and the obsolete <c>LoginWith2faModel</c>.
+/// nothing is granted until the code is too. Used by <c>AccountController</c>.
 /// </summary>
 internal sealed class TwoFactorLoginWorkflow
 {
@@ -49,7 +49,7 @@ internal sealed class TwoFactorLoginWorkflow
 
 /// <summary>
 /// Second step of signing in with a recovery code instead of an authenticator code. Each code works once. Shared by
-/// <c>AccountController</c> and the obsolete <c>LoginWithRecoveryCodeModel</c>.
+/// <c>AccountController</c>.
 /// </summary>
 internal sealed class RecoveryCodeLoginWorkflow
 {

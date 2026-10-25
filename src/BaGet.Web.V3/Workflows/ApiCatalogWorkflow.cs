@@ -8,8 +8,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// Builds the REST API page: the operations are read from the controllers of the API (<see cref="ApiCatalog"/>), the same source as
-/// the OpenAPI document, so the list cannot be stale. Shared by <see cref="ApiCatalogController"/> and the obsolete
-/// <c>BaGet.Web.Pages.Admin.ApiModel</c>.
+/// the OpenAPI document, so the list cannot be stale. Used by <see cref="ApiCatalogController"/>.
 /// </summary>
 public sealed class ApiCatalogWorkflow
 {

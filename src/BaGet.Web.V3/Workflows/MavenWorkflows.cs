@@ -14,8 +14,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The logic of the Maven front page: the artifacts whose coordinates or POM text contain the search text (only those the visitor
-/// may open) and the configuration that points Maven and Gradle at the repository. Shared by <c>MavenBrowseController</c> and the
-/// obsolete <see cref="MavenArtifactsModel"/>.
+/// may open) and the configuration that points Maven and Gradle at the repository. Used by <c>MavenBrowseController</c>.
 /// </summary>
 internal sealed class MavenArtifactsWorkflow
 {
@@ -73,7 +72,7 @@ internal sealed class MavenArtifactsWorkflow
 
 /// <summary>
 /// The logic of the page of one Maven artifact: its versions, and for the chosen version its files, POM and the dependency to copy.
-/// Shared by <c>MavenBrowseController</c> and the obsolete <see cref="MavenArtifactModel"/>.
+/// Used by <c>MavenBrowseController</c>.
 /// </summary>
 internal sealed class MavenArtifactWorkflow
 {
@@ -158,7 +157,7 @@ internal sealed class MavenArtifactWorkflow
 
 /// <summary>
 /// The logic of the Maven upload page: deploying an artifact version through <see cref="IMavenRepository.DeployAsync"/>, the call
-/// <c>mvn deploy</c>'s uploads end in. Shared by <c>MavenBrowseController</c> and the obsolete <see cref="MavenUploadModel"/>.
+/// <c>mvn deploy</c>'s uploads end in. Used by <c>MavenBrowseController</c>.
 /// </summary>
 internal sealed class MavenUploadWorkflow
 {

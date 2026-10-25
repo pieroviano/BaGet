@@ -15,7 +15,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// The replication screens: the replications and the form that creates one, and one replication (save, test the connection, run,
 /// resume, stop, delete, its log). Everything but stopping asks for the administrator's password. Shared by
-/// <c>AdminReplicationController</c> and the obsolete <c>ReplicationModel</c> and <c>ReplicationConfigModel</c>.
+/// <c>AdminReplicationController</c>.
 /// </summary>
 internal sealed class ReplicationWorkflow : PolicyWorkflow
 {

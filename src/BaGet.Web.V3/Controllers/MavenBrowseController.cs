@@ -12,8 +12,7 @@ namespace BaGet.Web;
 /// <summary>
 /// The web pages of a Maven repository: the artifact list (<c>/maven-artifacts</c>), one artifact
 /// (<c>/maven-artifacts/{group}/{artifact}/{version?}</c>) and the browser deployment (<c>/maven-upload</c>). They replace the Razor
-/// Pages <c>MavenArtifacts</c>, <c>MavenArtifact</c> and <c>MavenUpload</c> (their page models are obsolete shims over the same
-/// workflows): same URLs, same <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>), same repository rules
+/// Pages <c>MavenArtifacts</c>, <c>MavenArtifact</c> and <c>MavenUpload</c>: same URLs, same <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>), same repository rules
 /// (<see cref="RepositoryPageAttribute"/>: Read on the repository, on <c>group:artifact</c> for the artifact page, the right to
 /// publish for the upload; 404 in a repository that is not Maven's). Views are in <c>Views/MavenBrowse/</c>.
 /// </summary>

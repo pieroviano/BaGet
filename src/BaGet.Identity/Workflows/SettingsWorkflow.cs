@@ -13,8 +13,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// Edits every registered setting. Values are written to the overrides file; see <see cref="SettingsService"/>. One form per
-/// section, so one section's errors never block another. Shared by <c>AdminSettingsController</c> and the obsolete
-/// <c>SettingsModel</c>.
+/// section, so one section's errors never block another. Used by <c>AdminSettingsController</c>.
 /// </summary>
 internal sealed class AdminSettingsWorkflow : AdminWorkflow
 {

@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Base of the repository administration screens that change a remote repository's upstream or empty its cache: the controller
-/// counterpart of <c>RepositoryPageModel</c>. They ask for the administrator's password again (or a recent sign-in with the
+/// Base of the repository administration screens that change a remote repository's upstream or empty its cache. They ask for the administrator's password again (or a recent sign-in with the
 /// external provider, for an account without one), like the access screens do for changes that hand out credentials or delete
 /// data.
 /// </summary>

@@ -6,8 +6,7 @@ namespace BaGet.Identity.Mvc;
 /// <summary>
 /// Marks a controller action (or a whole controller) as a <em>repository page</em>: a page that acts on the request's
 /// repository and is therefore served at its own route and at <c>/r/{repo}/…</c>, and that passes the single repository check
-/// before the action runs. It replaces the path lists of <c>RepositoryPageRouteConvention</c> and <c>RepositoryPageFilter</c>
-/// with data on the action itself:
+/// before the action runs. The marker is data on the action itself:
 /// <list type="bullet">
 /// <item><description><c>RepositoryActionRouteConvention</c> adds the <c>r/{repo}/</c> twin of every route of the action
 /// (<c>Order</c> -1, so a link that carries a repository resolves to it and one that does not resolves to the plain route).</description></item>
@@ -47,7 +46,7 @@ public sealed class RepositoryPageAttribute : Attribute
     /// <summary>
     /// An upload page: the caller needs the right to publish (<c>IRepositoryAccess.CanWriteAsync</c>), not Read, so a
     /// Deploy-only drop box is usable. In a virtual repository the request continues in its deploy repository
-    /// (<c>RepositoryPageFilter.RequestedVirtualItemKey</c> remembers the virtual one for the view); without one it is 404.
+    /// (<c>RepositoryPageGate.RequestedVirtualItemKey</c> remembers the virtual one for the view); without one it is 404.
     /// </summary>
     public bool Upload { get; set; }
 

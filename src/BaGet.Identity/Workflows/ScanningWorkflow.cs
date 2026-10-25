@@ -17,7 +17,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// The vulnerability scanning screens: the overview of every repository and project, the dashboard of one repository (its findings,
 /// its policy, <em>Scan now</em>) and the policy of a project. Saving a policy asks for the administrator's password; starting a
-/// scan does not. Shared by <c>AdminScanningController</c> and the obsolete <c>ScanningModel</c>, <c>ScanRepositoryModel</c> and
+/// scan does not. Shared by <c>AdminScanningController</c> and
 /// <c>ScanProjectModel</c>.
 /// </summary>
 internal sealed class ScanningWorkflow : PolicyWorkflow

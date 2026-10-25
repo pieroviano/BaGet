@@ -19,7 +19,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// Lets a signed-in user write to the owners of a package without learning their addresses. The message goes to every owning user
 /// and to the administrators of every owning organization, one email each, with the sender in Reply-To. Served by
-/// <c>ContactOwnersController</c>; the obsolete <c>ContactOwnersModel</c> runs the same code.
+/// <c>ContactOwnersController</c>.
 /// </summary>
 internal sealed class ContactOwnersWorkflow : PackageWorkflowBase
 {

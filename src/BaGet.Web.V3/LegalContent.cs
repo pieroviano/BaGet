@@ -8,8 +8,7 @@ using Microsoft.Extensions.Hosting;
 namespace BaGet.Web;
 
 /// <summary>
-/// The workflow behind the legal pages: reads the operator-supplied Markdown file. Shared by <c>LegalController</c> and the
-/// obsolete <see cref="LegalPageModel"/> shims so the rule exists once. BaGet ships no legal text of its own: there is no content
+/// The workflow behind the legal pages: reads the operator-supplied Markdown file. Used by <c>LegalController</c>. BaGet ships no legal text of its own: there is no content
 /// while the file is not configured, is not an allowed Markdown path (<see cref="MarkdownFilePathAttribute.IsAllowed"/>) or does not exist.
 /// </summary>
 internal static class LegalContent

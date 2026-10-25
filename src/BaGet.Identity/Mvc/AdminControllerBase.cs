@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Base of the administrator screens: the controller counterpart of <c>AdminPageModel</c>. Signed in, accounts enabled (see
+/// Base of the administrator screens. Signed in, accounts enabled (see
 /// <see cref="AccountControllerBase"/>), and an administrator. Anyone else gets 404, so the screens' existence is not disclosed
 /// (an anonymous visitor is challenged to sign in first, as the pages did).
 /// </summary>

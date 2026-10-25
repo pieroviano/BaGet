@@ -25,7 +25,7 @@ namespace BaGet.Core;
 /// <para><b>Tarball</b> from the first member that has it. <b>Search</b> merges the members' listings by name (the first member's
 /// entry wins), ordered by name; remote members contribute the packages they stored.</para>
 /// <para><b>Writes</b> go to the deploy repository, with that repository's rules and the caller's rights there: the HTTP routes and
-/// pages are moved to it before they reach this class (<c>RepositoryResolutionMiddleware</c>, <c>RepositoryPageFilter</c>); a caller of
+/// pages are moved to it before they reach this class (<c>RepositoryResolutionMiddleware</c>, <c>RepositoryPageGate</c>); a caller of
 /// the service gets the same through this class. Without a deploy repository they are refused (403).</para>
 /// </remarks>
 public sealed class VirtualNpmRegistry : INpmRegistry

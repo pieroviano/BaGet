@@ -378,24 +378,6 @@ public class PackageWorkflowFacts
         }
     }
 
-    [Fact]
-    #pragma warning disable CS0618
-    public async Task TheObsoletePageModelShimStillWorks()
-    {
-        _packages
-            .Setup(m => m.FindPackagesAsync("testpackage", _cancellation))
-            .ReturnsAsync(new List<Package> { CreatePackage("1.0.0"), CreatePackage("2.0.0") });
-
-        var shim = new PackageModel(_packages.Object, _content.Object, _search.Object, _url.Object);
-        await shim.OnGetAsync("testpackage", "1.0.0", _cancellation);
-
-        Assert.True(shim.Found);
-        Assert.Equal("1.0.0", shim.Package?.NormalizedVersionString);
-        Assert.Equal(2, shim.Versions?.Count);
-        Assert.True(shim.Versions?[1].Selected);
-    }
-    #pragma warning restore CS0618
-
     private Package CreatePackage(
         string version,
         long downloads = 0,

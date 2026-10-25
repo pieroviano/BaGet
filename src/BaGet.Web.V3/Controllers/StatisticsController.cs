@@ -8,7 +8,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The feed's statistics (<c>/stats</c>, and <c>/r/{repo}/stats</c>; 404 in a virtual repository). Replaces the <c>/Statistics</c>
-/// Razor Page (<see cref="StatisticsModel"/> is now an obsolete shim).
+/// Razor Page.
 /// </summary>
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class StatisticsController : UiControllerBase

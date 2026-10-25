@@ -25,7 +25,7 @@ namespace BaGet.Core;
 /// of the merged document.</para>
 /// <para><b>Pages and search</b> merge the members' artifacts by <c>group:artifact</c> (the first member's entry wins a version).
 /// <b>Writes</b> go to the deploy repository, with that repository's rules and the caller's rights there: the HTTP routes and pages are
-/// moved to it before they reach this class (<c>RepositoryResolutionMiddleware</c>, <c>RepositoryPageFilter</c>); a caller of the service
+/// moved to it before they reach this class (<c>RepositoryResolutionMiddleware</c>, <c>RepositoryPageGate</c>); a caller of the service
 /// gets the same through this class. Without a deploy repository they are refused (403).</para>
 /// </remarks>
 public sealed class VirtualMavenRepository : IMavenRepository

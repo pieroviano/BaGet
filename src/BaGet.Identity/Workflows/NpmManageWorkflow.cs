@@ -18,7 +18,7 @@ namespace BaGet.Identity.Workflows;
 /// the same user's API key could through the registry routes and no more: the access model, ownership, and the unpublish
 /// window apply identically. Opening it takes ownership (directly or through an organization) or administration; unpublishing
 /// also asks for the password again, since it cannot be undone. Works in the request's repository. Served by
-/// <c>NpmManageController</c>; the obsolete <c>NpmManageModel</c> runs the same code.
+/// <c>NpmManageController</c>.
 /// </summary>
 internal sealed class NpmManageWorkflow : PackageWorkflowBase
 {

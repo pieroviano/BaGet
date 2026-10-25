@@ -13,44 +13,12 @@ using NuGet.Versioning;
 namespace BaGet.Identity.Pages.Account;
 
 /// <summary>
-/// The package IDs the signed-in user owns, directly or through an organization, and the
-/// way into each one's management page. Ownership is per repository, so the IDs are grouped by
-/// the repositories the user may read (<see cref="IRepositoryAccess"/>); a repository where
-/// the user owns nothing is not listed.
+/// The package IDs a user owns, directly or through an organization, summarised per repository: the rows of the My packages
+/// and the administrators' package screens. Ownership is per repository, so the IDs are grouped by the repositories the user
+/// may read (<see cref="IRepositoryAccess"/>); a repository where the user owns nothing is not listed.
 /// </summary>
-/// <remarks>
-/// The page is served by <c>AccountPackagesController</c> (it delegates to <c>AccountPackagesWorkflow</c>), so the page model's
-/// members are obsolete. The class itself is not: <see cref="OwnedPackage"/>, <see cref="RepositoryPackages"/>,
-/// <see cref="Summarise"/> and <see cref="ListVersionsAsync"/> are shared with the administrators' package pages and stay until
-/// those move.
-/// </remarks>
-public class PackagesModel : AccountPageModel
+public static class PackagesModel
 {
-    private const string Superseded = "The My packages screen is served by AccountPackagesController; this member has no page any more and will be removed in the next major version.";
-
-    private readonly AccountPackagesViewModel _state = new AccountPackagesViewModel();
-
-    protected override bool RequiresSignIn => true;
-
-    /// <summary>The owned packages of each repository that has any, <c>default</c> first.</summary>
-    [Obsolete(Superseded)]
-    public IReadOnlyList<RepositoryPackages> Groups => _state.Groups;
-
-    /// <summary>Whether the user owns nothing in any repository.</summary>
-    [Obsolete(Superseded)]
-    public bool IsEmpty => _state.IsEmpty;
-
-    /// <summary>
-    /// Whether the list needs repository headings: more than the default repository holds packages of the user.
-    /// </summary>
-    [Obsolete(Superseded)]
-    public bool ShowRepositoryNames => _state.ShowRepositoryNames;
-
-    /// <summary>Lists the packages the user owns (the page itself is <c>AccountPackagesController.Packages</c>).</summary>
-    [Obsolete(Superseded)]
-    public async Task OnGetAsync(CancellationToken cancellationToken)
-        => await new AccountPackagesWorkflow(Screen).ShowAsync(_state, cancellationToken);
-
     /// <summary>
     /// Every owned ID's versions, in one query, projected to the four columns the page
     /// shows. The page cost must not grow with how successful a publisher the user is:

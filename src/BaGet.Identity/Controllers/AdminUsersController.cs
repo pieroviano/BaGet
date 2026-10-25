@@ -10,8 +10,7 @@ namespace BaGet.Identity.Controllers;
 /// The administrator's account screens: the user list (<c>/admin/users</c>), one account (<c>/admin/users/{name}</c>), its deletion
 /// (<c>/admin/users/{name}/delete</c>) and the packages it owns (<c>/admin/users/{name}/packages</c>). They replace the Razor Pages
 /// <c>/Admin/Users</c>, <c>/Admin/UserDetail</c>, <c>/Admin/DeleteUser</c> and <c>/Admin/UserPackages</c> (same URLs, same
-/// <c>?handler=</c> values, same <c>asp-page</c> names through <see cref="LegacyPageAttribute"/>); the logic is in the workflows,
-/// which the obsolete page models call too. Administrators only (<see cref="AdminControllerBase"/>); every action asks the
+/// <c>?handler=</c> values, same <c>asp-page</c> names through <see cref="LegacyPageAttribute"/>); the logic is in the workflows. Administrators only (<see cref="AdminControllerBase"/>); every action asks the
 /// administrator's password again and is refused with 503 while the read-only gate is closed, as the pages did.
 /// </summary>
 public sealed class AdminUsersController : AdminControllerBase

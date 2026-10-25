@@ -13,7 +13,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// The retention screens: the policies and the form that creates one, one policy (save, dry run, run now, delete) and the legal
 /// holds. Creating, saving, running and deleting a policy and lifting a hold ask for the administrator's password; a dry run and
-/// placing a hold do not. Shared by <c>AdminRetentionController</c> and the obsolete <c>RetentionModel</c>,
+/// placing a hold do not. Used by <c>AdminRetentionController</c>,
 /// <c>RetentionPolicyModel</c> and <c>RetentionHoldsModel</c>.
 /// </summary>
 internal sealed class RetentionWorkflow : PolicyWorkflow

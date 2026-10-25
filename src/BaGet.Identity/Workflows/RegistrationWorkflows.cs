@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace BaGet.Identity.Workflows;
 
 /// <summary>
-/// Creating an account. Shared by <c>AccountController</c> and the obsolete <c>RegisterModel</c>. The screen itself answers 404
+/// Creating an account. Used by <c>AccountController</c>. The screen itself answers 404
 /// while <c>Accounts:AllowRegistration</c> is off: that check is made by the host before this runs.
 /// </summary>
 internal sealed class RegisterWorkflow
@@ -121,7 +121,7 @@ internal sealed class RegisterWorkflow
 }
 
 /// <summary>
-/// Asking for a password reset link. Shared by <c>AccountController</c> and the obsolete <c>ForgotPasswordModel</c>.
+/// Asking for a password reset link. Used by <c>AccountController</c>.
 /// </summary>
 internal sealed class ForgotPasswordWorkflow
 {
@@ -182,8 +182,7 @@ internal sealed class ForgotPasswordWorkflow
 }
 
 /// <summary>
-/// Setting a new password from the link of a reset email. Shared by <c>AccountController</c> and the obsolete
-/// <c>ResetPasswordModel</c>.
+/// Setting a new password from the link of a reset email. Used by <c>AccountController</c>.
 /// </summary>
 internal sealed class ResetPasswordWorkflow
 {
@@ -244,7 +243,7 @@ internal sealed class ResetPasswordWorkflow
 
 /// <summary>
 /// The target of the links in confirmation emails: a new account's address, or, when <c>email</c> is present, a change of
-/// address. Shared by <c>AccountController</c> and the obsolete <c>ConfirmEmailModel</c>.
+/// address. Used by <c>AccountController</c>.
 /// </summary>
 internal sealed class ConfirmEmailWorkflow
 {
@@ -292,7 +291,7 @@ internal sealed class ConfirmEmailWorkflow
 /// Proof of presence for an account without a password: a fresh sign-in with its external provider (the provider is asked to
 /// prompt for credentials again, whatever session it has). The time is kept in the sign-in cookie's properties and checked by
 /// <see cref="AccountSupport.IsConfirmedAsync"/> for <see cref="AccountSupport.ReauthenticationWindow"/>. Shared by
-/// <c>AccountController</c> and the obsolete <c>ReauthenticateModel</c>.
+/// <c>AccountController</c>.
 /// </summary>
 internal sealed class ReauthenticateWorkflow
 {

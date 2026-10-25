@@ -11,8 +11,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The web pages of an npm repository: the package list (<c>/npm-packages</c>), one package (<c>/npm-packages/{name}</c>) and the
-/// browser upload (<c>/npm-upload</c>). They replace the Razor Pages <c>NpmPackages</c>, <c>NpmPackage</c> and <c>NpmUpload</c>
-/// (their page models are obsolete shims over the same workflows): same URLs, same <c>asp-page</c> names
+/// browser upload (<c>/npm-upload</c>). They replace the Razor Pages <c>NpmPackages</c>, <c>NpmPackage</c> and <c>NpmUpload</c>: same URLs, same <c>asp-page</c> names
 /// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository, on
 /// the package for the package page, the right to publish for the upload; 404 in a repository that is not npm's). Views are in
 /// <c>Views/NpmBrowse/</c>.

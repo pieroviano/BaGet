@@ -20,7 +20,7 @@ namespace BaGet.Identity.Workflows;
 /// (PDBs), and the abuse reports against it. An administrator may open it for any ID, ownerless ones included, and alone may set
 /// the ID's verified (reserved) flag and delete permanently whatever <see cref="BaGetOptions.PackageDeletionBehavior"/> says,
 /// after confirming their password. Everything works in the request's repository. Served by
-/// <c>PackageManageController</c>; the obsolete <c>ManageModel</c> runs the same code.
+/// <c>PackageManageController</c>.
 /// </summary>
 internal sealed class ManageWorkflow : PackageWorkflowBase
 {

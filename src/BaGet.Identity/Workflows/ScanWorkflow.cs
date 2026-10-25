@@ -14,7 +14,7 @@ namespace BaGet.Identity.Workflows;
 /// package operations: signed in, the Manage action on the package (<see cref="ScanAccess"/>); refused with 503 while the server is
 /// read-only (the result is stored). The scan of a container image can take minutes, so it is queued for the background worker and
 /// the screen says so; the other formats are scanned before the answer. Works in the request's repository. Served by
-/// <c>ScanArtifactController</c>; the obsolete <c>ScanModel</c> runs the same code.
+/// <c>ScanArtifactController</c>.
 /// </summary>
 internal sealed class ScanWorkflow : PackageWorkflowBase
 {

@@ -10,7 +10,7 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// Lets a signed-in user write to the owners of a package (<c>/packages/{id}/contact-owners</c>, also at <c>/r/{repo}/…</c>). It
 /// replaces the <c>/Packages/ContactOwners</c> Razor Page (same URLs and form fields, same gates: accounts enabled, mail configured,
-/// signed in); the logic is <see cref="ContactOwnersWorkflow"/>, shared with the obsolete <c>ContactOwnersModel</c>.
+/// signed in); the logic is <see cref="ContactOwnersWorkflow"/>.
 /// </summary>
 [Route("packages/{id}/contact-owners")]
 [LegacyPage("/Packages/ContactOwners")]

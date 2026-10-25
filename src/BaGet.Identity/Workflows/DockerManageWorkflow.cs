@@ -15,7 +15,7 @@ namespace BaGet.Identity.Workflows;
 /// <c>DELETE</c> (<see cref="IOciAccess"/>: the Delete action on the image, for the signed-in user's session principal, never a
 /// typed key), so the screen can do what the same user's API key could through the registry routes and no more. Opening it needs
 /// Delete; every change also asks for the password again, since it cannot be undone. Works in the request's repository. Served by
-/// <c>DockerManageController</c>; the obsolete <c>DockerManageModel</c> runs the same code.
+/// <c>DockerManageController</c>.
 /// </summary>
 internal sealed class DockerManageWorkflow : PackageWorkflowBase
 {

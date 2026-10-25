@@ -11,8 +11,8 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The owners' screen for an npm package (<c>/npm-manage/{*id}</c>, also at <c>/r/{repo}/…</c>): owners, dist-tags, deprecation and
 /// unpublishing. It replaces the <c>/Packages/NpmManage</c> Razor Page (same URLs, same <c>?handler=</c> forms, same gates); the
-/// logic is <see cref="NpmManageWorkflow"/>, shared with the obsolete <c>NpmManageModel</c>. The name / repository-kind / ownership
-/// check runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter, as the page model's did.
+/// logic is <see cref="NpmManageWorkflow"/>. The name / repository-kind / ownership
+/// check runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter.
 /// </summary>
 [Route("npm-manage/{*id}")]
 [RepositoryPage(Format = RepositoryFormat.Npm, NotOnVirtual = true, NotOnRemote = true)]

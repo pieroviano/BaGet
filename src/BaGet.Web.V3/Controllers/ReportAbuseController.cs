@@ -8,7 +8,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// Report abuse (<c>/packages/{id}/{version}/report-abuse</c>, and under <c>/r/{repo}/</c>; 404 in a virtual repository). Replaces the
-/// <c>/ReportAbuse</c> Razor Page (<see cref="ReportAbuseModel"/> is now an obsolete shim). The form is posted with antiforgery
+/// <c>/ReportAbuse</c> Razor Page. The form is posted with antiforgery
 /// validation (<see cref="UiControllerBase"/>).
 /// </summary>
 [RepositoryPage(NotOnVirtual = true)]

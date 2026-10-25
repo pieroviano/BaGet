@@ -13,8 +13,7 @@ using Microsoft.Extensions.Logging;
 namespace BaGet.Identity.Workflows;
 
 /// <summary>
-/// The rules of the sign-in screen (password, external provider and its callback), shared by <c>AccountController</c> and the
-/// obsolete <c>LoginModel</c> page model so the two cannot diverge. Messages, lockout handling, the pending-approval answer and
+/// The rules of the sign-in screen (password, external provider and its callback), run by <c>AccountController</c>. Messages, lockout handling, the pending-approval answer and
 /// the local-only return URL are exactly those of the page.
 /// </summary>
 internal sealed class LoginWorkflow

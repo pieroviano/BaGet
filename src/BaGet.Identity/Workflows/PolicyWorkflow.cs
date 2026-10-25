@@ -8,11 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace BaGet.Identity.Workflows;
 
 /// <summary>
-/// Base of the retention, scanning and replication workflows: the part of <c>AccessControllerBase</c> / <c>AccessPageModel</c> that a
-/// handler calls (<see cref="ActAsync"/>, the audit actor, the confirmation inputs). The checks that run before a handler (administrator,
-/// no access model, <c>ThrowIfClosed</c> on a POST) stay in the controller base and the page-model base, which run first.
+/// Base of the retention, scanning and replication workflows: the part of <c>AccessControllerBase</c> that a handler calls (<see cref="ActAsync"/>, the audit actor, the confirmation inputs). The checks that run before a handler (administrator,
+/// no access model, <c>ThrowIfClosed</c> on a POST) stay in the controller base, which runs first.
 /// <para>
-/// A handler returns the result the page model's handler returned, except that <c>Page()</c> is <c>null</c> ("render the screen").
+/// A handler returns the action result, except that a screen to render is <c>null</c>.
 /// </para>
 /// </summary>
 internal abstract class PolicyWorkflow : AdminWorkflow

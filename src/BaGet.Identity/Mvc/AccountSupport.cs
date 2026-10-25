@@ -13,9 +13,7 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// The rules of the account screens that do not depend on the programming model, shared by the Razor Page base
-/// (<c>AccountPageModel</c>) and the controller base (<see cref="AccountControllerBase"/>) so the two cannot diverge while
-/// pages are being migrated.
+/// The rules of the account screens used by the controller base (<see cref="AccountControllerBase"/>) and the workflows.
 /// </summary>
 internal static class AccountSupport
 {

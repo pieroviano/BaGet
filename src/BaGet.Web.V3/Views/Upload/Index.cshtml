@@ -22,7 +22,7 @@
     // The repository this upload goes to is the one of the page's address (/upload, /r/{name}/upload): staging, the
     // submission and the commands below all follow it. The picker only moves between those addresses, and is
     // offered when there is a choice (IRepositoryAccess lists what the caller may publish to).
-    // For a virtual repository RepositoryPageFilter has already moved the request to its deploy repository: 'target' is
+    // For a virtual repository RepositoryPageGate has already moved the request to its deploy repository: 'target' is
     // where the package is stored, 'requested' the repository the visitor chose.
     var target = _repositoryContext.Current;
     var requested = Context.Items[RepositoryPageGate.RequestedVirtualItemKey] as RepositoryInfo ?? target;

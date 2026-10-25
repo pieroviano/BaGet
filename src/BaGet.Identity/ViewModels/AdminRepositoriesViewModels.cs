@@ -180,8 +180,7 @@ public sealed class RepositoryEditViewModel : ConfirmationModel, IFlashMessage
 }
 
 /// <summary>
-/// The fields the repository screen's forms post (every handler binds the same set, as the page model's <c>[BindProperty]</c>
-/// properties did). The upstream fields come with the <c>Remote.</c> prefix.
+/// The fields the repository screen's forms post (every handler binds the same set). The upstream fields come with the <c>Remote.</c> prefix.
 /// </summary>
 public sealed class RepositoryEditForm
 {

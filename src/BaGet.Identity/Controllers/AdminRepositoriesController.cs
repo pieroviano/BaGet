@@ -14,7 +14,7 @@ namespace BaGet.Identity.Controllers;
 /// (<c>/admin/repositories/{name}/delete</c>). They replace the Razor Pages <c>/Admin/Repositories</c>,
 /// <c>/Admin/RepositoryEdit</c> and <c>/Admin/RepositoryDelete</c> (same URLs, same <c>?handler=</c> values, same
 /// <c>asp-page</c> names through <see cref="LegacyPageAttribute"/>); the logic is in <see cref="RepositoriesWorkflow"/>,
-/// <see cref="RepositoryEditWorkflow"/> and <see cref="RepositoryDeleteWorkflow"/>, which the obsolete page models call too.
+/// <see cref="RepositoryEditWorkflow"/> and <see cref="RepositoryDeleteWorkflow"/>.
 /// Administrators only; every write is refused with 503 while the read-only gate is closed, and the changes that hand out
 /// credentials or delete data ask for the administrator's password again, as the pages did.
 /// </summary>

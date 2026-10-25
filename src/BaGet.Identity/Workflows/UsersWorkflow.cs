@@ -18,7 +18,7 @@ namespace BaGet.Identity.Workflows;
 /// The Users screen: lists the accounts and lets an administrator approve, promote or demote them, create an account, reset a
 /// password (a generated one shown once, or a link mailed to the user). Every action asks for the administrator's password again,
 /// and none is offered or accepted for the administrator's own account (that stays on <c>/account/settings</c>). Shared by
-/// <c>AdminUsersController</c> and the obsolete <c>UsersModel</c>.
+/// <c>AdminUsersController</c>.
 /// </summary>
 internal sealed class UsersWorkflow : AdminWorkflow
 {

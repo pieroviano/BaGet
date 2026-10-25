@@ -12,8 +12,7 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// What an account workflow needs from the request, whatever hosts it: the controller (<see cref="AccountControllerBase"/>) or the
-/// obsolete page model shim (<c>AccountPageModel</c>). The services are resolved per call, as the two bases always did: they are
+/// What an account workflow needs from the request, whatever hosts it (<see cref="AccountControllerBase"/>). The services are resolved per call: they are
 /// only registered while accounts are enabled, and the callers check that first.
 /// </summary>
 internal sealed class AccountScreen

@@ -11,8 +11,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// The groups list: the built-in <c>Everyone</c> and <c>Authenticated</c> first, and the new-group form. A group is a named set of
-/// users that permission targets and project roles can name. Shared by <c>AdminGroupsController</c> and the obsolete
-/// <c>GroupsModel</c>.
+/// users that permission targets and project roles can name. Used by <c>AdminGroupsController</c>.
 /// </summary>
 internal sealed class GroupsWorkflow : AccessWorkflow
 {
@@ -53,7 +52,7 @@ internal sealed class GroupsWorkflow : AccessWorkflow
 /// <summary>
 /// One group: rename it, add and remove members (found by a user-name search), see the grants that name it, delete it. The built-in
 /// groups are shown but have implicit members and cannot be renamed or deleted. Membership changes and deletion ask for the password
-/// again. Shared by <c>AdminGroupsController</c> and the obsolete <c>GroupDetailModel</c>.
+/// again. Used by <c>AdminGroupsController</c>.
 /// </summary>
 internal sealed class GroupDetailWorkflow : AccessWorkflow
 {

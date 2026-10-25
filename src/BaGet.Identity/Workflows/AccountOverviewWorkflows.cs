@@ -14,7 +14,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// The signed in user's organizations: create one, and manage the members of those the user administers. Shared by
-/// <c>AccountOrganizationsController</c> and the obsolete <c>OrganizationsModel</c>.
+/// <c>AccountOrganizationsController</c>.
 /// </summary>
 internal sealed class OrganizationsWorkflow
 {
@@ -124,8 +124,7 @@ internal sealed class OrganizationsWorkflow
 /// <summary>
 /// The package IDs the signed-in user owns, directly or through an organization, and the way into each one's management page.
 /// Ownership is per repository, so the IDs are grouped by the repositories the user may read (<see cref="IRepositoryAccess"/>);
-/// a repository where the user owns nothing is not listed. Shared by <c>AccountPackagesController</c> and the obsolete
-/// <c>PackagesModel</c>.
+/// a repository where the user owns nothing is not listed. Used by <c>AccountPackagesController</c>.
 /// </summary>
 internal sealed class AccountPackagesWorkflow
 {
@@ -231,7 +230,7 @@ internal sealed class AccountPackagesWorkflow
 /// Deploy, Delete and Manage, and the permission targets or project roles that grant them (optionally for one package ID, to see
 /// how include/exclude patterns apply). Repositories where the user holds nothing are not listed, so the page discloses nothing
 /// about private repositories. Package ownership is a second requirement for changing existing package IDs and is not shown
-/// here. Shared by <c>AccountPackagesController</c> and the obsolete <c>AccessModel</c>.
+/// here. Used by <c>AccountPackagesController</c>.
 /// </summary>
 internal sealed class AccountAccessWorkflow
 {
@@ -280,7 +279,7 @@ internal sealed class AccountAccessWorkflow
 
 /// <summary>
 /// A user's or an organization's public page: the packages it owns; and the signed-in user's own profile, which only forwards
-/// to it. Shared by <c>ProfileController</c> and the obsolete <c>ProfileModel</c> / <c>MyProfileModel</c>.
+/// to it. Used by <c>ProfileController</c>.
 /// </summary>
 internal sealed class ProfileWorkflow
 {

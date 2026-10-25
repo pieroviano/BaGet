@@ -17,8 +17,7 @@ namespace BaGet.Identity.Workflows;
 /// The organization screens of the administrator: the list, and one organization: rename it (package ownership follows in every
 /// repository, atomically), add, promote and remove members (an organization keeps at least one administrator) and delete it
 /// (refused while it owns packages). Every action asks for the administrator's password again and is refused with 503 while the
-/// <see cref="MaintenanceGate"/> is closed. Shared by <c>AdminOrganizationsController</c> and the obsolete
-/// <c>OrganizationsModel</c> and <c>OrganizationDetailModel</c>.
+/// <see cref="MaintenanceGate"/> is closed. Used by <c>AdminOrganizationsController</c>.
 /// </summary>
 internal sealed class AdminOrganizationsWorkflow : AdminWorkflow
 {

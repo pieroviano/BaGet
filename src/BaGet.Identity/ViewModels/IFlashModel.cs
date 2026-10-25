@@ -1,8 +1,7 @@
 namespace BaGet.Identity.ViewModels;
 
 /// <summary>
-/// A view model that carries the outcome of the last action across a redirect: what the page models kept in
-/// <c>[TempData] Message</c>. <c>AdminControllerBase.Flash</c> moves the value to and from TempData.
+/// A view model that carries the outcome of the last action across a redirect (<c>[TempData] Message</c>). <c>AdminControllerBase.Flash</c> moves the value to and from TempData.
 /// </summary>
 public interface IFlashMessage
 {

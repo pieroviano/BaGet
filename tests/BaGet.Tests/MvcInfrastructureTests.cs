@@ -210,7 +210,7 @@ public class MvcInfrastructureTests : IDisposable
     }
 
     [Fact]
-    public async Task TheControllersOwnCheckRunsBeforeTheRepositoryCheck_AsThePageModelsDid()
+    public async Task TheControllersOwnCheckRunsBeforeTheRepositoryCheck()
     {
         // The controller answers 418 before the repository check would answer 404 (npm repository, NuGet page).
         using var response = await _anonymous.GetAsync("r/web/test-ui/order");
@@ -291,7 +291,7 @@ public sealed class TestRepositoryController : UiControllerBase
     public IActionResult Redirect() => RedirectToPage("/Test/RepoPage");
 }
 
-/// <summary>A repository page whose own check answers first (the order a page model's check had before the repository filter).</summary>
+/// <summary>A repository page whose own check answers first.</summary>
 [Route("test-ui/order")]
 [RepositoryPage]
 public sealed class TestOrderController : UiControllerBase

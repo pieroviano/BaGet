@@ -7,8 +7,7 @@ namespace BaGet.Web;
 /// <summary>
 /// The administration REST API (<c>/api/v1</c>) for people (<c>/admin/api</c>): where it is, how to authenticate (the key of an
 /// administrator with the <c>admin:api</c> scope, or the global key), the password confirmation header, and every operation with the
-/// page that offers the same operation. Read-only, administrators only. Replaces the <c>/Admin/Api</c> Razor Page
-/// (<c>BaGet.Web.Pages.Admin.ApiModel</c> is now an obsolete shim).
+/// page that offers the same operation. Read-only, administrators only. Replaces the <c>/Admin/Api</c> Razor Page.
 /// </summary>
 public sealed class ApiCatalogController : AdminControllerBase
 {

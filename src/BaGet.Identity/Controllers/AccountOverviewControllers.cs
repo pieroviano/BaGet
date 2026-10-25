@@ -9,7 +9,7 @@ namespace BaGet.Identity.Controllers;
 
 /// <summary>
 /// The signed-in user's organizations: create one, and manage the members of those the user administers. It replaces the Razor
-/// Page <c>Account/Organizations</c> (an obsolete page model remains as a shim): same URL, same <c>?handler=</c> forms.
+/// Page <c>Account/Organizations</c>: same URL, same <c>?handler=</c> forms.
 /// </summary>
 public sealed class AccountOrganizationsController : AccountControllerBase
 {
@@ -55,8 +55,7 @@ public sealed class AccountOrganizationsController : AccountControllerBase
 
 /// <summary>
 /// The signed-in user's own packages and permissions: "My packages", "My access" and the redirect to the user's profile. It
-/// replaces the Razor Pages <c>Account/Packages</c>, <c>Account/Access</c> and <c>Account/Profile</c> (obsolete page models
-/// remain as shims): same URLs. Every action needs a signed-in user.
+/// replaces the Razor Pages <c>Account/Packages</c>, <c>Account/Access</c> and <c>Account/Profile</c>: same URLs. Every action needs a signed-in user.
 /// </summary>
 public sealed class AccountPackagesController : AccountControllerBase
 {
@@ -88,7 +87,7 @@ public sealed class AccountPackagesController : AccountControllerBase
 
 /// <summary>
 /// A user's or an organization's public page: the packages it owns (<c>/profiles/{name}</c>, and under
-/// <c>/r/{repo}/</c> too). It replaces the Razor Page <c>Profiles/Profile</c> (an obsolete page model remains as a shim).
+/// <c>/r/{repo}/</c> too). It replaces the Razor Page <c>Profiles/Profile</c>.
 /// </summary>
 [RepositoryPage]
 public sealed class ProfileController : AccountControllerBase

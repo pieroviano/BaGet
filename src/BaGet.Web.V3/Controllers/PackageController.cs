@@ -8,7 +8,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// The page of a package (<c>/packages/{id}/{version?}</c>, and under <c>/r/{repo}/</c>): the requested version, else the newest
-/// listed one. Replaces the <c>/Package</c> Razor Page (<see cref="PackageModel"/> is now an obsolete shim). The access rule on the
+/// listed one. Replaces the <c>/Package</c> Razor Page. The access rule on the
 /// package (Read) is the repository check of <see cref="RepositoryPageAttribute"/>.
 /// </summary>
 [RepositoryPage]

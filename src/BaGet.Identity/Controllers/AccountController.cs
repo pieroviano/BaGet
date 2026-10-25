@@ -12,7 +12,7 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The sign-in side of the account screens: sign in (password and external provider), the two second-factor steps, sign out,
 /// registration, email confirmation, the password reset pair and re-authentication. It replaces the Razor Pages of
-/// <c>Pages/Account</c> of the same names (obsolete page models remain as shims): same URLs, same <c>?handler=</c> forms, same
+/// <c>Pages/Account</c> of the same names: same URLs, same <c>?handler=</c> forms, same
 /// <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>). The rules live in the workflows of <c>BaGet.Identity.Workflows</c>.
 /// </summary>
 public sealed class AccountController : AccountControllerBase

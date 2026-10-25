@@ -16,8 +16,7 @@ namespace BaGet.Identity.Workflows;
 /// <summary>
 /// The two package listings of the administrator: the package IDs that have no owner in any repository (those that predate
 /// accounts, and those left behind when their only owner's account was deleted; only administrators and the global API key may
-/// change them), and the IDs one user owns. Shared by the controllers and the obsolete <c>PackagesModel</c> and
-/// <c>UserPackagesModel</c>.
+/// change them), and the IDs one user owns. Used by the controllers.
 /// </summary>
 internal sealed class AdminPackagesWorkflow : AdminWorkflow
 {

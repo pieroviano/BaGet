@@ -3,16 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Base of every controller that serves a screen of BaGet's own web UI (the replacement of a Razor Page model). What it gives
-/// a screen is what a Razor Page had without asking:
+/// Base of every controller that serves a screen of BaGet's own web UI. What it gives a screen:
 /// <list type="bullet">
 /// <item><description><b>Antiforgery.</b> <see cref="AutoValidateAntiforgeryTokenAttribute"/>: every unsafe request (POST) without
 /// a valid token is answered 400 before anything else runs, as for a page. Never opt a UI action out.</description></item>
 /// <item><description><b>Handlers.</b> <see cref="PageHandlerAttribute"/> picks the action by <c>?handler=</c>, so form URLs
 /// do not change; <see cref="RequestedHandler"/> is the value.</description></item>
-/// <item><description><b>Filters.</b> The controller's own <c>OnActionExecuting</c>/<c>OnActionExecutionAsync</c> override is the
-/// replacement of a page model's <c>OnPageHandlerExecuting</c>/<c>OnPageHandlerExecutionAsync</c> and runs first, before
-/// the global <c>RepositoryActionFilter</c>, as the model's did before <c>RepositoryPageFilter</c>.</description></item>
+/// <item><description><b>Filters.</b> The controller's own <c>OnActionExecuting</c>/<c>OnActionExecutionAsync</c> override runs first, before
+/// the global <c>RepositoryActionFilter</c>.</description></item>
 /// </list>
 /// A UI controller also carries <see cref="LegacyPageAttribute"/> (its page name) and, for a page of a repository,
 /// <see cref="RepositoryPageAttribute"/>.

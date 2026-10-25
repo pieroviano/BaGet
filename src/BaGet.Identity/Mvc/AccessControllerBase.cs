@@ -12,8 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Base of the access-control screens (groups, permission targets, projects, audit): the controller counterpart of
-/// <c>AccessPageModel</c>. Signed in, accounts enabled, an administrator, unless a screen widens it to a project's administrators
+/// Base of the access-control screens (groups, permission targets, projects, audit). Signed in, accounts enabled, an administrator, unless a screen widens it to a project's administrators
 /// (<see cref="AuthorizeAsync"/>); anyone else gets 404. Needs a relational database: where there is no access model (Azure
 /// Table) every screen sends an administrator to <c>/admin/access-unavailable</c>, which says so. Every POST is refused with 503
 /// while the <see cref="MaintenanceGate"/> is closed, and changes go through <see cref="IAccessAdministration"/>, which audits
