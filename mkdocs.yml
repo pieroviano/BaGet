@@ -20,9 +20,9 @@ theme:
 
 extra:
   social:
-    - type: github-alt
-      link: https://github.com/loic-sharma
-    - type: twitter
+    - icon: fontawesome/brands/github
+      link: https://github.com/pieroviano/BaGet
+    - icon: fontawesome/brands/x-twitter
       link: https://twitter.com/bagetapp
 
 markdown_extensions:
@@ -31,6 +31,10 @@ markdown_extensions:
       guess_lang: false
   - markdown.extensions.toc:
       permalink: true
+
+# Plan documents are working notes, never published (CLAUDE.md).
+exclude_docs: |
+  plans/
 
 nav:
   - Overview: index.md

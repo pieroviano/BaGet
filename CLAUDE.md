@@ -547,4 +547,4 @@ needs a migration **per provider**, and all four must report no pending model ch
 - Model-level cascade-delete configuration caused `PendingModelChangesWarning` across every integration
   test; orphan cleanup lives in `PackageDatabase.HardDeletePackageAsync` instead.
 
-Documentation is mkdocs (`mkdocs.yml`, `docs/`).
+Documentation is mkdocs (`mkdocs.yml`, `docs/`; `docs/plans/` excluded). `.github/workflows/docs.yml` builds it with `--strict` and deploys it to GitHub Pages (https://pieroviano.github.io/BaGet/) on every push to `main` (Pages source must be "GitHub Actions").
