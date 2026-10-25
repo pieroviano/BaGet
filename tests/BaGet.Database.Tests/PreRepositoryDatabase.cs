@@ -143,7 +143,7 @@ public static class PreRepositoryDatabase
             _engine = engine;
         }
 
-        private string Quote(string name) => _engine switch
+        public string Quote(string name) => _engine switch
         {
             "SqlServer" => "[" + name + "]",
             "MySql" => "`" + name + "`",

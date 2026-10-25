@@ -9,7 +9,10 @@ public class SqliteContext : AbstractContext<SqliteContext>
     /// <summary>
     /// The Sqlite error code for when a unique constraint is violated.
     /// </summary>
-    private const int SqliteUniqueConstraintViolationErrorCode = 19;
+    // The extended result codes: the primary code 19 (SQLITE_CONSTRAINT) also covers foreign key and NOT NULL violations,
+    // which are not "already exists".
+    private const int SqliteConstraintUnique = 2067;
+    private const int SqliteConstraintPrimaryKey = 1555;
 
     public SqliteContext(DbContextOptions<SqliteContext> options)
         : base(options)
@@ -18,7 +21,7 @@ public class SqliteContext : AbstractContext<SqliteContext>
     public override bool IsUniqueConstraintViolationException(DbUpdateException exception)
     {
         return exception.InnerException is SqliteException sqliteException &&
-               sqliteException.SqliteErrorCode == SqliteUniqueConstraintViolationErrorCode;
+               sqliteException.SqliteExtendedErrorCode is SqliteConstraintUnique or SqliteConstraintPrimaryKey;
     }
 
     protected override void OnModelCreating(ModelBuilder builder)

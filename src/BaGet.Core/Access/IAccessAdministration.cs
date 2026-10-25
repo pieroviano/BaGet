@@ -463,14 +463,18 @@ public class AccessAdministration : IAccessAdministration
         var repositories = await _context.Repositories!.Where(r => r.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var repository in repositories) repository.ProjectKey = null;
-        _context.ScanPolicies!.RemoveRange(await _context.ScanPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false));
-        // The project's retention policy applies to nothing once it is gone (and its ProjectKey is a foreign key).
-        _context.RetentionPolicies!.RemoveRange(await _context.RetentionPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        var scanPolicies = await _context.ScanPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
+        _context.ScanPolicies!.RemoveRange(scanPolicies);
+        // The project's retention policy applies to nothing once it is gone (and its ProjectKey is a foreign key). A run of it that is
+        // still going ends normally: it only reads the policy up front and RetentionEngine.RecordRunAsync skips a policy that is gone.
+        var retentionPolicies = await _context.RetentionPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false);
+        _context.RetentionPolicies!.RemoveRange(retentionPolicies);
+        foreach (var policy in retentionPolicies) Audit(actor, "retention.policy.delete", policy.Name, new { project = project.Name, reason = "project deleted" });
         _context.PermissionGrants!.RemoveRange(grants);
         _context.PermissionTargets!.RemoveRange(targets);
         _context.ProjectMembers!.RemoveRange(members);
         _context.Projects!.Remove(project);
-        Audit(actor, "project.delete", project.Name, new { targets = targets.Count, members = members.Count, repositories = repositories.Count });
+        Audit(actor, "project.delete", project.Name, new { targets = targets.Count, members = members.Count, repositories = repositories.Count, scanPolicies = scanPolicies.Count, retentionPolicies = retentionPolicies.Count });
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

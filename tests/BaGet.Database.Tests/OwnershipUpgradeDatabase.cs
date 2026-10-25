@@ -167,6 +167,59 @@ public static class OwnershipUpgradeDatabase
             await seed.InsertAsync("ReplicationItems", new() { ["ConfigKey"] = config, ["Name"] = "n", ["Version"] = "1", ["Part"] = string.Empty, ["Synced"] = now }, token).ConfigureAwait(false);
         }
 
+        // Maven, catalog, abuse reports, symbols, deprecations and vulnerabilities, holds, usage, blob links, upload sessions.
+        foreach (var (name, repository) in new[] { ("valid", 1), ("orphan", MissingRepository) })
+        {
+            await seed.InsertAsync("MavenArtifacts", new() { ["GroupId"] = "g." + name, ["ArtifactId"] = "a", ["Created"] = now, ["Modified"] = now, ["RepositoryKey"] = repository }, token).ConfigureAwait(false);
+            var artifact = await seed.MaxKeyAsync("MavenArtifacts", token).ConfigureAwait(false);
+            await seed.InsertAsync("MavenVersions", new() { ["ArtifactKey"] = artifact, ["Version"] = "1.0", ["IsSnapshot"] = false, ["Created"] = now, ["Modified"] = now }, token).ConfigureAwait(false);
+            var version = await seed.MaxKeyAsync("MavenVersions", token).ConfigureAwait(false);
+            await seed.InsertAsync("MavenFiles", new()
+            {
+                ["VersionKey"] = version, ["FileName"] = "a-1.0.jar", ["Extension"] = "jar", ["Size"] = 1L, ["SnapshotBuild"] = 0, ["Created"] = now,
+                ["Sha1"] = "x", ["Md5"] = "x", ["Sha256"] = "x", ["Sha512"] = "x",
+            }, token).ConfigureAwait(false);
+            await seed.InsertAsync("CatalogLeafs", new()
+            {
+                ["CommitId"] = Guid.NewGuid().ToString("D"), ["CommitTimestamp"] = now, ["Type"] = "nuget:PackageDetails", ["PackageId"] = name, ["PackageVersion"] = "1.0.0", ["RepositoryKey"] = repository,
+            }, token).ConfigureAwait(false);
+            await seed.InsertAsync("AbuseReports", new() { ["PackageId"] = name, ["PackageVersion"] = "1.0.0", ["Reason"] = "Other", ["Details"] = "d", ["Created"] = now, ["RepositoryKey"] = repository }, token).ConfigureAwait(false);
+            await seed.InsertAsync("PackageSymbols", new() { ["PackageId"] = name, ["PackageVersion"] = "1.0.0", ["FileName"] = "a.pdb", ["SymbolKey"] = "k", ["Created"] = now, ["RepositoryKey"] = repository }, token).ConfigureAwait(false);
+            await seed.InsertAsync("RetentionHolds", new() { ["Name"] = name, ["Version"] = string.Empty, ["Created"] = now, ["RepositoryKey"] = repository }, token).ConfigureAwait(false);
+            await seed.InsertAsync("ArtifactUsages", new() { ["Name"] = name, ["Version"] = "1", ["LastUsed"] = now, ["RepositoryKey"] = repository }, token).ConfigureAwait(false);
+        }
+
+        foreach (var package in new[] { "Valid.Package", "Orphan.Package" })
+        {
+            var key = await seed.PackageKeyAsync(package, "1.0.0", token).ConfigureAwait(false);
+            await seed.InsertAsync("PackageDeprecations", new() { ["Reasons"] = "[]", ["PackageKey"] = key }, token).ConfigureAwait(false);
+            await seed.InsertAsync("PackageVulnerabilities", new() { ["Severity"] = 1, ["PackageKey"] = key }, token).ConfigureAwait(false);
+        }
+
+        // Image-level rows: a link and an upload session of the valid image and of the orphan one, both linking a valid blob.
+        var images = new Dictionary<string, int>();
+        foreach (var name in new[] { "valid/image", "orphan/image" })
+        {
+            using var lookup = connection.CreateCommand();
+            lookup.CommandText = "SELECT " + seed.Quote("Key") + " FROM " + seed.Quote("OciRepositories") + " WHERE " + seed.Quote("Name") + " = '" + name + "'";
+            images[name] = Convert.ToInt32(await lookup.ExecuteScalarAsync(token).ConfigureAwait(false));
+        }
+
+        await seed.InsertAsync("OciBlobs", new() { ["Digest"] = "sha256:" + new string('c', 64), ["Size"] = 1L, ["RefCount"] = 1, ["Created"] = now, ["RepositoryKey"] = 1 }, token).ConfigureAwait(false);
+        var validBlob = await seed.MaxKeyAsync("OciBlobs", token).ConfigureAwait(false);
+        foreach (var (image, name) in new[] { (images["valid/image"], "valid"), (images["orphan/image"], "orphan") })
+        {
+            await seed.InsertAsync("OciBlobLinks", new() { ["ImageKey"] = image, ["BlobKey"] = validBlob, ["Manifests"] = 0, ["Created"] = now }, token).ConfigureAwait(false);
+            await seed.InsertAsync("OciUploads", new() { ["ImageKey"] = image, ["Reference"] = name, ["StorageUploadId"] = "u", ["Created"] = now, ["Updated"] = now }, token).ConfigureAwait(false);
+        }
+
+        // Organization memberships: of a missing user, of no organization, and a valid one.
+        await seed.InsertAsync("Organizations", new() { ["Name"] = "org", ["Created"] = now }, token).ConfigureAwait(false);
+        var organization = await seed.MaxKeyAsync("Organizations", token).ConfigureAwait(false);
+        await seed.InsertAsync("OrganizationMembers", new() { ["OrganizationKey"] = organization, ["UserId"] = User, ["IsAdmin"] = true }, token).ConfigureAwait(false);
+        await seed.InsertAsync("OrganizationMembers", new() { ["OrganizationKey"] = organization, ["UserId"] = MissingUser, ["IsAdmin"] = false }, token).ConfigureAwait(false);
+        await seed.InsertAsync("OrganizationMembers", new() { ["OrganizationKey"] = null, ["UserId"] = User, ["IsAdmin"] = false }, token).ConfigureAwait(false);
+
         await RunRow(seed, MissingConfig, now, token).ConfigureAwait(false);
         await seed.InsertAsync("ReplicationItems", new() { ["ConfigKey"] = MissingConfig, ["Name"] = "n", ["Version"] = "1", ["Part"] = string.Empty, ["Synced"] = now }, token).ConfigureAwait(false);
     }
@@ -224,11 +277,73 @@ public static class OwnershipUpgradeDatabase
         Assert.Equal(new[] { "valid/image" }, await context.OciRepositories!.IgnoreQueryFilters().Select(i => i.Name!).ToListAsync(token));
         Assert.Equal(1, await context.OciManifests!.CountAsync(token));
         Assert.Equal(1, await context.OciTags!.CountAsync(token));
-        Assert.Equal(0, await context.OciBlobs!.IgnoreQueryFilters().CountAsync(token));
+        Assert.Equal(1, await context.OciBlobs!.IgnoreQueryFilters().CountAsync(token)); // the orphan blob is gone, the valid one stays
         Assert.Equal(new[] { "valid-scan" }, await context.ScanResults!.IgnoreQueryFilters().Select(r => r.Name!).ToListAsync(token));
         Assert.Equal(1, await context.ScanFindings!.CountAsync(token));
         Assert.Equal(new[] { "c-ok" }, await context.ReplicationConfigs!.Select(c => c.Name!).ToListAsync(token));
         Assert.Equal(1, await context.ReplicationRuns!.CountAsync(token));
         Assert.Equal(1, await context.ReplicationItems!.CountAsync(token));
+
+        // Maven, catalog, abuse reports, symbols, holds, usage, deprecations, vulnerabilities, blob links, uploads, memberships.
+        Assert.Equal(new[] { "g.valid" }, await context.MavenArtifacts!.IgnoreQueryFilters().Select(a => a.GroupId!).ToListAsync(token));
+        Assert.Equal(1, await context.MavenVersions!.CountAsync(token));
+        Assert.Equal(1, await context.MavenFiles!.CountAsync(token));
+        Assert.Equal(new[] { "valid" }, await context.CatalogLeafs!.IgnoreQueryFilters().Select(c => c.PackageId!).ToListAsync(token));
+        Assert.Equal(new[] { "valid" }, await context.AbuseReports!.IgnoreQueryFilters().Select(c => c.PackageId!).ToListAsync(token));
+        Assert.Equal(new[] { "valid" }, await context.PackageSymbols!.IgnoreQueryFilters().Select(c => c.PackageId!).ToListAsync(token));
+        Assert.Equal(new[] { "valid" }, await context.RetentionHolds!.IgnoreQueryFilters().Select(c => c.Name!).ToListAsync(token));
+        Assert.Equal(new[] { "valid" }, await context.ArtifactUsages!.IgnoreQueryFilters().Select(c => c.Name!).ToListAsync(token));
+        Assert.Equal(1, await ((DbContext)context).Set<PackageDeprecation>().CountAsync(token));
+        Assert.Equal(1, await ((DbContext)context).Set<PackageVulnerability>().CountAsync(token));
+        Assert.Equal(new[] { 1 }, await context.OciBlobs!.IgnoreQueryFilters().Select(b => b.RepositoryKey).ToListAsync(token));
+        Assert.Equal(1, await context.OciBlobLinks!.CountAsync(token));
+        Assert.Equal(new[] { "valid" }, await context.OciUploads!.Select(u => u.Reference!).ToListAsync(token));
+        var member = Assert.Single(await context.OrganizationMembers!.ToListAsync(token));
+        Assert.Equal((User, true), (member.UserId, member.IsAdmin));
+    }
+
+    /// <summary>
+    /// A database with rows in repository 1 but no Repositories row 1 (migrated by an early AddRepositories, never started):
+    /// <see cref="AssertDefaultRepositoryCreatedAsync"/> checks it after the migrations.
+    /// </summary>
+    public static async Task CreateWithoutDefaultRepositoryAsync(IDatabaseContextFactory factory, string connectionString, DatabaseOptions options, CancellationToken token)
+    {
+        await using var context = (DbContext)factory.Create(connectionString, options);
+        context.GetService<IMigrator>().Migrate(LastBeforeForeignKeys(context));
+
+        var connection = context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync(token).ConfigureAwait(false);
+        var seed = new PreRepositoryDatabase.Inserter(connection, options.Type ?? string.Empty);
+        var now = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+
+        using (var delete = connection.CreateCommand())
+        {
+            delete.CommandText = "DELETE FROM " + seed.Quote("Repositories");
+            await delete.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+        }
+
+        foreach (var (id, repository) in new[] { ("Kept.Package", 1), ("Orphan.Package", MissingRepository) })
+        {
+            await seed.InsertAsync("Packages", new()
+            {
+                ["Id"] = id, ["Version"] = "1.0.0", ["Authors"] = "[]", ["Downloads"] = 0L, ["HasReadme"] = false, ["Listed"] = true,
+                ["Published"] = now, ["RequireLicenseAcceptance"] = false, ["Tags"] = "[]", ["IsPrerelease"] = false, ["SemVerLevel"] = 0,
+                ["OriginalVersion"] = "1.0.0", ["HasEmbeddedIcon"] = false, ["RepositoryKey"] = repository,
+            }, token).ConfigureAwait(false);
+            await seed.InsertAsync("PackageOwners", new() { ["PackageId"] = id, ["OwnerName"] = "ok", ["IsVerified"] = false, ["RepositoryKey"] = repository }, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>After the migrations: row 1 exists as <c>default</c>, the rows of repository 1 are kept, the other orphans are gone.</summary>
+    public static async Task AssertDefaultRepositoryCreatedAsync(IContext context, CancellationToken token)
+    {
+        var repository = await context.Repositories!.SingleAsync(token);
+        Assert.Equal((Repository.DefaultKey, Repository.DefaultName), (repository.Key, repository.Name));
+        Assert.Equal(new[] { "Kept.Package" }, await context.Packages!.IgnoreQueryFilters().Select(p => p.Id!).ToListAsync(token));
+        Assert.Equal(new[] { "Kept.Package" }, await context.PackageOwners!.IgnoreQueryFilters().Select(o => o.PackageId!).ToListAsync(token));
+
+        // The key sequence continues after row 1 on every engine.
+        var created = await new RepositoryService(context).CreateAsync("next", RepositoryFormat.NuGet, RepositoryKind.Local, token);
+        Assert.Equal(Repository.DefaultKey + 1, created.Key);
     }
 }

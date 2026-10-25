@@ -381,6 +381,12 @@ public class AccountDeletionService
 
         await StageAccessCleanupAsync(PrincipalType.User, user?.Id, cancellationToken);
 
+        // A membership of no organization (OrganizationKey is optional, a legacy row) is not found by OrganizationsToLeaveAsync, but
+        // OrganizationMember.UserId is a foreign key to the user.
+        #pragma warning disable CS8602
+        _context.OrganizationMembers.RemoveRange(await _context.OrganizationMembers.Where(m => m.UserId == user.Id && m.OrganizationKey == null).ToListAsync(cancellationToken));
+        #pragma warning restore CS8602
+
         foreach (var organization in await OrganizationsToLeaveAsync(user, cancellationToken))
         {
             #pragma warning disable CS8604

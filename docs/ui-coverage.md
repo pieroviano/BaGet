@@ -193,7 +193,7 @@ Every operation below has the page that offers the same operation and the same g
 | Give a user, group or organization actions through a permission target (none removes the grant) | REST `PUT /api/v1/permission-targets/{name}/grants` | `/Admin/PermissionDetail` | Admin key + password |
 | List projects with their repository and member counts | REST `GET /api/v1/projects` | `/Admin/Projects` | Admin key |
 | Create a project | REST `POST /api/v1/projects` | `/Admin/Projects` | Admin key |
-| Delete a project with its members and targets (its repositories stay) | REST `DELETE /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key + password |
+| Delete a project with its members, targets and retention/scan policies (its repositories stay) | REST `DELETE /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key + password |
 | Show a project with its repositories, members and permission targets | REST `GET /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key |
 | Give a user or group a role in a project | REST `PUT /api/v1/projects/{name}/members` | `/Admin/ProjectDetail` | Admin key + password |
 | Remove a user or group from a project | REST `DELETE /api/v1/projects/{name}/members/{type}/{principal}` | `/Admin/ProjectDetail` | Admin key + password |

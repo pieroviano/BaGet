@@ -171,6 +171,66 @@ public class OwnershipForeignKeyTests : IDisposable
     }
 
     [Fact]
+    public async Task AMissingDefaultRepositoryRowIsCreatedAndItsRowsAreKept()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "BaGetOwnershipUpgrade", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var connection = "Data Source=" + Path.Combine(directory, "old.db");
+            var options = new DatabaseOptions { Type = "Sqlite" };
+            var factory = new SqliteDatabaseContextFactory();
+
+            await OwnershipUpgradeDatabase.CreateWithoutDefaultRepositoryAsync(factory, connection, options, Token);
+
+            await using var context = (DbContext)factory.Create(connection, options);
+            await ((IContext)context).RunMigrationsAsync(Token);
+
+            await OwnershipUpgradeDatabase.AssertDefaultRepositoryCreatedAsync((IContext)context, Token);
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(directory, recursive: true); } catch (IOException) { }
+        }
+    }
+
+    [Fact]
+    public async Task AForeignKeyViolationIsNotAUniqueConstraintViolation()
+    {
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<IContext>();
+
+        context.PackageOwners!.Add(new PackageOwner { RepositoryKey = 4242, PackageId = "x", OwnerName = "y" });
+        var foreign = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync(Token));
+        Assert.False(context.IsUniqueConstraintViolationException(foreign));
+        ((DbContext)context).ChangeTracker.Clear();
+
+        context.Groups!.Add(new Group { Name = "dup", Created = DateTime.UtcNow });
+        await context.SaveChangesAsync(Token);
+        context.Groups!.Add(new Group { Name = "dup", Created = DateTime.UtcNow });
+        var unique = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync(Token));
+        Assert.True(context.IsUniqueConstraintViolationException(unique));
+    }
+
+    [Fact]
+    public async Task DeletingAUserAlsoRemovesAMembershipOfNoOrganization()
+    {
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<IContext>();
+        var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGetUser>>();
+        var user = new BaGetUser { UserName = "legacy", Email = "legacy@example.org" };
+        Assert.True((await users.CreateAsync(user, "Passw0rd!x1")).Succeeded);
+        context.OrganizationMembers!.Add(new OrganizationMember { OrganizationKey = null, UserId = user.Id, IsAdmin = false });
+        await context.SaveChangesAsync(Token);
+
+        var (_, result) = await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AccountDeletionService>().DeleteAsync(user, Token);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(await context.OrganizationMembers!.ToListAsync(Token));
+    }
+
+    [Fact]
     public async Task TheUpgradeMigrationDeletesOrphansAndKeepsValidRows()
     {
         var directory = Path.Combine(Path.GetTempPath(), "BaGetOwnershipUpgrade", Guid.NewGuid().ToString("N"));

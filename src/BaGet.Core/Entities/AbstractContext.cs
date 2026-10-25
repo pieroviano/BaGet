@@ -570,7 +570,7 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
         tag.Property(t => t.Name).HasMaxLength(MaxOciTagLength).IsRequired();
 
-        // The image is a Restrict foreign key (BuildOwnershipForeignKeys): deleting an image reaches its tags through its manifests
+        // The image is a NoAction foreign key (BuildOwnershipForeignKeys): deleting an image reaches its tags through its manifests
         // (one cascade path, which SQL Server requires).
         tag.HasOne<OciManifest>().WithMany().HasForeignKey(t => t.ManifestKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
     }

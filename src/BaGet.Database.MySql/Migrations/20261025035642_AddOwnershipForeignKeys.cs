@@ -13,7 +13,7 @@ namespace BaGet.Database.MySql.Migrations
         {
             // Rows that pointed at nothing are removed first (children before parents), or the constraints below could not be created.
             // On SQLite this runs before the table rebuilds that add the foreign keys.
-            foreach (var sql in OwnershipOrphanCleanup.Statements(name => "`" + name + "`"))
+            foreach (var sql in OwnershipOrphanCleanup.Statements(OwnershipEngine.MySql))
             {
                 migrationBuilder.Sql(sql);
             }

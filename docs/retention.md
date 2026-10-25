@@ -6,7 +6,7 @@ remote cache, remove untagged Docker manifests and collect their blobs. Everythi
 
 ## Policies
 
-A policy applies to **one repository** or to **every repository of a project** (virtual repositories store nothing and
+A policy applies to **one repository** or to **every repository of a project** (deleting the repository or the project deletes its policies, audited) (virtual repositories store nothing and
 are skipped). A version is deleted when **any enabled rule selects it** and no legal hold covers it.
 
 | Rule | Selects | Notes |

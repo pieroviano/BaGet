@@ -75,19 +75,13 @@ public class DockerFormatModule : IFormatModule
     }
 
     /// <inheritdoc/>
-    /// <remarks>An empty repository has no images, so manifests, tags, links and sessions (which cascade) are gone; what is left are blob rows nobody holds.</remarks>
+    /// <remarks>
+    /// <see cref="GetUsageAsync"/> counts image rows, and a repository is deleted only when it has none, so the images and with them
+    /// the manifests, tags, links and upload sessions are already gone here; what can be left are blob rows nobody holds.
+    /// </remarks>
     public async Task StagePurgeAsync(IContext context, int repositoryKey, CancellationToken cancellationToken)
     {
-        // Images with no manifest are not artifacts, but they and their blobs are rows of the repository (foreign keys): tags and links
-        // first, then the images (manifests and upload sessions cascade) and the blobs.
-        var images = await context.OciRepositories!.IgnoreQueryFilters().Where(i => i.RepositoryKey == repositoryKey).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var blobs = await context.OciBlobs!.IgnoreQueryFilters().Where(b => b.RepositoryKey == repositoryKey).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var imageKeys = images.Select(i => i.Key).ToList();
-        var blobKeys = blobs.Select(b => b.Key).ToList();
-        context.OciTags!.RemoveRange(await context.OciTags!.Where(t => imageKeys.Contains(t.ImageKey)).ToListAsync(cancellationToken).ConfigureAwait(false));
-        context.OciBlobLinks!.RemoveRange(await context.OciBlobLinks!.Where(l => imageKeys.Contains(l.ImageKey) || blobKeys.Contains(l.BlobKey)).ToListAsync(cancellationToken).ConfigureAwait(false));
-        context.OciRepositories!.RemoveRange(images);
-        context.OciBlobs!.RemoveRange(blobs);
+        context.OciBlobs!.RemoveRange(await context.OciBlobs!.IgnoreQueryFilters().Where(b => b.RepositoryKey == repositoryKey).ToListAsync(cancellationToken).ConfigureAwait(false));
     }
 }
 

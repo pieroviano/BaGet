@@ -3,6 +3,15 @@ using System.Collections.Generic;
 
 namespace BaGet.Core;
 
+/// <summary>The engines <see cref="OwnershipOrphanCleanup"/> writes SQL for.</summary>
+public enum OwnershipEngine
+{
+    Sqlite,
+    SqlServer,
+    PostgreSql,
+    MySql,
+}
+
 /// <summary>
 /// The SQL the <c>AddOwnershipForeignKeys</c> migration of every provider runs <b>before</b> it adds the foreign keys: rows that
 /// already pointed at a repository, project, user or replication configuration that does not exist are removed (or, for an
@@ -19,17 +28,44 @@ namespace BaGet.Core;
 /// </remarks>
 public static class OwnershipOrphanCleanup
 {
-    /// <param name="quote">Quotes one identifier for the target engine.</param>
-    public static IReadOnlyList<string> Statements(Func<string, string> quote)
+    /// <param name="engine">The engine the statements run on.</param>
+    public static IReadOnlyList<string> Statements(OwnershipEngine engine)
     {
-        if (quote == null) throw new ArgumentNullException(nameof(quote));
-
-        var q = quote;
+        Func<string, string> q = engine switch
+        {
+            OwnershipEngine.SqlServer => name => "[" + name + "]",
+            OwnershipEngine.MySql => name => "`" + name + "`",
+            _ => name => "\"" + name + "\"",
+        };
         var statements = new List<string>();
         void Run(string sql) => statements.Add(sql);
 
+        // The default repository (key 1) may be missing: a database migrated by an early AddRepositories (before the migration
+        // inserted the row) and not started since. Every row of key 1 belongs to it, so the row is created first, as
+        // AddRepositories and RepositoryService.EnsureDefaultAsync do, and key 1 is never treated as missing below.
+        var now = engine switch
+        {
+            OwnershipEngine.SqlServer => "SYSUTCDATETIME()",
+            OwnershipEngine.PostgreSql => "now()",
+            OwnershipEngine.MySql => "UTC_TIMESTAMP(6)",
+            _ => "CURRENT_TIMESTAMP",
+        };
+        var yes = engine == OwnershipEngine.PostgreSql ? "TRUE" : "1";
+        var dual = engine == OwnershipEngine.MySql ? " FROM DUAL" : string.Empty;
+        var insertDefault =
+            $"INSERT INTO {q("Repositories")} ({q("Key")}, {q("Name")}, {q("Format")}, {q("Kind")}, {q("AnonymousRead")}, {q("Created")}) " +
+            $"SELECT {Repository.DefaultKey}, '{Repository.DefaultName}', 'NuGet', 'Local', {yes}, {now}{dual} " +
+            $"WHERE NOT EXISTS (SELECT 1 FROM {q("Repositories")} WHERE {q("Key")} = {Repository.DefaultKey} OR {q("Name")} = '{Repository.DefaultName}')";
+        if (engine == OwnershipEngine.SqlServer) Run($"SET IDENTITY_INSERT {q("Repositories")} ON");
+        Run(insertDefault);
+        if (engine == OwnershipEngine.SqlServer) Run($"SET IDENTITY_INSERT {q("Repositories")} OFF");
+        if (engine == OwnershipEngine.PostgreSql)
+        {
+            Run($"SELECT setval(pg_get_serial_sequence('\"Repositories\"', 'Key'), (SELECT MAX({q("Key")}) FROM {q("Repositories")}))");
+        }
+
         string Repos = $"SELECT {q("Key")} FROM {q("Repositories")}";
-        string Missing(string column) => $"{q(column)} NOT IN ({Repos})";
+        string Missing(string column) => $"({q(column)} <> {Repository.DefaultKey} AND {q(column)} NOT IN ({Repos}))";
         string Delete(string table, string where) => $"DELETE FROM {q(table)} WHERE {where}";
 
         // Users: keys (their repository limits go with them), memberships.
@@ -37,6 +73,8 @@ public static class OwnershipOrphanCleanup
         Run(Delete("ApiKeys", noUser));
         Run(Delete("GroupMembers", noUser));
         Run(Delete("OrganizationMembers", noUser));
+        // A membership of no organization (the key is optional) is nothing; the user's foreign key would otherwise be the only link.
+        Run(Delete("OrganizationMembers", $"{q("OrganizationKey")} IS NULL"));
 
         // API keys limited only to missing repositories would become unlimited: delete them (the limit rows cascade).
         Run(Delete("ApiKeys",

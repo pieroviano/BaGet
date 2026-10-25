@@ -108,6 +108,22 @@ public class EngineUpgradeTests
 
     [Theory]
     [MemberData(nameof(EngineTypes))]
+    public async Task AMissingDefaultRepositoryRowIsCreatedNotTreatedAsAnOrphan(string type)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var engine = await Engines.GetOrSkipAsync(type);
+        var connection = engine.NewConnectionString();
+
+        await OwnershipUpgradeDatabase.CreateWithoutDefaultRepositoryAsync(engine.Factory, connection, engine.Options, cancellationToken);
+
+        await using var context = (DbContext)engine.Factory.Create(connection, engine.Options);
+        await ((IContext)context).RunMigrationsAsync(cancellationToken);
+
+        await OwnershipUpgradeDatabase.AssertDefaultRepositoryCreatedAsync((IContext)context, cancellationToken);
+    }
+
+    [Theory]
+    [MemberData(nameof(EngineTypes))]
     public async Task OrphanRowsAreRemovedBeforeTheOwnershipForeignKeysAreAdded(string type)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
