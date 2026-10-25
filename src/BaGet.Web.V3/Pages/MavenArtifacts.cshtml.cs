@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,26 +9,27 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace BaGet.Web;
 
 /// <summary>
-/// The front page of a Maven repository: a search box and the artifacts whose coordinates or POM name or description contain the
-/// text, by coordinates, with the configuration that points Maven and Gradle at the repository (<c>settings.xml</c>,
-/// <c>distributionManagement</c>). Served at <c>/r/{repo}/maven-artifacts</c> (<see cref="RepositoryPageRouteConvention"/>);
-/// <see cref="RepositoryPageFilter"/> requires Read on the repository and answers 404 in a repository that is not Maven's.
+/// The page model of the front page of a Maven repository when it was a Razor Page.
 /// </summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <see cref="MavenBrowseController"/> serves <c>/maven-artifacts</c> (and its <c>/r/{repo}/</c> twin) and
+/// shares the logic (<c>MavenArtifactsWorkflow</c>).
+/// </remarks>
+[Obsolete("The Maven artifact list is served by MavenBrowseController; this page model has no page any more and will be removed in the next major version.")]
 public class MavenArtifactsModel : PageModel
 {
     /// <summary>Artifacts per page.</summary>
-    public const int ResultsPerPage = 20;
+    public const int ResultsPerPage = MavenArtifactsWorkflow.ResultsPerPage;
 
-    private readonly IMavenRepository _maven;
+    private readonly MavenArtifactsWorkflow _workflow;
     private readonly IUrlGenerator _urls;
-    private readonly IRepositoryAccess _access;
     private readonly IRepositoryContext _repository;
 
     public MavenArtifactsModel(IMavenRepository maven, IUrlGenerator urls, IRepositoryAccess access, IRepositoryContext repository)
     {
-        _maven = maven ?? throw new ArgumentNullException(nameof(maven));
+        _workflow = new MavenArtifactsWorkflow(maven, urls, access, repository);
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
-        _access = access ?? throw new ArgumentNullException(nameof(access));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
@@ -60,31 +60,16 @@ public class MavenArtifactsModel : PageModel
     /// <summary>Whether another page follows.</summary>
     public bool HasNext => PageIndex * ResultsPerPage < Result.Total;
 
-    internal IReadOnlyList<InstallSnippet> ConfigurationTabs { get; private set; } = Array.Empty<InstallSnippet>();
+    internal System.Collections.Generic.IReadOnlyList<InstallSnippet> ConfigurationTabs { get; private set; } = Array.Empty<InstallSnippet>();
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return BadRequest();
 
-        // The listing names only the artifacts whose pages the visitor may open.
-        var repository = _repository.Current;
-        Result = await _maven.SearchAsync(
-            Query,
-            (PageIndex - 1) * ResultsPerPage,
-            ResultsPerPage,
-            (name, token) => _access.CanReadPackageAsync(User, repository, name, token),
-            cancellationToken);
-        Settings = await _maven.GetSettingsAsync(cancellationToken);
-
-        var id = RepositoryName;
-        var url = RepositoryUrl;
-        var tabs = new List<InstallSnippet> { new() { Name = "settings.xml", Lines = MavenSnippets.SettingsXml(id) } };
-        if (Kind == RepositoryKind.Remote) tabs.Add(new InstallSnippet { Name = "Mirror of Maven Central (settings.xml)", Lines = MavenSnippets.Mirror(id, url) });
-        if (Kind != RepositoryKind.Remote) tabs.Add(new InstallSnippet { Name = "Deploy (pom.xml)", Lines = MavenSnippets.DistributionManagement(id, url) });
-
-        tabs.Add(new InstallSnippet { Name = "Resolve (pom.xml)", Lines = MavenSnippets.Repositories(id, url, Settings.Policy != MavenPolicy.Snapshots, Settings.Policy != MavenPolicy.Releases) });
-        tabs.Add(new InstallSnippet { Name = "Gradle", Lines = MavenSnippets.GradleRepository(url) });
-        ConfigurationTabs = tabs;
+        var model = await _workflow.LoadAsync(Query, PageIndex, User, cancellationToken);
+        Result = model.Result;
+        Settings = model.Settings;
+        ConfigurationTabs = model.ConfigurationTabs;
 
         return Page();
     }

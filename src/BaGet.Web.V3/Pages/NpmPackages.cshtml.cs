@@ -9,26 +9,25 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace BaGet.Web;
 
 /// <summary>
-/// The front page of an npm repository: a search box and the packages whose name contains the text, ordered by name, with the
-/// commands that point a client at the registry. Served at <c>/r/{repo}/npm-packages</c> (<see cref="RepositoryPageRouteConvention"/>);
-/// <see cref="RepositoryPageFilter"/> requires Read on the repository and answers 404 in a repository that is not npm's.
+/// The page model of the front page of an npm repository when it was a Razor Page.
 /// </summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <see cref="NpmBrowseController"/> serves <c>/npm-packages</c> (and <c>/r/{repo}/npm-packages</c>) and
+/// shares the logic (<c>NpmPackagesWorkflow</c>).
+/// </remarks>
+[Obsolete("The npm package list is served by NpmBrowseController; this page model has no page any more and will be removed in the next major version.")]
 public class NpmPackagesModel : PageModel
 {
     /// <summary>Packages per page.</summary>
-    public const int ResultsPerPage = 20;
+    public const int ResultsPerPage = NpmPackagesWorkflow.ResultsPerPage;
 
-    private readonly INpmRegistry _registry;
+    private readonly NpmPackagesWorkflow _workflow;
     private readonly IUrlGenerator _urls;
-
-    private readonly IRepositoryAccess _access;
-    private readonly IRepositoryContext _repository;
 
     public NpmPackagesModel(INpmRegistry registry, IUrlGenerator urls, IRepositoryAccess access, IRepositoryContext repository)
     {
-        _access = access ?? throw new ArgumentNullException(nameof(access));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _workflow = new NpmPackagesWorkflow(registry, urls, access, repository);
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
     }
 
@@ -54,14 +53,7 @@ public class NpmPackagesModel : PageModel
     {
         if (!ModelState.IsValid) return BadRequest();
 
-        // The listing names only the packages whose pages the visitor may open.
-        var repository = _repository.Current;
-        Result = await _registry.SearchAsync(
-            Query,
-            (PageIndex - 1) * ResultsPerPage,
-            ResultsPerPage,
-            (name, token) => _access.CanReadPackageAsync(User, repository, name, token),
-            cancellationToken);
+        Result = (await _workflow.LoadAsync(Query, PageIndex, User, cancellationToken)).Result;
 
         return Page();
     }

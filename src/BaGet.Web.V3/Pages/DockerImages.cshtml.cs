@@ -10,26 +10,25 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace BaGet.Web;
 
 /// <summary>
-/// The front page of a Docker repository: a search box and the images whose name contains the text, with the commands that point
-/// Docker at the registry (<c>docker login</c>, pull, push, multi-platform push). Served at <c>/r/{repo}/docker-images</c>
-/// (<see cref="RepositoryPageRouteConvention"/>); <see cref="RepositoryPageFilter"/> requires Read on the repository and answers 404
-/// in a repository that is not Docker's. An image is listed only when the visitor may read it.
+/// The page model of the front page of a Docker repository when it was a Razor Page.
 /// </summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <see cref="DockerBrowseController"/> serves <c>/docker-images</c> (and its <c>/r/{repo}/</c> twin) and
+/// shares the logic (<c>DockerImagesWorkflow</c>).
+/// </remarks>
+[Obsolete("The Docker image list is served by DockerBrowseController; this page model has no page any more and will be removed in the next major version.")]
 public class DockerImagesModel : PageModel
 {
     /// <summary>Images per page.</summary>
-    public const int ResultsPerPage = 20;
+    public const int ResultsPerPage = DockerImagesWorkflow.ResultsPerPage;
 
-    private readonly IOciRegistry _registry;
-    private readonly IUrlGenerator _urls;
-    private readonly IRepositoryAccess _access;
+    private readonly DockerImagesWorkflow _workflow;
     private readonly IRepositoryContext _repository;
 
     public DockerImagesModel(IOciRegistry registry, IUrlGenerator urls, IRepositoryAccess access, IRepositoryContext repository)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _urls = urls ?? throw new ArgumentNullException(nameof(urls));
-        _access = access ?? throw new ArgumentNullException(nameof(access));
+        _workflow = new DockerImagesWorkflow(registry, urls, access, repository);
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
@@ -69,33 +68,11 @@ public class DockerImagesModel : PageModel
     {
         if (!ModelState.IsValid) return BadRequest();
 
-        var repository = _repository.Current;
-        Result = await _registry.ListImagesAsync(
-            Query,
-            (PageIndex - 1) * ResultsPerPage,
-            ResultsPerPage,
-            (name, token) => _access.CanReadPackageAsync(User, repository, name, token),
-            cancellationToken);
-
-        (Host, IsHttp) = _urls.GetOciRegistryHost();
-        var tabs = new List<InstallSnippet>
-        {
-            new() { Name = "Login", Prefix = ">", Lines = new[] { DockerSnippets.Login(Host) } },
-            new() { Name = "Pull", Prefix = ">", Lines = new[] { DockerSnippets.Pull(Host, RepositoryName, "team/app", "latest") } },
-        };
-        if (IsRemote)
-        {
-            // A cache of Docker Hub serves the official images as single names: nginx is library/nginx there.
-            tabs.Add(new InstallSnippet { Name = "Pull an official image", Prefix = ">", Lines = new[] { DockerSnippets.Pull(Host, RepositoryName, "nginx", "latest") } });
-        }
-        else
-        {
-            tabs.Add(new InstallSnippet { Name = "Push", Prefix = ">", Lines = DockerSnippets.Push(Host, RepositoryName, "team/app") });
-            tabs.Add(new InstallSnippet { Name = "Multi-platform", Prefix = ">", Lines = new[] { DockerSnippets.BuildxPush(Host, RepositoryName, "team/app") } });
-        }
-
-        if (IsHttp) tabs.Add(new InstallSnippet { Name = "Plain http (daemon.json)", Lines = DockerSnippets.InsecureRegistry(Host) });
-        CommandTabs = tabs;
+        var model = await _workflow.LoadAsync(Query, PageIndex, User, cancellationToken);
+        Result = model.Result;
+        Host = model.Host;
+        IsHttp = model.IsHttp;
+        CommandTabs = model.CommandTabs;
 
         return Page();
     }

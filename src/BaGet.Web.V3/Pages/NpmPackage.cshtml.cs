@@ -1,31 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace BaGet.Web;
 
 /// <summary>
-/// One npm package: its readme, versions, dist-tags and dependencies, and the commands to install it from this repository.
-/// Served at <c>/r/{repo}/npm-packages/{name}</c> (a scoped name keeps its slash); <see cref="RepositoryPageFilter"/>
-/// requires Read on the repository and on the package (the decoded name, so no spelling gets around an access pattern).
+/// The page model of one npm package's page when it was a Razor Page.
 /// </summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <see cref="NpmBrowseController"/> serves <c>/npm-packages/{name}</c> (and its <c>/r/{repo}/</c> twin) and
+/// shares the logic (<c>NpmPackageWorkflow</c>).
+/// </remarks>
+[Obsolete("The npm package page is served by NpmBrowseController; this page model has no page any more and will be removed in the next major version.")]
 public class NpmPackageModel : PageModel
 {
-    private readonly INpmRegistry _registry;
+    private readonly NpmPackageWorkflow _workflow;
     private readonly IUrlGenerator _urls;
 
     public NpmPackageModel(INpmRegistry registry, IUrlGenerator urls)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _workflow = new NpmPackageWorkflow(registry, urls);
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
     }
 
@@ -67,57 +67,18 @@ public class NpmPackageModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        if (!NpmNames.TryParseLookup(Id, out var name, out _)) return NotFound();
+        var model = await _workflow.LoadAsync(Id, RequestedVersion, User, HttpContext.RequestServices, cancellationToken);
+        if (model == null) return NotFound();
 
-        Package = await _registry.GetPackageAsync(name, cancellationToken);
-        if (Package == null)
-        {
-            // The page explains what is missing, with the status a link checker expects.
-            Response.StatusCode = 404;
-            return Page();
-        }
-
-        Selected = (RequestedVersion == null ? null : Package.Versions.FirstOrDefault(v => v.Version == RequestedVersion))
-                   ?? Package.Latest;
-        if (Selected == null) return Page();
-
-        Readme = ReadmeMarkdown.ToHtml(Selected.Readme);
-        SelectedTags = Package.DistTags.Where(t => t.Value == Selected.Version).Select(t => t.Key).OrderBy(t => t, StringComparer.Ordinal).ToList();
-        InstallTabs = NpmInstallSnippets.Build(Package.Name, Selected.Version, SelectedTags.FirstOrDefault(t => t != "latest"), RegistryUrl);
-
-        // Owners and the manage page belong to a repository that holds packages of its own; a remote one caches an upstream's and a
-        // virtual one holds none (it is managed where the package is stored).
-        var services = HttpContext.RequestServices;
-        var kind = services.GetService<IRepositoryContext>()?.Current.Kind ?? RepositoryKind.Local;
-        if (kind == RepositoryKind.Local && services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
-        {
-            var ownership = services.GetService<PackageOwnershipService>();
-            if (ownership != null)
-            {
-                Owners = (await ownership.GetOwnersAsync(Package.Name, cancellationToken)).Select(o => o.OwnerName ?? string.Empty).ToList();
-                CanManage = await NpmManageAccess.CanOpenAsync(services, User, Package.Name, cancellationToken);
-            }
-        }
+        Package = model.Package;
+        Selected = model.Selected;
+        Readme = model.Readme;
+        SelectedTags = model.SelectedTags;
+        InstallTabs = model.InstallTabs;
+        Owners = model.Owners;
+        CanManage = model.CanManage;
+        if (model.StatusCode != 200) Response.StatusCode = model.StatusCode;
 
         return Page();
-    }
-}
-
-/// <summary>Who sees the link to an npm package's manage page.</summary>
-internal static class NpmManageAccess
-{
-    /// <summary>An owner (directly or through an organization) or an administrator, signed in.</summary>
-    public static async Task<bool> CanOpenAsync(IServiceProvider services, System.Security.Claims.ClaimsPrincipal user, string name, CancellationToken cancellationToken)
-    {
-        if (user.Identity?.IsAuthenticated != true) return false;
-
-        var sessions = services.GetService<ISessionPrincipalFactory>();
-        var principal = sessions == null ? null : await sessions.CreateAsync(user);
-        if (principal == null) return false;
-        if (principal.IsAdministrator) return true;
-
-        var ownership = services.GetService<PackageOwnershipService>();
-
-        return ownership != null && await ownership.IsOwnerAsync(principal.UserId, principal.UserName, name, cancellationToken);
     }
 }

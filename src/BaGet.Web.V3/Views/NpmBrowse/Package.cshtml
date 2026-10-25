@@ -1,5 +1,4 @@
-@page "/npm-packages/{*id}"
-@model NpmPackageModel
+@model NpmPackageViewModel
 
 @{
     ViewData["Title"] = Model.Package == null ? Model.Id : Model.Package.Name + " " + Model.Selected?.Version;

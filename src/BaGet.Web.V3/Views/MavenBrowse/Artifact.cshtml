@@ -1,5 +1,4 @@
-@page "/maven-artifacts/{group}/{artifact}/{version?}"
-@model MavenArtifactModel
+@model MavenArtifactViewModel
 
 @{
     ViewData["Title"] = Model.Info == null ? Model.Group + ":" + Model.Artifact : Model.Info.Name + " " + Model.Selected?.Summary.Version;

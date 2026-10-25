@@ -1,5 +1,4 @@
-@page
-@model BaGet.Web.UploadModel
+@model UploadViewModel
 @using Microsoft.Extensions.Options
 @inject IUrlGenerator _url
 @inject IOptionsSnapshot<FeedsOptions> _feeds
@@ -26,12 +25,12 @@
     // For a virtual repository RepositoryPageFilter has already moved the request to its deploy repository: 'target' is
     // where the package is stored, 'requested' the repository the visitor chose.
     var target = _repositoryContext.Current;
-    var requested = Model.HttpContext.Items[RepositoryPageFilter.RequestedVirtualItemKey] as RepositoryInfo ?? target;
+    var requested = Context.Items[RepositoryPageFilter.RequestedVirtualItemKey] as RepositoryInfo ?? target;
     IReadOnlyList<RepositoryInfo> writable = Array.Empty<RepositoryInfo>();
     if (!Model.IsReadOnlyMode && _repositoryAccess.SupportsMultipleRepositories)
     {
         // This page uploads .nupkg files: the repositories of other formats have their own upload pages (or none, like Docker's).
-        writable = (await _repositoryAccess.WritableAsync(User, Model.HttpContext.RequestAborted)).Where(r => r.Format == BaGet.Core.RepositoryFormat.NuGet).ToList();
+        writable = (await _repositoryAccess.WritableAsync(User, Context.RequestAborted)).Where(r => r.Format == BaGet.Core.RepositoryFormat.NuGet).ToList();
     }
 }
 
@@ -71,7 +70,7 @@
         <div class="alert @(Model.Failed ? "alert-danger" : "alert-success")" role="alert" id="upload-message">
             @Model.Message
 
-            @if (Model.Published != null && await _repositoryAccess.CanReadPackageAsync(User, target, Model.Published.Id!, Model.HttpContext.RequestAborted))
+            @if (Model.Published != null && await _repositoryAccess.CanReadPackageAsync(User, target, Model.Published.Id!, Context.RequestAborted))
             {
                 <a asp-page="/Package"
                    asp-route-id="@Model.Published.Id"

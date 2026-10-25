@@ -1,31 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace BaGet.Web;
 
 /// <summary>
-/// One Maven artifact: its versions, and for the chosen version its files (with sizes and checksums), its POM and the
-/// dependency to copy. Served at <c>/r/{repo}/maven-artifacts/{group}/{artifact}/{version?}</c>; <see cref="RepositoryPageFilter"/>
-/// requires Read on the repository and on <c>group:artifact</c>.
+/// The page model of the page of one Maven artifact when it was a Razor Page.
 /// </summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <see cref="MavenBrowseController"/> serves <c>/maven-artifacts/{group}/{artifact}/{version?}</c> (and its
+/// <c>/r/{repo}/</c> twin) and shares the logic (<c>MavenArtifactWorkflow</c>).
+/// </remarks>
+[Obsolete("The Maven artifact page is served by MavenBrowseController; this page model has no page any more and will be removed in the next major version.")]
 public class MavenArtifactModel : PageModel
 {
-    private readonly IMavenRepository _maven;
+    private readonly MavenArtifactWorkflow _workflow;
     private readonly IUrlGenerator _urls;
     private readonly IRepositoryContext _repository;
 
     public MavenArtifactModel(IMavenRepository maven, IUrlGenerator urls, IRepositoryContext repository)
     {
-        _maven = maven ?? throw new ArgumentNullException(nameof(maven));
+        _workflow = new MavenArtifactWorkflow(maven, urls, repository);
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
@@ -68,51 +68,15 @@ public class MavenArtifactModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        if (!MavenNames.IsValidGroupId(Group) || !MavenNames.IsValidArtifactId(Artifact)) return NotFound();
-        if (Version != null && !MavenNames.IsValidVersion(Version)) return NotFound();
+        var model = await _workflow.LoadAsync(Group, Artifact, Version, User, HttpContext.RequestServices, cancellationToken);
+        if (model == null) return NotFound();
 
-        Info = await _maven.GetArtifactAsync(Group!, Artifact!, cancellationToken);
-        if (Info == null)
-        {
-            // The page explains what is missing, with the status a link checker expects.
-            Response.StatusCode = 404;
-            return Page();
-        }
-
-        var chosen = Version == null ? Info.Latest : Info.Versions.FirstOrDefault(v => v.Version == Version);
-        if (chosen == null)
-        {
-            Response.StatusCode = 404;
-            return Page();
-        }
-
-        Selected = await _maven.GetVersionAsync(Info.GroupId, Info.ArtifactId, chosen.Version, cancellationToken);
-        if (Selected != null)
-        {
-            InstallTabs = new[]
-            {
-                new InstallSnippet { Name = "Maven", Lines = MavenSnippets.Dependency(Info.GroupId, Info.ArtifactId, chosen.Version) },
-                new InstallSnippet { Name = "Gradle", Lines = new[] { MavenSnippets.GradleDependency(Info.GroupId, Info.ArtifactId, chosen.Version) } },
-                new InstallSnippet
-                {
-                    Name = "Check",
-                    Prefix = ">",
-                    Lines = new[] { MavenSnippets.GetCommand(Info.GroupId, Info.ArtifactId, chosen.Version, RepositoryName, RepositoryUrl) },
-                },
-            };
-        }
-
-        // Owners and the manage page belong to a repository that holds artifacts of its own (a local one).
-        var services = HttpContext.RequestServices;
-        if (_repository.Current.Kind == RepositoryKind.Local && services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
-        {
-            var ownership = services.GetService<PackageOwnershipService>();
-            if (ownership != null)
-            {
-                Owners = (await ownership.GetOwnersAsync(Info.Name, cancellationToken)).Select(o => o.OwnerName ?? string.Empty).ToList();
-                CanManage = await NpmManageAccess.CanOpenAsync(services, User, Info.Name, cancellationToken);
-            }
-        }
+        Info = model.Info;
+        Selected = model.Selected;
+        InstallTabs = model.InstallTabs;
+        Owners = model.Owners;
+        CanManage = model.CanManage;
+        if (model.StatusCode != 200) Response.StatusCode = model.StatusCode;
 
         return Page();
     }

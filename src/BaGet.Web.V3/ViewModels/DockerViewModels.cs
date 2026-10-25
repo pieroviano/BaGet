@@ -1,0 +1,80 @@
+using System;
+using System.Collections.Generic;
+using BaGet.Core;
+
+namespace BaGet.Web;
+
+/// <summary>What the Docker front page (<c>/docker-images</c>) shows: this page of images and the commands for the client.</summary>
+public sealed class DockerImagesViewModel
+{
+    /// <summary>The search text.</summary>
+    public string? Query { get; init; }
+
+    /// <summary>The page, from 1.</summary>
+    public int PageIndex { get; init; } = 1;
+
+    /// <summary>This page of results.</summary>
+    public OciImagePage Result { get; init; } = new(0, Array.Empty<OciImageSummary>());
+
+    /// <summary>The registry host as a Docker client writes it (<c>host:port</c>).</summary>
+    public string Host { get; init; } = string.Empty;
+
+    /// <summary>Whether the registry is reached over plain http (the Docker daemon then needs it as an insecure registry).</summary>
+    public bool IsHttp { get; init; }
+
+    /// <summary>The repository's name, the first path segment of every image reference.</summary>
+    public string RepositoryName { get; init; } = string.Empty;
+
+    /// <summary>Whether the repository caches an upstream registry (it takes no pushes).</summary>
+    public bool IsRemote { get; init; }
+
+    /// <summary>Whether the repository merges other repositories (a push goes to its deploy repository).</summary>
+    public bool IsVirtual { get; init; }
+
+    /// <summary>Whether another page follows.</summary>
+    public bool HasNext => PageIndex * DockerImagesWorkflow.ResultsPerPage < Result.Total;
+
+    internal IReadOnlyList<InstallSnippet> CommandTabs { get; init; } = Array.Empty<InstallSnippet>();
+}
+
+/// <summary>What the page of one Docker image (<c>/docker-images/{image}</c>, <c>?digest=</c> for a manifest) shows.</summary>
+public sealed class DockerImageViewModel
+{
+    /// <summary>The image name from the address (it may contain slashes).</summary>
+    public string? Image { get; init; }
+
+    /// <summary>The manifest to show in full (<c>?digest=</c>), or null for the overview.</summary>
+    public string? Digest { get; init; }
+
+    /// <summary>Narrows the referrers to one artifact type (<c>?artifactType=</c>); empty keeps them all.</summary>
+    public string? ArtifactType { get; init; }
+
+    /// <summary>The HTTP status the page is answered with: 200, or 404 when the image or manifest does not exist (the page then explains).</summary>
+    public int StatusCode { get; init; } = 200;
+
+    /// <summary>The image, or null when there is none of that name.</summary>
+    public OciImageInfo? Info { get; init; }
+
+    /// <summary>The chosen manifest, or null.</summary>
+    public OciManifestDetail? Selected { get; init; }
+
+    /// <summary>The manifests whose <c>subject</c> is the chosen manifest (signatures, SBOMs). Empty without a selection.</summary>
+    public IReadOnlyList<OciDescriptor> Referrers { get; init; } = Array.Empty<OciDescriptor>();
+
+    /// <summary>The registry host as a Docker client writes it.</summary>
+    public string Host { get; init; } = string.Empty;
+
+    /// <summary>The repository's name.</summary>
+    public string RepositoryName { get; init; } = string.Empty;
+
+    /// <summary>Whether the repository caches an upstream registry (it takes no pushes).</summary>
+    public bool IsRemote { get; init; }
+
+    /// <summary>Whether the signed-in user holds Delete on the image, so the manage page is offered.</summary>
+    public bool CanManage { get; init; }
+
+    internal IReadOnlyList<InstallSnippet> PullTabs { get; init; } = Array.Empty<InstallSnippet>();
+
+    /// <summary>The address of the registry API for the image (what a script calls).</summary>
+    public string RegistryUrl { get; init; } = string.Empty;
+}

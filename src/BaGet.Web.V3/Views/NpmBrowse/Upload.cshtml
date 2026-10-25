@@ -1,5 +1,4 @@
-@page "/npm-upload"
-@model NpmUploadModel
+@model NpmUploadViewModel
 @inject IRepositoryContext _repositoryContext
 
 @{
@@ -47,7 +46,7 @@
     {
         <form method="post" enctype="multipart/form-data" id="npm-upload-form">
             <p>
-                Publishes to <strong>@_repositoryContext.Current.Name</strong>@if (Model.HttpContext.Items[BaGet.Web.RepositoryPageFilter.RequestedVirtualItemKey] is BaGet.Core.RepositoryInfo requestedVirtual)
+                Publishes to <strong>@_repositoryContext.Current.Name</strong>@if (Context.Items[BaGet.Web.RepositoryPageFilter.RequestedVirtualItemKey] is BaGet.Core.RepositoryInfo requestedVirtual)
                 {
                     <text> (the deploy repository of the virtual repository <strong>@requestedVirtual.Name</strong>)</text>
                 }. The name and the version are read from the
