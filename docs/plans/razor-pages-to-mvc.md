@@ -1,6 +1,6 @@
 # Plan: Razor Pages → MVC (controllers + views), no breaking changes
 
-Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; **wave 1 done: mvc-browse, mvc-formats-ui, mvc-account, mvc-manage, mvc-admin-core (6cc7b61..HEAD of main, merged ff; full run 3655 tests, only the 11 known Telemetry failures)**; **wave 2 done: mvc-admin-access, mvc-admin-repos, mvc-admin-policies (92e5e3f..e0126f9, merged ff; BaGet.Tests 2212 run, only the known failures)**; **wave 3 done: mvc-finish**. **Status: implemented.** Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
+Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; **wave 1 done: mvc-browse, mvc-formats-ui, mvc-account, mvc-manage, mvc-admin-core (6cc7b61..HEAD of main, merged ff; full run 3655 tests, only the 11 known Telemetry failures)**; **wave 2 done: mvc-admin-access, mvc-admin-repos, mvc-admin-policies (92e5e3f..e0126f9, merged ff; BaGet.Tests 2212 run, only the known failures)**; **wave 3 done: mvc-finish (4de6f29..6f3e69f, merged ff; full run 3657 tests, 12 known failures, Docker not running)**. **Status: implemented.** Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
 `merge --ff-only` per track, max 5 agents at once (Sonnet implements, Opus reviews).
 
 ### Wave 0 results
