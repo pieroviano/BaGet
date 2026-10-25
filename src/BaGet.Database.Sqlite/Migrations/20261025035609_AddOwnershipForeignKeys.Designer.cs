@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaGet.Database.Sqlite.Migrations
 {
     [DbContext(typeof(SqliteContext))]
-    [Migration("20261025033656_AddOwnershipForeignKeys")]
+    [Migration("20261025035609_AddOwnershipForeignKeys")]
     partial class AddOwnershipForeignKeys
     {
         /// <inheritdoc />
@@ -2180,7 +2180,7 @@ namespace BaGet.Database.Sqlite.Migrations
                     b.HasOne("BaGet.Core.OciRepository", null)
                         .WithMany()
                         .HasForeignKey("ImageKey")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BaGet.Core.OciManifest", null)

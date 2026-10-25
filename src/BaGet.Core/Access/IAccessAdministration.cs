@@ -462,6 +462,8 @@ public class AccessAdministration : IAccessAdministration
 
         foreach (var repository in repositories) repository.ProjectKey = null;
         _context.ScanPolicies!.RemoveRange(await _context.ScanPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false));
+        // The project's retention policy applies to nothing once it is gone (and its ProjectKey is a foreign key).
+        _context.RetentionPolicies!.RemoveRange(await _context.RetentionPolicies!.Where(p => p.ProjectKey == project.Key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.PermissionGrants!.RemoveRange(grants);
         _context.PermissionTargets!.RemoveRange(targets);
         _context.ProjectMembers!.RemoveRange(members);

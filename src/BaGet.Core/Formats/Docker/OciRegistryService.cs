@@ -798,7 +798,9 @@ public partial class OciRegistryService : IOciRegistry
         var blobKeys = await _context.OciBlobLinks!.AsNoTracking().Where(l => l.ImageKey == row.Key).Select(l => l.BlobKey).ToListAsync(cancellationToken).ConfigureAwait(false);
         var uploads = await _context.OciUploads!.AsNoTracking().Where(u => u.ImageKey == row.Key).Select(u => u.StorageUploadId!).ToListAsync(cancellationToken).ConfigureAwait(false);
 
-        // The manifests, tags, links and sessions go with the image (cascading foreign keys).
+        // The manifests, links and sessions go with the image (cascading foreign keys); the tags are removed here, before the image
+        // (a tag also names the image, which the database must not see deleted while a tag still points at it).
+        _context.OciTags!.RemoveRange(await _context.OciTags!.Where(t => t.ImageKey == row.Key).ToListAsync(cancellationToken).ConfigureAwait(false));
         _context.OciRepositories!.Remove(row);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

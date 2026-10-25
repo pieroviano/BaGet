@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaGet.Database.MySql.Migrations
 {
     [DbContext(typeof(MySqlContext))]
-    [Migration("20261025033730_AddOwnershipForeignKeys")]
+    [Migration("20261025035642_AddOwnershipForeignKeys")]
     partial class AddOwnershipForeignKeys
     {
         /// <inheritdoc />
@@ -2286,7 +2286,7 @@ namespace BaGet.Database.MySql.Migrations
                     b.HasOne("BaGet.Core.OciRepository", null)
                         .WithMany()
                         .HasForeignKey("ImageKey")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BaGet.Core.OciManifest", null)

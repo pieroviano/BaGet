@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace BaGet.Database.SqlServer.Migrations
+namespace BaGet.Database.MySql.Migrations
 {
     /// <inheritdoc />
     public partial class AddOwnershipForeignKeys : Migration
@@ -13,7 +13,7 @@ namespace BaGet.Database.SqlServer.Migrations
         {
             // Rows that pointed at nothing are removed first (children before parents), or the constraints below could not be created.
             // On SQLite this runs before the table rebuilds that add the foreign keys.
-            foreach (var sql in OwnershipOrphanCleanup.Statements(name => "[" + name + "]"))
+            foreach (var sql in OwnershipOrphanCleanup.Statements(name => "`" + name + "`"))
             {
                 migrationBuilder.Sql(sql);
             }
@@ -113,8 +113,7 @@ namespace BaGet.Database.SqlServer.Migrations
                 table: "OciTags",
                 column: "ImageKey",
                 principalTable: "OciRepositories",
-                principalColumn: "Key",
-                onDelete: ReferentialAction.Restrict);
+                principalColumn: "Key");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_OrganizationMembers_AspNetUsers_UserId",

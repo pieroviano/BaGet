@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BaGet.Database.PostgreSql.Migrations
 {
     [DbContext(typeof(PostgreSqlContext))]
-    [Migration("20261025033720_AddOwnershipForeignKeys")]
+    [Migration("20261025035628_AddOwnershipForeignKeys")]
     partial class AddOwnershipForeignKeys
     {
         /// <inheritdoc />
@@ -2280,7 +2280,7 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.HasOne("BaGet.Core.OciRepository", null)
                         .WithMany()
                         .HasForeignKey("ImageKey")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BaGet.Core.OciManifest", null)

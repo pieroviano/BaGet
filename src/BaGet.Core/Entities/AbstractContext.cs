@@ -350,7 +350,9 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
         builder.Entity<ReplicationRun>().HasOne<ReplicationConfig>().WithMany().HasForeignKey(r => r.ConfigKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
         builder.Entity<ReplicationItem>().HasOne<ReplicationConfig>().WithMany().HasForeignKey(i => i.ConfigKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
-        builder.Entity<OciTag>().HasOne<OciRepository>().WithMany().HasForeignKey(t => t.ImageKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
+        // NoAction, not Restrict: deleting an image cascades to its manifests and from them to the tags, and a tag also points at the
+        // image, so the check has to wait for the end of the statement (PostgreSQL's RESTRICT is immediate). The code deletes the tags first anyway.
+        builder.Entity<OciTag>().HasOne<OciRepository>().WithMany().HasForeignKey(t => t.ImageKey).IsRequired().OnDelete(DeleteBehavior.NoAction);
     }
 
     private void BuildRetentionPolicyEntity(EntityTypeBuilder<RetentionPolicy> policy)

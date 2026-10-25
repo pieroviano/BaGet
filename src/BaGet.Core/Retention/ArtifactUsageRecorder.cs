@@ -99,9 +99,17 @@ public sealed class ArtifactUsageRecorder
                     }
                     catch (Exception e)
                     {
-                        // A repository that was deleted meanwhile or a race with another node: keep the entries, try again.
-                        _logger?.LogWarning(e, "Could not record download times for repository {Repository}", group.Key);
                         context = scope.ServiceProvider.GetRequiredService<IContext>();
+
+                        // A repository that was deleted meanwhile (RepositoryKey is a foreign key): its times belong to nothing, drop them.
+                        if (!await RepositoryExistsAsync(context, group.Key, cancellationToken).ConfigureAwait(false))
+                        {
+                            foreach (var entry in group) ((ICollection<KeyValuePair<(int, string, string), DateTime>>)_pending).Remove(entry);
+                            break;
+                        }
+
+                        // A race with another node: keep the entries, try again.
+                        _logger?.LogWarning(e, "Could not record download times for repository {Repository}", group.Key);
                     }
                 }
             }
@@ -111,6 +119,23 @@ public sealed class ArtifactUsageRecorder
         finally
         {
             _flushing.Release();
+        }
+    }
+
+    // False only when the database says so; a failing lookup counts as "exists" (keep the entries).
+    private static async Task<bool> RepositoryExistsAsync(IContext context, int repositoryKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await context.Repositories!.AsNoTracking().AnyAsync(r => r.Key == repositoryKey, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            return true;
         }
     }
 

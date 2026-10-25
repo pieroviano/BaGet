@@ -2277,7 +2277,7 @@ namespace BaGet.Database.PostgreSql.Migrations
                     b.HasOne("BaGet.Core.OciRepository", null)
                         .WithMany()
                         .HasForeignKey("ImageKey")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BaGet.Core.OciManifest", null)

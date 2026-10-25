@@ -113,8 +113,7 @@ namespace BaGet.Database.PostgreSql.Migrations
                 table: "OciTags",
                 column: "ImageKey",
                 principalTable: "OciRepositories",
-                principalColumn: "Key",
-                onDelete: ReferentialAction.Restrict);
+                principalColumn: "Key");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_OrganizationMembers_AspNetUsers_UserId",

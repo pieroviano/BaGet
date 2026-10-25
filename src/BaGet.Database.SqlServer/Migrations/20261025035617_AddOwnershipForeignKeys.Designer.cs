@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaGet.Database.SqlServer.Migrations
 {
     [DbContext(typeof(SqlServerContext))]
-    [Migration("20261025033710_AddOwnershipForeignKeys")]
+    [Migration("20261025035617_AddOwnershipForeignKeys")]
     partial class AddOwnershipForeignKeys
     {
         /// <inheritdoc />
@@ -2291,7 +2291,7 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.HasOne("BaGet.Core.OciRepository", null)
                         .WithMany()
                         .HasForeignKey("ImageKey")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BaGet.Core.OciManifest", null)
