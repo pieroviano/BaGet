@@ -25,11 +25,11 @@ A module only **describes** its format. Register it with `TryAddEnumerable(Servi
 |---|---|
 | `Format`, `DisplayName` | identity |
 | `RoutePrefix`, `FeedPath` | where its routes start; the address clients are given (admin pages) |
-| `CreatableKinds` | what `IRepositoryService.CreateAsync` accepts (NuGet and npm: local, remote) |
+| `CreatableKinds` | what `IRepositoryService.CreateAsync` accepts (every shipped format: local, remote) |
 | `SupportsVirtual` | whether virtual repositories of the format exist (`IVirtualRepositoryAdministration.CreateAsync(..., format)`, created with their members; the format's reads must merge and its writes move to the deploy repository) |
 | `StorageFolders` | folders it owns below `RepositoryStorage.Prefix` |
 | `CreateFields`, `CreateSettings` | extra inputs of the create form; turned into `Repository.Settings` (`ArgumentException` = message shown) |
-| `RepositoryLinks` | links on the Repositories page (NuGet: Browse, Upload) |
+| `RepositoryLinks` | links on the Repositories page (NuGet: Browse, Upload, V2 feed, Vulnerabilities, and Catalog/Signatures where offered; npm: Browse, Upload, Registry; Maven: Browse, Upload, Repository; Docker: Browse) |
 | `CountArtifactsAsync`, `GetUsageAsync`, `StagePurgeAsync` | package counts; what blocks deleting a repository; rows removed with it |
 
 What a format does per request is a scoped service beside the module, found with `provider.GetFormatService<T>(format)`
@@ -45,12 +45,12 @@ What a format does per request is a scoped service beside the module, found with
 Routes go through `BaGetEndpointBuilder.MapRoute(..., format: module.Format)` with a pattern starting `"{RoutePrefix}/…"`; it
 registers the default and `r/{repo}/` variants and tags the endpoint (`RepositoryRouteMetadata.Format`). Unmarked endpoints are
 NuGet's. **Razor Pages** are served under `/r/{repo}/` for every repository and decide per page: `RepositoryPageRouteConvention.PageFormats`
-names the format of a page (NuGet unless listed; the npm pages `/NpmPackages`, `/NpmPackage`, `/NpmUpload`, `/Packages/NpmManage`),
+names the format of a page (NuGet unless listed; the npm pages `/NpmPackages`, `/NpmPackage`, `/NpmUpload`, `/Packages/NpmManage`, the Maven pages `/MavenArtifacts`, `/MavenArtifact`, `/MavenUpload`, `/Packages/MavenManage`, the Docker pages `/DockerImages`, `/DockerImage`, `/Packages/DockerManage`; `/Packages/Scan` serves every format via `AnyFormatPages`),
 and `RepositoryPageFilter` answers 404 for a page of another format, except that the NuGet front page of a repository of another format
-redirects to the module's `browse` link. Widened with npm: the upload picker, header switcher, My packages, API-key repository
+redirects to the module's `browse` link. The upload picker, header switcher, My packages, API-key repository
 limits and the access-model listings now cover every format (the `Format == NuGet` filters are gone). A virtual repository
 is of one format and so are its members; a remote repository speaks the format's own upstream protocol (`RemoteProtocol`:
-NuGet V3/V2, `Npm`), set from the format. Azure Table still serves `default` only.
+NuGet `V3`/`V2`, `Npm`, `Maven`, `Docker`), set from the format. Azure Table still serves `default` only.
 
 ## Data model (B1)
 
@@ -82,8 +82,7 @@ Docker / OCI (built, migration `AddOciTables`; details in [Docker registry](dock
 
 `tests/BaGet.Clients.Tests`: `ClientContainers.NodeAsync()` starts `node:22-alpine` once (idle, `sleep infinity`) and runs scripts in
 it with an empty `$HOME`. `HostRegistry` is a real Kestrel server on `0.0.0.0` that records requests; the container reaches it as
-`host.docker.internal:{port}` (an extra host `host-gateway`, so Linux works too). `WebApplicationFactory` has no socket, so P3-npm
-hosts the real application on such a server for the CLI tests. The tests skip without a Docker daemon (as `BaGet.Database.Tests`).
+`host.docker.internal:{port}` (an extra host `host-gateway`, so Linux works too). `WebApplicationFactory` has no socket, so the CLI tests host the real application on such a server for the CLI tests. The tests skip without a Docker daemon (as `BaGet.Database.Tests`).
 
 `docker:dind`: **used by `DockerCliTests`** (`DockerDaemon`): `docker:27-dind` with `--privileged`, `DOCKER_TLS_CERTDIR=` and
 `--insecure-registry=<registry host:port>` reaches `docker info` in ~25 s; the `docker` CLI runs inside the same container against the unix socket,

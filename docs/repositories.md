@@ -7,7 +7,7 @@ A server holds one or more named repositories. Each has its own packages, owners
 | `default` | `/v3/index.json` (unchanged; every existing install is this one) |
 | any other | `/r/{name}/v3/index.json` |
 
-Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) repositories can be created for NuGet and for [npm](npm-registry.md); [Maven](maven-repositories.md) and [Docker](docker-registry.md) have local, remote and virtual repositories too (the [format layer](formats.md) is how formats plug in). A Docker repository is addressed as `/v2/{name}/{image}` at the server root, not under `/r/{name}/`.
+Local, [remote](remote-repositories.md) (upstream cache) and [virtual](virtual-repositories.md) (ordered group of members) repositories can be created for NuGet, [npm](npm-registry.md), [Maven](maven-repositories.md) and [Docker](docker-registry.md) (the [format layer](formats.md) is how formats plug in). A Docker repository is addressed as `/v2/{name}/{image}` at the server root, not under `/r/{name}/`.
 
 ## Web pages
 
@@ -35,7 +35,7 @@ Other administrator pages work across all repositories:
 
 | Page | Does |
 |---|---|
-| `/admin/operations` | Runs *Rebuild the catalog* and *Import download counts* for a chosen repository as background jobs; shows each one's last status |
+| `/admin/operations` | Runs *Rebuild the catalog*, *Import download counts*, the Docker garbage collection (dry run and run) and the vulnerability scan for a chosen repository as background jobs; shows each one's last status |
 | `/admin/validation` | Pending and quarantined submissions of every repository: retry, release (index anyway, audited), reject (see [configuration](configuration.md#validation)) |
 | `/admin/abuse` | Abuse reports of every repository (unresolved by default, `?all=true` for all): resolve or reopen; links each package to its Manage page in its own repository |
 

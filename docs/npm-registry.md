@@ -48,7 +48,7 @@ read-only mode.
 | Deprecate | `npm deprecate pkg@range "message"` sets the message of each version; an empty message clears it |
 | Unpublish | see below |
 | Search | `/-/v1/search` and the page match the package **name**; a listing never names a package its caller cannot read |
-| Audit | `npm audit` / the audit step of `npm install` get "no advisories" (scanning is a later phase) |
+| Audit | `npm audit` / the audit step of `npm install` get "no advisories" (findings are shown on the package pages and enforced on download/publish, see [vulnerability scanning](vulnerability-scanning.md); the audit endpoints stay empty) |
 | Writes need an API key | a Bearer token, Basic password or `X-NuGet-ApiKey`; never the browser session cookie |
 
 ### Unpublish policy
@@ -79,8 +79,7 @@ is deleted, as in the NuGet feed). Unpublishing the last version removes the pac
 | `POST -/v1/login` (404), `PUT -/user/org.couchdb.user:{user}`, `DELETE -/user/token/{token}` | login, logout |
 | `POST -/npm/v1/security/advisories/bulk`, `…/audits/quick` | no advisories |
 
-A scoped name is also accepted as two segments (`@scope/name`) on every route that names a package. Every route is a 404 in a Names are case-sensitive on every database (legacy names such as `JSONStream` differ from `jsonstream`). In a private repository a caller without Read gets `404 Not found` from every change route, whether the package exists or not.
-repository that is not npm.
+A scoped name is also accepted as two segments (`@scope/name`) on every route that names a package. Every route is a 404 in a repository that is not npm. Names are case-sensitive on every database (legacy names such as `JSONStream` differ from `jsonstream`). In a private repository a caller without Read gets `404 Not found` from every change route, whether the package exists or not.
 
 ## Configuration
 
@@ -89,7 +88,7 @@ repository that is not npm.
 | `Npm:UnpublishWindow` | `72:00:00` | see above. Live |
 | `Npm:MaxPublishBytes` | `536870912` (512 MiB) | largest publish request body (a tarball is about 3/4 of it); `0` = no limit beyond the web server's. Live |
 
-The web server's own body limit applies as well (`Kestrel` `MaxRequestBodySize`, 250 MB in the shipped host).
+The web server's own body limit applies as well (the shipped host turns Kestrel's `MaxRequestBodySize` off; IIS has its own caps, see [formats](formats.md#streaming-storage-b2)).
 
 ## Storage and data
 

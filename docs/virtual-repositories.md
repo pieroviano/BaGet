@@ -1,10 +1,10 @@
 # Virtual repositories
 
-A **virtual** repository presents several repositories of one format (local, [remote](remote-repositories.md) or other virtual ones) as one feed at `/r/{name}/v3/index.json` (npm: `/r/{name}/npm/`, see [npm virtual repositories](#npm-virtual-repositories)). Clients configure one source; the server decides which member answers. It stores nothing itself.
+A **virtual** repository presents several repositories of one format (local, [remote](remote-repositories.md) or other virtual ones) as one feed at `/r/{name}/v3/index.json` (npm: `/r/{name}/npm/`, see [npm virtual repositories](#npm-virtual-repositories); Maven: `/r/{name}/maven/`; Docker: `/v2/{name}/{image}`). Clients configure one source; the server decides which member answers. It stores nothing itself.
 
 ## Create and edit
 
-Administrators: `/admin/repositories` > *New virtual repository* (a name and the **format**, NuGet, npm or Maven; it starts empty), then `/admin/repositories/{name}`. Needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages). Not available with Azure Table or `Search:Type` = `AzureSearch` (only `default` exists there).
+Administrators: `/admin/repositories` > *New virtual repository* (a name and the **format**, NuGet, npm, Maven or Docker; it starts empty), then `/admin/repositories/{name}`. Needs a relational database and accounts, like all [repository pages](repositories.md#admin-pages). Not available with Azure Table or `Search:Type` = `AzureSearch` (only `default` exists there).
 
 | Control | Does |
 |---|---|
@@ -14,7 +14,7 @@ Administrators: `/admin/repositories` > *New virtual repository* (a name and the
 | Deploy repository | The member that receives uploads: a local member, or a virtual member that itself deploys to a local one. A remote repository cannot be one. *None* = the repository takes no uploads |
 | *Where would a package come from?* | Package id (npm: package name) + version: asks each effective member in order and shows what it found (*stored here*, *its upstream has it and it would be fetched*, *not found*, *its upstream could not be asked*, *not asked: an earlier member answers*) and which member answers. Fetches and stores nothing. It uses the rules of a real request: each member's stored copy, then its own upstream (a remote repository's, or the one `default` fetches through while `Mirror:Enabled`); an upstream in offline mode shows *not stored; its upstream is in offline mode*, a remembered 404 counts as not found, and later members' upstreams are not asked once one answers |
 
-Rules: at most 50 members; a repository is listed once; a member must exist and be of the virtual repository's format (a NuGet virtual repository takes no npm member and the other way round); **nesting** is allowed, a nested virtual member is expanded in place (each repository counts once, at its first place), and a change that would make a virtual repository contain itself is refused with the reason. A repository that a virtual repository lists cannot be deleted until it is removed there (the delete page says where). Edits are refused with `503` while the server is read-only for maintenance. Members are stored by name in `Repository.Settings` (no schema change).
+Rules: at most 50 members; a repository is listed once; a member must exist and be of the virtual repository's format (a NuGet virtual repository takes no npm, Maven or Docker member, and so on); **nesting** is allowed, a nested virtual member is expanded in place (each repository counts once, at its first place), and a change that would make a virtual repository contain itself is refused with the reason. A repository that a virtual repository lists cannot be deleted until it is removed there (the delete page says where). Edits are refused with `503` while the server is read-only for maintenance. Members are stored by name in `Repository.Settings` (no schema change).
 
 ## What a client sees
 
@@ -83,4 +83,4 @@ A virtual repository of format Docker merges Docker repositories (`docker pull h
 
 ## Not covered
 
-No per-member path rules (include/exclude patterns), no merged catalog (npm has none), no *last updated* sort, and the V2 feed ignores `$filter`/`$orderby` as everywhere. Per-member resolution state of remote members (memory, health) is per node, as for [remote repositories](remote-repositories.md).
+No per-member path rules (include/exclude patterns), no merged catalog (only NuGet has one), no *last updated* sort, and the V2 feed ignores `$filter`/`$orderby` as everywhere. Per-member resolution state of remote members (memory, health) is per node, as for [remote repositories](remote-repositories.md).
