@@ -48,7 +48,7 @@ public static class IServiceCollectionExtensions
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
 
-        // BaGet ships no Razor Page (every screen is a controller action), but a host's own pages and the Pages/ forwarding views keep working, so Razor Pages stays registered.
+        // BaGet ships no Razor Page (every screen is a controller action), but a host's own pages keep working (and find BaGet's layout in Views/Shared), so Razor Pages stays registered.
         services.AddRazorPages();
 
         // Page links stay inside the repository being browsed (see RepositoryUrlHelper).

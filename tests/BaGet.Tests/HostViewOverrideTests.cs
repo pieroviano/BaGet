@@ -9,7 +9,7 @@ namespace BaGet.Tests;
 /// A host that embeds BaGet overrides the layout, <c>_Avatar</c> or <c>_ScanFindings</c> by shipping its own copy; that works
 /// only while BaGet's views name them (<c>Layout = "_Layout"</c>, <c>&lt;partial name="_Avatar"&gt;</c>) and let the view engine
 /// search the host first. A path like <c>~/Views/Shared/_Layout.cshtml</c> would bypass a host's <c>Pages/Shared</c> copy.
-/// The forwarding stubs under <c>Pages/Shared</c> are the only files allowed to name the absolute path.
+/// BaGet ships no <c>Pages/</c> folder, so no file may name the absolute path.
 /// </summary>
 public class HostViewOverrideTests
 {
@@ -21,7 +21,6 @@ public class HostViewOverrideTests
         var offenders = Directory.EnumerateFiles(src, "*.cshtml", SearchOption.AllDirectories)
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
                      && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
-            .Where(f => !f.Replace(Path.DirectorySeparatorChar, '/').Contains("/Pages/Shared/_"))
             .Where(f => pattern.IsMatch(File.ReadAllText(f)))
             .Select(f => Path.GetRelativePath(src, f))
             .ToList();

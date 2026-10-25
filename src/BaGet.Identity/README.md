@@ -39,7 +39,7 @@ Every screen is a controller action and a view; the package ships **no `@page` f
 | Folder / type | Role |
 |---|---|
 | `Controllers/` | One controller per feature: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication` |
-| `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths forward to them). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
+| `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths were removed). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
 | `Workflows/`, `ViewModels/` | The logic (`internal` `*Workflow`, run by the controllers) and the models the views read |
 | `Mvc/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
 | `Mvc/LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving; navigation, `ApiOperation.UiPage` and the coverage tests use it |
