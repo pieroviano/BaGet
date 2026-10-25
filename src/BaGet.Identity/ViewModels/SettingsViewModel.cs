@@ -6,7 +6,7 @@ using BaGet.Core;
 namespace BaGet.Identity.ViewModels;
 
 /// <summary>What the server settings screen (<c>/admin/settings</c>) shows: every registered setting by section and the state of the last save.</summary>
-public sealed class SettingsViewModel : ConfirmationModel, IFlashMessage
+public sealed class AdminSettingsViewModel : ConfirmationModel, IFlashMessage
 {
     private IReadOnlyDictionary<string, string> _ids = new Dictionary<string, string>();
 

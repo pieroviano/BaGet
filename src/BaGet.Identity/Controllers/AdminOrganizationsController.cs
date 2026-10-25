@@ -10,7 +10,7 @@ namespace BaGet.Identity.Controllers;
 /// The administrator's organization screens: the list (<c>/admin/organizations</c>) and one organization
 /// (<c>/admin/organizations/{name}</c>: rename, members, delete). They replace the Razor Pages <c>/Admin/Organizations</c> and
 /// <c>/Admin/OrganizationDetail</c> (same URLs, handlers and <c>asp-page</c> names); the logic is in
-/// <see cref="OrganizationsWorkflow"/>. Every change asks the administrator's password again and is refused with 503 while the
+/// <see cref="AdminOrganizationsWorkflow"/>. Every change asks the administrator's password again and is refused with 503 while the
 /// read-only gate is closed.
 /// </summary>
 public sealed class AdminOrganizationsController : AdminControllerBase
@@ -19,7 +19,7 @@ public sealed class AdminOrganizationsController : AdminControllerBase
     [Route("admin/organizations"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Organizations")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var workflow = new OrganizationsWorkflow(HttpContext, Url);
+        var workflow = new AdminOrganizationsWorkflow(HttpContext, Url);
         await workflow.ListAsync(cancellationToken);
 
         return View("Index", workflow.List);
@@ -88,15 +88,15 @@ public sealed class AdminOrganizationsController : AdminControllerBase
         return Show(workflow, await workflow.GetAsync(cancellationToken));
     }
 
-    private OrganizationsWorkflow Start(string? name)
+    private AdminOrganizationsWorkflow Start(string? name)
     {
-        var workflow = new OrganizationsWorkflow(HttpContext, Url);
+        var workflow = new AdminOrganizationsWorkflow(HttpContext, Url);
         workflow.Model.Name = name;
 
         return workflow;
     }
 
-    private IActionResult Show(OrganizationsWorkflow workflow, IActionResult? result)
+    private IActionResult Show(AdminOrganizationsWorkflow workflow, IActionResult? result)
     {
         Flash(workflow.Model);
 

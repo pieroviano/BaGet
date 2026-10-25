@@ -16,14 +16,14 @@ namespace BaGet.Identity.Workflows;
 /// section, so one section's errors never block another. Shared by <c>AdminSettingsController</c> and the obsolete
 /// <c>SettingsModel</c>.
 /// </summary>
-internal sealed class SettingsWorkflow : AdminWorkflow
+internal sealed class AdminSettingsWorkflow : AdminWorkflow
 {
-    public SettingsWorkflow(HttpContext httpContext, IUrlHelper url) : base(httpContext, url)
+    public AdminSettingsWorkflow(HttpContext httpContext, IUrlHelper url) : base(httpContext, url)
     {
     }
 
     /// <summary>The state the screen renders.</summary>
-    public SettingsViewModel Model { get; } = new();
+    public AdminSettingsViewModel Model { get; } = new();
 
     private SettingsService Settings => Services.GetRequiredService<SettingsService>();
 
@@ -204,7 +204,7 @@ internal sealed class SettingsWorkflow : AdminWorkflow
     /// <summary>Back to the screen showing <paramref name="section"/>: <c>?section=id</c> (the server renders it) and <c>#id</c> (the browser keeps it).</summary>
     private static IActionResult RedirectToSection(string section)
     {
-        var id = SettingsViewModel.BuildId(section);
+        var id = AdminSettingsViewModel.BuildId(section);
 
         return RedirectToScreen("/Admin/Settings", new { section = id }, id);
     }
@@ -272,7 +272,7 @@ internal sealed class SettingsWorkflow : AdminWorkflow
         var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var group in Model.Sections)
         {
-            var id = SettingsViewModel.BuildId(group.Key);
+            var id = AdminSettingsViewModel.BuildId(group.Key);
             var candidate = id;
             for (var n = 2; !used.Add(candidate); n++) candidate = id + "-" + n;
             ids[group.Key] = candidate;

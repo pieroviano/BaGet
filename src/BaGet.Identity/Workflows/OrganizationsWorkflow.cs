@@ -20,14 +20,14 @@ namespace BaGet.Identity.Workflows;
 /// <see cref="MaintenanceGate"/> is closed. Shared by <c>AdminOrganizationsController</c> and the obsolete
 /// <c>OrganizationsModel</c> and <c>OrganizationDetailModel</c>.
 /// </summary>
-internal sealed class OrganizationsWorkflow : AdminWorkflow
+internal sealed class AdminOrganizationsWorkflow : AdminWorkflow
 {
-    public OrganizationsWorkflow(HttpContext httpContext, IUrlHelper url) : base(httpContext, url)
+    public AdminOrganizationsWorkflow(HttpContext httpContext, IUrlHelper url) : base(httpContext, url)
     {
     }
 
     /// <summary>The list; filled by <see cref="ListAsync"/>.</summary>
-    public OrganizationsViewModel List { get; } = new();
+    public AdminOrganizationsViewModel List { get; } = new();
 
     /// <summary>One organization; the caller sets <c>Name</c> first.</summary>
     public OrganizationDetailViewModel Model { get; } = new();
@@ -148,7 +148,7 @@ internal sealed class OrganizationsWorkflow : AdminWorkflow
     };
 
     private void Log(BaGetUser admin, string template, string? oldValue, string? newValue)
-        => Services.GetRequiredService<ILogger<OrganizationsWorkflow>>()
+        => Services.GetRequiredService<ILogger<AdminOrganizationsWorkflow>>()
             .LogWarning("{Admin} " + template, admin.UserName, oldValue, newValue);
 
     // Refuse during maintenance, confirm the password, run the change, then show the (possibly renamed) screen.

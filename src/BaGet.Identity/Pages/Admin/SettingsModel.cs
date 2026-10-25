@@ -14,14 +14,14 @@ namespace BaGet.Identity.Pages.Admin;
 /// </summary>
 /// <remarks>
 /// Kept as a shim (no breaking change of the public API); <c>AdminSettingsController</c> serves <c>/admin/settings</c>. Both call
-/// <c>SettingsWorkflow</c>.
+/// <c>AdminSettingsWorkflow</c>.
 /// </remarks>
 [Obsolete("The settings screen is served by AdminSettingsController; this page model has no page any more and will be removed in the next major version.")]
 public class SettingsModel : AdminPageModel
 {
-    private SettingsWorkflow? _workflow;
+    private AdminSettingsWorkflow? _workflow;
 
-    private SettingsWorkflow Workflow => _workflow ??= new SettingsWorkflow(HttpContext, Url);
+    private AdminSettingsWorkflow Workflow => _workflow ??= new AdminSettingsWorkflow(HttpContext, Url);
 
     /// <summary>The settings grouped by section; the top-level keys come first, under the empty key.</summary>
     public IReadOnlyList<IGrouping<string, SettingState>> Sections => Workflow.Model.Sections;

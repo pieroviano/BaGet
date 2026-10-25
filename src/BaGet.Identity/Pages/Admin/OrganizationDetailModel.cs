@@ -26,14 +26,14 @@ public record OrganizationMemberRow(string? UserName, bool IsAdmin);
 /// </summary>
 /// <remarks>
 /// Kept as a shim (no breaking change of the public API); <c>AdminOrganizationsController</c> serves
-/// <c>/admin/organizations/{name}</c>. Both call <c>OrganizationsWorkflow</c>.
+/// <c>/admin/organizations/{name}</c>. Both call <c>AdminOrganizationsWorkflow</c>.
 /// </remarks>
 [Obsolete("The organization screen is served by AdminOrganizationsController; this page model has no page any more and will be removed in the next major version.")]
 public class OrganizationDetailModel : AdminPageModel
 {
-    private OrganizationsWorkflow? _workflow;
+    private AdminOrganizationsWorkflow? _workflow;
 
-    private OrganizationsWorkflow Workflow => _workflow ??= new OrganizationsWorkflow(HttpContext, Url);
+    private AdminOrganizationsWorkflow Workflow => _workflow ??= new AdminOrganizationsWorkflow(HttpContext, Url);
 
     /// <summary>The organization's name (route).</summary>
     [BindProperty(SupportsGet = true)]
