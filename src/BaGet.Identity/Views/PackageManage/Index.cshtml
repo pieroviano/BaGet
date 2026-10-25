@@ -1,5 +1,4 @@
-@page "/packages/{id}/manage"
-@model BaGet.Identity.Pages.Packages.ManageModel
+@model BaGet.Identity.ViewModels.ManageViewModel
 @{
     ViewData["Title"] = $"Manage {Model.Id}";
 }
@@ -45,7 +44,7 @@
                 <tr>
                     <td><a href="@Url.RepositoryContent("profiles/" + owner.OwnerName)">@owner.OwnerName</a>@(owner.IsVerified ? " (verified)" : "")</td>
                     <td>
-                        <form method="post" asp-page-handler="RemoveOwner">
+                        <form method="post" asp-page="/Packages/Manage" asp-page-handler="RemoveOwner">
                             <input type="hidden" name="ownerName" value="@owner.OwnerName" />
                             <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
                         </form>
@@ -54,7 +53,7 @@
             }
         </tbody>
     </table>
-    <form method="post" asp-page-handler="AddOwner" class="form-inline">
+    <form method="post" asp-page="/Packages/Manage" asp-page-handler="AddOwner" class="form-inline">
         <input type="text" name="ownerName" class="form-control" placeholder="User or organization" />
         <button type="submit" class="btn btn-primary" disabled="@Model.IsReadOnlyMode">Add owner</button>
     </form>
@@ -63,7 +62,7 @@
         This ID is <strong>@(Model.IsVerified ? "verified" : "not verified")</strong>.
         @if (Model.IsAdministrator)
         {
-            <form method="post" asp-page-handler="SetVerified" style="display:inline">
+            <form method="post" asp-page="/Packages/Manage" asp-page-handler="SetVerified" style="display:inline">
                 <input type="hidden" name="verified" value="@(Model.IsVerified ? "false" : "true")" />
                 <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">@(Model.IsVerified ? "Clear verified flag" : "Mark as verified")</button>
             </form>
@@ -96,7 +95,7 @@
                     <td>@package.Downloads.ToString("N0")</td>
                     <td>
                         @(package.Listed ? "Yes" : "No")
-                        <form method="post" asp-page-handler="@(package.Listed ? "Unlist" : "Relist")" style="display:inline">
+                        <form method="post" asp-page="/Packages/Manage" asp-page-handler="@(package.Listed ? "Unlist" : "Relist")" style="display:inline">
                             <input type="hidden" name="version" value="@version" />
                             <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">@(package.Listed ? "Unlist" : "Relist")</button>
                         </form>
@@ -105,14 +104,14 @@
                         @if (package.Deprecation != null)
                         {
                             @string.Join(", ", package.Deprecation.Reasons ?? Array.Empty<string>())
-                            <form method="post" asp-page-handler="Undeprecate" style="display:inline">
+                            <form method="post" asp-page="/Packages/Manage" asp-page-handler="Undeprecate" style="display:inline">
                                 <input type="hidden" name="version" value="@version" />
                                 <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
                             </form>
                         }
                     </td>
                     <td>
-                        <form method="post" asp-page-handler="Deprecate" class="form-inline">
+                        <form method="post" asp-page="/Packages/Manage" asp-page-handler="Deprecate" class="form-inline">
                             <input type="hidden" name="version" value="@version" />
                             @foreach (var reason in PackageDeprecation.KnownReasons)
                             {
@@ -127,7 +126,7 @@
                     <td>
                         @* Labelled from the configured behaviour: on a server that unlists,
                            this button must not claim to delete. *@
-                        <form method="post" asp-page-handler="Delete" style="display:inline">
+                        <form method="post" asp-page="/Packages/Manage" asp-page-handler="Delete" style="display:inline">
                             <input type="hidden" name="version" value="@version" />
                             <button type="submit"
                                     class="@(Model.DeletionIsPermanent ? "btn btn-danger btn-xs" : "btn btn-default btn-xs")"
@@ -140,7 +139,7 @@
                         {
                             @* The server only unlists; an administrator may still remove the version.
                                The password is in the danger zone's form, which this button submits. *@
-                            <button type="submit" form="hard-delete-form" asp-page-handler="HardDelete"
+                            <button type="submit" form="hard-delete-form" asp-page="/Packages/Manage" asp-page-handler="HardDelete"
                                     name="version" value="@version" class="btn btn-danger btn-xs"
                                     onclick="return confirm('Delete @version permanently? This cannot be undone. Enter your password in the Danger zone below first.')"
                                     disabled="@Model.IsReadOnlyMode">
@@ -174,7 +173,7 @@
                         <td>
                             @if (vulnerability.Source == null)
                             {
-                                <form method="post" asp-page-handler="RemoveVulnerability">
+                                <form method="post" asp-page="/Packages/Manage" asp-page-handler="RemoveVulnerability">
                                     <input type="hidden" name="version" value="@version" />
                                     <input type="hidden" name="key" value="@vulnerability.Key" />
                                     <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Remove</button>
@@ -190,7 +189,7 @@
             }
         </tbody>
     </table>
-    <form method="post" asp-page-handler="AddVulnerability" class="form-inline" id="manage-add-vulnerability">
+    <form method="post" asp-page="/Packages/Manage" asp-page-handler="AddVulnerability" class="form-inline" id="manage-add-vulnerability">
         <select name="version" class="form-control input-sm">
             @foreach (var package in Model.Versions)
             {
@@ -243,7 +242,7 @@
                                 }
                             </td>
                             <td>
-                                <form method="post" asp-page-handler="DeleteSymbols">
+                                <form method="post" asp-page="/Packages/Manage" asp-page-handler="DeleteSymbols">
                                     <input type="hidden" name="version" value="@version" />
                                     <button type="submit" class="btn btn-danger btn-xs"
                                             onclick="return confirm('Delete the symbols of @version? Debuggers can no longer download them.')"
@@ -277,7 +276,7 @@
                         <td>@report.Details</td>
                         <td>@report.ReporterEmail</td>
                         <td>
-                            <form method="post" asp-page-handler="ResolveReport">
+                            <form method="post" asp-page="/Packages/Manage" asp-page-handler="ResolveReport">
                                 <input type="hidden" name="key" value="@report.Key" />
                                 <button type="submit" class="btn btn-default btn-xs" disabled="@Model.IsReadOnlyMode">Resolve</button>
                             </form>
@@ -310,7 +309,7 @@
                     {
                         <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/Manage", new { id = Model.Id }) ?? string.Empty))" />
                     }
-                    <button type="submit" asp-page-handler="HardDeleteAll" class="btn btn-danger"
+                    <button type="submit" asp-page="/Packages/Manage" asp-page-handler="HardDeleteAll" class="btn btn-danger"
                             onclick="return confirm('Delete every version of @Model.Id permanently? This cannot be undone.')"
                             disabled="@Model.IsReadOnlyMode">
                         Delete all versions permanently
