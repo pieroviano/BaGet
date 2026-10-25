@@ -74,7 +74,7 @@
   <ItemGroup>
     <!-- The UI's static files, at "wwwroot/" in this package, for hosts that embed BaGet without the
          Web SDK's static web assets (e.g. a worker service): they serve them from wwwroot/_content/BaGet.Web. -->
-    <None Include="..\BaGet.Web\wwwroot\**\*" Pack="true" PackagePath="wwwroot" Visible="false" />
+    <None Include="..\BaGet.Web.V3\wwwroot\**\*" Pack="true" PackagePath="wwwroot" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
