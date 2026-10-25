@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using BaGet.Core;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 
 namespace BaGet.Web;
@@ -28,9 +30,11 @@ public sealed class ReportAbuseViewModel
     [Display(Name = "Your email (optional)")]
     public string? ReporterEmail { get; set; }
 
-    /// <summary>True once the report was recorded.</summary>
+    /// <summary>True once the report was recorded. Never bound from the form (the page's property had a private setter).</summary>
+    [BindNever, ValidateNever]
     public bool Submitted { get; set; }
 
     /// <summary>Reports are kept in the database, which Azure Table storage cannot do.</summary>
+    [BindNever, ValidateNever]
     public bool CanReport { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -63,6 +64,24 @@ public class ReportAbusePageTests : IDisposable
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
         Assert.DoesNotContain("Report abuse", content);
+    }
+
+    [Fact]
+    public async Task APostedSubmittedFieldDoesNotClaimTheReportWasRecorded()
+    {
+        // The page's Submitted had a private setter; the view model's must not be bound from the form either.
+        using var browser = new Browser(_app);
+        using var response = await browser.PostAsync("packages/TestData/1.2.3/report-abuse", new Dictionary<string, string>
+        {
+            { "Reason", "" },
+            { "Details", "" },
+            { "Submitted", "true" },
+            { "CanReport", "true" },
+        });
+
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("report-submitted", content);
     }
 
     public void Dispose()

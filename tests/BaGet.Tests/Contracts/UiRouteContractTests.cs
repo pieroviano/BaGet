@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BaGet.Identity.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -52,6 +54,33 @@ public class UiRouteContractTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, plain.StatusCode);
         Assert.Equal(HttpStatusCode.OK, unknown.StatusCode);
+    }
+
+    [Theory]
+    // Each handler belongs to another page of the same controller (Login's Callback/External, Validation's Retry):
+    // Razor Pages looked at one page's handlers only, so these are unknown here and the default handler answers.
+    [InlineData("/account/register", "Callback", "GET")]
+    [InlineData("/account/loginwith2fa", "External", "POST")]
+    [InlineData("/admin/operations", "Retry", "POST")]
+    public async Task AHandlerOfAnotherPageOfTheSameControllerIsUnknownHere(string path, string handler, string method)
+    {
+        using var client = _app.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var verb = new HttpMethod(method);
+
+        using var plain = await client.SendAsync(new HttpRequestMessage(verb, path), TestContext.Current.CancellationToken);
+        using var other = await client.SendAsync(new HttpRequestMessage(verb, path + "?handler=" + handler), TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(HttpStatusCode.NotFound, other.StatusCode);
+        Assert.Equal(plain.StatusCode, other.StatusCode);
+    }
+
+    [Fact]
+    public void ARepeatedHandlerKeyCountsByItsFirstValue()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.QueryString = new QueryString("?handler=Approve&handler=Reject");
+
+        Assert.Equal("Approve", PageHandlerAttribute.RequestedHandler(context));
     }
 
     [Fact]
