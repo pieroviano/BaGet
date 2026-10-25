@@ -48,6 +48,12 @@ Migrated: the account screens. `AccountController` (sign-in side), `AccountSetti
 
 Migrated screens keep their logic in an `internal` workflow (`Workflows/`) that the controller and the obsolete page-model shim both run; the package-management screens (`Packages/*`) are `PackageManageController`, `NpmManageController`, `MavenManageController`, `DockerManageController`, `ContactOwnersController`, `ScanArtifactController` and `ValidationStatusPageController`.
 
+Migrated admin screens (wave 1): `AdminUsersController` (Users, UserDetail, DeleteUser, UserPackages), `AdminOrganizationsController`,
+`AdminSettingsController`, `AdminPackagesController`, `AdminOperationsController` (Operations, Validation, Abuse, Cluster, Formats,
+AccessUnavailable); controllers in `Controllers/`, views in `Views/<Controller>/`, view models in `ViewModels/`, the logic in internal
+`Workflows/*Workflow` (shared with the obsolete page models in `Pages/Admin`, kept as shims). `AdminControllerBase.Flash(model)` carries
+`Message`/`Error` across a redirect (the old `[TempData]` properties).
+
 Partials and the layout live in `Views/Shared` (the old `Pages/...` paths forward to them); a host overrides a view with its own
 `Views/<Controller>/<Action>.cshtml`.
 

@@ -143,7 +143,7 @@ public class AdminDeleteUserTests : IDisposable
 
         using var response = await DeleteAsync(admin, "alice", soleOwned: "delete");
 
-        Assert.Contains(BaGet.Identity.Pages.Admin.DeleteUserModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(BaGet.Identity.ViewModels.DeleteUserViewModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.True(await ExistsAsync(app, "alice"));
         Assert.Single(await VersionsAsync(app, "Alice.Solo"));
         Assert.Single(await OwnersAsync(app, "Alice.Solo"));

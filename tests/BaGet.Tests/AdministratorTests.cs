@@ -20,7 +20,7 @@ namespace BaGet.Tests;
 public class AdministratorTests : IDisposable
 {
     private const string Password = "Passw0rd!";
-    private const int UsersModelPageSize = BaGet.Identity.Pages.Admin.UsersModel.PageSize;
+    private const int UsersPageSize = BaGet.Identity.ViewModels.UsersViewModel.PageSize;
 
     private readonly ITestOutputHelper _output;
     private readonly List<IDisposable> _disposables = new List<IDisposable>();
@@ -165,7 +165,7 @@ public class AdministratorTests : IDisposable
         await WithAsync(app, async p =>
         {
             var context = p.GetRequiredService<IContext>();
-            for (var i = 0; i < UsersModelPageSize; i++)
+            for (var i = 0; i < UsersPageSize; i++)
             {
                 context.Users.Add(new BaGetUser { Id = $"id{i}", UserName = $"amber{i:D3}", NormalizedUserName = $"AMBER{i:D3}", Created = DateTime.UtcNow });
             }

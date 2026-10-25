@@ -256,8 +256,8 @@ public class AdminUserActionsTests : IDisposable
     [Fact]
     public void MaskEmailHidesTheLocalPart()
     {
-        Assert.Equal("a***@example.com", BaGet.Identity.Pages.Admin.UsersModel.MaskEmail("alice@example.com"));
-        Assert.Equal("the user's address", BaGet.Identity.Pages.Admin.UsersModel.MaskEmail("nonsense"));
-        Assert.Equal("the user's address", BaGet.Identity.Pages.Admin.UsersModel.MaskEmail(null));
+        Assert.Equal("a***@example.com", BaGet.Identity.ViewModels.UsersViewModel.MaskEmail("alice@example.com"));
+        Assert.Equal("the user's address", BaGet.Identity.ViewModels.UsersViewModel.MaskEmail("nonsense"));
+        Assert.Equal("the user's address", BaGet.Identity.ViewModels.UsersViewModel.MaskEmail(null));
     }
 }

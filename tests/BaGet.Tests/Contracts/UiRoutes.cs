@@ -49,11 +49,17 @@ internal static class UiRoutes
             {
                 // A controller action that stands in for a page: the same description (HEAD collapsed into GET).
                 name = legacy.PageName;
-                var handler = action.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name;
+                var handlerAttribute = action.MethodInfo.GetCustomAttribute<PageHandlerAttribute>();
+                var handler = handlerAttribute?.Name;
                 var verbs = endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods
                     .Select(v => v.ToUpperInvariant()).ToList() ?? new List<string> { "GET" };
                 if (verbs.Contains("GET")) verbs.Remove("HEAD");
-                handlers = verbs.Select(v => $"{v}:{handler}");
+
+                // A page with no handler method at all (it only renders, e.g. /Admin/AccessUnavailable) is a read-only action
+                // without [PageHandler]: it reports no handlers, like the page did.
+                handlers = handlerAttribute == null && verbs.All(v => v == "GET")
+                    ? Enumerable.Empty<string>()
+                    : verbs.Select(v => $"{v}:{handler}");
             }
             else
             {
