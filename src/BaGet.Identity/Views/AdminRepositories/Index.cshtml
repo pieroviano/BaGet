@@ -1,5 +1,4 @@
-@page "/admin/repositories"
-@model BaGet.Identity.Pages.Admin.RepositoriesModel
+@model BaGet.Identity.ViewModels.RepositoriesViewModel
 @{
     ViewData["Title"] = "Repositories";
 }
@@ -106,7 +105,7 @@
         @foreach (var module in Model.OtherFormats)
         {
             <h2>New @module.DisplayName repository</h2>
-            <form method="post" asp-page-handler="Format" id="format-create-form-@module.Format.ToString().ToLowerInvariant()">
+            <form method="post" asp-page="/Admin/Repositories" asp-page-handler="Format" id="format-create-form-@module.Format.ToString().ToLowerInvariant()">
                 <input type="hidden" name="format" value="@module.Format" />
                 <div class="form-group">
                     <label for="format-name-@module.Format">Name</label>
@@ -152,7 +151,7 @@
             package answers, version lists and search merge them (an npm package's dist-tags and a Maven artifact's <code>latest</code> and <code>release</code> follow the member order), and uploads go
             to the member you pick as the deploy repository. Created empty; you add the members on its page.
         </p>
-        <form method="post" asp-page-handler="Virtual" class="form-inline" id="virtual-create-form">
+        <form method="post" asp-page="/Admin/Repositories" asp-page-handler="Virtual" class="form-inline" id="virtual-create-form">
             <div class="form-group">
                 <label for="virtual-format">Format</label>
                 <select id="virtual-format" name="format" class="form-control">
@@ -182,7 +181,7 @@
             Verdaccio, Artifactory...; Maven: Maven Central, Artifactory, Nexus...): a package not stored here is fetched from the upstream
             the first time it is requested. Clients cannot push to it.
         </p>
-        <form method="post" asp-page-handler="Remote" id="remote-create-form">
+        <form method="post" asp-page="/Admin/Repositories" asp-page-handler="Remote" id="remote-create-form">
             <div class="form-group">
                 <label for="remote-format">Format</label>
                 <select id="remote-format" name="format" class="form-control">

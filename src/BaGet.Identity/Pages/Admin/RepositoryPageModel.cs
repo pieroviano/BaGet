@@ -7,6 +7,7 @@ namespace BaGet.Identity.Pages.Admin;
 /// administrator's password again (or a recent sign-in with the external provider, for an account without one), like
 /// the access pages do for changes that hand out credentials or delete data.
 /// </summary>
+[System.Obsolete("The repository screens are served by AdminRepositoriesController (RepositoryControllerBase); this base class will be removed in the next major version.")]
 public abstract class RepositoryPageModel : AdminPageModel
 {
     /// <summary>Why the last action was refused.</summary>

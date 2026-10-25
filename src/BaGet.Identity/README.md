@@ -55,6 +55,9 @@ AccessUnavailable); controllers in `Controllers/`, views in `Views/<Controller>/
 `Workflows/*Workflow` (shared with the obsolete page models in `Pages/Admin`, kept as shims). `AdminControllerBase.Flash(model)` carries
 `Message`/`Error` across a redirect (the old `[TempData]` properties).
 
+Wave 2: `AdminRepositoriesController` (Repositories with its create handlers, RepositoryEdit with its 11 handlers, RepositoryDelete) over
+`RepositoriesWorkflow` / `RepositoryEditWorkflow` / `RepositoryDeleteWorkflow`; `RepositoryPageModel` and the three page models are `[Obsolete]` shims.
+
 Partials and the layout live in `Views/Shared` (the old `Pages/...` paths forward to them); a host overrides a view with its own
 `Views/<Controller>/<Action>.cshtml`.
 

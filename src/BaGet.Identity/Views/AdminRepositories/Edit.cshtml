@@ -1,5 +1,4 @@
-@page "/admin/repositories/{name}"
-@model BaGet.Identity.Pages.Admin.RepositoryEditModel
+@model BaGet.Identity.ViewModels.RepositoryEditViewModel
 @{
     ViewData["Title"] = "Repository " + Model.Name;
 }
@@ -99,7 +98,7 @@
                         <small>(@Model.TestResult.ElapsedMilliseconds ms)</small>
                     </div>
                 }
-                <button type="submit" class="btn btn-default" id="remote-test" asp-page-handler="Test">Test connection</button>
+                <button type="submit" class="btn btn-default" id="remote-test" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="Test">Test connection</button>
                 <span class="help-block">Asks the upstream with the values above, saved or not, and saves nothing. Needs your password below, like saving does.</span>
             </section>
         }
@@ -115,7 +114,7 @@
     @if (Model.MavenSettings != null)
     {
         <h2>Maven settings</h2>
-        <form method="post" asp-page-handler="MavenSettings" id="maven-settings-form">
+        <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="MavenSettings" id="maven-settings-form">
             <div class="form-group">
                 <label for="maven-policy">Versions accepted</label>
                 <select id="maven-policy" name="policy" class="form-control">
@@ -185,12 +184,12 @@
                                 <td>@(member.Repository?.Kind.ToString() ?? "-")</td>
                                 <td>@(virtualDetail.DeployRepository == member.Name ? "deploy repository" : "")</td>
                                 <td>
-                                    <form method="post" asp-page-handler="MoveMember" class="form-inline" style="display:inline">
+                                    <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="MoveMember" class="form-inline" style="display:inline">
                                         <input type="hidden" name="member" value="@member.Name" />
                                         <button type="submit" name="direction" value="up" class="btn btn-default btn-xs member-up" disabled="@(i == 0)">Up</button>
                                         <button type="submit" name="direction" value="down" class="btn btn-default btn-xs member-down" disabled="@(i == virtualDetail.Members.Count - 1)">Down</button>
                                     </form>
-                                    <form method="post" asp-page-handler="RemoveMember" class="form-inline" style="display:inline">
+                                    <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="RemoveMember" class="form-inline" style="display:inline">
                                         <input type="hidden" name="member" value="@member.Name" />
                                         <button type="submit" class="btn btn-default btn-xs member-remove">Remove</button>
                                     </form>
@@ -203,7 +202,7 @@
 
             @if (Model.MemberCandidates.Count > 0)
             {
-                <form method="post" asp-page-handler="AddMember" class="form-inline" id="virtual-add-form">
+                <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="AddMember" class="form-inline" id="virtual-add-form">
                     <div class="form-group">
                         <label for="virtual-add-member">Add a member</label>
                         <select id="virtual-add-member" name="member" class="form-control">
@@ -222,7 +221,7 @@
             }
 
             <h3>Deploy repository</h3>
-            <form method="post" asp-page-handler="Deploy" class="form-inline" id="virtual-deploy-form">
+            <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="Deploy" class="form-inline" id="virtual-deploy-form">
                 <div class="form-group">
                     <label for="virtual-deploy">Uploads go to</label>
                     <select id="virtual-deploy" name="deploy" class="form-control">
@@ -247,7 +246,7 @@
             </p>
 
             <h3>Where would a package come from?</h3>
-            <form method="post" asp-page-handler="Preview" class="form-inline" id="virtual-preview-form">
+            <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="Preview" class="form-inline" id="virtual-preview-form">
                 <div class="form-group">
                     <label for="preview-package-id">@Model.PackageLabel</label>
                     <input id="preview-package-id" name="previewPackageId" type="text" class="form-control" value="@Model.PreviewPackageId" autocomplete="off" />
@@ -351,13 +350,13 @@
                 <a id="remote-browse" href="@Url.Page(Model.BrowsePage, new { repo = Model.Repository?.Name })">Browse the cached packages</a>
             </p>
 
-            <form method="post" asp-page-handler="Purge" id="remote-purge-form">
+            <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="Purge" id="remote-purge-form">
                 <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("purgePassword")" />
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Delete every cached package of this repository? They are fetched again when requested.');">Purge cache</button>
                 <span class="help-block">Deletes the stored packages and forgets the remembered answers.</span>
             </form>
 
-            <form method="post" asp-page-handler="PurgePackage" class="form-inline" id="remote-purge-package-form">
+            <form method="post" asp-page="/Admin/RepositoryEdit" asp-route-name="@Model.Name" asp-page-handler="PurgePackage" class="form-inline" id="remote-purge-package-form">
                 <div class="form-group">
                     <label for="purge-package-id">@Model.PackageLabel</label>
                     <input id="purge-package-id" name="packageId" type="text" class="form-control" value="@Model.PackageId" autocomplete="off" />
