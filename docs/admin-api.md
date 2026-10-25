@@ -27,13 +27,13 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 | remote repository create / save / test / purge, anonymous read of a remote repository | yes |
 | access changes: grants, patterns, memberships, deletes; user create/promote/demote/group/key revoke | yes |
 | retention policy create / save / run / delete, lift a hold; replication create / save / test / run / resume / delete; scanning policy; operation that deletes (`RequiresConfirmation`) | yes |
-| create empty group / target / project, rename group, virtual members, repository delete, dry run, place a hold, start a scan | no (as the pages) |
+| create empty group / target / project, rename group, virtual members, repository delete, dry run, place a hold, start a scan, stop a replication | no (as the pages) |
 
 ## Conventions
 
 | | |
 |---|---|
-| Errors | `application/problem+json`: `status`, `title`, `detail`, stable `code` (`not-found`, `invalid-request`, `conflict`, `confirmation-required`, `read-only`, `not-supported`, `unauthorized`, `forbidden`) |
+| Errors | `application/problem+json`: `status`, `title`, `detail`, stable `code` (`not-found`, `invalid-request`, `conflict`, `confirmation-required`, `confirmation-unavailable`, `locked-out`, `read-only`, `not-supported`, `unauthorized`, `forbidden`) |
 | Status | `400` invalid input, `404` unknown, `409` state forbids it (repository not empty, last administrator, already running), `422` not supported here (no access model on Azure Table), `503` + `Retry-After` while the server is read-only (writes only) |
 | Lists | `?page=1&pageSize=50` (max 200) answer `{items, page, pageSize, total}` |
 | Names | repositories, groups, users… by name in the path; principals by name in bodies |
@@ -49,7 +49,7 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 | `/users` | list, create, administrator flag, groups, keys, effective access |
 | `/operations` | list, start, status (catalog rebuild, downloads import, Docker GC, vulnerability scan…) |
 | `/retention` | `policies` (CRUD, `dry-run`, `run`), `holds` |
-| `/replication` | `configs` (CRUD, `run`, `resume`, `stop`, `runs`), `test`, `runs/{key}`, `inventory/{repository}` (what a peer calls) |
+| `/replication` | `configs` (list, show, create, replace, delete, `run`, `resume`, `stop`, `runs`), `test`, `runs/{key}`, `inventory/{repository}` (what a peer calls; its key needs `admin:api`) |
 | `/scanning` | overview, per-repository dashboard / results / policy / scan, per-project policy |
 
 ## Not offered over the API
@@ -59,7 +59,6 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 | password reset, invitation mails, account deletion, organizations, validation queue, abuse reports, server settings | mail or destroy on someone's behalf, or carry secrets; use the pages |
 | scanning one version | on the package page (needs Manage on the package, not a server administrator) |
 | a project administrator's delegated pages | the API admits server administrators only |
-| replication | arrives with its phase |
 
 ## Example
 

@@ -22,8 +22,6 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/pieroviano/BaGet
-    - icon: fontawesome/brands/x-twitter
-      link: https://twitter.com/bagetapp
 
 markdown_extensions:
   - markdown.extensions.admonition
