@@ -190,7 +190,7 @@ public class DatabaseCopyTests : IDisposable
                 var counts = await CountsAsync(targetDb);
                 Assert.Equal(await CountsAsync(sourceDb), counts);
                 Assert.True(counts["Packages"] >= 3);
-                Assert.True(counts["AspNetUsers"] >= 2);
+                Assert.True(counts["Users"] >= 2);
                 Assert.True(counts["Organizations"] >= 1);
 
                 // A key generated after the copy continues after the highest copied one.

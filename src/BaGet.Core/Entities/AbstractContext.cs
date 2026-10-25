@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -218,6 +219,15 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // Identity's tables lose the AspNet prefix (migration RenameAspNetTables).
+        builder.Entity<BaGetUser>().ToTable("Users");
+        builder.Entity<IdentityRole>().ToTable("Roles");
+        builder.Entity<IdentityUserRole<string>>().ToTable("UserRoles");
+        builder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims");
+        builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
+        builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens");
+        builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims");
 
         builder.Entity<Package>(BuildPackageEntity);
         builder.Entity<PackageDependency>(BuildPackageDependencyEntity);
