@@ -134,8 +134,8 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Package owners add / remove, verified flag | service | Manage (verified: Admin) | Manage |
 | Contact owners | service | `/packages/{id}/contact-owners` | signed in, SMTP |
 | Profiles, packages of an owner | pages | `/profiles/{name}`, Account Packages | read |
-| Approve a self-registered account (`Accounts:RequireApproval`) | service (`AccountApprovalService`) | Admin Users: *Approve* (list shows *Awaiting approval*); reject = Delete | Admin + Password, 503 while read-only |
-| Users: create, invite, promote, demote | CLI `account promote\|demote`, service | Admin Users | Admin + Password |
+| Approve a self-registered account (`Accounts:RequireApproval`) | CLI `account approve`, service (`AccountApprovalService`) | Admin Users and Admin UserDetail: *Approve* (both show *Awaiting approval*); reject = Delete | Admin + Password, 503 while read-only |
+| Users: create, invite, promote (also approves), demote | CLI `account promote\|demote`, service | Admin Users | Admin + Password |
 | Reset password, with `--email` | CLI `account reset-password [--email]` | Admin Users: Generate a password (+ optional email) | Admin + Password |
 | Send reset link | service | Admin Users | Admin + Password, SMTP |
 | Delete user, user's packages and keys | service | DeleteUser, UserDetail, UserPackages | Admin + Password |

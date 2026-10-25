@@ -68,7 +68,8 @@ Command line (run in the host folder):
 | `import downloads [-r <repo>]` | Imports nuget.org download counts |
 | `catalog rebuild [-r <repo>]` | Appends missing catalog entries |
 | `account reset-password <user> [--email <address>]` | Sets a generated password, switches off two-factor |
-| `account promote <user>` / `account demote <user>` | Grants or removes the administrator flag |
+| `account promote <user>` / `account demote <user>` | Grants or removes the administrator flag (promoting also approves a pending account) |
+| `account approve <user>` | Enables an account waiting for approval (`Accounts:RequireApproval`) |
 
 ## 6. Operate
 

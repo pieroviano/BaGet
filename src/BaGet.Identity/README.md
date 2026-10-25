@@ -24,7 +24,7 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 |---|---|
 | `Accounts:Enabled` | Off by default. On: callers authenticate with the global `ApiKey` if set, otherwise their own key |
 | `Accounts:AllowRegistration` | Local sign-up from the sign-in page (default `true`) |
-| `Accounts:RequireApproval` | A self-registered account (also first external sign-in) cannot sign in until an administrator approves it on `/admin/users` (default `false`) |
+| `Accounts:RequireApproval` | A self-registered account (also first external sign-in) cannot sign in until an administrator approves it on `/admin/users` or `/admin/users/{name}` (or `baget account approve`); promoting a user approves it too (default `false`) |
 | `Accounts:CreateDefaultAdministrator` | A server with no users creates `Admin` with a default password to change at first sign-in (default `true`) |
 | `Accounts:InitialAdministrators` | `;`-separated existing users promoted while there is no administrator |
 | `Accounts:OpenIdConnect:Authority`, `ClientId`, `ClientSecret`, `DisplayName` | External OpenID Connect provider (e.g. Entra ID) |

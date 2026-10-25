@@ -314,13 +314,16 @@ Who may change a package:
 
 With `Accounts:RequireApproval` on, `/account/register` creates the account but does not sign the user in, and no route
 (password, two-factor, external provider, API key) works for it until an administrator approves it. The user is told to
-wait; a sign-in attempt with the right password says the account awaits approval (a wrong password gets the usual
-"incorrect" message, so names are not revealed). If email is configured the confirmation link is still sent.
+wait (also when email is configured: the confirmation mail and the confirmation page repeat that approval is needed). A
+sign-in attempt with the right password says the account awaits approval; a wrong password gets the usual "incorrect"
+message and counts as a failed attempt, so a pending account locks out like any other and a locked-out one answers
+"locked" whatever the password (names and passwords are not revealed). `npm login` follows the same rule.
 
-- **Approve:** `/admin/users` shows an "Awaiting approval" label and a count; *Approve* asks for your password and is refused with `503` while the read-only gate is closed. The approval is logged at Warning.
+- **Approve:** `/admin/users` shows an "Awaiting approval" label and a count, and `/admin/users/{name}` the status; *Approve* (on either page) asks for your password and is refused with `503` while the read-only gate is closed. The approval is logged at Warning. Command line: `baget account approve <user>`.
+- **Promotion approves:** making a user an administrator (`account promote`, `Accounts:InitialAdministrators`, the Users page, the REST API) also approves the account, so a recovery never leaves the only administrator unable to sign in.
 - **Reject:** delete the account (*Delete* on the same page).
 - Turning the setting off does not approve existing pending accounts; approve them first. Existing accounts are never pending.
-- Not offered over the REST API or the command line; the Users page is the way.
+- Not offered over the REST API (which only reports `pendingApproval` on the user objects); the pages and `account approve` are the way.
 
 ### Administrators
 
@@ -340,6 +343,7 @@ account without one). Everyone else, and every request while accounts are off, g
 | `Accounts:InitialAdministrators` | User names, separated by `;`, promoted at start **only while no administrator exists** (it bootstraps an empty server). Only accounts that already exist are promoted; once any administrator exists the list is ignored, so registering a listed name later grants nothing and a demotion is not reversed. |
 | `Accounts:CreateDefaultAdministrator` | Default `true`. On a server with **no users at all**, startup creates the administrator `Admin` with password `Admin1234!` (email counted as confirmed, so it can sign in while SMTP is configured). Every start warns until the password is changed. Set `false` to bootstrap only through `InitialAdministrators` or `account promote`. |
 | `baget account promote <user>` | Makes the user an administrator. Needs `Accounts:Enabled`; exit code 1 for an unknown user. |
+| `baget account approve <user>` | Enables a self-registered account that waits for approval (`Accounts:RequireApproval`). Needs `Accounts:Enabled`; exit code 1 for an unknown user. `promote` approves too. |
 | `baget account demote <user>` | Removes the flag. Exit code 1 for an unknown user or the last administrator. |
 
 * The **last administrator cannot be demoted, and cannot delete their account**: promote another user first.

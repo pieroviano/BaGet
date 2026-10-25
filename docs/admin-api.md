@@ -56,7 +56,7 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 
 | Left on the pages | Why |
 |---|---|
-| password reset, invitation mails, account deletion, organizations, validation queue, abuse reports, server settings | mail or destroy on someone's behalf, or carry secrets; use the pages |
+| password reset, invitation mails, account deletion, account approval (`Accounts:RequireApproval`; user objects carry `pendingApproval`, and promoting a user approves it), organizations, validation queue, abuse reports, server settings | mail or destroy on someone's behalf, or carry secrets; use the pages |
 | scanning one version | on the package page (needs Manage on the package, not a server administrator) |
 | a project administrator's delegated pages | the API admits server administrators only |
 

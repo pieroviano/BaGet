@@ -71,7 +71,7 @@ Configuration is layered: `appsettings.json`, `appsettings.Overrides.json` (writ
 | Mirror to another server | [Replication](replication.md) |
 | Scan for vulnerabilities | [Vulnerability scanning](vulnerability-scanning.md) |
 | Automate administration | [Administration REST API](admin-api.md) with an `admin:api` key |
-| Account recovery | `dotnet BaGet.dll account reset-password <user>`, `account promote|demote <user>` |
+| Account recovery | `dotnet BaGet.dll account reset-password <user>`, `account promote|demote|approve <user>` |
 
 ## 7. Back up and upgrade
 
