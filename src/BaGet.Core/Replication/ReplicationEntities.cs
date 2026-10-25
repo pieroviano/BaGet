@@ -52,8 +52,8 @@ public enum ReplicationRunStatus
 
 /// <summary>
 /// One replication relationship: a local repository and a repository of another BaGet server, copied in one direction. Not
-/// repository-scoped (the administrator lists configurations across repositories). There is no foreign key (like the other optional
-/// relationships); deleting the repository deletes its configurations, runs and ledger.
+/// repository-scoped (the administrator lists configurations across repositories). Its <c>RepositoryKey</c> is a Restrict foreign key, and
+/// so is <c>ConfigKey</c> of its runs and ledger: deleting the repository deletes its configurations, runs and ledger first (code, not cascade).
 /// </summary>
 public class ReplicationConfig
 {

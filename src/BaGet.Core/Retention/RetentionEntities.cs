@@ -15,8 +15,8 @@ public static class RetentionLimits
 /// <summary>
 /// A retention policy: which stored versions of one repository (or of every repository of a project) are deleted, and when.
 /// A version is deleted when <b>any</b> enabled rule selects it and no <see cref="RetentionHold"/> covers it. Not repository-scoped:
-/// the administrator lists policies across repositories. There is no foreign key (like the other optional relationships); deleting a
-/// repository deletes its policies, and deleting a project leaves its policies inert (they match no repository).
+/// the administrator lists policies across repositories. <c>RepositoryKey</c> and <c>ProjectKey</c> are optional Restrict foreign keys;
+/// deleting a repository or a project deletes its policies first.
 /// </summary>
 public class RetentionPolicy
 {

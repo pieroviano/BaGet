@@ -137,7 +137,7 @@ public class ApiKeyRepository
 
     public ApiKey? ApiKey { get; set; }
 
-    /// <summary>The <see cref="Repository.Key"/> the key may be used in. No foreign key, like <see cref="IRepositoryScoped"/>.</summary>
+    /// <summary>The <see cref="Repository.Key"/> the key may be used in. A Restrict foreign key, like <see cref="IRepositoryScoped"/>.</summary>
     public int RepositoryKey { get; set; }
 }
 

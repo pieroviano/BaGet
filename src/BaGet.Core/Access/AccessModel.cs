@@ -135,7 +135,7 @@ public class PermissionTarget
 
     /// <summary>
     /// The <see cref="Project.Key"/> that administers the target. When set, the target applies only to repositories of
-    /// that project. Not a foreign key (nullable and additive, like <see cref="Repository.ProjectKey"/>).
+    /// that project. A Restrict foreign key to <see cref="Project"/> (nullable); deleting the project deletes its targets first.
     /// </summary>
     public int? ProjectKey { get; set; }
 

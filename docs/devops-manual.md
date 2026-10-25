@@ -78,6 +78,7 @@ Configuration is layered: `appsettings.json`, `appsettings.Overrides.json` (writ
 - Back up the database, the package store (file system folder or bucket), `appsettings.Overrides.json` and, in a cluster, the certificate in `Ha:KeyCertificatePath`.
 - Upgrade: back up, deploy the new build or image, restart; migrations apply at startup. In a cluster, roll nodes one at a time behind `/health/ready`.
 - After a database copy, restart every node.
+- **Upgrade note (ownership foreign keys).** The migration `AddOwnershipForeignKeys` adds foreign keys from repository, project, user and replication-configuration references to their rows. Before it does, it **deletes the rows that already pointed at nothing** (for example packages or API keys of a repository or user that no longer exists, and everything under them) and clears references to missing projects; such rows were invisible to the application. Back up first if you want to inspect them. From then on the database refuses an orphan, and deleting a repository, project or user is done by the application, which removes the dependents first.
 
 ## 8. High availability checklist
 

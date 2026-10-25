@@ -43,8 +43,8 @@ public class Repository
     public RepositoryKind Kind { get; set; }
 
     /// <summary>
-    /// The <see cref="Project.Key"/> that owns the repository, if any. Not a foreign key: it is nullable and
-    /// additive, like the other optional relationships (see <see cref="PackageDeprecation"/>).
+    /// The <see cref="Project.Key"/> that owns the repository, if any. A Restrict foreign key to <see cref="Project"/> (nullable);
+    /// deleting the project clears it first.
     /// </summary>
     public int? ProjectKey { get; set; }
 
@@ -87,7 +87,8 @@ public class Project
 
 /// <summary>
 /// An entity that belongs to one <see cref="Repository"/>. The context filters every query on these by the
-/// current repository (<see cref="IRepositoryContext"/>) and stamps new rows with it.
+/// current repository (<see cref="IRepositoryContext"/>) and stamps new rows with it. <c>RepositoryKey</c> is a Restrict foreign key
+/// to <see cref="Repository"/>: the code that deletes a repository removes the rows first.
 /// </summary>
 public interface IRepositoryScoped
 {
