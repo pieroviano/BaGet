@@ -23,7 +23,7 @@ public class SiteCssTests
     [Fact]
     public void DefinesHeaderVariablesAndNoLongerUsesNugetBlue()
     {
-        var css = ReadFromRepo(Path.Combine("src", "BaGet.Web", "wwwroot", "css", "site.css"));
+        var css = ReadFromRepo(Path.Combine("src", "BaGet.Web.V3", "wwwroot", "css", "site.css"));
 
         Assert.Contains("--header-bg:", css);
         Assert.Contains("--header-fg:", css);
@@ -33,7 +33,7 @@ public class SiteCssTests
     [Fact]
     public void LogoIsVisibleAgainstTheGoldenBand()
     {
-        var layout = ReadFromRepo(Path.Combine("src", "BaGet.Web", "Pages", "Shared", "_Layout.cshtml"));
+        var layout = ReadFromRepo(Path.Combine("src", "BaGet.Web.V3", "Pages", "Shared", "_Layout.cshtml"));
 
         Assert.DoesNotContain("#004880", layout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("fill=\"#f5a623\"", layout, StringComparison.OrdinalIgnoreCase);

@@ -12,7 +12,7 @@ namespace BaGet.Web.Tests;
 public class ApplicationPartsTests
 {
     [Theory]
-    [InlineData("BaGet.Web")]
+    [InlineData("BaGet.Web.V3")]
     [InlineData("BaGet.Web.V2")]
     [InlineData("BaGet.Catalog")]
     [InlineData("BaGet.Validation")]

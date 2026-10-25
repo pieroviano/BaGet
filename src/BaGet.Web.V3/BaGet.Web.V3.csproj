@@ -6,6 +6,9 @@
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet Extension's NuGet server implementation</Description>
     <RootNamespace>BaGet.Web</RootNamespace>
+    <!-- The assembly is BaGet.Web.V3, but the static web assets keep their URL (/_content/BaGet.Web/...):
+         the layout, embedding hosts (wwwroot/_content/BaGet.Web) and the package docs use it. -->
+    <StaticWebAssetBasePath>_content/BaGet.Web</StaticWebAssetBasePath>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);CS8620</NoWarn>
