@@ -137,8 +137,14 @@ public class RepositoryUrlHelper : IUrlHelper
 
     // Page() has already turned a relative page name into an absolute one (UrlHelperBase.NormalizeRouteValuesForPage),
     // so the value is compared as MVC knows pages.
+    // A helper built without the action map (the public constructor) knows the pages only by the obsolete static list.
     private bool IsRepositoryPage(string pageName)
-        => _actions?.IsRepositoryPage(pageName) == true;
+    {
+        if (_actions != null) return _actions.IsRepositoryPage(pageName);
+#pragma warning disable CS0618
+        return RepositoryPageRouteConvention.RepositoryPages.Contains(pageName, StringComparer.OrdinalIgnoreCase);
+#pragma warning restore CS0618
+    }
 }
 
 /// <summary>
