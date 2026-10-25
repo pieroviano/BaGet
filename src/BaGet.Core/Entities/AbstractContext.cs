@@ -300,6 +300,57 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
         builder.Entity<OciBlob>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<RetentionHold>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
         builder.Entity<ArtifactUsage>().Property(e => e.RepositoryKey).HasDefaultValue(Repository.DefaultKey);
+
+        BuildOwnershipForeignKeys(builder);
+    }
+
+    /// <summary>Entities whose <c>RepositoryKey</c> is a required foreign key to <see cref="Repository"/>.</summary>
+    internal static readonly Type[] RepositoryOwned =
+    {
+        typeof(Package), typeof(PackageOwner), typeof(CatalogEntry), typeof(PackageValidation), typeof(AbuseReport),
+        typeof(PackageSymbol), typeof(NpmPackage), typeof(MavenArtifact), typeof(OciRepository), typeof(OciBlob),
+        typeof(ScanResult), typeof(RetentionHold), typeof(ArtifactUsage), typeof(ApiKeyRepository), typeof(ReplicationConfig),
+    };
+
+    /// <summary>Entities whose nullable <c>RepositoryKey</c> is an optional foreign key to <see cref="Repository"/>.</summary>
+    internal static readonly Type[] RepositoryOptional = { typeof(RetentionPolicy), typeof(ScanPolicy) };
+
+    /// <summary>Entities whose nullable <c>ProjectKey</c> is an optional foreign key to <see cref="Project"/>.</summary>
+    internal static readonly Type[] ProjectOptional = { typeof(Repository), typeof(PermissionTarget), typeof(RetentionPolicy), typeof(ScanPolicy) };
+
+    /// <summary>Entities whose <c>UserId</c> is a required foreign key to the Identity users table.</summary>
+    internal static readonly Type[] UserOwned = { typeof(ApiKey), typeof(GroupMember), typeof(OrganizationMember) };
+
+    // The foreign keys that tie a row to its repository, project, user or replication configuration. They are all Restrict and
+    // have no navigation property (the entities are public API): the application deletes the owned rows itself, in order
+    // (RepositoryAdministration, AccountDeletionService, ...), and the database refuses a parent that still has children.
+    // The upgrade migration (AddOwnershipForeignKeys) deletes the rows that already pointed at nothing before adding them.
+    // PermissionGrant/ProjectMember.PrincipalId is polymorphic (user or group, by PrincipalType), so it has none.
+    private static void BuildOwnershipForeignKeys(ModelBuilder builder)
+    {
+        foreach (var type in RepositoryOwned)
+        {
+            builder.Entity(type).HasOne(typeof(Repository)).WithMany().HasForeignKey("RepositoryKey").IsRequired().OnDelete(DeleteBehavior.Restrict);
+        }
+
+        foreach (var type in RepositoryOptional)
+        {
+            builder.Entity(type).HasOne(typeof(Repository)).WithMany().HasForeignKey("RepositoryKey").IsRequired(false).OnDelete(DeleteBehavior.Restrict);
+        }
+
+        foreach (var type in ProjectOptional)
+        {
+            builder.Entity(type).HasOne(typeof(Project)).WithMany().HasForeignKey("ProjectKey").IsRequired(false).OnDelete(DeleteBehavior.Restrict);
+        }
+
+        foreach (var type in UserOwned)
+        {
+            builder.Entity(type).HasOne(typeof(BaGetUser)).WithMany().HasForeignKey("UserId").IsRequired().OnDelete(DeleteBehavior.Restrict);
+        }
+
+        builder.Entity<ReplicationRun>().HasOne<ReplicationConfig>().WithMany().HasForeignKey(r => r.ConfigKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<ReplicationItem>().HasOne<ReplicationConfig>().WithMany().HasForeignKey(i => i.ConfigKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<OciTag>().HasOne<OciRepository>().WithMany().HasForeignKey(t => t.ImageKey).IsRequired().OnDelete(DeleteBehavior.Restrict);
     }
 
     private void BuildRetentionPolicyEntity(EntityTypeBuilder<RetentionPolicy> policy)
@@ -517,8 +568,8 @@ public abstract class AbstractContext<TContext> : IdentityDbContext<BaGetUser>, 
 
         tag.Property(t => t.Name).HasMaxLength(MaxOciTagLength).IsRequired();
 
-        // The image is not a foreign key: deleting an image reaches its tags through its manifests (one cascade path, which
-        // SQL Server requires).
+        // The image is a Restrict foreign key (BuildOwnershipForeignKeys): deleting an image reaches its tags through its manifests
+        // (one cascade path, which SQL Server requires).
         tag.HasOne<OciManifest>().WithMany().HasForeignKey(t => t.ManifestKey).IsRequired().OnDelete(DeleteBehavior.Cascade);
     }
 

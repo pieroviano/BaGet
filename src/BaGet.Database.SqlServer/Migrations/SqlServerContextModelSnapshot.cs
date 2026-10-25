@@ -1398,6 +1398,8 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
+                    b.HasIndex("ProjectKey");
+
                     b.ToTable("PermissionTargets");
                 });
 
@@ -1683,6 +1685,8 @@ namespace BaGet.Database.SqlServer.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("ProjectKey");
 
                     b.ToTable("Repositories");
                 });
@@ -2113,6 +2117,24 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("BaGet.Core.AbuseReport", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.ApiKey", b =>
+                {
+                    b.HasOne("BaGet.Core.BaGetUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.ApiKeyRepository", b =>
                 {
                     b.HasOne("BaGet.Core.ApiKey", "ApiKey")
@@ -2121,7 +2143,31 @@ namespace BaGet.Database.SqlServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("ApiKey");
+                });
+
+            modelBuilder.Entity("BaGet.Core.ArtifactUsage", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.CatalogEntry", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BaGet.Core.GroupMember", b =>
@@ -2132,7 +2178,22 @@ namespace BaGet.Database.SqlServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BaGet.Core.BaGetUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("BaGet.Core.MavenArtifact", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BaGet.Core.MavenFile", b =>
@@ -2162,12 +2223,30 @@ namespace BaGet.Database.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BaGet.Core.NpmPackage", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.NpmVersion", b =>
                 {
                     b.HasOne("BaGet.Core.NpmPackage", null)
                         .WithMany()
                         .HasForeignKey("PackageKey")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.OciBlob", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -2195,8 +2274,23 @@ namespace BaGet.Database.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BaGet.Core.OciRepository", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.OciTag", b =>
                 {
+                    b.HasOne("BaGet.Core.OciRepository", null)
+                        .WithMany()
+                        .HasForeignKey("ImageKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("BaGet.Core.OciManifest", null)
                         .WithMany()
                         .HasForeignKey("ManifestKey")
@@ -2219,7 +2313,22 @@ namespace BaGet.Database.SqlServer.Migrations
                         .WithMany()
                         .HasForeignKey("OrganizationKey");
 
+                    b.HasOne("BaGet.Core.BaGetUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("BaGet.Core.Package", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BaGet.Core.PackageDependency", b =>
@@ -2240,6 +2349,24 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.Navigation("Package");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PackageOwner", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.PackageSymbol", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BaGet.Core.PackageType", b =>
                 {
                     b.HasOne("BaGet.Core.Package", "Package")
@@ -2256,6 +2383,12 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.HasOne("BaGet.Core.Package", "Package")
                         .WithMany()
                         .HasForeignKey("PackageKey");
+
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Package");
                 });
@@ -2280,6 +2413,14 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.Navigation("Target");
                 });
 
+            modelBuilder.Entity("BaGet.Core.PermissionTarget", b =>
+                {
+                    b.HasOne("BaGet.Core.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectKey")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("BaGet.Core.ProjectMember", b =>
                 {
                     b.HasOne("BaGet.Core.Project", "Project")
@@ -2291,12 +2432,91 @@ namespace BaGet.Database.SqlServer.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("BaGet.Core.ReplicationConfig", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationItem", b =>
+                {
+                    b.HasOne("BaGet.Core.ReplicationConfig", null)
+                        .WithMany()
+                        .HasForeignKey("ConfigKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.ReplicationRun", b =>
+                {
+                    b.HasOne("BaGet.Core.ReplicationConfig", null)
+                        .WithMany()
+                        .HasForeignKey("ConfigKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.Repository", b =>
+                {
+                    b.HasOne("BaGet.Core.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectKey")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionHold", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.RetentionPolicy", b =>
+                {
+                    b.HasOne("BaGet.Core.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectKey")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("BaGet.Core.ScanFinding", b =>
                 {
                     b.HasOne("BaGet.Core.ScanResult", null)
                         .WithMany("Findings")
                         .HasForeignKey("ResultKey")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanPolicy", b =>
+                {
+                    b.HasOne("BaGet.Core.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectKey")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("BaGet.Core.ScanResult", b =>
+                {
+                    b.HasOne("BaGet.Core.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryKey")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
