@@ -30,6 +30,7 @@ public static class IServiceCollectionExtensions
                 // The same check for the controller actions that replace pages (actions marked [RepositoryPage]), and the
                 // /r/{repo}/ twin of their routes (the counterpart of RepositoryPageRouteConvention below).
                 options.Filters.Add<RepositoryActionFilter>();
+                options.Conventions.Add(new RouteNotForLinksConvention());
                 options.Conventions.Add(new RepositoryActionRouteConvention());
 
                 // The read check of every protocol route (401 for anonymous callers, 404 without Read access).
@@ -68,6 +69,13 @@ public static class IServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();
+
+        // The logic of the browse screens, shared by their controllers and the obsolete page-model shims.
+        services.AddScoped<IndexWorkflow>();
+        services.AddScoped<PackageWorkflow>();
+        services.AddScoped<StatisticsWorkflow>();
+        services.AddScoped<ReportAbuseWorkflow>();
+        services.AddScoped<ApiCatalogWorkflow>();
         services.AddScoped<OciCallerResolver>();
         services.AddScoped<OciAuthorizationFilter>();
         services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();

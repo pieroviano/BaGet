@@ -1,5 +1,4 @@
-@page
-@model IndexModel
+@model IndexViewModel
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 @inject BaGet.Core.IUrlGenerator Autocomplete
 
@@ -188,7 +187,7 @@ else
             </div>
             <div class="card-body">
                 <div class="card-heading">
-                    <a asp-page="Package"
+                    <a asp-page="/Package"
                        asp-route-id="@package.PackageId"
                        class="package-title">
                         @package.PackageId
@@ -256,7 +255,7 @@ else
     </div>
 
     var showPreviousLink = Model.PageIndex > 1;
-    var showNextLink = Model.Packages?.Count >= IndexModel.ResultsPerPage;
+    var showNextLink = Model.Packages?.Count >= IndexWorkflow.ResultsPerPage;
 
     if (showPreviousLink || showNextLink)
     {
@@ -370,7 +369,7 @@ else
         if (page == 1) page = null;
         if (sortBy == SearchSort.Relevance || !Model.CanSort) sortBy = null;
 
-        return Url.Page("Index", new
+        return Url.Page("/Index", new
         {
             q = Model.Query,
             p = page,

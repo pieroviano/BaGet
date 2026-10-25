@@ -1,51 +1,63 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 
 namespace BaGet.Web;
 
+/// <summary>The page model of the package page when it was a Razor Page.</summary>
+/// <remarks>
+/// Kept as a shim so that code compiled against it still loads and runs (no breaking change of the public API); there is no page
+/// behind it any more: <see cref="PackageController"/> serves it. Both share <see cref="PackageWorkflow"/>.
+/// </remarks>
+[Obsolete("The package page is served by PackageController; this page model has no page any more and will be removed in the next major version.")]
 public class PackageModel : PageModel
 {
-    private readonly IPackageService _packages;
-    private readonly IPackageContentService _content;
-    private readonly ISearchService _search;
-    private readonly IUrlGenerator _url;
+    private readonly PackageWorkflow _workflow;
 
+    /// <summary>Creates the page model.</summary>
     public PackageModel(
         IPackageService packages,
         IPackageContentService content,
         ISearchService search,
         IUrlGenerator url)
     {
-        _packages = packages ?? throw new ArgumentNullException(nameof(packages));
-        _content = content ?? throw new ArgumentNullException(nameof(content));
-        _search = search ?? throw new ArgumentNullException(nameof(search));
-        _url = url ?? throw new ArgumentNullException(nameof(url));
+        _workflow = new PackageWorkflow(packages, content, search, url);
     }
 
+    /// <summary>False when the package does not exist.</summary>
     public bool Found { get; private set; }
 
+    /// <summary>The version shown.</summary>
     public Package? Package { get; private set; }
 
+    /// <summary>The package is a dotnet template.</summary>
     public bool IsDotnetTemplate { get; private set; }
+
+    /// <summary>The package is a dotnet tool.</summary>
     public bool IsDotnetTool { get; private set; }
+
+    /// <summary>When any version was last published.</summary>
     public DateTime LastUpdated { get; private set; }
+
+    /// <summary>Downloads of every version.</summary>
     public long TotalDownloads { get; private set; }
 
+    /// <summary>The packages that depend on this one.</summary>
     public IReadOnlyList<PackageDependent>? UsedBy { get; set; }
+
+    /// <summary>The dependencies, by framework.</summary>
     public IReadOnlyList<DependencyGroupModel>? DependencyGroups { get; private set; }
+
+    /// <summary>The listed versions, newest first.</summary>
     public IReadOnlyList<VersionModel>? Versions { get; private set; }
 
+    /// <summary>The readme, rendered safely.</summary>
     public HtmlString? Readme { get; private set; }
 
     internal IReadOnlyList<FrameworkGroup> FrameworkGroups { get; private set; } = Array.Empty<FrameworkGroup>();
@@ -54,172 +66,71 @@ public class PackageModel : PageModel
     /// <summary>Owner names; empty unless accounts are enabled and the package has owners.</summary>
     public IReadOnlyList<string?> Owners { get; private set; } = Array.Empty<string>();
 
-    /// <summary>
-    /// Each owner's avatar address by name. Empty when Gravatar is off or accounts are disabled.
-    /// </summary>
+    /// <summary>The avatar address of each owner by name; empty when Gravatar is off or accounts are disabled.</summary>
     public IReadOnlyDictionary<string, string> OwnerAvatars { get; private set; } = new Dictionary<string, string>();
 
-    /// <summary>
-    /// The management page's address when the signed in user may open it (an owner, directly or through an
-    /// organization, or an administrator), else null and the page offers no link. Built by
-    /// <see cref="RepositoryPageLinks.Manage"/> for the repository the request works in.
-    /// </summary>
+    /// <summary>The address of the management page when the signed in user may open it, else null.</summary>
     public string? ManageUrl { get; private set; }
 
+    /// <summary>The icon address.</summary>
     public string? IconUrl { get; private set; }
+
+    /// <summary>The license address, null for a license expression or file.</summary>
     public string? LicenseUrl { get; private set; }
+
+    /// <summary>Where the package file is downloaded.</summary>
     public string? PackageDownloadUrl { get; private set; }
 
-    /// <summary>
-    /// This version on nuget.info, NuGet Package Explorer's web app, as nuget.org links it. nuget.info
-    /// always downloads from nuget.org, so the link only works for a package that is also published there.
-    /// </summary>
+    /// <summary>This version on nuget.info (works only for a package that is also published on nuget.org).</summary>
     public string? PackageExplorerUrl { get; private set; }
 
+    /// <summary>Loads the package.</summary>
     public async Task OnGetAsync(string id, string? version, CancellationToken cancellationToken)
     {
-        var packages = await _packages.FindPackagesAsync(id, cancellationToken);
-        var listedPackages = packages.Where(p => p.Listed).ToList();
+        var model = await _workflow.LoadAsync(id, version, HttpContext, Url, cancellationToken);
 
-        // Try to find the requested version.
-        if (NuGetVersion.TryParse(version, out var requestedVersion))
-        {
-            Package = packages.SingleOrDefault(p => p.Version == requestedVersion);
-        }
-
-        // Otherwise try to display the latest version.
-        if (Package == null)
-        {
-            Package = listedPackages.OrderByDescending(p => p.Version).FirstOrDefault();
-        }
-
-        if (Package == null)
-        {
-            Package = new Package { Id = id };
-            Found = false;
-            return;
-        }
-
-        var packageVersion = Package.Version;
-
-        Found = true;
-        #pragma warning disable CS8602, CS8604
-        IsDotnetTemplate = Package.PackageTypes.Any(t => t.Name.Equals("Template", StringComparison.OrdinalIgnoreCase));
-        #pragma warning restore CS8604
-        IsDotnetTool = Package.PackageTypes.Any(t => t.Name.Equals("DotnetTool", StringComparison.OrdinalIgnoreCase));
-        #pragma warning restore CS8602
-        LastUpdated = packages.Max(p => p.Published);
-        TotalDownloads = packages.Sum(p => p.Downloads);
-
-        var dependents = await _search.FindDependentsAsync(Package.Id, cancellationToken);
-
-        UsedBy = dependents.Data;
-        DependencyGroups = PackageDependencies.GroupByFramework(Package.Dependencies);
-        Versions = ToVersions(listedPackages, packageVersion);
-
-        if (Package.HasReadme)
-        {
-            Readme = await GetReadmeHtmlStringOrNullAsync(Package.Id, packageVersion, cancellationToken);
-        }
-
-        IconUrl = Package.HasEmbeddedIcon
-            ? _url.GetPackageIconDownloadUrl(Package.Id, packageVersion)
-            : Package.IconUrlString;
-        LicenseUrl = GetLicenseUrlOrNull(Package);
-        FrameworkGroups = PackageFrameworks.Compute(Package.TargetFrameworks?.Select(f => f.Moniker));
-        InstallTabs = InstallSnippets.Build(Package.Id, Package.NormalizedVersionString, IsDotnetTemplate, IsDotnetTool);
-
-        // PackageOwnershipService is only registered when accounts are enabled.
-        var ownership = HttpContext?.RequestServices.GetService<PackageOwnershipService>();
-        if (ownership != null)
-        {
-            var owners = await ownership.GetOwnersAsync(Package.Id, cancellationToken);
-            Owners = owners.Select(o => o.OwnerName).ToList();
-            #pragma warning disable CS8602
-            OwnerAvatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
-                .GetUrlsAsync(Owners, 32, cancellationToken);
-            #pragma warning restore CS8602
-
-            // A virtual repository holds no packages to manage: they are managed in the member that stores them.
-            var repository = HttpContext?.RequestServices.GetService<IRepositoryContext>()?.Current;
-            if (User.Identity?.IsAuthenticated == true
-                && repository?.Kind != RepositoryKind.Virtual
-                && await CanManageAsync(ownership, Package.Id, cancellationToken))
+        Found = model.Found;
+        Package = model.Package;
+        IsDotnetTemplate = model.IsDotnetTemplate;
+        IsDotnetTool = model.IsDotnetTool;
+        LastUpdated = model.LastUpdated;
+        TotalDownloads = model.TotalDownloads;
+        UsedBy = model.UsedBy;
+        DependencyGroups = model.DependencyGroups;
+        Versions = model.Versions?
+            .Select(v => new VersionModel
             {
-                ManageUrl = Url.Content(RepositoryPageLinks.Manage(repository?.Name, Package.Id));
-            }
-        }
-        PackageDownloadUrl = _url.GetPackageDownloadUrl(Package.Id, packageVersion);
-        #pragma warning disable CS8604
-        PackageExplorerUrl = "https://nuget.info/packages/"
-            + Uri.EscapeDataString(Package.Id) + "/" + Uri.EscapeDataString(Package.NormalizedVersionString);
-        #pragma warning restore CS8604
-    }
-
-    // The rule of the management page itself (ManageModel): an owner holding the Manage permission in this
-    // repository, or an administrator.
-    private async Task<bool> CanManageAsync(PackageOwnershipService ownership, string? packageId, CancellationToken cancellationToken)
-    {
-        var services = HttpContext!.RequestServices;
-        var userId = services.GetService<UserManager<BaGetUser>>()?.GetUserId(User);
-        if (await ownership.IsOwnerAsync(userId, User.Identity?.Name, packageId, cancellationToken)
-            && await ManagePermission.HeldAsync(services, User, packageId, cancellationToken)) return true;
-
-        var administrators = services.GetService<AdministratorService>();
-        return administrators != null && await administrators.IsAdministratorAsync(User, cancellationToken);
-    }
-
-    /// <summary>
-    /// The license address, or null when there is none. A package that declares a license
-    /// expression or file carries only the deprecation placeholder here, which leads nowhere useful.
-    /// </summary>
-    private static string? GetLicenseUrlOrNull(Package package)
-    {
-        var url = package.LicenseUrlString;
-        if (string.IsNullOrEmpty(url)) return null;
-        if (url.StartsWith("https://aka.ms/deprecateLicenseUrl", StringComparison.OrdinalIgnoreCase)) return null;
-
-        return url;
-    }
-
-    private IReadOnlyList<VersionModel> ToVersions(IReadOnlyList<Package> packages, NuGetVersion selectedVersion)
-    {
-        return packages
-            .Select(p => new VersionModel
-            {
-                Version = p.Version,
-                Downloads = p.Downloads,
-                Selected = p.Version == selectedVersion,
-                LastUpdated = p.Published,
+                Version = v.Version,
+                Downloads = v.Downloads,
+                Selected = v.Selected,
+                LastUpdated = v.LastUpdated,
             })
-            .OrderByDescending(m => m.Version)
             .ToList();
+        Readme = model.Readme;
+        FrameworkGroups = model.FrameworkGroups;
+        InstallTabs = model.InstallTabs;
+        Owners = model.Owners;
+        OwnerAvatars = model.OwnerAvatars;
+        ManageUrl = model.ManageUrl;
+        IconUrl = model.IconUrl;
+        LicenseUrl = model.LicenseUrl;
+        PackageDownloadUrl = model.PackageDownloadUrl;
+        PackageExplorerUrl = model.PackageExplorerUrl;
     }
 
-    private async Task<HtmlString?> GetReadmeHtmlStringOrNullAsync(
-        string? packageId,
-        NuGetVersion packageVersion,
-        CancellationToken cancellationToken)
-    {
-        string readme;
-        using (var readmeStream = await _content.GetPackageReadmeStreamOrNullAsync(packageId, packageVersion, cancellationToken))
-        {
-            if (readmeStream == null) return null;
-
-            using (var reader = new StreamReader(readmeStream))
-            {
-                readme = await reader.ReadToEndAsync();
-            }
-        }
-
-        return ReadmeMarkdown.ToHtml(readme);
-    }
-
+    /// <summary>One row of the versions table.</summary>
     public record VersionModel
     {
+        /// <summary>The version.</summary>
         public NuGetVersion? Version { get; init; }
+
+        /// <summary>Its downloads.</summary>
         public long Downloads { get; init; }
+
+        /// <summary>Whether it is the version shown.</summary>
         public bool Selected { get; init; }
+
+        /// <summary>When it was published.</summary>
         public DateTime LastUpdated { get; init; }
     }
 }

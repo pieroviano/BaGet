@@ -15,6 +15,18 @@ What the snapshots record: **ui-routes** = per page name: lower-cased route temp
 **ui-forms** = for `anonymous`/`user`/`admin` and ~190 addresses (every page, plus `/r/{repo}/` in a repository of each format, a remote, a virtual, a private and an unknown one): status, redirect target, `<title>`, every `<form>` (method, action with `?handler=`, field names/types, antiforgery token), every link to a BaGet page. Texts, hidden values, tokens, dates, ids are not recorded.
 **public-api** = one line per public type, base type, interface and public/protected member of `BaGet.Web.V3` and `BaGet.Identity`; a migration may add lines, never remove or change one.
 
+### Wave 1 results: mvc-browse
+
+| Item | Note |
+|---|---|
+| Migrated | Index (+`/packages`), Package, Statistics, ReportAbuse, Admin/Api -> `HomeController`, `PackageController`, `StatisticsController`, `ReportAbuseController`, `ApiCatalogController`; views in `Views/<Controller>/` |
+| Workflows are **public** | Plan said `internal`: a controller's public constructor cannot take an internal type (CS0051) and MVC needs it public |
+| Multi-route action | Link generation breaks ties by template text, so `Url.Page("/Index")` gave `/index`, not the old `/packages`: `[RouteNotForLinks("", "index")]` (+ `RouteNotForLinksConvention`, before the twin convention) |
+| Namespace trap | `Views/Package`, `Views/ApiCatalog` generate `BaGet.Web.Package`/`.ApiCatalog` (hides the types): per-view `@namespace` |
+| Relative page names | `asp-page="Package"`, `Url.Page("Index")` became absolute (`/Package`, `/Index`): relative names need a Razor Page context |
+| ReportAbuse | GET takes route values only (a bound model would show "required" errors on a plain GET); POST binds `ReportAbuseViewModel` |
+| Tests | `IndexModelFacts`/`PackageModelFacts` -> `IndexWorkflowFacts`/`PackageWorkflowFacts` + one shim smoke test each |
+
 ### How to migrate a page (for tracks of waves 1-3)
 
 1. **Logic first.** Move the page model's logic into `internal sealed class <Feature>Workflow` (scoped) so the controller and the `[Obsolete]` shim of the page model both call it. Keep the page model class (name, namespace, public constructor, properties, handler methods) as the shim; mark it and its `*Model` helpers `[Obsolete("... removed in the next major version")]`. Delete the `.cshtml` (`@page`).

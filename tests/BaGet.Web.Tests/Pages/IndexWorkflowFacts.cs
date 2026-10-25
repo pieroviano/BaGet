@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Protocol.Models;
@@ -7,15 +7,16 @@ using Xunit;
 
 namespace BaGet.Web.Tests;
 
-public class IndexModelFacts
+public class IndexWorkflowFacts
 {
-    private readonly IndexModel _target;
+    private readonly IndexWorkflow _target;
+    private readonly ISearchService _searchService;
 
     private SearchRequest? _capturedRequest = null;
     private readonly SearchResponse _response = new SearchResponse();
     private readonly CancellationToken _cancellation = CancellationToken.None;
 
-    public IndexModelFacts()
+    public IndexWorkflowFacts()
     {
         var search = new Mock<ISearchService>();
         search
@@ -23,13 +24,14 @@ public class IndexModelFacts
             .Callback((SearchRequest r, CancellationToken c) => _capturedRequest = r)
             .ReturnsAsync(_response);
 
-        _target = new IndexModel(search.Object, new StatisticsService(new NullContext()));
+        _searchService = search.Object;
+        _target = new IndexWorkflow(_searchService, new StatisticsService(new NullContext()));
     }
 
     [Fact]
     public async Task DefaultSearch()
     {
-        await _target.OnGetAsync(_cancellation);
+        await _target.LoadAsync(new IndexViewModel(), null, _cancellation);
 
         #pragma warning disable CS8602
         Assert.Equal(0, _capturedRequest.Skip);
@@ -45,13 +47,16 @@ public class IndexModelFacts
     [Fact]
     public async Task AcceptsParameters()
     {
-        _target.Prerelease = false;
-        _target.PageIndex = 5;
-        _target.PackageType = "foo";
-        _target.Framework = "bar";
-        _target.Query = "Hello world";
+        var model = new IndexViewModel
+        {
+            Prerelease = false,
+            PageIndex = 5,
+            PackageType = "foo",
+            Framework = "bar",
+            Query = "Hello world",
+        };
 
-        await _target.OnGetAsync(_cancellation);
+        await _target.LoadAsync(model, null, _cancellation);
 
         #pragma warning disable CS8602
         Assert.Equal(80, _capturedRequest.Skip);
@@ -63,4 +68,20 @@ public class IndexModelFacts
         Assert.Equal("bar", _capturedRequest.Framework);
         Assert.Equal("Hello world", _capturedRequest.Query);
     }
+
+    [Fact]
+    #pragma warning disable CS0618
+    public async Task TheObsoletePageModelShimStillWorks()
+    {
+        var shim = new IndexModel(_searchService, new StatisticsService(new NullContext())) { PageIndex = 3, Query = "x" };
+
+        await shim.OnGetAsync(_cancellation);
+
+        #pragma warning disable CS8602
+        Assert.Equal(40, _capturedRequest.Skip);
+        #pragma warning restore CS8602
+        Assert.Equal("x", _capturedRequest.Query);
+        Assert.False(shim.IsHome);
+    }
+    #pragma warning restore CS0618
 }

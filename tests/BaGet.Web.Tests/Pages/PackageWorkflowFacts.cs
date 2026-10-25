@@ -11,23 +11,24 @@ using Xunit;
 
 namespace BaGet.Web.Tests;
 
-public class PackageModelFacts
+public class PackageWorkflowFacts
 {
     private readonly Mock<IPackageContentService> _content;
     private readonly Mock<IPackageService> _packages;
     private readonly Mock<ISearchService> _search;
     private readonly Mock<IUrlGenerator> _url;
-    private readonly PackageModel _target;
+    private readonly PackageWorkflow _workflow;
+    private PackageViewModel _target = null!;
 
     private readonly CancellationToken _cancellation = CancellationToken.None;
 
-    public PackageModelFacts()
+    public PackageWorkflowFacts()
     {
         _content = new Mock<IPackageContentService>();
         _packages = new Mock<IPackageService>();
         _search = new Mock<ISearchService>();
         _url = new Mock<IUrlGenerator>();
-        _target = new PackageModel(
+        _workflow = new PackageWorkflow(
             _packages.Object,
             _content.Object,
             _search.Object,
@@ -45,7 +46,7 @@ public class PackageModelFacts
             .Setup(m => m.FindPackagesAsync("testpackage", _cancellation))
             .ReturnsAsync(new List<Package>());
 
-        await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
         Assert.False(_target.Found);
         #pragma warning disable CS8602
@@ -65,7 +66,7 @@ public class PackageModelFacts
                 CreatePackage("1.0.0", listed: false),
             });
 
-        await _target.OnGetAsync("testpackage", version: null, _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", version: null, null, null, _cancellation);
 
         Assert.False(_target.Found);
         #pragma warning disable CS8602
@@ -87,7 +88,7 @@ public class PackageModelFacts
                 CreatePackage("3.0.0"),
             });
 
-        await _target.OnGetAsync("testpackage", "2.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "2.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
@@ -122,7 +123,7 @@ public class PackageModelFacts
                 CreatePackage("3.0.0"),
             });
 
-        await _target.OnGetAsync("testpackage", "2.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "2.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
@@ -153,7 +154,7 @@ public class PackageModelFacts
                 CreatePackage("3.0.0", listed: false),
             });
 
-        await _target.OnGetAsync("testpackage", "4.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "4.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
@@ -187,7 +188,7 @@ public class PackageModelFacts
                 CreatePackage("1.0.0", packageTypes: packageTypes)
             });
 
-        await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         Assert.Equal(expectDotnetTemplate, _target.IsDotnetTemplate);
@@ -215,7 +216,7 @@ public class PackageModelFacts
                 }
             });
 
-        await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
         #pragma warning disable CS8602
         Assert.Equal(2, _target.UsedBy.Count);
@@ -254,7 +255,7 @@ public class PackageModelFacts
                 })
             });
 
-        await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
@@ -309,7 +310,7 @@ public class PackageModelFacts
                 })
             });
 
-        await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         #pragma warning disable CS8604
@@ -331,7 +332,7 @@ public class PackageModelFacts
                 CreatePackage("2.0.0", listed: false, downloads: 5, published: now),
             });
 
-        await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
         Assert.True(_target.Found);
         Assert.Equal(15, _target.TotalDownloads);
@@ -367,7 +368,7 @@ public class PackageModelFacts
                     _cancellation))
                 .ReturnsAsync(readmeStream);
 
-            await _target.OnGetAsync("testpackage", "1.0.0", _cancellation);
+            _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
 
             #pragma warning disable CS8602
             Assert.Equal(
@@ -376,6 +377,24 @@ public class PackageModelFacts
             #pragma warning restore CS8602
         }
     }
+
+    [Fact]
+    #pragma warning disable CS0618
+    public async Task TheObsoletePageModelShimStillWorks()
+    {
+        _packages
+            .Setup(m => m.FindPackagesAsync("testpackage", _cancellation))
+            .ReturnsAsync(new List<Package> { CreatePackage("1.0.0"), CreatePackage("2.0.0") });
+
+        var shim = new PackageModel(_packages.Object, _content.Object, _search.Object, _url.Object);
+        await shim.OnGetAsync("testpackage", "1.0.0", _cancellation);
+
+        Assert.True(shim.Found);
+        Assert.Equal("1.0.0", shim.Package?.NormalizedVersionString);
+        Assert.Equal(2, shim.Versions?.Count);
+        Assert.True(shim.Versions?[1].Selected);
+    }
+    #pragma warning restore CS0618
 
     private Package CreatePackage(
         string version,
