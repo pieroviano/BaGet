@@ -134,7 +134,9 @@ public class UiCoverageInventoryTests : IDisposable
     [Fact]
     public void EveryCommandLineCommandIsListedWithItsPage()
     {
-        var program = File.ReadAllText(Path.Combine(AdminApiAccessTests.RepositoryRoot(), "src", "BaGet", "Program.cs"));
+        var program = string.Concat(Directory.EnumerateFiles(Path.Combine(AdminApiAccessTests.RepositoryRoot(), "src", "BaGet"), "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar))
+            .Select(File.ReadAllText));
         var commands = Regex.Matches(program, @"\.Command\(""([a-z-]+)""").Select(m => m.Groups[1].Value).Distinct().ToList();
         Assert.Contains("rebuild", commands);
 
