@@ -196,7 +196,10 @@ public class AdminApiAccessTests : IDisposable
         Assert.NotEmpty(endpoints);
 
         var paths = answer.Json["paths"]!.AsObject();
-        var pages = provider.ActionDescriptors.Items.OfType<PageActionDescriptor>().Select(p => p.ViewEnginePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // A page is a Razor Page or a controller action that replaced one (it keeps the page's name, LegacyPageAttribute).
+        var pages = provider.ActionDescriptors.Items.OfType<PageActionDescriptor>().Select(p => p.ViewEnginePath)
+            .Concat(provider.ActionDescriptors.Items.SelectMany(a => a.EndpointMetadata.OfType<BaGet.Identity.Mvc.LegacyPageAttribute>().Select(l => l.PageName)))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var docs = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "ui-coverage.md"));
         foreach (var endpoint in endpoints)
         {

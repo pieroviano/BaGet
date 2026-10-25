@@ -33,7 +33,7 @@ public class SiteCssTests
     [Fact]
     public void LogoIsVisibleAgainstTheGoldenBand()
     {
-        var layout = ReadFromRepo(Path.Combine("src", "BaGet.Web.V3", "Pages", "Shared", "_Layout.cshtml"));
+        var layout = ReadFromRepo(Path.Combine("src", "BaGet.Web.V3", "Views", "Shared", "_Layout.cshtml"));
 
         Assert.DoesNotContain("#004880", layout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("fill=\"#f5a623\"", layout, StringComparison.OrdinalIgnoreCase);

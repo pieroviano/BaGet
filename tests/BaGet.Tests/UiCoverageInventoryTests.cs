@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -74,6 +75,8 @@ public class UiCoverageInventoryTests : IDisposable
         var provider = _app.Services.GetRequiredService<IActionDescriptorCollectionProvider>();
         var controllers = provider.ActionDescriptors.Items.OfType<ControllerActionDescriptor>()
             .Where(d => d.AttributeRouteInfo?.Template?.StartsWith("api/v1", StringComparison.Ordinal) != true)
+            // A controller that stands in for a Razor Page is a page: EveryRazorPageIsNamedInTheCoverageTable audits it by its page name.
+            .Where(d => !d.EndpointMetadata.OfType<LegacyPageAttribute>().Any())
             .Select(d => d.ControllerName)
             .Distinct()
             .ToList();
@@ -99,11 +102,12 @@ public class UiCoverageInventoryTests : IDisposable
     [Fact]
     public void EveryRazorPageIsNamedInTheCoverageTable()
     {
-        var pages = _app.Services.GetRequiredService<EndpointDataSource>().Endpoints
-            .OfType<RouteEndpoint>()
-            .Select(e => (Page: e.Metadata.GetMetadata<CompiledPageActionDescriptor>(), Template: e.RoutePattern.RawText ?? string.Empty))
-            .Where(p => p.Page != null)
-            .GroupBy(p => p.Page!.ViewEnginePath, StringComparer.OrdinalIgnoreCase)
+        // A page is a Razor Page or a controller action that replaced one (it keeps the page's name, LegacyPageAttribute).
+        var endpoints = _app.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
+        var pages = endpoints
+            .Select(e => (Name: e.Metadata.GetMetadata<CompiledPageActionDescriptor>()?.ViewEnginePath ?? e.Metadata.GetMetadata<LegacyPageAttribute>()?.PageName, Template: e.RoutePattern.RawText ?? string.Empty))
+            .Where(p => p.Name != null)
+            .GroupBy(p => p.Name!, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.Select(p => p.Template).ToList(), StringComparer.OrdinalIgnoreCase);
         Assert.True(pages.Count > 50);
 

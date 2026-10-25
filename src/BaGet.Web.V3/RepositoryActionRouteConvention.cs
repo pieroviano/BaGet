@@ -50,6 +50,11 @@ public class RepositoryActionRouteConvention : IApplicationModelConvention
     {
         var controllerRoutes = controller.Selectors.Select(s => s.AttributeRouteModel).Where(r => r != null).ToList();
 
+        // What the action already answers at (a twin added by an earlier pass is found here and not added again).
+        var existing = new HashSet<string>(
+            action.Selectors.Select(s => (s.AttributeRouteModel?.Template ?? string.Empty).TrimStart('~', '/')),
+            StringComparer.OrdinalIgnoreCase);
+
         // Snapshot: the twins are added to the same list. Twins are never twinned again (idempotent).
         foreach (var selector in action.Selectors.ToList())
         {
@@ -69,18 +74,20 @@ public class RepositoryActionRouteConvention : IApplicationModelConvention
                 effective.AddRange(controllerRoutes.Select(c => AttributeRouteModel.CombineAttributeRouteModel(c, own)!));
             }
 
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var route in effective)
             {
                 var template = (route.Template ?? string.Empty).TrimStart('~', '/');
-                if ((template + "/").StartsWith(Routes.RepositoryPathPrefix, StringComparison.Ordinal) || !seen.Add(template)) continue;
+                if ((template + "/").StartsWith(Routes.RepositoryPathPrefix, StringComparison.Ordinal)) continue;
+
+                var twinTemplate = (Routes.RepositoryPathPrefix + template).TrimEnd('/');
+                if (!existing.Add(twinTemplate)) continue;
 
                 var twin = new SelectorModel(selector)
                 {
                     AttributeRouteModel = new AttributeRouteModel
                     {
                         // The leading slash makes the template absolute: the controller's prefix is already part of it.
-                        Template = "/" + (Routes.RepositoryPathPrefix + template).TrimEnd('/'),
+                        Template = "/" + twinTemplate,
                         Order = TwinOrder,
                         Name = string.IsNullOrEmpty(route.Name) ? null : Routes.RepositoryRouteName(route.Name),
                         SuppressLinkGeneration = route.SuppressLinkGeneration,

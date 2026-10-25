@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using BaGet.Identity.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 
@@ -22,25 +25,48 @@ internal static class UiRoutes
 
     public static IReadOnlyList<Entry> Read(EndpointDataSource source)
     {
-        var entries = new List<Entry>();
+        // (page, template, order) -> handlers; a controller has one endpoint per action, a page one per template.
+        var found = new Dictionary<(string Page, string Template, int Order), SortedSet<string>>();
         foreach (var endpoint in source.Endpoints.OfType<RouteEndpoint>())
         {
+            var template = (endpoint.RoutePattern.RawText ?? string.Empty).ToLowerInvariant().TrimStart('/');
             var page = endpoint.Metadata.GetMetadata<CompiledPageActionDescriptor>();
-            if (page == null) continue;
+            var action = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
+            var legacy = endpoint.Metadata.GetMetadata<LegacyPageAttribute>();
 
-            // "GET:" is the default GET handler, "POST:Approve" the handler named by ?handler=Approve. HEAD is answered by the GET
-            // handler of a page and is not a separate handler.
-            var handlers = page.HandlerMethods
-                .Where(h => HttpVerbs.Contains(h.HttpMethod ?? string.Empty)) // OnPageHandlerExecuting & co. parse as method "Page": filters, not handlers
-                .Select(h => $"{h.HttpMethod?.ToUpperInvariant()}:{h.Name}")
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(h => h, StringComparer.Ordinal)
-                .ToList();
+            string name;
+            IEnumerable<string> handlers;
+            if (page != null)
+            {
+                // "GET:" is the default GET handler, "POST:Approve" the handler named by ?handler=Approve. HEAD is answered by
+                // the GET handler of a page and is not a separate handler.
+                name = page.ViewEnginePath;
+                handlers = page.HandlerMethods
+                    .Where(h => HttpVerbs.Contains(h.HttpMethod ?? string.Empty)) // OnPageHandlerExecuting & co. parse as method "Page": filters, not handlers
+                    .Select(h => $"{h.HttpMethod?.ToUpperInvariant()}:{h.Name}");
+            }
+            else if (action != null && legacy != null)
+            {
+                // A controller action that stands in for a page: the same description (HEAD collapsed into GET).
+                name = legacy.PageName;
+                var handler = action.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name;
+                var verbs = endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods
+                    .Select(v => v.ToUpperInvariant()).ToList() ?? new List<string> { "GET" };
+                if (verbs.Contains("GET")) verbs.Remove("HEAD");
+                handlers = verbs.Select(v => $"{v}:{handler}");
+            }
+            else
+            {
+                continue;
+            }
 
-            entries.Add(new Entry(page.ViewEnginePath, (endpoint.RoutePattern.RawText ?? string.Empty).ToLowerInvariant().TrimStart('/'), endpoint.Order, handlers));
+            var key = (name, template, endpoint.Order);
+            if (!found.TryGetValue(key, out var set)) found[key] = set = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (var handler in handlers) set.Add(handler);
         }
 
-        return entries
+        return found
+            .Select(p => new Entry(p.Key.Page, p.Key.Template, p.Key.Order, p.Value.ToList()))
             .OrderBy(e => e.Page, StringComparer.Ordinal)
             .ThenBy(e => e.Template, StringComparer.Ordinal)
             .ToList();
