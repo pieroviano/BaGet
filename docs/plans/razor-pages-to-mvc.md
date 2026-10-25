@@ -27,6 +27,17 @@ What the snapshots record: **ui-routes** = per page name: lower-cased route temp
 | ReportAbuse | GET takes route values only (a bound model would show "required" errors on a plain GET); POST binds `ReportAbuseViewModel` |
 | Tests | `IndexModelFacts`/`PackageModelFacts` -> `IndexWorkflowFacts`/`PackageWorkflowFacts` + one shim smoke test each |
 
+### Wave 1, track mvc-manage (done): `Packages/*`
+
+| Point | Result |
+|---|---|
+| Workflows | `internal sealed *Workflow` per screen, built with `new` from the `HttpContext` (not DI-scoped): `BaGet.Identity/Workflows`, base `PackageWorkflowBase` (`Show` marker = "render the screen") |
+| Naming | the validation screen's controller is `ValidationStatusPageController` (`ValidationStatusController` is the validation protocol controller in `BaGet.Validation`; one controller name for both confuses the coverage audit and view lookup) |
+| View models | public, `internal set`, `ViewModels/`; the views keep their `Model.X` names |
+| Check order | the manage screens' ownership/format/permission check runs in the controller's `OnActionExecutionAsync` (before `RepositoryActionFilter`); ids come from route values |
+| Forms | an MVC view has no ambient page, so `asp-page-handler` forms also carry `asp-page="/Packages/X"` |
+| Stray POST | a manage controller has a `NoHandler` fallback (`[HttpPost, PageHandler]`, 404) **without** `[LegacyPage]` (so `ui-routes.txt` is unchanged): else a `<form method=post>` with no `?handler=` is 404 at routing, before the antiforgery 400 |
+
 ### How to migrate a page (for tracks of waves 1-3)
 
 1. **Logic first.** Move the page model's logic into `internal sealed class <Feature>Workflow` (scoped) so the controller and the `[Obsolete]` shim of the page model both call it. Keep the page model class (name, namespace, public constructor, properties, handler methods) as the shim; mark it and its `*Model` helpers `[Obsolete("... removed in the next major version")]`. Delete the `.cshtml` (`@page`).

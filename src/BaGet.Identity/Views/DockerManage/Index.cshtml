@@ -1,5 +1,4 @@
-@page "/docker-manage/{**image}"
-@model BaGet.Identity.Pages.Packages.DockerManageModel
+@model BaGet.Identity.ViewModels.DockerManageViewModel
 @{
     ViewData["Title"] = "Manage " + Model.Image;
     ViewData["HideSearchBar"] = true;
@@ -44,7 +43,7 @@
                     <td><code>@tag.Name</code></td>
                     <td><a asp-page="/DockerImage" asp-route-image="@info.Name" asp-route-digest="@tag.Digest"><code>@tag.Digest.Substring(0, 19)...</code></a></td>
                     <td>
-                        <button type="submit" form="confirm-form" name="tag" value="@tag.Name" asp-page-handler="DeleteTag" asp-route-image="@info.Name"
+                        <button type="submit" form="confirm-form" name="tag" value="@tag.Name" asp-page="/Packages/DockerManage" asp-page-handler="DeleteTag" asp-route-image="@info.Name"
                                 class="btn btn-danger btn-xs"
                                 onclick="return confirm('Delete the tag @tag.Name? The manifest stays. Enter your password in the danger zone below first.')">Delete tag</button>
                     </td>
@@ -69,7 +68,7 @@
                     <td>@(manifest.Platform ?? "")</td>
                     <td>@string.Join(", ", manifest.Tags)</td>
                     <td>
-                        <button type="submit" form="confirm-form" name="digest" value="@manifest.Digest" asp-page-handler="DeleteManifest" asp-route-image="@info.Name"
+                        <button type="submit" form="confirm-form" name="digest" value="@manifest.Digest" asp-page="/Packages/DockerManage" asp-page-handler="DeleteManifest" asp-route-image="@info.Name"
                                 class="btn btn-danger btn-xs"
                                 onclick="return confirm('Delete this manifest and its tags? This cannot be undone. Enter your password in the danger zone below first.')">Delete manifest</button>
                     </td>
@@ -96,8 +95,8 @@
             <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Page("/Packages/DockerManage", new { image = info.Name }) ?? string.Empty))" />
         }
 
-        <button type="submit" asp-page-handler="Prune" asp-route-image="@info.Name" class="btn btn-default" id="docker-prune">Remove unused layers</button>
-        <button type="submit" asp-page-handler="DeleteImage" asp-route-image="@info.Name" class="btn btn-danger" id="docker-delete-image"
+        <button type="submit" asp-page="/Packages/DockerManage" asp-page-handler="Prune" asp-route-image="@info.Name" class="btn btn-default" id="docker-prune">Remove unused layers</button>
+        <button type="submit" asp-page="/Packages/DockerManage" asp-page-handler="DeleteImage" asp-route-image="@info.Name" class="btn btn-danger" id="docker-delete-image"
                 onclick="return confirm('Delete @info.Name with every manifest and tag? This cannot be undone.')">Delete the whole image</button>
     </form>
 </div>

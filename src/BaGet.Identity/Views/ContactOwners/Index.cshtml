@@ -1,5 +1,4 @@
-@page "/packages/{id}/contact-owners"
-@model BaGet.Identity.Pages.Packages.ContactOwnersModel
+@model BaGet.Identity.ViewModels.ContactOwnersViewModel
 @{
     ViewData["Title"] = $"Contact the owners of {Model.PackageId}";
 }
@@ -40,7 +39,7 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                     <label asp-for="Message"></label>
-                    <textarea asp-for="Message" class="form-control" rows="8" maxlength="@ContactOwnersModel.MaxMessageLength"></textarea>
+                    <textarea asp-for="Message" class="form-control" rows="8" maxlength="@BaGet.Identity.ViewModels.ContactOwnersViewModel.MaxMessageLength"></textarea>
                     <span asp-validation-for="Message" class="text-danger"></span>
                 </div>
                 <div class="checkbox">

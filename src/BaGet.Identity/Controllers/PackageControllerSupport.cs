@@ -27,7 +27,9 @@ internal static class PackageControllerSupport
         var request = context.HttpContext.Request;
         if (request.HasFormContentType && request.Form.TryGetValue(key, out var form) && form.Count > 0)
         {
-            return form.ToString();
+            var posted = form.ToString();
+
+            return posted.Length == 0 ? null : posted;
         }
 
         var query = request.Query[key].ToString();

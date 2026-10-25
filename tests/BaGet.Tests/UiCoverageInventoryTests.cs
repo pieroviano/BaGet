@@ -73,11 +73,15 @@ public class UiCoverageInventoryTests : IDisposable
     public void EveryProtocolControllerHasARowInTheCoverageTable()
     {
         var provider = _app.Services.GetRequiredService<IActionDescriptorCollectionProvider>();
-        var controllers = provider.ActionDescriptors.Items.OfType<ControllerActionDescriptor>()
+        var all = provider.ActionDescriptors.Items.OfType<ControllerActionDescriptor>()
             .Where(d => d.AttributeRouteInfo?.Template?.StartsWith("api/v1", StringComparison.Ordinal) != true)
-            // A controller that stands in for a Razor Page is a page: EveryRazorPageIsNamedInTheCoverageTable audits it by its page name.
-            .Where(d => !d.EndpointMetadata.OfType<LegacyPageAttribute>().Any())
+            .ToList();
+        // A controller that stands in for a Razor Page is a page: EveryRazorPageIsNamedInTheCoverageTable audits it by its page name.
+        // It is recognised by any action carrying LegacyPage (a fallback action such as NoHandler deliberately does not).
+        var pageControllers = all.Where(d => d.EndpointMetadata.OfType<LegacyPageAttribute>().Any()).Select(d => d.ControllerName).ToHashSet();
+        var controllers = all
             .Select(d => d.ControllerName)
+            .Where(c => !pageControllers.Contains(c))
             .Distinct()
             .ToList();
         Assert.NotEmpty(controllers);
