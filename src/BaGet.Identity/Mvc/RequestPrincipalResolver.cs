@@ -17,6 +17,9 @@ namespace BaGet.Web;
 /// </summary>
 public class RequestPrincipalResolver
 {
+    /// <summary>The header NuGet clients send an API key in.</summary>
+    internal const string ApiKeyHeader = "X-NuGet-ApiKey";
+
     private const string ItemKey = "BaGet.RequestPrincipal";
     private const string WriteItemKey = "BaGet.RequestWritePrincipal";
 
@@ -62,7 +65,7 @@ public class RequestPrincipalResolver
     {
         var key = basic?.Password;
         if (string.IsNullOrEmpty(key)) key = BasicCredentials.ReadBearer(context.Request);
-        if (string.IsNullOrEmpty(key)) key = context.Request.GetApiKey();
+        if (string.IsNullOrEmpty(key)) key = context.Request.Headers[ApiKeyHeader];
 
         return key;
     }

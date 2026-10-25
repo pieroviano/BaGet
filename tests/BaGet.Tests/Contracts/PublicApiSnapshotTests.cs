@@ -12,10 +12,15 @@ namespace BaGet.Tests.Contracts;
 
 /// <summary>
 /// The public-API contract of the web UI: the public and protected surface
-/// of <c>BaGet.Web.V3</c> and <c>BaGet.Identity</c> is listed in <c>Contracts/public-api.txt</c>, one line per type, base
-/// type, interface and member. The actual surface must be a <b>superset</b> of the snapshot: members and
-/// types may be added, none may be removed or change signature (a removal is a breaking change: regenerate the snapshot on purpose). Razor-generated view
-/// classes are not public API.
+/// of <c>BaGet.Web.V3</c> and <c>BaGet.Identity</c> (and of the Application projects their types moved to) is listed in
+/// <c>Contracts/public-api.txt</c>, one line per type, base type, interface and member. The actual surface must be a <b>superset</b> of
+/// the snapshot: members and types may be added, none may be removed or change signature (a removal is a breaking change: regenerate the
+/// snapshot on purpose). Razor-generated view classes are not public API.
+/// <para>
+/// A type is identified by namespace and name, <b>not by assembly</b>: a type that moved to <c>BaGet.Identity.Application</c> or
+/// <c>BaGet.Web.Application</c> still counts, provided the assembly that listed it keeps a <c>[TypeForwardedTo]</c> for it
+/// (<see cref="EveryTypeOfTheSnapshotStillResolvesThroughItsOriginalAssembly"/>), so binaries compiled against the old assembly keep working.
+/// </para>
 /// </summary>
 public class PublicApiSnapshotTests
 {
@@ -25,7 +30,19 @@ public class PublicApiSnapshotTests
     {
         typeof(NavLinkTagHelper).Assembly,
         typeof(AccountsServiceCollectionExtensions).Assembly,
+        typeof(BaGet.Identity.Application.ScreenGate).Assembly,
+        typeof(BaGet.Web.Application.LegalUseCase).Assembly,
     };
+
+    // The assemblies the snapshot was taken from: a type listed under one of them must still resolve through it (moved types are forwarded).
+    private static readonly Dictionary<string, Assembly> Original = new(StringComparer.Ordinal)
+    {
+        ["BaGet.Web.V3"] = typeof(NavLinkTagHelper).Assembly,
+        ["BaGet.Identity"] = typeof(AccountsServiceCollectionExtensions).Assembly,
+    };
+
+    /// <summary>The assembly column of a snapshot line is dropped: a moved type is the same line.</summary>
+    private static string WithoutAssembly(string line) => line.Substring(line.IndexOf(' ') + 1);
 
     [Fact]
     public void ThePublicApiIsASupersetOfTheSnapshot()
@@ -42,12 +59,47 @@ public class PublicApiSnapshotTests
         Assert.True(File.Exists(path), $"{FileName} does not exist; generate it with {ContractSnapshot.UpdateVariable}=1.");
 
         var expected = File.ReadAllLines(path).Where(l => l.Length > 0).ToList();
-        var missing = expected.Except(actual, StringComparer.Ordinal).ToList();
+        var present = new HashSet<string>(actual.Select(WithoutAssembly), StringComparer.Ordinal);
+        var missing = expected.Where(l => !present.Contains(WithoutAssembly(l))).ToList();
 
         Assert.True(
             missing.Count == 0,
             $"{missing.Count} public API entries of the snapshot are gone or changed (a removal is a breaking change):{Environment.NewLine}  "
             + string.Join(Environment.NewLine + "  ", missing.Take(40)));
+    }
+
+    [Fact]
+    public void EveryTypeOfTheSnapshotStillResolvesThroughItsOriginalAssembly()
+    {
+        var path = Path.Combine(ContractSnapshot.Folder, FileName);
+        var unresolved = new List<string>();
+
+        foreach (var line in File.ReadAllLines(path).Where(l => l.Contains(" type ", StringComparison.Ordinal)))
+        {
+            // "<assembly> type <full name> [kind]"
+            var parts = line.Split(' ');
+            if (!Original.TryGetValue(parts[0], out var assembly)) continue;
+
+            // Assembly.GetType follows a [TypeForwardedTo] to the assembly the type moved to.
+            if (!Resolves(assembly, parts[2])) unresolved.Add(line);
+        }
+
+        Assert.True(unresolved.Count == 0, "Types that no longer resolve through the assembly that listed them (a moved type needs [TypeForwardedTo]):" + Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", unresolved.Take(40)));
+    }
+
+    // The snapshot writes a nested type as Outer.Inner; the runtime name is Outer+Inner.
+    private static bool Resolves(Assembly assembly, string name)
+    {
+        for (var candidate = name; ; )
+        {
+            if (assembly.GetType(candidate, throwOnError: false) != null) return true;
+
+            var dot = candidate.LastIndexOf('.');
+            if (dot < 0) return false;
+
+            candidate = candidate.Substring(0, dot) + "+" + candidate.Substring(dot + 1);
+            if (candidate.IndexOf('.') < 0) return false;
+        }
     }
 
     /// <summary>One sorted line per public type, base type, interface and public or protected member.</summary>

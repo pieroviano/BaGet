@@ -68,6 +68,16 @@ public class RepositoryResolutionMiddleware
             if (found == null || (!isPage && found.Format != format))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                if (endpoint?.Metadata.GetMetadata<BaGet.Identity.Mvc.UiApiAttribute>() != null)
+                {
+                    // The JSON twin of a screen answers in its own shape.
+                    await context.Response.WriteAsJsonAsync(
+                        BaGet.Identity.Application.ScreenResult<object>.NotFound(),
+                        BaGet.Identity.Application.UiApiJson.Options,
+                        context.RequestAborted);
+                    return;
+                }
+
                 context.Response.ContentType = "text/plain; charset=utf-8";
                 await context.Response.WriteAsync("There is no such repository.", context.RequestAborted);
                 return;

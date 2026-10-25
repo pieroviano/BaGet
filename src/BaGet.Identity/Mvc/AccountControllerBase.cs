@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -57,30 +58,31 @@ public abstract class AccountControllerBase : UiControllerBase
     /// <summary>Whether the screen needs a signed-in user (checked here, not with <c>[Authorize]</c>, see the class remarks).</summary>
     protected virtual bool RequiresSignIn => false;
 
+    /// <summary>The gate every account and administration screen passes (the JSON API bases ask the same one).</summary>
+    protected ScreenGate Gate
+        => HttpContext.RequestServices.GetService<ScreenGate>()
+           ?? ActivatorUtilities.CreateInstance<ScreenGate>(HttpContext.RequestServices);
+
     /// <inheritdoc/>
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-        if (!Accounts.Enabled)
-        {
-            context.Result = NotFound();
-            return;
-        }
-
         var metadata = context.ActionDescriptor.EndpointMetadata ?? (System.Collections.Generic.IList<object>)Array.Empty<object>();
+        var request = new GateRequest(
+            RequiresSignIn: RequiresSignIn || metadata.OfType<RequiresSignInAttribute>().Any(),
+            RequiresEmail: RequiresEmail || metadata.OfType<RequiresEmailAttribute>().Any());
 
-        if ((RequiresEmail || metadata.OfType<RequiresEmailAttribute>().Any()) && !EmailConfigured)
+        switch (Gate.CheckAccount(User, request))
         {
-            context.Result = NotFound();
-            return;
+            case GateOutcome.Allowed:
+                base.OnActionExecuting(context);
+                break;
+            case GateOutcome.SignIn:
+                context.Result = Challenge();
+                break;
+            default:
+                context.Result = NotFound();
+                break;
         }
-
-        if ((RequiresSignIn || metadata.OfType<RequiresSignInAttribute>().Any()) && User.Identity?.IsAuthenticated != true)
-        {
-            context.Result = Challenge();
-            return;
-        }
-
-        base.OnActionExecuting(context);
     }
 
     private AccountScreen? _screen;

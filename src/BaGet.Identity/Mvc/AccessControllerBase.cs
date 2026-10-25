@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application;
 using BaGet.Identity.Pages.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -76,24 +77,25 @@ public abstract class AccessControllerBase : AdminControllerBase
         if (context.Result != null) return;
 
         var cancellationToken = HttpContext.RequestAborted;
-        IsServerAdministrator = await Administrators.IsAdministratorAsync(User, cancellationToken);
         CurrentUserId = UserManager.GetUserId(User);
 
-        if (HttpContext.RequestServices.GetRequiredService<IContext>() is NullContext)
+        // The gate holds the order: administrator or whoever AuthorizeAsync admits, the access model present, writable on a POST.
+        var gate = await Gate.CheckAsync(
+            User,
+            new GateRequest(Role: GateRole.AccessAdministrator, IsWrite: HttpMethods.IsPost(Request.Method), AlsoAllow: async ct => await AuthorizeAsync(ct)),
+            cancellationToken);
+        IsServerAdministrator = gate.IsServerAdministrator;
+
+        if (gate.Outcome == GateOutcome.AccessUnavailable)
         {
-            context.Result = IsServerAdministrator ? RedirectToPage("/Admin/AccessUnavailable") : NotFound();
+            context.Result = RedirectToPage("/Admin/AccessUnavailable");
             return;
         }
 
-        if (!await AuthorizeAsync(cancellationToken))
+        if (!gate.IsAllowed)
         {
             context.Result = NotFound();
             return;
-        }
-
-        if (HttpMethods.IsPost(Request.Method))
-        {
-            HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
         }
 
         var current = await UserManager.GetUserAsync(User);

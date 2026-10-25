@@ -9,7 +9,8 @@ namespace BaGet.Web;
 /// <summary>
 /// Makes the controller actions that replaced Razor Pages reachable at <c>/r/{repo}/…</c> as well as at their own route, for actions marked <see cref="RepositoryPageAttribute"/> (on the
 /// action or on its controller). Every route of such an action (the controller's <c>[Route]</c> combined with the action's own
-/// template, aliases included) gets a twin prefixed with <see cref="Routes.RepositoryPathPrefix"/>.
+/// template, aliases included) gets a twin prefixed with <see cref="Routes.RepositoryPathPrefix"/>; for a JSON twin of a screen
+/// (<see cref="UiApiAttribute"/>, routed under <see cref="ApiPrefix"/>) the prefix goes after <c>api/ui/</c>.
 /// <para>
 /// Link generation, as for pages: the twin has a lower <c>Order</c> than the original. Without a <c>repo</c> value (explicit or
 /// ambient from the current <c>/r/{repo}/</c> request) the twin cannot be filled in, so <c>Url.Action</c>, <c>asp-action</c>,
@@ -26,6 +27,9 @@ public class RepositoryActionRouteConvention : IApplicationModelConvention
 {
     /// <summary>Order of the repository twin of a route; below the default 0 so it wins when it can be filled in.</summary>
     public const int TwinOrder = -1;
+
+    /// <summary>Prefix of the JSON UI API (<c>/api/ui</c>); the repository twin of such a route is <c>api/ui/r/{repo}/…</c>.</summary>
+    public const string ApiPrefix = "api/ui/";
 
     /// <inheritdoc/>
     public void Apply(ApplicationModel application)
@@ -76,9 +80,13 @@ public class RepositoryActionRouteConvention : IApplicationModelConvention
             foreach (var route in effective)
             {
                 var template = (route.Template ?? string.Empty).TrimStart('~', '/');
-                if ((template + "/").StartsWith(Routes.RepositoryPathPrefix, StringComparison.Ordinal)) continue;
 
-                var twinTemplate = (Routes.RepositoryPathPrefix + template).TrimEnd('/');
+                // The JSON twin of a screen (api/ui/...) has its repository twin under the API prefix: api/ui/r/{repo}/...
+                var isApi = template.StartsWith(ApiPrefix, StringComparison.OrdinalIgnoreCase);
+                var path = isApi ? template.Substring(ApiPrefix.Length) : template;
+                if ((path + "/").StartsWith(Routes.RepositoryPathPrefix, StringComparison.Ordinal)) continue;
+
+                var twinTemplate = ((isApi ? ApiPrefix : string.Empty) + Routes.RepositoryPathPrefix + path).TrimEnd('/');
                 if (!existing.Add(twinTemplate)) continue;
 
                 var twin = new SelectorModel(selector)

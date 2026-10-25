@@ -13,16 +13,8 @@ namespace BaGet.Web;
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class StatisticsController : UiControllerBase
 {
-    private readonly StatisticsWorkflow _workflow;
-
-    /// <summary>Creates the controller.</summary>
-    public StatisticsController(StatisticsWorkflow workflow)
-    {
-        _workflow = workflow ?? throw new ArgumentNullException(nameof(workflow));
-    }
-
     /// <summary>The statistics page.</summary>
     [Route("stats"), HttpGet, HttpHead, PageHandler, LegacyPage("/Statistics")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        => View("Index", new StatisticsViewModel(await _workflow.GetAsync(cancellationToken)));
+        => Render(await Api<StatisticsUiApiController, StatisticsViewModel>(api => api.Get(cancellationToken)), "Index");
 }

@@ -38,7 +38,7 @@ public class UiCoverageInventoryTests : IDisposable
 
     /// <summary>
     /// Each protocol controller and the text of docs/ui-coverage.md that names the capability it serves and its page.
-    /// Controllers of <c>/api/v1</c> are audited by <c>AdminApiAccessTests</c>.
+    /// Controllers of <c>/api/v1</c> are audited by <c>AdminApiAccessTests</c>, those of <c>/api/ui</c> (twins of a screen) by <c>UiApiParityTests</c>.
     /// </summary>
     private static readonly Dictionary<string, string> ControllerRows = new()
     {
@@ -75,6 +75,8 @@ public class UiCoverageInventoryTests : IDisposable
         var provider = _app.Services.GetRequiredService<IActionDescriptorCollectionProvider>();
         var all = provider.ActionDescriptors.Items.OfType<ControllerActionDescriptor>()
             .Where(d => d.AttributeRouteInfo?.Template?.StartsWith("api/v1", StringComparison.Ordinal) != true)
+            // The JSON twins of the screens (api/ui) are covered through their screen: UiApiParityTests requires each to serve one.
+            .Where(d => d.AttributeRouteInfo?.Template?.StartsWith("api/ui/", StringComparison.Ordinal) != true)
             .ToList();
         // A controller that stands in for a Razor Page is a page: EveryRazorPageIsNamedInTheCoverageTable audits it by its page name.
         // It is recognised by any action carrying LegacyPage (a fallback action such as NoHandler deliberately does not).

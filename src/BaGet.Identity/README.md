@@ -17,6 +17,8 @@ services.AddBaGetAccounts(configuration);
 `AddBaGetAccounts` reads `Accounts:Enabled` **while registering**, so the configuration must be complete before it
 runs. Disabled, it adds an empty authentication setup and only the global `ApiKey` authenticates.
 
+The business services live in `Extension.BaGet.Identity.Application` (same namespace, types forwarded from this assembly); this package keeps the screens: controllers, views and the MVC infrastructure (`Mvc/`). `Mvc/Api` holds the base classes of the JSON UI API (`UiApiControllerBase`, `AccountUiApiControllerBase`, `AdminUiApiControllerBase`, `AccessUiApiControllerBase`), `UiApiInvoker` (a view controller calls its JSON twin in process), `UiApiSecurityFilter` (cookie + antiforgery header, or API key) and `GET /api/ui/antiforgery`.
+
 `MaintenanceAwareSignInManager` lets a sign-in complete while the read-only `MaintenanceGate` is closed (it skips the
 failed-attempt counter reset; a wrong password is still refused), so administrators can reach the Settings page.
 

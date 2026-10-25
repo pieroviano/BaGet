@@ -1,45 +1,29 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Core;
 using BaGet.Identity.Mvc;
+using BaGet.Web.Application;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 
 namespace BaGet.Web;
 
 /// <summary>
 /// The Terms of Use (<c>/terms</c>) and Privacy Policy (<c>/privacy</c>) pages: the operator-supplied Markdown files
 /// (<c>Site:TermsOfUsePath</c>, <c>Site:PrivacyPolicyPath</c>), 404 while a file is not configured or does not exist. Same URLs, same
-/// <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>), views in <c>Views/Legal/</c>.
+/// <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>), views in <c>Views/Legal/</c>. Renders what <see cref="LegalUiApiController"/> answers.
 /// </summary>
 public sealed class LegalController : UiControllerBase
 {
-    private readonly IOptionsSnapshot<SiteOptions> _site;
-    private readonly IHostEnvironment _environment;
-
-    /// <summary>Creates the controller.</summary>
-    public LegalController(IOptionsSnapshot<SiteOptions> site, IHostEnvironment environment)
-    {
-        _site = site ?? throw new ArgumentNullException(nameof(site));
-        _environment = environment ?? throw new ArgumentNullException(nameof(environment));
-    }
-
     /// <summary>The Privacy Policy.</summary>
     [Route("privacy"), HttpGet, HttpHead, PageHandler, LegacyPage("/Privacy")]
-    public Task<IActionResult> Privacy(CancellationToken cancellationToken)
-        => ShowAsync(_site.Value.PrivacyPolicyPath, "Privacy Policy", cancellationToken);
+    public async Task<IActionResult> Privacy(CancellationToken cancellationToken)
+        => Render(await Api<LegalUiApiController, LegalScreen>(api => api.Privacy(cancellationToken)), "Privacy", ToViewModel);
 
     /// <summary>The Terms of Use.</summary>
     [Route("terms"), HttpGet, HttpHead, PageHandler, LegacyPage("/Terms")]
-    public Task<IActionResult> Terms(CancellationToken cancellationToken)
-        => ShowAsync(_site.Value.TermsOfUsePath, "Terms of Use", cancellationToken);
+    public async Task<IActionResult> Terms(CancellationToken cancellationToken)
+        => Render(await Api<LegalUiApiController, LegalScreen>(api => api.Terms(cancellationToken)), "Terms", ToViewModel);
 
-    private async Task<IActionResult> ShowAsync(string? path, string title, CancellationToken cancellationToken)
-    {
-        var content = await LegalContent.ReadAsync(path, _environment, cancellationToken);
-
-        return content == null ? NotFound() : View(new LegalViewModel(title, content));
-    }
+    // The view keeps its model (hosts override the view); the twin's DTO carries the rendered HTML as text.
+    private static object? ToViewModel(LegalScreen screen) => new LegalViewModel(screen.Title, new HtmlString(screen.ContentHtml));
 }

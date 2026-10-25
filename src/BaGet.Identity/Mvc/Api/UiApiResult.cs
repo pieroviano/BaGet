@@ -1,0 +1,55 @@
+using System;
+using System.Threading.Tasks;
+using BaGet.Identity.Application;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Net.Http.Headers;
+
+namespace BaGet.Identity.Mvc;
+
+/// <summary>
+/// The HTTP answer of a <see cref="ScreenResult{T}"/> on <c>/api/ui</c>: always <c>application/json</c> written with
+/// <see cref="UiApiJson.Options"/> (camelCase, enums by name), with the status the decision maps to: Ok and Next 200, Invalid 400 (the body
+/// still carries the model and the errors), NotFound 404, Forbidden 403, SignIn 401 with a <c>Bearer</c> challenge (not <c>Basic</c>, which
+/// would make a browser prompt for a password on a <c>fetch</c>). A maintenance refusal is not a result: it propagates and the middleware answers 503.
+/// <para>
+/// The in-process call of a view controller never executes it: <see cref="UiApiInvoker"/> reads <see cref="ObjectResult.Value"/>.
+/// </para>
+/// </summary>
+public sealed class UiApiResult : ObjectResult
+{
+    private readonly IScreenResult _screen;
+
+    /// <summary>Creates the answer for <paramref name="screen"/>.</summary>
+    public UiApiResult(IScreenResult screen)
+        : base(screen)
+    {
+        _screen = screen ?? throw new ArgumentNullException(nameof(screen));
+        StatusCode = StatusOf(screen.Status);
+        ContentTypes.Add("application/json");
+        Formatters.Add(new SystemTextJsonOutputFormatter(UiApiJson.Options));
+        DeclaredType = screen.GetType();
+    }
+
+    /// <summary>The HTTP status of a decision.</summary>
+    public static int StatusOf(ScreenStatus status) => status switch
+    {
+        ScreenStatus.Invalid => StatusCodes.Status400BadRequest,
+        ScreenStatus.NotFound => StatusCodes.Status404NotFound,
+        ScreenStatus.Forbidden => StatusCodes.Status403Forbidden,
+        ScreenStatus.SignIn => StatusCodes.Status401Unauthorized,
+        _ => StatusCodes.Status200OK,
+    };
+
+    /// <inheritdoc/>
+    public override Task ExecuteResultAsync(ActionContext context)
+    {
+        if (_screen.Status == ScreenStatus.SignIn)
+        {
+            context.HttpContext.Response.Headers[HeaderNames.WWWAuthenticate] = "Bearer realm=\"BaGet\"";
+        }
+
+        return base.ExecuteResultAsync(context);
+    }
+}

@@ -1,0 +1,5 @@
+api/ui/antiforgery	GET	-	-	order=0
+api/ui/privacy	GET	/Privacy	-	order=0
+api/ui/r/{repo}/stats	GET	/Statistics	-	order=-1
+api/ui/stats	GET	/Statistics	-	order=0
+api/ui/terms	GET	/Terms	-	order=0

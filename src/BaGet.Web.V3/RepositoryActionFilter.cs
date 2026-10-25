@@ -1,6 +1,10 @@
 using System.Linq;
 using System.Threading.Tasks;
+using BaGet.Core;
+using BaGet.Identity.Application;
 using BaGet.Identity.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace BaGet.Web;
@@ -30,6 +34,31 @@ public class RepositoryActionFilter : IAsyncActionFilter
                 FrontPage: attribute.FrontPage);
 
             var result = await RepositoryPageGate.CheckAsync(context.HttpContext, context.RouteData, rule);
+
+            // The JSON twin of a screen answers in JSON: 401 for a visitor who must sign in, 404 for what the caller may not see. An API
+            // key limited to repositories sees a repository outside its limit as a signed-in user sees one it may not read: 404.
+            var isApi = context.ActionDescriptor.EndpointMetadata.OfType<UiApiAttribute>().Any();
+            if (isApi)
+            {
+                var key = UiApiCaller.Key(context.HttpContext);
+                if (result == null && key != null
+                    && !key.AllowsRepository(context.HttpContext.RequestServices.GetRequiredService<IRepositoryContext>().Current.Key))
+                {
+                    result = new NotFoundResult();
+                }
+
+                result = result switch
+                {
+                    null => null,
+                    ChallengeResult => new UiApiResult(ScreenResult<object>.SignIn()),
+                    NotFoundResult => new UiApiResult(ScreenResult<object>.NotFound()),
+                    RedirectToPageResult redirect => new UiApiResult(ScreenResult<object>.GoTo(new ScreenNext(
+                        redirect.PageName!,
+                        redirect.RouteValues?.ToDictionary(p => p.Key, p => (object?)p.Value)))),
+                    _ => result,
+                };
+            }
+
             if (result != null)
             {
                 context.Result = result;

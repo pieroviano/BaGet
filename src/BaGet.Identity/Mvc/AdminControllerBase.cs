@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using BaGet.Identity.Application;
 using BaGet.Identity.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -26,7 +27,7 @@ public abstract class AdminControllerBase : AccountControllerBase
         OnActionExecuting(context);
         if (context.Result != null) return;
 
-        if (!await Administrators.IsAdministratorAsync(User, HttpContext.RequestAborted))
+        if (!(await Gate.CheckAsync(User, new GateRequest(Role: GateRole.Administrator), HttpContext.RequestAborted)).IsAllowed)
         {
             context.Result = NotFound();
             return;

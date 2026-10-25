@@ -5,6 +5,7 @@ using BaGet.Catalog;
 using BaGet.Core;
 using BaGet.Identity;
 using BaGet.Validation;
+using BaGet.Web.Application;
 using BaGet.Web;
 using BaGet.Web.V2.Controllers;
 using Microsoft.AspNetCore.Mvc;
@@ -84,7 +85,8 @@ public static class IServiceCollectionExtensions
         // The logic of the browse screens, used by their controllers.
         services.AddScoped<IndexWorkflow>();
         services.AddScoped<PackageWorkflow>();
-        services.AddScoped<StatisticsWorkflow>();
+        // The use cases of the screens that moved to BaGet.Web.Application (the controllers call them through their JSON twins).
+        services.AddBaGetWebUseCases();
         services.AddScoped<ReportAbuseWorkflow>();
         services.AddScoped<ApiCatalogWorkflow>();
         services.AddScoped<OciCallerResolver>();

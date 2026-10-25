@@ -37,6 +37,8 @@
     <InternalsVisibleTo Include="BaGet.Database.Tests" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Catalog" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Identity" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Identity.Application" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Web.Application" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>

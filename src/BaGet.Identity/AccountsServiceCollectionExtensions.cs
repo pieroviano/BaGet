@@ -1,5 +1,6 @@
 using System;
 using BaGet.Core;
+using BaGet.Identity.Application;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,9 @@ public static class AccountsServiceCollectionExtensions
 
         var site = configuration.GetSection(nameof(BaGetOptions.Site)).Get<SiteOptions>() ?? new SiteOptions();
         EmailLinkPolicy.ValidatePublicUrl(site.PublicUrl);
+
+        // The screen gate is needed whether or not accounts are enabled: the screens answer 404 through it while they are off.
+        services.AddBaGetIdentityApplication();
 
         if (!options.Enabled)
         {

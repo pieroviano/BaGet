@@ -1,0 +1,23 @@
+using BaGet.Identity.Application;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace BaGet.Web.Application;
+
+/// <summary>Registration of the use cases of the web screens.</summary>
+public static class WebApplicationServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers the use cases (one scoped class per area of screens) and the account project's screen gate. Called by
+    /// <c>AddBaGetWebApplication</c>; a track that moves a screen's logic here adds its use case below.
+    /// </summary>
+    public static IServiceCollection AddBaGetWebUseCases(this IServiceCollection services)
+    {
+        services.AddBaGetIdentityApplication();
+
+        services.TryAddScoped<LegalUseCase>();
+        services.TryAddScoped<StatisticsUseCase>();
+
+        return services;
+    }
+}
