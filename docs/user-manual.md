@@ -19,7 +19,7 @@ Task-oriented guide to BaGet Extension: install, sign in, publish, consume, admi
 
 | Task | Where |
 |---|---|
-| Sign in, register, profile | The sign-in page (registration is `Accounts:AllowRegistration`) |
+| Sign in, register, profile | The sign-in page (registration is `Accounts:AllowRegistration`; with `Accounts:RequireApproval` an administrator must approve new accounts on `/admin/users`) |
 | Create an API key (scopes, expiry, repository limit) | `/account/apikeys` |
 | Package owners, organizations | [Access control](access-control.md) |
 

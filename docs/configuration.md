@@ -277,6 +277,7 @@ that behaviour back; otherwise configure them with:
 | --- | --- | --- |
 | `Enabled` | `false` in code, `true` in the shipped file | turns accounts on |
 | `AllowRegistration` | `true` | whether `/account/register` creates accounts |
+| `RequireApproval` | `false` | a self-registered account (registration page, or first sign-in through the external provider) stays disabled until an administrator approves it on `/admin/users`; accounts an administrator creates are never pending. See [Approving new accounts](#approving-new-accounts) |
 | `InitialAdministrators`, `CreateDefaultAdministrator` | none, `true` | see [Administrators](#administrators) |
 | `OpenIdConnect:*` | none | see [Sign in with OpenID Connect](#sign-in-with-openid-connect) |
 
@@ -308,6 +309,18 @@ Who may change a package:
 
 !!! warning
     With accounts off, set `ApiKey`. Without it the server is open: anyone may push anything.
+
+### Approving new accounts
+
+With `Accounts:RequireApproval` on, `/account/register` creates the account but does not sign the user in, and no route
+(password, two-factor, external provider, API key) works for it until an administrator approves it. The user is told to
+wait; a sign-in attempt with the right password says the account awaits approval (a wrong password gets the usual
+"incorrect" message, so names are not revealed). If email is configured the confirmation link is still sent.
+
+- **Approve:** `/admin/users` shows an "Awaiting approval" label and a count; *Approve* asks for your password and is refused with `503` while the read-only gate is closed. The approval is logged at Warning.
+- **Reject:** delete the account (*Delete* on the same page).
+- Turning the setting off does not approve existing pending accounts; approve them first. Existing accounts are never pending.
+- Not offered over the REST API or the command line; the Users page is the way.
 
 ### Administrators
 

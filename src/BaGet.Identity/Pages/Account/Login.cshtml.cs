@@ -61,6 +61,17 @@ public class LoginModel : AccountPageModel
             return RedirectToPage("/Account/LoginWith2fa", new { ReturnUrl, RememberMe });
         }
 
+        if (result.IsNotAllowed && await FindPendingAsync() is { } pending)
+        {
+            // The refusal comes before the password is checked, so it must not read like an unconfirmed email (which
+            // would tell anyone that this name is registered): explain it to the right password only.
+            Error = await UserManager.CheckPasswordAsync(pending, Password!)
+                ? PendingMessage
+                : "The user name or password is incorrect.";
+
+            return Page();
+        }
+
         Error = result.IsLockedOut
             ? "The account is locked after too many failed attempts. Try again later."
             : result.IsNotAllowed
@@ -68,6 +79,17 @@ public class LoginModel : AccountPageModel
                 : "The user name or password is incorrect.";
 
         return Page();
+    }
+
+    private const string PendingMessage = "Your account is waiting for an administrator to enable it. Try again once it has been approved.";
+
+    private async Task<BaGetUser?> FindPendingAsync()
+    {
+        if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(Password)) return null;
+
+        var user = await UserManager.FindByNameAsync(UserName);
+
+        return user is { PendingApproval: true } ? user : null;
     }
 
     public bool EmailIsConfigured => EmailConfigured;
@@ -119,6 +141,13 @@ public class LoginModel : AccountPageModel
             // This provider login already belongs to an account, which cannot sign in yet
             // (its email is unconfirmed). Never make another account for it.
             var existing = await UserManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (existing is { PendingApproval: true })
+            {
+                Error = PendingMessage;
+
+                return Page();
+            }
+
             if (existing != null && await TrySendConfirmationAsync(existing))
             {
                 Notice = "Confirm your email address before signing in. We sent you a new confirmation link.";
@@ -154,6 +183,7 @@ public class LoginModel : AccountPageModel
             // proven by following a link, like one typed into the registration form.
             EmailConfirmed = !string.IsNullOrWhiteSpace(email) && ProviderVerifiedEmail(info.Principal),
             Created = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow,
+            PendingApproval = Accounts.RequireApproval,
         };
 
         var created = await UserManager.CreateAsync(user);
@@ -168,6 +198,16 @@ public class LoginModel : AccountPageModel
             if (user.Id != null && await UserManager.FindByIdAsync(user.Id) != null) await UserManager.DeleteAsync(user);
 
             Error = string.Join(" ", created.Errors.Select(e => e.Description));
+            return Page();
+        }
+
+        if (user.PendingApproval)
+        {
+            // Approval does not replace the address check: send the link now, so approving is the last step.
+            if (EmailConfigured && !user.EmailConfirmed) await TrySendConfirmationAsync(user);
+
+            Notice = "Your account was created. An administrator must enable it before you can sign in.";
+
             return Page();
         }
 

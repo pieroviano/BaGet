@@ -6,6 +6,7 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BaGet.Identity.Pages.Account;
 
@@ -70,6 +71,7 @@ public class RegisterModel : AccountPageModel
             UserName = UserName,
             Email = Email,
             Created = HttpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow,
+            PendingApproval = Accounts.RequireApproval,
         };
 
         #pragma warning disable CS8604
@@ -83,6 +85,12 @@ public class RegisterModel : AccountPageModel
             }
 
             return Page();
+        }
+
+        if (user.PendingApproval)
+        {
+            HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RegisterModel>>()
+                .LogWarning("{User} registered and awaits approval", user.UserName);
         }
 
         if (EmailConfigured)
@@ -107,10 +115,21 @@ public class RegisterModel : AccountPageModel
             return Page();
         }
 
+        if (user.PendingApproval)
+        {
+            // Not signed in: an administrator enables the account first.
+            AwaitingApproval = true;
+
+            return Page();
+        }
+
         await SignInManager.SignInAsync(user, isPersistent: false);
 
         return RedirectToLocal(ReturnUrl);
     }
+
+    /// <summary>Whether the account was created but waits for an administrator (<c>Accounts:RequireApproval</c>).</summary>
+    public bool AwaitingApproval { get; private set; }
 
     public bool ConfirmationSent { get; private set; }
 

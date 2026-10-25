@@ -15,7 +15,7 @@ namespace BaGet.Database.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.21");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
 
             modelBuilder.Entity("BaGet.Core.AbuseReport", b =>
                 {
@@ -237,6 +237,9 @@ namespace BaGet.Database.Sqlite.Migrations
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("PendingApproval")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("TEXT");

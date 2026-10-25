@@ -17,6 +17,13 @@ public class BaGetUser : IdentityUser
     /// API key in use: its scopes and package glob still apply (<c>OwnershipAuthorizationService</c>).
     /// </summary>
     public bool IsAdministrator { get; set; }
+
+    /// <summary>
+    /// A self-registered account (<c>Accounts:RequireApproval</c>) that no administrator has enabled yet. It cannot
+    /// sign in by any route until the Users page approves it. False for every other account, so existing rows
+    /// need no data change.
+    /// </summary>
+    public bool PendingApproval { get; set; }
 }
 
 /// <summary>

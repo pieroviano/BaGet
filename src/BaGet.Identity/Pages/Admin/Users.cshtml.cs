@@ -19,7 +19,8 @@ namespace BaGet.Identity.Pages.Admin;
 /// <param name="Created">When the account was created.</param>
 /// <param name="IsAdministrator">Whether the user is an administrator.</param>
 /// <param name="AvatarUrl">The avatar's address, or null for the initial.</param>
-public record UserRow(string? UserName, string? Email, DateTime Created, bool IsAdministrator, string? AvatarUrl);
+/// <param name="PendingApproval">Whether the account waits for an administrator to enable it (<c>Accounts:RequireApproval</c>).</param>
+public record UserRow(string? UserName, string? Email, DateTime Created, bool IsAdministrator, string? AvatarUrl, bool PendingApproval = false);
 
 /// <summary>
 /// Lists the accounts and lets an administrator promote or demote them, reset their password
@@ -43,6 +44,9 @@ public class UsersModel : AdminPageModel
 
     /// <summary>The users on this page.</summary>
     public IReadOnlyList<UserRow> Users { get; private set; } = Array.Empty<UserRow>();
+
+    /// <summary>How many accounts, in all pages, wait for approval.</summary>
+    public int PendingCount { get; private set; }
 
     /// <summary>The number of pages for the current filter.</summary>
     public int PageCount { get; private set; } = 1;
@@ -102,6 +106,41 @@ public class UsersModel : AdminPageModel
 
     /// <summary>Lists the users.</summary>
     public async Task OnGetAsync(CancellationToken cancellationToken) => await LoadAsync(cancellationToken);
+
+    /// <summary>
+    /// Enables a self-registered account that waits for approval (<c>Accounts:RequireApproval</c>). Asks for the
+    /// administrator's password; refused with 503 while the <see cref="MaintenanceGate"/> is closed. Rejecting an
+    /// account is the Delete page.
+    /// </summary>
+    public async Task<IActionResult> OnPostApproveAsync(string userName, string? password, CancellationToken cancellationToken)
+    {
+        HttpContext.RequestServices.GetService<MaintenanceGate>()?.ThrowIfClosed();
+
+        var current = await UserManager.GetUserAsync(User);
+        if (current == null) return Challenge();
+
+        if (!await IsConfirmedAsync(current, password))
+        {
+            Error = "The confirmation is incorrect, so nothing was changed.";
+
+            return BackToUsers();
+        }
+
+        switch (await HttpContext.RequestServices.GetRequiredService<AccountApprovalService>().ApproveAsync(userName, current.UserName, cancellationToken))
+        {
+            case AccountApprovalResult.Approved:
+                Message = $"{userName} was approved and can sign in.";
+                break;
+            case AccountApprovalResult.NotPending:
+                Message = $"{userName} was not waiting for approval.";
+                break;
+            default:
+                Error = "There is no user with that name.";
+                break;
+        }
+
+        return BackToUsers();
+    }
 
     /// <summary>Makes a user an administrator.</summary>
     public Task<IActionResult> OnPostPromoteAsync(string userName, string? password, CancellationToken cancellationToken)
@@ -342,7 +381,7 @@ public class UsersModel : AdminPageModel
             .OrderBy(u => u.UserName)
             .Skip((PageNumber - 1) * PageSize)
             .Take(PageSize)
-            .Select(u => new { u.UserName, u.Email, u.Created, u.IsAdministrator })
+            .Select(u => new { u.UserName, u.Email, u.Created, u.IsAdministrator, u.PendingApproval })
             .ToListAsync(cancellationToken);
 
         var avatars = await HttpContext.RequestServices.GetRequiredService<AvatarService>()
@@ -350,9 +389,11 @@ public class UsersModel : AdminPageModel
 
         #pragma warning disable CS8620
         Users = page
-            .Select(u => new UserRow(u.UserName, u.Email, u.Created, u.IsAdministrator, avatars.GetValueOrDefault(u.UserName)))
+            .Select(u => new UserRow(u.UserName, u.Email, u.Created, u.IsAdministrator, avatars.GetValueOrDefault(u.UserName), u.PendingApproval))
             .ToList();
         #pragma warning restore CS8620
+
+        PendingCount = await HttpContext.RequestServices.GetRequiredService<AccountApprovalService>().CountPendingAsync(cancellationToken);
 
         var current = await UserManager.GetUserAsync(User);
         CurrentUserName = current?.UserName;

@@ -36,6 +36,13 @@
         <div class="alert alert-danger" role="alert" id="users-error">@Model.Error</div>
     }
 
+    @if (Model.PendingCount > 0)
+    {
+        <div class="alert alert-warning" role="alert" id="pending-approval-alert">
+            @Model.PendingCount account(s) wait for approval and cannot sign in until you approve them (Approve) or remove them (Delete).
+        </div>
+    }
+
     <form method="get" class="form-inline">
         <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Search user names" />
         <button type="submit" class="btn btn-default">Search</button>
@@ -62,8 +69,16 @@
                             {
                                 <span class="label label-info">Administrator</span>
                             }
+                            @if (user.PendingApproval)
+                            {
+                                <span class="label label-warning">Awaiting approval</span>
+                            }
                         </td>
                         <td>
+                            @if (user.PendingApproval)
+                            {
+                                <button type="submit" class="btn btn-primary btn-xs" asp-page-handler="Approve" name="userName" value="@user.UserName">Approve</button>
+                            }
                             @if (user.IsAdministrator)
                             {
                                 <button type="submit" class="btn btn-default btn-xs" asp-page-handler="Demote" name="userName" value="@user.UserName">Demote</button>

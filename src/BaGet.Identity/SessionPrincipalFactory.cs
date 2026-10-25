@@ -35,7 +35,7 @@ public class SessionPrincipalFactory : ISessionPrincipalFactory
         if (string.IsNullOrEmpty(userId)) return null;
 
         var account = await _users.FindByIdAsync(userId);
-        if (account == null) return null;
+        if (account == null || account.PendingApproval) return null;
 
         return new BaGetPrincipal(
             userId: userId,

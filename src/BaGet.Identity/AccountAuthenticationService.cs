@@ -52,7 +52,7 @@ public class AccountAuthenticationService : Core.IAuthenticationService
         #pragma warning disable CS8604
         var user = await _users.FindByIdAsync(key.UserId);
         #pragma warning restore CS8604
-        if (user == null) return null;
+        if (user == null || user.PendingApproval) return null;
 
         return new BaGetPrincipal(
             user.Id,

@@ -37,6 +37,14 @@ public class MaintenanceAwareSignInManager : SignInManager<BaGetUser>
         _gate = gate;
     }
 
+    /// <summary>
+    /// An account awaiting an administrator's approval (<see cref="BaGetUser.PendingApproval"/>) cannot sign in by any
+    /// route (password, two-factor, external provider): every one of them asks here first, and the result is the
+    /// same "not allowed" as an unconfirmed email.
+    /// </summary>
+    public override async Task<bool> CanSignInAsync(BaGetUser user)
+        => !user.PendingApproval && await base.CanSignInAsync(user);
+
     /// <summary>Resets the failed-attempt counter, unless the gate is closed (a write it would refuse).</summary>
     protected override Task ResetLockout(BaGetUser user)
         => _gate.IsClosed ? Task.CompletedTask : base.ResetLockout(user);

@@ -25,6 +25,13 @@ public class AccountsOptions
     public bool AllowRegistration { get; set; } = true;
 
     /// <summary>
+    /// Whether an account created by self-service (the registration page, or the first sign-in through the external
+    /// provider) stays disabled until an administrator approves it on the Users page. Accounts an administrator
+    /// creates are never pending. Off by default: new accounts sign in at once, as before.
+    /// </summary>
+    public bool RequireApproval { get; set; }
+
+    /// <summary>
     /// User names promoted to administrator at startup, separated by semicolons. Applied
     /// only while the server has no administrator, and only to accounts that already exist,
     /// so it bootstraps the first administrator and nothing more: a listed name registered

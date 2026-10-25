@@ -13,6 +13,16 @@
         <div class="alert alert-success" role="alert">
             Your account was created. We sent a link to your email address; follow it to confirm the address, then
             <a asp-page="/Account/Login" asp-route-returnUrl="@Model.ReturnUrl">sign in</a>.
+            @if (Model.AwaitingApproval)
+            {
+                <text>An administrator must also enable your account before you can sign in.</text>
+            }
+        </div>
+    }
+    else if (Model.AwaitingApproval)
+    {
+        <div class="alert alert-success" role="alert" id="awaiting-approval">
+            Your account was created. An administrator must enable it before you can sign in.
         </div>
     }
     else
