@@ -79,6 +79,15 @@ public sealed class AdminOrganizationsController : AdminControllerBase
         return Show(workflow, await workflow.RemoveMemberAsync(userName, password, cancellationToken));
     }
 
+    /// <summary>A form posted to the screen's own URL, with no handler: the screen is rendered (the page had no default handler).</summary>
+    [Route("admin/organizations/{name}"), HttpPost, PageHandler, ImplicitPageHandler, LegacyPage("/Admin/OrganizationDetail")]
+    public async Task<IActionResult> DetailPost(string name, CancellationToken cancellationToken)
+    {
+        var workflow = Start(name);
+
+        return Show(workflow, await workflow.GetAsync(cancellationToken));
+    }
+
     private OrganizationsWorkflow Start(string? name)
     {
         var workflow = new OrganizationsWorkflow(HttpContext, Url);

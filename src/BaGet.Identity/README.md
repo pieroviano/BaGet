@@ -40,6 +40,7 @@ The web UI is moving from Razor Pages to controllers and views without changing 
 |---|---|
 | `PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
 | `LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving, navigation and `ApiOperation.UiPage` use it |
+| `ImplicitPageHandlerAttribute` | Marks the default `[PageHandler]` action that answers a verb the page had no handler for (a form posted to the page's own URL): it renders the screen; not a handler of the route contract |
 | `RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
 | `UiControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`), `RequestedHandler` |
 | `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | The controller counterparts of the page-model bases (`AccountPageModel`, `AdminPageModel`, `AccessPageModel`, `RepositoryPageModel`, `RetentionPageModel`, `ReplicationPageModel`) with the same checks in the same order; the page-model bases remain for pages not migrated yet and for compatibility |

@@ -57,7 +57,9 @@ internal static class UiRoutes
 
                 // A page with no handler method at all (it only renders, e.g. /Admin/AccessUnavailable) is a read-only action
                 // without [PageHandler]: it reports no handlers, like the page did.
-                handlers = handlerAttribute == null && verbs.All(v => v == "GET")
+                // [ImplicitPageHandler] is the same for a verb the page had no handler for (the page renders itself): not a handler.
+                handlers = action.MethodInfo.GetCustomAttribute<ImplicitPageHandlerAttribute>() != null
+                           || (handlerAttribute == null && verbs.All(v => v == "GET"))
                     ? Enumerable.Empty<string>()
                     : verbs.Select(v => $"{v}:{handler}");
             }

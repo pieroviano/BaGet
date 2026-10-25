@@ -90,6 +90,16 @@ public sealed class AdminUsersController : AdminControllerBase
         return ShowUsers(workflow, await workflow.CreateAsync(newUserName, newEmail, newPassword, invite, password, cancellationToken));
     }
 
+    /// <summary>A form posted to the screen's own URL, with no handler: the screen is rendered (the page had no default handler).</summary>
+    [Route("admin/users"), HttpPost, PageHandler, ImplicitPageHandler, LegacyPage("/Admin/Users")]
+    public async Task<IActionResult> IndexPost(string? q, [ModelBinder(Name = "p")] int pageNumber = 1, CancellationToken cancellationToken = default)
+    {
+        var workflow = StartUsers(q, pageNumber);
+        await workflow.GetAsync(cancellationToken);
+
+        return ShowUsers(workflow, null);
+    }
+
     private UsersWorkflow StartUsers(string? q, int pageNumber)
     {
         var workflow = new UsersWorkflow(HttpContext, Url);
@@ -151,6 +161,15 @@ public sealed class AdminUsersController : AdminControllerBase
         var workflow = StartDetail(name, package);
 
         return ShowDetail(workflow, await workflow.RemoveGroupAsync(group, password, cancellationToken));
+    }
+
+    /// <summary>A form posted to the screen's own URL, with no handler: the screen is rendered (the page had no default handler).</summary>
+    [Route("admin/users/{name}"), HttpPost, PageHandler, ImplicitPageHandler, LegacyPage("/Admin/UserDetail")]
+    public async Task<IActionResult> DetailPost(string name, string? package, CancellationToken cancellationToken)
+    {
+        var workflow = StartDetail(name, package);
+
+        return ShowDetail(workflow, await workflow.GetAsync(cancellationToken));
     }
 
     private UserDetailWorkflow StartDetail(string? name, string? package)
