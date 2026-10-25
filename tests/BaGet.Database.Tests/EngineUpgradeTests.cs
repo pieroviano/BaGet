@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -105,4 +105,22 @@ public class EngineUpgradeTests
         PackageTypes = new List<PackageType>(),
         TargetFrameworks = new List<TargetFramework>(),
     };
+
+    [Theory]
+    [MemberData(nameof(EngineTypes))]
+    public async Task OrphanRowsAreRemovedBeforeTheOwnershipForeignKeysAreAdded(string type)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var engine = await Engines.GetOrSkipAsync(type);
+        var connection = engine.NewConnectionString();
+
+        await OwnershipUpgradeDatabase.CreateAsync(engine.Factory, connection, engine.Options, cancellationToken);
+
+        await using var context = (DbContext)engine.Factory.Create(connection, engine.Options);
+        Assert.Contains(await context.Database.GetPendingMigrationsAsync(cancellationToken), m => m.EndsWith("_AddOwnershipForeignKeys"));
+        await ((IContext)context).RunMigrationsAsync(cancellationToken);
+        Assert.Empty(await context.Database.GetPendingMigrationsAsync(cancellationToken));
+
+        await OwnershipUpgradeDatabase.AssertCleanedAsync((IContext)context, cancellationToken);
+    }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -132,7 +132,7 @@ public static class PreRepositoryDatabase
     /// <summary>How the API key is stored (SHA-256, lowercase hex), duplicated here as the identity project is internal.</summary>
     private static string Hash(string key) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant();
 
-    private sealed class Inserter
+    internal sealed class Inserter
     {
         private readonly DbConnection _connection;
         private readonly string _engine;
@@ -165,6 +165,14 @@ public static class PreRepositoryDatabase
             }
 
             await command.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+        }
+
+        public async Task<int> MaxKeyAsync(string table, CancellationToken token)
+        {
+            using var command = _connection.CreateCommand();
+            command.CommandText = $"SELECT MAX({Quote("Key")}) FROM {Quote(table)}";
+
+            return Convert.ToInt32(await command.ExecuteScalarAsync(token).ConfigureAwait(false));
         }
 
         public async Task<int> PackageKeyAsync(string id, string version, CancellationToken token)

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -33,6 +33,7 @@
     <Compile Include="..\BaGet.Core.Tests\Support\DiagnosticsCapture.cs" Link="Support\DiagnosticsCapture.cs" />
     <!-- The pre-repository database builder (B7), shared with BaGet.Database.Tests, which runs it on every engine. -->
     <Compile Include="..\BaGet.Database.Tests\PreRepositoryDatabase.cs" Link="Support\PreRepositoryDatabase.cs" />
+    <Compile Include="..\BaGet.Database.Tests\OwnershipUpgradeDatabase.cs" Link="Support\OwnershipUpgradeDatabase.cs" />
   </ItemGroup>
 
   <ItemGroup>
