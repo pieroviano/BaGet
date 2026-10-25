@@ -27,8 +27,7 @@ Baseline: **3648 tests** (page-model shims removed; Docker not running, last ful
 (see the "Enabled local Jaeger" commit) 13 telemetry tests (`TelemetryExportTests`, `TelemetrySettingsPageTests`,
 `TelemetryE2ETests`) fail on a clean checkout too; not investigated. Checked at `e213fe0` without Jaeger: 11 of them (`TelemetryExportTests` x3,
 `TelemetrySettingsPageTests` x8) fail on a clean checkout, and `DatabaseCopyTests.ACopyEmitsADatabaseCopySpan...` fails in the full run (passes alone). With Docker running, the 2
-`TelemetryE2ETests` (Jaeger container) fail at `173c5a3` too (checked in a detached worktree). `AdminOperationsTests.RetryValidatesAgainAndIndexesWhenItNowPasses` failed once in a 14-minute full
-run and passes alone (a timing race in the validation worker, not npm). Only the Docker test projects need services; integration tests
+`TelemetryE2ETests` (Jaeger container) fail at `173c5a3` too (checked in a detached worktree). `AdminOperationsTests.RetryValidatesAgainAndIndexesWhenItNowPasses` raced the validation worker (the package is served a moment before the submission leaves the queue); it now waits for both. Only the Docker test projects need services; integration tests
 use SQLite and a temporary directory.
 
 `BaGet.Database.Tests` copies between every ordered pair of SQLite / SQL Server / PostgreSQL / MySQL with

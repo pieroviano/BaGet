@@ -290,7 +290,13 @@ public class AdminOperationsTests : IDisposable
             await Task.Delay(50, Token);
         }
 
-        Assert.DoesNotContain(await ListAsync(), s => s.SubmissionId == submission);
+        // The worker indexes the package before it removes the submission, so the package can be served a moment before the
+        // queue forgets the submission: wait for that too (a submission that is never removed still fails at the deadline).
+        while ((await ListAsync()).Any(s => s.SubmissionId == submission))
+        {
+            Assert.True(DateTime.UtcNow < deadline, "the retried submission was never removed from the queue");
+            await Task.Delay(50, Token);
+        }
     }
 
     [Fact]
