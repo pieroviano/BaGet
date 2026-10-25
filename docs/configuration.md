@@ -146,6 +146,14 @@ See [npm registry](npm-registry.md).
 
 See [Docker registry](docker-registry.md).
 
+## Maven repositories
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `Maven:MaxFileBytes` | `1073741824` | largest file in bytes a deploy or a remote download may store (413 above). Live |
+
+See [Maven repositories](maven-repositories.md).
+
 ## Vulnerability scanning
 
 | Key | Default | Meaning |
@@ -769,14 +777,14 @@ no longer read.
 
 ## Telemetry
 
-Off by default. The server emits traces and metrics with `System.Diagnostics` (`ActivitySource` / `Meter` named `BaGet`);
+Off in code (`Telemetry:Enabled` is `false`), but the shipped `appsettings.json` sets `Enabled` to `true` with `Otlp:Endpoint` `http://localhost:4317` (`Grpc`), so a local collector such as Jaeger is used when present; set `Telemetry__Enabled=false` to switch it off. The server emits traces and metrics with `System.Diagnostics` (`ActivitySource` / `Meter` named `BaGet`);
 the host exports them over OTLP (OpenTelemetry) only while `Telemetry:Enabled` is true and an endpoint is set. Logs go
 out through a Serilog sink. Keys apply **without a restart**, except `ServiceName` and `Metrics:ExportInterval`
 (read at startup):
 
 | Key | Default | Meaning |
 |---|---|---|
-| `Telemetry:Enabled` | `false` | Master switch. Off: spans are not recorded, nothing is queued, no connection is made |
+| `Telemetry:Enabled` | `false` in code, `true` in the shipped file | Master switch. Off: spans are not recorded, nothing is queued, no connection is made |
 | `Telemetry:ServiceName` | `baget` | `service.name` of every signal, read once at startup (restart) |
 | `Telemetry:Otlp:Endpoint` | empty | Traces collector, absolute http(s) URL, for example `http://jaeger:4317`; empty = no traces |
 | `Telemetry:Otlp:Protocol` | `Grpc` | `Grpc` (port 4317) or `HttpProtobuf` (4318; `/v1/traces`, `/v1/metrics`, `/v1/logs` is appended) |
@@ -842,7 +850,8 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 | environment variables, command line | an operator's explicit setting still wins; the page marks a saved value that one of these overrides, because the saved value then has no effect |
 
 - A setting read only at startup (`Accounts`, `Email`, `Database`, `Storage`, `Search`, `Mirror`,
-  `Site:PublicUrl`, `PathBase`, `AllowedHosts`, `Urls`, `RunMigrationsAtStartup`, `IISServerOptions`) is marked
+  `Site:PublicUrl`, `PathBase`, `AllowedHosts`, `Urls`, `RunMigrationsAtStartup`, `IISServerOptions`, `Ha`,
+  `Serilog:EventLog`, `Telemetry:ServiceName`, `Telemetry:Metrics:ExportInterval`, and the options of the cloud storage and search providers) is marked
   **restart required**; every other setting applies to the next request. The page lists the changes waiting for a restart.
 - A secret (API keys, connection strings, passwords, client secrets) is write-only: the page shows it masked,
   a blank field keeps the current value, and "Clear" saves an empty one. It is stored in plain text in the
