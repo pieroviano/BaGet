@@ -1,6 +1,6 @@
 # Plan: Razor Pages → MVC (controllers + views), no breaking changes
 
-Status: **wave 0 (`mvc-infra`) done** on `wt/mvc-infra`; waves 1-3 planned. Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
+Status: **wave 0 done: mvc-infra (21c457c..HEAD of main, merged ff)**; waves 1-3 planned. Execution: parallel tracks in git worktrees (`wt/<slug>`), one wave at a time, rebase +
 `merge --ff-only` per track, max 5 agents at once (Sonnet implements, Opus reviews).
 
 ### Wave 0 results
