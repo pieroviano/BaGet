@@ -38,6 +38,16 @@ What the snapshots record: **ui-routes** = per page name: lower-cased route temp
 | Forms | an MVC view has no ambient page, so `asp-page-handler` forms also carry `asp-page="/Packages/X"` |
 | Stray POST | a manage controller has a `NoHandler` fallback (`[HttpPost, PageHandler]`, 404) **without** `[LegacyPage]` (so `ui-routes.txt` is unchanged): else a `<form method=post>` with no `?handler=` is 404 at routing, before the antiforgery 400 |
 
+### Wave 2, track mvc-admin-access (done): Groups, GroupDetail, Permissions, PermissionDetail, Projects, ProjectDetail, Audit
+
+| Point | Result |
+|---|---|
+| Controllers | `AdminGroups/Permissions/Projects/AuditController : AccessControllerBase`; workflows `GroupsWorkflow`, `GroupDetailWorkflow`, `PermissionsWorkflow`, `PermissionDetailWorkflow`, `ProjectsWorkflow`, `ProjectDetailWorkflow`, `AuditWorkflow` over `AccessWorkflow` (caller flags `IsServerAdministrator`/`CurrentUserId` set by the base class that ran first) |
+| Project-admin rule | `AccessAuthorization` (shared by controllers and shims); the controller's `AuthorizeAsync` chooses by the action's `[LegacyPage]` (detail screens read the `name` route value) |
+| Messages | `Flash(model)` (`AccessViewModel : IFlashModel`); the `[TempData] Message/Error` of `AccessControllerBase` stay unused (their key prefix differs) |
+| Stray POST | detail screens get an `[ImplicitPageHandler]` POST that renders the screen (404 for an unknown name; the page rendered an empty one) |
+| `AccessPageModel` | unchanged (Retention/Replication/Scanning pages still derive from it) |
+
 ### How to migrate a page (for tracks of waves 1-3)
 
 1. **Logic first.** Move the page model's logic into `internal sealed class <Feature>Workflow` (scoped) so the controller and the `[Obsolete]` shim of the page model both call it. Keep the page model class (name, namespace, public constructor, properties, handler methods) as the shim; mark it and its `*Model` helpers `[Obsolete("... removed in the next major version")]`. Delete the `.cshtml` (`@page`).

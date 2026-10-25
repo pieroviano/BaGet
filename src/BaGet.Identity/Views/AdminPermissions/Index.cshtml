@@ -1,5 +1,4 @@
-@page "/admin/permissions"
-@model BaGet.Identity.Pages.Admin.PermissionsModel
+@model BaGet.Identity.ViewModels.PermissionsViewModel
 @{
     ViewData["Title"] = "Permission targets";
 }
@@ -38,7 +37,7 @@
                             <span class="label label-info">Built-in</span>
                         }
                     </td>
-                    <td><code>@BaGet.Identity.Pages.Admin.AccessPageModel.Join(target.RepositoryPatterns)</code></td>
+                    <td><code>@BaGet.Identity.Mvc.AccessSupport.Join(target.RepositoryPatterns)</code></td>
                     <td>
                         <code>@(BaGet.Core.AccessPatterns.DescribeScope(target.IncludePatterns, target.ExcludePatterns) ?? "*")</code>
                     </td>
@@ -85,6 +84,6 @@
     </p>
     <form method="post" id="restore-form">
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("restorePassword")" />
-        <button type="submit" class="btn btn-default" asp-page-handler="RestoreBuiltIns">Restore built-in groups and targets</button>
+        <button type="submit" class="btn btn-default" asp-page="/Admin/Permissions" asp-page-handler="RestoreBuiltIns">Restore built-in groups and targets</button>
     </form>
 </div>
