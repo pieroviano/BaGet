@@ -36,6 +36,7 @@ exclude_docs: |
 
 nav:
   - Overview: index.md
+  - Installation manual: installation-manual.md
   - Installation:
     - On your computer: installation/local.md
     - Docker: installation/docker.md

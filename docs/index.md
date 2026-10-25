@@ -6,7 +6,7 @@ BaGet Extension is A NuGet, Maven, NVM, Docker and symbol server. It is [open so
   <img width="100%" src="BaGetSite.png">
 </p>
 
-New here? Read the [user manual](user-manual.md).
+New here? Read the [installation manual](installation-manual.md) and the [user manual](user-manual.md).
 
 ## Run BaGet Extension
 
