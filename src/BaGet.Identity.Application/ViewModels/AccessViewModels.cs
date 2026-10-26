@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BaGet.Core;
+using System.Text.Json.Serialization;
 using BaGet.Identity.Pages.Admin;
 
 namespace BaGet.Identity.ViewModels;
@@ -82,6 +83,7 @@ public sealed class PermissionsViewModel : AccessViewModel
     public PatternPreview? Preview { get; internal set; }
 
     /// <summary>The model of the pattern fields partial.</summary>
+    [JsonIgnore]
     public PatternFieldsView Fields => new(RepositoryPatterns, IncludePatterns, ExcludePatterns, TestPackage, Preview);
 }
 
@@ -119,6 +121,7 @@ public sealed class PermissionDetailViewModel : AccessViewModel
     public AccessAction FormActions { get; internal set; }
 
     /// <summary>The model of the pattern fields partial.</summary>
+    [JsonIgnore]
     public PatternFieldsView Fields => new(RepositoryPatterns, IncludePatterns, ExcludePatterns, TestPackage, Preview);
 }
 
@@ -166,6 +169,7 @@ public sealed class ProjectDetailViewModel : AccessViewModel
     public PatternPreview? Preview { get; internal set; }
 
     /// <summary>The model of the pattern fields partial.</summary>
+    [JsonIgnore]
     public PatternFieldsView Fields => new(RepositoryPatterns, IncludePatterns, ExcludePatterns, TestPackage, Preview);
 }
 

@@ -151,6 +151,19 @@ public abstract class AccessUiApiControllerBase : AdminUiApiControllerBase
     /// <summary>Admits a caller who is not a server administrator. The default admits nobody else.</summary>
     protected virtual Task<bool> AuthorizeAsync(CancellationToken cancellationToken) => Task.FromResult(false);
 
+    /// <summary>
+    /// Who is using the screen, for a use case: the signed-in account (an API key's owner) and whether the caller is a server administrator rather than
+    /// only a project administrator (decided by the same <see cref="ScreenGate"/> that admitted the request).
+    /// </summary>
+    [NonAction]
+    protected async Task<AccessCaller> CallerAsync(CancellationToken cancellationToken)
+        => new(User, await Gate.IsAdministratorAsync(User, KeyCaller, cancellationToken));
+
+    /// <summary>The page name of the screen the running action serves (<see cref="UiApiAttribute.Screen"/>), so a base can widen one screen of a controller.</summary>
+    [NonAction]
+    protected string? ScreenName()
+        => ControllerContext.ActionDescriptor.EndpointMetadata.OfType<UiApiAttribute>().FirstOrDefault()?.Screen;
+
     /// <inheritdoc/>
     protected override GateRequest Requirements(ActionExecutingContext context)
         => base.Requirements(context) with

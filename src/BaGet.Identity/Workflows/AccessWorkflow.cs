@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -14,7 +13,7 @@ namespace BaGet.Identity.Workflows;
 
 /// <summary>
 /// The logic of an access-control screen (groups, permission targets, projects, audit), the controller (<c>AccessControllerBase</c>) builds one workflow per request and calls it. The base class that runs first has already checked who may use the screen (administrator,
-/// or a project administrator, see <see cref="AccessAuthorization"/>), refused a write while the read-only gate is closed
+/// or a project administrator, see <see cref="BaGet.Identity.Application.AccessAuthorization"/>), refused a write while the read-only gate is closed
 /// (<c>ThrowIfClosed</c>) and told the workflow who the caller is (<see cref="IsServerAdministrator"/>, <see cref="CurrentUserId"/>);
 /// everything else (password confirmation, the 404 and administrator-only rules of each action, audit through
 /// <see cref="IAccessAdministration"/>) is here. A handler returns the result the page handler returned, except that <c>Page()</c>
@@ -75,40 +74,4 @@ internal abstract class AccessWorkflow : AdminWorkflow
     /// <summary>What a set of patterns selects, for the pattern editors.</summary>
     protected Task<PatternPreview> PreviewAsync(string[] repositoryPatterns, string[] includePatterns, string[] excludePatterns, string? testPackage, CancellationToken cancellationToken)
         => AccessSupport.PreviewAsync(Services, repositoryPatterns, includePatterns, excludePatterns, testPackage, cancellationToken);
-}
-
-/// <summary>
-/// Who may open an access screen beyond the server administrators: the administrators of the project the screen acts on. One place for the controllers.
-/// </summary>
-internal static class AccessAuthorization
-{
-    /// <summary>The projects list: server administrators, and anyone who administers at least one project.</summary>
-    public static async Task<bool> ProjectsAsync(IAccessAdministration access, bool isServerAdministrator, string? userId, CancellationToken cancellationToken)
-        => isServerAdministrator || (await AdministeredAsync(access, userId, cancellationToken)).Count > 0;
-
-    /// <summary>A project screen: server administrators, and the project's own administrators (the project is the <c>name</c> route value).</summary>
-    public static async Task<bool> ProjectAsync(IAccessAdministration access, bool isServerAdministrator, string? userId, string? projectName, CancellationToken cancellationToken)
-    {
-        if (isServerAdministrator) return true;
-
-        return !string.IsNullOrEmpty(projectName) && userId != null && await access.IsProjectAdminAsync(userId, projectName, cancellationToken);
-    }
-
-    /// <summary>A permission target screen: server administrators, and the administrators of the target's project for a project target.</summary>
-    public static async Task<bool> TargetAsync(IAccessAdministration access, bool isServerAdministrator, string? userId, string? targetName, CancellationToken cancellationToken)
-    {
-        if (isServerAdministrator) return true;
-        if (string.IsNullOrEmpty(targetName) || userId == null) return false;
-
-        var target = await access.GetTargetAsync(targetName, cancellationToken);
-
-        return target?.Target.ProjectName != null && await access.IsProjectAdminAsync(userId, target.Target.ProjectName, cancellationToken);
-    }
-
-    /// <summary>The names of the projects the user administers.</summary>
-    public static async Task<System.Collections.Generic.IReadOnlyList<string>> AdministeredAsync(IAccessAdministration access, string? userId, CancellationToken cancellationToken)
-        => userId == null
-            ? Array.Empty<string>()
-            : (await access.ProjectRolesOfUserAsync(userId, cancellationToken))
-                .Where(r => r.Role == ProjectRole.Admin).Select(r => r.Project).Distinct(StringComparer.Ordinal).ToList();
 }

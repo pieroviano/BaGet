@@ -23,6 +23,10 @@ public static class AdminUseCasesServiceCollectionExtensions
         services.TryAddScoped<AdminOrganizationsUseCase>();
         services.TryAddScoped<AdminSettingsUseCase>();
         services.TryAddScoped<AdminOperationsUseCase>();
+        services.TryAddScoped<AdminGroupsUseCase>();
+        services.TryAddScoped<AdminPermissionsUseCase>();
+        services.TryAddScoped<AdminProjectsUseCase>();
+        services.TryAddScoped<AdminAuditUseCase>();
 
         return services;
     }

@@ -1,13 +1,6 @@
 BaGet.Identity.Workflows.AccessWorkflow
 BaGet.Identity.Workflows.AdminWorkflow
-BaGet.Identity.Workflows.AuditWorkflow
-BaGet.Identity.Workflows.GroupDetailWorkflow
-BaGet.Identity.Workflows.GroupsWorkflow
-BaGet.Identity.Workflows.PermissionDetailWorkflow
-BaGet.Identity.Workflows.PermissionsWorkflow
 BaGet.Identity.Workflows.PolicyWorkflow
-BaGet.Identity.Workflows.ProjectDetailWorkflow
-BaGet.Identity.Workflows.ProjectsWorkflow
 BaGet.Identity.Workflows.ReplicationWorkflow
 BaGet.Identity.Workflows.RepositoriesWorkflow
 BaGet.Identity.Workflows.RepositoryDeleteWorkflow

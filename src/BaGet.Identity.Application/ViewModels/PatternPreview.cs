@@ -1,15 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Mvc;
-using BaGet.Identity.Pages.Account;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Pages.Admin;
 
