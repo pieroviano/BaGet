@@ -30,10 +30,10 @@ public abstract class RetentionControllerBase : AccessControllerBase
     /// <summary>Loads <see cref="Repositories"/> and <see cref="ProjectNames"/>.</summary>
     protected async Task LoadChoicesAsync(CancellationToken cancellationToken)
     {
-        Repositories = await AccessSupport.RetentionRepositoriesAsync(HttpContext.RequestServices, cancellationToken);
-        ProjectNames = await AccessSupport.ProjectNamesAsync(HttpContext.RequestServices, cancellationToken);
+        Repositories = await PolicyScreenSupport.RetentionRepositoriesAsync(HttpContext.RequestServices.GetRequiredService<IRepositoryService>(), cancellationToken);
+        ProjectNames = await PolicyScreenSupport.ProjectNamesAsync(HttpContext.RequestServices.GetRequiredService<IAccessAdministration>(), cancellationToken);
     }
 
     /// <summary>The rules of a policy in one line, for the lists.</summary>
-    public static string Describe(RetentionPolicy p) => AccessSupport.DescribeRetention(p);
+    public static string Describe(RetentionPolicy p) => PolicyScreenSupport.DescribeRetention(p);
 }

@@ -1,8 +1,0 @@
-/Admin/Replication
-/Admin/ReplicationConfig
-/Admin/Retention
-/Admin/RetentionHolds
-/Admin/RetentionPolicy
-/Admin/ScanProject
-/Admin/ScanRepository
-/Admin/Scanning

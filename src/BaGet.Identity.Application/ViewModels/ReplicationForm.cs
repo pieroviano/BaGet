@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Pages.Admin;
@@ -20,6 +19,7 @@ public sealed class ReplicationForm
     public string? Repository { get; set; }
 
     /// <summary><c>Push</c> or <c>Pull</c>.</summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ReplicationDirection Direction { get; set; } = ReplicationDirection.Push;
 
     public string? PeerUrl { get; set; }
@@ -40,7 +40,25 @@ public sealed class ReplicationForm
 
     public bool PropagateDeletes { get; set; }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ReplicationConflict Conflict { get; set; } = ReplicationConflict.TargetWins;
+
+    /// <summary>A copy without the peer's API key: what a screen's model carries back, so the key typed in a request is never echoed (JSON included).</summary>
+    public ReplicationForm WithoutSecret() => new()
+    {
+        Name = Name,
+        Repository = Repository,
+        Direction = Direction,
+        PeerUrl = PeerUrl,
+        PeerRepository = PeerRepository,
+        ApiKey = null,
+        ClearApiKey = ClearApiKey,
+        Enabled = Enabled,
+        OnDeploy = OnDeploy,
+        ScheduleMinutes = ScheduleMinutes,
+        PropagateDeletes = PropagateDeletes,
+        Conflict = Conflict,
+    };
 
     /// <summary>The administration's input for configuration <paramref name="key"/> (0 creates).</summary>
     public ReplicationInput ToInput(int key)

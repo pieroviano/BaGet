@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Pages.Admin;

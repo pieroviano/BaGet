@@ -27,9 +27,9 @@ public abstract class ReplicationControllerBase : AccessControllerBase
     /// <summary>Loads <see cref="Repositories"/>.</summary>
     protected async Task LoadChoicesAsync(CancellationToken cancellationToken)
     {
-        Repositories = await AccessSupport.ReplicationRepositoriesAsync(HttpContext.RequestServices, cancellationToken);
+        Repositories = await PolicyScreenSupport.ReplicationRepositoriesAsync(HttpContext.RequestServices.GetRequiredService<IRepositoryService>(), cancellationToken);
     }
 
     /// <summary>The schedule and triggers of a configuration in a few words.</summary>
-    public static string Describe(ReplicationConfig c) => AccessSupport.DescribeReplication(c);
+    public static string Describe(ReplicationConfig c) => PolicyScreenSupport.DescribeReplication(c);
 }

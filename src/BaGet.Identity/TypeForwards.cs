@@ -78,9 +78,37 @@ using System.Runtime.CompilerServices;
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.FormatsViewModel))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ClusterViewModel))]
 
+<<<<<<< HEAD
 // The repository administration screens (Repositories, RepositoryEdit, RepositoryDelete) moved with their use cases; names and namespaces are kept.
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.RemoteFormModel))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoriesViewModel))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoryEditViewModel))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoryEditForm))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoryDeleteViewModel))]
+=======
+// The retention, scanning and replication screens' models and forms moved with their use cases; names and namespaces are kept.
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.PolicyViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RetentionViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RetentionPolicyViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RetentionHoldsViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanningRepositoryRow))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanningProjectRow))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanningSettingsView))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScreenLink))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanningViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanRepositoryViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanProjectViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ReplicationViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ReplicationConfigViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RetentionPolicyBody))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RetentionHoldForm))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RetentionHoldRemoval))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ScanPolicyBody))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ReplicationBody))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.ReplicationForm))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.ReplicationFieldsView))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.RetentionPolicyForm))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.RetentionFieldsView))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.ScanPolicyFields))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.ScanPolicyFormView))]
+>>>>>>> 33bbb0c (UI API wave 2, split-admin-policies: use cases and JSON twins for Retention, RetentionPolicy, RetentionHolds, Scanning, ScanRepository, ScanProject, Replication, ReplicationConfig)

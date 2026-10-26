@@ -77,6 +77,7 @@ public class ReplicationConfig
     /// The peer's API key, protected like a remote repository's password (<see cref="IRemoteCredentialProtector"/>); never shown by a
     /// page or the API and never logged. The key needs the peer's <c>admin:api</c> scope (inventory) and the format's push or read rights.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public string? ProtectedApiKey { get; set; }
 
     /// <summary>A disabled configuration is never run by the schedule or a deploy; a manual run is refused.</summary>

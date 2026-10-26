@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using BaGet.Core;
 using BaGet.Identity.Pages.Admin;
 
@@ -85,6 +86,19 @@ public sealed class RetentionHoldsViewModel : PolicyViewModel
     public IReadOnlyList<RepositoryInfo> Repositories { get; internal set; } = Array.Empty<RepositoryInfo>();
 }
 
+/// <summary>The scanning options the overview shows.</summary>
+/// <param name="Enabled">Whether artifacts are scanned.</param>
+/// <param name="ScanOnDeploy">Whether a stored version is queued for a scan at once.</param>
+/// <param name="OsvUrl">The OSV API root.</param>
+/// <param name="OsvOfflinePath">The offline copy of the OSV data, or null.</param>
+/// <param name="RescanInterval">The age after which an artifact is scanned again (zero or negative: never).</param>
+public sealed record ScanningSettingsView(bool Enabled, bool ScanOnDeploy, string OsvUrl, string? OsvOfflinePath, TimeSpan RescanInterval);
+
+/// <summary>A screen as a client links to it: the page name (as <c>asp-page</c> writes it) and its route values; the view turns it into an address.</summary>
+/// <param name="Screen">The legacy page name of the screen (<c>/Package</c>).</param>
+/// <param name="RouteValues">Route values; a null value (<c>repo</c> of the default repository) is kept.</param>
+public sealed record ScreenLink(string Screen, IReadOnlyDictionary<string, object?> RouteValues);
+
 /// <summary>One repository of the scanning overview.</summary>
 /// <param name="Repository">The repository.</param>
 /// <param name="Summary">Its scan counts.</param>
@@ -99,8 +113,15 @@ public sealed record ScanningProjectRow(ProjectSummary Project, bool HasPolicy);
 /// <summary>What the vulnerability scanning overview (<c>/admin/scanning</c>) shows.</summary>
 public sealed class ScanningViewModel
 {
-    /// <summary>The scanning options in force.</summary>
+    /// <summary>
+    /// The scanning options in force, for the view. Not serialised: the options class holds the scanner's registry credential; the JSON carries
+    /// <see cref="Settings"/>, the values the screen shows.
+    /// </summary>
+    [JsonIgnore]
     public ScanningOptions Options { get; internal set; } = new();
+
+    /// <summary>The scanning options the screen shows (no credential).</summary>
+    public ScanningSettingsView Settings { get; internal set; } = new(false, true, string.Empty, null, TimeSpan.Zero);
 
     /// <summary>Whether Trivy is configured (container images are scanned).</summary>
     public bool TrivyConfigured { get; internal set; }
@@ -148,13 +169,20 @@ public sealed class ScanRepositoryViewModel : PolicyViewModel
     /// <summary>The last run of the repository scan, or null.</summary>
     public AdminJobStatus? Job { get; internal set; }
 
-    /// <summary>The fields of the policy editor.</summary>
+    /// <summary>The fields of the policy editor (for the view; the JSON carries <see cref="Own"/>).</summary>
+    [JsonIgnore]
     public ScanPolicyFormView PolicyForm => new(ScanPolicyFields.From(Own), Confirmation("scan-policy-password"), "scan-policy");
 
-    internal Func<ScanResult, string?>? PackageUrls { get; set; }
+    /// <summary>The package screen of each finding's version (by <see cref="ScanResult.Key"/>), when its format has one.</summary>
+    public IReadOnlyDictionary<int, ScreenLink> PackageLinks { get; internal set; } = new Dictionary<int, ScreenLink>();
+
+    /// <summary>Turns a <see cref="ScreenLink"/> into an address; set by the view controller (the use case knows no routes).</summary>
+    [JsonIgnore]
+    public Func<ScreenLink, string?>? LinkResolver { get; set; }
 
     /// <summary>The page of a version in its format (the repository's package page), for the findings list.</summary>
-    public string? PackageUrl(ScanResult result) => PackageUrls?.Invoke(result);
+    public string? PackageUrl(ScanResult result)
+        => PackageLinks.TryGetValue(result.Key, out var link) ? LinkResolver?.Invoke(link) : null;
 }
 
 /// <summary>What the scanning policy of a project (<c>/admin/scanning/projects/{name}</c>) shows.</summary>
@@ -169,7 +197,8 @@ public sealed class ScanProjectViewModel : PolicyViewModel
     /// <summary>The policy stored for the project, or null.</summary>
     public ScanPolicy? Own { get; internal set; }
 
-    /// <summary>The fields of the policy editor.</summary>
+    /// <summary>The fields of the policy editor (for the view; the JSON carries <see cref="Own"/>).</summary>
+    [JsonIgnore]
     public ScanPolicyFormView PolicyForm => new(ScanPolicyFields.From(Own), Confirmation("scan-project-password"), "scan-project");
 }
 
