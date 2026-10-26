@@ -430,7 +430,7 @@ public class PolicyScreensUiApiTests : IDisposable
         {
             var db = scope.ServiceProvider.GetRequiredService<IContext>();
             var repository = (await scope.ServiceProvider.GetRequiredService<IRepositoryService>().FindAsync("default", Token))!;
-            db.ScanResults.Add(new ScanResult
+            db.ScanResults!.Add(new ScanResult
             {
                 RepositoryKey = repository.Key,
                 Name = "linked.package",

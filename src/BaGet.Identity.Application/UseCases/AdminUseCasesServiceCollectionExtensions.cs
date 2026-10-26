@@ -23,7 +23,6 @@ public static class AdminUseCasesServiceCollectionExtensions
         services.TryAddScoped<AdminOrganizationsUseCase>();
         services.TryAddScoped<AdminSettingsUseCase>();
         services.TryAddScoped<AdminOperationsUseCase>();
-<<<<<<< HEAD
         services.TryAddScoped<AdminGroupsUseCase>();
         services.TryAddScoped<AdminPermissionsUseCase>();
         services.TryAddScoped<AdminProjectsUseCase>();
@@ -32,11 +31,9 @@ public static class AdminUseCasesServiceCollectionExtensions
         services.TryAddScoped<AdminRepositoriesUseCase>();
         services.TryAddScoped<AdminRepositoryEditUseCase>();
         services.TryAddScoped<AdminRepositoryDeleteUseCase>();
-=======
         services.TryAddScoped<RetentionUseCase>();
         services.TryAddScoped<ScanningUseCase>();
         services.TryAddScoped<ReplicationUseCase>();
->>>>>>> 33bbb0c (UI API wave 2, split-admin-policies: use cases and JSON twins for Retention, RetentionPolicy, RetentionHolds, Scanning, ScanRepository, ScanProject, Replication, ReplicationConfig)
 
         return services;
     }
