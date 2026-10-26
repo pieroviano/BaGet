@@ -41,6 +41,25 @@ public abstract class UiApiControllerBase : ControllerBase
         => HttpContext.RequestServices.GetService<ScreenGate>()
            ?? ActivatorUtilities.CreateInstance<ScreenGate>(HttpContext.RequestServices);
 
+    /// <summary>
+    /// A use case, resolved when the action runs (not injected into the constructor): the account use cases are registered only while accounts are
+    /// enabled, and the gate must be able to answer 404 first.
+    /// </summary>
+    [NonAction]
+    protected T UseCase<T>() where T : notnull => HttpContext.RequestServices.GetRequiredService<T>();
+
+    /// <summary>
+    /// What the request binding already refused (a value that is not a number, a malformed body), by field, for a use case that must not act while
+    /// there is any. A use case validates its form itself; this only carries what it cannot see.
+    /// </summary>
+    [NonAction]
+    protected IReadOnlyDictionary<string, string[]> BindingErrors()
+        => ModelState
+            .Where(entry => entry.Value is { Errors.Count: > 0 })
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors.Select(e => string.IsNullOrEmpty(e.ErrorMessage) ? "The value is not valid." : e.ErrorMessage).ToArray());
+
     /// <summary>The answer of an action: <paramref name="result"/> with the HTTP status of its decision.</summary>
     [NonAction]
     protected ActionResult<ScreenResult<T>> Respond<T>(ScreenResult<T> result)
@@ -77,7 +96,16 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
 
     /// <summary>What the screen requires of the caller; a derived base widens it (role, writes).</summary>
     protected virtual GateRequest Requirements(ActionExecutingContext context)
-        => new(RequiresSignIn: RequiresSignIn, RequiresEmail: RequiresEmail, KeyCaller: KeyCaller, CookieOnly: CookieOnly);
+    {
+        // The per-action forms of the two requirements, like AccountControllerBase reads them.
+        var metadata = context.ActionDescriptor.EndpointMetadata ?? (IList<object>)Array.Empty<object>();
+
+        return new GateRequest(
+            RequiresSignIn: RequiresSignIn || metadata.OfType<RequiresSignInAttribute>().Any(),
+            RequiresEmail: RequiresEmail || metadata.OfType<RequiresEmailAttribute>().Any(),
+            KeyCaller: KeyCaller,
+            CookieOnly: CookieOnly);
+    }
 
     /// <summary>Asks the gate; a refusal is the answer.</summary>
     [NonAction]

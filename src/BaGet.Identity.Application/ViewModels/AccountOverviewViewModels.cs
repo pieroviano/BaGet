@@ -26,8 +26,13 @@ public class AccountOrganization
     public bool IsAdmin { get; set; }
 
     /// <summary>The members, by user name.</summary>
-    public IReadOnlyList<(string UserName, bool IsAdmin)>? Members { get; set; }
+    public IReadOnlyList<AccountOrganizationMember>? Members { get; set; }
 }
+
+/// <summary>One member of an organization (a flat record, so the screen's JSON names its fields).</summary>
+/// <param name="UserName">The member's user name.</param>
+/// <param name="IsAdmin">Whether the member administers the organization.</param>
+public sealed record AccountOrganizationMember(string UserName, bool IsAdmin);
 
 /// <summary>The "My packages" screen: the packages the user owns in each repository.</summary>
 public sealed class AccountPackagesViewModel

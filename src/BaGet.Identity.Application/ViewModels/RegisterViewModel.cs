@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace BaGet.Identity.ViewModels;
 
-/// <summary>The registration screen.</summary>
-public sealed class RegisterViewModel
+/// <summary>What the registration form posts.</summary>
+public class RegisterForm
 {
     /// <summary>The wanted user name.</summary>
     [Required]
@@ -16,12 +14,12 @@ public sealed class RegisterViewModel
     [EmailAddress]
     public string? Email { get; set; }
 
-    /// <summary>The password.</summary>
+    /// <summary>The password. Never echoed.</summary>
     [Required]
     [DataType(DataType.Password)]
     public string? Password { get; set; }
 
-    /// <summary>The password again.</summary>
+    /// <summary>The password again. Never echoed.</summary>
     [Required]
     [DataType(DataType.Password)]
     [Display(Name = "Confirm password")]
@@ -30,16 +28,17 @@ public sealed class RegisterViewModel
 
     /// <summary>Where to go after signing in; only a local URL is followed.</summary>
     public string? ReturnUrl { get; set; }
+}
 
+/// <summary>The registration screen. A request binds <see cref="RegisterForm"/>, never this type; the passwords are always empty here.</summary>
+public sealed class RegisterViewModel : RegisterForm
+{
     /// <summary>Whether the account was created but waits for an administrator (<c>Accounts:RequireApproval</c>).</summary>
-    [BindNever, ValidateNever]
     public bool AwaitingApproval { get; set; }
 
     /// <summary>Whether a confirmation link was mailed.</summary>
-    [BindNever, ValidateNever]
     public bool ConfirmationSent { get; set; }
 
     /// <summary>Whether the screen asks for an email address.</summary>
-    [BindNever, ValidateNever]
     public bool EmailRequired { get; set; }
 }

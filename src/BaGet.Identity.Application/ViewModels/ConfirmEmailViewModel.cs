@@ -1,7 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-
 namespace BaGet.Identity.ViewModels;
 
 /// <summary>The result of following the link of a confirmation email.</summary>

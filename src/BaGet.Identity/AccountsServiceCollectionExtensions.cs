@@ -12,7 +12,7 @@ namespace BaGet.Identity;
 
 public static class AccountsServiceCollectionExtensions
 {
-    public const string OpenIdConnectScheme = "oidc";
+    public const string OpenIdConnectScheme = ExternalSignInUseCase.OpenIdConnectScheme;
 
     /// <summary>
     /// Add accounts if "Accounts:Enabled" is set. Otherwise only an empty authentication
@@ -47,6 +47,18 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<AvatarService>();
         services.TryAddScoped<AdministratorService>();
         services.TryAddScoped<AccountApprovalService>();
+
+        services.AddHttpContextAccessor();
+
+        // The use cases of the account screens: resolved only after the screen gate let the request in, so they exist only while accounts are enabled.
+        services.TryAddScoped<SignInUseCase>();
+        services.TryAddScoped<RegistrationUseCase>();
+        services.TryAddScoped<ExternalSignInUseCase>();
+        services.TryAddScoped<AccountSettingsUseCase>();
+        services.TryAddScoped<TwoFactorUseCase>();
+        services.TryAddScoped<ApiKeysUseCase>();
+        services.TryAddScoped<AccountOverviewUseCase>();
+        services.TryAddScoped<ProfileUseCase>();
         services.TryAddScoped<AdminUserCreationService>();
         services.TryAddSingleton<ContactRateLimiter>();
         services.TryAddSingleton<PasswordResetRateLimiter>();

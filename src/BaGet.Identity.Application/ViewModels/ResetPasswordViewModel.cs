@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.Text.Json.Serialization;
 
 namespace BaGet.Identity.ViewModels;
 
-/// <summary>The screen behind the link of a password reset email.</summary>
-public sealed class ResetPasswordViewModel
+/// <summary>What the new-password form behind a reset link posts.</summary>
+public class ResetPasswordForm
 {
     /// <summary>The account named by the link.</summary>
     public string? UserId { get; set; }
@@ -13,24 +12,27 @@ public sealed class ResetPasswordViewModel
     /// <summary>The encoded reset token of the link.</summary>
     public string? Code { get; set; }
 
-    /// <summary>The new password.</summary>
+    /// <summary>The new password. Never echoed.</summary>
     [Required]
     [DataType(DataType.Password)]
     [Display(Name = "New password")]
     public string? Password { get; set; }
 
-    /// <summary>The new password again.</summary>
+    /// <summary>The new password again. Never echoed.</summary>
     [Required]
     [DataType(DataType.Password)]
     [Display(Name = "Confirm password")]
     [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
     public string? ConfirmPassword { get; set; }
 
-    /// <summary>The refusal to show.</summary>
-    [BindNever, ValidateNever]
-    public string? Error { get; set; }
-
     /// <summary>Whether the link carries a user and a token.</summary>
-    [BindNever, ValidateNever]
+    [JsonIgnore]
     public bool LinkIsUsable => !string.IsNullOrEmpty(UserId) && !string.IsNullOrEmpty(Code);
+}
+
+/// <summary>The screen behind the link of a password reset email. A request binds <see cref="ResetPasswordForm"/>, never this type.</summary>
+public sealed class ResetPasswordViewModel : ResetPasswordForm
+{
+    /// <summary>The refusal to show.</summary>
+    public string? Error { get; set; }
 }

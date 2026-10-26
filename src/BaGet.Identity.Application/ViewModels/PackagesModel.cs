@@ -4,8 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
-using BaGet.Identity.Workflows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
@@ -61,7 +59,7 @@ public static class PackagesModel
     }
 
     // A Maven repository keeps its own tables too: the owned ids are group:artifact, summarised one artifact at a time.
-    private static async Task<List<OwnedPackage>> SummariseMavenAsync(IMavenRepository maven, IReadOnlyList<string> ids, CancellationToken cancellationToken)
+    internal static async Task<List<OwnedPackage>> SummariseMavenAsync(IMavenRepository maven, IReadOnlyList<string> ids, CancellationToken cancellationToken)
     {
         var owned = new List<OwnedPackage>(ids.Count);
         foreach (var id in ids)
@@ -82,7 +80,7 @@ public static class PackagesModel
     }
 
     // An npm repository keeps its own tables: the summary comes from the registry, one package at a time (a user owns few).
-    private static async Task<List<OwnedPackage>> SummariseNpmAsync(INpmRegistry registry, IReadOnlyList<string> ids, CancellationToken cancellationToken)
+    internal static async Task<List<OwnedPackage>> SummariseNpmAsync(INpmRegistry registry, IReadOnlyList<string> ids, CancellationToken cancellationToken)
     {
         var owned = new List<OwnedPackage>(ids.Count);
         foreach (var id in ids)

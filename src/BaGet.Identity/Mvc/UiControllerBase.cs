@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Identity.Application;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Mvc;
@@ -36,7 +38,7 @@ public abstract class UiControllerBase : Controller
 
     /// <summary>
     /// Calls the JSON twin of this screen in process (<see cref="UiApiInvoker"/>) and returns what it answered. The twin does the work; this
-    /// controller only <see cref="Render{TModel}"/>s the answer. The twin's filters do not run, so the controller base has run the screen gate
+    /// controller only <c>Render</c>s the answer. The twin's filters do not run, so the controller base has run the screen gate
     /// and the antiforgery validation of the view action already.
     /// </summary>
     /// <typeparam name="TApi">The twin controller.</typeparam>
@@ -45,27 +47,58 @@ public abstract class UiControllerBase : Controller
         where TApi : UiApiControllerBase
         => UiApiInvoker.InvokeAsync(this, call);
 
+    /// <summary><c>Api</c> for a twin action that does not await.</summary>
+    protected Task<UiApiResponse<TModel>> Api<TApi, TModel>(Func<TApi, ActionResult<ScreenResult<TModel>>> call)
+        where TApi : UiApiControllerBase
+    {
+        if (call == null) throw new ArgumentNullException(nameof(call));
+
+        return UiApiInvoker.InvokeAsync<TApi, TModel>(this, api => Task.FromResult(call(api)));
+    }
+
     /// <summary>
     /// Turns the answer of a twin into this controller's result: a plain action result the twin returned is returned unchanged; Ok and Invalid
     /// render <paramref name="view"/> (errors copied into <c>ModelState</c>, the result's status code applied); NotFound is 404, SignIn a challenge
-    /// (the sign-in redirect), Forbidden a forbid, Next sets the flash message and redirects to the next screen by its page name (the repository stays).
+    /// (the sign-in redirect), Forbidden a bare 403 (what a page answered), Next sets the flash message and redirects to the next screen by its page
+    /// name (the repository stays), or to its local address.
     /// </summary>
-    /// <param name="response">What <see cref="Api{TApi,TModel}"/> returned.</param>
+    /// <param name="response">What <c>Api</c> returned.</param>
     /// <param name="view">The view to render.</param>
     /// <param name="viewModel">Maps the twin's model to the view's model when they differ (default: the model itself).</param>
-    protected IActionResult Render<TModel>(UiApiResponse<TModel> response, string view, Func<TModel, object?>? viewModel = null)
+    /// <param name="modelShowsFormErrors">
+    /// The view prints the form-level message from its model (<c>Model.Error</c>), so the form-level errors (the empty key) are not copied into <c>ModelState</c> as
+    /// well: the page would show the message twice. Field errors are always copied.
+    /// </param>
+    protected IActionResult Render<TModel>(UiApiResponse<TModel> response, string view, Func<TModel, object?>? viewModel = null, bool modelShowsFormErrors = false)
     {
         if (response == null) throw new ArgumentNullException(nameof(response));
-        if (response.Raw != null) return response.Raw;
 
-        var screen = response.Screen;
+        return response.Raw ?? Render(response.Screen, view, viewModel, modelShowsFormErrors);
+    }
+
+    /// <summary>
+    /// The same mapping for a result a controller got from a use case directly: only the browser-only steps (the external provider's challenge and
+    /// callback) have no twin to call.
+    /// </summary>
+    protected IActionResult Render<TModel>(ScreenResult<TModel> screen, string view, Func<TModel, object?>? viewModel = null, bool modelShowsFormErrors = false)
+    {
+        if (screen == null) throw new ArgumentNullException(nameof(screen));
+
         switch (screen.Status)
         {
             case ScreenStatus.Ok:
             case ScreenStatus.Invalid:
                 foreach (var pair in screen.Errors)
                 {
-                    foreach (var message in pair.Value) ModelState.AddModelError(pair.Key, message);
+                    if (modelShowsFormErrors && pair.Key.Length == 0) continue;
+
+                    foreach (var message in pair.Value)
+                    {
+                        // A binding or validation error MVC already recorded for the field says the same: once is enough.
+                        if (ModelState.TryGetValue(pair.Key, out var entry) && entry.Errors.Any(e => e.ErrorMessage == message)) continue;
+
+                        ModelState.AddModelError(pair.Key, message);
+                    }
                 }
 
                 var model = screen.Model == null ? null : viewModel != null ? viewModel(screen.Model) : screen.Model;
@@ -81,14 +114,17 @@ public abstract class UiControllerBase : Controller
                 return Challenge();
 
             case ScreenStatus.Forbidden:
-                return Forbid();
+                // What a page answered: a bare 403 (Forbid() would hand the request to the cookie handler's access-denied redirect).
+                return new StatusCodeResult(StatusCodes.Status403Forbidden);
 
             case ScreenStatus.Next:
                 var next = screen.Next!;
                 if (next.Message != null) TempData["Message"] = next.Message;
                 if (next.Error != null) TempData["Error"] = next.Error;
 
-                return new RedirectToPageResult(next.Screen, next.RouteValues) { UrlHelper = Url };
+                return next.LocalUrl != null
+                    ? new LocalRedirectResult(next.LocalUrl) { UrlHelper = Url }
+                    : new RedirectToPageResult(next.Screen, next.RouteValues) { UrlHelper = Url };
 
             default:
                 throw new InvalidOperationException($"Unknown screen status {screen.Status}.");
