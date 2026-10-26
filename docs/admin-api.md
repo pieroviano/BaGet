@@ -59,7 +59,7 @@ Built with `Microsoft.AspNetCore.OpenApi`, written as OpenAPI 3.0, browsed with 
 | Document | Address | Holds |
 |---|---|---|
 | `v1` | `/openapi/v1.json`, alias `/api/v1/openapi.json` | this API (`/api/v1`) |
-| `ui` | `/openapi/ui.json` | the JSON twins of the screens (`/api/ui`); fills as screens get one |
+| `ui` | `/openapi/ui.json` | the JSON twins of every screen (`/api/ui`, see [UI API](ui-api.md)) |
 | `protocols` | `/openapi/protocols.json` | NuGet, symbol, npm, Maven and Docker routes, plain and `/r/{repo}/`, read from the mapped endpoints (paths, methods, route parameters, format; bodies are the protocols' own) |
 
 **Password confirmation (screens and `/api/ui`):** a locked-out account never confirms, and a wrong password counts as a failed sign-in (so repeated guesses lock the account, as with `X-Confirm-Password`). A project administrator's `/api/ui/admin/projects/{name}` model carries no `assignable` repositories (only server administrators assign).

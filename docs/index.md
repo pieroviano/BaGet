@@ -39,7 +39,7 @@ per-repository or per-project policy can warn or refuse downloads and deploys wi
 ## Administration REST API
 
 `/api/v1` does everything the administrator pages do (repositories, access model, users, operations, retention, scanning, replication) for
-scripts, with an administrator's API key and OpenAPI 3: [administration REST API](admin-api.md); try every endpoint in the browser: [testing the APIs with Scalar](scalar.md).
+scripts, with an administrator's API key and OpenAPI 3: [administration REST API](admin-api.md); try every endpoint in the browser: [testing the APIs with Scalar](scalar.md). Every web screen also has a JSON twin for custom frontends: [UI API](ui-api.md).
 
 ## What BaGet Extension serves
 

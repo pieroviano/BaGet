@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using BaGet.Tests.Contracts;
 using Xunit;
 
 namespace BaGet.Tests;
@@ -10,7 +9,7 @@ namespace BaGet.Tests;
 /// <summary>
 /// The layering of the UI API split (decision D3): the Application projects hold use cases, DTOs and business services and reference no
 /// MVC or Razor assembly; the UI projects hold controllers, views and MVC infrastructure, and the logic of a screen is not in a class named
-/// <c>*Workflow</c> any more once its track ran.
+/// <c>*Workflow</c> (none is left) and a view controller resolves no use case or Application service itself.
 /// </summary>
 public class ApplicationLayeringTests
 {
@@ -59,7 +58,7 @@ public class ApplicationLayeringTests
     }
 
     [Fact]
-    public void NoNewWorkflowClassAppearsInTheUiProjects()
+    public void NoWorkflowClassIsLeftInTheUiProjects()
     {
         var workflows = UiAssemblies
             .SelectMany(a => a.GetTypes())
@@ -67,7 +66,7 @@ public class ApplicationLayeringTests
             .Select(t => t.FullName!)
             .ToList();
 
-        UiApiPending.VerifyListed(UiApiPending.WorkflowsFile, workflows, "Workflow classes in the UI projects");
+        Assert.True(workflows.Count == 0, "Workflow classes in the UI projects:" + Environment.NewLine + string.Join(Environment.NewLine, workflows));
     }
 
     [Fact]
@@ -82,5 +81,35 @@ public class ApplicationLayeringTests
         Assert.Contains("BaGet.Web.Application.LegalUseCase", useCases);
         Assert.Contains("BaGet.Web.Application.StatisticsUseCase", useCases);
         Assert.DoesNotContain(UiAssemblies.SelectMany(a => a.GetTypes()), t => t.Name.EndsWith("UseCase", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AViewControllerHoldsNoUseCaseOrApplicationService()
+    {
+        // The view controller binds, calls the JSON twin in process and renders; the only use case it names is the browser-only
+        // external-provider step, which has no twin.
+        var viewControllers = UiAssemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(t => !t.IsAbstract && t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Any(m => m.GetCustomAttributes(inherit: false).Any(a => a.GetType().Name == "LegacyPageAttribute")))
+            .ToList();
+
+        Assert.NotEmpty(viewControllers);
+
+        var offenders = new List<string>();
+        foreach (var type in viewControllers)
+        {
+            const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            var held = type.GetFields(all).Select(f => f.FieldType)
+                .Concat(type.GetProperties(all).Select(p => p.PropertyType))
+                .Concat(type.GetConstructors(all).SelectMany(c => c.GetParameters()).Select(p => p.ParameterType));
+
+            offenders.AddRange(held
+                .Where(h => ApplicationAssemblies.Contains(h.Assembly) && h.Name != "ExternalSignInUseCase" && !h.IsEnum && !h.Name.EndsWith("Form", StringComparison.Ordinal))
+                .Where(h => h.Name.EndsWith("UseCase", StringComparison.Ordinal) || h.Name.EndsWith("Service", StringComparison.Ordinal))
+                .Select(h => type.Name + " holds " + h.Name));
+        }
+
+        Assert.True(offenders.Count == 0, string.Join(Environment.NewLine, offenders));
     }
 }

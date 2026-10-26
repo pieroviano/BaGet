@@ -4,7 +4,7 @@ Every operation the server offers (REST, CLI, service) is reachable from the web
 This page maps each capability to its page. Pages in repository scope also exist as `/r/{name}/...`. "Admin" = an
 administrator signed in (others get 404). "Password" = the administrator's password (or a fresh external sign-in) is
 asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed) and, on package pages, refuses in
-`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, UI action (page name from `[LegacyPage]`) or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none.
+`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, UI action (page name from `[LegacyPage]`) or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none. Every screen also has a JSON twin under `/api/ui` ([UI API](ui-api.md)); the twin is covered by its screen's row (no row of its own) and `UiApiParityTests` fails for a screen without one.
 
 ## NuGet protocol (per repository)
 

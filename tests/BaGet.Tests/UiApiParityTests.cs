@@ -101,7 +101,7 @@ public class UiApiParityTests : IDisposable
     }
 
     [Fact]
-    public void EveryScreenWithoutATwinIsOnThePendingList()
+    public void EveryScreenHasAUiApiTwin()
     {
         using var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string> { { "Accounts:Enabled", "true" } });
         var actions = Actions(app);
@@ -114,7 +114,7 @@ public class UiApiParityTests : IDisposable
             .Where(s => !served.Contains(s))
             .ToList();
 
-        UiApiPending.VerifyListed(UiApiPending.ScreensFile, screens, "Screens without a [UiApi] twin");
+        Assert.True(screens.Count == 0, "Screens without a [UiApi] twin:" + Environment.NewLine + string.Join(Environment.NewLine, screens));
     }
 
     // ---- pilot: legal pages ----

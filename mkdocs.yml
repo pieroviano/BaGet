@@ -62,6 +62,7 @@ nav:
   - Access control: access-control.md
   - Vulnerability scanning: vulnerability-scanning.md
   - Administration REST API: admin-api.md
+  - UI API (/api/ui): ui-api.md
   - Testing the APIs with Scalar: scalar.md
   - UI coverage: ui-coverage.md
   - Import:

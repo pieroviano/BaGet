@@ -1,2 +1,0 @@
-BaGet.Identity.Workflows.AccessWorkflow
-BaGet.Identity.Workflows.AdminWorkflow
