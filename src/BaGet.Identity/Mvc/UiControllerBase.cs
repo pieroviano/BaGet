@@ -124,7 +124,7 @@ public abstract class UiControllerBase : Controller
 
                 return next.LocalUrl != null
                     ? new LocalRedirectResult(next.LocalUrl) { UrlHelper = Url }
-                    : new RedirectToPageResult(next.Screen, next.RouteValues) { UrlHelper = Url };
+                    : new RedirectToPageResult(next.Screen, pageHandler: null, routeValues: next.RouteValues, fragment: next.Fragment) { UrlHelper = Url };
 
             default:
                 throw new InvalidOperationException($"Unknown screen status {screen.Status}.");

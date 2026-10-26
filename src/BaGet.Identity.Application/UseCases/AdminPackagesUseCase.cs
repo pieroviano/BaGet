@@ -6,60 +6,68 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Pages.Admin;
 using BaGet.Identity.ViewModels;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Workflows;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// The two package listings of the administrator: the package IDs that have no owner in any repository (those that predate
 /// accounts, and those left behind when their only owner's account was deleted; only administrators and the global API key may
-/// change them), and the IDs one user owns. Used by the controllers.
+/// change them), and the IDs one user owns.
 /// </summary>
-internal sealed class AdminPackagesWorkflow : AdminWorkflow
+public sealed class AdminPackagesUseCase
 {
-    public AdminPackagesWorkflow(HttpContext httpContext, IUrlHelper url) : base(httpContext, url)
+    private readonly IContext _context;
+    private readonly IRepositoryService _repositories;
+    private readonly IServiceScopeFactory _scopes;
+    private readonly PackageOwnershipService _ownership;
+    private readonly UserManager<BaGetUser> _users;
+
+    /// <summary>Creates the use case.</summary>
+    public AdminPackagesUseCase(
+        IContext context,
+        IRepositoryService repositories,
+        IServiceScopeFactory scopes,
+        PackageOwnershipService ownership,
+        UserManager<BaGetUser> users)
     {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _repositories = repositories ?? throw new ArgumentNullException(nameof(repositories));
+        _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
+        _ownership = ownership ?? throw new ArgumentNullException(nameof(ownership));
+        _users = users ?? throw new ArgumentNullException(nameof(users));
     }
 
-    /// <summary>The ownerless listing; the caller sets <c>PageNumber</c> first.</summary>
-    public AdminPackagesViewModel Ownerless { get; } = new();
-
-    /// <summary>One user's listing; the caller sets <c>Name</c> first.</summary>
-    public UserPackagesViewModel OfUser { get; } = new();
-
-    /// <summary>Lists the ownerless IDs of every repository.</summary>
-    public async Task GetOwnerlessAsync(CancellationToken cancellationToken)
+    /// <summary>Lists the ownerless IDs of every repository, <paramref name="pageNumber"/> being one-based.</summary>
+    public async Task<ScreenResult<AdminPackagesViewModel>> GetOwnerlessAsync(int pageNumber, CancellationToken cancellationToken)
     {
-        var context = Services.GetRequiredService<IContext>();
+        var model = new AdminPackagesViewModel { PageNumber = pageNumber };
 
         // Ownership is per repository, so an ID is ownerless where nobody in that repository owns it.
         #pragma warning disable CS8602, CS8604
-        var ownerless = context.Packages
+        var ownerless = _context.Packages
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(p => !context.PackageOwners.IgnoreQueryFilters()
+            .Where(p => !_context.PackageOwners.IgnoreQueryFilters()
                 .Any(o => o.RepositoryKey == p.RepositoryKey && o.PackageId.ToLower() == p.Id.ToLower()))
             .Select(p => new { p.RepositoryKey, Id = p.Id.ToLower() })
             .Distinct();
         #pragma warning restore CS8602, CS8604
 
         var total = await ownerless.CountAsync(cancellationToken);
-        Ownerless.PageCount = Math.Max(1, (total + AdminPackagesViewModel.PageSize - 1) / AdminPackagesViewModel.PageSize);
-        Ownerless.PageNumber = Math.Min(Math.Max(1, Ownerless.PageNumber), Ownerless.PageCount);
+        model.PageCount = Math.Max(1, (total + AdminPackagesViewModel.PageSize - 1) / AdminPackagesViewModel.PageSize);
+        model.PageNumber = Math.Min(Math.Max(1, model.PageNumber), model.PageCount);
 
         var page = await ownerless
             .OrderBy(o => o.Id)
             .ThenBy(o => o.RepositoryKey)
-            .Skip((Ownerless.PageNumber - 1) * AdminPackagesViewModel.PageSize)
+            .Skip((model.PageNumber - 1) * AdminPackagesViewModel.PageSize)
             .Take(AdminPackagesViewModel.PageSize)
             .ToListAsync(cancellationToken);
 
-        var repositories = (await Services.GetRequiredService<IRepositoryService>()
-            .ListAsync(cancellationToken)).ToDictionary(r => r.Key);
-        var scopes = Services.GetRequiredService<IServiceScopeFactory>();
+        var repositories = (await _repositories.ListAsync(cancellationToken)).ToDictionary(r => r.Key);
 
         // Each repository's rows are read in a scope pinned to it, which supplies its versions and owners.
         var rows = new List<AdminPackageRow>();
@@ -67,7 +75,7 @@ internal sealed class AdminPackagesWorkflow : AdminWorkflow
         {
             if (!repositories.TryGetValue(group.Key, out var repository)) continue;
 
-            using var scope = scopes.CreateRepositoryScope(repository);
+            using var scope = _scopes.CreateRepositoryScope(repository);
             rows.AddRange(await AdminPackageRows.BuildAsync(
                 scope.ServiceProvider.GetRequiredService<IContext>(),
                 group.Select(o => o.Id).ToList(),
@@ -75,24 +83,27 @@ internal sealed class AdminPackagesWorkflow : AdminWorkflow
                 repository.Name));
         }
 
-        Ownerless.Packages = rows
+        model.Packages = rows
             .OrderBy(r => r.Package.Id, StringComparer.OrdinalIgnoreCase)
             .ThenBy(r => r.RepositoryName, StringComparer.Ordinal)
             .ToList();
+
+        return ScreenResult<AdminPackagesViewModel>.Ok(model);
     }
 
-    /// <summary>Lists the user's packages; 404 for an unknown user.</summary>
-    public async Task<IActionResult?> GetUserAsync(CancellationToken cancellationToken)
+    /// <summary>Lists the user's packages; not found for an unknown user.</summary>
+    public async Task<ScreenResult<UserPackagesViewModel>> GetUserAsync(string? name, CancellationToken cancellationToken)
     {
-        var user = await UserManager.FindByNameAsync(OfUser.Name ?? string.Empty);
-        if (user == null) return new NotFoundResult();
+        var user = await _users.FindByNameAsync(name ?? string.Empty);
+        if (user == null) return ScreenResult<UserPackagesViewModel>.NotFound();
 
-        OfUser.Name = user.UserName;
+        var ids = await _ownership.GetOwnedPackageIdsAsync(user.Id, user.UserName, cancellationToken);
 
-        var ids = await Ownership.GetOwnedPackageIdsAsync(user.Id, user.UserName, cancellationToken);
-        OfUser.Packages = await AdminPackageRows.BuildAsync(Services.GetRequiredService<IContext>(), ids, cancellationToken);
-
-        return null;
+        return ScreenResult<UserPackagesViewModel>.Ok(new UserPackagesViewModel
+        {
+            Name = user.UserName,
+            Packages = await AdminPackageRows.BuildAsync(_context, ids, cancellationToken),
+        });
     }
 }
 

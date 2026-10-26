@@ -1,15 +1,6 @@
-/Admin/Abuse
-/Admin/AccessUnavailable
 /Admin/Audit
-/Admin/Cluster
-/Admin/DeleteUser
-/Admin/Formats
 /Admin/GroupDetail
 /Admin/Groups
-/Admin/Operations
-/Admin/OrganizationDetail
-/Admin/Organizations
-/Admin/Packages
 /Admin/PermissionDetail
 /Admin/Permissions
 /Admin/ProjectDetail
@@ -25,8 +16,3 @@
 /Admin/ScanProject
 /Admin/ScanRepository
 /Admin/Scanning
-/Admin/Settings
-/Admin/UserDetail
-/Admin/UserPackages
-/Admin/Users
-/Admin/Validation

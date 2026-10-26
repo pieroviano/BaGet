@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using BaGet.Core;
 
 namespace BaGet.Identity.ViewModels;
@@ -10,8 +11,13 @@ public sealed class AdminSettingsViewModel : ConfirmationModel, IFlashMessage
 {
     private IReadOnlyDictionary<string, string> _ids = new Dictionary<string, string>();
 
-    /// <summary>The settings grouped by section; the top-level keys come first, under the empty key.</summary>
+    /// <summary>The settings grouped by section; the top-level keys come first, under the empty key. Not serialised: <see cref="SectionList"/> is the same with the keys.</summary>
+    [JsonIgnore]
     public IReadOnlyList<IGrouping<string, SettingState>> Sections { get; internal set; } = Array.Empty<IGrouping<string, SettingState>>();
+
+    /// <summary>The same sections as <see cref="Sections"/>, each with its key and DOM id, as the JSON carries them.</summary>
+    public IReadOnlyList<SettingsSection> SectionList
+        => Sections.Select(group => new SettingsSection(group.Key, SectionId(group.Key), group.ToList())).ToList();
 
     /// <summary>The file the settings are saved to.</summary>
     public string? OverridesPath { get; internal set; }
@@ -91,4 +97,72 @@ public sealed class AdminSettingsViewModel : ConfirmationModel, IFlashMessage
         var chars = key.Select(c => char.IsAsciiLetterOrDigit(c) || c == '-' || c == '_' ? c : '-').ToArray();
         return new string(chars);
     }
+}
+
+/// <summary>One section of the settings screen: its key (empty for the top-level keys), its DOM id and its settings.</summary>
+/// <param name="Key">The section's key; empty for the settings that sit at the top level.</param>
+/// <param name="Id">The stable DOM id (<see cref="AdminSettingsViewModel.SectionId"/>).</param>
+/// <param name="Settings">The settings of the section; a sensitive one never carries its value.</param>
+public sealed record SettingsSection(string Key, string Id, IReadOnlyList<SettingState> Settings);
+
+/// <summary>
+/// The progress of the database copy as the Settings page polls it (<c>?handler=CopyStatus</c>): the properties are those the page's script reads
+/// (<c>phase</c> as the phase name, <c>active</c>, <c>finished</c>, <c>succeeded</c>, <c>restartRequired</c> ...). Holds no connection string.
+/// </summary>
+/// <param name="Phase">The stage, by name.</param>
+/// <param name="Active">A copy is queued or running.</param>
+/// <param name="Finished">The copy ended, either way.</param>
+/// <param name="Succeeded">The copy succeeded.</param>
+/// <param name="RestartRequired">The settings are saved and the process must restart to use them.</param>
+/// <param name="Table">The table being copied, or null.</param>
+/// <param name="TableRowsCopied">Rows of the table copied so far.</param>
+/// <param name="TableRowsTotal">Rows of the table in the source.</param>
+/// <param name="TablesDone">Tables completed.</param>
+/// <param name="TablesTotal">Tables to copy.</param>
+/// <param name="RowsCopied">Rows copied over all tables.</param>
+/// <param name="RowsTotal">Rows to copy over all tables.</param>
+/// <param name="Message">A one-line summary of the current state.</param>
+/// <param name="Errors">Why the copy was refused or failed.</param>
+public sealed record DatabaseCopyStatusView(
+    string Phase,
+    bool Active,
+    bool Finished,
+    bool Succeeded,
+    bool RestartRequired,
+    string? Table,
+    long TableRowsCopied,
+    long TableRowsTotal,
+    int TablesDone,
+    int TablesTotal,
+    long RowsCopied,
+    long RowsTotal,
+    string? Message,
+    IReadOnlyList<string> Errors)
+{
+    /// <summary>The page's view of <paramref name="status"/>.</summary>
+    public static DatabaseCopyStatusView Of(DatabaseCopyStatus status)
+        => new(
+            status.Phase.ToString(),
+            status.IsActive,
+            status.IsFinished,
+            status.Phase == DatabaseCopyPhase.Succeeded,
+            status.RestartRequired,
+            status.Table,
+            status.TableRowsCopied,
+            status.TableRowsTotal,
+            status.TablesDone,
+            status.TablesTotal,
+            status.RowsCopied,
+            status.RowsTotal,
+            status.Message,
+            status.Errors);
+}
+
+/// <summary>What the "access control unavailable" screen (<c>/admin/access-unavailable</c>) says: why, as the JSON carries it (the page has fixed text).</summary>
+/// <param name="Reason">Why the access screens are not available.</param>
+public sealed record AccessUnavailableViewModel(string Reason)
+{
+    /// <summary>The standard reason.</summary>
+    public static AccessUnavailableViewModel Standard { get; } = new(
+        "The configured database has no tables for groups, permission targets and projects. Use SQLite, SQL Server, PostgreSQL or MySQL to manage access here.");
 }

@@ -84,9 +84,9 @@
                         {
                             <tr>
                                 <td>@key.Description</td>
-                                <td>@string.Join(", ", key.Scopes ?? Array.Empty<string>())</td>
+                                <td>@string.Join(", ", key.Scopes)</td>
                                 <td><code>@key.PackageGlobPattern</code></td>
-                                <td>@Model.DescribeRepositories(key)</td>
+                                <td>@key.Repositories</td>
                                 <td>@key.Created.ToString("yyyy-MM-dd")</td>
                                 <td>@(key.Expires?.ToString("yyyy-MM-dd") ?? "Never")</td>
                                 <td><button type="submit" class="btn btn-danger btn-xs" asp-controller="AdminUsers" asp-action="Detail" asp-route-handler="RevokeKey" name="key" value="@key.Key">Revoke</button></td>

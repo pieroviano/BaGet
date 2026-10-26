@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace BaGet.Core;
 
@@ -46,7 +47,7 @@ public enum SettingKind
 /// <param name="Section">The first segment of the key, or an empty string for a top-level key.</param>
 /// <param name="Group">The options type's name without "Options", such as "AzureBlobStorage".</param>
 /// <param name="Kind">How the value is edited.</param>
-/// <param name="ClrType">The property's type, without <see cref="Nullable{T}"/>.</param>
+/// <param name="ClrType">The property's type, without <see cref="Nullable{T}"/> (not serialised: a <see cref="Type"/> has no JSON form).</param>
 /// <param name="EnumValues">The allowed names of an <see cref="SettingKind.Enum"/>, otherwise empty.</param>
 /// <param name="IsSensitive">The value is a credential: masked and write-only.</param>
 /// <param name="RequiresRestart">A change applies after a restart.</param>
@@ -63,7 +64,7 @@ public sealed record SettingDescriptor(
     string Section,
     string Group,
     SettingKind Kind,
-    Type ClrType,
+    [property: JsonIgnore] Type ClrType,
     string[] EnumValues,
     bool IsSensitive,
     bool RequiresRestart,

@@ -1,7 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Application;
 using BaGet.Identity.Mvc;
-using BaGet.Identity.Workflows;
+using BaGet.Identity.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Controllers;
@@ -10,8 +11,9 @@ namespace BaGet.Identity.Controllers;
 /// The administrator's operational screens: maintenance operations (<c>/admin/operations</c>), the validation queue
 /// (<c>/admin/validation</c>), abuse reports (<c>/admin/abuse</c>), the cluster status (<c>/admin/cluster</c>), the package formats
 /// (<c>/admin/formats</c>) and the notice shown where there is no access model (<c>/admin/access-unavailable</c>). They replace the
-/// Razor Pages of the same names (same URLs, handlers and <c>asp-page</c> names); the logic is in
-/// <see cref="OperationsWorkflow"/>. Every write is refused with 503 while the read-only gate is closed.
+/// Razor Pages of the same names (same URLs, handlers and <c>asp-page</c> names); the work is done by the JSON twin
+/// (<see cref="AdminOperationsUiApiController"/>) and this controller only renders its answers. Every write is refused with 503 while
+/// the read-only gate is closed.
 /// </summary>
 public sealed class AdminOperationsController : AdminControllerBase
 {
@@ -20,139 +22,70 @@ public sealed class AdminOperationsController : AdminControllerBase
     /// <summary>Lists the operations and their status.</summary>
     [Route("admin/operations"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Operations")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        await workflow.GetOperationsAsync(cancellationToken);
-        Flash(workflow.Operations);
-
-        return View("Index", workflow.Operations);
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, OperationsViewModel>(api => api.GetOperations(cancellationToken)), "Index");
 
     /// <summary>Starts an operation on a repository.</summary>
     [Route("admin/operations"), HttpPost, PageHandler, LegacyPage("/Admin/Operations")]
     public async Task<IActionResult> Start(string? operation, string? repository, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        var result = await workflow.StartAsync(operation, repository, password, cancellationToken);
-        Flash(workflow.Operations);
-
-        return result ?? View("Index", workflow.Operations);
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, OperationsViewModel>(api => api.Start(new OperationForm(operation, repository, password), cancellationToken)), "Index");
 
     // ---------------------------------------------------------------- Validation
 
     /// <summary>Lists the pending and quarantined submissions.</summary>
     [Route("admin/validation"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Validation")]
     public async Task<IActionResult> Validation(CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        await workflow.GetValidationAsync(cancellationToken);
-        Flash(workflow.Validation);
-
-        return View("Validation", workflow.Validation);
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, ValidationViewModel>(api => api.GetValidation(cancellationToken)), "Validation");
 
     /// <summary>Validates the submission again.</summary>
     [Route("admin/validation"), HttpPost, PageHandler("Retry"), LegacyPage("/Admin/Validation")]
     public async Task<IActionResult> Retry(string? submissionId, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-
-        return AfterValidation(workflow, await workflow.RetryAsync(submissionId, cancellationToken));
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, ValidationViewModel>(api => api.Retry(new SubmissionForm(submissionId, null), cancellationToken)), "Validation");
 
     /// <summary>Indexes the quarantined package although validation failed.</summary>
     [Route("admin/validation"), HttpPost, PageHandler("Release"), LegacyPage("/Admin/Validation")]
     public async Task<IActionResult> Release(string? submissionId, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-
-        return AfterValidation(workflow, await workflow.ReleaseAsync(submissionId, password, cancellationToken));
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, ValidationViewModel>(api => api.Release(new SubmissionForm(submissionId, password), cancellationToken)), "Validation");
 
     /// <summary>Deletes the quarantined package.</summary>
     [Route("admin/validation"), HttpPost, PageHandler("Reject"), LegacyPage("/Admin/Validation")]
     public async Task<IActionResult> Reject(string? submissionId, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-
-        return AfterValidation(workflow, await workflow.RejectAsync(submissionId, password, cancellationToken));
-    }
-
-    private IActionResult AfterValidation(OperationsWorkflow workflow, IActionResult? result)
-    {
-        Flash(workflow.Validation);
-
-        return result ?? View("Validation", workflow.Validation);
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, ValidationViewModel>(api => api.Reject(new SubmissionForm(submissionId, password), cancellationToken)), "Validation");
 
     // ---------------------------------------------------------------- Abuse
 
     /// <summary>Lists the abuse reports (the unresolved ones unless <c>all</c>).</summary>
     [Route("admin/abuse"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Abuse")]
     public async Task<IActionResult> Abuse(bool all, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        workflow.Abuse.All = all;
-        await workflow.GetAbuseAsync(cancellationToken);
-        Flash(workflow.Abuse);
-
-        return View("Abuse", workflow.Abuse);
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, AbuseViewModel>(api => api.GetAbuse(all, cancellationToken)), "Abuse");
 
     /// <summary>Marks a report resolved.</summary>
     [Route("admin/abuse"), HttpPost, PageHandler("Resolve"), LegacyPage("/Admin/Abuse")]
     public async Task<IActionResult> Resolve(int key, bool all, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        workflow.Abuse.All = all;
-
-        return AfterAbuse(workflow, await workflow.ResolveAsync(key, cancellationToken));
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, AbuseViewModel>(api => api.Resolve(new AbuseForm(key, all), cancellationToken)), "Abuse");
 
     /// <summary>Reopens a resolved report.</summary>
     [Route("admin/abuse"), HttpPost, PageHandler("Reopen"), LegacyPage("/Admin/Abuse")]
     public async Task<IActionResult> Reopen(int key, bool all, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        workflow.Abuse.All = all;
-
-        return AfterAbuse(workflow, await workflow.ReopenAsync(key, cancellationToken));
-    }
-
-    private IActionResult AfterAbuse(OperationsWorkflow workflow, IActionResult? result)
-    {
-        Flash(workflow.Abuse);
-
-        return result ?? View("Abuse", workflow.Abuse);
-    }
+        => RenderFlashed(await Api<AdminOperationsUiApiController, AbuseViewModel>(api => api.Reopen(new AbuseForm(key, all), cancellationToken)), "Abuse");
 
     // ---------------------------------------------------------------- Cluster, Formats, AccessUnavailable
 
     /// <summary>The cluster status; <c>?refresh=true</c> runs the health checks again.</summary>
     [Route("admin/cluster"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Cluster")]
     public async Task<IActionResult> Cluster(bool refresh, CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        await workflow.GetClusterAsync(refresh, cancellationToken);
-
-        return View("Cluster", workflow.Cluster);
-    }
+        => Render(await Api<AdminOperationsUiApiController, ClusterViewModel>(api => api.GetCluster(refresh, cancellationToken)), "Cluster");
 
     /// <summary>The package formats this server can host.</summary>
     [Route("admin/formats"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Formats")]
     public async Task<IActionResult> Formats(CancellationToken cancellationToken)
-    {
-        var workflow = new OperationsWorkflow(HttpContext, Url);
-        await workflow.GetFormatsAsync(cancellationToken);
-
-        return View("Formats", workflow.Formats);
-    }
+        => Render(await Api<AdminOperationsUiApiController, FormatsViewModel>(api => api.GetFormats(cancellationToken)), "Formats");
 
     /// <summary>
     /// Where the access screens send an administrator when the configured database has no access model (Azure Table): says so and
-    /// explains what applies instead. The page had no handler method at all, hence no <see cref="PageHandlerAttribute"/>.
+    /// explains what applies instead. The page had no handler method at all, hence no <see cref="PageHandlerAttribute"/>. The page
+    /// has fixed text, so the view takes no model.
     /// </summary>
     [Route("admin/access-unavailable"), HttpGet, HttpHead, LegacyPage("/Admin/AccessUnavailable")]
-    public IActionResult AccessUnavailable() => View("AccessUnavailable");
+    public async Task<IActionResult> AccessUnavailable()
+        => Render(await Api<AdminOperationsUiApiController, AccessUnavailableViewModel>(api => Task.FromResult(api.GetAccessUnavailable())), "AccessUnavailable", _ => null);
 }

@@ -64,6 +64,8 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<AccountOverviewUseCase>();
         services.TryAddScoped<ProfileUseCase>();
         services.TryAddScoped<AdminUserCreationService>();
+        services.TryAddScoped<IScreenLinks, Mvc.ScreenLinks>();
+        services.AddBaGetAdminUseCases();
         services.TryAddSingleton<ContactRateLimiter>();
         services.TryAddSingleton<PasswordResetRateLimiter>();
         services.TryAddSingleton<BackgroundEmailQueue>();

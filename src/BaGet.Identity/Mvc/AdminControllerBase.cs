@@ -57,4 +57,23 @@ public abstract class AdminControllerBase : AccountControllerBase
         if (model.Error != null) TempData["Error"] = model.Error;
         else model.Error = TempData["Error"] as string;
     }
+
+    /// <summary>
+    /// <c>Render</c> for a screen whose model carries the outcome of the last action across a redirect
+    /// (<see cref="IFlashMessage"/>, <see cref="IFlashModel"/>): the message and error the previous request stored are moved into the model before the
+    /// view renders, as <see cref="Flash(IFlashMessage)"/> did on the page models. A redirect (<c>Next</c> with a message) stores them for the next request.
+    /// </summary>
+    [NonAction]
+    protected IActionResult RenderFlashed<TModel>(UiApiResponse<TModel> response, string view)
+        where TModel : class, IFlashMessage
+        => Render(
+            response,
+            view,
+            model =>
+            {
+                if (model is IFlashModel flash) Flash(flash);
+                else Flash((IFlashMessage)model);
+
+                return model;
+            });
 }
