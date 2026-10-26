@@ -282,6 +282,32 @@ public class AdminAccessUiApiTests : IDisposable
     }
 
     [Fact]
+    public async Task GuessingThePasswordThroughAKeyLocksTheAccountOut()
+    {
+        var alice = (await FindAsync(_app, "alice"))!.Id;
+        for (var i = 0; i < 12; i++)
+        {
+            await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/groups/team/add-member", new { userId = alice, password = "wrong" + i });
+        }
+
+        // Locked out: even the right password no longer confirms, as in /api/v1.
+        var answer = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/groups/team/add-member", new { userId = alice, password = Password });
+        Assert.Contains("confirmation is incorrect", answer.Json!["next"]!["error"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Empty((await WithAsync(a => a.GetGroupAsync("team", Token)))!.Members);
+    }
+
+    [Fact]
+    public async Task OnlyAServerAdministratorIsOfferedTheRepositoriesToAssign()
+    {
+        var project = await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/projects/shop");
+        Assert.Equal(HttpStatusCode.OK, project.Status);
+        Assert.Empty(project.Json!["model"]!["assignable"]!.AsArray());
+
+        var admin = await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/projects/shop");
+        Assert.NotEmpty(admin.Json!["model"]!["assignable"]!.AsArray());
+    }
+
+    [Fact]
     public async Task EveryWriteIsRefusedWith503WhileTheServerIsReadOnly()
     {
         var gate = _app.Services.GetRequiredService<MaintenanceGate>();

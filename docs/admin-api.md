@@ -62,6 +62,8 @@ Built with `Microsoft.AspNetCore.OpenApi`, written as OpenAPI 3.0, browsed with 
 | `ui` | `/openapi/ui.json` | the JSON twins of the screens (`/api/ui`); fills as screens get one |
 | `protocols` | `/openapi/protocols.json` | NuGet, symbol, npm, Maven and Docker routes, plain and `/r/{repo}/`, read from the mapped endpoints (paths, methods, route parameters, format; bodies are the protocols' own) |
 
+**Password confirmation (screens and `/api/ui`):** a locked-out account never confirms, and a wrong password counts as a failed sign-in (so repeated guesses lock the account, as with `X-Confirm-Password`). A project administrator's `/api/ui/admin/projects/{name}` model carries no `assignable` repositories (only server administrators assign).
+
 **Who:** administrators only. A signed-in server administrator (cookie), an administrator's `admin:api` key (not limited to repositories) or the global `ApiKey` (when one is configured) get `200`; everyone else, anonymous included, gets `404`. Scalar's own files are gated the same way. The documents never contain keys or secrets.
 
 ## Not offered over the API

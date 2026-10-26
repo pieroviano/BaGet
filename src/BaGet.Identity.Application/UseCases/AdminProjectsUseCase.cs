@@ -215,12 +215,16 @@ public sealed class AdminProjectsUseCase : AccessUseCaseBase
         model.Project = await Access.GetProjectAsync(model.Name ?? string.Empty, cancellationToken);
         if (model.Project == null) return false;
 
-        var all = await Repositories.ListAsync(cancellationToken);
-        model.Assignable = all
-            .Where(r => !model.Project.Repositories.Contains(r.Name, StringComparer.Ordinal))
-            .Select(r => r.Name)
-            .OrderBy(n => n, StringComparer.Ordinal)
-            .ToList();
+        // Only a server administrator assigns repositories; the view shows the list to nobody else, so the model must not carry it.
+        if (caller.IsServerAdministrator)
+        {
+            var all = await Repositories.ListAsync(cancellationToken);
+            model.Assignable = all
+                .Where(r => !model.Project.Repositories.Contains(r.Name, StringComparer.Ordinal))
+                .Select(r => r.Name)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToList();
+        }
 
         return true;
     }

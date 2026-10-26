@@ -426,6 +426,15 @@ public class AdminRemoteRepositoriesTests : IDisposable
         Assert.DoesNotContain("id=\"remote-test-result\"", refusedTest);
         Assert.Equal(wireBefore, _wire.Requests.Length);
 
+        // The wrong passwords above counted as failed attempts and locked the account out (as a sign-in would); lift it to try the right one.
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser>>();
+            var root = (await users.FindByNameAsync("root"))!;
+            await users.SetLockoutEndDateAsync(root, null);
+            await users.ResetAccessFailedCountAsync(root);
+        }
+
         var test = EditFields(null, null);
         Assert.Contains("id=\"remote-test-result\"", await ReadAsync(await _admin.PostAsync("admin/repositories/up", test, action: "admin/repositories/up?handler=Test")));
     }

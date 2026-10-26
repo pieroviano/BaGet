@@ -24,14 +24,20 @@ public static class AccountConfirmation
 
     /// <summary>
     /// The check behind every sensitive action. An account with a password types it again; one without (external sign-in
-    /// only) must have signed in again with its provider a moment ago.
+    /// only) must have signed in again with its provider a moment ago. A locked-out account never confirms; a wrong password is counted.
     /// </summary>
     public static async Task<bool> IsConfirmedAsync(UserManager<BaGetUser> users, HttpContext httpContext, BaGetUser? user, string? password)
     {
         #pragma warning disable CS8604
-        return await users.HasPasswordAsync(user)
-            ? await users.CheckPasswordAsync(user, password ?? string.Empty)
-            : await HasReauthenticatedRecentlyAsync(httpContext);
+        if (!await users.HasPasswordAsync(user)) return await HasReauthenticatedRecentlyAsync(httpContext);
+
+        // Like a sign-in: a locked-out account is refused without looking at the password, and a wrong one counts as a failed attempt
+        // (a refused write while the read-only gate is closed), so confirmations cannot be used to guess a password without limit.
+        if (await users.IsLockedOutAsync(user)) return false;
+        if (await users.CheckPasswordAsync(user, password ?? string.Empty)) return true;
+        await users.AccessFailedAsync(user);
+
+        return false;
         #pragma warning restore CS8604
     }
 
