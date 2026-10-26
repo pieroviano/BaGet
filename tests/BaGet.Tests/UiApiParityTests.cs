@@ -128,9 +128,13 @@ public class UiApiParityTests : IDisposable
         ("/Account/Reauthenticate", "Callback", "GET"),
     };
 
+    // An action with no HTTP method constraint answers any method: demand a twin for GET and POST, never skip it.
     private static string[] MethodsOf(ControllerActionDescriptor action)
-        => action.ActionConstraints?.OfType<Microsoft.AspNetCore.Mvc.ActionConstraints.HttpMethodActionConstraint>().SelectMany(c => c.HttpMethods).Distinct().ToArray()
-           ?? new[] { "GET" };
+    {
+        var methods = action.ActionConstraints?.OfType<Microsoft.AspNetCore.Mvc.ActionConstraints.HttpMethodActionConstraint>().SelectMany(c => c.HttpMethods).Distinct().ToArray();
+
+        return methods is { Length: > 0 } ? methods : new[] { "GET", "POST" };
+    }
 
     [Fact]
     public void EveryScreenAndHandlerOfAViewActionHasAUiApiTwinOfTheSameMethodExceptTheBrowserOnlySteps()

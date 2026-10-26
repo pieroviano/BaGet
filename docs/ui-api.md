@@ -19,7 +19,8 @@ Route values keep the screen's names (`{id}`, `{name}`, `{version}`). The comple
 ## Who may call
 
 Like [`/api/v1`](admin-api.md): **API keys only**. The browser session cookie is never a credential on `/api/ui`, and there is no antiforgery token
-(nothing ambient for a cross-site page to ride on).
+(nothing ambient for a cross-site page to ride on). Exception: an open server (accounts off, no `ApiKey`) lets anonymous callers upload, so any page a
+visitor opens can post an upload there, as it already can to the protocol routes (CORS allows any origin); configure an `ApiKey` or turn accounts on.
 
 | Caller | Rule |
 |---|---|

@@ -83,7 +83,7 @@ public sealed class AccountSettingsUiApiController : AccountUiApiControllerBase
 
 /// <summary>
 /// The JSON twin of the signed-in user's organizations (<c>/api/ui/account/organizations</c>): <see cref="AccountOrganizationsController"/> calls it
-/// in process. Cookie sessions only, signed in.
+/// in process. Screen only: over HTTP it answers 403 to every caller.
 /// </summary>
 [Route("api/ui/account/organizations")]
 public sealed class AccountOrganizationsUiApiController : AccountUiApiControllerBase
@@ -114,7 +114,7 @@ public sealed class AccountOrganizationsUiApiController : AccountUiApiController
 
 /// <summary>
 /// The JSON twin of "My packages", "My access" and the "my profile" redirect (<c>/api/ui/account/packages</c>, <c>access</c>, <c>profile</c>):
-/// <see cref="AccountPackagesController"/> calls it in process. Cookie sessions only, signed in.
+/// <see cref="AccountPackagesController"/> calls it in process. Screen only: over HTTP it answers 403 to every caller.
 /// </summary>
 [Route("api/ui/account")]
 public sealed class AccountPackagesUiApiController : AccountUiApiControllerBase

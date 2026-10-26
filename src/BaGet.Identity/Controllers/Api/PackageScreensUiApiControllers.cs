@@ -11,7 +11,7 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The JSON twin of the contact-owners screen: <c>GET /api/ui/packages/{id}/contact-owners</c> (the form's state) and <c>POST</c> to the same
 /// address with <c>{ "message": …, "copyToSelf": … }</c> (also under <c>/api/ui/r/{repo}/…</c>). Needs accounts and mail, like the page.
-/// Cookie session only. <see cref="ContactOwnersController"/> calls it in process and renders the view.
+/// Screen only: over HTTP it answers 403 to every caller. <see cref="ContactOwnersController"/> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/packages/{id}/contact-owners")]
 [RepositoryPage(NotOnVirtual = true)]
@@ -41,7 +41,7 @@ public sealed class ContactOwnersUiApiController : AccountUiApiControllerBase
 /// <summary>
 /// The JSON twin of the validation status screen: <c>GET /api/ui/packages/{id}/validation</c> (also under <c>/api/ui/r/{repo}/…</c>), the
 /// newest submission of each version and the verdict of its steps; 403 without Push or Manage on the ID, 404 when validation never saw it.
-/// Cookie session only. <see cref="ValidationStatusPageController"/> calls it in process and renders the view.
+/// Screen only: over HTTP it answers 403 to every caller. <see cref="ValidationStatusPageController"/> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/packages/{id}/validation")]
 [RepositoryPage(NotOnVirtual = true)]
@@ -75,7 +75,7 @@ public sealed class ScanArtifactForm
 /// The JSON twin of <em>Scan now</em>: <c>GET /api/ui/scan-artifact?name=&amp;version=</c> (the stored result) and <c>POST
 /// /api/ui/scan-artifact</c> with <c>{ "name": …, "version": … }</c> (scans now, or queues an image; also under <c>/api/ui/r/{repo}/…</c>).
 /// 403 without the Manage action on the artifact. A refused scan answers with the screen under 409 (scanning unavailable) or 404 (no such
-/// version). Cookie session only. <see cref="ScanArtifactController"/> calls it in process and renders the view.
+/// version). Screen only: over HTTP it answers 403 to every caller. <see cref="ScanArtifactController"/> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/scan-artifact")]
 [RepositoryPage(AnyFormat = true, NotOnVirtual = true)]

@@ -15,7 +15,8 @@ namespace BaGet.Identity.Mvc;
 /// there is no antiforgery here.</description></item>
 /// <item><description><b>No credentials</b>: anonymous. The browser session cookie is <b>never</b> a credential on <c>/api/ui</c>: <c>User</c> is reset to an anonymous
 /// principal and the request is marked so that no later code re-reads the cookie. With no ambient credential there is nothing for a cross-site page to
-/// ride on, so no antiforgery token is needed (nor offered).</description></item>
+/// ride on, so no antiforgery token is needed (nor offered). An open server (accounts off, no <c>ApiKey</c>) accepts anonymous uploads, so a cross-site
+/// form can post one, as it can to the protocol routes.</description></item>
 /// </list>
 /// In-process calls of a view controller do not pass through here: the view action has its own antiforgery validation and its own cookie session.
 /// </summary>
