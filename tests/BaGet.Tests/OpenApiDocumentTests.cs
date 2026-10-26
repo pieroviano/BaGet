@@ -167,6 +167,26 @@ public class OpenApiDocumentTests : IDisposable
     }
 
     [Fact]
+    public async Task TheCookieSchemeNamesTheCookieThatSigningInSets()
+    {
+        // A client generated from the document must send the session cookie the server really issues.
+        using var root = new Browser(_api.App);
+        using var login = await root.PostAsync("account/login", new Dictionary<string, string>
+        {
+            { "UserName", "root" },
+            { "Password", Password },
+        });
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+        var issued = login.Headers.GetValues("Set-Cookie").Select(c => c.Split('=')[0]).ToList();
+
+        using var answer = await root.GetAsync(ApiDocuments.JsonPath(ApiDocuments.Ui));
+        var document = JsonNode.Parse(await answer.Content.ReadAsStringAsync(AdminApiHarness.Token))!;
+        var name = document["components"]!["securitySchemes"]!["cookie"]!["name"]!.GetValue<string>();
+
+        Assert.Contains(name, issued);
+    }
+
+    [Fact]
     public async Task EverybodyElseGets404()
     {
         var addresses = ApiDocuments.All.Select(ApiDocuments.JsonPath).Concat(new[] { "/api/v1/openapi.json", "/scalar", "/scalar/v1", "/scalar/protocols" }).ToList();

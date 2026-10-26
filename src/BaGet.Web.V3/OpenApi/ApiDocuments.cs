@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,7 +67,7 @@ public static class ApiDocuments
     {
         options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
         options.ShouldInclude = include;
-        options.AddDocumentTransformer((document, _, _) =>
+        options.AddDocumentTransformer((document, context, _) =>
         {
             document.Info = new OpenApiInfo { Title = title, Version = "1.0.0", Description = description };
             document.Components ??= new OpenApiComponents();
@@ -73,7 +75,7 @@ public static class ApiDocuments
             document.Components.SecuritySchemes["bearer"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "bearer", Description = "An API key." };
             document.Components.SecuritySchemes["basic"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "basic", Description = "The API key as the password." };
             document.Components.SecuritySchemes["apiKey"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Header, Name = "X-NuGet-ApiKey", Description = "An API key." };
-            document.Components.SecuritySchemes["cookie"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Cookie, Name = ".BaGet.Session", Description = "The browser session (only /api/ui; unsafe methods also need the antiforgery header)." };
+            document.Components.SecuritySchemes["cookie"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Cookie, Name = SessionCookieName(context.ApplicationServices), Description = "The browser session (only /api/ui; unsafe methods also need the antiforgery header)." };
             document.Security = new List<OpenApiSecurityRequirement>
             {
                 new() { [new OpenApiSecuritySchemeReference("bearer", document)] = new List<string>() },
@@ -85,6 +87,14 @@ public static class ApiDocuments
             return Task.CompletedTask;
         });
     }
+
+    /// <summary>
+    /// The name of the browser-session cookie as configured (ASP.NET Core Identity's application cookie; a host may rename it), else
+    /// the default <c>.AspNetCore.Identity.Application</c>.
+    /// </summary>
+    internal static string SessionCookieName(IServiceProvider services)
+        => services.GetService<IOptionsMonitor<CookieAuthenticationOptions>>()?.Get(IdentityConstants.ApplicationScheme).Cookie.Name
+           ?? CookieAuthenticationDefaults.CookiePrefix + IdentityConstants.ApplicationScheme;
 
     private static bool IsUnder(ApiDescription description, string prefix)
     {

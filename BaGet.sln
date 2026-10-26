@@ -72,6 +72,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 	ProjectSection(SolutionItems) = preProject
 		docs\access-control.md = docs\access-control.md
 		docs\admin-api.md = docs\admin-api.md
+		docs\scalar.md = docs\scalar.md
 		docs\configuration.md = docs\configuration.md
 		docs\devops-manual.md = docs\devops-manual.md
 		docs\docker-registry.md = docs\docker-registry.md

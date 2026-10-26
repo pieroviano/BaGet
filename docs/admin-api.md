@@ -54,7 +54,7 @@ account out). An owner with no password: `403` `confirmation-unavailable`. The g
 
 ## OpenAPI and Scalar
 
-Built with `Microsoft.AspNetCore.OpenApi`, written as OpenAPI 3.0, browsed with [Scalar](https://scalar.com) at **`/scalar`**.
+Built with `Microsoft.AspNetCore.OpenApi`, written as OpenAPI 3.0, browsed with [Scalar](https://scalar.com) at **`/scalar`** (how to test with it: [Testing the APIs with Scalar](scalar.md)).
 
 | Document | Address | Holds |
 |---|---|---|
