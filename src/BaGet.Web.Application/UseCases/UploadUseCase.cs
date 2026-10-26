@@ -5,30 +5,29 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
-using Microsoft.AspNetCore.Http;
+using BaGet.Identity.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NuGet.Packaging;
 using NuGet.Versioning;
 
-namespace BaGet.Web;
+namespace BaGet.Web.Application;
 
 using NuGetPackageType = NuGet.Packaging.Core.PackageType;
 
 /// <summary>
 /// Uploading a NuGet package through the browser, in two steps: the first stages the file and shows what it contains, the second
 /// publishes it (or the third discards it). Every step goes through the same authorization and the same submission pipeline as
-/// <c>dotnet nuget push</c>, so the browser can do what the pusher's own API key could, and no more. Shared by
-/// <c>UploadController</c>.
+/// <c>dotnet nuget push</c>, so the browser can do what the pusher's own API key could, and no more. The use case of the Upload screen
+/// (<c>UploadUiApiController</c>, which the view controller calls in process).
 /// </summary>
 /// <remarks>
 /// Deliberately not an account page: those answer 404 while accounts are disabled, and this one must still work there - with a
 /// pasted API key, exactly as the push endpoint requires one. Each step returns the <see cref="UploadViewModel"/> to render and
 /// the status to answer it with; a refusal is a page with a message, never a bare error.
 /// </remarks>
-internal sealed class UploadWorkflow
+public sealed class UploadUseCase
 {
     internal const string ReadOnlyMessage =
         "This server is in read-only mode, so nothing can be uploaded.";
@@ -69,7 +68,6 @@ internal sealed class UploadWorkflow
 
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly IOptions<AccountsOptions> _accounts;
-    private readonly IAuthenticationService _authentication;
     private readonly IPackageAuthorizationService _authorization;
     private readonly IPackageSubmissionService _submissions;
     private readonly ISymbolIndexingService _symbols;
@@ -77,23 +75,25 @@ internal sealed class UploadWorkflow
     private readonly IPackageDatabase _packages;
     private readonly ILogger _logger;
     private readonly IScanGate _scanGate;
+    private readonly UploadAuthenticator _authenticator;
 
-    public UploadWorkflow(
+    /// <summary>Creates the use case.</summary>
+    public UploadUseCase(
         IOptionsSnapshot<BaGetOptions> options,
         IOptions<AccountsOptions> accounts,
-        IAuthenticationService authentication,
         IPackageAuthorizationService authorization,
         IPackageSubmissionService submissions,
         ISymbolIndexingService symbols,
         IPackageStagingService staging,
         IPackageDatabase packages,
-        ILogger logger,
-        IScanGate scanGate)
+        ILogger<UploadUseCase> logger,
+        IScanGate scanGate,
+        UploadAuthenticator authenticator)
     {
+        _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _scanGate = scanGate ?? throw new ArgumentNullException(nameof(scanGate));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
-        _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _submissions = submissions ?? throw new ArgumentNullException(nameof(submissions));
         _symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
@@ -111,14 +111,25 @@ internal sealed class UploadWorkflow
     private string NotAuthenticatedMessage => AccountsEnabled ? SignInMessage : ApiKeyRejectedMessage;
 
     /// <summary>The page as a visitor first sees it (step one).</summary>
-    public UploadViewModel Show(ClaimsPrincipal user, string? id) => NewModel(user, id);
+    public ScreenResult<UploadViewModel> Show(ClaimsPrincipal user, string? id) => ScreenResult<UploadViewModel>.Ok(NewModel(user, id));
 
     /// <summary>Step one: stages the file and describes what it contains.</summary>
-    public async Task<UploadViewModel> StageAsync(
+    public async Task<ScreenResult<UploadViewModel>> StageAsync(
         ClaimsPrincipal user,
-        IServiceProvider services,
+        BaGetPrincipal? key,
         string? id,
-        IFormFile? package,
+        UploadedFile? package,
+        string? apiKey,
+        CancellationToken cancellationToken)
+    {
+        return Result(await StageCoreAsync(user, key, id, package, apiKey, cancellationToken));
+    }
+
+    private async Task<UploadViewModel> StageCoreAsync(
+        ClaimsPrincipal user,
+        BaGetPrincipal? key,
+        string? id,
+        UploadedFile? package,
         string? apiKey,
         CancellationToken cancellationToken)
     {
@@ -127,7 +138,7 @@ internal sealed class UploadWorkflow
         if (IsReadOnlyMode) return Refuse(model, 401, ReadOnlyMessage);
         if (NothingCanAuthenticate) return Refuse(model, 401, NoApiKeyMessage);
 
-        var principal = await AuthenticateAsync(user, services, apiKey, cancellationToken);
+        var principal = await _authenticator.AuthenticateAsync(user, key, apiKey, cancellationToken);
         if (principal == null) return Refuse(model, 401, NotAuthenticatedMessage);
 
         if (package == null || package.Length == 0)
@@ -200,9 +211,21 @@ internal sealed class UploadWorkflow
     }
 
     /// <summary>Step two: publishes the staged upload.</summary>
-    public async Task<UploadViewModel> SubmitAsync(
+    public async Task<ScreenResult<UploadViewModel>> SubmitAsync(
         ClaimsPrincipal user,
-        IServiceProvider services,
+        BaGetPrincipal? key,
+        string? id,
+        string token,
+        string? apiKey,
+        bool acceptTerms,
+        CancellationToken cancellationToken)
+    {
+        return Result(await SubmitCoreAsync(user, key, id, token, apiKey, acceptTerms, cancellationToken));
+    }
+
+    private async Task<UploadViewModel> SubmitCoreAsync(
+        ClaimsPrincipal user,
+        BaGetPrincipal? key,
         string? id,
         string token,
         string? apiKey,
@@ -214,7 +237,7 @@ internal sealed class UploadWorkflow
         if (IsReadOnlyMode) return Refuse(model, 401, ReadOnlyMessage);
         if (NothingCanAuthenticate) return Refuse(model, 401, NoApiKeyMessage);
 
-        var principal = await AuthenticateAsync(user, services, apiKey, cancellationToken);
+        var principal = await _authenticator.AuthenticateAsync(user, key, apiKey, cancellationToken);
         if (principal == null) return RefuseKey(model, token);
 
         // Whoever staged the upload is the only one who can open it, so another user's
@@ -271,9 +294,20 @@ internal sealed class UploadWorkflow
     /// could otherwise make its owner upload the whole file again, and the deletion is a
     /// write to the store that read-only mode is meant to freeze.
     /// </summary>
-    public async Task<UploadViewModel> CancelAsync(
+    public async Task<ScreenResult<UploadViewModel>> CancelAsync(
         ClaimsPrincipal user,
-        IServiceProvider services,
+        BaGetPrincipal? key,
+        string? id,
+        string token,
+        string? apiKey,
+        CancellationToken cancellationToken)
+    {
+        return Result(await CancelCoreAsync(user, key, id, token, apiKey, cancellationToken));
+    }
+
+    private async Task<UploadViewModel> CancelCoreAsync(
+        ClaimsPrincipal user,
+        BaGetPrincipal? key,
         string? id,
         string token,
         string? apiKey,
@@ -284,7 +318,7 @@ internal sealed class UploadWorkflow
         if (IsReadOnlyMode) return Refuse(model, 401, ReadOnlyMessage);
         if (NothingCanAuthenticate) return Refuse(model, 401, NoApiKeyMessage);
 
-        var principal = await AuthenticateAsync(user, services, apiKey, cancellationToken);
+        var principal = await _authenticator.AuthenticateAsync(user, key, apiKey, cancellationToken);
         if (principal == null) return RefuseKey(model, token);
 
         // Another user's token is indistinguishable from one that never existed, as it
@@ -414,23 +448,6 @@ internal sealed class UploadWorkflow
         }
     }
 
-    /// <summary>
-    /// Who is uploading. With accounts on it is the signed-in session; with accounts off
-    /// there is no session to trust, so a pasted API key authenticates instead.
-    /// </summary>
-    private async Task<BaGetPrincipal?> AuthenticateAsync(ClaimsPrincipal user, IServiceProvider services, string? apiKey, CancellationToken cancellationToken)
-    {
-        if (!AccountsEnabled)
-        {
-            return await _authentication.AuthenticatePrincipalAsync(apiKey, cancellationToken);
-        }
-
-        // Resolved per request: the factory is only registered while accounts are on.
-        var factory = services.GetService<SessionPrincipalFactory>();
-
-        return factory == null ? null : await factory.CreateAsync(user);
-    }
-
     private static string Denied(string? packageId)
         => $"You may not publish '{packageId}'. Either someone else owns it, or it predates "
            + "this server's accounts and only an administrator may publish to it.";
@@ -556,6 +573,12 @@ internal sealed class UploadWorkflow
             return Refuse(model, 403, e.Message);
         }
     }
+
+    // A refusal is a screen the form is shown again on, with the status the refusal carries and its sentence as the form's error; the rest is the screen.
+    private static ScreenResult<UploadViewModel> Result(UploadViewModel model)
+        => model.Failed
+            ? ScreenResult<UploadViewModel>.Invalid(model, model.Message ?? string.Empty, model.StatusCode)
+            : ScreenResult<UploadViewModel>.Ok(model, model.StatusCode == 200 ? null : model.StatusCode);
 
     private static UploadViewModel Refuse(UploadViewModel model, int statusCode, string message)
     {

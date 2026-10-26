@@ -1,3 +1,4 @@
+using BaGet.Web.Application;
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Html;
@@ -74,7 +75,7 @@ public sealed class UploadViewModel
     public bool NothingCanAuthenticate { get; set; }
 
     /// <summary>What the page says in that state, so the explanation and the refusal are one sentence.</summary>
-    public string NoApiKeyExplanation => UploadWorkflow.NoApiKeyMessage;
+    public string NoApiKeyExplanation => UploadUseCase.NoApiKeyMessage;
 
     /// <summary>Whether to render the form at all.</summary>
     public bool CanUpload => !IsReadOnlyMode && !NothingCanAuthenticate && (!AccountsEnabled || SignedIn);

@@ -5,7 +5,6 @@ using BaGet.Core;
 using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Web;
 
@@ -14,16 +13,11 @@ namespace BaGet.Web;
 /// browser upload (<c>/npm-upload</c>). They replace the Razor Pages <c>NpmPackages</c>, <c>NpmPackage</c> and <c>NpmUpload</c>: same URLs, same <c>asp-page</c> names
 /// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository, on
 /// the package for the package page, the right to publish for the upload; 404 in a repository that is not npm's). Views are in
-/// <c>Views/NpmBrowse/</c>.
+/// <c>Views/NpmBrowse/</c>. The work is <see cref="BaGet.Web.Application.NpmBrowseUseCase"/>, reached through the JSON twin
+/// <see cref="NpmBrowseUiApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class NpmBrowseController : UiControllerBase
 {
-    private NpmPackagesWorkflow PackagesWorkflow => HttpContext.RequestServices.GetRequiredService<NpmPackagesWorkflow>();
-
-    private NpmPackageWorkflow PackageWorkflow => HttpContext.RequestServices.GetRequiredService<NpmPackageWorkflow>();
-
-    private NpmUploadWorkflow UploadWorkflow => HttpContext.RequestServices.GetRequiredService<NpmUploadWorkflow>();
-
     /// <summary>The package list with a search box.</summary>
     [Route("npm-packages"), HttpGet, HttpHead, PageHandler, LegacyPage("/NpmPackages")]
     [RepositoryPage(Format = RepositoryFormat.Npm)]
@@ -34,38 +28,24 @@ public sealed class NpmBrowseController : UiControllerBase
     {
         if (!ModelState.IsValid) return BadRequest();
 
-        return View("Packages", await PackagesWorkflow.LoadAsync(q, p, User, cancellationToken));
+        return Render(await Api<NpmBrowseUiApiController, NpmPackagesViewModel>(api => api.Packages(q, p, cancellationToken)), "Packages");
     }
 
     /// <summary>One package: readme, versions, dist-tags, install commands.</summary>
     [Route("npm-packages/{*id}"), HttpGet, HttpHead, PageHandler, LegacyPage("/NpmPackage")]
     [RepositoryPage(Format = RepositoryFormat.Npm)]
-    public async Task<IActionResult> Package(
-        string? id,
-        string? version,
-        CancellationToken cancellationToken = default)
-    {
-        var model = await PackageWorkflow.LoadAsync(id, version, User, HttpContext.RequestServices, cancellationToken);
-        if (model == null) return NotFound();
-
-        if (model.StatusCode != StatusCodes.Status200OK) Response.StatusCode = model.StatusCode;
-
-        return View("Package", model);
-    }
+    public async Task<IActionResult> Package(string? id, string? version, CancellationToken cancellationToken = default)
+        => Render(await Api<NpmBrowseUiApiController, NpmPackageViewModel>(api => api.Package(id, version, cancellationToken)), "Package");
 
     /// <summary>The upload form.</summary>
     [Route("npm-upload"), HttpGet, HttpHead, PageHandler, LegacyPage("/NpmUpload")]
     [RepositoryPage(Format = RepositoryFormat.Npm, Upload = true)]
-    public IActionResult Upload() => View("Upload", UploadWorkflow.Show(User));
+    public async Task<IActionResult> Upload()
+        => Render(await Api<NpmBrowseUiApiController, NpmUploadViewModel>(api => api.Upload()), "Upload");
 
     /// <summary>Publishes the chosen tarball with the dist-tag <paramref name="tag"/> (default <c>latest</c>).</summary>
     [Route("npm-upload"), HttpPost, PageHandler, LegacyPage("/NpmUpload")]
     [RepositoryPage(Format = RepositoryFormat.Npm, Upload = true)]
     public async Task<IActionResult> UploadPost(IFormFile? package, string? tag, string? apiKey, CancellationToken cancellationToken)
-    {
-        var model = await UploadWorkflow.PublishAsync(User, HttpContext.RequestServices, package, tag, apiKey, cancellationToken);
-        Response.StatusCode = model.StatusCode;
-
-        return View("Upload", model);
-    }
+        => Render(await Api<NpmBrowseUiApiController, NpmUploadViewModel>(api => api.UploadPost(package, tag, apiKey, cancellationToken)), "Upload");
 }

@@ -5,16 +5,15 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
-using Microsoft.Extensions.DependencyInjection;
+using BaGet.Identity.Application;
 
-namespace BaGet.Web;
+namespace BaGet.Web.Application;
 
 /// <summary>
-/// The logic of the Docker front page: the images whose name contains the text (only those the visitor may read) and the commands
-/// that point Docker at the registry. Used by <c>DockerBrowseController</c>.
+/// The screens of a Docker repository: the image list (<c>/docker-images</c>) with the commands that point Docker at the registry, and one image
+/// (<c>/docker-images/{image}</c>; with a digest, one manifest in full). Used by <c>DockerBrowseUiApiController</c>, which the view controller calls in process.
 /// </summary>
-internal sealed class DockerImagesWorkflow
+public sealed class DockerBrowseUseCase
 {
     /// <summary>Images per page.</summary>
     public const int ResultsPerPage = 20;
@@ -23,17 +22,26 @@ internal sealed class DockerImagesWorkflow
     private readonly IUrlGenerator _urls;
     private readonly IRepositoryAccess _access;
     private readonly IRepositoryContext _repository;
+    private readonly ManageAccess _manage;
 
-    public DockerImagesWorkflow(IOciRegistry registry, IUrlGenerator urls, IRepositoryAccess access, IRepositoryContext repository)
+    /// <summary>Creates the use case.</summary>
+    public DockerBrowseUseCase(IOciRegistry registry, IUrlGenerator urls, IRepositoryAccess access, IRepositoryContext repository, ManageAccess manage)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
         _access = access ?? throw new ArgumentNullException(nameof(access));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _manage = manage ?? throw new ArgumentNullException(nameof(manage));
     }
 
-    public async Task<DockerImagesViewModel> LoadAsync(string? query, int pageIndex, ClaimsPrincipal user, CancellationToken cancellationToken)
+    /// <summary>The images whose name contains the text (only those the visitor may read) and the commands that point Docker at the registry.</summary>
+    public async Task<ScreenResult<DockerImagesViewModel>> ImagesAsync(string? query, int pageIndex, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        if (pageIndex < 1)
+        {
+            return ScreenResult<DockerImagesViewModel>.Invalid(new DockerImagesViewModel(), new Dictionary<string, string[]> { ["p"] = new[] { "The page must be 1 or more." } }, 400);
+        }
+
         var repository = _repository.Current;
         var result = await _registry.ListImagesAsync(
             query,
@@ -63,7 +71,7 @@ internal sealed class DockerImagesWorkflow
 
         if (isHttp) tabs.Add(new InstallSnippet { Name = "Plain http (daemon.json)", Lines = DockerSnippets.InsecureRegistry(host) });
 
-        return new DockerImagesViewModel
+        return ScreenResult<DockerImagesViewModel>.Ok(new DockerImagesViewModel
         {
             Query = query,
             PageIndex = pageIndex,
@@ -74,48 +82,35 @@ internal sealed class DockerImagesWorkflow
             IsRemote = isRemote,
             IsVirtual = repository.Kind == RepositoryKind.Virtual,
             CommandTabs = tabs,
-        };
-    }
-}
-
-/// <summary>
-/// The logic of the page of one Docker image: its tags, manifests and, with a digest, one manifest in full. Shared by
-/// <c>DockerBrowseController</c>.
-/// </summary>
-internal sealed class DockerImageWorkflow
-{
-    private readonly IOciRegistry _registry;
-    private readonly IUrlGenerator _urls;
-    private readonly IRepositoryContext _repository;
-
-    public DockerImageWorkflow(IOciRegistry registry, IUrlGenerator urls, IRepositoryContext repository)
-    {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _urls = urls ?? throw new ArgumentNullException(nameof(urls));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        });
     }
 
-    /// <summary>The page's data; null when the image name or the digest is not valid (the page answers a plain 404).</summary>
-    public async Task<DockerImageViewModel?> LoadAsync(string? image, string? digest, string? artifactType, ClaimsPrincipal user, IServiceProvider services, CancellationToken cancellationToken)
+    /// <summary>
+    /// One image: tags, manifests and, with a digest, one manifest in full. Not found when the image name or the digest is not valid; an image or
+    /// manifest that does not exist is the page that explains it, with status 404.
+    /// </summary>
+    public async Task<ScreenResult<DockerImageViewModel>> ImageAsync(string? image, string? digest, string? artifactType, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
-        if (!OciNames.IsValidImage(image)) return null;
-        if (digest != null && !OciNames.IsValidDigest(digest)) return null;
+        if (!OciNames.IsValidImage(image)) return ScreenResult<DockerImageViewModel>.NotFound();
+        if (digest != null && !OciNames.IsValidDigest(digest)) return ScreenResult<DockerImageViewModel>.NotFound();
 
         var repository = _repository.Current;
         var repositoryName = repository.Name;
         var isRemote = repository.Kind == RepositoryKind.Remote;
         var registryUrl = $"{_urls.GetOciRegistryUrl()}{repositoryName}/{image}/";
-        DockerImageViewModel Missing(OciImageInfo? info) => new()
-        {
-            Image = image,
-            Digest = digest,
-            ArtifactType = artifactType,
-            Info = info,
-            RepositoryName = repositoryName,
-            IsRemote = isRemote,
-            RegistryUrl = registryUrl,
-            StatusCode = 404,
-        };
+        ScreenResult<DockerImageViewModel> Missing(OciImageInfo? info) => ScreenResult<DockerImageViewModel>.Ok(
+            new DockerImageViewModel
+            {
+                Image = image,
+                Digest = digest,
+                ArtifactType = artifactType,
+                Info = info,
+                RepositoryName = repositoryName,
+                IsRemote = isRemote,
+                RegistryUrl = registryUrl,
+                StatusCode = 404,
+            },
+            404);
 
         var info = await _registry.GetImageAsync(image!, cancellationToken);
         if (info == null)
@@ -145,7 +140,7 @@ internal sealed class DockerImageWorkflow
         if (pullDigest != null) tabs.Add(new InstallSnippet { Name = "Pull by digest", Prefix = ">", Lines = new[] { DockerSnippets.Pull(host, repositoryName, image!, digest: pullDigest) } });
         if (!isRemote) tabs.Add(new InstallSnippet { Name = "Push", Prefix = ">", Lines = DockerSnippets.Push(host, repositoryName, image!) });
 
-        return new DockerImageViewModel
+        return ScreenResult<DockerImageViewModel>.Ok(new DockerImageViewModel
         {
             Image = image,
             Digest = digest,
@@ -158,42 +153,7 @@ internal sealed class DockerImageWorkflow
             IsRemote = isRemote,
             RegistryUrl = registryUrl,
             PullTabs = tabs,
-            CanManage = await DockerManageAccess.CanOpenAsync(services, user, repository, image!, cancellationToken),
-        };
-    }
-}
-
-/// <summary>Who is offered the Docker manage page: a signed-in user who holds Delete on the image (the rule the registry applies to a delete).</summary>
-internal static class DockerManageAccess
-{
-    public static async Task<bool> CanOpenAsync(IServiceProvider services, ClaimsPrincipal user, RepositoryInfo repository, string image, CancellationToken cancellationToken)
-    {
-        // The tools exist where images are pushed: only a local repository (the manage page of another kind is 404).
-        if (user.Identity?.IsAuthenticated != true || repository.Kind != RepositoryKind.Local) return false;
-
-        var sessions = services.GetService<ISessionPrincipalFactory>();
-        var principal = sessions == null ? null : await sessions.CreateAsync(user);
-        if (principal == null) return false;
-
-        return await services.GetRequiredService<IOciAccess>().IsAllowedAsync(principal, repository, image, OciActions.Delete, cancellationToken);
-    }
-}
-
-/// <summary>Who sees the link to the manage page of an npm package or a Maven artifact.</summary>
-internal static class NpmManageAccess
-{
-    /// <summary>An owner (directly or through an organization) or an administrator, signed in.</summary>
-    public static async Task<bool> CanOpenAsync(IServiceProvider services, ClaimsPrincipal user, string name, CancellationToken cancellationToken)
-    {
-        if (user.Identity?.IsAuthenticated != true) return false;
-
-        var sessions = services.GetService<ISessionPrincipalFactory>();
-        var principal = sessions == null ? null : await sessions.CreateAsync(user);
-        if (principal == null) return false;
-        if (principal.IsAdministrator) return true;
-
-        var ownership = services.GetService<PackageOwnershipService>();
-
-        return ownership != null && await ownership.IsOwnerAsync(principal.UserId, principal.UserName, name, cancellationToken);
+            CanManage = await _manage.CanManageImageAsync(user, repository, image!, cancellationToken),
+        });
     }
 }

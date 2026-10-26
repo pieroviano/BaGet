@@ -21,6 +21,14 @@ public static class WebApplicationServiceCollectionExtensions
         services.TryAddScoped<PackageUseCase>();
         services.TryAddScoped<ReportAbuseUseCase>();
 
+        // The format screens and the browser uploads.
+        services.TryAddScoped<UploadAuthenticator>();
+        services.TryAddScoped<ManageAccess>();
+        services.TryAddScoped<UploadUseCase>();
+        services.TryAddScoped<NpmBrowseUseCase>();
+        services.TryAddScoped<MavenBrowseUseCase>();
+        services.TryAddScoped<DockerBrowseUseCase>();
+
         return services;
     }
 }

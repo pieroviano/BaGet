@@ -5,37 +5,65 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
+using BaGet.Identity.Application;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Web;
+namespace BaGet.Web.Application;
 
 /// <summary>
-/// The logic of the Maven front page: the artifacts whose coordinates or POM text contain the search text (only those the visitor
-/// may open) and the configuration that points Maven and Gradle at the repository. Used by <c>MavenBrowseController</c>.
+/// The screens of a Maven repository: the artifact list (<c>/maven-artifacts</c>) with the configuration that points Maven and Gradle at the
+/// repository, one artifact (<c>/maven-artifacts/{group}/{artifact}/{version?}</c>) and the browser deployment (<c>/maven-upload</c>), whose
+/// deploy goes through <see cref="IMavenRepository.DeployAsync"/>, the call <c>mvn deploy</c>'s uploads end in. Used by
+/// <c>MavenBrowseUiApiController</c>, which the view controller calls in process.
 /// </summary>
-internal sealed class MavenArtifactsWorkflow
+public sealed class MavenBrowseUseCase
 {
     /// <summary>Artifacts per page.</summary>
     public const int ResultsPerPage = 20;
+
+    internal const string ReadOnlyMessage = "This server is in read-only mode, so nothing can be uploaded.";
+    internal const string SignInMessage = "Sign in to upload an artifact.";
+    internal const string ApiKeyRejectedMessage = "That API key was not accepted.";
+    internal const string NoFileMessage = "Choose a file or a POM to deploy.";
 
     private readonly IMavenRepository _maven;
     private readonly IUrlGenerator _urls;
     private readonly IRepositoryAccess _access;
     private readonly IRepositoryContext _repository;
+    private readonly IOptionsSnapshot<BaGetOptions> _options;
+    private readonly IOptions<AccountsOptions> _accounts;
+    private readonly UploadAuthenticator _authenticator;
+    private readonly ManageAccess _manage;
 
-    public MavenArtifactsWorkflow(IMavenRepository maven, IUrlGenerator urls, IRepositoryAccess access, IRepositoryContext repository)
+    /// <summary>Creates the use case.</summary>
+    public MavenBrowseUseCase(
+        IMavenRepository maven,
+        IUrlGenerator urls,
+        IRepositoryAccess access,
+        IRepositoryContext repository,
+        IOptionsSnapshot<BaGetOptions> options,
+        IOptions<AccountsOptions> accounts,
+        UploadAuthenticator authenticator,
+        ManageAccess manage)
     {
         _maven = maven ?? throw new ArgumentNullException(nameof(maven));
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
         _access = access ?? throw new ArgumentNullException(nameof(access));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
+        _manage = manage ?? throw new ArgumentNullException(nameof(manage));
     }
 
-    public async Task<MavenArtifactsViewModel> LoadAsync(string? query, int pageIndex, ClaimsPrincipal user, CancellationToken cancellationToken)
+    /// <summary>The artifacts whose coordinates or POM text contain the search text (only those the visitor may open) and the client configuration.</summary>
+    public async Task<ScreenResult<MavenArtifactsViewModel>> ArtifactsAsync(string? query, int pageIndex, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        if (pageIndex < 1)
+        {
+            return ScreenResult<MavenArtifactsViewModel>.Invalid(new MavenArtifactsViewModel(), new Dictionary<string, string[]> { ["p"] = new[] { "The page must be 1 or more." } }, 400);
+        }
+
         // The listing names only the artifacts whose pages the visitor may open.
         var repository = _repository.Current;
         var result = await _maven.SearchAsync(
@@ -56,7 +84,7 @@ internal sealed class MavenArtifactsWorkflow
         tabs.Add(new InstallSnippet { Name = "Resolve (pom.xml)", Lines = MavenSnippets.Repositories(id, url, settings.Policy != MavenPolicy.Snapshots, settings.Policy != MavenPolicy.Releases) });
         tabs.Add(new InstallSnippet { Name = "Gradle", Lines = MavenSnippets.GradleRepository(url) });
 
-        return new MavenArtifactsViewModel
+        return ScreenResult<MavenArtifactsViewModel>.Ok(new MavenArtifactsViewModel
         {
             Query = query,
             PageIndex = pageIndex,
@@ -66,32 +94,17 @@ internal sealed class MavenArtifactsWorkflow
             Kind = kind,
             RepositoryName = id,
             ConfigurationTabs = tabs,
-        };
-    }
-}
-
-/// <summary>
-/// The logic of the page of one Maven artifact: its versions, and for the chosen version its files, POM and the dependency to copy.
-/// Used by <c>MavenBrowseController</c>.
-/// </summary>
-internal sealed class MavenArtifactWorkflow
-{
-    private readonly IMavenRepository _maven;
-    private readonly IUrlGenerator _urls;
-    private readonly IRepositoryContext _repository;
-
-    public MavenArtifactWorkflow(IMavenRepository maven, IUrlGenerator urls, IRepositoryContext repository)
-    {
-        _maven = maven ?? throw new ArgumentNullException(nameof(maven));
-        _urls = urls ?? throw new ArgumentNullException(nameof(urls));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        });
     }
 
-    /// <summary>The page's data; null when the coordinates or the version are not valid Maven names (the page answers a plain 404).</summary>
-    public async Task<MavenArtifactViewModel?> LoadAsync(string? group, string? artifact, string? version, ClaimsPrincipal user, IServiceProvider services, CancellationToken cancellationToken)
+    /// <summary>
+    /// One artifact: its versions, and for the chosen version its files, POM and the dependency to copy. Not found when the coordinates or the
+    /// version are not valid Maven names; an artifact or version that does not exist is the page that explains it, with status 404.
+    /// </summary>
+    public async Task<ScreenResult<MavenArtifactViewModel>> ArtifactAsync(string? group, string? artifact, string? version, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
-        if (!MavenNames.IsValidGroupId(group) || !MavenNames.IsValidArtifactId(artifact)) return null;
-        if (version != null && !MavenNames.IsValidVersion(version)) return null;
+        if (!MavenNames.IsValidGroupId(group) || !MavenNames.IsValidArtifactId(artifact)) return ScreenResult<MavenArtifactViewModel>.NotFound();
+        if (version != null && !MavenNames.IsValidVersion(version)) return ScreenResult<MavenArtifactViewModel>.NotFound();
 
         var repositoryUrl = _urls.GetMavenRepositoryUrl();
         var repositoryName = _repository.Current.Name;
@@ -100,13 +113,13 @@ internal sealed class MavenArtifactWorkflow
         if (info == null)
         {
             // The page explains what is missing, with the status a link checker expects.
-            return new MavenArtifactViewModel { Group = group, Artifact = artifact, Version = version, RepositoryUrl = repositoryUrl, RepositoryName = repositoryName, StatusCode = 404 };
+            return Explained(new MavenArtifactViewModel { Group = group, Artifact = artifact, Version = version, RepositoryUrl = repositoryUrl, RepositoryName = repositoryName, StatusCode = 404 });
         }
 
         var chosen = version == null ? info.Latest : info.Versions.FirstOrDefault(v => v.Version == version);
         if (chosen == null)
         {
-            return new MavenArtifactViewModel { Group = group, Artifact = artifact, Version = version, Info = info, RepositoryUrl = repositoryUrl, RepositoryName = repositoryName, StatusCode = 404 };
+            return Explained(new MavenArtifactViewModel { Group = group, Artifact = artifact, Version = version, Info = info, RepositoryUrl = repositoryUrl, RepositoryName = repositoryName, StatusCode = 404 });
         }
 
         var selected = await _maven.GetVersionAsync(info.GroupId, info.ArtifactId, chosen.Version, cancellationToken);
@@ -127,19 +140,9 @@ internal sealed class MavenArtifactWorkflow
         }
 
         // Owners and the manage page belong to a repository that holds artifacts of its own (a local one).
-        IReadOnlyList<string> owners = Array.Empty<string>();
-        var canManage = false;
-        if (_repository.Current.Kind == RepositoryKind.Local && services.GetService<IOptions<AccountsOptions>>()?.Value.Enabled == true)
-        {
-            var ownership = services.GetService<PackageOwnershipService>();
-            if (ownership != null)
-            {
-                owners = (await ownership.GetOwnersAsync(info.Name, cancellationToken)).Select(o => o.OwnerName ?? string.Empty).ToList();
-                canManage = await NpmManageAccess.CanOpenAsync(services, user, info.Name, cancellationToken);
-            }
-        }
+        var (owners, canManage) = await _manage.OwnersAndManageAsync(user, info.Name, cancellationToken);
 
-        return new MavenArtifactViewModel
+        return Explained(new MavenArtifactViewModel
         {
             Group = group,
             Artifact = artifact,
@@ -151,59 +154,38 @@ internal sealed class MavenArtifactWorkflow
             InstallTabs = installTabs,
             Owners = owners,
             CanManage = canManage,
-        };
-    }
-}
-
-/// <summary>
-/// The logic of the Maven upload page: deploying an artifact version through <see cref="IMavenRepository.DeployAsync"/>, the call
-/// <c>mvn deploy</c>'s uploads end in. Used by <c>MavenBrowseController</c>.
-/// </summary>
-internal sealed class MavenUploadWorkflow
-{
-    internal const string ReadOnlyMessage = "This server is in read-only mode, so nothing can be uploaded.";
-    internal const string SignInMessage = "Sign in to upload an artifact.";
-    internal const string ApiKeyRejectedMessage = "That API key was not accepted.";
-    internal const string NoFileMessage = "Choose a file or a POM to deploy.";
-
-    private readonly IOptionsSnapshot<BaGetOptions> _options;
-    private readonly IOptions<AccountsOptions> _accounts;
-    private readonly IAuthenticationService _authentication;
-    private readonly IMavenRepository _maven;
-    private readonly IUrlGenerator _urls;
-    private readonly IRepositoryContext _repository;
-
-    public MavenUploadWorkflow(
-        IOptionsSnapshot<BaGetOptions> options,
-        IOptions<AccountsOptions> accounts,
-        IAuthenticationService authentication,
-        IMavenRepository maven,
-        IUrlGenerator urls,
-        IRepositoryContext repository)
-    {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
-        _authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
-        _maven = maven ?? throw new ArgumentNullException(nameof(maven));
-        _urls = urls ?? throw new ArgumentNullException(nameof(urls));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        });
     }
 
-    /// <summary>The page before anything was posted.</summary>
-    public async Task<MavenUploadViewModel> ShowAsync(ClaimsPrincipal user, CancellationToken cancellationToken)
-        => Build(user, await _maven.GetSettingsAsync(cancellationToken), null, null, false, null, null, 200);
+    /// <summary>The upload page before anything was posted.</summary>
+    public async Task<ScreenResult<MavenUploadViewModel>> UploadFormAsync(ClaimsPrincipal user, CancellationToken cancellationToken)
+        => Result(Build(user, await _maven.GetSettingsAsync(cancellationToken), null, null, false, null, null, 200));
 
-    /// <summary>Deploys the chosen files under the given coordinates.</summary>
-    public async Task<MavenUploadViewModel> DeployAsync(
+    /// <summary>Deploys the chosen files under the given coordinates. A refusal is the form again (with the coordinates posted), with the status it carries.</summary>
+    public async Task<ScreenResult<MavenUploadViewModel>> DeployAsync(
         ClaimsPrincipal user,
-        IServiceProvider services,
+        BaGetPrincipal? key,
         string? groupId,
         string? artifactId,
         string? version,
         string? packaging,
         string? classifier,
-        IFormFile? file,
-        IFormFile? pom,
+        UploadedFile? file,
+        UploadedFile? pom,
+        string? apiKey,
+        CancellationToken cancellationToken)
+        => Result(await DeployCoreAsync(user, key, groupId, artifactId, version, packaging, classifier, file, pom, apiKey, cancellationToken));
+
+    private async Task<MavenUploadViewModel> DeployCoreAsync(
+        ClaimsPrincipal user,
+        BaGetPrincipal? key,
+        string? groupId,
+        string? artifactId,
+        string? version,
+        string? packaging,
+        string? classifier,
+        UploadedFile? file,
+        UploadedFile? pom,
         string? apiKey,
         CancellationToken cancellationToken)
     {
@@ -217,7 +199,7 @@ internal sealed class MavenUploadWorkflow
             return Refuse(401, "This server has no API key configured and no accounts, so the browser upload is closed.");
         }
 
-        var principal = await AuthenticateAsync(user, services, apiKey, cancellationToken);
+        var principal = await _authenticator.AuthenticateAsync(user, key, apiKey, cancellationToken);
         if (principal == null) return Refuse(401, _accounts.Value.Enabled ? SignInMessage : ApiKeyRejectedMessage);
 
         var hasFile = file != null && file.Length > 0;
@@ -257,6 +239,15 @@ internal sealed class MavenUploadWorkflow
         return Build(user, settings, posted, result.Message ?? "Deployed.", false, result.Subject, version?.Trim(), 200);
     }
 
+    // A page that explains a missing artifact carries 404 as its status (the screen is still shown).
+    private static ScreenResult<MavenArtifactViewModel> Explained(MavenArtifactViewModel model)
+        => ScreenResult<MavenArtifactViewModel>.Ok(model, model.StatusCode == 200 ? null : model.StatusCode);
+
+    private static ScreenResult<MavenUploadViewModel> Result(MavenUploadViewModel model)
+        => model.Failed
+            ? ScreenResult<MavenUploadViewModel>.Invalid(model, model.Message ?? string.Empty, model.StatusCode)
+            : ScreenResult<MavenUploadViewModel>.Ok(model, model.StatusCode == 200 ? null : model.StatusCode);
+
     private static int StatusOf(MavenStatus status) => status switch
     {
         MavenStatus.Unauthorized => 401,
@@ -292,14 +283,4 @@ internal sealed class MavenUploadWorkflow
             Posted = posted,
             StatusCode = status,
         };
-
-    private async Task<BaGetPrincipal?> AuthenticateAsync(ClaimsPrincipal user, IServiceProvider services, string? apiKey, CancellationToken cancellationToken)
-    {
-        if (!_accounts.Value.Enabled) return await _authentication.AuthenticatePrincipalAsync(apiKey, cancellationToken);
-
-        // Resolved per request: the factory is only registered while accounts are on.
-        var factory = services.GetService<SessionPrincipalFactory>();
-
-        return factory == null ? null : await factory.CreateAsync(user);
-    }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BaGet.Core;
+using BaGet.Web.Application;
 using Microsoft.AspNetCore.Html;
 
 namespace BaGet.Web;
@@ -21,7 +22,7 @@ public sealed class NpmPackagesViewModel
     public string RegistryUrl { get; init; } = string.Empty;
 
     /// <summary>Whether another page follows.</summary>
-    public bool HasNext => PageIndex * NpmPackagesWorkflow.ResultsPerPage < Result.Total;
+    public bool HasNext => PageIndex * NpmBrowseUseCase.ResultsPerPage < Result.Total;
 }
 
 /// <summary>What the page of one npm package (<c>/npm-packages/{name}</c>) shows.</summary>
@@ -56,7 +57,7 @@ public sealed class NpmPackageViewModel
         ? null
         : RegistryUrl + Package.Name + "/-/" + NpmNames.TarballFileName(Package.Name, Selected.Version);
 
-    internal IReadOnlyList<InstallSnippet> InstallTabs { get; init; } = Array.Empty<InstallSnippet>();
+    public IReadOnlyList<InstallSnippet> InstallTabs { get; init; } = Array.Empty<InstallSnippet>();
 
     /// <summary>The owners, when accounts are on; empty otherwise.</summary>
     public IReadOnlyList<string> Owners { get; init; } = Array.Empty<string>();
@@ -89,7 +90,7 @@ public sealed class NpmUploadViewModel
     /// <summary>The address npm is configured with for this repository.</summary>
     public string RegistryUrl { get; init; } = string.Empty;
 
-    internal IReadOnlyList<string> PublishLines { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<string> PublishLines { get; init; } = Array.Empty<string>();
 
     /// <summary>What happened, for the page to show.</summary>
     public string? Message { get; init; }

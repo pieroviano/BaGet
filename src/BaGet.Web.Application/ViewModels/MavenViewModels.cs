@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BaGet.Core;
+using BaGet.Web.Application;
 
 namespace BaGet.Web;
 
@@ -29,9 +30,9 @@ public sealed class MavenArtifactsViewModel
     public string RepositoryName { get; init; } = string.Empty;
 
     /// <summary>Whether another page follows.</summary>
-    public bool HasNext => PageIndex * MavenArtifactsWorkflow.ResultsPerPage < Result.Total;
+    public bool HasNext => PageIndex * MavenBrowseUseCase.ResultsPerPage < Result.Total;
 
-    internal IReadOnlyList<InstallSnippet> ConfigurationTabs { get; init; } = Array.Empty<InstallSnippet>();
+    public IReadOnlyList<InstallSnippet> ConfigurationTabs { get; init; } = Array.Empty<InstallSnippet>();
 }
 
 /// <summary>What the page of one Maven artifact (<c>/maven-artifacts/{group}/{artifact}/{version?}</c>) shows.</summary>
@@ -61,7 +62,7 @@ public sealed class MavenArtifactViewModel
     /// <summary>The repository's name (the <c>id</c> in <c>settings.xml</c>).</summary>
     public string RepositoryName { get; init; } = string.Empty;
 
-    internal IReadOnlyList<InstallSnippet> InstallTabs { get; init; } = Array.Empty<InstallSnippet>();
+    public IReadOnlyList<InstallSnippet> InstallTabs { get; init; } = Array.Empty<InstallSnippet>();
 
     /// <summary>The owners, when accounts are on; empty otherwise.</summary>
     public IReadOnlyList<string> Owners { get; init; } = Array.Empty<string>();

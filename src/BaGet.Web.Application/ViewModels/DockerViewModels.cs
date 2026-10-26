@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BaGet.Core;
+using BaGet.Web.Application;
 
 namespace BaGet.Web;
 
@@ -32,9 +33,9 @@ public sealed class DockerImagesViewModel
     public bool IsVirtual { get; init; }
 
     /// <summary>Whether another page follows.</summary>
-    public bool HasNext => PageIndex * DockerImagesWorkflow.ResultsPerPage < Result.Total;
+    public bool HasNext => PageIndex * DockerBrowseUseCase.ResultsPerPage < Result.Total;
 
-    internal IReadOnlyList<InstallSnippet> CommandTabs { get; init; } = Array.Empty<InstallSnippet>();
+    public IReadOnlyList<InstallSnippet> CommandTabs { get; init; } = Array.Empty<InstallSnippet>();
 }
 
 /// <summary>What the page of one Docker image (<c>/docker-images/{image}</c>, <c>?digest=</c> for a manifest) shows.</summary>
@@ -73,7 +74,7 @@ public sealed class DockerImageViewModel
     /// <summary>Whether the signed-in user holds Delete on the image, so the manage page is offered.</summary>
     public bool CanManage { get; init; }
 
-    internal IReadOnlyList<InstallSnippet> PullTabs { get; init; } = Array.Empty<InstallSnippet>();
+    public IReadOnlyList<InstallSnippet> PullTabs { get; init; } = Array.Empty<InstallSnippet>();
 
     /// <summary>The address of the registry API for the image (what a script calls).</summary>
     public string RegistryUrl { get; init; } = string.Empty;

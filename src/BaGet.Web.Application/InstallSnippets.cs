@@ -2,19 +2,6 @@ using System.Collections.Generic;
 
 namespace BaGet.Web;
 
-/// <summary>One tab of the "install this package" box.</summary>
-public sealed class InstallSnippet
-{
-    /// <summary>The tool name (the tab title).</summary>
-    public string? Name { get; init; }
-
-    /// <summary>A shell prompt shown before the first line; not part of the copied text.</summary>
-    public string? Prefix { get; init; }
-
-    /// <summary>The lines to copy.</summary>
-    public IReadOnlyList<string>? Lines { get; init; }
-}
-
 /// <summary>
 /// The "install this package" commands of the package page, one tab per tool.
 /// </summary>

@@ -5,7 +5,7 @@ view action calls that API action **in process** and only renders the model. An 
 `/api/ui` alone. Business logic moves out of the UI projects into one Application project per area. OpenAPI documents (built-in
 `Microsoft.AspNetCore.OpenApi`) plus a Scalar UI describe `/api/ui`, `/api/v1` and the package protocols, for administrators only.
 
-**Status:** wave 0 `uiapi-infra` done (infrastructure + pilot Legal, Statistics); `openapi` track done; wave 1 `split-browse` done (Index/`/packages` as `api/ui/home` + `api/ui/packages`, Package, ReportAbuse, Admin/Api; `IndexUseCase`, `PackageUseCase`, `ReportAbuseUseCase`; the Admin/Api list is built in its twin because it reads MVC action descriptors); other wave 1 tracks and waves 2-3 pending.
+**Status:** wave 0 `uiapi-infra` done (infrastructure + pilot Legal, Statistics); `openapi` track done; wave 1 `split-browse` done (Index/`/packages` as `api/ui/home` + `api/ui/packages`, Package, ReportAbuse, Admin/Api; `IndexUseCase`, `PackageUseCase`, `ReportAbuseUseCase`; the Admin/Api list is built in its twin because it reads MVC action descriptors); wave 1 `split-formats` done (Upload, NpmPackages, NpmPackage, NpmUpload, MavenArtifacts, MavenArtifact, MavenUpload, DockerImages, DockerImage: `UploadUseCase`, `NpmBrowseUseCase`, `MavenBrowseUseCase`, `DockerBrowseUseCase`; a shown screen's `StatusCode` is also the HTTP status of the twin; `HtmlString` is written as text); other wave 1 tracks and waves 2-3 pending.
 
 | Blocking check | Outcome (wave 0) |
 |---|---|

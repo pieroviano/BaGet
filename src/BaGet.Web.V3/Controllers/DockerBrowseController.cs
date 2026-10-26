@@ -5,7 +5,6 @@ using BaGet.Core;
 using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Web;
 
@@ -14,14 +13,11 @@ namespace BaGet.Web;
 /// (<c>/docker-images/{image}</c>, <c>?digest=</c> for a manifest). They replace the Razor Pages <c>DockerImages</c> and
 /// <c>DockerImage</c>: same URLs, same <c>asp-page</c> names
 /// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository and,
-/// for the image page, on the image; 404 in a repository that is not Docker's). Views are in <c>Views/DockerBrowse/</c>.
+/// for the image page, on the image; 404 in a repository that is not Docker's). Views are in <c>Views/DockerBrowse/</c>. The work is <see cref="BaGet.Web.Application.DockerBrowseUseCase"/>, reached through the JSON twin
+/// <see cref="DockerBrowseUiApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class DockerBrowseController : UiControllerBase
 {
-    private DockerImagesWorkflow ImagesWorkflow => HttpContext.RequestServices.GetRequiredService<DockerImagesWorkflow>();
-
-    private DockerImageWorkflow ImageWorkflow => HttpContext.RequestServices.GetRequiredService<DockerImageWorkflow>();
-
     /// <summary>The image list with a search box and the client commands.</summary>
     [Route("docker-images"), HttpGet, HttpHead, PageHandler, LegacyPage("/DockerImages")]
     [RepositoryPage(Format = RepositoryFormat.Docker)]
@@ -32,23 +28,12 @@ public sealed class DockerBrowseController : UiControllerBase
     {
         if (!ModelState.IsValid) return BadRequest();
 
-        return View("Images", await ImagesWorkflow.LoadAsync(q, p, User, cancellationToken));
+        return Render(await Api<DockerBrowseUiApiController, DockerImagesViewModel>(api => api.Images(q, p, cancellationToken)), "Images");
     }
 
     /// <summary>One image: tags, manifests, and with <c>?digest=</c> one manifest in full.</summary>
     [Route("docker-images/{**image}"), HttpGet, HttpHead, PageHandler, LegacyPage("/DockerImage")]
     [RepositoryPage(Format = RepositoryFormat.Docker)]
-    public async Task<IActionResult> Image(
-        string? image,
-        string? digest,
-        string? artifactType,
-        CancellationToken cancellationToken = default)
-    {
-        var model = await ImageWorkflow.LoadAsync(image, digest, artifactType, User, HttpContext.RequestServices, cancellationToken);
-        if (model == null) return NotFound();
-
-        if (model.StatusCode != StatusCodes.Status200OK) Response.StatusCode = model.StatusCode;
-
-        return View("Image", model);
-    }
+    public async Task<IActionResult> Image(string? image, string? digest, string? artifactType, CancellationToken cancellationToken = default)
+        => Render(await Api<DockerBrowseUiApiController, DockerImageViewModel>(api => api.Image(image, digest, artifactType, cancellationToken)), "Image");
 }

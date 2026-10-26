@@ -62,27 +62,6 @@ public static class IServiceCollectionExtensions
         // Which controller action replaces which page, so links to a page that moved to a controller keep resolving.
         services.AddSingleton<UiActionMap>();
 
-        // The logic of the controllers that replaced the format and upload pages.
-        services.AddScoped<NpmPackagesWorkflow>();
-        services.AddScoped<NpmPackageWorkflow>();
-        services.AddScoped<NpmUploadWorkflow>();
-        services.AddScoped<MavenArtifactsWorkflow>();
-        services.AddScoped<MavenArtifactWorkflow>();
-        services.AddScoped<MavenUploadWorkflow>();
-        services.AddScoped<DockerImagesWorkflow>();
-        services.AddScoped<DockerImageWorkflow>();
-        services.AddScoped(provider => new UploadWorkflow(
-            provider.GetRequiredService<Microsoft.Extensions.Options.IOptionsSnapshot<BaGetOptions>>(),
-            provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<AccountsOptions>>(),
-            provider.GetRequiredService<IAuthenticationService>(),
-            provider.GetRequiredService<IPackageAuthorizationService>(),
-            provider.GetRequiredService<IPackageSubmissionService>(),
-            provider.GetRequiredService<ISymbolIndexingService>(),
-            provider.GetRequiredService<IPackageStagingService>(),
-            provider.GetRequiredService<IPackageDatabase>(),
-            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<UploadWorkflow>>(),
-            provider.GetRequiredService<IScanGate>()));
-
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();
 

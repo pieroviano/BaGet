@@ -44,12 +44,3 @@ BaGet.Identity.Workflows.TwoFactorWorkflow
 BaGet.Identity.Workflows.UserDetailWorkflow
 BaGet.Identity.Workflows.UsersWorkflow
 BaGet.Identity.Workflows.ValidationStatusWorkflow
-BaGet.Web.DockerImageWorkflow
-BaGet.Web.DockerImagesWorkflow
-BaGet.Web.MavenArtifactWorkflow
-BaGet.Web.MavenArtifactsWorkflow
-BaGet.Web.MavenUploadWorkflow
-BaGet.Web.NpmPackageWorkflow
-BaGet.Web.NpmPackagesWorkflow
-BaGet.Web.NpmUploadWorkflow
-BaGet.Web.UploadWorkflow

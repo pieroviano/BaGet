@@ -46,14 +46,6 @@
 /Admin/UserPackages
 /Admin/Users
 /Admin/Validation
-/DockerImage
-/DockerImages
-/MavenArtifact
-/MavenArtifacts
-/MavenUpload
-/NpmPackage
-/NpmPackages
-/NpmUpload
 /Packages/ContactOwners
 /Packages/DockerManage
 /Packages/Manage
@@ -62,4 +54,3 @@
 /Packages/Scan
 /Packages/ValidationStatus
 /Profiles/Profile
-/Upload

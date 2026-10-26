@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity;
 using BaGet.Web;
+using BaGet.Web.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -134,7 +135,7 @@ public class BrowserUploadTests : IDisposable
         // And the staged copy is gone: the token no longer names anything.
         using var again = await alice.SubmitAsync(token);
         Assert.Equal(HttpStatusCode.NotFound, again.StatusCode);
-        Assert.Contains(UploadWorkflow.UnknownTokenMessage, await again.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(UploadUseCase.UnknownTokenMessage, await again.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
@@ -196,7 +197,7 @@ public class BrowserUploadTests : IDisposable
         using var stolen = await bob.SubmitAsync(token);
 
         Assert.Equal(HttpStatusCode.NotFound, stolen.StatusCode);
-        Assert.Contains(UploadWorkflow.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(UploadUseCase.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Alice.Shared", "1.0.0"));
 
         // Alice's own upload is untouched, so Bob's attempt did not consume it.
@@ -223,7 +224,7 @@ public class BrowserUploadTests : IDisposable
         using var reused = await alice.SubmitAsync(token);
 
         Assert.Equal(HttpStatusCode.NotFound, reused.StatusCode);
-        Assert.Contains(UploadWorkflow.UnknownTokenMessage, await reused.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(UploadUseCase.UnknownTokenMessage, await reused.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Cancelled", "1.0.0"));
     }
 
@@ -261,7 +262,7 @@ public class BrowserUploadTests : IDisposable
         using var refused = await alice.SubmitAsync(token, acceptTerms: false);
 
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
-        Assert.Contains(UploadWorkflow.TermsMessage, await refused.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(UploadUseCase.TermsMessage, await refused.Content.ReadAsStringAsync(cancellationToken));
         Assert.False(await ExistsAsync("Terms", "1.0.0"));
 
         // The preview is still there, so ticking the box is all that is needed.
@@ -340,7 +341,7 @@ public class BrowserUploadTests : IDisposable
         {
             // Indistinguishable from a token that never existed, as submitting is.
             Assert.Equal(HttpStatusCode.NotFound, stolen.StatusCode);
-            Assert.Contains(UploadWorkflow.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync(cancellationToken));
+            Assert.Contains(UploadUseCase.UnknownTokenMessage, await stolen.Content.ReadAsStringAsync(cancellationToken));
         }
 
         // Alice's upload is untouched, so Bob could not make her upload the file again.
@@ -525,7 +526,7 @@ public class BrowserUploadWithoutAccountsTests : IDisposable
 
         // 401, and not the 404 an account page would answer with accounts disabled.
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Contains(UploadWorkflow.ApiKeyRejectedMessage, html);
+        Assert.Contains(UploadUseCase.ApiKeyRejectedMessage, html);
         Assert.DoesNotMatch("name=\"token\" value=\"[0-9a-f]{32}\"", html);
     }
 
@@ -579,7 +580,7 @@ public class BrowserUploadReadOnlyTests
             BrowserUpload.TokenPage);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Contains(UploadWorkflow.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(UploadUseCase.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
@@ -596,7 +597,7 @@ public class BrowserUploadReadOnlyTests
             tokenPage: BrowserUpload.TokenPage);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Contains(UploadWorkflow.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(UploadUseCase.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
     }
 
     [Fact]
