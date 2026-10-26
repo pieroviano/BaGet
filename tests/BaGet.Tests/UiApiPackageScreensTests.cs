@@ -301,13 +301,16 @@ public class UiApiPackageScreensTests : IDisposable
         Assert.Equal(HttpStatusCode.Unauthorized, (await JsonAsync(_anonymous, HttpMethod.Get, "/api/ui/r/web/npm-manage/left-pad")).Status);
         Assert.Equal(HttpStatusCode.Forbidden, await StatusAsync(_bob, "r/web/npm-manage/left-pad"));
         Assert.Equal(HttpStatusCode.Forbidden, (await JsonAsync(_bob, HttpMethod.Get, "/api/ui/r/web/npm-manage/left-pad")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, await StatusAsync(_alice, "r/web/npm-manage/nothing-here"));
-        Assert.Equal(HttpStatusCode.NotFound, (await JsonAsync(_alice, HttpMethod.Get, "/api/ui/r/web/npm-manage/nothing-here")).Status);
+        // Who may not know it exists is told the same as for a package of somebody else (403); an administrator sees it is not there.
+        Assert.Equal(HttpStatusCode.Forbidden, await StatusAsync(_alice, "r/web/npm-manage/nothing-here"));
+        Assert.Equal(HttpStatusCode.Forbidden, (await JsonAsync(_alice, HttpMethod.Get, "/api/ui/r/web/npm-manage/nothing-here")).Status);
+        Assert.Equal(HttpStatusCode.NotFound, await StatusAsync(_root, "r/web/npm-manage/nothing-here"));
+        Assert.Equal(HttpStatusCode.NotFound, (await JsonAsync(_root, HttpMethod.Get, "/api/ui/r/web/npm-manage/nothing-here")).Status);
         Assert.Equal(HttpStatusCode.NotFound, await StatusAsync(_alice, "r/web/npm-manage/Bad%20Name"));
         Assert.Equal(HttpStatusCode.NotFound, (await JsonAsync(_alice, HttpMethod.Get, "/api/ui/r/web/npm-manage/Bad%20Name")).Status);
-        // The default repository is not an npm repository.
-        Assert.Equal(HttpStatusCode.NotFound, await StatusAsync(_alice, "npm-manage/left-pad"));
-        Assert.Equal(HttpStatusCode.NotFound, (await JsonAsync(_alice, HttpMethod.Get, "/api/ui/npm-manage/left-pad")).Status);
+        // The default repository is not an npm repository (the ownership check comes first, as before: an administrator gets to the 404).
+        Assert.Equal(HttpStatusCode.NotFound, await StatusAsync(_root, "npm-manage/left-pad"));
+        Assert.Equal(HttpStatusCode.NotFound, (await JsonAsync(_root, HttpMethod.Get, "/api/ui/npm-manage/left-pad")).Status);
 
         // A tag set through the twin shows on the page, one removed through the page is gone for the twin.
         var set = await JsonAsync(_alice, HttpMethod.Post, "/api/ui/r/web/npm-manage/set-tag/left-pad", new { tag = "stable", version = "1.0.0" });
@@ -391,8 +394,8 @@ public class UiApiPackageScreensTests : IDisposable
     {
         await _app.CreateDockerRepositoryAsync("dock", cancellationToken: Token);
 
-        // anonymous 302 <-> 401, a user without Delete on the image 403 <-> 403 (the registry's own rule), an administrator on an image
-        // nobody pushed 404 <-> 404, a key 403.
+        // anonymous 302 <-> 401, an administrator on an image nobody pushed 404 <-> 404, a key 403, and whatever the registry's own Delete
+        // rule says about an ordinary user is the same on both.
         Assert.Equal(HttpStatusCode.Redirect, await StatusAsync(_anonymous, "docker-manage/dock/app"));
         Assert.Equal(HttpStatusCode.Unauthorized, (await JsonAsync(_anonymous, HttpMethod.Get, "/api/ui/docker-manage/dock/app")).Status);
         Assert.Equal(HttpStatusCode.NotFound, await StatusAsync(_root, "docker-manage/dock/app"));
@@ -444,7 +447,7 @@ public class UiApiPackageScreensTests : IDisposable
         Assert.Equal(HttpStatusCode.Forbidden, (await JsonAsync(_bob, HttpMethod.Get, "/api/ui/" + address)).Status);
 
         // Scanning is off by default: the screen is shown again with the reason, under 409, in both ways.
-        using var posted = await _alice.PostAsync(address, new Dictionary<string, string>(), action: address);
+        using var posted = await _alice.PostAsync(address, new Dictionary<string, string>(), action: address, tokenPage: "account/settings");
         var twin = await JsonAsync(_alice, HttpMethod.Post, "/api/ui/scan-artifact", new { name = "Alice.Package", version = "1.0.0" });
         Assert.Equal(HttpStatusCode.Conflict, posted.StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, twin.Status);
