@@ -40,7 +40,7 @@ public enum GateRole
     Administrator,
 
     /// <summary>
-    /// The access screens: server administrators, or whoever <see cref="GateRequest.AlsoAllow"/> admits (a project's administrators);
+    /// The access screens: server administrators, or whoever <see cref="GateRequest.AlsoAllow"/> admits (a project's administrators; a key only when it carries <see cref="ApiKeyScopes.Admin"/> and no repository limit);
     /// 503 on a write while the server is read-only; an administrator is sent to the "unavailable" screen where there is no access model.
     /// </summary>
     AccessAdministrator,
@@ -160,7 +160,7 @@ public sealed class ScreenGate
             return new GateResult(isAdministrator ? GateOutcome.AccessUnavailable : GateOutcome.NotFound, isAdministrator);
         }
 
-        if (!isAdministrator && (request.AlsoAllow == null || !await request.AlsoAllow(cancellationToken)))
+        if (!isAdministrator && (request.AlsoAllow == null || !CanDelegate(request.KeyCaller) || !await request.AlsoAllow(cancellationToken)))
         {
             return new GateResult(Refusal(request), isAdministrator);
         }
@@ -169,6 +169,10 @@ public sealed class ScreenGate
 
         return new GateResult(GateOutcome.Allowed, isAdministrator);
     }
+
+    // A key reaches the access screens only with the administration scope and no repository limit, as for the administration API
+    // (a project administrator's other keys, e.g. package:push or limited to one repository, never administer); a session needs nothing more.
+    private static bool CanDelegate(BaGetPrincipal? key) => key == null || (key.HasScope(ApiKeyScopes.Admin) && key.RepositoryKeys == null);
 
     // A key that lacks the administration scope is told so (403); a session that is not an administrator learns nothing (404).
     private static GateOutcome Refusal(GateRequest request) => request.KeyCaller != null ? GateOutcome.Forbidden : GateOutcome.NotFound;
