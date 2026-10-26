@@ -2,7 +2,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Mvc;
-using BaGet.Identity.Workflows;
+using BaGet.Identity.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -11,8 +12,9 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The owners' screen for a Maven artifact (<c>/maven-manage/{group}/{artifact}</c>, also at <c>/r/{repo}/…</c>): owners, versions,
 /// the files of the chosen version, deletion and snapshot clean-up. It replaces the <c>/Packages/MavenManage</c> Razor Page (same
-/// URLs, same <c>?handler=</c> forms, same gates); the logic is <see cref="MavenManageWorkflow"/>. The coordinates / repository-kind / ownership check runs in <see cref="OnActionExecutionAsync"/>,
-/// before the global repository filter.
+/// URLs, same <c>?handler=</c> forms, same gates); the work is done by <see cref="MavenManageUiApiController"/> (the JSON twin, over
+/// <c>MavenManageUseCase</c>), which this controller calls in process and renders. The coordinates / repository-kind / ownership check
+/// runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter.
 /// </summary>
 [Route("maven-manage/{group}/{artifact}")]
 [RepositoryPage(Format = RepositoryFormat.Maven, NotOnVirtual = true, NotOnRemote = true)]
@@ -20,12 +22,15 @@ public sealed class MavenManageController : AccountControllerBase
 {
     private const string ViewName = "Index";
 
-    private MavenManageWorkflow? _workflow;
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
-    private MavenManageWorkflow Workflow => _workflow!;
+    private string? Group => RouteData.Values.TryGetValue("group", out var group) ? group as string : null;
+
+    private string? Artifact => RouteData.Values.TryGetValue("artifact", out var artifact) ? artifact as string : null;
+
+    /// <summary>The version whose files are listed: the form field of a POST, else the query string.</summary>
+    private string? SelectedVersion => PackageControllerSupport.FormOrQuery(Request, "version");
 
     /// <inheritdoc/>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -33,12 +38,15 @@ public sealed class MavenManageController : AccountControllerBase
         OnActionExecuting(context);
         if (context.Result != null) return;
 
-        _workflow = new MavenManageWorkflow(
-            HttpContext,
-            PackageControllerSupport.Route(context, "group"),
-            PackageControllerSupport.Route(context, "artifact"),
-            PackageControllerSupport.FormOrQuery(context, "version"));
-        var refusal = await _workflow.EnterAsync(PackageControllerSupport.HandlerName(context));
+        var refusal = await UiApiEntry.InvokeAsync<MavenManageUiApiController, MavenManageViewModel>(
+            this,
+            api => api.EnterAsync(
+                PackageControllerSupport.Route(context, "group"),
+                PackageControllerSupport.Route(context, "artifact"),
+                PackageControllerSupport.FormOrQuery(context, "version"),
+                PackageControllerSupport.HandlerName(context),
+                HttpMethods.IsPost(Request.Method),
+                context.HttpContext.RequestAborted));
         if (refusal != null)
         {
             context.Result = Present(refusal);
@@ -51,37 +59,37 @@ public sealed class MavenManageController : AccountControllerBase
     /// <summary>The screen.</summary>
     [HttpGet, HttpHead, PageHandler, LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        => Present(await Workflow.GetAsync(cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.Get(Group, Artifact, SelectedVersion, cancellationToken)));
 
     /// <summary>Adds an owner.</summary>
     [HttpPost, PageHandler("AddOwner"), LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> AddOwner(string ownerName, CancellationToken cancellationToken)
-        => Present(await Workflow.AddOwnerAsync(ownerName, cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.AddOwner(Group, Artifact, new MavenManageForm { Version = SelectedVersion, OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Removes an owner.</summary>
     [HttpPost, PageHandler("RemoveOwner"), LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> RemoveOwner(string ownerName, CancellationToken cancellationToken)
-        => Present(await Workflow.RemoveOwnerAsync(ownerName, cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.RemoveOwner(Group, Artifact, new MavenManageForm { Version = SelectedVersion, OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Deletes one file of the chosen version, after the password.</summary>
     [HttpPost, PageHandler("DeleteFile"), LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> DeleteFile(string? fileName, string? password, CancellationToken cancellationToken)
-        => Present(await Workflow.DeleteFileAsync(fileName, password, cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.DeleteFile(Group, Artifact, new MavenManageForm { Version = SelectedVersion, FileName = fileName, Password = password }, cancellationToken)));
 
     /// <summary>Deletes one version, after the password.</summary>
     [HttpPost, PageHandler("DeleteVersion"), LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> DeleteVersion(string? version, string? password, CancellationToken cancellationToken)
-        => Present(await Workflow.DeleteVersionAsync(version, password, cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.DeleteVersion(Group, Artifact, new MavenManageForm { Version = version, Password = password }, cancellationToken)));
 
     /// <summary>Deletes the whole artifact, after the password.</summary>
     [HttpPost, PageHandler("DeleteArtifact"), LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> DeleteArtifact(string? password, CancellationToken cancellationToken)
-        => Present(await Workflow.DeleteArtifactAsync(password, cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.DeleteArtifact(Group, Artifact, new MavenManageForm { Version = SelectedVersion, Password = password }, cancellationToken)));
 
     /// <summary>Deletes old snapshot builds of a version, after the password.</summary>
     [HttpPost, PageHandler("Cleanup"), LegacyPage("/Packages/MavenManage")]
     public async Task<IActionResult> Cleanup(string? version, string? keep, string? password, CancellationToken cancellationToken)
-        => Present(await Workflow.CleanupAsync(version, keep, password, cancellationToken));
+        => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.Cleanup(Group, Artifact, new MavenManageForm { Version = version, Keep = keep, Password = password }, cancellationToken)));
 
     /// <summary>
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without
@@ -93,6 +101,5 @@ public sealed class MavenManageController : AccountControllerBase
     [HttpPost, PageHandler]
     public IActionResult NoHandler() => NotFound();
 
-    private IActionResult Present(IActionResult result)
-        => PackageControllerSupport.Resolve(this, result, ViewName, Workflow.Model);
+    private IActionResult Present(UiApiResponse<MavenManageViewModel> response) => Render(response, ViewName);
 }

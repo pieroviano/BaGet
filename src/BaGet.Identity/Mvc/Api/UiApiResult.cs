@@ -10,7 +10,7 @@ namespace BaGet.Identity.Mvc;
 
 /// <summary>
 /// The HTTP answer of a <see cref="ScreenResult{T}"/> on <c>/api/ui</c>: always <c>application/json</c> written with
-/// <see cref="UiApiJson.Options"/> (camelCase, enums by name), with the status the decision maps to: Ok and Next 200, Invalid 400 (the body
+/// <see cref="UiApiJson.Options"/> (camelCase, enums by name), with the status the decision maps to (or the screen's own <see cref="IScreenResult.StatusCode"/> when it sets one, e.g. 409 for a refused scan): Ok and Next 200, Invalid 400 (the body
 /// still carries the model and the errors), NotFound 404, Forbidden 403, SignIn 401 with a <c>Bearer</c> challenge (not <c>Basic</c>, which
 /// would make a browser prompt for a password on a <c>fetch</c>). A shown screen that carries its own status (<see cref="IScreenResult.StatusCode"/>) is answered with it. A maintenance refusal is not a result: it propagates and the middleware answers 503.
 /// <para>

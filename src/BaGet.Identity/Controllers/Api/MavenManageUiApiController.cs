@@ -1,0 +1,86 @@
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using BaGet.Identity.Application;
+using BaGet.Identity.Mvc;
+using BaGet.Identity.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BaGet.Identity.Controllers;
+
+/// <summary>The form of the Maven management handlers: the chosen version and what the handler needs.</summary>
+public sealed class MavenManageForm
+{
+    /// <summary>The user or organization (<c>AddOwner</c>, <c>RemoveOwner</c>).</summary>
+    public string? OwnerName { get; set; }
+
+    /// <summary>The version whose files are listed, and the one a handler acts on (<c>DeleteFile</c>, <c>DeleteVersion</c>, <c>Cleanup</c>).</summary>
+    public string? Version { get; set; }
+
+    /// <summary>The file to delete (<c>DeleteFile</c>).</summary>
+    public string? FileName { get; set; }
+
+    /// <summary>How many snapshot builds to keep (<c>Cleanup</c>).</summary>
+    public string? Keep { get; set; }
+
+    /// <summary>The caller's password, for the deleting handlers.</summary>
+    public string? Password { get; set; }
+}
+
+/// <summary>
+/// The JSON twin of the Maven artifact management screen: <c>GET /api/ui/maven-manage/{group}/{artifact}?version=</c> and, for each handler
+/// of the page, <c>POST /api/ui/maven-manage/{group}/{artifact}/{handler-in-kebab-case}</c> with a JSON body (also under
+/// <c>/api/ui/r/{repo}/…</c>). Cookie session only. <see cref="MavenManageController"/> calls it in process and renders the view.
+/// </summary>
+[Route("api/ui/maven-manage/{group}/{artifact}")]
+[RepositoryPage(Format = RepositoryFormat.Maven, NotOnVirtual = true, NotOnRemote = true)]
+public sealed class MavenManageUiApiController : AccountUiApiControllerBase
+{
+    private const string Screen = "/Packages/MavenManage";
+
+    /// <inheritdoc/>
+    protected override bool RequiresSignIn => true;
+
+    private MavenManageUseCase UseCase => HttpContext.RequestServices.GetRequiredService<MavenManageUseCase>();
+
+    /// <summary>The coordinates / repository-kind / ownership check that opens every handler (see <see cref="PackageManageUiApiController.EnterAsync"/>).</summary>
+    [NonAction]
+    public Task<ScreenResult<MavenManageViewModel>?> EnterAsync(string? group, string? artifact, string? version, string? handler, bool isWrite, CancellationToken cancellationToken)
+        => UseCase.EnterAsync(User, group, artifact, version, handler, isWrite, cancellationToken);
+
+    /// <summary>The screen.</summary>
+    [HttpGet, UiApi(Screen)]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> Get(string? group, string? artifact, [FromQuery] string? version, CancellationToken cancellationToken)
+        => Respond(await UseCase.GetAsync(User, group, artifact, version, cancellationToken));
+
+    /// <summary>Adds an owner.</summary>
+    [HttpPost("add-owner"), UiApi(Screen, Handler = "AddOwner")]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> AddOwner(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
+        => Respond(await UseCase.AddOwnerAsync(User, group, artifact, form?.Version, form?.OwnerName, cancellationToken));
+
+    /// <summary>Removes an owner.</summary>
+    [HttpPost("remove-owner"), UiApi(Screen, Handler = "RemoveOwner")]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> RemoveOwner(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
+        => Respond(await UseCase.RemoveOwnerAsync(User, group, artifact, form?.Version, form?.OwnerName, cancellationToken));
+
+    /// <summary>Deletes one file of the chosen version, after the password.</summary>
+    [HttpPost("delete-file"), UiApi(Screen, Handler = "DeleteFile")]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> DeleteFile(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
+        => Respond(await UseCase.DeleteFileAsync(User, group, artifact, form?.Version, form?.FileName, form?.Password, cancellationToken));
+
+    /// <summary>Deletes one version, after the password.</summary>
+    [HttpPost("delete-version"), UiApi(Screen, Handler = "DeleteVersion")]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> DeleteVersion(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
+        => Respond(await UseCase.DeleteVersionAsync(User, group, artifact, form?.Version, form?.Version, form?.Password, cancellationToken));
+
+    /// <summary>Deletes the whole artifact, after the password.</summary>
+    [HttpPost("delete-artifact"), UiApi(Screen, Handler = "DeleteArtifact")]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> DeleteArtifact(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
+        => Respond(await UseCase.DeleteArtifactAsync(User, group, artifact, form?.Version, form?.Password, cancellationToken));
+
+    /// <summary>Deletes old snapshot builds of a version, after the password.</summary>
+    [HttpPost("cleanup"), UiApi(Screen, Handler = "Cleanup")]
+    public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> Cleanup(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
+        => Respond(await UseCase.CleanupAsync(User, group, artifact, form?.Version, form?.Version, form?.Keep, form?.Password, cancellationToken));
+}

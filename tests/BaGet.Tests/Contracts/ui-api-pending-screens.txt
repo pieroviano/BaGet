@@ -30,10 +30,3 @@
 /Admin/UserPackages
 /Admin/Users
 /Admin/Validation
-/Packages/ContactOwners
-/Packages/DockerManage
-/Packages/Manage
-/Packages/MavenManage
-/Packages/NpmManage
-/Packages/Scan
-/Packages/ValidationStatus

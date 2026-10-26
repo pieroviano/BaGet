@@ -16,4 +16,22 @@ public static class IdentityApplicationServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Registers the use cases of the account and administration screens that exist only while accounts are enabled (they need the user store).
+    /// Called by <c>AddBaGetAccounts</c> after its <c>Enabled</c> check, together with the host's <see cref="IReauthenticationState"/>.
+    /// </summary>
+    public static IServiceCollection AddBaGetIdentityUseCases(this IServiceCollection services)
+    {
+        services.TryAddScoped<PackageScreenServices>();
+        services.TryAddScoped<PackageManageUseCase>();
+        services.TryAddScoped<NpmManageUseCase>();
+        services.TryAddScoped<MavenManageUseCase>();
+        services.TryAddScoped<DockerManageUseCase>();
+        services.TryAddScoped<ContactOwnersUseCase>();
+        services.TryAddScoped<ValidationStatusUseCase>();
+        services.TryAddScoped<ScanArtifactUseCase>();
+
+        return services;
+    }
 }

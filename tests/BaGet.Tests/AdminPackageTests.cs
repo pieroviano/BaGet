@@ -373,7 +373,7 @@ public class AdminPackageReadOnlyTests : PackageManagementPageTestBase
             { "password", "Passw0rd!" },
         }, action: "packages/Alice.Package/manage?handler=HardDelete");
 
-        Assert.Contains(BaGet.Identity.Workflows.ManageWorkflow.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(BaGet.Identity.Application.PackageManageUseCase.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
     }
 }

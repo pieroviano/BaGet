@@ -4,14 +4,9 @@ BaGet.Identity.Workflows.AdminPackagesWorkflow
 BaGet.Identity.Workflows.AdminSettingsWorkflow
 BaGet.Identity.Workflows.AdminWorkflow
 BaGet.Identity.Workflows.AuditWorkflow
-BaGet.Identity.Workflows.ContactOwnersWorkflow
 BaGet.Identity.Workflows.DeleteUserWorkflow
-BaGet.Identity.Workflows.DockerManageWorkflow
 BaGet.Identity.Workflows.GroupDetailWorkflow
 BaGet.Identity.Workflows.GroupsWorkflow
-BaGet.Identity.Workflows.ManageWorkflow
-BaGet.Identity.Workflows.MavenManageWorkflow
-BaGet.Identity.Workflows.NpmManageWorkflow
 BaGet.Identity.Workflows.OperationsWorkflow
 BaGet.Identity.Workflows.PermissionDetailWorkflow
 BaGet.Identity.Workflows.PermissionsWorkflow
@@ -23,8 +18,6 @@ BaGet.Identity.Workflows.RepositoriesWorkflow
 BaGet.Identity.Workflows.RepositoryDeleteWorkflow
 BaGet.Identity.Workflows.RepositoryEditWorkflow
 BaGet.Identity.Workflows.RetentionWorkflow
-BaGet.Identity.Workflows.ScanWorkflow
 BaGet.Identity.Workflows.ScanningWorkflow
 BaGet.Identity.Workflows.UserDetailWorkflow
 BaGet.Identity.Workflows.UsersWorkflow
-BaGet.Identity.Workflows.ValidationStatusWorkflow

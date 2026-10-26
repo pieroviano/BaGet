@@ -1,6 +1,5 @@
 using System.Reflection;
 using BaGet.Identity.Mvc;
-using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -22,8 +21,11 @@ internal static class PackageControllerSupport
 
     /// <summary>A form field of a POST, else a query string value: how the screens read their input.</summary>
     public static string? FormOrQuery(ActionExecutingContext context, string key)
+        => FormOrQuery(context.HttpContext.Request, key);
+
+    /// <summary>A form field of a POST, else a query string value: how the screens read their input.</summary>
+    public static string? FormOrQuery(Microsoft.AspNetCore.Http.HttpRequest request, string key)
     {
-        var request = context.HttpContext.Request;
         if (request.HasFormContentType && request.Form.TryGetValue(key, out var form) && form.Count > 0)
         {
             var posted = form.ToString();
@@ -35,8 +37,4 @@ internal static class PackageControllerSupport
 
         return query.Length == 0 ? null : query;
     }
-
-    /// <summary>Turns a workflow's "show the screen" marker into the controller's view; any other result is returned as it is.</summary>
-    public static IActionResult Resolve(Controller controller, IActionResult result, string view, object model)
-        => PackageWorkflowBase.IsShow(result) ? controller.View(view, model) : result;
 }

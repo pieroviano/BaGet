@@ -35,6 +35,10 @@ public static class AccountsServiceCollectionExtensions
             return services;
         }
 
+        services.AddHttpContextAccessor();
+        services.TryAddScoped<IReauthenticationState, HttpReauthenticationState>();
+        services.AddBaGetIdentityUseCases();
+
         services.TryAddScoped<ApiKeyService>();
         services.TryAddScoped<INpmTokenService, NpmTokenService>();
         services.TryAddScoped<PackageOwnershipService>();
