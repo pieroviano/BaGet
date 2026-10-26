@@ -241,7 +241,7 @@ registering an `HttpClient` no longer affects mirroring). Cached packages are or
 (`IPassThroughUpstreamClient`, `IPackageService.OpenUncachedAsync`): nothing is stored. `Deploy` is never granted on a remote
 (`AccessEvaluator.IsAllowedAsync`/`ExplainAsync`, administrators too), `[RemoteRepositoryReadOnly]` answers `403` on push and symbol push
 (accounts off too), `AccessRepositoryAccess` hides it from the upload picker. Admin pages: create on `Repositories`, edit/test/cache/purge on
-`RepositoryEdit` (create, save, test and purge ask for the password: `RepositoryEditWorkflow`/`RepositoriesWorkflow`; *Test connection* sends the stored password
+`RepositoryEdit` (create, save, test and purge ask for the password: `AdminRepositoryEditUseCase`/`AdminRepositoriesUseCase`, JSON twin `AdminRepositoriesUiApiController`; *Test connection* sends the stored password
 only while the URL's origin and the user name are unchanged, the rule saving applies, follows redirects only within the typed origin and reads at most 1 MB; `Remote:BlockPrivateAddresses` (`RemoteOptions`, `RemoteAddressPolicy`, checked on create/save/test and on each V3 connection via `RemoteHttpClientFactory`'s `ConnectCallback`) refuses loopback/private/link-local upstreams, default off). A remote repository created with credentials starts with `AnonymousRead` off unless chosen (`IRepositoryService.CreateAsync(..., anonymousRead, ...)`); the auto-created `mirror` and every other repository start anonymous. Purge hard-deletes through `IPackageDeletionService` in a `CreateRepositoryScope`.
 
 **Virtual repositories** (`RepositoryKind.Virtual`; `BaGet.Core/Repositories/Virtual`, docs: `docs/virtual-repositories.md`). `Repository.Settings` is `VirtualRepositorySettings`

@@ -77,3 +77,10 @@ using System.Runtime.CompilerServices;
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.FormatRow))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.FormatsViewModel))]
 [assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.ClusterViewModel))]
+
+// The repository administration screens (Repositories, RepositoryEdit, RepositoryDelete) moved with their use cases; names and namespaces are kept.
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.Pages.Admin.RemoteFormModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoriesViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoryEditViewModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoryEditForm))]
+[assembly: TypeForwardedTo(typeof(BaGet.Identity.ViewModels.RepositoryDeleteViewModel))]

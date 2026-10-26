@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BaGet.Core;
 
 namespace BaGet.Identity.Pages.Admin;
@@ -12,18 +13,22 @@ public class RemoteFormModel
     /// For display: the format of the repository being edited (an npm repository has no protocol choice and a different URL and
     /// credential wording). Never read back: the repository's own format decides.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public RepositoryFormat Format { get; set; } = RepositoryFormat.NuGet;
 
     /// <summary>The upstream URL (V3 <c>index.json</c> or V2 feed, or an npm registry's base URL).</summary>
     public string? Url { get; set; }
 
     /// <summary>The upstream's protocol (NuGet only; an npm repository speaks the npm registry protocol).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public RemoteProtocol Protocol { get; set; } = RemoteProtocol.V3;
 
     /// <summary>The HTTP Basic user name, if the upstream needs one.</summary>
     public string? Username { get; set; }
 
-    /// <summary>The HTTP Basic password or token; blank keeps the stored one.</summary>
+    /// <summary>
+    /// The HTTP Basic password or token; blank keeps the stored one. Input only: a screen never sends it back (the use cases clear it from every model they return).
+    /// </summary>
     public string? Password { get; set; }
 
     /// <summary>Remove the stored password on save.</summary>

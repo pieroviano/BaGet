@@ -1,8 +1,5 @@
 /Admin/Replication
 /Admin/ReplicationConfig
-/Admin/Repositories
-/Admin/RepositoryDelete
-/Admin/RepositoryEdit
 /Admin/Retention
 /Admin/RetentionHolds
 /Admin/RetentionPolicy

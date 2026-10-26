@@ -1,9 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Application;
 using BaGet.Identity.Mvc;
 using BaGet.Identity.Pages.Admin;
 using BaGet.Identity.ViewModels;
-using BaGet.Identity.Workflows;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Controllers;
@@ -13,8 +16,8 @@ namespace BaGet.Identity.Controllers;
 /// (<c>/admin/repositories/{name}</c>: anonymous read, upstream, cache, members, Maven settings) and its deletion
 /// (<c>/admin/repositories/{name}/delete</c>). They replace the Razor Pages <c>/Admin/Repositories</c>,
 /// <c>/Admin/RepositoryEdit</c> and <c>/Admin/RepositoryDelete</c> (same URLs, same <c>?handler=</c> values, same
-/// <c>asp-page</c> names through <see cref="LegacyPageAttribute"/>); the logic is in <see cref="RepositoriesWorkflow"/>,
-/// <see cref="RepositoryEditWorkflow"/> and <see cref="RepositoryDeleteWorkflow"/>.
+/// <c>asp-page</c> names through <see cref="LegacyPageAttribute"/>); the work is done by the JSON twin
+/// (<see cref="AdminRepositoriesUiApiController"/>) and this controller only renders its answers.
 /// Administrators only; every write is refused with 503 while the read-only gate is closed, and the changes that hand out
 /// credentials or delete data ask for the administrator's password again, as the pages did.
 /// </summary>
@@ -24,217 +27,148 @@ public sealed class AdminRepositoriesController : RepositoryControllerBase
 
     /// <summary>Lists the repositories (narrowed by <c>format</c>, <c>kind</c>, <c>q</c>) and shows the create forms.</summary>
     [Route("admin/repositories"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Repositories")]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
-    {
-        var workflow = StartList(null, null);
-        await workflow.GetAsync(cancellationToken);
-
-        return ShowList(workflow, null);
-    }
+    public async Task<IActionResult> Index(string? format, string? kind, string? q, CancellationToken cancellationToken)
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.GetRepositories(format, kind, q, cancellationToken)), "Index");
 
     /// <summary>Creates a local NuGet repository.</summary>
     [Route("admin/repositories"), HttpPost, PageHandler, LegacyPage("/Admin/Repositories")]
     public async Task<IActionResult> Create(string? name, RemoteFormModel? remote, CancellationToken cancellationToken)
-    {
-        var workflow = StartList(name, remote);
-
-        return ShowList(workflow, await workflow.PostAsync(cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.Create(new RepositoryCreateForm { Name = name, Remote = remote ?? new RemoteFormModel() }, cancellationToken)), "Index");
 
     /// <summary>Creates a local repository of a format other than NuGet from the posted <c>field:*</c> values.</summary>
     [Route("admin/repositories"), HttpPost, PageHandler("Format"), LegacyPage("/Admin/Repositories")]
     public async Task<IActionResult> CreateFormat(string? name, RemoteFormModel? remote, string? format, bool anonymousRead = true, CancellationToken cancellationToken = default)
-    {
-        var workflow = StartList(name, remote);
-
-        return ShowList(workflow, await workflow.PostFormatAsync(format, anonymousRead, cancellationToken));
-    }
+        => Show(
+            await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.CreateFormat(
+                new RepositoryCreateForm { Name = name, Remote = remote ?? new RemoteFormModel(), Format = format, AnonymousRead = anonymousRead, Fields = PostedFields() },
+                cancellationToken)),
+            "Index");
 
     /// <summary>Creates a virtual repository with no members.</summary>
     [Route("admin/repositories"), HttpPost, PageHandler("Virtual"), LegacyPage("/Admin/Repositories")]
     public async Task<IActionResult> CreateVirtual(string? name, RemoteFormModel? remote, string? format = null, bool anonymousRead = true, CancellationToken cancellationToken = default)
-    {
-        var workflow = StartList(name, remote);
-
-        return ShowList(workflow, await workflow.PostVirtualAsync(format, anonymousRead, cancellationToken));
-    }
+        => Show(
+            await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.CreateVirtual(
+                new RepositoryCreateForm { Name = name, Remote = remote ?? new RemoteFormModel(), Format = format, AnonymousRead = anonymousRead },
+                cancellationToken)),
+            "Index");
 
     /// <summary>Creates a remote repository from the posted upstream settings, after the administrator's password.</summary>
     [Route("admin/repositories"), HttpPost, PageHandler("Remote"), LegacyPage("/Admin/Repositories")]
     public async Task<IActionResult> CreateRemote(string? name, RemoteFormModel? remote, string? password, string? anonymousRead, string? format = null, CancellationToken cancellationToken = default)
-    {
-        var workflow = StartList(name, remote);
+        => Show(
+            await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.CreateRemote(
+                new RepositoryCreateForm
+                {
+                    Name = name,
+                    Remote = remote ?? new RemoteFormModel(),
+                    Format = format,
+                    Password = password,
+                    // Absent = the default; anything but "true" is "no".
+                    AnonymousRead = string.IsNullOrEmpty(anonymousRead) ? null : string.Equals(anonymousRead, "true", StringComparison.OrdinalIgnoreCase),
+                },
+                cancellationToken)),
+            "Index");
 
-        return ShowList(workflow, await workflow.PostRemoteAsync(password, anonymousRead, format, cancellationToken));
-    }
-
-    private RepositoriesWorkflow StartList(string? name, RemoteFormModel? remote)
-    {
-        var workflow = new RepositoriesWorkflow(HttpContext, Url);
-        workflow.Model.Name = name;
-        if (remote != null) workflow.Model.Remote = remote;
-
-        return workflow;
-    }
-
-    private IActionResult ShowList(RepositoriesWorkflow workflow, IActionResult? result)
-    {
-        Flash(workflow.Model);
-
-        return result ?? View("Index", workflow.Model);
-    }
+    // The format module's create fields, posted as field:{name}.
+    private Dictionary<string, string?> PostedFields()
+        => !Request.HasFormContentType
+            ? new Dictionary<string, string?>()
+            : Request.Form.Keys
+                .Where(k => k.StartsWith("field:", StringComparison.Ordinal))
+                .ToDictionary(k => k.Substring("field:".Length), k => (string?)Request.Form[k].ToString(), StringComparer.Ordinal);
 
     // ---------------------------------------------------------------- RepositoryEdit
 
     /// <summary>Shows one repository.</summary>
     [Route("admin/repositories/{name}"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> Edit(string name, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, null);
-
-        return ShowEdit(workflow, await workflow.GetAsync(cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.GetRepository(name, cancellationToken)), "Edit");
 
     /// <summary>Saves the repository.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler, LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> Save(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostAsync(password, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Save(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Saves the policy of a local Maven repository.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("MavenSettings"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> MavenSettings(string name, RepositoryEditForm? form, string? policy, string? redeploy, string? snapshotBuilds, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostMavenSettingsAsync(policy, redeploy, snapshotBuilds, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.MavenSettings(name, Body(form, null, policy: policy, redeploy: redeploy, snapshotBuilds: snapshotBuilds), cancellationToken)), "Edit");
 
     /// <summary>Asks a remote repository's upstream with the unsaved values and saves nothing.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("Test"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> Test(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostTestAsync(password, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Test(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Deletes everything a remote repository cached.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("Purge"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> Purge(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostPurgeAsync(password, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Purge(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Deletes one cached package of a remote repository.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("PurgePackage"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> PurgePackage(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostPurgePackageAsync(password, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.PurgePackage(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Adds a member at the end of a virtual repository.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("AddMember"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> AddMember(string name, RepositoryEditForm? form, string? member, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostAddMemberAsync(member, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.AddMember(name, Body(form, null, member: member), cancellationToken)), "Edit");
 
     /// <summary>Removes a member of a virtual repository.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("RemoveMember"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> RemoveMember(string name, RepositoryEditForm? form, string? member, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostRemoveMemberAsync(member, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.RemoveMember(name, Body(form, null, member: member), cancellationToken)), "Edit");
 
     /// <summary>Moves a member of a virtual repository up or down.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("MoveMember"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> MoveMember(string name, RepositoryEditForm? form, string? member, string? direction, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostMoveMemberAsync(member, direction, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.MoveMember(name, Body(form, null, member: member, direction: direction), cancellationToken)), "Edit");
 
     /// <summary>Sets the member of a virtual repository that receives uploads.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("Deploy"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> Deploy(string name, RepositoryEditForm? form, string? deploy, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
-
-        return ShowEdit(workflow, await workflow.PostDeployAsync(deploy, cancellationToken));
-    }
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Deploy(name, Body(form, null, deploy: deploy), cancellationToken)), "Edit");
 
     /// <summary>Shows where a package version would come from in a virtual repository.</summary>
     [Route("admin/repositories/{name}"), HttpPost, PageHandler("Preview"), LegacyPage("/Admin/RepositoryEdit")]
     public async Task<IActionResult> Preview(string name, RepositoryEditForm? form, CancellationToken cancellationToken)
-    {
-        var workflow = StartEdit(name, form);
+        => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Preview(name, Body(form, null), cancellationToken)), "Edit");
 
-        return ShowEdit(workflow, await workflow.PostPreviewAsync(cancellationToken));
-    }
-
-    private RepositoryEditWorkflow StartEdit(string? name, RepositoryEditForm? form)
-    {
-        var workflow = new RepositoryEditWorkflow(HttpContext, Url);
-        workflow.Model.Name = name;
-        if (form != null)
+    // What the page's forms post, as the twin's body.
+    private static RepositoryEditRequest Body(RepositoryEditForm? form, string? password, string? member = null, string? direction = null, string? deploy = null, string? policy = null, string? redeploy = null, string? snapshotBuilds = null)
+        => new()
         {
-            workflow.Model.AnonymousRead = form.AnonymousRead;
-            workflow.Model.Remote = form.Remote;
-            workflow.Model.PreviewPackageId = form.PreviewPackageId;
-            workflow.Model.PreviewVersion = form.PreviewVersion;
-            workflow.Model.PackageId = form.PackageId;
-            workflow.Model.PackageVersion = form.PackageVersion;
-        }
+            AnonymousRead = form?.AnonymousRead ?? false,
+            Remote = form?.Remote ?? new RemoteFormModel(),
+            PreviewPackageId = form?.PreviewPackageId,
+            PreviewVersion = form?.PreviewVersion,
+            PackageId = form?.PackageId,
+            PackageVersion = form?.PackageVersion,
+            Password = password,
+            Member = member,
+            Direction = direction,
+            Deploy = deploy,
+            Policy = policy,
+            Redeploy = redeploy,
+            SnapshotBuilds = snapshotBuilds,
+        };
 
-        return workflow;
-    }
-
-    private IActionResult ShowEdit(RepositoryEditWorkflow workflow, IActionResult? result)
-    {
-        Flash(workflow.Model);
-
-        return result ?? View("Edit", workflow.Model);
-    }
+    // The screens print the reason from their model (Error), so a refusal is not copied into ModelState as well; the message of the last
+    // redirect is moved into the model.
+    private IActionResult Show<TModel>(UiApiResponse<TModel> response, string view)
+        where TModel : class, IFlashMessage
+        => Render(response, view, model => { Flash(model); return model; }, modelShowsFormErrors: true);
 
     // ---------------------------------------------------------------- RepositoryDelete
 
     /// <summary>Shows what deleting the repository does.</summary>
     [Route("admin/repositories/{name}/delete"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/RepositoryDelete")]
     public async Task<IActionResult> DeleteRepository(string name, CancellationToken cancellationToken)
-    {
-        var workflow = new RepositoryDeleteWorkflow(HttpContext, Url);
-        workflow.Model.Name = name;
-
-        return ShowDeletion(workflow, await workflow.GetAsync(cancellationToken));
-    }
+        => Render(await Api<AdminRepositoriesUiApiController, RepositoryDeleteViewModel>(api => api.GetDeletion(name, cancellationToken)), "Delete", modelShowsFormErrors: true);
 
     /// <summary>Deletes the repository, then returns to the list.</summary>
     [Route("admin/repositories/{name}/delete"), HttpPost, PageHandler, LegacyPage("/Admin/RepositoryDelete")]
     public async Task<IActionResult> DeleteRepositoryConfirmed(string name, CancellationToken cancellationToken)
-    {
-        var workflow = new RepositoryDeleteWorkflow(HttpContext, Url);
-        workflow.Model.Name = name;
-
-        return ShowDeletion(workflow, await workflow.PostAsync(cancellationToken));
-    }
-
-    private IActionResult ShowDeletion(RepositoryDeleteWorkflow workflow, IActionResult? result)
-    {
-        if (workflow.RedirectMessage != null) TempData["Message"] = workflow.RedirectMessage;
-
-        return result ?? View("Delete", workflow.Model);
-    }
+        => Render(await Api<AdminRepositoriesUiApiController, RepositoryDeleteViewModel>(api => api.DeleteRepository(name, cancellationToken)), "Delete", modelShowsFormErrors: true);
 }

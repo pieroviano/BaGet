@@ -2,8 +2,5 @@ BaGet.Identity.Workflows.AccessWorkflow
 BaGet.Identity.Workflows.AdminWorkflow
 BaGet.Identity.Workflows.PolicyWorkflow
 BaGet.Identity.Workflows.ReplicationWorkflow
-BaGet.Identity.Workflows.RepositoriesWorkflow
-BaGet.Identity.Workflows.RepositoryDeleteWorkflow
-BaGet.Identity.Workflows.RepositoryEditWorkflow
 BaGet.Identity.Workflows.RetentionWorkflow
 BaGet.Identity.Workflows.ScanningWorkflow

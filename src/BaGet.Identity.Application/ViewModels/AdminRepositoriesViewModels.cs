@@ -3,20 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using BaGet.Core;
 using BaGet.Identity.Pages.Admin;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.ViewModels;
+
+/// <summary>A package format a repository can be created for, with the extra fields its create form asks (the JSON form of an <see cref="IFormatModule"/>).</summary>
+/// <param name="Format">The format.</param>
+/// <param name="DisplayName">Its name for people (<c>npm</c>, <c>Maven</c>).</param>
+/// <param name="CreateFields">What the administrator fills in to create a local repository of it, besides the name.</param>
+public sealed record RepositoryFormatChoice(RepositoryFormat Format, string DisplayName, IReadOnlyList<FormatCreateField> CreateFields)
+{
+    /// <summary>The choice for <paramref name="module"/>.</summary>
+    public static RepositoryFormatChoice Of(IFormatModule module)
+        => new(module.Format, module.DisplayName, module.CreateFields);
+}
 
 /// <summary>
 /// What the repositories screen (<c>/admin/repositories</c>) shows: the repositories with their feed addresses, the list filter and
 /// the create forms. The posted fields of the create forms (<see cref="Name"/>, <see cref="Remote"/>) live here too, so a refused
-/// creation shows again what was typed.
+/// creation shows again what was typed (the typed upstream password excepted: it is never sent back).
 /// </summary>
 public sealed class RepositoriesViewModel : ConfirmationModel, IFlashMessage
 {
-    private HashSet<string> _deployable = new();
+    private IReadOnlyDictionary<string, string> _feeds = new Dictionary<string, string>();
+    private IReadOnlyDictionary<string, string> _bases = new Dictionary<string, string>();
+    private IReadOnlyDictionary<string, IReadOnlyList<FormatLink>> _links = new Dictionary<string, IReadOnlyList<FormatLink>>();
 
     /// <summary>The name for the repository to create.</summary>
     public string? Name { get; set; }
@@ -49,48 +59,38 @@ public sealed class RepositoriesViewModel : ConfirmationModel, IFlashMessage
     public string? FilterName { get; internal set; }
 
     /// <summary>Every format this server knows, for the list filter.</summary>
-    public IReadOnlyList<IFormatModule> AllFormats { get; internal set; } = Array.Empty<IFormatModule>();
+    public IReadOnlyList<RepositoryFormatChoice> AllFormats { get; internal set; } = Array.Empty<RepositoryFormatChoice>();
 
     /// <summary>The formats a remote repository can be created for.</summary>
-    public IReadOnlyList<IFormatModule> RemoteFormats { get; internal set; } = Array.Empty<IFormatModule>();
+    public IReadOnlyList<RepositoryFormatChoice> RemoteFormats { get; internal set; } = Array.Empty<RepositoryFormatChoice>();
 
     /// <summary>The formats a virtual repository can be created for.</summary>
-    public IReadOnlyList<IFormatModule> VirtualFormats { get; internal set; } = Array.Empty<IFormatModule>();
+    public IReadOnlyList<RepositoryFormatChoice> VirtualFormats { get; internal set; } = Array.Empty<RepositoryFormatChoice>();
 
     /// <summary>The formats other than NuGet that can be created here, with their form fields.</summary>
-    public IReadOnlyList<IFormatModule> OtherFormats { get; internal set; } = Array.Empty<IFormatModule>();
+    public IReadOnlyList<RepositoryFormatChoice> OtherFormats { get; internal set; } = Array.Empty<RepositoryFormatChoice>();
 
-    internal HttpContext? Http { get; set; }
+    /// <summary>The virtual repositories that have a deploy repository, so take uploads (a remote one takes none).</summary>
+    public IReadOnlyList<string> Deployable { get; internal set; } = Array.Empty<string>();
 
-    internal IUrlHelper? UrlHelper { get; set; }
+    /// <summary>The feed address of each repository, by repository name.</summary>
+    public IReadOnlyDictionary<string, string> Feeds { get => _feeds; internal set => _feeds = value; }
 
-    internal void SetDeployable(HashSet<string> names) => _deployable = names;
+    /// <summary>The base address of each repository (where its format's routes start, ends with a slash), by repository name.</summary>
+    public IReadOnlyDictionary<string, string> BaseUrls { get => _bases; internal set => _bases = value; }
 
-    /// <summary>Whether uploads to <paramref name="repository"/> are possible at all (a remote one takes none; a virtual one needs a deploy repository).</summary>
-    public bool TakesUploads(RepositorySummary repository) => repository.Kind switch
-    {
-        RepositoryKind.Remote => false,
-        RepositoryKind.Virtual => _deployable.Contains(repository.Name),
-        _ => true,
-    };
-
-    private FormatRegistry Formats => Http!.RequestServices.GetRequiredService<FormatRegistry>();
+    /// <summary>The links its format contributes for each repository (browse, upload...), without the upload link where it takes none, by repository name.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<FormatLink>> Links { get => _links; internal set => _links = value; }
 
     /// <summary>The feed address of <paramref name="repository"/>, by its format's <see cref="IFormatModule.FeedPath"/>.</summary>
-    public string FeedUrl(RepositorySummary repository)
-        => RepositoryFeedUrl.For(Http!, repository.Name, Formats.Find(repository.Format)?.FeedPath ?? "v3/index.json");
+    public string FeedUrl(RepositorySummary repository) => _feeds.TryGetValue(repository.Name, out var url) ? url : string.Empty;
+
+    /// <summary>The base address of <paramref name="repository"/>, which a link given by a path (<see cref="FormatLink.Path"/>) is appended to.</summary>
+    public string BaseUrl(RepositorySummary repository) => _bases.TryGetValue(repository.Name, out var url) ? url : string.Empty;
 
     /// <summary>The links its format contributes for <paramref name="repository"/> (browse, upload...), without the upload link where it takes none.</summary>
     public IReadOnlyList<FormatLink> LinksOf(RepositorySummary repository)
-        => (Formats.Find(repository.Format)?.RepositoryLinks(new RepositoryInfo(repository.Key, repository.Name, repository.Format, repository.Kind)) ?? Array.Empty<FormatLink>())
-            .Where(l => !l.NeedsUploads || TakesUploads(repository))
-            .ToList();
-
-    /// <summary>Where <paramref name="link"/> leads for <paramref name="repository"/>.</summary>
-    public string LinkUrl(RepositorySummary repository, FormatLink link)
-        => link.Page != null
-            ? UrlHelper!.Page(link.Page, new { repo = repository.IsDefault ? null : repository.Name }) ?? string.Empty
-            : RepositoryFeedUrl.BaseFor(Http!, repository.Name) + link.Path;
+        => _links.TryGetValue(repository.Name, out var links) ? links : Array.Empty<FormatLink>();
 }
 
 /// <summary>
