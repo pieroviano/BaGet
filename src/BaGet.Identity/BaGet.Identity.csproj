@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -8,6 +8,7 @@
     <RootNamespace>BaGet.Identity</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>
+    <PackageId>Extension.$(MSBuildProjectName).UI</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
