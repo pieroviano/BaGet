@@ -1,5 +1,16 @@
+api/ui/admin/api	GET	/Admin/Api	-	order=0
 api/ui/antiforgery	GET	-	-	order=0
+api/ui/home	GET	/Index	-	order=0
+api/ui/packages	GET	/Index	-	order=0
+api/ui/packages/{id}/{version?}	GET	/Package	-	order=0
+api/ui/packages/{id}/{version}/report-abuse	GET	/ReportAbuse	-	order=0
+api/ui/packages/{id}/{version}/report-abuse	POST	/ReportAbuse	-	order=0
 api/ui/privacy	GET	/Privacy	-	order=0
+api/ui/r/{repo}/home	GET	/Index	-	order=-1
+api/ui/r/{repo}/packages	GET	/Index	-	order=-1
+api/ui/r/{repo}/packages/{id}/{version?}	GET	/Package	-	order=-1
+api/ui/r/{repo}/packages/{id}/{version}/report-abuse	GET	/ReportAbuse	-	order=-1
+api/ui/r/{repo}/packages/{id}/{version}/report-abuse	POST	/ReportAbuse	-	order=-1
 api/ui/r/{repo}/stats	GET	/Statistics	-	order=-1
 api/ui/stats	GET	/Statistics	-	order=0
 api/ui/terms	GET	/Terms	-	order=0

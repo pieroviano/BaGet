@@ -1,4 +1,4 @@
-using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Identity.Mvc;
@@ -9,38 +9,36 @@ namespace BaGet.Web;
 /// <summary>
 /// Report abuse (<c>/packages/{id}/{version}/report-abuse</c>, and under <c>/r/{repo}/</c>; 404 in a virtual repository). Replaces the
 /// <c>/ReportAbuse</c> Razor Page. The form is posted with antiforgery
-/// validation (<see cref="UiControllerBase"/>).
+/// validation (<see cref="UiControllerBase"/>). Renders what <see cref="ReportAbuseUiApiController"/> answers.
 /// </summary>
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class ReportAbuseController : UiControllerBase
 {
-    private readonly ReportAbuseWorkflow _workflow;
-
-    /// <summary>Creates the controller.</summary>
-    public ReportAbuseController(ReportAbuseWorkflow workflow)
-    {
-        _workflow = workflow ?? throw new ArgumentNullException(nameof(workflow));
-    }
-
     /// <summary>The empty form.</summary>
     [Route("packages/{id}/{version}/report-abuse"), HttpGet, HttpHead, PageHandler, LegacyPage("/ReportAbuse")]
-    public IActionResult Show(string? id, string? version)
-        => View("Show", new ReportAbuseViewModel { Id = id, Version = version, CanReport = _workflow.CanReport });
+    public async Task<IActionResult> Show(string? id, string? version)
+        => Render(await Api<ReportAbuseUiApiController, ReportAbuseScreen>(api => api.Get(id, version)), "Show", ToViewModel);
 
     /// <summary>Records the report.</summary>
     [Route("packages/{id}/{version}/report-abuse"), HttpPost, PageHandler, LegacyPage("/ReportAbuse")]
-    public async Task<IActionResult> Submit(ReportAbuseViewModel model, CancellationToken cancellationToken)
+    public async Task<IActionResult> Submit(string? id, string? version, ReportAbuseViewModel model, CancellationToken cancellationToken)
     {
-        model.CanReport = _workflow.CanReport;
-        switch (await _workflow.SubmitAsync(model, ModelState, cancellationToken))
-        {
-            case ReportAbuseOutcome.NotFound:
-                return NotFound();
-            case ReportAbuseOutcome.Submitted:
-                model.Submitted = true;
-                return View("Show", model);
-            default:
-                return View("Show", model);
-        }
+        // The use case validates the form itself (same rules, same field names), so the errors of model binding are dropped, not shown twice.
+        ModelState.Clear();
+        var form = new ReportAbuseForm { Reason = model.Reason, Details = model.Details, ReporterEmail = model.ReporterEmail };
+
+        return Render(await Api<ReportAbuseUiApiController, ReportAbuseScreen>(api => api.Submit(id, version, form, cancellationToken)), "Show", ToViewModel);
     }
+
+    private static object? ToViewModel(ReportAbuseScreen screen)
+        => new ReportAbuseViewModel
+        {
+            Id = screen.Id,
+            Version = screen.Version,
+            Reason = screen.Form.Reason,
+            Details = screen.Form.Details,
+            ReporterEmail = screen.Form.ReporterEmail,
+            Submitted = screen.Submitted,
+            CanReport = screen.CanReport,
+        };
 }

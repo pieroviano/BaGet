@@ -46,17 +46,17 @@
                 <tr data-path="@endpoint.Path" data-method="@endpoint.Method">
                     <td><code>@endpoint.Method</code></td>
                     <td><code>@endpoint.Path</code></td>
-                    <td>@endpoint.Operation.Summary</td>
-                    <td>@(endpoint.Operation.Confirm ? "password" : "-")</td>
+                    <td>@endpoint.Summary</td>
+                    <td>@(endpoint.Confirm ? "password" : "-")</td>
                     <td>
-                        @{ var link = Url.Page(endpoint.Operation.UiPage); }
+                        @{ var link = Url.Page(endpoint.UiPage); }
                         @if (link != null)
                         {
-                            <a href="@link">@endpoint.Operation.UiPage</a>
+                            <a href="@link">@endpoint.UiPage</a>
                         }
                         else
                         {
-                            <code>@endpoint.Operation.UiPage</code>
+                            <code>@endpoint.UiPage</code>
                         }
                     </td>
                 </tr>

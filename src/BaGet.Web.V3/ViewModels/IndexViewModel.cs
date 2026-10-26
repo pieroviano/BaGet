@@ -9,7 +9,7 @@ namespace BaGet.Web;
 
 /// <summary>
 /// What the front page and the package list show: the search the visitor asked for (bound from the query string, same names
-/// as the former Razor Page's properties) and the results the workflow fills in.
+/// as the former Razor Page's properties) and the results the use case found (filled from the screen the JSON twin answered).
 /// </summary>
 public sealed class IndexViewModel
 {
@@ -55,4 +55,18 @@ public sealed class IndexViewModel
 
     /// <summary>When each listed package ID was last published, by ID; empty when unsupported.</summary>
     public IReadOnlyDictionary<string, DateTime> LastUpdated { get; internal set; } = new Dictionary<string, DateTime>();
+
+    /// <summary>The query of the request, as the use case takes it.</summary>
+    internal IndexQuery ToQuery() => new(Query, PageIndex, PackageType, Framework, Prerelease, SortBy);
+
+    /// <summary>Fills this model (which carries the bound query) from what the JSON twin answered.</summary>
+    internal IndexViewModel Fill(IndexScreen screen)
+    {
+        SupportedSorts = screen.SupportedSorts;
+        IsHome = screen.IsHome;
+        Totals = screen.Totals;
+        Packages = screen.Packages;
+        LastUpdated = screen.LastUpdated;
+        return this;
+    }
 }

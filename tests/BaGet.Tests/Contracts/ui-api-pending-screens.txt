@@ -16,7 +16,6 @@
 /Account/TwoFactor
 /Admin/Abuse
 /Admin/AccessUnavailable
-/Admin/Api
 /Admin/Audit
 /Admin/Cluster
 /Admin/DeleteUser
@@ -49,14 +48,12 @@
 /Admin/Validation
 /DockerImage
 /DockerImages
-/Index
 /MavenArtifact
 /MavenArtifacts
 /MavenUpload
 /NpmPackage
 /NpmPackages
 /NpmUpload
-/Package
 /Packages/ContactOwners
 /Packages/DockerManage
 /Packages/Manage
@@ -65,5 +62,4 @@
 /Packages/Scan
 /Packages/ValidationStatus
 /Profiles/Profile
-/ReportAbuse
 /Upload

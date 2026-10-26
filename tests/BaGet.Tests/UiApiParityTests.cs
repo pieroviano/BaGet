@@ -226,4 +226,118 @@ public class UiApiParityTests : IDisposable
         Assert.Equal(HttpStatusCode.Redirect, page.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, api.StatusCode);
     }
+
+    // ---- browse: front page, list, package, report abuse ----
+
+    [Fact]
+    public async Task TheFrontPageAndTheListShowWhatTheirTwinsCarry()
+    {
+        using var app = Start();
+        using var client = app.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+        using (var package = TestResources.GetResourceStream(TestResources.Package))
+        {
+            await app.AddPackageAsync(package, token);
+        }
+
+        var homePage = await client.GetStringAsync("/", token);
+        var home = JsonNode.Parse(await client.GetStringAsync("/api/ui/home", token))!["model"]!;
+        var listPage = await client.GetStringAsync("/packages", token);
+        var list = JsonNode.Parse(await client.GetStringAsync("/api/ui/packages", token))!["model"]!;
+        var searchPage = await client.GetStringAsync("/?q=TestData", token);
+        var search = JsonNode.Parse(await client.GetStringAsync("/api/ui/home?q=TestData", token))!["model"]!;
+
+        Assert.True(home["isHome"]!.GetValue<bool>());
+        Assert.Contains("id=\"home-packages\">" + home["totals"]!["packageIds"]!.GetValue<int>(), homePage);
+
+        // /packages is the list even without a search, and so is the root with a q parameter.
+        Assert.False(list["isHome"]!.GetValue<bool>());
+        Assert.False(search["isHome"]!.GetValue<bool>());
+        Assert.Equal("TestData", list["packages"]![0]!["id"]!.GetValue<string>());
+        Assert.Contains("TestData", listPage);
+        Assert.Contains("TestData", searchPage);
+        Assert.DoesNotContain("id=\"home-packages\"", listPage);
+    }
+
+    [Fact]
+    public async Task TheListStatusesMatchBetweenThePageAndTheTwin()
+    {
+        using var app = Start();
+        using var client = app.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        foreach (var query in new[] { "p=0", "sortBy=99", "p=abc" })
+        {
+            using var page = await client.GetAsync("/packages?" + query, token);
+            using var api = await client.GetAsync("/api/ui/packages?" + query, token);
+
+            Assert.Equal(HttpStatusCode.BadRequest, page.StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, api.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task ThePackagePageAndItsTwinShowTheSameVersionAndVersions()
+    {
+        using var app = Start();
+        await app.CreateRepositoryAsync("second", TestContext.Current.CancellationToken);
+        using var client = app.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+        using (var package = TestResources.GetResourceStream(TestResources.Package))
+        {
+            await app.AddPackageAsync(package, token);
+        }
+
+        var page = await client.GetStringAsync("/packages/TestData/1.2.3", token);
+        var json = JsonNode.Parse(await client.GetStringAsync("/api/ui/packages/TestData/1.2.3", token))!["model"]!;
+
+        Assert.True(json["found"]!.GetValue<bool>());
+        Assert.Equal("1.2.3", json["package"]!["version"]!.GetValue<string>());
+        Assert.Equal("1.2.3", json["versions"]![0]!["version"]!.GetValue<string>());
+        Assert.Contains("TestData", page);
+        Assert.Contains("1.2.3", page);
+        Assert.NotEmpty(json["installTabs"]!.AsArray());
+
+        // An unknown package is a page that says so (200), and the same in JSON; an unknown repository is a 404 in both.
+        using var missingPage = await client.GetAsync("/packages/NoSuch", token);
+        using var missingApi = await client.GetAsync("/api/ui/packages/NoSuch", token);
+        using var noRepositoryPage = await client.GetAsync("/r/nope/packages/TestData", token);
+        using var noRepositoryApi = await client.GetAsync("/api/ui/r/nope/packages/TestData", token);
+        using var secondApi = await client.GetAsync("/api/ui/r/second/packages/TestData", token);
+
+        Assert.Equal(HttpStatusCode.OK, missingPage.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, missingApi.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, noRepositoryPage.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, noRepositoryApi.StatusCode);
+        Assert.False(JsonNode.Parse(await secondApi.Content.ReadAsStringAsync(token))!["model"]!["found"]!.GetValue<bool>());
+    }
+
+    [Fact]
+    public async Task AReportThroughThePageAndAReportThroughTheTwinRecordTheSameState()
+    {
+        using var app = Start();
+        using var client = app.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var form = await client.GetStringAsync("/packages/TestData/1.2.3/report-abuse", token);
+        Assert.Contains("name=\"Reason\"", form);
+
+        // The twin takes the form as JSON, with the antiforgery header like any cookie caller (the token comes from /api/ui/antiforgery).
+        var antiforgery = JsonNode.Parse(await client.GetStringAsync("/api/ui/antiforgery", token))!["requestToken"]!.GetValue<string>();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse")
+        {
+            Content = new StringContent("{\"reason\":\"Other\",\"details\":\"This is bad.\"}", System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("RequestVerificationToken", antiforgery);
+        using var posted = await client.SendAsync(request, token);
+        var json = JsonNode.Parse(await posted.Content.ReadAsStringAsync(token))!;
+
+        Assert.Equal(HttpStatusCode.OK, posted.StatusCode);
+        Assert.True(json["model"]!["submitted"]!.GetValue<bool>());
+        using var scope = app.Services.CreateScope();
+        var reports = scope.ServiceProvider.GetRequiredService<BaGet.Core.IContext>().AbuseReports!.ToList();
+        Assert.Single(reports);
+        Assert.Equal("TestData", reports[0].PackageId);
+        Assert.Equal("1.2.3", reports[0].PackageVersion);
+    }
 }

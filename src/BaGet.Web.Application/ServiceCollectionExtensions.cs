@@ -17,6 +17,9 @@ public static class WebApplicationServiceCollectionExtensions
 
         services.TryAddScoped<LegalUseCase>();
         services.TryAddScoped<StatisticsUseCase>();
+        services.TryAddScoped<IndexUseCase>();
+        services.TryAddScoped<PackageUseCase>();
+        services.TryAddScoped<ReportAbuseUseCase>();
 
         return services;
     }

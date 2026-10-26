@@ -5,34 +5,37 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Web.Application;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NuGet.Versioning;
 using Xunit;
 
 namespace BaGet.Web.Tests;
 
-public class PackageWorkflowFacts
+public class PackageUseCaseFacts
 {
     private readonly Mock<IPackageContentService> _content;
     private readonly Mock<IPackageService> _packages;
     private readonly Mock<ISearchService> _search;
     private readonly Mock<IUrlGenerator> _url;
-    private readonly PackageWorkflow _workflow;
-    private PackageViewModel _target = null!;
+    private readonly PackageUseCase _workflow;
+    private PackageScreen _target = null!;
 
     private readonly CancellationToken _cancellation = CancellationToken.None;
 
-    public PackageWorkflowFacts()
+    public PackageUseCaseFacts()
     {
         _content = new Mock<IPackageContentService>();
         _packages = new Mock<IPackageService>();
         _search = new Mock<ISearchService>();
         _url = new Mock<IUrlGenerator>();
-        _workflow = new PackageWorkflow(
+        _workflow = new PackageUseCase(
             _packages.Object,
             _content.Object,
             _search.Object,
-            _url.Object);
+            _url.Object,
+            new ServiceCollection().BuildServiceProvider());
 
         _search
             .Setup(s => s.FindDependentsAsync("testpackage", _cancellation))
@@ -46,14 +49,14 @@ public class PackageWorkflowFacts
             .Setup(m => m.FindPackagesAsync("testpackage", _cancellation))
             .ReturnsAsync(new List<Package>());
 
-        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
         Assert.False(_target.Found);
         #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
         #pragma warning restore CS8602
-        Assert.Null(_target.DependencyGroups);
-        Assert.Null(_target.Versions);
+        Assert.Empty(_target.DependencyGroups);
+        Assert.Empty(_target.Versions);
     }
 
     [Fact]
@@ -66,14 +69,14 @@ public class PackageWorkflowFacts
                 CreatePackage("1.0.0", listed: false),
             });
 
-        _target = await _workflow.LoadAsync("testpackage", version: null, null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", null, null, _cancellation)).Model!;
 
         Assert.False(_target.Found);
         #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
         #pragma warning restore CS8602
-        Assert.Null(_target.DependencyGroups);
-        Assert.Null(_target.Versions);
+        Assert.Empty(_target.DependencyGroups);
+        Assert.Empty(_target.Versions);
     }
 
     [Fact]
@@ -88,25 +91,25 @@ public class PackageWorkflowFacts
                 CreatePackage("3.0.0"),
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "2.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "2.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
         #pragma warning restore CS8602
-        Assert.Equal("2.0.0", _target.Package.NormalizedVersionString);
+        Assert.Equal("2.0.0", _target.Package.Version);
 
         #pragma warning disable CS8602
         Assert.Equal(3, _target.Versions.Count);
-        Assert.Equal("3.0.0", _target.Versions[0].Version.OriginalVersion);
+        Assert.Equal("3.0.0", _target.Versions[0].Version);
         #pragma warning restore CS8602
         Assert.False(_target.Versions[0].Selected);
         #pragma warning disable CS8602
-        Assert.Equal("2.0.0", _target.Versions[1].Version.OriginalVersion);
+        Assert.Equal("2.0.0", _target.Versions[1].Version);
         #pragma warning restore CS8602
         Assert.True(_target.Versions[1].Selected);
         #pragma warning disable CS8602
-        Assert.Equal("1.0.0", _target.Versions[2].Version.OriginalVersion);
+        Assert.Equal("1.0.0", _target.Versions[2].Version);
         #pragma warning restore CS8602
         Assert.False(_target.Versions[2].Selected);
     }
@@ -123,21 +126,21 @@ public class PackageWorkflowFacts
                 CreatePackage("3.0.0"),
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "2.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "2.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
         #pragma warning restore CS8602
-        Assert.Equal("2.0.0", _target.Package.NormalizedVersionString);
+        Assert.Equal("2.0.0", _target.Package.Version);
 
         #pragma warning disable CS8602
         Assert.Equal(2, _target.Versions.Count);
-        Assert.Equal("3.0.0", _target.Versions[0].Version.OriginalVersion);
+        Assert.Equal("3.0.0", _target.Versions[0].Version);
         #pragma warning restore CS8602
         Assert.False(_target.Versions[0].Selected);
         #pragma warning disable CS8602
-        Assert.Equal("1.0.0", _target.Versions[1].Version.OriginalVersion);
+        Assert.Equal("1.0.0", _target.Versions[1].Version);
         #pragma warning restore CS8602
         Assert.False(_target.Versions[1].Selected);
     }
@@ -154,21 +157,21 @@ public class PackageWorkflowFacts
                 CreatePackage("3.0.0", listed: false),
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "4.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "4.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
         Assert.Equal("testpackage", _target.Package.Id);
         #pragma warning restore CS8602
-        Assert.Equal("2.0.0", _target.Package.NormalizedVersionString);
+        Assert.Equal("2.0.0", _target.Package.Version);
 
         #pragma warning disable CS8602
         Assert.Equal(2, _target.Versions.Count);
-        Assert.Equal("2.0.0", _target.Versions[0].Version.OriginalVersion);
+        Assert.Equal("2.0.0", _target.Versions[0].Version);
         #pragma warning restore CS8602
         Assert.True(_target.Versions[0].Selected);
         #pragma warning disable CS8602
-        Assert.Equal("1.0.0", _target.Versions[1].Version.OriginalVersion);
+        Assert.Equal("1.0.0", _target.Versions[1].Version);
         #pragma warning restore CS8602
         Assert.False(_target.Versions[1].Selected);
     }
@@ -188,7 +191,7 @@ public class PackageWorkflowFacts
                 CreatePackage("1.0.0", packageTypes: packageTypes)
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         Assert.Equal(expectDotnetTemplate, _target.IsDotnetTemplate);
@@ -216,7 +219,7 @@ public class PackageWorkflowFacts
                 }
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
         #pragma warning disable CS8602
         Assert.Equal(2, _target.UsedBy.Count);
@@ -255,7 +258,7 @@ public class PackageWorkflowFacts
                 })
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         #pragma warning disable CS8602
@@ -310,7 +313,7 @@ public class PackageWorkflowFacts
                 })
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         #pragma warning disable CS8604
@@ -332,7 +335,7 @@ public class PackageWorkflowFacts
                 CreatePackage("2.0.0", listed: false, downloads: 5, published: now),
             });
 
-        _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+        _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
         Assert.True(_target.Found);
         Assert.Equal(15, _target.TotalDownloads);
@@ -368,12 +371,12 @@ public class PackageWorkflowFacts
                     _cancellation))
                 .ReturnsAsync(readmeStream);
 
-            _target = await _workflow.LoadAsync("testpackage", "1.0.0", null, null, _cancellation);
+            _target = (await _workflow.GetAsync("testpackage", "1.0.0", null, _cancellation)).Model!;
 
             #pragma warning disable CS8602
             Assert.Equal(
                 "<h1 id=\"my-readme\">My readme</h1>\n<p>Hello world!</p>\n",
-                _target.Readme.Value);
+                _target.ReadmeHtml);
             #pragma warning restore CS8602
         }
     }

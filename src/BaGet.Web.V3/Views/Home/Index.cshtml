@@ -255,7 +255,7 @@ else
     </div>
 
     var showPreviousLink = Model.PageIndex > 1;
-    var showNextLink = Model.Packages?.Count >= IndexWorkflow.ResultsPerPage;
+    var showNextLink = Model.Packages?.Count >= BaGet.Web.Application.IndexUseCase.ResultsPerPage;
 
     if (showPreviousLink || showNextLink)
     {

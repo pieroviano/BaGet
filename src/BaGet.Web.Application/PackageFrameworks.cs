@@ -8,8 +8,9 @@ namespace BaGet.Web;
 /// <summary>
 /// The frameworks of one package, as the package page's Frameworks tab shows them.
 /// </summary>
-internal sealed class FrameworkGroup
+public sealed class FrameworkGroup
 {
+    /// <summary>The family (.NET, .NET Core, .NET Standard, .NET Framework, Other).</summary>
     public string? Name { get; init; }
 
     /// <summary>Frameworks the package ships assets for.</summary>

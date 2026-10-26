@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BaGet.Core;
 using Microsoft.AspNetCore.Html;
 using NuGet.Versioning;
 
 namespace BaGet.Web;
 
-/// <summary>What the package page shows; filled by <see cref="PackageWorkflow"/>.</summary>
+/// <summary>What the package page shows; filled from the screen the JSON twin answered (<see cref="PackageUiApiController"/>).</summary>
 public sealed class PackageViewModel
 {
     /// <summary>False when the package (or any listed version of it) does not exist; <see cref="Package"/> then only names the ID.</summary>
@@ -39,7 +40,9 @@ public sealed class PackageViewModel
     /// <summary>The readme, rendered safely.</summary>
     public HtmlString? Readme { get; internal set; }
 
+    /// <summary>The frameworks the package supports, by family.</summary>
     internal IReadOnlyList<FrameworkGroup> FrameworkGroups { get; set; } = Array.Empty<FrameworkGroup>();
+    /// <summary>The install commands, one tab per tool.</summary>
     internal IReadOnlyList<InstallSnippet> InstallTabs { get; set; } = Array.Empty<InstallSnippet>();
 
     /// <summary>Owner names; empty unless accounts are enabled and the package has owners.</summary>
@@ -68,6 +71,46 @@ public sealed class PackageViewModel
     /// nuget.org, so the link only works for a package that is also published there.
     /// </summary>
     public string? PackageExplorerUrl { get; internal set; }
+
+    /// <summary>The model of the view for what the JSON twin answered. The package is a flat copy: only the members the page prints are set.</summary>
+    internal static PackageViewModel From(PackageScreen screen)
+    {
+        var details = screen.Package;
+        return new PackageViewModel
+        {
+            Found = screen.Found,
+            Package = new Package
+            {
+                Id = details.Id,
+                NormalizedVersionString = details.Version,
+                Description = details.Description,
+                ReleaseNotes = details.ReleaseNotes,
+                ProjectUrl = Uri.TryCreate(details.ProjectUrl, UriKind.Absolute, out var project) ? project : null,
+                RepositoryUrl = Uri.TryCreate(details.RepositoryUrl, UriKind.Absolute, out var source) ? source : null,
+                Downloads = details.Downloads,
+                Authors = details.Authors.ToArray(),
+            },
+            IsDotnetTemplate = screen.IsDotnetTemplate,
+            IsDotnetTool = screen.IsDotnetTool,
+            LastUpdated = screen.LastUpdated,
+            TotalDownloads = screen.TotalDownloads,
+            UsedBy = screen.UsedBy,
+            DependencyGroups = screen.DependencyGroups,
+            Versions = screen.Versions
+                .Select(v => new PackageVersionRow { Version = NuGetVersion.Parse(v.Version), Downloads = v.Downloads, Selected = v.Selected, LastUpdated = v.LastUpdated })
+                .ToList(),
+            Readme = screen.ReadmeHtml == null ? null : new HtmlString(screen.ReadmeHtml),
+            FrameworkGroups = screen.FrameworkGroups,
+            InstallTabs = screen.InstallTabs,
+            Owners = screen.Owners,
+            OwnerAvatars = screen.OwnerAvatars,
+            ManageUrl = screen.ManageUrl,
+            IconUrl = screen.IconUrl,
+            LicenseUrl = screen.LicenseUrl,
+            PackageDownloadUrl = screen.PackageDownloadUrl,
+            PackageExplorerUrl = screen.PackageExplorerUrl,
+        };
+    }
 }
 
 /// <summary>One row of the versions table of the package page.</summary>

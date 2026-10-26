@@ -5,3 +5,6 @@ using System.Runtime.CompilerServices;
 [assembly: TypeForwardedTo(typeof(BaGet.Web.RequestPrincipalResolver))]
 [assembly: TypeForwardedTo(typeof(BaGet.Web.BasicCredentials))]
 [assembly: TypeForwardedTo(typeof(BaGet.Web.ReadmeMarkdown))]
+[assembly: TypeForwardedTo(typeof(BaGet.Web.PackageDependencies))]
+[assembly: TypeForwardedTo(typeof(BaGet.Web.DependencyGroupModel))]
+[assembly: TypeForwardedTo(typeof(BaGet.Web.DependencyModel))]

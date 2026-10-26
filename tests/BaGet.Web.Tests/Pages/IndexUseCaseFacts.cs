@@ -2,21 +2,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Protocol.Models;
+using BaGet.Web.Application;
 using Moq;
 using Xunit;
 
 namespace BaGet.Web.Tests;
 
-public class IndexWorkflowFacts
+public class IndexUseCaseFacts
 {
-    private readonly IndexWorkflow _target;
+    private readonly IndexUseCase _target;
     private readonly ISearchService _searchService;
 
     private SearchRequest? _capturedRequest = null;
     private readonly SearchResponse _response = new SearchResponse();
     private readonly CancellationToken _cancellation = CancellationToken.None;
 
-    public IndexWorkflowFacts()
+    public IndexUseCaseFacts()
     {
         var search = new Mock<ISearchService>();
         search
@@ -25,13 +26,13 @@ public class IndexWorkflowFacts
             .ReturnsAsync(_response);
 
         _searchService = search.Object;
-        _target = new IndexWorkflow(_searchService, new StatisticsService(new NullContext()));
+        _target = new IndexUseCase(_searchService, new StatisticsService(new NullContext()));
     }
 
     [Fact]
     public async Task DefaultSearch()
     {
-        await _target.LoadAsync(new IndexViewModel(), null, _cancellation);
+        await _target.GetAsync(new IndexQuery(), false, _cancellation);
 
         #pragma warning disable CS8602
         Assert.Equal(0, _capturedRequest.Skip);
@@ -47,16 +48,9 @@ public class IndexWorkflowFacts
     [Fact]
     public async Task AcceptsParameters()
     {
-        var model = new IndexViewModel
-        {
-            Prerelease = false,
-            PageIndex = 5,
-            PackageType = "foo",
-            Framework = "bar",
-            Query = "Hello world",
-        };
+        var model = new IndexQuery(Query: "Hello world", PageIndex: 5, PackageType: "foo", Framework: "bar", Prerelease: false);
 
-        await _target.LoadAsync(model, null, _cancellation);
+        await _target.GetAsync(model, false, _cancellation);
 
         #pragma warning disable CS8602
         Assert.Equal(80, _capturedRequest.Skip);

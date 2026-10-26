@@ -86,13 +86,8 @@ public static class IServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();
 
-        // The logic of the browse screens, used by their controllers.
-        services.AddScoped<IndexWorkflow>();
-        services.AddScoped<PackageWorkflow>();
         // The use cases of the screens that moved to BaGet.Web.Application (the controllers call them through their JSON twins).
         services.AddBaGetWebUseCases();
-        services.AddScoped<ReportAbuseWorkflow>();
-        services.AddScoped<ApiCatalogWorkflow>();
         services.AddScoped<OciCallerResolver>();
         services.AddScoped<OciAuthorizationFilter>();
         services.AddTransient<IUrlGenerator, BaGetUrlGenerator>();

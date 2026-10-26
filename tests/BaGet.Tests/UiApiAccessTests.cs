@@ -270,6 +270,86 @@ public class UiApiAccessTests : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/r/second/stats", key: limited)).Status);
     }
 
+    // ---- browse screens: front page, package, report abuse, REST API page ----
+
+    [Fact]
+    public async Task TheFrontPageAndTheListAreAnonymousAndABadQueryIsAPlain400()
+    {
+        var home = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/home");
+        var list = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages?q=anything");
+        var secondHome = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/r/second/home");
+
+        Assert.Equal(HttpStatusCode.OK, home.Status);
+        Assert.True(home.Json!["model"]!["isHome"]!.GetValue<bool>());
+        Assert.Equal(HttpStatusCode.OK, list.Status);
+        Assert.False(list.Json!["model"]!["isHome"]!.GetValue<bool>());
+        Assert.Equal(HttpStatusCode.OK, secondHome.Status);
+        Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages?p=0")).Status);
+        Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages?sortBy=99")).Status);
+    }
+
+    [Fact]
+    public async Task APackageScreenIsAnonymousAndOffersTheManageLinkOnlyToSomeoneWhoMayManage()
+    {
+        using (var package = TestResources.GetResourceStream(TestResources.Package))
+        {
+            await _app.AddPackageAsync(package, Token);
+        }
+
+        var anonymous = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3");
+        var missing = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages/NoSuchPackage");
+        var administrator = await SendAsync(_root, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3");
+
+        Assert.Equal(HttpStatusCode.OK, anonymous.Status);
+        Assert.True(anonymous.Json!["model"]!["found"]!.GetValue<bool>());
+        Assert.Equal("TestData", anonymous.Json["model"]!["package"]!["id"]!.GetValue<string>());
+        Assert.Null(anonymous.Json["model"]!["manageUrl"]);
+        Assert.False(missing.Json!["model"]!["found"]!.GetValue<bool>());
+        Assert.EndsWith("/packages/TestData/manage", administrator.Json!["model"]!["manageUrl"]!.GetValue<string>(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AReportAbusePostFollowsTheAntiforgeryRuleAndRefusesAnEmptyFormWithTheReasons()
+    {
+        var withoutHeader = await SendAsync(_alice, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse");
+        Assert.Equal(HttpStatusCode.BadRequest, withoutHeader.Status);
+        Assert.Null(withoutHeader.Json!["model"]);
+
+        // Past the antiforgery check (cookie with the header, or a key) the empty form is refused with the reasons by field.
+        var withHeader = await SendAsync(_alice, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse", antiforgery: await TokenAsync(_alice));
+        var withKey = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse", key: _aliceKey);
+        foreach (var answer in new[] { withHeader, withKey })
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, answer.Status);
+            Assert.Equal("Invalid", answer.Json!["status"]!.GetValue<string>());
+            Assert.NotNull(answer.Json["errors"]!["Details"]);
+            Assert.NotNull(answer.Json["errors"]!["Reason"]);
+        }
+    }
+
+    [Fact]
+    public async Task TheRestApiScreenIsForAdministratorsOnly()
+    {
+        const string path = "/api/ui/admin/api";
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootPushOnlyKey)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _aliceKey)).Status);
+
+        foreach (var answer in new[] { await SendAsync(_root, HttpMethod.Get, path), await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootKey) })
+        {
+            Assert.Equal(HttpStatusCode.OK, answer.Status);
+            var model = answer.Json!["model"]!;
+            Assert.EndsWith("/api/v1", model["apiBase"]!.GetValue<string>(), StringComparison.Ordinal);
+            Assert.NotEmpty(model["endpoints"]!.AsArray());
+
+            // Flat JSON: no reflection objects, no key.
+            Assert.DoesNotContain("descriptor", answer.Body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(_rootKey, answer.Body, StringComparison.Ordinal);
+        }
+    }
+
     // ---- no secrets ----
 
     [Fact]
