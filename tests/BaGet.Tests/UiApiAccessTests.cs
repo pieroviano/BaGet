@@ -19,9 +19,9 @@ using static BaGet.Tests.AdminTestSupport;
 namespace BaGet.Tests;
 
 /// <summary>
-/// Authentication, antiforgery and the gates of <c>/api/ui</c> (plan, "Verification" / <c>UiApiAccessTests</c>), driven through the real pipeline with test
-/// twins that derive from each base of the family (account, administrator, access). A track that adds a family of screens extends this class with its own
-/// cases (anonymous / user / admin / key / limited key / no antiforgery / read-only).
+/// Authentication and the gates of <c>/api/ui</c> over HTTP, driven through the real pipeline with test twins that derive from each base of the family
+/// (account, administrator, access). Only API keys authenticate (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>: the browser
+/// cookie, HTTP Basic and antiforgery play no part. A track that adds a family of screens extends this class with its own cases.
 /// </summary>
 public class UiApiAccessTests : IDisposable
 {
@@ -80,17 +80,27 @@ public class UiApiAccessTests : IDisposable
 
     private sealed record Answer(HttpStatusCode Status, JsonNode? Json, HttpResponseHeaders Headers, string Body);
 
-    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, string? key = null, string? antiforgery = null, bool bearer = true)
+    public enum Credential { Bearer, ApiKeyHeader, Basic }
+
+    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, string? key = null, Credential how = Credential.Bearer)
     {
         using var request = new HttpRequestMessage(method, path);
         if (key != null)
         {
-            request.Headers.Authorization = bearer
-                ? new AuthenticationHeaderValue("Bearer", key)
-                : new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes("root:" + key)));
+            switch (how)
+            {
+                case Credential.Bearer:
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+                    break;
+                case Credential.ApiKeyHeader:
+                    request.Headers.Add("X-NuGet-ApiKey", key);
+                    break;
+                default:
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes("root:" + key)));
+                    break;
+            }
         }
 
-        if (antiforgery != null) request.Headers.Add("RequestVerificationToken", antiforgery);
         if (method != HttpMethod.Get) request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
 
         using var response = await browser.SendAsync(request);
@@ -99,95 +109,169 @@ public class UiApiAccessTests : IDisposable
         return new Answer(response.StatusCode, body.Length > 0 && body[0] == '{' ? JsonNode.Parse(body) : null, response.Headers, body);
     }
 
-    private async Task<string> TokenAsync(Browser browser)
-    {
-        var answer = await SendAsync(browser, HttpMethod.Get, "/api/ui/antiforgery");
-        Assert.Equal(HttpStatusCode.OK, answer.Status);
-        Assert.Equal("RequestVerificationToken", answer.Json!["headerName"]!.GetValue<string>());
+    private static string FormWideError(Answer answer) => answer.Json!["errors"]![""]![0]!.GetValue<string>();
 
-        return answer.Json["requestToken"]!.GetValue<string>();
-    }
-
-    // ---- antiforgery ----
+    // ---- no antiforgery, no cookie, no Basic ----
 
     [Fact]
-    public async Task TheAntiforgeryEndpointIsAnonymousAndNeverCached()
+    public async Task TheAntiforgeryEndpointIsGone()
     {
-        var answer = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/antiforgery");
-
-        Assert.Equal(HttpStatusCode.OK, answer.Status);
-        Assert.False(string.IsNullOrEmpty(answer.Json!["requestToken"]!.GetValue<string>()));
-        Assert.True(answer.Headers.CacheControl?.NoStore);
+        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/antiforgery")).Status);
+        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_root, HttpMethod.Get, "/api/ui/antiforgery")).Status);
     }
 
-    [Fact]
-    public async Task ACookieWriteWithoutTheAntiforgeryHeaderIs400AndWithItRuns()
+    [Theory]
+    [InlineData(Credential.Bearer)]
+    [InlineData(Credential.ApiKeyHeader)]
+    public async Task AKeyWriteNeedsNoAntiforgeryHeader(Credential how)
     {
-        var refused = await SendAsync(_alice, HttpMethod.Post, "/api/ui/test-probe/account");
-        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
-        Assert.Equal("Invalid", refused.Json!["status"]!.GetValue<string>());
-
-        var accepted = await SendAsync(_alice, HttpMethod.Post, "/api/ui/test-probe/account", antiforgery: await TokenAsync(_alice));
-        Assert.Equal(HttpStatusCode.OK, accepted.Status);
-        Assert.Equal("account", accepted.Json!["model"]!.GetValue<string>());
-    }
-
-    [Fact]
-    public async Task AnAnonymousWriteWithoutTheTokenIs400BeforeTheGateAndWithItIs401()
-    {
-        var refused = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account");
-        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
-
-        var signIn = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account", antiforgery: await TokenAsync(_anonymous));
-        Assert.Equal(HttpStatusCode.Unauthorized, signIn.Status);
-        Assert.Equal("SignIn", signIn.Json!["status"]!.GetValue<string>());
-        Assert.Contains("Bearer", string.Join(",", signIn.Headers.WwwAuthenticate), StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task AKeyWriteNeedsNoAntiforgeryHeader()
-    {
-        var answer = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/admin", key: _rootKey);
+        var answer = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/admin", key: _rootKey, how: how);
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
         Assert.Equal("admin", answer.Json!["model"]!.GetValue<string>());
     }
 
-    [Fact]
-    public async Task AKeyIsAcceptedAsBasicPasswordToo()
+    [Theory]
+    [InlineData("GET")]
+    [InlineData("POST")]
+    public async Task HttpBasicIs401EvenWithAValidKeyAndTheMessageSaysWhatToUse(string method)
     {
-        var answer = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/admin", key: _rootKey, bearer: false);
+        var answer = await SendAsync(_anonymous, new HttpMethod(method), "/api/ui/test-probe/admin", key: _rootKey, how: Credential.Basic);
 
-        Assert.Equal(HttpStatusCode.OK, answer.Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, answer.Status);
+        Assert.Equal("SignIn", answer.Json!["status"]!.GetValue<string>());
+        Assert.Contains("Bearer", FormWideError(answer), StringComparison.Ordinal);
+        Assert.Contains("X-NuGet-ApiKey", FormWideError(answer), StringComparison.Ordinal);
+        Assert.Contains("Bearer", string.Join(",", answer.Headers.WwwAuthenticate), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BasicIsRefusedOnAPublicScreenToo()
+    {
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/stats", key: _rootKey, how: Credential.Basic)).Status);
+    }
+
+    [Fact]
+    public async Task ACookieIsNeverACredentialOnAnAdministratorTwin()
+    {
+        // The signed-in administrator's browser: no key means anonymous, so 401 (not 200 as the session would have given, not 404 as a user's would).
+        var read = await SendAsync(_root, HttpMethod.Get, "/api/ui/test-probe/admin");
+        var write = await SendAsync(_root, HttpMethod.Post, "/api/ui/test-probe/admin");
+        var access = await SendAsync(_root, HttpMethod.Get, "/api/ui/test-probe/access");
+        var screen = await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories");
+
+        Assert.All(new[] { read, write, access, screen }, answer => Assert.Equal(HttpStatusCode.Unauthorized, answer.Status));
+        Assert.Contains("Bearer", FormWideError(read), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AKeyWinsOverTheCookieOfAnotherUser()
+    {
+        // root's browser sends alice's key: the caller is alice (403), not the administrator behind the cookie.
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_root, HttpMethod.Get, "/api/ui/test-probe/admin", key: _aliceKey)).Status);
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/test-probe/admin", key: _rootKey)).Status);
+    }
+
+    [Fact]
+    public async Task ACookieOnAPublicScreenSeesWhatAnAnonymousVisitorSees()
+    {
+        using (var package = TestResources.GetResourceStream(TestResources.Package))
+        {
+            await _app.AddPackageAsync(package, Token);
+        }
+
+        // The package screen offers the Manage link to somebody who may manage: the administrator's cookie is ignored, the administrator's key is not.
+        var cookie = await SendAsync(_root, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3");
+        var key = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3", key: _rootKey);
+
+        Assert.Equal(HttpStatusCode.OK, cookie.Status);
+        Assert.Null(cookie.Json!["model"]!["manageUrl"]);
+        Assert.NotNull(key.Json!["model"]!["manageUrl"]);
+    }
+
+    [Fact]
+    public async Task APrivateRepositoryIsNotOpenedByTheCookieOfAnAdministratorButByTheirKey()
+    {
+        await using (var scope = _app.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IRepositoryService>()
+                .CreateAsync("closed", RepositoryFormat.NuGet, RepositoryKind.Local, new Dictionary<string, string?>(), anonymousRead: false, Token);
+        }
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, "/api/ui/r/closed/stats")).Status);
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/r/closed/stats", key: _rootKey)).Status);
+    }
+
+    [Fact]
+    public async Task AnAnonymousWriteOnAPublicScreenReachesTheUseCaseWithoutAnyToken()
+    {
+        // Past authentication and (absent) antiforgery the empty form is refused with the reasons by field, not with a 400 about a token.
+        var answer = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse");
+
+        Assert.Equal(HttpStatusCode.BadRequest, answer.Status);
+        Assert.Equal("Invalid", answer.Json!["status"]!.GetValue<string>());
+        Assert.NotNull(answer.Json["errors"]!["Reason"]);
     }
 
     [Fact]
     public async Task CredentialsThatDoNotAuthenticateAre401NotAnonymous()
     {
-        var answer = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/stats", key: "not-a-key");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, answer.Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/stats", key: "not-a-key")).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/stats", key: "not-a-key", how: Credential.ApiKeyHeader)).Status);
+        // A valid cookie does not rescue a bad key.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, "/api/ui/test-probe/admin", key: "not-a-key")).Status);
     }
 
-    // ---- the account base: cookie only ----
+    [Fact]
+    public async Task TheSessionCookieIsNotReadForTheReauthenticationProofEither()
+    {
+        // The re-authentication window lives in the session cookie; a request that is not allowed to use the cookie must not consult it.
+        var context = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        context.Items[AccountConfirmation.IgnoreSessionItem] = true;
+
+        Assert.False(await AccountConfirmation.HasReauthenticatedRecentlyAsync(context));
+    }
+
+    // ---- the account base: screen only ----
 
     [Fact]
-    public async Task AccountSelfServiceIsCookieOnlyAKeyIs403()
+    public async Task AccountSelfServiceIsScreenOnlyAndEveryCallerOverHttpGets403WithAMessage()
     {
-        var withKey = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account", key: _aliceKey);
+        var answers = new[]
+        {
+            await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account", key: _aliceKey),
+            await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account", key: _aliceKey, how: Credential.ApiKeyHeader),
+            await SendAsync(_alice, HttpMethod.Post, "/api/ui/test-probe/account"),
+            await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account"),
+            await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/test-probe/account", key: _rootKey),
+        };
 
-        Assert.Equal(HttpStatusCode.Forbidden, withKey.Status);
-        Assert.Equal("Forbidden", withKey.Json!["status"]!.GetValue<string>());
+        foreach (var answer in answers)
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, answer.Status);
+            Assert.Equal("Forbidden", answer.Json!["status"]!.GetValue<string>());
+            Assert.Contains("web screen", FormWideError(answer), StringComparison.Ordinal);
+        }
+    }
+
+    [Theory]
+    [InlineData("/api/ui/account/login")]
+    [InlineData("/api/ui/account/settings")]
+    [InlineData("/api/ui/account/apikeys")]
+    [InlineData("/api/ui/account/organizations")]
+    public async Task TheRealAccountTwinsAreScreenOnly(string path)
+    {
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _aliceKey)).Status);
     }
 
     // ---- the administrator base ----
 
     [Fact]
-    public async Task AnAdministratorScreenIsAnAdminSessionOrAnAdminApiKey()
+    public async Task AnAdministratorScreenIsAnAdminApiKeyAndNothingElse()
     {
         Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/test-probe/admin")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/test-probe/admin")).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, "/api/ui/test-probe/admin")).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/test-probe/admin")).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/test-probe/admin", key: _rootKey)).Status);
     }
 
@@ -200,9 +284,19 @@ public class UiApiAccessTests : IDisposable
     }
 
     [Fact]
-    public async Task TheGlobalKeyAdministersWhenOneIsConfigured()
+    public async Task TheGlobalKeyIsRefusedOnAdministratorTwinsWithAMessage()
     {
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/test-probe/admin", key: GlobalKey)).Status);
+        // It has no owner, so the use cases that need the current user could not act for it: 403 at the gate, whatever the method.
+        foreach (var method in new[] { HttpMethod.Get, HttpMethod.Post })
+        {
+            foreach (var path in new[] { "/api/ui/test-probe/admin", "/api/ui/test-probe/access", method == HttpMethod.Get ? "/api/ui/admin/users" : "/api/ui/admin/users/promote", "/api/ui/admin/repositories" })
+            {
+                var answer = await SendAsync(_anonymous, method, path, key: GlobalKey);
+
+                Assert.Equal(HttpStatusCode.Forbidden, answer.Status);
+                Assert.Contains("global ApiKey", FormWideError(answer), StringComparison.Ordinal);
+            }
+        }
     }
 
     [Fact]
@@ -241,7 +335,7 @@ public class UiApiAccessTests : IDisposable
     public async Task AnAccessScreenAdmitsWhomAuthorizeAsyncAdmitsAndNobodyElse()
     {
         // The probe admits nobody but server administrators.
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/test-probe/access")).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/test-probe/access")).Status);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/test-probe/access", key: _aliceKey)).Status);
     }
 
@@ -298,7 +392,7 @@ public class UiApiAccessTests : IDisposable
 
         var anonymous = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3");
         var missing = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages/NoSuchPackage");
-        var administrator = await SendAsync(_root, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3");
+        var administrator = await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/packages/TestData/1.2.3", key: _rootKey);
 
         Assert.Equal(HttpStatusCode.OK, anonymous.Status);
         Assert.True(anonymous.Json!["model"]!["found"]!.GetValue<bool>());
@@ -309,16 +403,11 @@ public class UiApiAccessTests : IDisposable
     }
 
     [Fact]
-    public async Task AReportAbusePostFollowsTheAntiforgeryRuleAndRefusesAnEmptyFormWithTheReasons()
+    public async Task AReportAbusePostRefusesAnEmptyFormWithTheReasonsWhoeverSendsIt()
     {
-        var withoutHeader = await SendAsync(_alice, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse");
-        Assert.Equal(HttpStatusCode.BadRequest, withoutHeader.Status);
-        Assert.Null(withoutHeader.Json!["model"]);
-
-        // Past the antiforgery check (cookie with the header, or a key) the empty form is refused with the reasons by field.
-        var withHeader = await SendAsync(_alice, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse", antiforgery: await TokenAsync(_alice));
+        var anonymous = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse");
         var withKey = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse", key: _aliceKey);
-        foreach (var answer in new[] { withHeader, withKey })
+        foreach (var answer in new[] { anonymous, withKey })
         {
             Assert.Equal(HttpStatusCode.BadRequest, answer.Status);
             Assert.Equal("Invalid", answer.Json!["status"]!.GetValue<string>());
@@ -328,16 +417,17 @@ public class UiApiAccessTests : IDisposable
     }
 
     [Fact]
-    public async Task TheRestApiScreenIsForAdministratorsOnly()
+    public async Task TheRestApiScreenIsForAdministratorKeysOnly()
     {
         const string path = "/api/ui/admin/api";
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, path)).Status);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootPushOnlyKey)).Status);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _aliceKey)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
 
-        foreach (var answer in new[] { await SendAsync(_root, HttpMethod.Get, path), await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootKey) })
+        foreach (var answer in new[] { await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootKey), await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootKey, how: Credential.ApiKeyHeader) })
         {
             Assert.Equal(HttpStatusCode.OK, answer.Status);
             var model = answer.Json!["model"]!;
@@ -355,7 +445,7 @@ public class UiApiAccessTests : IDisposable
     [Fact]
     public async Task NoResponseEchoesTheCredentialsOfTheRequest()
     {
-        foreach (var path in new[] { "/api/ui/stats", "/api/ui/test-probe/admin", "/api/ui/antiforgery" })
+        foreach (var path in new[] { "/api/ui/stats", "/api/ui/test-probe/admin" })
         {
             var answer = await SendAsync(_anonymous, HttpMethod.Get, path, key: _rootKey);
 
@@ -367,7 +457,7 @@ public class UiApiAccessTests : IDisposable
 
 // The twins below live in the test assembly; UiApiAccessTests registers it as an application part. They only exist to drive each base of the family.
 
-/// <summary>An account twin (cookie only, signed in).</summary>
+/// <summary>An account twin (screen only, signed in).</summary>
 [Route("api/ui/test-probe/account")]
 public sealed class ProbeAccountUiApiController : AccountUiApiControllerBase
 {

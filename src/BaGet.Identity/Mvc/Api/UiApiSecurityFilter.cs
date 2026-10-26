@@ -1,23 +1,21 @@
-using System;
 using System.Threading.Tasks;
-using BaGet.Core;
 using BaGet.Identity.Application;
 using BaGet.Web;
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Mvc;
 
 /// <summary>
-/// Authenticates a request to <c>/api/ui</c> (decision D2) before any action runs:
+/// Authenticates a request to <c>/api/ui</c> over HTTP before any action runs, like <c>/api/v1</c>: <b>API keys only</b>.
 /// <list type="bullet">
-/// <item><description><b>API key</b> (Basic password, Bearer token or <c>X-NuGet-ApiKey</c>, resolved by <see cref="RequestPrincipalResolver.ResolveForWriteAsync"/>, which never
-/// accepts the cookie): the key's owner acts within the key's scopes and repository limits; no antiforgery, because a web page cannot make a browser send such
-/// a header. Credentials that do not authenticate are refused with 401 (they are not read as "anonymous").</description></item>
-/// <item><description><b>Browser session or anonymous</b>: an unsafe method (anything but GET, HEAD, OPTIONS, TRACE) must carry the antiforgery token in the
-/// <c>RequestVerificationToken</c> header (token from <c>GET /api/ui/antiforgery</c>), else 400 before anything else runs, as a form without its token is for a page.</description></item>
+/// <item><description><b>Bearer or <c>X-NuGet-ApiKey</c></b> (resolved by <see cref="RequestPrincipalResolver.ResolveForWriteAsync"/>): the key's owner acts within the key's
+/// scopes and repository limits. A key that does not authenticate is refused with 401 (not read as "anonymous").</description></item>
+/// <item><description><b>HTTP Basic</b> is refused with 401: browsers cache Basic credentials after a Basic challenge and re-send them on cross-site requests, and
+/// there is no antiforgery here.</description></item>
+/// <item><description><b>No credentials</b>: anonymous. The browser session cookie is <b>never</b> a credential on <c>/api/ui</c>: <c>User</c> is reset to an anonymous
+/// principal and the request is marked so that no later code re-reads the cookie. With no ambient credential there is nothing for a cross-site page to
+/// ride on, so no antiforgery token is needed (nor offered).</description></item>
 /// </list>
 /// In-process calls of a view controller do not pass through here: the view action has its own antiforgery validation and its own cookie session.
 /// </summary>
@@ -28,35 +26,27 @@ public sealed class UiApiSecurityFilter : IAsyncAuthorizationFilter
     {
         var http = context.HttpContext;
 
-        if (UiApiCaller.HasKeyCredentials(http.Request))
+        if (UiApiCaller.HasBasicCredentials(http.Request))
         {
-            var resolver = http.RequestServices.GetService<RequestPrincipalResolver>();
-            var key = resolver == null ? null : await resolver.ResolveForWriteAsync(http, http.RequestAborted);
-            if (key == null)
-            {
-                context.Result = new UiApiResult(ScreenResult<object>.SignIn());
-                return;
-            }
-
-            UiApiCaller.SetKey(http, key);
+            context.Result = new UiApiResult(ScreenResult<object>.SignIn(
+                "HTTP Basic is not accepted on /api/ui: send the API key as 'Authorization: Bearer <key>' or in the 'X-NuGet-ApiKey' header."));
             return;
         }
 
-        if (HttpMethods.IsGet(http.Request.Method) || HttpMethods.IsHead(http.Request.Method)
-            || HttpMethods.IsOptions(http.Request.Method) || HttpMethods.IsTrace(http.Request.Method))
+        if (!UiApiCaller.HasKeyCredentials(http.Request))
         {
+            UiApiCaller.SetAnonymous(http);
             return;
         }
 
-        try
+        var resolver = http.RequestServices.GetService<RequestPrincipalResolver>();
+        var key = resolver == null ? null : await resolver.ResolveForWriteAsync(http, http.RequestAborted);
+        if (key == null)
         {
-            await http.RequestServices.GetRequiredService<IAntiforgery>().ValidateRequestAsync(http);
+            context.Result = new UiApiResult(ScreenResult<object>.SignIn("The API key is not valid."));
+            return;
         }
-        catch (AntiforgeryValidationException)
-        {
-            context.Result = new UiApiResult(ScreenResult<object>.Invalid(
-                null!,
-                "The antiforgery token is missing or invalid. Send the token of GET /api/ui/antiforgery in the RequestVerificationToken header, or authenticate with an API key."));
-        }
+
+        UiApiCaller.SetKey(http, key);
     }
 }

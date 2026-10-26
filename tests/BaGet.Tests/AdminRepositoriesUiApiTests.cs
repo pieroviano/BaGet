@@ -19,7 +19,7 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// The JSON twin (<c>/api/ui/admin/repositories</c>) of the repository screens (list and create forms, one repository with all its handlers, deletion): who may
-/// call it, the antiforgery rule, the read-only gate, that the answers carry what the pages show, that each write does what the page's form does, and that no
+/// call it, the read-only gate, that the answers carry what the pages show, that each write does what the page's form does, and that no
 /// answer ever carries an upstream password.
 /// </summary>
 public class AdminRepositoriesUiApiTests : IDisposable
@@ -81,11 +81,10 @@ public class AdminRepositoriesUiApiTests : IDisposable
 
     private sealed record Answer(HttpStatusCode Status, JsonNode? Json, string Body);
 
-    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null, string? antiforgery = null)
+    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null)
     {
         using var request = new HttpRequestMessage(method, path);
         if (key != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-        if (antiforgery != null) request.Headers.Add("RequestVerificationToken", antiforgery);
         if (method != HttpMethod.Get)
         {
             var json = body == null ? "{}" : JsonSerializer.Serialize(body, new JsonSerializerOptions(JsonSerializerDefaults.Web));
@@ -121,13 +120,13 @@ public class AdminRepositoriesUiApiTests : IDisposable
     [InlineData("/api/ui/admin/repositories?kind=Local")]
     [InlineData("/api/ui/admin/repositories/default")]
     [InlineData("/api/ui/admin/repositories/default/delete")]
-    public async Task ARepositoryScreenIsAnAdminSessionOrAnAdminApiKeyAndNobodyElse(string path)
+    public async Task ARepositoryScreenIsAnAdminApiKeyAndNobodyElse(string path)
     {
         Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, path)).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _adminKey)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
 
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _pushOnlyAdminKey)).Status);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _limitedAdminKey)).Status);
@@ -139,7 +138,7 @@ public class AdminRepositoriesUiApiTests : IDisposable
     {
         foreach (var path in new[] { "/api/ui/admin/repositories/nobody", "/api/ui/admin/repositories/nobody/delete" })
         {
-            var answer = await SendAsync(_root, HttpMethod.Get, path);
+            var answer = await AdminAsync(HttpMethod.Get, path);
 
             Assert.Equal(HttpStatusCode.NotFound, answer.Status);
             Assert.Equal("NotFound", Status(answer));
@@ -152,8 +151,8 @@ public class AdminRepositoriesUiApiTests : IDisposable
         await CreateAsync("format");
         await CreateAsync("create");
 
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories/format")).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories/create")).Status);
+        Assert.Equal(HttpStatusCode.OK, (await AdminAsync(HttpMethod.Get, "/api/ui/admin/repositories/format")).Status);
+        Assert.Equal(HttpStatusCode.OK, (await AdminAsync(HttpMethod.Get, "/api/ui/admin/repositories/create")).Status);
 
         var saved = await AdminAsync(HttpMethod.Post, "/api/ui/admin/repositories/format", new { anonymousRead = false });
         Assert.Equal("Next", Status(saved));
@@ -163,16 +162,11 @@ public class AdminRepositoriesUiApiTests : IDisposable
     // ---- writes ----
 
     [Fact]
-    public async Task ACookieWriteNeedsTheAntiforgeryHeaderAndAKeyWriteDoesNot()
+    public async Task ACookieWriteIs401AndAKeyWriteNeedsNoAntiforgeryHeader()
     {
         var refused = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/repositories", new { name = "cookie" });
-        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.Status);
         Assert.Null(await _app.Services.GetRequiredService<IRepositoryService>().FindAsync("cookie", Token));
-
-        var token = (await SendAsync(_root, HttpMethod.Get, "/api/ui/antiforgery")).Json!["requestToken"]!.GetValue<string>();
-        var withCookie = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/repositories", new { name = "cookie" }, antiforgery: token);
-        Assert.Equal("Next", Status(withCookie));
-        Assert.NotNull(await _app.Services.GetRequiredService<IRepositoryService>().FindAsync("cookie", Token));
 
         var withKey = await AdminAsync(HttpMethod.Post, "/api/ui/admin/repositories", new { name = "keyed" });
         Assert.Equal("Next", Status(withKey));
@@ -397,7 +391,7 @@ public class AdminRepositoriesUiApiTests : IDisposable
         await AdminAsync(HttpMethod.Post, "/api/ui/admin/repositories/create/format", new { name = "mynpm", format = "Npm" });
 
         var page = await _root.GetPageAsync("/admin/repositories");
-        var model = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories")).Json!["model"]!;
+        var model = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/repositories")).Json!["model"]!;
 
         var names = model["repositories"]!.AsArray().Select(r => r!["name"]!.GetValue<string>()).ToList();
         Assert.Equal(new[] { "default", "mynpm", "second" }, names.OrderBy(n => n, StringComparer.Ordinal).ToArray());
@@ -410,9 +404,9 @@ public class AdminRepositoriesUiApiTests : IDisposable
         Assert.NotEmpty(model["otherFormats"]!.AsArray());
         Assert.Contains(model["links"]!["mynpm"]!.AsArray(), link => link!["id"]!.GetValue<string>() == "browse");
 
-        var filtered = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories?format=Npm")).Json!["model"]!["repositories"]!.AsArray();
+        var filtered = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/repositories?format=Npm")).Json!["model"]!["repositories"]!.AsArray();
         Assert.Equal("mynpm", filtered.Single()!["name"]!.GetValue<string>());
-        Assert.Equal("Npm", (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories?format=Npm")).Json!["model"]!["filterFormat"]!.GetValue<string>());
+        Assert.Equal("Npm", (await AdminAsync(HttpMethod.Get, "/api/ui/admin/repositories?format=Npm")).Json!["model"]!["filterFormat"]!.GetValue<string>());
     }
 
     [Fact]
@@ -420,7 +414,7 @@ public class AdminRepositoriesUiApiTests : IDisposable
     {
         await CreateAsync("second");
         var page = await _root.GetPageAsync("/admin/repositories/second");
-        var model = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/repositories/second")).Json!["model"]!;
+        var model = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/repositories/second")).Json!["model"]!;
 
         Assert.Equal("second", model["name"]!.GetValue<string>());
         Assert.Contains(model["feedUrl"]!.GetValue<string>(), page, StringComparison.Ordinal);

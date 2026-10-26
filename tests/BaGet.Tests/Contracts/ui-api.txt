@@ -145,7 +145,6 @@ api/ui/admin/validation	GET	/Admin/Validation	-	order=0
 api/ui/admin/validation/reject	POST	/Admin/Validation	Reject	order=0
 api/ui/admin/validation/release	POST	/Admin/Validation	Release	order=0
 api/ui/admin/validation/retry	POST	/Admin/Validation	Retry	order=0
-api/ui/antiforgery	GET	-	-	order=0
 api/ui/docker-images	GET	/DockerImages	-	order=0
 api/ui/docker-images/{**image}	GET	/DockerImage	-	order=0
 api/ui/docker-manage/delete-image/{**image}	POST	/Packages/DockerManage	DeleteImage	order=0

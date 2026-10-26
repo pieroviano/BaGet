@@ -17,13 +17,13 @@ namespace BaGet.Identity.Mvc;
 /// returns its model, so a single-page application (or any client) can be written against it alone, and the view controller only renders
 /// what <see cref="UiApiInvoker"/> got from it.
 /// <list type="bullet">
-/// <item><description><b>Authentication</b> (<see cref="UiApiSecurityFilter"/>): cookie session with the antiforgery header on writes, or an API key
-/// (see <see cref="UiApiCaller"/>).</description></item>
+/// <item><description><b>Authentication</b> (<see cref="UiApiSecurityFilter"/>): API keys only (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>; the
+/// browser session and HTTP Basic are never accepted over HTTP, so there is no antiforgery (see <see cref="UiApiCaller"/>).</description></item>
 /// <item><description><b>Answers</b> are <see cref="ScreenResult{T}"/> through <see cref="Respond{T}"/>: <c>status</c>, <c>model</c>, <c>errors</c>, <c>next</c>.</description></item>
 /// <item><description><b>No <c>[ApiController]</c></b>: its automatic 400 on an invalid model would differ between an HTTP call and the
 /// in-process call of a view controller. An action validates explicitly and answers <see cref="ScreenResult{T}.Invalid(T, string, int?)"/>.</description></item>
 /// <item><description><b>Filters do not run in process</b>: the view controller's base runs the same <see cref="ScreenGate"/> before it calls the
-/// twin, and its own antiforgery validation.</description></item>
+/// twin, and its own antiforgery validation and cookie session.</description></item>
 /// </list>
 /// A twin is marked <see cref="UiApiAttribute"/> (never <see cref="LegacyPageAttribute"/>), routed under <c>api/ui/</c> (a repository
 /// screen also at <c>api/ui/r/{repo}/...</c> through <see cref="RepositoryPageAttribute"/>), and takes the request body as JSON
@@ -31,9 +31,11 @@ namespace BaGet.Identity.Mvc;
 /// </summary>
 [TypeFilter(typeof(UiApiSecurityFilter))]
 [Produces("application/json")]
+// Not [ApiController], so ApiExplorer would skip the twins: they all belong in the OpenAPI document "ui".
+[ApiExplorerSettings(IgnoreApi = false)]
 public abstract class UiApiControllerBase : ControllerBase
 {
-    /// <summary>The API key behind the request, or null for a browser session or an anonymous visitor.</summary>
+    /// <summary>The API key behind the request, or null for an anonymous caller.</summary>
     protected BaGetPrincipal? KeyCaller => UiApiCaller.Key(HttpContext);
 
     /// <summary>The screen gate (the same one the view controllers ask).</summary>
@@ -67,6 +69,18 @@ public abstract class UiApiControllerBase : ControllerBase
 
     /// <summary>The answer for a gate's refusal: the screen has no model, so the result is of the action's own model type with only the decision set.</summary>
     [NonAction]
+    protected static IScreenResult Refusal(GateResult gate)
+        => gate.Message != null
+            ? gate.Outcome switch
+            {
+                GateOutcome.SignIn => ScreenResult<object>.SignIn(gate.Message),
+                GateOutcome.Forbidden => ScreenResult<object>.Forbidden(gate.Message),
+                _ => Refusal(gate.Outcome),
+            }
+            : Refusal(gate.Outcome);
+
+    /// <summary>The answer for a gate's refusal, without a message.</summary>
+    [NonAction]
     protected static IScreenResult Refusal(GateOutcome outcome)
         => outcome switch
         {
@@ -80,8 +94,8 @@ public abstract class UiApiControllerBase : ControllerBase
 /// <summary>
 /// Base of the account screens' JSON twins: accounts enabled (else 404), mail configured when <see cref="RequiresEmail"/>, signed in when
 /// <see cref="RequiresSignIn"/> (else 401), through the same <see cref="ScreenGate"/> as <c>AccountControllerBase</c>. Account self-service
-/// (password, two-factor, external logins, API keys, sign-in and out, deletion) is <b>cookie only</b>: an API key never changes credentials
-/// (<see cref="CookieOnly"/>, 403).
+/// (password, two-factor, external logins, API keys, sign-in and out, deletion) and package ownership screens are <b>cookie only</b> (<see cref="CookieOnly"/>):
+/// over HTTP, where the cookie is never accepted, they answer 403 "use the web screen" to everybody; the web screen reaches them in process.
 /// </summary>
 public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncActionFilter
 {
@@ -91,7 +105,7 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
     /// <summary>Whether the screen needs mail to be configured.</summary>
     protected virtual bool RequiresEmail => false;
 
-    /// <summary>Whether an API key is refused (account self-service). The administration bases lift it.</summary>
+    /// <summary>Whether the twin is screen-only over HTTP (account self-service, package ownership): 403 for every caller. The administration bases lift it.</summary>
     protected virtual bool CookieOnly => true;
 
     /// <summary>What the screen requires of the caller; a derived base widens it (role, writes).</summary>
@@ -104,7 +118,11 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
             RequiresSignIn: RequiresSignIn || metadata.OfType<RequiresSignInAttribute>().Any(),
             RequiresEmail: RequiresEmail || metadata.OfType<RequiresEmailAttribute>().Any(),
             KeyCaller: KeyCaller,
-            CookieOnly: CookieOnly);
+            CookieOnly: CookieOnly)
+        {
+            // This filter runs only when the twin is called over HTTP (the in-process call of a view controller skips it).
+            OverHttp = true,
+        };
     }
 
     /// <summary>Asks the gate; a refusal is the answer.</summary>
@@ -114,7 +132,7 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
         var gate = await Gate.CheckAsync(User, Requirements(context), HttpContext.RequestAborted);
         if (!gate.IsAllowed)
         {
-            context.Result = new UiApiResult(Refusal(gate.Outcome));
+            context.Result = new UiApiResult(Refusal(gate));
             return;
         }
 
@@ -123,9 +141,8 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
 }
 
 /// <summary>
-/// Base of the administrator screens' JSON twins: the caller is a server administrator (else 404 for a session, 403 for a key that is not
-/// an administrator's or lacks the <c>admin:api</c> scope), like <c>AdminControllerBase</c>. An API key may open them (see
-/// <see cref="ScreenGate.IsAdministratorKey"/>).
+/// Base of the administrator screens' JSON twins: the caller is an administrator's API key with the <c>admin:api</c> scope and no repository limit
+/// (see <see cref="ScreenGate.IsAdministratorKey"/>): 401 with no key, 403 for any other key, the global <c>ApiKey</c> included.
 /// </summary>
 public abstract class AdminUiApiControllerBase : AccountUiApiControllerBase
 {

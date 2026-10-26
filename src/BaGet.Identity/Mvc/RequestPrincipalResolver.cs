@@ -32,6 +32,13 @@ public class RequestPrincipalResolver
         _sessions = sessions;
     }
 
+    /// <summary>Drops what was resolved for the request so far (used when the request's credentials are decided afterwards, as on <c>/api/ui</c>).</summary>
+    internal static void Forget(HttpContext context)
+    {
+        context.Items.Remove(ItemKey);
+        context.Items.Remove(WriteItemKey);
+    }
+
     /// <summary>The caller, or null when anonymous. Resolved once per request.</summary>
     public async Task<BaGetPrincipal?> ResolveAsync(HttpContext context, CancellationToken cancellationToken)
     {

@@ -31,7 +31,7 @@ public sealed class MavenManageForm
 /// <summary>
 /// The JSON twin of the Maven artifact management screen: <c>GET /api/ui/maven-manage/{group}/{artifact}?version=</c> and, for each handler
 /// of the page, <c>POST /api/ui/maven-manage/{group}/{artifact}/{handler-in-kebab-case}</c> with a JSON body (also under
-/// <c>/api/ui/r/{repo}/…</c>). Cookie session only. <see cref="MavenManageController"/> calls it in process and renders the view.
+/// <c>/api/ui/r/{repo}/…</c>). Screen only (403 over HTTP to every caller; the web screen calls it in process). <see cref="MavenManageController"/> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/maven-manage/{group}/{artifact}")]
 [RepositoryPage(Format = RepositoryFormat.Maven, NotOnVirtual = true, NotOnRemote = true)]

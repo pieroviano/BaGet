@@ -25,7 +25,7 @@ public sealed class DockerManageForm
 /// <summary>
 /// The JSON twin of the Docker image management screen: <c>GET /api/ui/docker-manage/{**image}</c> and, for each handler of the page,
 /// <c>POST /api/ui/docker-manage/{handler-in-kebab-case}/{**image}</c> with a JSON body (the image name has slashes, so the handler comes
-/// first; also under <c>/api/ui/r/{repo}/…</c>). Cookie session only. <see cref="DockerManageController"/> calls it in process and renders
+/// first; also under <c>/api/ui/r/{repo}/…</c>). Screen only (403 over HTTP to every caller; the web screen calls it in process). <see cref="DockerManageController"/> calls it in process and renders
 /// the view.
 /// </summary>
 [Route("api/ui/docker-manage")]

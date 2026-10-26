@@ -117,6 +117,56 @@ public class UiApiParityTests : IDisposable
         Assert.True(screens.Count == 0, "Screens without a [UiApi] twin:" + Environment.NewLine + string.Join(Environment.NewLine, screens));
     }
 
+    // Steps with no JSON twin because they only redirect the browser to the external sign-in provider and back (the challenge and its callback, which
+    // set the session cookie; the same for signing in again to re-authenticate): (screen page name, handler, method). Nothing else may be missing; a default POST that only re-renders its screen
+    // ([ImplicitPageHandler]) is no operation and needs no twin.
+    private static readonly HashSet<(string Screen, string? Handler, string Method)> BrowserOnly = new()
+    {
+        ("/Account/Login", "External", "POST"),
+        ("/Account/Login", "Callback", "GET"),
+        ("/Account/Reauthenticate", null, "POST"),
+        ("/Account/Reauthenticate", "Callback", "GET"),
+    };
+
+    private static string[] MethodsOf(ControllerActionDescriptor action)
+        => action.ActionConstraints?.OfType<Microsoft.AspNetCore.Mvc.ActionConstraints.HttpMethodActionConstraint>().SelectMany(c => c.HttpMethods).Distinct().ToArray()
+           ?? new[] { "GET" };
+
+    [Fact]
+    public void EveryScreenAndHandlerOfAViewActionHasAUiApiTwinOfTheSameMethodExceptTheBrowserOnlySteps()
+    {
+        using var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string> { { "Accounts:Enabled", "true" } });
+        var actions = Actions(app);
+
+        var twins = actions
+            .Where(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>() != null)
+            .SelectMany(a => MethodsOf(a).Select(m => (a.MethodInfo.GetCustomAttribute<UiApiAttribute>()!.Screen, a.MethodInfo.GetCustomAttribute<UiApiAttribute>()!.Handler, Method: m)))
+            .ToHashSet();
+
+        var missing = new List<string>();
+        var seen = new HashSet<(string, string?, string)>();
+        foreach (var view in actions.Where(a => a.EndpointMetadata.OfType<LegacyPageAttribute>().Any() && !a.EndpointMetadata.OfType<ImplicitPageHandlerAttribute>().Any()))
+        {
+            var screen = view.EndpointMetadata.OfType<LegacyPageAttribute>().Last().PageName;
+            var handler = view.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name;
+            foreach (var method in MethodsOf(view).Where(m => m is "GET" or "POST"))
+            {
+                var key = (screen, handler, method);
+                if (!seen.Add(key) || twins.Contains(key) || BrowserOnly.Contains(key)) continue;
+
+                missing.Add($"{method} {screen} handler={handler} ({view.DisplayName})");
+            }
+        }
+
+        // The allow-list names real view actions (it cannot rot).
+        foreach (var entry in BrowserOnly)
+        {
+            Assert.Contains(seen, k => k.Equals(entry));
+        }
+
+        Assert.True(missing.Count == 0, "View actions (screen, handler, method) without a [UiApi] twin and not on the browser-only list:" + Environment.NewLine + string.Join(Environment.NewLine, missing));
+    }
+
     // ---- pilot: legal pages ----
 
     [Fact]
@@ -322,13 +372,11 @@ public class UiApiParityTests : IDisposable
         var form = await client.GetStringAsync("/packages/TestData/1.2.3/report-abuse", token);
         Assert.Contains("name=\"Reason\"", form);
 
-        // The twin takes the form as JSON, with the antiforgery header like any cookie caller (the token comes from /api/ui/antiforgery).
-        var antiforgery = JsonNode.Parse(await client.GetStringAsync("/api/ui/antiforgery", token))!["requestToken"]!.GetValue<string>();
+        // The twin takes the form as JSON, anonymously and without any token: /api/ui has no ambient credential to forge.
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/ui/packages/TestData/1.2.3/report-abuse")
         {
             Content = new StringContent("{\"reason\":\"Other\",\"details\":\"This is bad.\"}", System.Text.Encoding.UTF8, "application/json"),
         };
-        request.Headers.Add("RequestVerificationToken", antiforgery);
         using var posted = await client.SendAsync(request, token);
         var json = JsonNode.Parse(await posted.Content.ReadAsStringAsync(token))!;
 

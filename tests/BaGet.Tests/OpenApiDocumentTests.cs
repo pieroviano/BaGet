@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Mvc;
 using BaGet.Web;
 using BaGet.Web.Api;
 using BaGet.Web.OpenApi;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -97,15 +101,66 @@ public class OpenApiDocumentTests : IDisposable
     }
 
     [Fact]
-    public async Task TheUiDocumentExistsAndHoldsOnlyUiApiPaths()
+    public async Task TheUiDocumentListsEveryUiApiActionInItsPlainAndRepositoryVariants()
     {
         var document = await _api.GetAsync("/openapi/ui.json");
         Assert.Equal(HttpStatusCode.OK, document.Status);
         Assert.StartsWith("3.0", document.Json["openapi"]!.GetValue<string>());
+        var paths = document.Json["paths"]!.AsObject();
+        Assert.All(paths.Select(p => p.Key), path => Assert.StartsWith("/api/ui", path));
 
-        // Empty until a controller under /api/ui exists; whatever is there lives under the prefix.
-        var paths = document.Json["paths"];
-        if (paths != null) Assert.All(paths.AsObject().Select(p => p.Key), path => Assert.StartsWith("/api/ui", path));
+        var twins = _api.App.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items
+            .OfType<ControllerActionDescriptor>()
+            .Where(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>() != null)
+            .ToList();
+        Assert.True(twins.Count > 150, "the UI API actions were not found: " + twins.Count);
+
+        var missing = new List<string>();
+        foreach (var action in twins)
+        {
+            var path = "/" + ProtocolsDocumentTransformer.CleanPath(action.AttributeRouteInfo!.Template!);
+            var methods = action.ActionConstraints?.OfType<HttpMethodActionConstraint>().SelectMany(c => c.HttpMethods).Distinct().ToArray() ?? new[] { "GET" };
+            foreach (var method in methods)
+            {
+                if (paths[path]?[method.ToLowerInvariant()] == null) missing.Add($"{method} {path} ({action.DisplayName})");
+            }
+        }
+
+        Assert.True(missing.Count == 0, "UI API operations missing from the ui document:" + Environment.NewLine + string.Join(Environment.NewLine, missing));
+
+        // Both variants of a repository screen.
+        Assert.NotNull(paths["/api/ui/stats"]?["get"]);
+        Assert.NotNull(paths["/api/ui/r/{repo}/stats"]?["get"]);
+
+        // A screen result is the answer.
+        Assert.Contains("ScreenResult", paths["/api/ui/stats"]!["get"]!["responses"]!["200"]!.ToJsonString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheSecuritySchemesOfTheDocumentsAreTheCredentialsTheirApisAccept()
+    {
+        static string[] Schemes(JsonNode document) => document["components"]!["securitySchemes"]!.AsObject().Select(p => p.Key).OrderBy(k => k, StringComparer.Ordinal).ToArray();
+
+        // /api/ui: API keys in headers a page cannot make a browser send. No cookie, no HTTP Basic.
+        var ui = (await _api.GetAsync("/openapi/ui.json")).Json;
+        Assert.Equal(new[] { "apiKey", "bearer" }, Schemes(ui));
+        Assert.Equal(new[] { "apiKey", "bearer" }, ui["security"]!.AsArray().SelectMany(r => r!.AsObject().Select(p => p.Key)).OrderBy(k => k, StringComparer.Ordinal).ToArray());
+
+        // /api/v1 never accepted the cookie either.
+        var v1 = (await _api.GetAsync("/openapi/v1.json")).Json;
+        Assert.Equal(new[] { "apiKey", "basic", "bearer" }, Schemes(v1));
+        Assert.DoesNotContain("cookie", (await _api.GetAsync("/openapi/protocols.json")).Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AScreenOnlyTwinSaysSoInItsDescriptionAndAnAdministrationOneDoesNot()
+    {
+        var paths = (await _api.GetAsync("/openapi/ui.json")).Json["paths"]!.AsObject();
+
+        Assert.Contains("Screen only", paths["/api/ui/account/settings"]!["get"]!["description"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("Screen only", paths["/api/ui/packages/{id}/manage"]!["get"]!["description"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Null(paths["/api/ui/admin/users"]!["get"]!["description"]);
+        Assert.Null(paths["/api/ui/stats"]!["get"]!["description"]);
     }
 
     [Fact]
@@ -164,26 +219,6 @@ public class OpenApiDocumentTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, script.StatusCode);
         using var anonymousScript = await _api.Client.GetAsync("/scalar/scalar.aspnetcore.js", AdminApiHarness.Token);
         Assert.Equal(HttpStatusCode.NotFound, anonymousScript.StatusCode);
-    }
-
-    [Fact]
-    public async Task TheCookieSchemeNamesTheCookieThatSigningInSets()
-    {
-        // A client generated from the document must send the session cookie the server really issues.
-        using var root = new Browser(_api.App);
-        using var login = await root.PostAsync("account/login", new Dictionary<string, string>
-        {
-            { "UserName", "root" },
-            { "Password", Password },
-        });
-        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        var issued = login.Headers.GetValues("Set-Cookie").Select(c => c.Split('=')[0]).ToList();
-
-        using var answer = await root.GetAsync(ApiDocuments.JsonPath(ApiDocuments.Ui));
-        var document = JsonNode.Parse(await answer.Content.ReadAsStringAsync(AdminApiHarness.Token))!;
-        var name = document["components"]!["securitySchemes"]!["cookie"]!["name"]!.GetValue<string>();
-
-        Assert.Contains(name, issued);
     }
 
     [Fact]

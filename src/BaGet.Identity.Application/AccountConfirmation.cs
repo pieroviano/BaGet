@@ -41,9 +41,18 @@ public static class AccountConfirmation
         #pragma warning restore CS8604
     }
 
+    /// <summary>
+    /// The <see cref="HttpContext.Items"/> key that marks a request whose browser session cookie is not a credential (a JSON twin called over HTTP, which
+    /// accepts API keys only): nothing may read the cookie for it.
+    /// </summary>
+    public const string IgnoreSessionItem = "BaGet.IgnoreSessionCookie";
+
     /// <summary>Whether the session re-authenticated with the external provider within <see cref="ReauthenticationWindow"/>.</summary>
     public static async Task<bool> HasReauthenticatedRecentlyAsync(HttpContext httpContext)
     {
+        // A request that does not use the session cookie (/api/ui over HTTP) must not read it here either.
+        if (httpContext.Items.ContainsKey(IgnoreSessionItem)) return false;
+
         var authentication = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (authentication?.Properties == null
             || !authentication.Properties.Items.TryGetValue(ReauthenticatedItem, out var value)

@@ -10,8 +10,8 @@ namespace BaGet.Identity.Controllers;
 /// <summary>
 /// The JSON twin of the sign-in side of the account screens (<c>/api/ui/account/...</c>): sign in, the two second-factor steps, sign out,
 /// registration, email confirmation, the password reset pair and the re-authentication screen. <see cref="AccountController"/> calls it in process
-/// and renders the views. <b>Cookie sessions only</b>: signing in sets the same session cookie as the page (same lockout, approval, two-factor and
-/// return-URL rules); an API key never signs in or changes credentials (403). A write needs the antiforgery token (<c>GET /api/ui/antiforgery</c>).
+/// and renders the views. <b>Screen only</b>: signing in sets the same session cookie as the page (same lockout, approval, two-factor and
+/// return-URL rules), so over HTTP every caller gets 403 "use the web screen"; the view controller calls the twin in process.
 /// The external provider's challenge and callback are browser-only and have no twin.
 /// </summary>
 [Route("api/ui/account")]

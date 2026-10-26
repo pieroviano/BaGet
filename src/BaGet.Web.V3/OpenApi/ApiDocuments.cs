@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -44,9 +46,17 @@ public static class ApiDocuments
     /// <summary>Registers the three documents (written as OpenAPI 3.0, which every client generator reads).</summary>
     public static IServiceCollection AddBaGetOpenApi(this IServiceCollection services)
     {
-        services.AddOpenApi(Ui, options => Configure(options, "BaGet UI API",
-            "The JSON twin of every screen of the web UI (/api/ui). Cookie callers send the antiforgery token of GET /api/ui/antiforgery on writes; API-key callers do not.",
-            description => IsUnder(description, UiPrefix)));
+        services.AddOpenApi(Ui, options =>
+        {
+            // /api/ui accepts API keys in headers a web page cannot make a browser send: no HTTP Basic, no session cookie, no antiforgery.
+            Configure(options, "BaGet UI API",
+                "The JSON twin of every screen of the web UI (/api/ui). Authenticate with an API key as 'Authorization: Bearer <key>' or the X-NuGet-ApiKey header; "
+                + "the browser session cookie and HTTP Basic are not accepted, and there is no antiforgery token. Administration screens need an administrator's key with the admin:api scope "
+                + "and no repository limit (the global ApiKey is refused). Account self-service and package ownership screens exist only in the web UI and answer 403 here.",
+                description => IsUnder(description, UiPrefix),
+                basic: false);
+            options.AddOperationTransformer(ScreenOnlyNote);
+        });
         services.AddOpenApi(V1, options => Configure(options, "BaGet administration API",
             "Administers repositories, projects, users, groups, permission targets, retention, scanning and operations. "
             + "Send an administrator's API key with the admin:api scope as 'Authorization: Bearer <key>' (or the server's global ApiKey). "
@@ -63,7 +73,30 @@ public static class ApiDocuments
         return services;
     }
 
-    private static void Configure(OpenApiOptions options, string title, string description, Func<ApiDescription, bool> include)
+    /// <summary>The note added to the description of an operation whose screen exists only in the web UI.</summary>
+    public const string ScreenOnlyDescription = "Screen only: this screen changes or reveals credentials or ownership, so it is available in the web UI only. Over /api/ui it answers 403 to every caller.";
+
+    private static Task ScreenOnlyNote(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        if (context.Description.ActionDescriptor is ControllerActionDescriptor action && IsScreenOnly(action.ControllerTypeInfo))
+        {
+            operation.Description = string.IsNullOrEmpty(operation.Description) ? ScreenOnlyDescription : operation.Description + " " + ScreenOnlyDescription;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    // The twin's base says it (AccountUiApiControllerBase.CookieOnly, a constant per type): read it without a request.
+    internal static bool IsScreenOnly(Type controller)
+    {
+        if (!typeof(AccountUiApiControllerBase).IsAssignableFrom(controller)) return false;
+
+        var property = typeof(AccountUiApiControllerBase).GetProperty("CookieOnly", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!;
+
+        return (bool)property.GetValue(RuntimeHelpers.GetUninitializedObject(controller))!;
+    }
+
+    private static void Configure(OpenApiOptions options, string title, string description, Func<ApiDescription, bool> include, bool basic = true)
     {
         options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
         options.ShouldInclude = include;
@@ -73,28 +106,18 @@ public static class ApiDocuments
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
             document.Components.SecuritySchemes["bearer"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "bearer", Description = "An API key." };
-            document.Components.SecuritySchemes["basic"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "basic", Description = "The API key as the password." };
+            if (basic) document.Components.SecuritySchemes["basic"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "basic", Description = "The API key as the password." };
             document.Components.SecuritySchemes["apiKey"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Header, Name = "X-NuGet-ApiKey", Description = "An API key." };
-            document.Components.SecuritySchemes["cookie"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Cookie, Name = SessionCookieName(context.ApplicationServices), Description = "The browser session (only /api/ui; unsafe methods also need the antiforgery header)." };
             document.Security = new List<OpenApiSecurityRequirement>
             {
                 new() { [new OpenApiSecuritySchemeReference("bearer", document)] = new List<string>() },
-                new() { [new OpenApiSecuritySchemeReference("basic", document)] = new List<string>() },
-                new() { [new OpenApiSecuritySchemeReference("apiKey", document)] = new List<string>() },
-                new() { [new OpenApiSecuritySchemeReference("cookie", document)] = new List<string>() },
             };
+            if (basic) document.Security.Add(new() { [new OpenApiSecuritySchemeReference("basic", document)] = new List<string>() });
+            document.Security.Add(new() { [new OpenApiSecuritySchemeReference("apiKey", document)] = new List<string>() });
 
             return Task.CompletedTask;
         });
     }
-
-    /// <summary>
-    /// The name of the browser-session cookie as configured (ASP.NET Core Identity's application cookie; a host may rename it), else
-    /// the default <c>.AspNetCore.Identity.Application</c>.
-    /// </summary>
-    internal static string SessionCookieName(IServiceProvider services)
-        => services.GetService<IOptionsMonitor<CookieAuthenticationOptions>>()?.Get(IdentityConstants.ApplicationScheme).Cookie.Name
-           ?? CookieAuthenticationDefaults.CookiePrefix + IdentityConstants.ApplicationScheme;
 
     private static bool IsUnder(ApiDescription description, string prefix)
     {

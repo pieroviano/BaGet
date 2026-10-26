@@ -19,8 +19,8 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// The JSON twins (<c>/api/ui</c>) of the NuGet upload screen and of the npm, Maven and Docker screens (plan, wave 1, <c>split-formats</c>): the model the twin
-/// carries is what the page shows, the statuses correspond (404 to 404, sign-in redirect to 401), the uploads work with a cookie plus the antiforgery header or with an
-/// API key alone, a refusal carries the status of the refusal, and nothing a request carried (an API key) comes back in a response.
+/// carries is what the page shows, the statuses correspond (404 to 404, sign-in redirect to 401), the uploads work with an API key (the cookie is not a credential on the twins, so a browser
+/// session is anonymous there and there is no antiforgery), a refusal carries the status of the refusal, and nothing a request carried (an API key) comes back in a response.
 /// </summary>
 public class UiApiFormatScreensTests : IDisposable
 {
@@ -79,14 +79,10 @@ public class UiApiFormatScreensTests : IDisposable
         return await ReadAsync(response);
     }
 
-    private async Task<string> AntiforgeryAsync(Browser browser)
-        => (await GetAsync(browser, "/api/ui/antiforgery")).Json!["requestToken"]!.GetValue<string>();
-
-    private async Task<Answer> PostAsync(Browser browser, string path, HttpContent content, string? key = null, bool antiforgery = false)
+    private async Task<Answer> PostAsync(Browser browser, string path, HttpContent content, string? key = null)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = content };
         if (key != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-        if (antiforgery) request.Headers.Add("RequestVerificationToken", await AntiforgeryAsync(browser));
         using var response = await browser.SendAsync(request);
 
         return await ReadAsync(response);
@@ -121,7 +117,7 @@ public class UiApiFormatScreensTests : IDisposable
     public async Task TheUploadFormIsTheSameStateOnThePageAndOnItsTwin()
     {
         var page = await GetAsync(_alice, "/upload");
-        var api = await GetAsync(_alice, "/api/ui/upload");
+        var api = await GetAsync(_anonymous, "/api/ui/upload", _aliceKey);
         var anonymousApi = await GetAsync(_anonymous, "/api/ui/upload");
 
         Assert.Equal(HttpStatusCode.OK, page.Status);
@@ -136,9 +132,9 @@ public class UiApiFormatScreensTests : IDisposable
     }
 
     [Fact]
-    public async Task ASignedInUserStagesPublishesAndDiscardsThroughTheTwinWithTheAntiforgeryHeader()
+    public async Task AKeyHolderStagesPublishesAndDiscardsThroughTheTwinWithoutAnyAntiforgeryHeader()
     {
-        var staged = await PostAsync(_alice, "/api/ui/upload/stage", Multipart("package", "TestData.1.2.3.nupkg", NuGetPackage()), antiforgery: true);
+        var staged = await PostAsync(_anonymous, "/api/ui/upload/stage", Multipart("package", "TestData.1.2.3.nupkg", NuGetPackage()), key: _aliceKey);
 
         Assert.Equal(HttpStatusCode.OK, staged.Status);
         var preview = staged.Json!["model"]!["staged"]!;
@@ -147,12 +143,12 @@ public class UiApiFormatScreensTests : IDisposable
         var token = preview["token"]!.GetValue<string>();
 
         // Without the terms accepted the twin refuses with 400 and keeps the upload staged.
-        var refused = await PostAsync(_alice, "/api/ui/upload/submit", Json($"{{\"token\":\"{token}\"}}"), antiforgery: true);
+        var refused = await PostAsync(_anonymous, "/api/ui/upload/submit", Json($"{{\"token\":\"{token}\"}}"), key: _aliceKey);
         Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
         Assert.Equal("Invalid", refused.Json!["status"]!.GetValue<string>());
         Assert.NotEmpty(refused.Json["errors"]![""]!.AsArray());
 
-        var published = await PostAsync(_alice, "/api/ui/upload/submit", Json($"{{\"token\":\"{token}\",\"acceptTerms\":true}}"), antiforgery: true);
+        var published = await PostAsync(_anonymous, "/api/ui/upload/submit", Json($"{{\"token\":\"{token}\",\"acceptTerms\":true}}"), key: _aliceKey);
         Assert.Equal(HttpStatusCode.OK, published.Status);
         Assert.Equal("TestData", published.Json!["model"]!["published"]!["id"]!.GetValue<string>());
 
@@ -160,19 +156,20 @@ public class UiApiFormatScreensTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
 
         // The token names nothing now: the same sentence as the page, with its status.
-        var again = await PostAsync(_alice, "/api/ui/upload/cancel", Json($"{{\"token\":\"{token}\"}}"), antiforgery: true);
+        var again = await PostAsync(_anonymous, "/api/ui/upload/cancel", Json($"{{\"token\":\"{token}\"}}"), key: _aliceKey);
         Assert.Equal(HttpStatusCode.NotFound, again.Status);
         Assert.Contains("no longer staged", again.Json!["errors"]![""]![0]!.GetValue<string>());
     }
 
     [Fact]
-    public async Task ACookieWriteWithoutTheAntiforgeryHeaderIs400AndAnApiKeyNeedsNone()
+    public async Task ACookieIsNotACredentialOnTheUploadTwinAndAnApiKeyIs()
     {
-        var forged = await PostAsync(_alice, "/api/ui/upload/stage", Multipart("package", "TestData.1.2.3.nupkg", NuGetPackage()));
-        Assert.Equal(HttpStatusCode.BadRequest, forged.Status);
-        Assert.Null(forged.Json!["model"]);
+        // The signed-in browser is anonymous on /api/ui: refused like a visitor who did not sign in.
+        var cookie = await PostAsync(_alice, "/api/ui/upload/stage", Multipart("package", "TestData.1.2.3.nupkg", NuGetPackage()));
+        Assert.Equal(HttpStatusCode.Unauthorized, cookie.Status);
+        Assert.Equal("Sign in to upload a package.", cookie.Json!["errors"]![""]![0]!.GetValue<string>());
 
-        // A key is not a cookie: no antiforgery, and the key's owner is the uploader.
+        // The key's owner is the uploader.
         var staged = await PostAsync(_anonymous, "/api/ui/upload/stage", Multipart("package", "TestData.1.2.3.nupkg", NuGetPackage()), key: _aliceKey);
         Assert.Equal(HttpStatusCode.OK, staged.Status);
         Assert.Equal("TestData", staged.Json!["model"]!["staged"]!["id"]!.GetValue<string>());
@@ -181,10 +178,8 @@ public class UiApiFormatScreensTests : IDisposable
     [Fact]
     public async Task AnAnonymousUploadIsRefusedWith401AndTheSentenceOfThePage()
     {
-        var token = await AntiforgeryAsync(_anonymous);
         using var content = Multipart("package", "TestData.1.2.3.nupkg", NuGetPackage());
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/ui/upload/stage") { Content = content };
-        request.Headers.Add("RequestVerificationToken", token);
         using var response = await _anonymous.SendAsync(request);
         var api = await ReadAsync(response);
 
@@ -211,7 +206,7 @@ public class UiApiFormatScreensTests : IDisposable
     public async Task AnApiKeyOfTheRequestIsNeverEchoedInTheAnswer()
     {
         var fields = new Dictionary<string, string> { { "apiKey", PastedKey } };
-        var answer = await PostAsync(_alice, "/api/ui/upload/stage", Multipart("package", "x.nupkg", Encoding.UTF8.GetBytes("not a zip"), fields), antiforgery: true);
+        var answer = await PostAsync(_anonymous, "/api/ui/upload/stage", Multipart("package", "x.nupkg", Encoding.UTF8.GetBytes("not a zip"), fields), key: _aliceKey);
 
         Assert.DoesNotContain(PastedKey, answer.Body, StringComparison.Ordinal);
         Assert.DoesNotContain(_aliceKey, answer.Body, StringComparison.Ordinal);
@@ -222,8 +217,8 @@ public class UiApiFormatScreensTests : IDisposable
     {
         await _app.CreateRepositoryAsync("second", Token);
 
-        var known = await GetAsync(_alice, "/api/ui/r/second/upload");
-        var unknown = await GetAsync(_alice, "/api/ui/r/nope/upload");
+        var known = await GetAsync(_anonymous, "/api/ui/r/second/upload", _aliceKey);
+        var unknown = await GetAsync(_anonymous, "/api/ui/r/nope/upload", _aliceKey);
         var unknownPage = await GetAsync(_alice, "/r/nope/upload");
 
         Assert.Equal(HttpStatusCode.OK, known.Status);
@@ -321,10 +316,8 @@ public class UiApiFormatScreensTests : IDisposable
         var package = await GetAsync(_anonymous, "/api/ui/r/web/npm-packages/up-lib");
         Assert.Equal("up-lib", package.Json!["model"]!["package"]!["name"]!.GetValue<string>());
 
-        var token = await AntiforgeryAsync(_anonymous);
         using var content = Multipart("package", "up-lib-2.0.1.tgz", NpmTestPackages.Tarball("up-lib", "2.0.1").Bytes);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/ui/r/web/npm-upload") { Content = content };
-        request.Headers.Add("RequestVerificationToken", token);
         using var response = await _anonymous.SendAsync(request);
         var refused = await ReadAsync(response);
         Assert.Equal(HttpStatusCode.Unauthorized, refused.Status);

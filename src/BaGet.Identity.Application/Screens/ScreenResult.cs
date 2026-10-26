@@ -123,8 +123,16 @@ public sealed class ScreenResult<T> : IScreenResult
     /// <summary>The caller may not do this.</summary>
     public static ScreenResult<T> Forbidden() => new(ScreenStatus.Forbidden, default, null, null, null);
 
+    /// <summary>The caller may not do this, and <paramref name="message"/> says why (carried as the form-wide error, <c>""</c>).</summary>
+    public static ScreenResult<T> Forbidden(string message)
+        => new(ScreenStatus.Forbidden, default, new Dictionary<string, string[]> { [string.Empty] = new[] { message } }, null, null);
+
     /// <summary>The caller must sign in.</summary>
     public static ScreenResult<T> SignIn() => new(ScreenStatus.SignIn, default, null, null, null);
+
+    /// <summary>The caller must sign in, and <paramref name="message"/> says how (carried as the form-wide error, <c>""</c>).</summary>
+    public static ScreenResult<T> SignIn(string message)
+        => new(ScreenStatus.SignIn, default, new Dictionary<string, string[]> { [string.Empty] = new[] { message } }, null, null);
 
     /// <summary>The action is done; continue at <paramref name="next"/>.</summary>
     public static ScreenResult<T> GoTo(ScreenNext next)
@@ -138,8 +146,8 @@ public sealed class ScreenResult<T> : IScreenResult
         return refusal.Status switch
         {
             ScreenStatus.NotFound => NotFound(),
-            ScreenStatus.Forbidden => Forbidden(),
-            ScreenStatus.SignIn => SignIn(),
+            ScreenStatus.Forbidden => refusal.Errors.Count > 0 ? new(ScreenStatus.Forbidden, default, refusal.Errors, null, null) : Forbidden(),
+            ScreenStatus.SignIn => refusal.Errors.Count > 0 ? new(ScreenStatus.SignIn, default, refusal.Errors, null, null) : SignIn(),
             ScreenStatus.Next => GoTo(refusal.Next!),
             _ => throw new ArgumentException("Only an answer without a model can be carried over.", nameof(refusal)),
         };

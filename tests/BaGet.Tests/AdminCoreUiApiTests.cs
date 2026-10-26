@@ -18,8 +18,8 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// The JSON twins (<c>/api/ui/admin/...</c>) of the core administration screens (users, account detail and deletion, user and ownerless packages, organizations,
-/// settings, operations, validation, abuse, cluster, formats, access notice): who may call them (anonymous / user / administrator session / <c>admin:api</c> key /
-/// other keys), the antiforgery rule, the read-only gate, that the answers carry what the page shows and that nothing secret leaves the server.
+/// settings, operations, validation, abuse, cluster, formats, access notice): who may call them (anonymous / user / administrator cookie (never accepted) / <c>admin:api</c> key /
+/// other keys), the read-only gate, that the answers carry what the page shows and that nothing secret leaves the server.
 /// </summary>
 public class AdminCoreUiApiTests : IDisposable
 {
@@ -82,11 +82,10 @@ public class AdminCoreUiApiTests : IDisposable
 
     private sealed record Answer(HttpStatusCode Status, JsonNode? Json, HttpResponseHeaders Headers, string Body);
 
-    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null, string? antiforgery = null)
+    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null)
     {
         using var request = new HttpRequestMessage(method, path);
         if (key != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-        if (antiforgery != null) request.Headers.Add("RequestVerificationToken", antiforgery);
         if (method != HttpMethod.Get)
         {
             var json = body == null ? "{}" : System.Text.Json.JsonSerializer.Serialize(body, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
@@ -99,8 +98,7 @@ public class AdminCoreUiApiTests : IDisposable
         return new Answer(response.StatusCode, text.Length > 0 && text[0] == '{' ? JsonNode.Parse(text) : null, response.Headers, text);
     }
 
-    private async Task<string> TokenAsync(Browser browser)
-        => (await SendAsync(browser, HttpMethod.Get, "/api/ui/antiforgery")).Json!["requestToken"]!.GetValue<string>();
+    private Task<Answer> AsAdminAsync(HttpMethod method, string path, object? body = null) => SendAsync(_anonymous, method, path, body, key: _adminKey);
 
     private static string Status(Answer answer) => answer.Json!["status"]!.GetValue<string>();
 
@@ -127,14 +125,14 @@ public class AdminCoreUiApiTests : IDisposable
 
     [Theory]
     [MemberData(nameof(ReadScreens))]
-    public async Task AnAdministratorScreenIsAnAdminSessionOrAnAdminApiKeyAndNobodyElse(string path)
+    public async Task AnAdministratorScreenIsAnAdminApiKeyAndNobodyElse(string path)
     {
         Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, path)).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _adminKey)).Status);
-        // The global key administers but has no account: a screen that compares the caller with the account it acts on (deleting) needs a signed-in user.
-        Assert.Equal(path.EndsWith("/delete", StringComparison.Ordinal) ? HttpStatusCode.Unauthorized : HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
+        // The global key has no account (the screens act as the signed-in user): refused on every administration screen.
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
 
         // A key without the administration scope, a limited one and a plain user's key.
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _pushOnlyAdminKey)).Status);
@@ -147,7 +145,7 @@ public class AdminCoreUiApiTests : IDisposable
     {
         foreach (var path in new[] { "/api/ui/admin/users/nobody", "/api/ui/admin/users/nobody/delete", "/api/ui/admin/users/nobody/packages", "/api/ui/admin/organizations/nobody" })
         {
-            var answer = await SendAsync(_root, HttpMethod.Get, path);
+            var answer = await AsAdminAsync(HttpMethod.Get, path);
 
             Assert.Equal(HttpStatusCode.NotFound, answer.Status);
             Assert.Equal("NotFound", Status(answer));
@@ -157,12 +155,12 @@ public class AdminCoreUiApiTests : IDisposable
     // ---- writes ----
 
     [Fact]
-    public async Task ACookieWriteNeedsTheAntiforgeryHeaderAndAKeyWriteDoesNot()
+    public async Task ACookieWriteIs401AndAKeyWriteNeedsNoAntiforgeryHeader()
     {
         var body = new { userName = "alice", password = Password };
 
         var refused = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/users/promote", body);
-        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.Status);
         Assert.False((await FindAsync(_app, "alice"))!.IsAdministrator);
 
         var withKey = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/users/promote", body, key: _adminKey);
@@ -172,9 +170,10 @@ public class AdminCoreUiApiTests : IDisposable
         Assert.Equal("alice is now an administrator.", withKey.Json["next"]!["message"]!.GetValue<string>());
         Assert.True((await FindAsync(_app, "alice"))!.IsAdministrator);
 
-        var withCookie = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/users/demote", body, antiforgery: await TokenAsync(_root));
-        Assert.Equal(HttpStatusCode.OK, withCookie.Status);
-        Assert.False((await FindAsync(_app, "alice"))!.IsAdministrator);
+        // The global key is refused at the gate, not by a use case that finds no current user.
+        var global = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/users/demote", body, key: GlobalKey);
+        Assert.Equal(HttpStatusCode.Forbidden, global.Status);
+        Assert.True((await FindAsync(_app, "alice"))!.IsAdministrator);
     }
 
     [Fact]
@@ -275,8 +274,8 @@ public class AdminCoreUiApiTests : IDisposable
         Assert.Equal("Next", Status(answer));
         Assert.Equal("/Admin/OrganizationDetail", answer.Json!["next"]!["screen"]!.GetValue<string>());
         Assert.Equal("acme2", answer.Json["next"]!["routeValues"]!["name"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/organizations/acme2")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/organizations/acme")).Status);
+        Assert.Equal(HttpStatusCode.OK, (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/organizations/acme2")).Status);
+        Assert.Equal(HttpStatusCode.NotFound, (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/organizations/acme")).Status);
     }
 
     [Fact]
@@ -315,14 +314,14 @@ public class AdminCoreUiApiTests : IDisposable
     public async Task TheUserListPageAndItsTwinListTheSameAccounts()
     {
         var page = await _root.GetPageAsync("/admin/users");
-        var json = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/users")).Json!["model"]!;
+        var json = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/users")).Json!["model"]!;
 
         var names = json["users"]!.AsArray().Select(u => u!["userName"]!.GetValue<string>()).ToList();
         Assert.Equal(new[] { "alice", "bob", "root" }, names);
         foreach (var name in names) Assert.Contains(name, page, StringComparison.Ordinal);
         Assert.Equal("root", json["currentUserName"]!.GetValue<string>());
 
-        var filtered = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/users?q=ali")).Json!["model"]!["users"]!.AsArray();
+        var filtered = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/users?q=ali")).Json!["model"]!["users"]!.AsArray();
         Assert.Single(filtered);
     }
 
@@ -330,7 +329,7 @@ public class AdminCoreUiApiTests : IDisposable
     public async Task TheAccountPageAndItsTwinAgree()
     {
         var page = await _root.GetPageAsync("/admin/users/alice");
-        var json = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/users/alice")).Json!["model"]!;
+        var json = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/users/alice")).Json!["model"]!;
 
         Assert.Equal("alice", json["account"]!["userName"]!.GetValue<string>());
         Assert.Equal("alice@example.com", json["account"]!["email"]!.GetValue<string>());
@@ -345,20 +344,20 @@ public class AdminCoreUiApiTests : IDisposable
     [Fact]
     public async Task TheOrganizationAndTheClusterAndTheFormatsAgreeWithTheirPages()
     {
-        var organization = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/organizations/acme")).Json!["model"]!;
+        var organization = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/organizations/acme")).Json!["model"]!;
         Assert.Equal("acme", organization["organization"]!["name"]!.GetValue<string>());
         Assert.Equal("bob", organization["members"]![0]!["userName"]!.GetValue<string>());
         Assert.True(organization["members"]![0]!["isAdmin"]!.GetValue<bool>());
         Assert.Contains("bob", await _root.GetPageAsync("/admin/organizations/acme"), StringComparison.Ordinal);
 
-        var list = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/organizations")).Json!["model"]!["organizations"]!.AsArray();
+        var list = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/organizations")).Json!["model"]!["organizations"]!.AsArray();
         Assert.Equal("acme", list.Single()!["name"]!.GetValue<string>());
 
-        var cluster = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/cluster")).Json!["model"]!["status"]!;
+        var cluster = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/cluster")).Json!["model"]!["status"]!;
         Assert.False(cluster["enabled"]!.GetValue<bool>());
         Assert.Contains(cluster["thisNode"]!.GetValue<string>(), await _root.GetPageAsync("/admin/cluster"), StringComparison.Ordinal);
 
-        var formats = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/formats")).Json!["model"]!["rows"]!.AsArray();
+        var formats = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/formats")).Json!["model"]!["rows"]!.AsArray();
         var displayNames = formats.Select(r => r!["module"]!["displayName"]!.GetValue<string>()).ToList();
         Assert.Contains("NuGet", displayNames);
         var page = await _root.GetPageAsync("/admin/formats");
@@ -368,7 +367,7 @@ public class AdminCoreUiApiTests : IDisposable
     [Fact]
     public async Task TheOperationsAndTheValidationAndTheAbuseScreensAnswerLikeTheirPages()
     {
-        var operations = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/operations")).Json!["model"]!;
+        var operations = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/operations")).Json!["model"]!;
         Assert.NotEmpty(operations["rows"]!.AsArray());
         Assert.Contains(operations["rows"]![0]!["operation"]!["title"]!.GetValue<string>(), await _root.GetPageAsync("/admin/operations"), StringComparison.Ordinal);
 
@@ -378,10 +377,10 @@ public class AdminCoreUiApiTests : IDisposable
         var unknown = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/operations", new { operation = "nope", repository = "default", password = Password }, key: _adminKey);
         Assert.Equal(HttpStatusCode.NotFound, unknown.Status);
 
-        var validation = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/validation")).Json!["model"]!;
+        var validation = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/validation")).Json!["model"]!;
         Assert.False(validation["isSupported"]!.GetValue<bool>() && validation["submissions"]!.AsArray().Count > 0);
 
-        var abuse = await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/abuse?all=true");
+        var abuse = await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/abuse?all=true");
         Assert.True(abuse.Json!["model"]!["all"]!.GetValue<bool>());
         var missing = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/abuse/resolve", new { key = 12345, all = false }, key: _adminKey);
         Assert.Equal(HttpStatusCode.NotFound, missing.Status);
@@ -392,7 +391,7 @@ public class AdminCoreUiApiTests : IDisposable
     {
         var page = await _root.GetAsync("/admin/settings?handler=CopyStatus");
         var pageJson = JsonNode.Parse(await page.Content.ReadAsStringAsync(Token))!;
-        var twin = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/settings/copy-status")).Json!["model"]!;
+        var twin = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/settings/copy-status")).Json!["model"]!;
 
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
         Assert.Equal("Idle", pageJson["phase"]!.GetValue<string>());

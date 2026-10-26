@@ -18,7 +18,7 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// The JSON twins (<c>/api/ui/admin/retention</c>, <c>/scanning</c>, <c>/replication</c>) of the retention, scanning and replication screens: who may call
-/// them (anonymous / user / administrator session / <c>admin:api</c> key / other keys), the antiforgery rule, the read-only gate, the password, that the
+/// them (anonymous / user / administrator cookie (never accepted) / <c>admin:api</c> key / other keys), the read-only gate, the password, that the
 /// answers carry what the pages show, and that no answer carries a secret (the peer API key of a replication, the scanner's registry credential).
 /// </summary>
 public class PolicyScreensUiApiTests : IDisposable
@@ -86,11 +86,10 @@ public class PolicyScreensUiApiTests : IDisposable
 
     private sealed record Answer(HttpStatusCode Status, JsonNode? Json, string Body);
 
-    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null, string? antiforgery = null)
+    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null)
     {
         using var request = new HttpRequestMessage(method, path);
         if (key != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-        if (antiforgery != null) request.Headers.Add("RequestVerificationToken", antiforgery);
         if (method != HttpMethod.Get)
         {
             var json = body == null ? "{}" : System.Text.Json.JsonSerializer.Serialize(body, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
@@ -104,9 +103,6 @@ public class PolicyScreensUiApiTests : IDisposable
     }
 
     private Task<Answer> AdminAsync(HttpMethod method, string path, object? body = null) => SendAsync(_anonymous, method, path, body, key: _adminKey);
-
-    private async Task<string> TokenAsync(Browser browser)
-        => (await SendAsync(browser, HttpMethod.Get, "/api/ui/antiforgery")).Json!["requestToken"]!.GetValue<string>();
 
     private static string Status(Answer answer) => answer.Json!["status"]!.GetValue<string>();
 
@@ -154,13 +150,13 @@ public class PolicyScreensUiApiTests : IDisposable
 
     [Theory]
     [MemberData(nameof(ReadScreens))]
-    public async Task AScreenIsAnAdminSessionOrAnAdminApiKeyAndNobodyElse(string path)
+    public async Task AScreenIsAnAdminApiKeyAndNobodyElse(string path)
     {
         Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, path)).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _adminKey)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
 
         // A key without the administration scope, a limited one and a plain user's key.
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _pushOnlyAdminKey)).Status);
@@ -177,8 +173,8 @@ public class PolicyScreensUiApiTests : IDisposable
         foreach (var path in new[] { $"/api/ui/admin/retention/{policy}", $"/api/ui/admin/replication/{replication}" })
         {
             Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
-            Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
-            Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, path)).Status);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, path)).Status);
             Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _aliceKey)).Status);
         }
     }
@@ -194,7 +190,7 @@ public class PolicyScreensUiApiTests : IDisposable
             "/api/ui/admin/scanning/projects/nope",
         })
         {
-            var answer = await SendAsync(_root, HttpMethod.Get, path);
+            var answer = await AdminAsync(HttpMethod.Get, path);
 
             Assert.Equal(HttpStatusCode.NotFound, answer.Status);
             Assert.Equal("NotFound", Status(answer));
@@ -221,21 +217,15 @@ public class PolicyScreensUiApiTests : IDisposable
     // ---- writes ----
 
     [Fact]
-    public async Task ACookieWriteNeedsTheAntiforgeryHeaderAndAKeyWriteDoesNot()
+    public async Task ACookieWriteIs401AndAKeyWriteNeedsNoAntiforgeryHeader()
     {
-        var body = PolicyBody("cookie");
-
-        var refused = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/retention", body);
-        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
+        var refused = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/retention", PolicyBody("cookie"));
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.Status);
         Assert.Empty(await _app.Services.GetRequiredService<IRetentionAdministration>().ListPoliciesAsync(Token));
-
-        var withCookie = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/retention", body, antiforgery: await TokenAsync(_root));
-        Assert.Equal(HttpStatusCode.OK, withCookie.Status);
-        Assert.Equal("Next", Status(withCookie));
 
         var withKey = await AdminAsync(HttpMethod.Post, "/api/ui/admin/retention", PolicyBody("by-key"));
         Assert.Equal("Next", Status(withKey));
-        Assert.Equal(2, (await _app.Services.GetRequiredService<IRetentionAdministration>().ListPoliciesAsync(Token)).Count);
+        Assert.Single(await _app.Services.GetRequiredService<IRetentionAdministration>().ListPoliciesAsync(Token));
     }
 
     [Fact]
@@ -298,11 +288,11 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.NotNull(refused.Json["model"]!["repositories"]);
 
         var key = await CreatePolicyAsync("first");
-        var list = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/retention")).Json!["model"]!;
+        var list = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/retention")).Json!["model"]!;
         Assert.Equal("first", list["policies"]![0]!["policy"]!["name"]!.GetValue<string>());
         Assert.Contains("first", await _root.GetPageAsync("/admin/retention"), StringComparison.Ordinal);
 
-        var one = (await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Json!["model"]!;
+        var one = (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Json!["model"]!;
         Assert.Equal(key, one["key"]!.GetValue<int>());
         Assert.Equal(3, one["form"]!["keepLast"]!.GetValue<int>());
         Assert.Equal("default", one["view"]!["repository"]!.GetValue<string>());
@@ -320,7 +310,7 @@ public class PolicyScreensUiApiTests : IDisposable
 
         var saved = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/retention/{key}/save", PolicyBody("renamed", keepLast: 5));
         Assert.Equal("Policy renamed was saved.", NextMessage(saved));
-        Assert.Equal(5, (await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Json!["model"]!["form"]!["keepLast"]!.GetValue<int>());
+        Assert.Equal(5, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Json!["model"]!["form"]!["keepLast"]!.GetValue<int>());
 
         var dry = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/retention/{key}/dry-run");
         Assert.Equal("The dry run started; nothing is deleted.", NextMessage(dry));
@@ -333,11 +323,11 @@ public class PolicyScreensUiApiTests : IDisposable
 
         var kept = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/retention/{key}/delete", new { password = "wrong" });
         Assert.Contains("confirmation is incorrect", NextError(kept), StringComparison.Ordinal);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Status);
+        Assert.Equal(HttpStatusCode.OK, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Status);
 
         var deleted = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/retention/{key}/delete", new { password = Password });
         Assert.Equal("/Admin/Retention", deleted.Json!["next"]!["screen"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Status);
+        Assert.Equal(HttpStatusCode.NotFound, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Status);
     }
 
     [Fact]
@@ -351,7 +341,7 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.Equal(HttpStatusCode.BadRequest, bad.Status);
         Assert.Equal("nowhere", bad.Json!["model"]!["holdRepository"]!.GetValue<string>());
 
-        var holds = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/retention/holds?repository=default")).Json!["model"]!["holds"]!.AsArray();
+        var holds = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/retention/holds?repository=default")).Json!["model"]!["holds"]!.AsArray();
         var hold = Assert.Single(holds)!;
         Assert.Equal("case 12", hold["reason"]!.GetValue<string>());
         Assert.Contains("Some.Package", await _root.GetPageAsync("/admin/retention/holds?repository=default"), StringComparison.Ordinal);
@@ -359,11 +349,11 @@ public class PolicyScreensUiApiTests : IDisposable
         var keyOfHold = hold["key"]!.GetValue<int>();
         var wrong = await AdminAsync(HttpMethod.Post, "/api/ui/admin/retention/holds/remove", new { key = keyOfHold, password = "wrong" });
         Assert.Contains("confirmation is incorrect", NextError(wrong), StringComparison.Ordinal);
-        Assert.Single((await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/retention/holds")).Json!["model"]!["holds"]!.AsArray());
+        Assert.Single((await AdminAsync(HttpMethod.Get, "/api/ui/admin/retention/holds")).Json!["model"]!["holds"]!.AsArray());
 
         var lifted = await AdminAsync(HttpMethod.Post, "/api/ui/admin/retention/holds/remove", new { key = keyOfHold, password = Password });
         Assert.Equal("The hold was lifted.", NextMessage(lifted));
-        Assert.Empty((await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/retention/holds")).Json!["model"]!["holds"]!.AsArray());
+        Assert.Empty((await AdminAsync(HttpMethod.Get, "/api/ui/admin/retention/holds")).Json!["model"]!["holds"]!.AsArray());
     }
 
     // ---- scanning ----
@@ -371,7 +361,7 @@ public class PolicyScreensUiApiTests : IDisposable
     [Fact]
     public async Task TheOverviewCarriesTheSettingsTheScreenShowsAndNeverTheScannersCredential()
     {
-        var overview = await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/scanning");
+        var overview = await AdminAsync(HttpMethod.Get, "/api/ui/admin/scanning");
         var model = overview.Json!["model"]!;
 
         Assert.False(model["settings"]!["enabled"]!.GetValue<bool>());
@@ -397,7 +387,7 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.Equal("The scanning policy of default was saved.", NextMessage(saved));
         Assert.Equal("/Admin/ScanRepository", saved.Json!["next"]!["screen"]!.GetValue<string>());
 
-        var dashboard = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/scanning/default?min=1&p=0")).Json!["model"]!;
+        var dashboard = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/scanning/default?min=1&p=0")).Json!["model"]!;
         Assert.Equal(1, dashboard["own"]!["warnSeverity"]!.GetValue<int>());
         Assert.Equal(3, dashboard["own"]!["blockDownloadSeverity"]!.GetValue<int>());
         Assert.True(dashboard["own"]!["blockUnscanned"]!.GetValue<bool>());
@@ -445,7 +435,7 @@ public class PolicyScreensUiApiTests : IDisposable
             await db.SaveChangesAsync(Token);
         }
 
-        var dashboard = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/scanning/default")).Json!["model"]!;
+        var dashboard = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/scanning/default")).Json!["model"]!;
         var finding = Assert.Single(dashboard["findings"]!.AsArray())!;
         var link = dashboard["packageLinks"]![finding["key"]!.GetValue<int>().ToString(System.Globalization.CultureInfo.InvariantCulture)]!;
 
@@ -471,7 +461,7 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.Null(refused.Json!["model"]!["form"]!["apiKey"]);
 
         var key = await CreateReplicationAsync("first");
-        var config = await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/replication/{key}");
+        var config = await AdminAsync(HttpMethod.Get, $"/api/ui/admin/replication/{key}");
         var model = config.Json!["model"]!;
 
         Assert.True(model["view"]!["hasApiKey"]!.GetValue<bool>());
@@ -480,7 +470,7 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.DoesNotContain(PeerKey, config.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("protectedApiKey", config.Body, StringComparison.OrdinalIgnoreCase);
 
-        var list = await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/replication");
+        var list = await AdminAsync(HttpMethod.Get, "/api/ui/admin/replication");
         Assert.Equal("first", list.Json!["model"]!["replications"]![0]!["config"]!["name"]!.GetValue<string>());
         Assert.DoesNotContain("protectedApiKey", list.Body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("first", await _root.GetPageAsync("/admin/replication"), StringComparison.Ordinal);
@@ -501,7 +491,7 @@ public class PolicyScreensUiApiTests : IDisposable
         // A save with no key typed keeps the stored one.
         var saved = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/replication/{key}/save", ReplicationBody("tested", apiKey: null));
         Assert.Equal("Replication tested was saved.", NextMessage(saved));
-        Assert.True((await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Json!["model"]!["view"]!["hasApiKey"]!.GetValue<bool>());
+        Assert.True((await AdminAsync(HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Json!["model"]!["view"]!["hasApiKey"]!.GetValue<bool>());
     }
 
     [Fact]
@@ -514,10 +504,10 @@ public class PolicyScreensUiApiTests : IDisposable
 
         var wrong = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/replication/{key}/delete", new { password = "wrong" });
         Assert.Contains("confirmation is incorrect", NextError(wrong), StringComparison.Ordinal);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Status);
+        Assert.Equal(HttpStatusCode.OK, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Status);
 
         var deleted = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/replication/{key}/delete", new { password = Password });
         Assert.Equal("/Admin/Replication", deleted.Json!["next"]!["screen"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_root, HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Status);
+        Assert.Equal(HttpStatusCode.NotFound, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Status);
     }
 }

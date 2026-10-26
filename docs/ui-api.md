@@ -18,20 +18,21 @@ Route values keep the screen's names (`{id}`, `{name}`, `{version}`). The comple
 
 ## Who may call
 
+Like [`/api/v1`](admin-api.md): **API keys only**. The browser session cookie is never a credential on `/api/ui`, and there is no antiforgery token
+(nothing ambient for a cross-site page to ride on).
+
 | Caller | Rule |
 |---|---|
-| Browser session (cookie) | Reads freely; every write needs the antiforgery header (below), else `400` |
-| API key (Basic password, Bearer, or `X-NuGet-ApiKey`) | Acts as the key's owner within its scopes and repository limit; no antiforgery; invalid credentials `401`; never falls back to the cookie |
-| Administrator screens | Administrator session, or a key with `admin:api` and no repository limit (a project administrator reaches the screens of their project) |
-| Account self-service (password, two-factor, external logins, API keys, sign-in/out, deletion), package ownership/listing/deletion pages | Cookie only: a key gets `403` |
-| Anonymous | Only public screens (home, package, legal, statistics, sign-in/registration); else `401` |
+| API key in `Authorization: Bearer <key>` or `X-NuGet-ApiKey: <key>` | Acts as the key's owner within its scopes and repository limit. An invalid key is `401` (never read as anonymous, never falls back to the cookie) |
+| HTTP Basic | `401` with a message saying to use Bearer or `X-NuGet-ApiKey` (browsers cache Basic credentials and re-send them cross-site) |
+| Browser session (cookie) | Ignored: the request is anonymous |
+| Anonymous | Public screens (home, package, statistics, legal, report abuse, profiles, browse); a protected screen is `401` |
+| Administrator screens | An administrator's key with `admin:api` and no repository limit. Anyone else: `401` (no key), `403` (another key). The **global `ApiKey` is refused** (`403`: it has no owner; use an administrator's key). A project administrator reaches the screens of their project in the web UI only |
+| Account self-service (sign-in/out, registration, password, two-factor, external logins, API keys, organizations, deletion) and package ownership screens (manage, contact owners, validation status, scan) | **Web UI only**: `403` "use the web screen" to every caller. They stay in the OpenAPI document, marked "Screen only" |
 
 Same gates as the HTML screen: accounts on, mail configured, administrator, access model present, repository check (`r/{repo}`: `404` for an
 unknown repository, a format mismatch or a repository the caller cannot read), `MaintenanceGate` (`503` + `Retry-After` on writes while read-only) and the
-password the screen asks for, sent in the body.
-
-**Antiforgery.** `GET /api/ui/antiforgery` returns `{"headerName": "RequestVerificationToken", "requestToken": "..."}` and sets the
-antiforgery cookie; send the token in that header on every `POST`/`PUT`/`PATCH`/`DELETE` made with the session.
+password the screen asks for, sent in the body. The HTML screens keep their cookie session and antiforgery token; they call the same code in process.
 
 ## The answer: `ScreenResult<T>`
 
@@ -57,13 +58,13 @@ security stamp or an API key value (except the key just created, shown once).
 
 ## Browser-only steps
 
-No twin: the external provider's challenge and callback (they redirect the browser), the "sign in again" button, and downloads that are
-plain URLs (package files, symbol files, avatars).
+No twin: the external provider's challenge and callback (sign-in and re-authentication), and downloads that are
+plain URLs (package files, symbol files, avatars). `UiApiParityTests` fails for any other screen and handler (GET or POST) of a view without a twin.
 
 ## OpenAPI and Scalar
 
-`/openapi/ui.json` (this API), `/openapi/v1.json` and `/openapi/protocols.json`, viewer at `/scalar`; administrators only (everyone else `404`).
-See [testing the APIs with Scalar](scalar.md).
+`/openapi/ui.json` (this API: every twin, plain and `/api/ui/r/{repo}/`; security schemes `bearer` and `apiKey` only), `/openapi/v1.json` and
+`/openapi/protocols.json`, viewer at `/scalar`; administrators only (everyone else `404`). See [testing the APIs with Scalar](scalar.md).
 
 ## Architecture
 
@@ -80,3 +81,42 @@ Moved public types keep their name and namespace and are forwarded (`[TypeForwar
 
 URLs, forms, `?handler=` values, redirects and status codes of the HTML screens are unchanged; the snapshots `ui-routes.txt`,
 `ui-forms.txt` and `public-api.txt` (a superset check) guard it. Each screen's row in [UI coverage](ui-coverage.md) covers its twin.
+
+## Adding a screen
+
+Worked examples: `LegalController` / `LegalUiApiController` / `LegalUseCase`, `StatisticsController` / `StatisticsUiApiController` / `StatisticsUseCase`;
+test twins for each base at the end of `tests/BaGet.Tests/UiApiAccessTests.cs`.
+
+| Piece | Where | Rule |
+|---|---|---|
+| Use case | `BaGet.Web.Application/UseCases` or `BaGet.Identity.Application/UseCases` | Scoped `<Area>UseCase`, one method per GET and handler; inputs explicit (caller `ClaimsPrincipal`, form DTO, `CancellationToken`); returns `ScreenResult<T>`; sees no `HttpContext`, `ModelState`, `TempData`; validates its form itself; a write calls `MaintenanceGate.ThrowIfClosed`; absolute links from `IUrlGenerator`; no secret in a DTO |
+| DTO | same project, same namespace as the old view model | Flat, no EF entities; a public one listed in `public-api.txt` needs `[TypeForwardedTo]` in `TypeForwards.cs` of the old assembly |
+| Registration | `AddBaGetWebUseCases`, or `AddBaGetAccounts` after its `Enabled` check | `TryAddScoped<<Area>UseCase>()` |
+| JSON twin | `BaGet.Web.V3/Controllers/Api` or `BaGet.Identity/Controllers/Api` | `<Feature>UiApiController`; never `[ApiController]`, `[LegacyPage]` or `[AutoValidateAntiforgeryToken]` |
+| View controller | unchanged place | Binds the form, `Api<Twin, Model>(api => ...)`, `Render(...)`; holds no use case |
+
+Twin bases: `UiApiControllerBase` (public), `AccountUiApiControllerBase` (override `RequiresSignIn`/`RequiresEmail`; **screen only**: 403 over HTTP),
+`AdminUiApiControllerBase` (administrator key), `AccessUiApiControllerBase` (override `AuthorizeAsync`; writes `503` while read-only; retention, replication and
+repository bases build on these). Every twin is visible in the OpenAPI `ui` document (the base sets `[ApiExplorerSettings(IgnoreApi = false)]`) and answers
+`ActionResult<ScreenResult<T>>` through `Respond(...)`.
+
+```csharp
+[Route("api/ui")]
+[RepositoryPage(NotOnVirtual = true)]          // same values as the view controller: adds api/ui/r/{repo}/...
+public sealed class StatisticsUiApiController : UiApiControllerBase
+{
+    [HttpGet("stats"), UiApi("/Statistics")]
+    public async Task<ActionResult<ScreenResult<StatisticsViewModel>>> Get(CancellationToken ct)
+        => Respond(await _useCase.GetAsync(ct));
+}
+```
+
+Routes: GET `api/ui/<view path>`; default POST the same path; handler `X` = `api/ui/<path>/<x-kebab-case>` with `[UiApi("/Page", Handler = "X")]`; route values keep the
+view's names. Bodies are `[FromBody]` JSON, uploads `[FromForm]` multipart. Public helpers are `[NonAction]` or non-public. The view action becomes
+`=> Render(await Api<StatisticsUiApiController, StatisticsViewModel>(api => api.Get(ct)), "Index")` and keeps every attribute and its base (whose `ScreenGate` and
+antiforgery already ran: the twin's filters do not run in process).
+
+Checklist: the parity case (page and twin carry the same, statuses correspond) in `UiApiParityTests`; a case per caller kind in `UiApiAccessTests`
+(anonymous, cookie ignored, key, `admin:api` key, limited key, global key, Basic); no password or key in a response; regenerate `Contracts/ui-api.txt` with
+`BAGET_UPDATE_CONTRACTS=1` (never hand-merge); `ui-routes.txt`, `ui-forms.txt` and `public-api.txt` stay unchanged; a row in [UI coverage](ui-coverage.md) for
+a new screen.

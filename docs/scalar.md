@@ -22,7 +22,7 @@ Pick one with the document selector at the top of the viewer.
 
 | Document | JSON | What it covers | Authenticate with |
 |---|---|---|---|
-| `ui` | `/openapi/ui.json` | `/api/ui/...`: the JSON twin of every web screen (what an Angular/React frontend calls) | your browser session, or any API key |
+| `ui` | `/openapi/ui.json` | `/api/ui/...`: the JSON twin of every web screen (what an Angular/React frontend calls) | an API key: `bearer` or `apiKey` (never the session, never Basic) |
 | `v1` | `/openapi/v1.json` (alias `/api/v1/openapi.json`) | `/api/v1/...`: the administration REST API ([admin-api.md](admin-api.md)) | an administrator's `admin:api` key (never the session) |
 | `protocols` | `/openapi/protocols.json` | NuGet V3/V2, symbols, npm, Maven and Docker (OCI) routes, at `/` and `/r/{repo}/` | anonymous where the repository allows it, else an API key |
 
@@ -38,27 +38,22 @@ Open the **Authentication** box of the viewer (or the *Auth* tab of the request 
 | Scheme | Fill in | Use for |
 |---|---|---|
 | `bearer` | the key | `/api/v1`, `/api/ui`, most protocol routes |
-| `basic` | any user name (npm/Maven send the account name), the key as password | the same; what Maven and Docker clients send |
-| `apiKey` (`X-NuGet-ApiKey` header) | the key | NuGet push/delete, also accepted elsewhere |
-| `cookie` | nothing: the browser already sends the session cookie (`.AspNetCore.Identity.Application`) because Scalar runs on the same origin | `/api/ui` only |
+| `basic` | any user name (npm/Maven send the account name), the key as password | `/api/v1` and the protocol routes (what Maven and Docker clients send); **not** `/api/ui` |
+| `apiKey` (`X-NuGet-ApiKey` header) | the key | `/api/ui`, NuGet push/delete, also accepted elsewhere |
 
-A wrong or revoked key is refused with `401`; it never falls back to the session.
+A wrong or revoked key is refused with `401`; it never falls back to the session (no document accepts the session cookie). The `ui` document offers `bearer` and `apiKey` only.
 
 ## Testing `/api/ui` (screens as JSON)
 
-**Reads (GET)** work at once with the session: e.g. `GET /api/ui/admin/repositories` returns the model the **Repositories** screen renders.
+Set the `bearer` (or `apiKey`) scheme to a key, as for `/api/v1`. The browser session is **not** used here (Scalar runs on the same origin, but the cookie is ignored),
+and there is **no antiforgery token** and no `GET /api/ui/antiforgery`. Without a key you are anonymous: public screens work (home, package, statistics, report abuse), a
+protected one answers `401` with a message saying to send a key; HTTP Basic is refused with `401`.
 
-**Writes with the session** need the antiforgery token, exactly like the HTML forms:
-
-1. Send `GET /api/ui/antiforgery`. The answer is `{"headerName": "RequestVerificationToken", "requestToken": "..."}` and it sets the
-   antiforgery cookie the token belongs to.
-2. On every `POST`/`PUT`/`PATCH`/`DELETE`, add the header `RequestVerificationToken: <requestToken>` (in the request window's *Headers*).
-3. Without it the answer is `400` with the message "The antiforgery token is missing or invalid".
-
-**Writes with an API key** need no antiforgery header. Limits:
-
-- Account self-service (password, two-factor, external logins, API keys, sign-in/out, account deletion) refuses keys with `403`: use the session.
-- Administrator screens need a key with `admin:api`; a repository-limited key sees only its repositories (`404` elsewhere).
+- **Administration screens** (`/api/ui/admin/...`) need an administrator's key with the `admin:api` scope and no repository limit, e.g. `GET /api/ui/admin/repositories` returns
+  the model the **Repositories** screen renders. The server's global `ApiKey` is refused with `403` (it has no owner): use an administrator's key.
+- **Account self-service** (sign-in, password, two-factor, API keys, organizations, deletion) and **package ownership** screens (manage, contact owners, validation status, scan)
+  are screen-only: they appear in the document, marked "Screen only", and answer `403` "use the web screen" to everybody.
+- A key limited to repositories sees other repositories as `404`.
 
 **Confirmation passwords.** Actions whose screen asks your password (delete, purge, access changes, ...) take it in the request body field
 the schema shows (e.g. `password`). A wrong one counts as a failed sign-in and can lock the account.
@@ -78,7 +73,7 @@ HTTP status: `200` (Ok, Next), `400` (Invalid), `401` (SignIn), `403` (Forbidden
 
 ## Testing `/api/v1` (administration)
 
-Set the `bearer` scheme to an administrator's `admin:api` key (or the global `ApiKey`); the session is never accepted here. Operations
+Set the `bearer` scheme to an administrator's `admin:api` key (or the global `ApiKey`, which `/api/v1` still accepts); the session is never accepted here. Operations
 marked as needing confirmation also take the key owner's password in the **`X-Confirm-Password`** header (the global key needs none).
 Errors are `application/problem+json` with a stable `code`; lists are paged (`page`, `pageSize` up to 200). Details: [admin-api.md](admin-api.md).
 

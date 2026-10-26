@@ -18,7 +18,7 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// The JSON twins (<c>/api/ui/admin/groups|permissions|projects|audit</c>) of the access-control screens: who may call them (anonymous / user / administrator
-/// session / <c>admin:api</c> key / other keys / a project's administrators by the <c>name</c> route value), the antiforgery rule, the read-only gate, the
+/// cookie (never accepted) / <c>admin:api</c> key / other keys; a project's administrators have no way in over HTTP), the read-only gate, the
 /// password confirmation, that the answers carry what the pages show and that nothing secret leaves the server.
 /// </summary>
 public class AdminAccessUiApiTests : IDisposable
@@ -104,11 +104,10 @@ public class AdminAccessUiApiTests : IDisposable
 
     private sealed record Answer(HttpStatusCode Status, JsonNode? Json, HttpResponseHeaders Headers, string Body);
 
-    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null, string? antiforgery = null)
+    private async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? key = null)
     {
         using var request = new HttpRequestMessage(method, path);
         if (key != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-        if (antiforgery != null) request.Headers.Add("RequestVerificationToken", antiforgery);
         if (method != HttpMethod.Get)
         {
             var json = body == null ? "{}" : System.Text.Json.JsonSerializer.Serialize(body, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
@@ -137,14 +136,18 @@ public class AdminAccessUiApiTests : IDisposable
 
     [Theory]
     [MemberData(nameof(AdministratorScreens))]
-    public async Task AnAccessScreenForAdministratorsIsAnAdminSessionOrAnAdminApiKeyAndNobodyElse(string path)
+    public async Task AnAccessScreenForAdministratorsIsAnAdminApiKeyAndNobodyElse(string path)
     {
         Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_anonymous, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_pat, HttpMethod.Get, path)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_root, HttpMethod.Get, path)).Status);
+
+        // A signed-in browser is anonymous here: the cookie is never a credential on /api/ui.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_alice, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_pat, HttpMethod.Get, path)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_root, HttpMethod.Get, path)).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _adminKey)).Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
+
+        // The global key has no owner: refused on the screens (it still administers /api/v1).
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: GlobalKey)).Status);
 
         // A key without the administration scope, a limited one, a plain user's key and a project administrator's own keys.
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _pushOnlyAdminKey)).Status);
@@ -154,67 +157,33 @@ public class AdminAccessUiApiTests : IDisposable
     }
 
     [Fact]
-    public async Task AProjectAdministratorOpensOnlyTheScreensOfTheirProjectByTheRouteValue()
+    public async Task AProjectAdministratorHasNoWayInOverHttp()
     {
-        // The list: the projects they administer, nothing else.
-        var list = await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/projects");
-        Assert.Equal(HttpStatusCode.OK, list.Status);
-        Assert.Equal(new[] { "shop" }, list.Json!["model"]!["projects"]!.AsArray().Select(p => p!["name"]!.GetValue<string>()).ToArray());
-        Assert.False(list.Json["model"]!["isServerAdministrator"]!.GetValue<bool>());
+        // The project screens of a project administrator exist in the web UI (AccessAdminPagesTests); over HTTP only an administrator's key opens
+        // them, and a project administrator cannot hold one.
+        foreach (var path in new[] { "/api/ui/admin/projects", "/api/ui/admin/projects/shop", "/api/ui/admin/permissions/shop-target" })
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_pat, HttpMethod.Get, path)).Status);
+            Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, path, key: _patPushKey)).Status);
+            Assert.Equal(HttpStatusCode.OK, (await AsAdminAsync(HttpMethod.Get, path)).Status);
+        }
 
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/projects/shop")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/projects/other")).Status);
-
-        // A permission target is open to the administrators of the target's project only.
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/permissions/shop-target")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/permissions/global-target")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/permissions")).Status);
-
-        // Only an administrator can hold an administration key, so a project administrator's keys open nothing; and a user who administers no project sees an empty door (404).
-        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/admin/projects/shop", key: _patPushKey)).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/admin/projects")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_alice, HttpMethod.Get, "/api/ui/admin/projects/shop")).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/projects/shop/set-member", new { type = "User", principalName = "bob", role = "Developer", password = Password })).Status);
+        Assert.DoesNotContain((await WithAsync(x => x.GetProjectAsync("shop", Token)))!.Members, m => m.Principal == "bob");
     }
 
-    [Fact]
-    public async Task AProjectAdministratorManagesMembersAndTargetsButNeverCreatesDeletesOrAssigns()
-    {
-        var token = await TokenAsync(_pat);
-
-        var member = await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/projects/shop/set-member", new { type = "User", principalName = "bob", role = "Developer", password = Password }, antiforgery: token);
-        Assert.Equal("Next", Status(member));
-        Assert.Equal("bob is now Developer of shop.", member.Json!["next"]!["message"]!.GetValue<string>());
-
-        var target = await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/projects/shop/create-target", new { targetName = "mine", repositoryPatterns = "*" }, antiforgery: token);
-        Assert.Equal("Next", Status(target));
-        Assert.Equal("/Admin/PermissionDetail", target.Json!["next"]!["screen"]!.GetValue<string>());
-
-        var assign = await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/projects/shop/assign-repository", new { repository = "default", password = Password }, antiforgery: token);
-        Assert.Contains("Only server administrators", assign.Json!["next"]!["error"]!.GetValue<string>(), StringComparison.Ordinal);
-
-        var delete = await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/projects/shop/delete", new { password = Password }, antiforgery: token);
-        Assert.Contains("Only server administrators", delete.Json!["next"]!["error"]!.GetValue<string>(), StringComparison.Ordinal);
-        Assert.NotNull(await WithAsync(a => a.GetProjectAsync("shop", Token)));
-
-        var create = await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/projects", new { name = "mine" }, antiforgery: token);
-        Assert.Equal(HttpStatusCode.NotFound, create.Status);
-        Assert.Null(await WithAsync(a => a.GetProjectAsync("mine", Token)));
-    }
 
     [Fact]
-    public async Task AProjectTargetIsDeletedBackToItsProjectForAProjectAdministrator()
+    public async Task TheDeletionOfAProjectTargetReturnsToTheTargetsAndItsPreviewShowsOnlyTheProjectsRepositories()
     {
-        var token = await TokenAsync(_pat);
-
-        var deleted = await SendAsync(_pat, HttpMethod.Post, "/api/ui/admin/permissions/shop-target/delete", new { password = Password }, antiforgery: token);
+        var deleted = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/permissions/shop-target/delete", new { password = Password });
 
         Assert.Equal("Next", Status(deleted));
-        Assert.Equal("/Admin/ProjectDetail", deleted.Json!["next"]!["screen"]!.GetValue<string>());
-        Assert.Equal("shop", deleted.Json["next"]!["routeValues"]!["name"]!.GetValue<string>());
+        Assert.Equal("/Admin/Permissions", deleted.Json!["next"]!["screen"]!.GetValue<string>());
         Assert.Null(await WithAsync(a => a.GetTargetAsync("shop-target", Token)));
 
         // The pattern preview of a project target only ever shows the project's repositories.
-        var preview = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/projects/shop/preview", new { targetName = "x", repositoryPatterns = "*" }, key: _adminKey);
+        var preview = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/projects/shop/preview", new { targetName = "x", repositoryPatterns = "*" });
         Assert.Empty(preview.Json!["model"]!["preview"]!["repositories"]!.AsArray());
     }
 
@@ -223,7 +192,7 @@ public class AdminAccessUiApiTests : IDisposable
     {
         foreach (var path in new[] { "/api/ui/admin/groups/nobody", "/api/ui/admin/permissions/nobody", "/api/ui/admin/projects/nobody" })
         {
-            var answer = await SendAsync(_root, HttpMethod.Get, path);
+            var answer = await AsAdminAsync(HttpMethod.Get, path);
 
             Assert.Equal(HttpStatusCode.NotFound, answer.Status);
             Assert.Equal("NotFound", Status(answer));
@@ -232,14 +201,11 @@ public class AdminAccessUiApiTests : IDisposable
 
     // ---- writes ----
 
-    private async Task<string> TokenAsync(Browser browser)
-        => (await SendAsync(browser, HttpMethod.Get, "/api/ui/antiforgery")).Json!["requestToken"]!.GetValue<string>();
-
     [Fact]
-    public async Task ACookieWriteNeedsTheAntiforgeryHeaderAndAKeyWriteDoesNot()
+    public async Task ACookieWriteIs401AndAKeyWriteNeedsNoAntiforgeryHeader()
     {
         var refused = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/groups", new { name = "cookie-group" });
-        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.Status);
         Assert.Null(await WithAsync(a => a.GetGroupAsync("cookie-group", Token)));
 
         var withKey = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/groups", new { name = "key-group", description = "by key" });
@@ -249,11 +215,7 @@ public class AdminAccessUiApiTests : IDisposable
         Assert.Equal("key-group", withKey.Json["next"]!["routeValues"]!["name"]!.GetValue<string>());
         Assert.Equal("Group key-group was created.", withKey.Json["next"]!["message"]!.GetValue<string>());
 
-        var withCookie = await SendAsync(_root, HttpMethod.Post, "/api/ui/admin/groups", new { name = "cookie-group" }, antiforgery: await TokenAsync(_root));
-        Assert.Equal(HttpStatusCode.OK, withCookie.Status);
-        Assert.NotNull(await WithAsync(a => a.GetGroupAsync("cookie-group", Token)));
-
-        // The audit entry names the account that made the change.
+        // The audit entry names the account the key belongs to.
         var audit = await WithAsync(a => a.AuditAsync(50, Token));
         Assert.Contains(audit, e => e.Actor == "root");
     }
@@ -297,13 +259,10 @@ public class AdminAccessUiApiTests : IDisposable
     }
 
     [Fact]
-    public async Task OnlyAServerAdministratorIsOfferedTheRepositoriesToAssign()
+    public async Task AnAdministratorIsOfferedTheRepositoriesToAssign()
     {
-        var project = await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/projects/shop");
-        Assert.Equal(HttpStatusCode.OK, project.Status);
-        Assert.Empty(project.Json!["model"]!["assignable"]!.AsArray());
-
         var admin = await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/projects/shop");
+
         Assert.NotEmpty(admin.Json!["model"]!["assignable"]!.AsArray());
     }
 
@@ -334,9 +293,9 @@ public class AdminAccessUiApiTests : IDisposable
                 Assert.True(answer.Status == HttpStatusCode.ServiceUnavailable, $"{path} answered {answer.Status}");
             }
 
-            // Reading still works, and so does a project administrator's read.
+            // Reading still works.
             Assert.Equal(HttpStatusCode.OK, (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/groups")).Status);
-            Assert.Equal(HttpStatusCode.OK, (await SendAsync(_pat, HttpMethod.Get, "/api/ui/admin/projects/shop")).Status);
+            Assert.Equal(HttpStatusCode.OK, (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/projects/shop")).Status);
         }
         finally
         {
@@ -465,20 +424,20 @@ public class AdminAccessUiApiTests : IDisposable
     public async Task ThePagesAndTheirTwinsListTheSameThings()
     {
         var groups = await _root.GetPageAsync("/admin/groups");
-        var groupJson = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/groups")).Json!["model"]!;
+        var groupJson = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/groups")).Json!["model"]!;
         var groupNames = groupJson["groups"]!.AsArray().Select(g => g!["name"]!.GetValue<string>()).ToList();
         Assert.Contains("team", groupNames);
         Assert.Contains("Everyone", groupNames);
         foreach (var name in groupNames) Assert.Contains(name, groups, StringComparison.Ordinal);
 
         var targets = await _root.GetPageAsync("/admin/permissions");
-        foreach (var name in (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/permissions")).Json!["model"]!["targets"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()))
+        foreach (var name in (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/permissions")).Json!["model"]!["targets"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()))
         {
             Assert.Contains(name, targets, StringComparison.Ordinal);
         }
 
         var detailPage = await _root.GetPageAsync("/admin/projects/shop");
-        var detail = (await SendAsync(_root, HttpMethod.Get, "/api/ui/admin/projects/shop")).Json!["model"]!;
+        var detail = (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/projects/shop")).Json!["model"]!;
         Assert.Contains("pat", detail["project"]!["members"]![0]!["principal"]!.GetValue<string>(), StringComparison.Ordinal);
         Assert.Contains("pat", detailPage, StringComparison.Ordinal);
         Assert.Contains("shop-target", detailPage, StringComparison.Ordinal);

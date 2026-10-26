@@ -9,8 +9,8 @@ namespace BaGet.Identity.Controllers;
 
 /// <summary>
 /// The JSON twin of the signed-in user's own settings (<c>/api/ui/account/settings</c>, <c>twofactor</c>, <c>apikeys</c>):
-/// <see cref="AccountSettingsController"/> calls it in process. <b>Cookie sessions only</b> and signed in: an API key never changes credentials,
-/// reads the authenticator key or mints another key (403), and a visitor gets 401. A write needs the antiforgery token. A refused action answers
+/// <see cref="AccountSettingsController"/> calls it in process. <b>Screen only</b> (the browser session): over HTTP, where only API keys authenticate, every caller gets 403
+/// "use the web screen"; an API key never changes credentials, reads the authenticator key or mints another key. A refused action answers
 /// 400 with the screen's model (<c>error</c> says why); the password-confirmed actions re-ask the password like the page.
 /// </summary>
 [Route("api/ui/account")]
