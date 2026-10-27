@@ -21,13 +21,11 @@
   <ItemGroup>
     <PackageReference Include="Humanizer" Version="3.0.10" />
     <PackageReference Include="Markdig" Version="1.4.1" />
-    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="10.0.402">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="10.0.402" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftAspNetCoreOpenApiPackageVersion)" />
     <PackageReference Include="Scalar.AspNetCore" Version="$(ScalarAspNetCorePackageVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,10 +46,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Web.Tests" Key="$(BaGetPublicKey)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

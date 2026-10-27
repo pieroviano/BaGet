@@ -15,10 +15,8 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig" Version="1.4.1" />
-    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="10.0.402">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="10.0.402" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,10 +24,6 @@
     <ProjectReference Include="..\BaGet.Catalog\BaGet.Catalog.csproj" />
     <ProjectReference Include="..\BaGet.Validation\BaGet.Validation.csproj" />
     <ProjectReference Include="..\BaGet.Identity.Application\BaGet.Identity.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
