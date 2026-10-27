@@ -165,6 +165,17 @@ public class RemoteNpmRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task AnUpstreamListingVersionsThatDifferOnlyInCaseServesEachByItsOwnSpelling()
+    {
+        _upstream.Add("case-pkg", "1.0.0-Beta", "1.0.0-beta");
+        await CreateRemoteAsync();
+
+        using var lower = await TarballAsync("case-pkg", "1.0.0-beta");
+        Assert.Equal(HttpStatusCode.OK, lower.StatusCode);
+        Assert.Equal(_upstream.Tarball("case-pkg", "1.0.0-beta").Bytes, await lower.Content.ReadAsByteArrayAsync(Cancel));
+    }
+
+    [Fact]
     public async Task ALegacyUpperCaseNameIsServedFromTheUpstreamAndItsTarballIsCached()
     {
         _upstream.Add("JSONStream", "1.3.5");
