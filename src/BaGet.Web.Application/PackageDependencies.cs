@@ -83,15 +83,3 @@ public static class PackageDependencies
         return $"{frameworkName} {frameworkVersion}";
     }
 }
-
-public class DependencyGroupModel
-{
-    public string? Name { get; set; }
-    public IReadOnlyList<DependencyModel>? Dependencies { get; set; }
-}
-
-public record DependencyModel
-{
-    public string? PackageId { get; init; }
-    public string? VersionSpec { get; init; }
-}

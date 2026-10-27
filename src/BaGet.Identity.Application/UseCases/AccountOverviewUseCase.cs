@@ -13,36 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Application.UseCases;
 
-/// <summary>What the "create an organization" form posts.</summary>
-public sealed class CreateOrganizationForm
-{
-    /// <summary>The organization's name.</summary>
-    public string? Name { get; set; }
-}
-
-/// <summary>What the "add a member" form posts.</summary>
-public sealed class AddOrganizationMemberForm
-{
-    /// <summary>The organization.</summary>
-    public string? Organization { get; set; }
-
-    /// <summary>The user to add.</summary>
-    public string? UserName { get; set; }
-
-    /// <summary>Whether the new member administers the organization.</summary>
-    public bool IsAdmin { get; set; }
-}
-
-/// <summary>What the "remove a member" (or "leave") form posts.</summary>
-public sealed class RemoveOrganizationMemberForm
-{
-    /// <summary>The organization.</summary>
-    public string? Organization { get; set; }
-
-    /// <summary>The member to remove.</summary>
-    public string? UserName { get; set; }
-}
-
 /// <summary>
 /// The signed-in user's own overview screens: their organizations (create one, manage the members of those they administer), "My packages" and
 /// "My access", and the redirect from "my profile" to the profile page. Every method needs a signed-in session; none changes credentials.

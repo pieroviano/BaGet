@@ -1,0 +1,38 @@
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Identity.Application;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.UseCases;
+using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Controllers.UI;
+using BaGet.Identity.Mvc;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BaGet.Identity.Controllers;
+
+/// <summary>
+/// The signed-in user's own packages and permissions: "My packages", "My access" and the redirect to the user's profile. It
+/// replaces the Razor Pages <c>Account/Packages</c>, <c>Account/Access</c> and <c>Account/Profile</c>: same URLs. Every action needs a signed-in user.
+/// The work is done by <see cref="AccountPackagesUiApiController"/>.
+/// </summary>
+public sealed class AccountPackagesController : AccountControllerBase
+{
+    /// <inheritdoc/>
+    protected override bool RequiresSignIn => true;
+
+    /// <summary>The package IDs the user owns, per repository.</summary>
+    [Route("account/packages"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Packages")]
+    public async Task<IActionResult> Packages(CancellationToken cancellationToken)
+        => Render(await Api<AccountPackagesUiApiController, AccountPackagesViewModel>(api => api.Packages(cancellationToken)), "Packages");
+
+    /// <summary>What the user may do in each repository.</summary>
+    [Route("account/access"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Access")]
+    public async Task<IActionResult> Access(string? package, CancellationToken cancellationToken)
+        => Render(await Api<AccountPackagesUiApiController, AccountAccessViewModel>(api => api.Access(package, cancellationToken)), "Access");
+
+    /// <summary>The signed-in user's own profile: forwards to <c>/profiles/{name}</c>.</summary>
+    [Route("account/profile"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Profile")]
+    public async Task<IActionResult> MyProfile()
+        => Render(await Api<AccountPackagesUiApiController, EmptyScreen>(api => api.MyProfile()), "MyProfile", _ => null);
+}

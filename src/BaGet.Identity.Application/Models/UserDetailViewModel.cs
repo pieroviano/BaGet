@@ -4,24 +4,6 @@ using BaGet.Core;
 
 namespace BaGet.Identity.Application.Models;
 
-/// <summary>The account an administrator looks at, without anything that signs in as it (no password hash, security stamp or tokens).</summary>
-/// <param name="UserName">The user name.</param>
-/// <param name="Email">The email address, or null.</param>
-/// <param name="Created">When the account was created.</param>
-/// <param name="IsAdministrator">Whether it is a server administrator.</param>
-/// <param name="PendingApproval">Whether it waits for an administrator to enable it.</param>
-public sealed record UserAccountInfo(string? UserName, string? Email, DateTime Created, bool IsAdministrator, bool PendingApproval);
-
-/// <summary>One of an account's API keys as the administrator sees it; the key itself and its hash are never shown.</summary>
-/// <param name="Key">The key's number (what revoking names).</param>
-/// <param name="Description">The description the owner gave it.</param>
-/// <param name="Scopes">What it may do.</param>
-/// <param name="PackageGlobPattern">The package IDs it applies to.</param>
-/// <param name="Created">When it was created.</param>
-/// <param name="Expires">When it expires, or null.</param>
-/// <param name="Repositories">Where it may be used: the repositories it is limited to, or "all repositories".</param>
-public sealed record UserKeyRow(int Key, string? Description, IReadOnlyList<string> Scopes, string? PackageGlobPattern, DateTime Created, DateTime? Expires, string Repositories);
-
 /// <summary>What the user detail screen (<c>/admin/users/{name}</c>) shows: the account, its keys, organizations and access.</summary>
 public sealed class UserDetailViewModel : ConfirmationModel, IFlashModel
 {

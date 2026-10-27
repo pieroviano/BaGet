@@ -141,11 +141,3 @@ public sealed class AdminUserDeletionUseCase : AdminUseCaseBase
         await Confirmation.LoadAsync(model, caller);
     }
 }
-
-/// <summary>The identity failure text shared by the administration use cases.</summary>
-internal static class AccountSupportText
-{
-    /// <summary>The messages of an identity failure as one sentence.</summary>
-    public static string Describe(IdentityResult result)
-        => string.Join(" ", System.Linq.Enumerable.Select(result.Errors, e => e.Description));
-}

@@ -11,47 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Web.V3.Api;
 
-/// <summary>A user in a list.</summary>
-public sealed record UserDto(string UserName, string? Email, DateTime Created, bool IsAdministrator, bool PendingApproval = false);
-
-/// <summary>An API key without its secret or hash.</summary>
-public sealed record ApiKeyDto(int Key, string? Description, IReadOnlyList<string> Scopes, string? PackageGlobPattern, DateTime Created, DateTime? Expires, string Repositories);
-
-/// <summary>A user as the UserDetail page shows them.</summary>
-public sealed record UserDetailDto(
-    UserDto User,
-    IReadOnlyList<string> Groups,
-    IReadOnlyList<UserProjectRole> ProjectRoles,
-    IReadOnlyList<string> Organizations,
-    int OwnedPackageIds,
-    IReadOnlyList<ApiKeyDto> Keys);
-
-/// <summary>What a user may do in one repository, and why.</summary>
-public sealed record UserAccessDto(string Repository, AccessAction Actions, string? Override, IReadOnlyList<AccessReason> Reasons);
-
-/// <summary>Creates an account.</summary>
-public sealed class CreateUserRequest
-{
-    /// <summary>The user name.</summary>
-    public string? UserName { get; set; }
-
-    /// <summary>The address (trusted: marked confirmed), or none.</summary>
-    public string? Email { get; set; }
-
-    /// <summary>The first password; none = the server generates one and returns it once.</summary>
-    public string? Password { get; set; }
-}
-
-/// <summary>The created account; <see cref="GeneratedPassword"/> is shown this once.</summary>
-public sealed record CreatedUserDto(UserDto User, string? GeneratedPassword);
-
-/// <summary>Sets whether a user is an administrator.</summary>
-public sealed class AdministratorRequest
-{
-    /// <summary>The new state.</summary>
-    public bool? IsAdministrator { get; set; }
-}
-
 /// <summary>
 /// Accounts: the Users and UserDetail pages' operations (list, create, promote and demote, group membership, revoking a key). Password
 /// resets and account deletion are not offered over the API: they mail or destroy on someone's behalf and stay on the pages. Needs

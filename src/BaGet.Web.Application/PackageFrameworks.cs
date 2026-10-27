@@ -6,21 +6,6 @@ using NuGet.Frameworks;
 namespace BaGet.Web;
 
 /// <summary>
-/// The frameworks of one package, as the package page's Frameworks tab shows them.
-/// </summary>
-public sealed class FrameworkGroup
-{
-    /// <summary>The family (.NET, .NET Core, .NET Standard, .NET Framework, Other).</summary>
-    public string? Name { get; init; }
-
-    /// <summary>Frameworks the package ships assets for.</summary>
-    public List<string> Declared { get; } = new List<string>();
-
-    /// <summary>Frameworks the package works with without declaring them.</summary>
-    public List<string> Computed { get; } = new List<string>();
-}
-
-/// <summary>
 /// Groups a package's declared target frameworks and computes the further
 /// frameworks it is compatible with, the way nuget.org's Frameworks tab does.
 /// </summary>

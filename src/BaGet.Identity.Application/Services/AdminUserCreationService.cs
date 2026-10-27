@@ -8,32 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BaGet.Identity.Application.Services;
 
-/// <summary>How an administrator-created account gets its first password.</summary>
-public enum NewUserPasswordMode
-{
-    /// <summary>The administrator typed one.</summary>
-    Given,
-
-    /// <summary>The server generates one, shown to the administrator once.</summary>
-    Generated,
-
-    /// <summary>
-    /// The account gets an unknown random password and is mailed a reset link to choose its own. Needs an
-    /// email address and a configured SMTP server; the caller checks that and queues the mail.
-    /// </summary>
-    Invited,
-}
-
-/// <summary>The outcome of <see cref="AdminUserCreationService.CreateAsync"/>.</summary>
-/// <param name="User">The new user, or null if none was created.</param>
-/// <param name="Error">Why nothing was created, or null.</param>
-/// <param name="GeneratedPassword">The password for <see cref="NewUserPasswordMode.Generated"/>, to show once.</param>
-public record NewUserResult(BaGetUser? User, string? Error, string? GeneratedPassword = null)
-{
-    /// <summary>Whether the account was created.</summary>
-    public bool Succeeded => User != null;
-}
-
 /// <summary>
 /// Creates an account on an administrator's behalf. The same name rule as registration applies (user and
 /// organization names share one namespace); the address is trusted, as in

@@ -13,36 +13,6 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Identity.Application.UseCases;
 
-/// <summary>What the change-password form posts (the body of <c>POST /api/ui/account/settings/change-password</c>).</summary>
-public sealed class ChangePasswordForm
-{
-    /// <summary>The current password (an account without one sets its first after signing in again with its provider).</summary>
-    public string? CurrentPassword { get; set; }
-
-    /// <summary>The new password.</summary>
-    public string? NewPassword { get; set; }
-
-    /// <summary>The new password again.</summary>
-    public string? ConfirmPassword { get; set; }
-}
-
-/// <summary>What the change-email form posts.</summary>
-public sealed class ChangeEmailForm
-{
-    /// <summary>The new address.</summary>
-    public string? NewEmail { get; set; }
-
-    /// <summary>The password, asked again (an account without one needs a fresh provider sign-in instead).</summary>
-    public string? Password { get; set; }
-}
-
-/// <summary>What a form that only re-asks the password posts (delete the account, turn two-factor off, reset the authenticator).</summary>
-public sealed class PasswordConfirmationForm
-{
-    /// <summary>The password, asked again.</summary>
-    public string? Password { get; set; }
-}
-
 /// <summary>
 /// The signed-in user's account settings: change the password, change the email address, delete the account. Each form has its own method and
 /// takes its fields as parameters, so one form's rules never block another's. A sensitive action asks the password again (an account without one

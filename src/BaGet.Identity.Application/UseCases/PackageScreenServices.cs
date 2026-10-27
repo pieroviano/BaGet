@@ -10,23 +10,6 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
-/// Whether the session re-authenticated with the external provider a moment ago (the proof of presence a sensitive action asks of an
-/// account that has no password). It reads the sign-in cookie, so the host implements it (<c>BaGet.Identity</c>); a use case only asks.
-/// Without a session (an API key, an anonymous caller) the answer is false.
-/// </summary>
-public interface IReauthenticationState
-{
-    /// <summary>Whether the session re-authenticated within the last few minutes.</summary>
-    Task<bool> HasReauthenticatedRecentlyAsync(CancellationToken cancellationToken);
-}
-
-/// <summary>What a password-confirmed screen shows about how the caller can confirm.</summary>
-/// <param name="HasPassword">The caller has a password to type.</param>
-/// <param name="Reauthenticated">For an account without a password: it signed in again with its provider a moment ago.</param>
-/// <param name="CanReauthenticate">An external provider is available to sign in again with.</param>
-public readonly record struct ConfirmationState(bool HasPassword, bool Reauthenticated, bool CanReauthenticate);
-
-/// <summary>
 /// The services every package-management use case (<c>Packages/*</c> screens) shares: the signed-in user's account, the sensitive-action
 /// check, the session principal the format services authorize, the read-only switch. Registered scoped with the account services.
 /// </summary>

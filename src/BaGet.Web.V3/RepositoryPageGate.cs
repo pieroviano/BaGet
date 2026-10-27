@@ -10,17 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Web.V3;
 
 /// <summary>
-/// What a repository page requires of the repository it is served in. Built from the attribute of a controller action
-/// (<c>BaGet.Identity.Mvc.RepositoryPageAttribute</c>, <see cref="RepositoryActionFilter"/>) and judged by <see cref="RepositoryPageGate"/>.
-/// </summary>
-/// <param name="Format">The format the page belongs to, or null when it serves every format.</param>
-/// <param name="Upload">The caller needs the right to publish rather than Read, and a virtual repository continues in its deploy repository.</param>
-/// <param name="NotOnVirtual">404 in a virtual repository.</param>
-/// <param name="NotOnRemote">404 in a remote repository.</param>
-/// <param name="FrontPage">The NuGet front page: in a repository of another format it redirects to the format's browse link.</param>
-internal sealed record RepositoryPageRule(RepositoryFormat? Format, bool Upload, bool NotOnVirtual, bool NotOnRemote, bool FrontPage);
-
-/// <summary>
 /// The single check every repository page passes: the caller must be allowed to read the repository (the upload pages: to publish
 /// to it) the request resolved to (<see cref="IRepositoryAccess"/>), else the page answers 404 to a signed-in user (the same
 /// answer as an unknown repository, so nothing says that a private one exists) and sends a visitor who is not signed in to sign

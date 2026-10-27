@@ -14,25 +14,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace BaGet.Web.V3.Api;
 
-/// <summary>One operation of the administration API, as read from the controllers.</summary>
-/// <param name="Method">The HTTP method.</param>
-/// <param name="Path">The path template, constraints removed (<c>/api/v1/groups/{name}</c>).</param>
-/// <param name="Tag">The resource the controller serves.</param>
-/// <param name="Operation">The <see cref="ApiOperationAttribute"/> of the action.</param>
-/// <param name="Descriptor">The action.</param>
-public sealed record ApiEndpoint(string Method, string Path, string Tag, ApiOperationAttribute Operation, ControllerActionDescriptor Descriptor)
-{
-    /// <summary>The query parameters, route parameters and body of the action, in declaration order.</summary>
-    public IReadOnlyList<ApiParameter> Parameters => ApiCatalog.ParametersOf(this);
-}
-
-/// <summary>A parameter of an operation.</summary>
-/// <param name="Name">The name on the wire.</param>
-/// <param name="In"><c>path</c>, <c>query</c> or <c>body</c>.</param>
-/// <param name="Type">The CLR type.</param>
-/// <param name="Required">Whether it must be given.</param>
-public sealed record ApiParameter(string Name, string In, Type Type, bool Required);
-
 /// <summary>
 /// What the administration API offers, read from its controllers: one <see cref="ApiEndpoint"/> per action. The <c>/admin/api</c> page and
 /// the UI-coverage test read this one list, so they cannot differ from the code. The served OpenAPI document is built by

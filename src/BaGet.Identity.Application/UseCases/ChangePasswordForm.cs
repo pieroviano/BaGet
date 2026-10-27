@@ -1,0 +1,27 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+
+namespace BaGet.Identity.Application.UseCases;
+
+/// <summary>What the change-password form posts (the body of <c>POST /api/ui/account/settings/change-password</c>).</summary>
+public sealed class ChangePasswordForm
+{
+    /// <summary>The current password (an account without one sets its first after signing in again with its provider).</summary>
+    public string? CurrentPassword { get; set; }
+
+    /// <summary>The new password.</summary>
+    public string? NewPassword { get; set; }
+
+    /// <summary>The new password again.</summary>
+    public string? ConfirmPassword { get; set; }
+}

@@ -1,0 +1,32 @@
+using System;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using BaGet.Identity.Application.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+
+namespace BaGet.Identity.Application.Screens;
+
+/// <summary>The answer of the <see cref="ScreenGate"/>.</summary>
+public enum GateOutcome
+{
+    /// <summary>The caller may use the screen.</summary>
+    Allowed,
+
+    /// <summary>Accounts are disabled: there is nothing to show (404).</summary>
+    AccountsOff,
+
+    /// <summary>The screen does not exist for this caller (404): no mail configured, not an administrator, not a project administrator.</summary>
+    NotFound,
+
+    /// <summary>The caller must sign in.</summary>
+    SignIn,
+
+    /// <summary>The caller is known but this credential may not do it (a screen-only twin over HTTP, a key without the administration scope).</summary>
+    Forbidden,
+
+    /// <summary>The database has no access model (Azure Table) and the caller is an administrator: the screen says so.</summary>
+    AccessUnavailable,
+}

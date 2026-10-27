@@ -12,43 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Controllers.UI;
 
-/// <summary>The form of the npm management handlers that name an owner.</summary>
-public sealed class NpmManageOwnerForm
-{
-    /// <summary>The user or organization.</summary>
-    public string? OwnerName { get; set; }
-}
-
-/// <summary>The form of <c>SetTag</c>.</summary>
-public sealed class NpmManageTagForm
-{
-    /// <summary>The dist-tag.</summary>
-    public string? Tag { get; set; }
-
-    /// <summary>The version it points at (not used by <c>RemoveTag</c>).</summary>
-    public string? Version { get; set; }
-}
-
-/// <summary>The form of <c>Deprecate</c> and <c>Undeprecate</c>.</summary>
-public sealed class NpmManageDeprecateForm
-{
-    /// <summary>The version.</summary>
-    public string? Version { get; set; }
-
-    /// <summary>The deprecation message (<c>Deprecate</c> only).</summary>
-    public string? Message { get; set; }
-}
-
-/// <summary>The form of <c>Unpublish</c> (one version) and <c>UnpublishAll</c> (the version is ignored); the password confirms.</summary>
-public sealed class NpmManageUnpublishForm
-{
-    /// <summary>The version (<c>Unpublish</c> only).</summary>
-    public string? Version { get; set; }
-
-    /// <summary>The caller's password.</summary>
-    public string? Password { get; set; }
-}
-
 /// <summary>
 /// The JSON twin of the npm package management screen: <c>GET /api/ui/npm-manage/{*id}</c> and, for each handler of the page, <c>POST
 /// /api/ui/npm-manage/{handler-in-kebab-case}/{*id}</c> with a JSON body (the package name is a catch-all, so the handler comes first; also

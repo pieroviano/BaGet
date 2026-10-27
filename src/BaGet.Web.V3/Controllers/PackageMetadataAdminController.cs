@@ -209,30 +209,3 @@ public class PackageMetadataAdminController : Controller
         }
     }
 }
-
-public class DeprecationRequest
-{
-    [JsonPropertyName("reasons")]
-    public IReadOnlyList<string>? Reasons { get; set; }
-
-    [JsonPropertyName("message")]
-    public string? Message { get; set; }
-
-    [JsonPropertyName("alternatePackageId")]
-    public string? AlternatePackageId { get; set; }
-
-    [JsonPropertyName("alternateVersionRange")]
-    public string? AlternateVersionRange { get; set; }
-}
-
-public class VulnerabilityRequest
-{
-    [JsonPropertyName("advisoryUrl")]
-    public string? AdvisoryUrl { get; set; }
-
-    [JsonPropertyName("severity")]
-    public int Severity { get; set; }
-
-    [JsonPropertyName("versionRange")]
-    public string? VersionRange { get; set; }
-}

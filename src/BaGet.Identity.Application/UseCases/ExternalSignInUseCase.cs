@@ -17,11 +17,6 @@ using Microsoft.Extensions.Options;
 
 namespace BaGet.Identity.Application.UseCases;
 
-/// <summary>Where a browser is sent to talk to the external provider.</summary>
-/// <param name="Scheme">The authentication scheme to challenge.</param>
-/// <param name="Properties">The challenge's properties (callback address, anti-forgery value, prompt).</param>
-public sealed record ExternalChallenge(string Scheme, AuthenticationProperties Properties);
-
 /// <summary>
 /// Signing in, and proving presence again, through the external (OpenID Connect) provider. These steps are <b>browser-only</b>: the provider
 /// redirects the browser and answers into a cookie, so they have no JSON twin; the view controller sends the challenge and handles the callback.

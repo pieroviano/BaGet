@@ -12,19 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Controllers.UI;
 
-/// <summary>The form of the Docker management handlers; every one asks for the caller's password.</summary>
-public sealed class DockerManageForm
-{
-    /// <summary>The tag to delete (<c>DeleteTag</c>).</summary>
-    public string? Tag { get; set; }
-
-    /// <summary>The manifest digest to delete (<c>DeleteManifest</c>).</summary>
-    public string? Digest { get; set; }
-
-    /// <summary>The caller's password.</summary>
-    public string? Password { get; set; }
-}
-
 /// <summary>
 /// The JSON twin of the Docker image management screen: <c>GET /api/ui/docker-manage/{**image}</c> and, for each handler of the page,
 /// <c>POST /api/ui/docker-manage/{handler-in-kebab-case}/{**image}</c> with a JSON body (the image name has slashes, so the handler comes

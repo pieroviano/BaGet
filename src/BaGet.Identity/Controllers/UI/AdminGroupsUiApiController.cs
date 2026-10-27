@@ -1,0 +1,60 @@
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using BaGet.Identity.Application;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.UseCases;
+using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Mvc;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BaGet.Identity.Controllers.UI;
+
+/// <summary>
+/// The JSON twin of the groups screens (<c>/api/ui/admin/groups</c>): the list with the new-group form and one group (rename, members, delete).
+/// <see cref="AdminGroupsController"/> calls it in process. Server administrators only (a session, or an <c>admin:api</c> key); every change that
+/// touches membership or deletes asks the administrator's password in the body, and every write is refused with 503 while the server is read-only.
+/// </summary>
+[Route("api/ui/admin/groups")]
+public sealed class AdminGroupsUiApiController : AccessUiApiControllerBase
+{
+    private AdminGroupsUseCase Groups => UseCase<AdminGroupsUseCase>();
+
+    /// <summary>Lists the groups.</summary>
+    [HttpGet(""), UiApi("/Admin/Groups")]
+    public async Task<ActionResult<ScreenResult<GroupsViewModel>>> List(CancellationToken cancellationToken = default)
+        => Respond(await Groups.ListAsync(await CallerAsync(cancellationToken), cancellationToken));
+
+    /// <summary>Creates a group and points at it.</summary>
+    [HttpPost(""), UiApi("/Admin/Groups")]
+    public async Task<ActionResult<ScreenResult<GroupsViewModel>>> Create([FromBody] GroupCreation? form, CancellationToken cancellationToken = default)
+        => Respond(await Groups.CreateAsync(await CallerAsync(cancellationToken), form ?? new GroupCreation(null, null), cancellationToken));
+
+    /// <summary>Shows one group, with the member search for <paramref name="q"/>.</summary>
+    [HttpGet("{name}"), UiApi("/Admin/GroupDetail")]
+    public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> Get(string name, string? q, CancellationToken cancellationToken = default)
+        => Respond(await Groups.GetAsync(await CallerAsync(cancellationToken), name, q, cancellationToken));
+
+    /// <summary>Renames the group.</summary>
+    [HttpPost("{name}/rename"), UiApi("/Admin/GroupDetail", Handler = "Rename")]
+    public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> Rename(string name, [FromBody] GroupRename? form, CancellationToken cancellationToken = default)
+        => Respond(await Groups.RenameAsync(await CallerAsync(cancellationToken), name, form ?? new GroupRename(null), cancellationToken));
+
+    /// <summary>Adds a user to the group.</summary>
+    [HttpPost("{name}/add-member"), UiApi("/Admin/GroupDetail", Handler = "AddMember")]
+    public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> AddMember(string name, [FromBody] GroupMemberChange? form, CancellationToken cancellationToken = default)
+        => Respond(await Groups.AddMemberAsync(await CallerAsync(cancellationToken), name, form ?? new GroupMemberChange(null, null), cancellationToken));
+
+    /// <summary>Removes a user from the group.</summary>
+    [HttpPost("{name}/remove-member"), UiApi("/Admin/GroupDetail", Handler = "RemoveMember")]
+    public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> RemoveMember(string name, [FromBody] GroupMemberChange? form, CancellationToken cancellationToken = default)
+        => Respond(await Groups.RemoveMemberAsync(await CallerAsync(cancellationToken), name, form ?? new GroupMemberChange(null, null), cancellationToken));
+
+    /// <summary>Deletes the group with the grants and project roles that name it.</summary>
+    [HttpPost("{name}/delete"), UiApi("/Admin/GroupDetail", Handler = "Delete")]
+    public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> Delete(string name, [FromBody] PasswordForm? form, CancellationToken cancellationToken = default)
+        => Respond(await Groups.DeleteAsync(await CallerAsync(cancellationToken), name, form ?? new PasswordForm(null), cancellationToken));
+}

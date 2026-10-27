@@ -13,13 +13,6 @@ using QRCoder;
 
 namespace BaGet.Identity.Application.UseCases;
 
-/// <summary>What the "turn two-factor authentication on" form posts.</summary>
-public sealed class TwoFactorCodeForm
-{
-    /// <summary>The code from the authenticator app.</summary>
-    public string? Code { get; set; }
-}
-
 /// <summary>
 /// Authenticator-app (TOTP) two-factor authentication of the signed-in user: set up with a QR code, recovery codes shown once, turn off, or start
 /// over with a new key. The setup key, its QR code and the new recovery codes are in the answer because the screen shows them; the endpoints are

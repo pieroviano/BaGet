@@ -1,0 +1,25 @@
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Identity.Application;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.UseCases;
+using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Controllers.UI;
+using BaGet.Identity.Mvc;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BaGet.Identity.Controllers;
+
+/// <summary>
+/// A user's or an organization's public page: the packages it owns (<c>/profiles/{name}</c>, and under
+/// <c>/r/{repo}/</c> too). It replaces the Razor Page <c>Profiles/Profile</c>. The work is done by <see cref="ProfileUiApiController"/>.
+/// </summary>
+[RepositoryPage]
+public sealed class ProfileController : AccountControllerBase
+{
+    /// <summary>The profile named <paramref name="name"/>; 404 when neither a user nor an organization has it.</summary>
+    [Route("profiles/{name}"), HttpGet, HttpHead, PageHandler, LegacyPage("/Profiles/Profile")]
+    public async Task<IActionResult> Profile(string? name, CancellationToken cancellationToken)
+        => Render(await Api<ProfileUiApiController, ProfileViewModel>(api => api.Profile(name, cancellationToken)), "Profile");
+}

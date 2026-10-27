@@ -1,0 +1,25 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using BaGet.Core;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace BaGet.Identity.Application.Services;
+
+/// <summary>How an administrator-created account gets its first password.</summary>
+public enum NewUserPasswordMode
+{
+    /// <summary>The administrator typed one.</summary>
+    Given,
+
+    /// <summary>The server generates one, shown to the administrator once.</summary>
+    Generated,
+
+    /// <summary>
+    /// The account gets an unknown random password and is mailed a reset link to choose its own. Needs an
+    /// email address and a configured SMTP server; the caller checks that and queues the mail.
+    /// </summary>
+    Invited,
+}
