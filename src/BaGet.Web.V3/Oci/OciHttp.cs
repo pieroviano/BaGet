@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using BaGet.Core;
-using BaGet.Web.V3.Controllers;
+using BaGet.Web.V3.Controllers.FrontEnd;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

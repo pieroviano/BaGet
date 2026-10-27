@@ -40,7 +40,7 @@ Every screen is a controller action and a view; the package ships **no `@page` f
 
 | Folder / type | Role |
 |---|---|
-| `Controllers/` | The view (screen) controllers, one per feature: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication` |
+| `Controllers/FrontEnd` | The view (screen) controllers, one per feature: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication` |
 | `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths were removed). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
 | `Controllers/UI/`, `Controllers/Base/` | The JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)) and the controller base classes. The models the views read and the logic of every screen are in `Extension.BaGet.Identity.Application` (use cases); no `*Workflow` class is left |
 | `Mvc/Attributes/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
@@ -54,7 +54,7 @@ handler form names its controller and action. `AdminControllerBase.Flash(model)`
 
 ## Layout
 
-One type per file, no nested types, namespace = `BaGet.Identity` + folder (`CodeLayoutTests`). `Controllers/` screens, `Controllers/UI` JSON twins, `Controllers/Base` bases; `Mvc/Attributes`, `Mvc/Screens`, `Mvc/UI` (twin plumbing), `Security` (credentials, principal resolver), `Extensions`.
+One type per file, no nested types, namespace = `BaGet.Identity` + folder (`CodeLayoutTests`). `Controllers/FrontEnd` screens, `Controllers/UI` JSON twins, `Controllers/Base` bases; `Mvc/Attributes`, `Mvc/Screens`, `Mvc/UI` (twin plumbing), `Security` (credentials, principal resolver), `Extensions`.
 
 ## Links
 

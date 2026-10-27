@@ -10,7 +10,7 @@ Storage, database and search are pluggable and chosen from configuration at runt
 |---|---|
 | `BaGet` | Host and CLI entry point: `Program.cs` (configuration, services, pipeline, commands) |
 | `BaGet.Core` | Domain: entities, `IContext`, `IPackageDatabase`, storage, search, indexing, remote/virtual repositories, format modules (`Formats`: NuGet, npm, Maven, Docker), access model, retention, scanning, replication, operations, high availability (`Ha`), telemetry, options, settings, maintenance gate, database copy |
-| `BaGet.Web.V3` | V3, npm, Maven and OCI controllers (`Controllers/Protocols`), the `/api/v1` administration API (`Controllers/Api`), the UI controllers (`Controllers`, JSON twins in `Controllers/UI`) and views, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` (`Routing`) |
+| `BaGet.Web.V3` | V3, npm, Maven and OCI controllers (`Controllers/Protocols`), the `/api/v1` administration API (`Controllers/Api`), the UI controllers (`Controllers/FrontEnd`, JSON twins in `Controllers/UI`) and views, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` (`Routing`) |
 | `BaGet.Web.V2` | Legacy V2 OData/Atom feed (`Feeds:EnableV2`) |
 | `BaGet.Identity` | Accounts, API keys, ownership, administrators, access-model, retention, replication, scanning and other admin pages (`Accounts:Enabled`) |
 | `BaGet.Catalog` | V3 catalog resource, writer and rebuild |

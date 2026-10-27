@@ -2,7 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Web.V3.Api;
-using BaGet.Web.V3.Controllers;
+using BaGet.Web.V3.Controllers.FrontEnd;
 using BaGet.Web.V3.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

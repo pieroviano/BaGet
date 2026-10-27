@@ -108,8 +108,7 @@ public class CodeLayoutTests
                 var kind = KindOf(project, type);
                 if (kind == null) { violations.Add($"{file.Relative}: {NameOf(type)} is a controller of no known kind"); continue; }
                 var expected = "Controllers/" + kind;
-                if (kind == "") expected = "Controllers";
-                if (folder != expected) violations.Add($"{file.Relative}: {NameOf(type)} is a {(kind == "" ? "screen" : kind)} controller and belongs in {expected}");
+                if (folder != expected) violations.Add($"{file.Relative}: {NameOf(type)} is a {kind} controller and belongs in {expected}");
             }
         }
 
@@ -117,7 +116,7 @@ public class CodeLayoutTests
     }
 
     /// <summary>
-    /// The sub-folder of <c>Controllers</c> a controller belongs in: "" screens (view controllers), "UI" the <c>/api/ui</c> JSON twins,
+    /// The sub-folder of <c>Controllers</c> a controller belongs in: "FrontEnd" the screens (controllers returning a view), "UI" the <c>/api/ui</c> JSON twins,
     /// "Base" the abstract bases, "Api" the <c>/api/v1</c> administration REST controllers, "Protocols" the package-protocol controllers.
     /// </summary>
     private static string? KindOf(string project, ClassDeclarationSyntax type)
@@ -129,7 +128,7 @@ public class CodeLayoutTests
 
         var bases = type.BaseList?.Types.Select(t => t.Type.ToString()).ToList() ?? new List<string>();
         if (bases.Any(b => b.EndsWith("ApiController", StringComparison.Ordinal))) return "Api";
-        if (bases.Any(b => b == "UiControllerBase" || (b.EndsWith("ControllerBase", StringComparison.Ordinal) && b != "ControllerBase"))) return "";
+        if (bases.Any(b => b == "UiControllerBase" || (b.EndsWith("ControllerBase", StringComparison.Ordinal) && b != "ControllerBase"))) return "FrontEnd";
         if (bases.Any(b => b == "Controller" || b == "ControllerBase")) return "Protocols";
 
         return null;

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 using BaGet.Validation.Extensions;
-using BaGet.Web.V3.Controllers;
+using BaGet.Web.V3.Controllers.FrontEnd;
 using BaGet.Identity.Security;
 using BaGet.Validation.Controllers.Protocols;
 using BaGet.Web.Application.Extensions;
