@@ -8,7 +8,7 @@ using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Extensions;
 using Xunit;
-using BaGet.Web.V3.TagHelpers;
+using BaGet.Frontend.TagHelpers;
 
 namespace BaGet.Tests.Contracts;
 

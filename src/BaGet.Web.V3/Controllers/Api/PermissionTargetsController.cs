@@ -1,4 +1,3 @@
-using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,13 +17,13 @@ public class PermissionTargetsController : AccessApiController
 {
     /// <summary>Lists targets.</summary>
     [HttpGet]
-    [ApiOperation("List permission targets", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Index), Response = typeof(TargetSummary), PagedList = true)]
+    [ApiOperation("List permission targets", "AdminPermissions", "Index", Response = typeof(TargetSummary), PagedList = true)]
     public async Task<IActionResult> List(int? page, int? pageSize)
         => Unavailable() ?? RespondPage(await AccessAdmin.ListTargetsAsync(Cancellation), page, pageSize);
 
     /// <summary>One target.</summary>
     [HttpGet("{name}")]
-    [ApiOperation("Show a permission target with its grants", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Detail), Response = typeof(TargetDetails))]
+    [ApiOperation("Show a permission target with its grants", "AdminPermissions", "Detail", Response = typeof(TargetDetails))]
     public async Task<IActionResult> Get(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -34,7 +33,7 @@ public class PermissionTargetsController : AccessApiController
 
     /// <summary>Creates a target without grants.</summary>
     [HttpPost]
-    [ApiOperation("Create a permission target (add grants afterwards)", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Index), Response = typeof(TargetSummary), Status = 201)]
+    [ApiOperation("Create a permission target (add grants afterwards)", "AdminPermissions", "Index", Response = typeof(TargetSummary), Status = 201)]
     public async Task<IActionResult> Create([FromBody] PermissionTargetRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -55,7 +54,7 @@ public class PermissionTargetsController : AccessApiController
 
     /// <summary>Replaces a target's patterns.</summary>
     [HttpPut("{name}")]
-    [ApiOperation("Replace a permission target's repository and package patterns", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Detail), Confirm = true, Response = typeof(TargetSummary))]
+    [ApiOperation("Replace a permission target's repository and package patterns", "AdminPermissions", "Detail", Confirm = true, Response = typeof(TargetSummary))]
     public async Task<IActionResult> Update(string name, [FromBody] PermissionTargetRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -70,7 +69,7 @@ public class PermissionTargetsController : AccessApiController
 
     /// <summary>Deletes a target and its grants.</summary>
     [HttpDelete("{name}")]
-    [ApiOperation("Delete a permission target and its grants", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Detail), Confirm = true, Status = 204)]
+    [ApiOperation("Delete a permission target and its grants", "AdminPermissions", "Detail", Confirm = true, Status = 204)]
     public async Task<IActionResult> Delete(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -85,7 +84,7 @@ public class PermissionTargetsController : AccessApiController
 
     /// <summary>Sets a principal's actions through a target.</summary>
     [HttpPut("{name}/grants")]
-    [ApiOperation("Give a user, group or organization actions through a permission target (none removes the grant)", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Detail), Confirm = true, Response = typeof(TargetDetails))]
+    [ApiOperation("Give a user, group or organization actions through a permission target (none removes the grant)", "AdminPermissions", "Detail", Confirm = true, Response = typeof(TargetDetails))]
     public async Task<IActionResult> SetGrant(string name, [FromBody] GrantRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -113,7 +112,7 @@ public class PermissionTargetsController : AccessApiController
 
     /// <summary>Previews what patterns select.</summary>
     [HttpPost("preview")]
-    [ApiOperation("Preview which repositories (and whether a package) a set of patterns selects; saves nothing", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Index), Response = typeof(PatternPreviewDto))]
+    [ApiOperation("Preview which repositories (and whether a package) a set of patterns selects; saves nothing", "AdminPermissions", "Index", Response = typeof(PatternPreviewDto))]
     public async Task<IActionResult> Preview([FromBody] PatternPreviewRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -130,7 +129,7 @@ public class PermissionTargetsController : AccessApiController
 
     /// <summary>Re-creates the built-in groups and targets that are missing.</summary>
     [HttpPost("restore-built-ins")]
-    [ApiOperation("Re-create the built-in groups and permission targets that are missing", typeof(AdminPermissionsController), nameof(AdminPermissionsController.Index), Confirm = true, Status = 204)]
+    [ApiOperation("Re-create the built-in groups and permission targets that are missing", "AdminPermissions", "Index", Confirm = true, Status = 204)]
     public async Task<IActionResult> RestoreBuiltIns()
     {
         if (Unavailable() is { } unavailable) return unavailable;

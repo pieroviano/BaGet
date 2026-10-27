@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.Models.Packages;
 using BaGet.Identity.Application.UseCases.Packages;
-using BaGet.Identity.Controllers.FrontEnd;
 using BaGet.Identity.Models.Packages;
 
 namespace BaGet.Identity.Controllers.UI;
@@ -17,7 +16,7 @@ namespace BaGet.Identity.Controllers.UI;
 /// <summary>
 /// The JSON twin of the npm package management screen: <c>GET /api/ui/npm-manage/{*id}</c> and, for each handler of the page, <c>POST
 /// /api/ui/npm-manage/{handler-in-kebab-case}/{*id}</c> with a JSON body (the package name is a catch-all, so the handler comes first; also
-/// under <c>/api/ui/r/{repo}/…</c>). Screen only (403 over HTTP to every caller; the web screen calls it in process). <see cref="NpmManageController"/> calls it in process and renders the view.
+/// under <c>/api/ui/r/{repo}/…</c>). Screen only (403 over HTTP to every caller; the web screen calls it in process). <c>NpmManageController</c> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/npm-manage")]
 [RepositoryPage(Format = RepositoryFormat.Npm, NotOnVirtual = true, NotOnRemote = true)]
@@ -34,47 +33,47 @@ public sealed class NpmManageUiApiController : AccountUiApiControllerBase
         => UseCase.EnterAsync(User, id, handler, isWrite, cancellationToken);
 
     /// <summary>The screen.</summary>
-    [HttpGet("{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index))]
+    [HttpGet("{*id}"), UiApi("NpmManage", "Index")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Get(string? id, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, id, cancellationToken));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost("add-owner/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "AddOwner")]
+    [HttpPost("add-owner/{*id}"), UiApi("NpmManage", "Index", Handler = "AddOwner")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> AddOwner(string? id, [FromBody] NpmManageOwnerForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.AddOwnerAsync(User, id, form?.OwnerName, cancellationToken));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost("remove-owner/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "RemoveOwner")]
+    [HttpPost("remove-owner/{*id}"), UiApi("NpmManage", "Index", Handler = "RemoveOwner")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> RemoveOwner(string? id, [FromBody] NpmManageOwnerForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveOwnerAsync(User, id, form?.OwnerName, cancellationToken));
 
     /// <summary>Points a dist-tag at a version.</summary>
-    [HttpPost("set-tag/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "SetTag")]
+    [HttpPost("set-tag/{*id}"), UiApi("NpmManage", "Index", Handler = "SetTag")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> SetTag(string? id, [FromBody] NpmManageTagForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.SetTagAsync(User, id, form?.Tag, form?.Version, cancellationToken));
 
     /// <summary>Removes a dist-tag.</summary>
-    [HttpPost("remove-tag/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "RemoveTag")]
+    [HttpPost("remove-tag/{*id}"), UiApi("NpmManage", "Index", Handler = "RemoveTag")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> RemoveTag(string? id, [FromBody] NpmManageTagForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveTagAsync(User, id, form?.Tag, cancellationToken));
 
     /// <summary>Deprecates a version.</summary>
-    [HttpPost("deprecate/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "Deprecate")]
+    [HttpPost("deprecate/{*id}"), UiApi("NpmManage", "Index", Handler = "Deprecate")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Deprecate(string? id, [FromBody] NpmManageDeprecateForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeprecateAsync(User, id, form?.Version, form?.Message, cancellationToken));
 
     /// <summary>Removes a version's deprecation.</summary>
-    [HttpPost("undeprecate/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "Undeprecate")]
+    [HttpPost("undeprecate/{*id}"), UiApi("NpmManage", "Index", Handler = "Undeprecate")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Undeprecate(string? id, [FromBody] NpmManageDeprecateForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UndeprecateAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Unpublishes one version, after the password is confirmed.</summary>
-    [HttpPost("unpublish/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "Unpublish")]
+    [HttpPost("unpublish/{*id}"), UiApi("NpmManage", "Index", Handler = "Unpublish")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Unpublish(string? id, [FromBody] NpmManageUnpublishForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UnpublishAsync(User, id, form?.Version, form?.Password, cancellationToken));
 
     /// <summary>Unpublishes every version, after the password is confirmed.</summary>
-    [HttpPost("unpublish-all/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "UnpublishAll")]
+    [HttpPost("unpublish-all/{*id}"), UiApi("NpmManage", "Index", Handler = "UnpublishAll")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> UnpublishAll(string? id, [FromBody] NpmManageUnpublishForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UnpublishAllAsync(User, id, form?.Password, cancellationToken));
 }

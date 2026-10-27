@@ -14,7 +14,7 @@ namespace BaGet.Frontend.Mvc.UI;
 /// still carries the model and the errors), NotFound 404, Forbidden 403, SignIn 401 with a <c>Bearer</c> challenge (not <c>Basic</c>, which
 /// would make a browser prompt for a password on a <c>fetch</c>). A shown screen that carries its own status (<see cref="IScreenResult.StatusCode"/>) is answered with it. A maintenance refusal is not a result: it propagates and the middleware answers 503.
 /// <para>
-/// The in-process call of a view controller never executes it: <see cref="UiApiInvoker"/> reads <see cref="ObjectResult.Value"/>.
+/// The in-process call of a view controller never executes it: <c>UiApiInvoker</c> reads <see cref="ObjectResult.Value"/>.
 /// </para>
 /// </summary>
 public sealed class UiApiResult : ObjectResult

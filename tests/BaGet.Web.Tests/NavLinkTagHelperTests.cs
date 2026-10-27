@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Xunit;
-using BaGet.Web.V3.TagHelpers;
+using BaGet.Frontend.TagHelpers;
 
 namespace BaGet.Web.Tests;
 

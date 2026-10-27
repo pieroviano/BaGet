@@ -25,12 +25,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BaGet.Identity.Application\BaGet.Identity.Application.csproj" />
+    <ProjectReference Include="..\BaGet.Api.Base\BaGet.Api.Base.csproj" />
     <ProjectReference Include="..\BaGet.Core\BaGet.Core.csproj" />
+    <ProjectReference Include="..\BaGet.Web.Application\BaGet.Web.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
-    <InternalsVisibleTo Include="BaGet.Identity.Api" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Web.Tests" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Identity.FrontEnd" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Web.FrontEnd" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>

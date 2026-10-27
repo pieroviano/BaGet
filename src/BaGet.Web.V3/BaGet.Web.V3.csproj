@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -9,7 +9,6 @@
     <!-- The assembly is BaGet.Web.V3, but the static web assets keep their URL (/_content/BaGet.Web/...):
          the layout, embedding hosts (wwwroot/_content/BaGet.Web) and the package docs use it. -->
     <StaticWebAssetBasePath>_content/BaGet.Web</StaticWebAssetBasePath>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);CS8620</NoWarn>
   </PropertyGroup>
@@ -34,6 +33,7 @@
     <ProjectReference Include="..\BaGet.Web.V2\BaGet.Web.V2.csproj" />
     <ProjectReference Include="..\BaGet.Catalog\BaGet.Catalog.csproj" />
     <ProjectReference Include="..\BaGet.Identity.Api\BaGet.Identity.Api.csproj" />
+    <ProjectReference Include="..\BaGet.Api.Base\BaGet.Api.Base.csproj" />
     <ProjectReference Include="..\BaGet.Validation\BaGet.Validation.csproj" />
   </ItemGroup>
 
@@ -45,13 +45,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Web.FrontEnd" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Web.Tests" Key="$(BaGetPublicKey)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- The views are compiled into this assembly; their .cshtml are not deployment files. Publishing them would
-         collide with the other Razor library's Views/_ViewImports.cshtml and _ViewStart.cshtml (NETSDK1152). -->
-    <Content Update="Views\**\*.cshtml" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@ using BaGet.Frontend.Mvc.Attributes;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
-namespace BaGet.Web.V3.Routing;
+namespace BaGet.Frontend.Routing;
 
 /// <summary>
 /// Which controller actions are repository pages (<see cref="RepositoryPageAttribute"/>), read from the registered actions.

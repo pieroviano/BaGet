@@ -16,9 +16,9 @@ namespace BaGet.Web.V3.Api.Catalog;
 public sealed class ApiOperationAttribute : Attribute
 {
     /// <param name="summary">One sentence, imperative ("Create a group").</param>
-    /// <param name="uiController">The view controller of the screen that offers the operation, such as <c>typeof(AdminGroupsController)</c>.</param>
-    /// <param name="uiAction">The action of that controller that shows the screen, such as <c>nameof(AdminGroupsController.Index)</c>.</param>
-    public ApiOperationAttribute(string summary, Type uiController, string uiAction)
+    /// <param name="uiController">The view controller of the screen that offers the operation, without the suffix, such as <c>"AdminGroups"</c>.</param>
+    /// <param name="uiAction">The action of that controller that shows the screen, such as <c>"Index"</c>.</param>
+    public ApiOperationAttribute(string summary, string uiController, string uiAction)
     {
         Summary = summary ?? throw new ArgumentNullException(nameof(summary));
         UiController = uiController ?? throw new ArgumentNullException(nameof(uiController));
@@ -28,22 +28,14 @@ public sealed class ApiOperationAttribute : Attribute
     /// <summary>What the operation does.</summary>
     public string Summary { get; }
 
-    /// <summary>The view controller of the screen that offers the same operation.</summary>
-    public Type UiController { get; }
+    /// <summary>The view controller of the screen that offers the same operation, without the <c>Controller</c> suffix.</summary>
+    public string UiController { get; }
 
     /// <summary>The action of <see cref="UiController"/> that shows that screen.</summary>
     public string UiAction { get; }
 
     /// <summary>The screen that offers the same operation (controller name without the suffix, and action).</summary>
-    public ScreenRef UiScreen
-    {
-        get
-        {
-            var name = UiController.Name;
-
-            return new ScreenRef(name.EndsWith("Controller", StringComparison.Ordinal) ? name.Substring(0, name.Length - "Controller".Length) : name, UiAction);
-        }
-    }
+    public ScreenRef UiScreen => new(UiController, UiAction);
 
     /// <summary>
     /// Whether the page asks the administrator's password again for this operation, so the API asks for the

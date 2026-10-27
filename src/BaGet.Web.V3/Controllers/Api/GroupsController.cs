@@ -1,4 +1,3 @@
-using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -16,13 +15,13 @@ public class GroupsController : AccessApiController
 {
     /// <summary>Lists groups.</summary>
     [HttpGet]
-    [ApiOperation("List groups with their member counts", typeof(AdminGroupsController), nameof(AdminGroupsController.Index), Response = typeof(GroupSummary), PagedList = true)]
+    [ApiOperation("List groups with their member counts", "AdminGroups", "Index", Response = typeof(GroupSummary), PagedList = true)]
     public async Task<IActionResult> List(int? page, int? pageSize)
         => Unavailable() ?? RespondPage(await AccessAdmin.ListGroupsAsync(Cancellation), page, pageSize);
 
     /// <summary>One group.</summary>
     [HttpGet("{name}")]
-    [ApiOperation("Show a group with its members and the grants naming it", typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Response = typeof(GroupDetails))]
+    [ApiOperation("Show a group with its members and the grants naming it", "AdminGroups", "Detail", Response = typeof(GroupDetails))]
     public async Task<IActionResult> Get(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -32,7 +31,7 @@ public class GroupsController : AccessApiController
 
     /// <summary>Creates a group.</summary>
     [HttpPost]
-    [ApiOperation("Create a group", typeof(AdminGroupsController), nameof(AdminGroupsController.Index), Response = typeof(GroupSummary), Status = 201)]
+    [ApiOperation("Create a group", "AdminGroups", "Index", Response = typeof(GroupSummary), Status = 201)]
     public async Task<IActionResult> Create([FromBody] CreateGroupRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -45,7 +44,7 @@ public class GroupsController : AccessApiController
 
     /// <summary>Renames a group.</summary>
     [HttpPatch("{name}")]
-    [ApiOperation("Rename a group", typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Response = typeof(GroupSummary))]
+    [ApiOperation("Rename a group", "AdminGroups", "Detail", Response = typeof(GroupSummary))]
     public async Task<IActionResult> Rename(string name, [FromBody] RenameGroupRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -59,7 +58,7 @@ public class GroupsController : AccessApiController
 
     /// <summary>Deletes a group.</summary>
     [HttpDelete("{name}")]
-    [ApiOperation("Delete a group with the grants and project roles that name it", typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Confirm = true, Status = 204)]
+    [ApiOperation("Delete a group with the grants and project roles that name it", "AdminGroups", "Detail", Confirm = true, Status = 204)]
     public async Task<IActionResult> Delete(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -74,7 +73,7 @@ public class GroupsController : AccessApiController
 
     /// <summary>Adds a user to a group.</summary>
     [HttpPut("{name}/members/{user}")]
-    [ApiOperation("Add a user to a group", typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Confirm = true, Status = 204)]
+    [ApiOperation("Add a user to a group", "AdminGroups", "Detail", Confirm = true, Status = 204)]
     public async Task<IActionResult> AddMember(string name, string user)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -90,7 +89,7 @@ public class GroupsController : AccessApiController
 
     /// <summary>Removes a user from a group.</summary>
     [HttpDelete("{name}/members/{user}")]
-    [ApiOperation("Remove a user from a group", typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Confirm = true, Status = 204)]
+    [ApiOperation("Remove a user from a group", "AdminGroups", "Detail", Confirm = true, Status = 204)]
     public async Task<IActionResult> RemoveMember(string name, string user)
     {
         if (Unavailable() is { } unavailable) return unavailable;

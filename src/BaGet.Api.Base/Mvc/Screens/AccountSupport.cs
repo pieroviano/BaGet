@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Email;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Application.Security;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>
-/// The rules of the account screens used by the controller base (<see cref="AccountControllerBase"/>) and the workflows.
+/// The rules of the account screens used by the account controller base (<c>AccountControllerBase</c>), the use cases' link builder and the re-authentication state.
 /// </summary>
 internal static class AccountSupport
 {
@@ -63,7 +62,7 @@ internal static class AccountSupport
         throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
     }
 
-    /// <summary>Decodes a token written by <see cref="PasswordResetLinkSender.EncodeToken"/>, or null.</summary>
+    /// <summary>Decodes a token written by <c>PasswordResetLinkSender.EncodeToken</c>, or null.</summary>
     public static string? DecodeToken(string? code) => AccountConfirmation.DecodeToken(code);
 
     /// <summary>The messages of an identity failure as one sentence.</summary>

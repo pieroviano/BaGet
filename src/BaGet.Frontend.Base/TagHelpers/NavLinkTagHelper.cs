@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using BaGet.Identity.Application.Screens;
 
-namespace BaGet.Web.V3.TagHelpers;
+namespace BaGet.Frontend.TagHelpers;
 
 [HtmlTargetElement(Attributes = "nav-link")]
 public class NavLinkTagHelper : TagHelper

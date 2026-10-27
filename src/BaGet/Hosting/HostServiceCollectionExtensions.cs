@@ -57,6 +57,7 @@ internal static class HostServiceCollectionExtensions
 
         services.AddBaGetOptions<IISServerOptions>(nameof(IISServerOptions));
         services.AddBaGetWebApplication(app => app.AddBaGetProviders());
+        services.AddBaGetFrontEnd();
         services.AddBaGetAccounts(configuration);
 
         // Cluster mode (Ha:Enabled): Redis, cluster-wide leases and the data protection keys in the database. After the BaGet

@@ -8,7 +8,6 @@ using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.Application.Screens;
 using BaGet.Web.Application.UseCases;
-using BaGet.Web.V3.Controllers.FrontEnd;
 
 namespace BaGet.Web.V3.Controllers.UI;
 
@@ -16,7 +15,7 @@ namespace BaGet.Web.V3.Controllers.UI;
 /// The JSON twin of the package page: <c>GET /api/ui/packages/{id}/{version?}</c>, and under <c>/api/ui/r/{repo}/</c>. The requested version, else the newest
 /// listed one, with the readme as safe HTML, the install commands, dependencies, versions, owners and, for an owner or administrator, the address
 /// of the management page. Anonymous when the repository is readable by anonymous visitors (the repository check of <see cref="RepositoryPageAttribute"/>).
-/// <see cref="PackageController"/> calls it in process.
+/// <c>PackageController</c> calls it in process.
 /// </summary>
 [Route("api/ui")]
 [RepositoryPage]
@@ -31,7 +30,7 @@ public sealed class PackageUiApiController : UiApiControllerBase
     }
 
     /// <summary>Shows the package.</summary>
-    [HttpGet("packages/{id}/{version?}"), UiApi(typeof(PackageController), nameof(PackageController.Show))]
+    [HttpGet("packages/{id}/{version?}"), UiApi("Package", "Show")]
     public async Task<ActionResult<ScreenResult<PackageScreen>>> Get(string id, string? version, CancellationToken cancellationToken)
     {
         var result = await _package.GetAsync(id, version, User, cancellationToken);

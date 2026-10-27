@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
-using BaGet.Frontend.Controllers.Base;
 using BaGet.Frontend.Mvc.Attributes;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
@@ -15,8 +14,8 @@ namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// Tells the endpoints of BaGet's own web UI from every other endpoint and names the screen an action belongs to. A screen is an action of
-/// a controller derived from <see cref="UiControllerBase"/> (the view controllers; the JSON twins under <c>/api/ui</c> derive from
-/// <see cref="UiApiControllerBase"/>, never from it) other than a <see cref="FallbackHandlerAttribute"/> fallback. The screen is identified by
+/// a controller implementing <see cref="IScreenController"/> (the view controllers, derived from <c>UiControllerBase</c>; the JSON twins under <c>/api/ui</c> derive from
+/// <c>UiApiControllerBase</c>, never from it) other than a <see cref="FallbackHandlerAttribute"/> fallback. The screen is identified by
 /// the controller and the action that answers a plain <c>GET</c> for it (<see cref="ScreenRef"/>); the actions of one screen are those of the
 /// controller that share its route templates (<see cref="PageHandlerAttribute"/>: handlers post to the screen's own URL).
 /// </summary>
@@ -29,7 +28,7 @@ public static class ScreenEndpoints
     /// <summary>Whether <paramref name="action"/> belongs to a screen of the web UI.</summary>
     public static bool IsScreen(ActionDescriptor? action)
         => action is ControllerActionDescriptor controller
-           && typeof(UiControllerBase).IsAssignableFrom(controller.ControllerTypeInfo.AsType())
+           && typeof(IScreenController).IsAssignableFrom(controller.ControllerTypeInfo.AsType())
            && controller.MethodInfo.GetCustomAttribute<FallbackHandlerAttribute>(inherit: true) == null;
 
     /// <summary>Whether <paramref name="endpoint"/> is an action of a screen of the web UI.</summary>

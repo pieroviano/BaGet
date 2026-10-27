@@ -465,7 +465,7 @@ public sealed class ProbeAccountUiApiController : AccountUiApiControllerBase
 {
     protected override bool RequiresSignIn => true;
 
-    [HttpPost, UiApi(typeof(ProbeAccountUiApiController), nameof(Post))]
+    [HttpPost, UiApi("ProbeAccountUiApi", "Post")]
     public ActionResult<ScreenResult<string>> Post() => Respond(ScreenResult<string>.Ok("account"));
 }
 
@@ -473,10 +473,10 @@ public sealed class ProbeAccountUiApiController : AccountUiApiControllerBase
 [Route("api/ui/test-probe/admin")]
 public sealed class ProbeAdminUiApiController : AdminUiApiControllerBase
 {
-    [HttpGet, UiApi(typeof(ProbeAdminUiApiController), nameof(Get))]
+    [HttpGet, UiApi("ProbeAdminUiApi", "Get")]
     public ActionResult<ScreenResult<string>> Get() => Respond(ScreenResult<string>.Ok("admin"));
 
-    [HttpPost, UiApi(typeof(ProbeAdminUiApiController), nameof(Get), Handler = "Change")]
+    [HttpPost, UiApi("ProbeAdminUiApi", "Get", Handler = "Change")]
     public ActionResult<ScreenResult<string>> Post() => Respond(ScreenResult<string>.Ok("admin"));
 }
 
@@ -484,9 +484,9 @@ public sealed class ProbeAdminUiApiController : AdminUiApiControllerBase
 [Route("api/ui/test-probe/access")]
 public sealed class ProbeAccessUiApiController : AccessUiApiControllerBase
 {
-    [HttpGet, UiApi(typeof(ProbeAccessUiApiController), nameof(Get))]
+    [HttpGet, UiApi("ProbeAccessUiApi", "Get")]
     public ActionResult<ScreenResult<string>> Get() => Respond(ScreenResult<string>.Ok("access"));
 
-    [HttpPost, UiApi(typeof(ProbeAccessUiApiController), nameof(Get), Handler = "Change")]
+    [HttpPost, UiApi("ProbeAccessUiApi", "Get", Handler = "Change")]
     public ActionResult<ScreenResult<string>> Post() => Respond(ScreenResult<string>.Ok("access"));
 }

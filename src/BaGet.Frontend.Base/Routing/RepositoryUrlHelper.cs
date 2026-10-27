@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 
-namespace BaGet.Web.V3.Routing;
+namespace BaGet.Frontend.Routing;
 
 /// <summary>
 /// Keeps links to repository pages inside the repository being browsed. ASP.NET Core carries ambient route values (here
@@ -41,7 +41,7 @@ public class RepositoryUrlHelper : IUrlHelper
     {
         if (actionContext == null) throw new ArgumentNullException(nameof(actionContext));
 
-        if (_actions != null && ActionContext.RouteData.Values.TryGetValue(Routes.RepositoryRouteKey, out var repo) && repo is string name)
+        if (_actions != null && ActionContext.RouteData.Values.TryGetValue(RepositoryPageAttribute.RouteKey, out var repo) && repo is string name)
         {
             var values = actionContext.Values as RouteValueDictionary
                 ?? (actionContext.Values == null ? new RouteValueDictionary() : new RouteValueDictionary(actionContext.Values));
@@ -49,9 +49,9 @@ public class RepositoryUrlHelper : IUrlHelper
             // A missing controller or action is the current one, as MVC's own helper reads it.
             var controller = actionContext.Controller ?? Convert.ToString(ActionContext.RouteData.Values["controller"], System.Globalization.CultureInfo.InvariantCulture);
             var action = actionContext.Action ?? Convert.ToString(ActionContext.RouteData.Values["action"], System.Globalization.CultureInfo.InvariantCulture);
-            if (!values.ContainsKey(Routes.RepositoryRouteKey) && controller != null && action != null && _actions.IsRepositoryAction(controller, action))
+            if (!values.ContainsKey(RepositoryPageAttribute.RouteKey) && controller != null && action != null && _actions.IsRepositoryAction(controller, action))
             {
-                values[Routes.RepositoryRouteKey] = name;
+                values[RepositoryPageAttribute.RouteKey] = name;
                 actionContext = new UrlActionContext
                 {
                     Action = actionContext.Action,

@@ -1,4 +1,3 @@
-using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +21,7 @@ public class OperationsController : AdminApiController
 {
     /// <summary>Lists the available operations.</summary>
     [HttpGet]
-    [ApiOperation("List the operations this server offers, the repositories each applies to and their last runs", typeof(AdminOperationsController), nameof(AdminOperationsController.Index), Response = typeof(OperationDto))]
+    [ApiOperation("List the operations this server offers, the repositories each applies to and their last runs", "AdminOperations", "Index", Response = typeof(OperationDto))]
     public async Task<IActionResult> List()
     {
         var jobs = Service<AdminJobService>();
@@ -45,7 +44,7 @@ public class OperationsController : AdminApiController
 
     /// <summary>The last run of an operation on a repository.</summary>
     [HttpGet("{operation}/repositories/{repository}")]
-    [ApiOperation("Show the last run of an operation on a repository", typeof(AdminOperationsController), nameof(AdminOperationsController.Index), Response = typeof(AdminJobStatus))]
+    [ApiOperation("Show the last run of an operation on a repository", "AdminOperations", "Index", Response = typeof(AdminJobStatus))]
     public IActionResult Status(string operation, string repository)
         => Service<AdminJobService>().Get(operation, repository) is { } status
             ? Respond(status)
@@ -53,7 +52,7 @@ public class OperationsController : AdminApiController
 
     /// <summary>Starts an operation.</summary>
     [HttpPost("{operation}/repositories/{repository}")]
-    [ApiOperation("Start an operation on a repository (one that deletes data asks for the password)", typeof(AdminOperationsController), nameof(AdminOperationsController.Index), Confirm = true, Response = typeof(AdminJobStatus), Status = 202)]
+    [ApiOperation("Start an operation on a repository (one that deletes data asks for the password)", "AdminOperations", "Index", Confirm = true, Response = typeof(AdminJobStatus), Status = 202)]
     public async Task<IActionResult> Start(string operation, string repository)
     {
         var jobs = Service<AdminJobService>();

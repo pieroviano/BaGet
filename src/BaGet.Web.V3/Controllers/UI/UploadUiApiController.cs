@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.Application.Models.Upload;
 using BaGet.Web.Application.UseCases;
-using BaGet.Web.V3.Controllers.FrontEnd;
 
 namespace BaGet.Web.V3.Controllers.UI;
 
@@ -20,7 +19,7 @@ namespace BaGet.Web.V3.Controllers.UI;
 /// (JSON <see cref="UploadTokenRequest"/>). The repository rule is the page's (<see cref="RepositoryPageAttribute.Upload"/>: the caller needs the right to
 /// publish, a virtual repository continues in its deploy repository). A refusal is <c>400</c>-class JSON carrying the status of the refusal (401, 403,
 /// 404, 409, 500) and the form's state with the sentence in <c>errors</c>; an API key in the request authenticates the uploader within its scopes.
-/// Not an account screen: it works with accounts off, with a pasted API key, like the push endpoint. <see cref="UploadController"/> calls it in process.
+/// Not an account screen: it works with accounts off, with a pasted API key, like the push endpoint. <c>UploadController</c> calls it in process.
 /// </summary>
 [Route("api/ui/upload")]
 [RepositoryPage(Upload = true)]
@@ -35,17 +34,17 @@ public sealed class UploadUiApiController : UiApiControllerBase
     }
 
     /// <summary>Step one: the form.</summary>
-    [HttpGet, UiApi(typeof(UploadController), nameof(UploadController.Index))]
+    [HttpGet, UiApi("Upload", "Index")]
     public Task<ActionResult<ScreenResult<UploadViewModel>>> Get(string? id)
         => Task.FromResult(Respond(_upload.Show(User, id)));
 
     /// <summary>Stages the chosen file and describes what it contains.</summary>
-    [HttpPost("stage"), UiApi(typeof(UploadController), nameof(UploadController.Index), Handler = "Stage")]
+    [HttpPost("stage"), UiApi("Upload", "Index", Handler = "Stage")]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Stage(string? id, IFormFile? package, string? apiKey, CancellationToken cancellationToken)
         => Respond(await _upload.StageAsync(User, KeyCaller, id, package.ToUploadedFile(), apiKey, cancellationToken));
 
     /// <summary>Publishes the staged upload.</summary>
-    [HttpPost("submit"), UiApi(typeof(UploadController), nameof(UploadController.Index), Handler = "Submit")]
+    [HttpPost("submit"), UiApi("Upload", "Index", Handler = "Submit")]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Submit(string? id, [FromBody] UploadTokenRequest? request, CancellationToken cancellationToken)
     {
         request ??= new UploadTokenRequest();
@@ -54,7 +53,7 @@ public sealed class UploadUiApiController : UiApiControllerBase
     }
 
     /// <summary>Discards the staged upload.</summary>
-    [HttpPost("cancel"), UiApi(typeof(UploadController), nameof(UploadController.Index), Handler = "Cancel")]
+    [HttpPost("cancel"), UiApi("Upload", "Index", Handler = "Cancel")]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Cancel(string? id, [FromBody] UploadTokenRequest? request, CancellationToken cancellationToken)
     {
         request ??= new UploadTokenRequest();

@@ -51,6 +51,7 @@
     <ProjectReference Include="..\BaGet.Database.SqlServer\BaGet.Database.SqlServer.csproj" />
     <ProjectReference Include="..\BaGet.Gcp\BaGet.Gcp.csproj" />
     <ProjectReference Include="..\BaGet.Web.V3\BaGet.Web.V3.csproj" />
+    <ProjectReference Include="..\BaGet.Web.FrontEnd\BaGet.Web.FrontEnd.csproj" />
     <ProjectReference Include="..\BaGet.Protocol\BaGet.Protocol.csproj" />
   </ItemGroup>
 

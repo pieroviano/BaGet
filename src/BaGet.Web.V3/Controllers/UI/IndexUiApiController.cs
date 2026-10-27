@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.Application.Models.Browse;
 using BaGet.Web.Application.Screens;
 using BaGet.Web.Application.UseCases;
-using BaGet.Web.V3.Controllers.FrontEnd;
 
 namespace BaGet.Web.V3.Controllers.UI;
 
@@ -19,7 +18,7 @@ namespace BaGet.Web.V3.Controllers.UI;
 /// else the results; <c>GET /api/ui/packages</c> is the list (<c>/packages</c>, <c>/index</c>), never the front page. Both take the page's query
 /// (<c>q</c>, <c>p</c>, <c>packageType</c>, <c>framework</c>, <c>prerelease</c>, <c>sortBy</c>) and exist under <c>/api/ui/r/{repo}/</c>. In a repository of
 /// another format the front page answers the format's own browse screen as <c>next</c>. A query that cannot be answered (page below 1, unknown sort) is a plain
-/// 400. <see cref="HomeController"/> calls it in process.
+/// 400. <c>HomeController</c> calls it in process.
 /// </summary>
 [Route("api/ui")]
 [RepositoryPage(FrontPage = true)]
@@ -34,7 +33,7 @@ public sealed class IndexUiApiController : UiApiControllerBase
     }
 
     /// <summary>The front page of the repository, or the results when the query asks for something.</summary>
-    [HttpGet("home"), UiApi(typeof(HomeController), nameof(HomeController.Index))]
+    [HttpGet("home"), UiApi("Home", "Index")]
     public Task<ActionResult<ScreenResult<IndexScreen>>> Home(
         [FromQuery(Name = "q")] string? query,
         [FromQuery(Name = "p")] int pageIndex = 1,
@@ -46,7 +45,7 @@ public sealed class IndexUiApiController : UiApiControllerBase
         => GetAsync(new IndexQuery(query, pageIndex, packageType, framework, prerelease, sortBy), !Request.Query.ContainsKey("q"), cancellationToken);
 
     /// <summary>One page of the package list.</summary>
-    [HttpGet("packages"), UiApi(typeof(HomeController), nameof(HomeController.Index))]
+    [HttpGet("packages"), UiApi("Home", "Index")]
     public Task<ActionResult<ScreenResult<IndexScreen>>> Packages(
         [FromQuery(Name = "q")] string? query,
         [FromQuery(Name = "p")] int pageIndex = 1,

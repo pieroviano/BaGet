@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Web.V3.Routing;
+namespace BaGet.Frontend.Routing;
 
 /// <summary>
 /// Hands out <see cref="RepositoryUrlHelper"/> wrapping MVC's default URL helper; one per request, like the default.

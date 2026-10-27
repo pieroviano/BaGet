@@ -31,7 +31,7 @@ namespace BaGet.Frontend.Controllers.Base;
 /// the view model as <c>@model</c>.</para>
 /// </remarks>
 [AutoValidateAntiforgeryToken]
-public abstract class UiControllerBase : Controller
+public abstract class UiControllerBase : Controller, IScreenController
 {
     /// <summary>
     /// The handler the request names (<c>?handler=</c>, or the <c>handler</c> route value), or null for the default handler.

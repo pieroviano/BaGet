@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -6,7 +6,6 @@
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet Extension's user accounts, package owners and per-user API keys.</Description>
     <RootNamespace>BaGet.Identity</RootNamespace>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>
     <PackageId>Extension.$(MSBuildProjectName)</PackageId>
   </PropertyGroup>
@@ -26,17 +25,13 @@
   <ItemGroup>
     <ProjectReference Include="..\BaGet.Identity.Application\BaGet.Identity.Application.csproj" />
     <ProjectReference Include="..\BaGet.Core\BaGet.Core.csproj" />
-    <ProjectReference Include="..\BaGet.Frontend.Base\BaGet.Frontend.Base.csproj" />
+    <ProjectReference Include="..\BaGet.Api.Base\BaGet.Api.Base.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- The views are compiled into this assembly; their .cshtml are not deployment files. Publishing them would
-         collide with the other Razor library's Views/_ViewImports.cshtml and _ViewStart.cshtml (NETSDK1152). -->
-    <Content Update="Views\**\*.cshtml" CopyToPublishDirectory="Never" />
+    <InternalsVisibleTo Include="BaGet.Identity.FrontEnd" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Frontend.Base" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
 </Project>

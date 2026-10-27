@@ -28,6 +28,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Web.V3" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Frontend.Base" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Web.FrontEnd" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Web.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>

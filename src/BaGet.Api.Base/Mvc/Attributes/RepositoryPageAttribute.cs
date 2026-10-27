@@ -24,6 +24,9 @@ namespace BaGet.Frontend.Mvc.Attributes;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public sealed class RepositoryPageAttribute : Attribute
 {
+    /// <summary>The route value that carries the repository name on the <c>/r/{repo}/</c> variant of a route.</summary>
+    public const string RouteKey = "repo";
+
     /// <summary>
     /// The format whose repositories the page belongs to (NuGet unless set). The page answers 404 in a repository of another
     /// format; the NuGet front page (<see cref="FrontPage"/>) instead sends the visitor to the format's own browse page.

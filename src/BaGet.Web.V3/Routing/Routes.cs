@@ -5,7 +5,7 @@ public class Routes
     /// <summary>
     /// The route value that carries the repository name on the <c>/r/{repo}/</c> variant of a protocol route.
     /// </summary>
-    public const string RepositoryRouteKey = "repo";
+    public const string RepositoryRouteKey = BaGet.Frontend.Mvc.Attributes.RepositoryPageAttribute.RouteKey;
 
     /// <summary>
     /// The path segments in front of a non-default repository's routes.

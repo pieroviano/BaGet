@@ -19,6 +19,9 @@ public class Program
             app.AddFileStorage();
         });
 
+        // The web UI (screens and views); leave it out for a host that serves only the APIs.
+        builder.Services.AddBaGetFrontEnd();
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())

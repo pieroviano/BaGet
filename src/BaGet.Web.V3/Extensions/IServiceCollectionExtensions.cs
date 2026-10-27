@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using BaGet.Catalog.Controllers.Protocols;
 using BaGet.Catalog.Extensions;
@@ -59,15 +60,6 @@ public static class IServiceCollectionExtensions
         // The ui / v1 / protocols OpenAPI documents (served to administrators only, see BaGetEndpointBuilder.MapApiDocumentation).
         services.AddBaGetOpenApi();
 
-        // BaGet ships no Razor Page (every screen is a controller action), but a host's own pages (which find BaGet's layout in Views/Shared) keep working, so Razor Pages stays registered.
-        services.AddRazorPages();
-
-        // Page links stay inside the repository being browsed (see RepositoryUrlHelper).
-        services.AddSingleton<Microsoft.AspNetCore.Mvc.Routing.IUrlHelperFactory, RepositoryUrlHelperFactory>();
-
-        // Which controller action replaces which page, so links to a page that moved to a controller keep resolving.
-        services.AddSingleton<UiActionMap>();
-
         services.AddHttpContextAccessor();
         services.AddScoped<RequestPrincipalResolver>();
 
@@ -95,16 +87,19 @@ public static class IServiceCollectionExtensions
     /// accounts, the catalog, validation and the V2 feed would then answer 404.
     /// </summary>
     internal static IMvcBuilder AddBaGetApplicationParts(this IMvcBuilder builder)
-    {
-        var assemblies = new[]
-        {
+        => builder.AddApplicationPartsOnce(
             typeof(PackageContentController).Assembly,
             typeof(V2FeedController).Assembly,
             typeof(CatalogController).Assembly,
             typeof(RepositorySignaturesController).Assembly,
-            typeof(AccountsServiceCollectionExtensions).Assembly,
-        };
+            typeof(AccountsServiceCollectionExtensions).Assembly);
 
+    /// <summary>
+    /// Adds each of <paramref name="assemblies"/> as an MVC application part unless a part of that name exists already (the entry assembly
+    /// may have contributed it); a part is added with its views, as a Razor SDK assembly's generated attributes would.
+    /// </summary>
+    internal static IMvcBuilder AddApplicationPartsOnce(this IMvcBuilder builder, params Assembly[] assemblies)
+    {
         return builder.ConfigureApplicationPartManager(manager =>
         {
             foreach (var assembly in assemblies)

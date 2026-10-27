@@ -11,7 +11,7 @@ namespace BaGet.Frontend.Mvc.UI;
 /// The in-process call of a twin's <em>entry check</em>: a screen whose first step (ownership, a Delete permission, a valid name) must run
 /// before the global repository filter, as it did on the page, asks it from <c>OnActionExecutionAsync</c> of its view controller. The twin
 /// exposes the step as a <c>[NonAction]</c> method returning the refusal, or null to go on; the use case remembers the answer for the
-/// request, so the operation that follows does not repeat the work. Same rules as <see cref="UiApiInvoker"/>: the twin shares the
+/// request, so the operation that follows does not repeat the work. Same rules as <c>UiApiInvoker</c>: the twin shares the
 /// view action's <see cref="ControllerContext"/>, its own filters do not run.
 /// </summary>
 public static class UiApiEntry

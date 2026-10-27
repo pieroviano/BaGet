@@ -13,7 +13,7 @@ namespace BaGet.Frontend.Controllers.Base;
 /// <summary>
 /// Base of every controller of the JSON UI API (<c>/api/ui/...</c>): the twin of a view controller that does the work of a screen and
 /// returns its model, so a single-page application (or any client) can be written against it alone, and the view controller only renders
-/// what <see cref="UiApiInvoker"/> got from it.
+/// what <c>UiApiInvoker</c> got from it.
 /// <list type="bullet">
 /// <item><description><b>Authentication</b> (<see cref="UiApiSecurityFilter"/>): API keys only (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>; the
 /// browser session and HTTP Basic are never accepted over HTTP, so there is no antiforgery (see <see cref="UiApiCaller"/>).</description></item>

@@ -24,7 +24,7 @@ public class ApplicationLayeringTests
     private static readonly Assembly[] UiAssemblies =
     {
         typeof(UiControllerBase).Assembly,
-        typeof(BaGet.Web.V3.TagHelpers.NavLinkTagHelper).Assembly,
+        typeof(BaGet.Frontend.TagHelpers.NavLinkTagHelper).Assembly,
     };
 
     [Fact]

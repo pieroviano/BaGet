@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BaGet.Web.V3\BaGet.Web.V3.csproj" />
+    <ProjectReference Include="..\..\src\BaGet.Web.FrontEnd\BaGet.Web.FrontEnd.csproj" />
   </ItemGroup>
 
 </Project>

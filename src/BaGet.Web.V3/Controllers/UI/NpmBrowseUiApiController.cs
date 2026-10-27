@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.Application.Models.Npm;
 using BaGet.Web.Application.UseCases;
-using BaGet.Web.V3.Controllers.FrontEnd;
 
 namespace BaGet.Web.V3.Controllers.UI;
 
@@ -21,7 +20,7 @@ namespace BaGet.Web.V3.Controllers.UI;
 /// off, <c>apiKey</c>). Also under <c>/api/ui/r/{repo}/...</c>, with the pages' repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository and
 /// the package, the right to publish for the upload, 404 in a repository that is not npm's). A package that does not exist answers <c>404</c> with the explaining
 /// screen; a refused upload answers its status (401, 403, 404, 409) with the form's state. An API key in the request authenticates the uploader within its scopes.
-/// <see cref="NpmBrowseController"/> calls it in process.
+/// <c>NpmBrowseController</c> calls it in process.
 /// </summary>
 [Route("api/ui")]
 public sealed class NpmBrowseUiApiController : UiApiControllerBase
@@ -35,25 +34,25 @@ public sealed class NpmBrowseUiApiController : UiApiControllerBase
     }
 
     /// <summary>The package list with a search box.</summary>
-    [HttpGet("npm-packages"), UiApi(typeof(NpmBrowseController), nameof(NpmBrowseController.Packages))]
+    [HttpGet("npm-packages"), UiApi("NpmBrowse", "Packages")]
     [RepositoryPage(Format = RepositoryFormat.Npm)]
     public async Task<ActionResult<ScreenResult<NpmPackagesViewModel>>> Packages(string? q, int p = 1, CancellationToken cancellationToken = default)
         => Respond(await _npm.PackagesAsync(q, p, User, cancellationToken));
 
     /// <summary>One package: readme, versions, dist-tags, install commands.</summary>
-    [HttpGet("npm-packages/{*id}"), UiApi(typeof(NpmBrowseController), nameof(NpmBrowseController.Package))]
+    [HttpGet("npm-packages/{*id}"), UiApi("NpmBrowse", "Package")]
     [RepositoryPage(Format = RepositoryFormat.Npm)]
     public async Task<ActionResult<ScreenResult<NpmPackageViewModel>>> Package(string? id, string? version, CancellationToken cancellationToken = default)
         => Respond(await _npm.PackageAsync(id, version, User, cancellationToken));
 
     /// <summary>The upload form's state.</summary>
-    [HttpGet("npm-upload"), UiApi(typeof(NpmBrowseController), nameof(NpmBrowseController.Upload))]
+    [HttpGet("npm-upload"), UiApi("NpmBrowse", "Upload")]
     [RepositoryPage(Format = RepositoryFormat.Npm, Upload = true)]
     public Task<ActionResult<ScreenResult<NpmUploadViewModel>>> Upload()
         => Task.FromResult(Respond(_npm.UploadForm(User)));
 
     /// <summary>Publishes the chosen tarball with the dist-tag <paramref name="tag"/> (default <c>latest</c>).</summary>
-    [HttpPost("npm-upload"), UiApi(typeof(NpmBrowseController), nameof(NpmBrowseController.Upload))]
+    [HttpPost("npm-upload"), UiApi("NpmBrowse", "Upload")]
     [RepositoryPage(Format = RepositoryFormat.Npm, Upload = true)]
     public async Task<ActionResult<ScreenResult<NpmUploadViewModel>>> UploadPost(IFormFile? package, string? tag, string? apiKey, CancellationToken cancellationToken)
         => Respond(await _npm.PublishAsync(User, KeyCaller, package.ToUploadedFile(), tag, apiKey, cancellationToken));

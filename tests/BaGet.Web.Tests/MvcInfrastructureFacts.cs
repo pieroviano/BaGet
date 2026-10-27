@@ -16,8 +16,9 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.Routing;
 using Xunit;
+using BaGet.Frontend.Routing;
 using BaGet.Web.V3.Routing;
-using BaGet.Web.V3.TagHelpers;
+using BaGet.Frontend.TagHelpers;
 
 namespace BaGet.Web.Tests;
 
