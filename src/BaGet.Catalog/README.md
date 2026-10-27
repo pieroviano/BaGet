@@ -22,6 +22,10 @@ A database without the catalog table (Azure Table storage) gets `NullCatalogData
 
 To read a catalog, use `CatalogProcessor` in `Extension.BaGet.Protocol`.
 
+## Layout
+
+One type per file, namespace = `BaGet.Catalog` + folder (`CodeLayoutTests`): `Controllers/Protocols` (`CatalogController`), `Database` (`ICatalogDatabase`, `CatalogDatabase`, `NullCatalogDatabase`), `Storage` (`CatalogReader`, `CatalogWriter`), `Rebuild` (`CatalogRebuilder`, `CatalogRebuildOperation`), `ServiceIndex`, `Extensions` (`AddBaGetCatalog`).
+
 ## Links
 
 [Documentation](https://pieroviano.github.io/BaGet/) · [Source](https://github.com/pieroviano/BaGet)

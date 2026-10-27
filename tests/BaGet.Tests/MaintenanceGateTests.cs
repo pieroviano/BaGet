@@ -262,7 +262,7 @@ public class MaintenanceGateTests : IDisposable
 
             GateOf(app).Close("Copying the database");
             using var scope = app.Services.CreateScope();
-            var writer = scope.ServiceProvider.GetRequiredService<BaGet.Catalog.CatalogWriter>();
+            var writer = scope.ServiceProvider.GetRequiredService<BaGet.Catalog.Storage.CatalogWriter>();
             await Assert.ThrowsAsync<MaintenanceException>(() => writer.OnPackageChangedAsync(
                 "Cataloged.Package", NuGet.Versioning.NuGetVersion.Parse("1.0.0"), CancellationToken.None));
 

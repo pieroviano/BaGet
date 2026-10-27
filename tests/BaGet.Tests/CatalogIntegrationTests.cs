@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Catalog;
+using BaGet.Catalog.Rebuild;
 using BaGet.Core;
 using BaGet.Protocol;
 using BaGet.Protocol.Catalog;

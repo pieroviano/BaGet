@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using BaGet.Core;
 using BaGet.Protocol.Models;
+using BaGet.Catalog.Controllers.Protocols;
+using BaGet.Catalog.Database;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.ServiceIndex;
 
 /// <summary>
 /// Advertises Catalog/3.0.0, unless the database cannot hold the catalog or the repository is virtual.

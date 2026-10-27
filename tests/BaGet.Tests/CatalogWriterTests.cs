@@ -1,5 +1,5 @@
 using System;
-using BaGet.Catalog;
+using BaGet.Catalog.Storage;
 using Xunit;
 
 namespace BaGet.Tests;

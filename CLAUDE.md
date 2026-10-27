@@ -520,7 +520,7 @@ Unit tests reach internals through `InternalsVisibleTo`, declared in each **proj
 | `BaGet.Web.V2` | `BaGet.Web.V2.Tests` (no such project; `BaGet.Tests` has no access) |
 | `BaGet.Aws`, `BaGet.Gcp`, `BaGet.Aliyun` | `BaGet.Storage.Tests` |
 
-## Code layout (BaGet.Identity, BaGet.Identity.Application, BaGet.Validation, BaGet.Web.Application, BaGet.Web.V3)
+## Code layout (BaGet.Catalog, BaGet.Identity, BaGet.Identity.Application, BaGet.Validation, BaGet.Web.Application, BaGet.Web.V3)
 
 One type per file named like it, no nested types, namespace = the project's `RootNamespace` + folder (folders name the functionality: `Models/<area>`, `UseCases/<area>`, `Services/<area>`, `Routing`, `Filters`, `Middleware`...), and every controller in the folder of its kind: `Controllers/FrontEnd` screens (controllers returning a view), `Controllers/UI` `/api/ui` twins, `Controllers/Base` bases, `Controllers/Api` `/api/v1`, `Controllers/Protocols` package protocols. `CodeLayoutTests` enforces it; the only namespace exceptions are `BaGetEndpointBuilder` and `IServiceCollectionExtensions` (namespace `BaGet`, for discoverability).
 

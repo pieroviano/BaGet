@@ -7,8 +7,10 @@ using BaGet.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
+using BaGet.Catalog.Database;
+using BaGet.Catalog.Storage;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.Rebuild;
 
 /// <summary>
 /// Reconciles the catalog with the packages: appends a details entry for every package

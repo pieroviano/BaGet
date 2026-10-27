@@ -3,8 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
+using BaGet.Catalog.Database;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.Rebuild;
 
 /// <summary>The <c>catalog rebuild</c> command as an <see cref="IAdminOperation"/>.</summary>
 public sealed class CatalogRebuildOperation : IAdminOperation

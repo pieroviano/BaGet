@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using BaGet.Catalog.Storage;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.Controllers.Protocols;
 
 /// <summary>
 /// The Catalog/3.0.0 resource.

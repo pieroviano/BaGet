@@ -5,8 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Protocol.Models;
+using BaGet.Catalog.Database;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.Storage;
 
 /// <summary>
 /// Builds the catalog documents. The index and pages are built from the database on

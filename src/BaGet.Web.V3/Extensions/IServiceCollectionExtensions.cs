@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
 using System.Text.Json.Serialization;
-using BaGet.Catalog;
+using BaGet.Catalog.Controllers.Protocols;
+using BaGet.Catalog.Extensions;
 using BaGet.Core;
 using BaGet.Identity.Extensions;
 using BaGet.Web.V3.OpenApi;

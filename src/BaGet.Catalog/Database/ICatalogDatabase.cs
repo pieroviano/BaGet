@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.Database;
 
 /// <summary>
 /// Where the catalog log is kept.

@@ -1,8 +1,12 @@
 using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using BaGet.Catalog.Database;
+using BaGet.Catalog.Rebuild;
+using BaGet.Catalog.ServiceIndex;
+using BaGet.Catalog.Storage;
 
-namespace BaGet.Catalog;
+namespace BaGet.Catalog.Extensions;
 
 public static class CatalogServiceCollectionExtensions
 {

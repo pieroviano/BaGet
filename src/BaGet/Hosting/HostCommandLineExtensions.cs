@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Catalog;
+using BaGet.Catalog.Rebuild;
 using BaGet.Core;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Builder;
