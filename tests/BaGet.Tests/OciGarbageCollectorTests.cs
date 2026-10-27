@@ -586,6 +586,71 @@ public class OciGarbageCollectorTests : IDisposable
         => InRepoAsync(async sp => await sp.GetRequiredService<IContext>().OciBlobLinks!.AsNoTracking().Select(l => l.Manifests).ToArrayAsync(Token));
 
     [Fact]
+    public async Task AMountOfABlobWhoseFileIsGoneIsRefusedAndRecordsNothing()
+    {
+        var layer = Encoding.UTF8.GetBytes("mounted layer " + new string('m', 100));
+        var digest = OciTestImage.Digest(layer);
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/source", layer);
+            await sp.GetRequiredService<IStorageService>().DeleteAsync(RepositoryStorage.Scope(sp.GetRequiredService<IRepositoryContext>().Current, OciNames.BlobPath(digest)), Token);
+
+            return 0;
+        });
+
+        var mounted = await InRepoAsync(sp => sp.GetRequiredService<IOciRegistry>().MountBlobAsync("team/target", digest, "team/source", Token));
+
+        Assert.False(mounted);
+        Assert.Null(await InRepoAsync(sp => sp.GetRequiredService<IOciRegistry>().GetBlobInfoAsync("team/target", digest, Token)));
+    }
+
+    [Fact]
+    public async Task ASlowMonolithicPutDoesNotHoldTheDigestLockWhileItsBodyIsRead()
+    {
+        var layer = Encoding.UTF8.GetBytes("slow layer " + new string('w', 100));
+        var digest = OciTestImage.Digest(layer);
+        var body = new GatedStream(layer);
+        var slow = InRepoAsync(async sp => await sp.GetRequiredService<IOciRegistry>().PutBlobAsync("team/slow", digest, body, Token));
+        await body.Started.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);
+
+        // The same digest is pushed again and finishes while the first body is still being read.
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/other", layer);
+
+            return 0;
+        }).WaitAsync(TimeSpan.FromSeconds(10), Token);
+
+        body.Release();
+        await slow.WaitAsync(TimeSpan.FromSeconds(10), Token);
+        Assert.NotNull(await InRepoAsync(sp => sp.GetRequiredService<IOciRegistry>().GetBlobInfoAsync("team/slow", digest, Token)));
+    }
+
+    private sealed class GatedStream : MemoryStream
+    {
+        private readonly TaskCompletionSource _gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public GatedStream(byte[] content) : base(content)
+        {
+        }
+
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Release() => _gate.TrySetResult();
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            Started.TrySetResult();
+            await _gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            return await base.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+        }
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            => ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+    }
+
+    [Fact]
     public async Task ManifestsPushedAtTheSameTimeEachCountAsAUserOfTheirSharedLayer()
     {
         var layer = Encoding.UTF8.GetBytes("shared layer " + new string('s', 100));

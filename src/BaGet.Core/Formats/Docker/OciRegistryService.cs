@@ -426,7 +426,7 @@ public partial class OciRegistryService : IOciRegistry
         _context.OciUploads!.Remove(upload);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await RecordBlobAsync(row.Key, digest, commit.Length, cancellationToken).ConfigureAwait(false);
-        await RequireFileAfterAlreadyExistsAsync(commit, digest, cancellationToken).ConfigureAwait(false);
+        await RequireFileAfterAlreadyExistsAsync(commit, row.Key, digest, cancellationToken).ConfigureAwait(false);
 
         return new OciBlobStored(digest, commit.Length);
     }
@@ -457,13 +457,23 @@ public partial class OciRegistryService : IOciRegistry
         _gate.ThrowIfClosed();
         using var inFlight = OciBlobCommits.Enter();
 
-        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        // The body is read before the digest is locked: a slow client must not hold up deletes, the GC or other pushes.
         var uploadId = await Streaming.BeginUploadAsync("application/octet-stream", cancellationToken).ConfigureAwait(false);
-        StorageCommitResult commit;
         try
         {
             var data = await OciStreams.NonEmptyAsync(content, cancellationToken).ConfigureAwait(false);
             if (data != null) await Streaming.AppendAsync(uploadId, 0, data, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await TryAbortAsync(uploadId).ConfigureAwait(false);
+            throw;
+        }
+
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        StorageCommitResult commit;
+        try
+        {
             commit = await Streaming.CommitAsync(uploadId, BlobPath(digest), OciNames.HexOf(digest), cancellationToken).ConfigureAwait(false);
         }
         catch (StorageDigestMismatchException)
@@ -479,20 +489,43 @@ public partial class OciRegistryService : IOciRegistry
         if (commit.Result == StoragePutResult.Conflict) throw new InvalidOperationException("The blob store holds different content under this digest.");
 
         await RecordBlobAsync(imageKey, digest, commit.Length, cancellationToken).ConfigureAwait(false);
-        await RequireFileAfterAlreadyExistsAsync(commit, digest, cancellationToken).ConfigureAwait(false);
+        await RequireFileAfterAlreadyExistsAsync(commit, imageKey, digest, cancellationToken).ConfigureAwait(false);
 
         return new OciBlobStored(digest, commit.Length);
     }
 
     // A commit onto an existing file reports AlreadyExists; the file may have been removed (by another node, which the in-process
-    // lock cannot see) after the row was written. Look once more: if it is gone, fail so the client uploads again (the row is kept, the
-    // next commit stores the file under it).
-    private async Task RequireFileAfterAlreadyExistsAsync(StorageCommitResult commit, string digest, CancellationToken cancellationToken)
+    // lock cannot see) after the row was written. Look once more: if it is gone, undo the record (else a retrying client's HEAD would
+    // find the row, skip the upload and the blob would be a 404) and fail so the client uploads again.
+    private async Task RequireFileAfterAlreadyExistsAsync(StorageCommitResult commit, int imageKey, string digest, CancellationToken cancellationToken)
     {
         if (commit.Result != StoragePutResult.AlreadyExists) return;
         if (await Streaming.GetInfoAsync(BlobPath(digest), cancellationToken).ConfigureAwait(false) != null) return;
 
+        await UnrecordBlobAsync(imageKey, digest).ConfigureAwait(false);
+
         throw new OciException(OciErrorCode.BlobUploadInvalid, "The blob was removed while it was being stored: upload it again.", digest);
+    }
+
+    // Takes back RecordBlobAsync for a blob whose file is gone: the image's link, and the blob row when no image holds it. The caller
+    // holds the digest lock.
+    private async Task UnrecordBlobAsync(int imageKey, string digest)
+    {
+        (_context as DbContext)?.ChangeTracker.Clear();
+        await using var transaction = await _context.Database.BeginTransactionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var blob = await _context.OciBlobs!.FirstOrDefaultAsync(b => b.Digest == digest, CancellationToken.None).ConfigureAwait(false);
+        if (blob == null) return;
+
+        var link = await _context.OciBlobLinks!.FirstOrDefaultAsync(l => l.ImageKey == imageKey && l.BlobKey == blob.Key, CancellationToken.None).ConfigureAwait(false);
+        if (link != null) _context.OciBlobLinks!.Remove(link);
+        await _context.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var holders = await _context.OciBlobLinks!.CountAsync(l => l.BlobKey == blob.Key, CancellationToken.None).ConfigureAwait(false);
+        if (holders == 0) _context.OciBlobs!.Remove(blob);
+        else blob.RefCount = holders;
+        await _context.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     // Records that the image holds the blob (creating the blob row when this is the repository's first copy) and settles the
@@ -550,6 +583,10 @@ public partial class OciRegistryService : IOciRegistry
 
         var imageKey = await EnsureImageAsync(image, cancellationToken).ConfigureAwait(false);
         _gate.ThrowIfClosed();
+
+        // Under the digest lock, and only while the file is there: a delete of the source image may have removed the blob since.
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        if (await Streaming.GetInfoAsync(BlobPath(digest), cancellationToken).ConfigureAwait(false) == null) return false;
         await RecordBlobAsync(imageKey, digest, blob.Size, cancellationToken).ConfigureAwait(false);
 
         return true;

@@ -210,6 +210,9 @@ public partial class OciRegistryService
 
         var imageKey = await EnsureImageAsync(image, cancellationToken).ConfigureAwait(false);
         _gate.ThrowIfClosed();
+
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        if (await Streaming.GetInfoAsync(BlobPath(digest), cancellationToken).ConfigureAwait(false) == null) return false;
         await RecordBlobAsync(imageKey, digest, existing.Size, cancellationToken, countReferences: true).ConfigureAwait(false);
 
         return true;
@@ -269,7 +272,7 @@ public partial class OciRegistryService
 
         await ForgetSessionAsync(session).ConfigureAwait(false);
         await RecordBlobAsync(imageKey, digest, commit.Length, cancellationToken, countReferences: true).ConfigureAwait(false);
-        await RequireFileAfterAlreadyExistsAsync(commit, digest, cancellationToken).ConfigureAwait(false);
+        await RequireFileAfterAlreadyExistsAsync(commit, imageKey, digest, cancellationToken).ConfigureAwait(false);
 
         return true;
     }
