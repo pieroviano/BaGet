@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.V3.Api.Catalog;
+using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet.Web.V3.Controllers.Api;
 

@@ -23,6 +23,7 @@
     <XUnitPackageVersion>4.0.2</XUnitPackageVersion>
     <JintPackageVersion>4.2.0</JintPackageVersion>
     <TestcontainersPackageVersion>4.16.0</TestcontainersPackageVersion>
+    <MicrosoftCodeAnalysisCSharpPackageVersion>4.14.0</MicrosoftCodeAnalysisCSharpPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

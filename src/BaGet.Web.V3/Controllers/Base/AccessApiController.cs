@@ -4,10 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
-using BaGet.Web.V3.Controllers.Base;
 using BaGet.Web.V3.Api;
 
-namespace BaGet.Web.V3.Controllers.Api;
+namespace BaGet.Web.V3.Controllers.Base;
 
 /// <summary>A change that needs the relational access model; the Azure Table database has none.</summary>
 public abstract class AccessApiController : AdminApiController

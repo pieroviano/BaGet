@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using BaGet.Web.V3.Api.Catalog;
 using BaGet.Web.V3.Models.Api;
 using BaGet.Web.V3.Api;
+using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet.Web.V3.Controllers.Api;
 
