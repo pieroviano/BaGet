@@ -217,6 +217,56 @@ public class AccountSettingsTests : IDisposable
         Assert.False(await CanSignInAsync(app, "alice", "N3w-Passw0rd!"));
     }
 
+    [Fact]
+    public async Task AWrongCurrentPasswordIsCountedAsAFailedAttempt()
+    {
+        var (app, browser) = Start();
+        await browser.RegisterAsync("alice");
+
+        using var response = await browser.PostAsync("account/settings", new Dictionary<string, string>
+        {
+            { "currentPassword", "wrong" },
+            { "newPassword", "N3w-Passw0rd!" },
+            { "confirmPassword", "N3w-Passw0rd!" },
+        }, action: "account/settings?handler=ChangePassword");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        #pragma warning disable CS8602
+        Assert.Equal(1, (await FindAsync(app, "alice")).AccessFailedCount);
+        #pragma warning restore CS8602
+    }
+
+    [Fact]
+    public async Task ALockedOutAccountCannotChangeThePasswordEvenWithTheRightOne()
+    {
+        var (app, browser) = Start();
+        await browser.RegisterAsync("alice");
+        await WithAsync(app, async p =>
+        {
+            var users = p.GetRequiredService<UserManager<BaGetUser>>();
+            var alice = (await users.FindByNameAsync("alice"))!;
+            await users.SetLockoutEndDateAsync(alice, DateTimeOffset.UtcNow.AddDays(1));
+            return 0;
+        });
+
+        using var response = await browser.PostAsync("account/settings", new Dictionary<string, string>
+        {
+            { "currentPassword", Password },
+            { "newPassword", "N3w-Passw0rd!" },
+            { "confirmPassword", "N3w-Passw0rd!" },
+        }, action: "account/settings?handler=ChangePassword");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await WithAsync(app, async p =>
+        {
+            var users = p.GetRequiredService<UserManager<BaGetUser>>();
+            var alice = (await users.FindByNameAsync("alice"))!;
+            Assert.True(await users.CheckPasswordAsync(alice, Password));
+            Assert.False(await users.CheckPasswordAsync(alice, "N3w-Passw0rd!"));
+            return 0;
+        });
+    }
+
     // --- Change email -------------------------------------------------------------------
 
     [Fact]
@@ -339,6 +389,25 @@ public class AccountSettingsTests : IDisposable
 
         #pragma warning disable CS8602
         Assert.False((await FindAsync(app, "alice")).EmailConfirmed);
+        #pragma warning restore CS8602
+    }
+
+    [Fact]
+    public async Task AnUnconfirmedAccountAnswersNotAllowedOnlyToTheRightPassword()
+    {
+        var (app, browser) = Start(email: true);
+        await RegisterUnconfirmedAsync(browser, "alice", "alice@example.com");
+
+        using var wrong = await SignInAsync(browser, "alice", "wrong");
+        var wrongBody = await wrong.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var right = await SignInAsync(browser, "alice", Password);
+        var rightBody = await right.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains("The user name or password is incorrect.", wrongBody);
+        Assert.DoesNotContain("Confirm your email address", wrongBody);
+        Assert.Contains("Confirm your email address", rightBody);
+        #pragma warning disable CS8602
+        Assert.Equal(1, (await FindAsync(app, "alice")).AccessFailedCount);
         #pragma warning restore CS8602
     }
 
