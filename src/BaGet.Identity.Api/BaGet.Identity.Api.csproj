@@ -26,7 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BaGet.Identity.Application\BaGet.Identity.Application.csproj" />
     <ProjectReference Include="..\BaGet.Core\BaGet.Core.csproj" />
-    <ProjectReference Include="..\BaGet.Identity.Base\BaGet.Identity.Base.csproj" />
+    <ProjectReference Include="..\BaGet.Frontend.Base\BaGet.Frontend.Base.csproj" />
   </ItemGroup>
 
   <ItemGroup>

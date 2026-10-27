@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Identity.Api" Key="$(BaGetPublicKey)" />
-    <InternalsVisibleTo Include="BaGet.Identity.Base" Key="$(BaGetPublicKey)" />
+    <InternalsVisibleTo Include="BaGet.Frontend.Base" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Web.Application" Key="$(BaGetPublicKey)" />
   </ItemGroup>

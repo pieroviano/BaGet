@@ -163,7 +163,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity.Application"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Web.Application", "src\BaGet.Web.Application\BaGet.Web.Application.csproj", "{35F745F2-E3CF-40B9-A033-DD396650192A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity.Base", "src\BaGet.Identity.Base\BaGet.Identity.Base.csproj", "{A3B5E731-CA4E-10DB-FB69-E6CDB85443A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Frontend.Base", "src\BaGet.Frontend.Base\BaGet.Frontend.Base.csproj", "{A3B5E731-CA4E-10DB-FB69-E6CDB85443A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
