@@ -281,6 +281,11 @@ public class NpmRegistryService : INpmRegistry
         return stored.Any(v => NpmNames.Comparable(v) == NpmNames.Comparable(version)) ? ResolutionOutcome.Stored : ResolutionOutcome.NotFound;
     }
 
+    private static readonly KeyedLocks PublishLocks = new();
+
+    // Versions that npm (or a case-insensitive store) treats as one share a lock: build metadata and prerelease case ignored.
+    private string LockKey(string name, string version) => StoragePath(name, NpmNames.Comparable(version)).ToLowerInvariant();
+
     private string StoragePath(string name, string version) => RepositoryStorage.Scope(_repository.Current, NpmNames.TarballPath(name, version));
 
     /// <inheritdoc/>
@@ -424,6 +429,7 @@ public class NpmRegistryService : INpmRegistry
         var version = cached.Version;
         var path = StoragePath(name, version);
 
+        using var publishLock = await PublishLocks.LockAsync(LockKey(name, version), cancellationToken).ConfigureAwait(false);
         var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
         var stored = package == null
             ? new List<string>()
@@ -640,6 +646,11 @@ public class NpmRegistryService : INpmRegistry
 
         _gate.ThrowIfClosed();
 
+        // One publish of a version (build metadata and prerelease case ignored) at a time in this process: the clash check and
+        // the file write must not interleave with a concurrent publish, or the loser would replace the winner's file. Under the
+        // lock the rows decide, so a loser is refused without touching storage. Other nodes sharing the store are not fenced.
+        using var publishLock = await PublishLocks.LockAsync(LockKey(name, version), cancellationToken).ConfigureAwait(false);
+
         var package = await _context.NpmPackages!.FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
         var isNewPackage = package == null;
         if (package != null)
@@ -689,7 +700,7 @@ public class NpmRegistryService : INpmRegistry
                     Integrity = integrity,
                     Shasum = shasum,
                     TarballSize = length,
-                    Manifest = BuildStoredManifest(publication.Manifest, name, version, integrity, shasum).ToJsonString(),
+                    Manifest = BuildStoredManifest(publication.Manifest, name, version, integrity, shasum, inner).ToJsonString(),
                     Published = now,
                 });
 
@@ -760,9 +771,29 @@ public class NpmRegistryService : INpmRegistry
         return await PublishAsync(caller, new NpmPublication(normalized, version, inner, string.IsNullOrWhiteSpace(tag) ? "latest" : tag.Trim(), tarball), cancellationToken).ConfigureAwait(false);
     }
 
-    private static JsonObject BuildStoredManifest(JsonObject sent, string name, string version, string integrity, string shasum)
+    // The fields npm acts on at install time come from the tarball's own package.json when there is one (a publisher cannot
+    // declare harmless dependencies or no install script in the request and ship others); the registry owns name, version and dist.
+    private static readonly string[] TarballOwnedFields =
+    {
+        "dependencies", "optionalDependencies", "peerDependencies", "peerDependenciesMeta", "bundleDependencies", "bundledDependencies",
+        "bin", "directories", "engines", "funding", "os", "cpu", "libc", "scripts",
+    };
+
+    private static JsonObject BuildStoredManifest(JsonObject sent, string name, string version, string integrity, string shasum, JsonObject? tarballPackageJson = null)
     {
         var manifest = (JsonObject)sent.DeepClone();
+
+        if (tarballPackageJson != null)
+        {
+            foreach (var field in TarballOwnedFields)
+            {
+                if (tarballPackageJson[field] is { } value) manifest[field] = value.DeepClone(); else manifest.Remove(field);
+            }
+
+            var hasInstallScript = tarballPackageJson["scripts"] is JsonObject scripts
+                && (scripts.ContainsKey("preinstall") || scripts.ContainsKey("install") || scripts.ContainsKey("postinstall"));
+            if (hasInstallScript) manifest["hasInstallScript"] = true; else manifest.Remove("hasInstallScript");
+        }
 
         // The registry decides these; the client's copies are discarded.
         manifest.Remove("_attachments");
@@ -1053,6 +1084,11 @@ public class NpmRegistryService : INpmRegistry
         var package = await _context.NpmPackages!.AsNoTracking().FirstOrDefaultAsync(p => p.Name == name, cancellationToken).ConfigureAwait(false);
         var published = package != null && await _context.NpmVersions!.AnyAsync(v => v.PackageKey == package.Key && v.Version == version, cancellationToken).ConfigureAwait(false);
         if (published) return await UnpublishVersionsAsync(caller, name, new[] { version }, null, cancellationToken).ConfigureAwait(false);
+
+        // A row whose version differs only in case or build metadata owns the file on a case-insensitive store: untouched.
+        var lookalike = package != null && (await _context.NpmVersions!.AsNoTracking().Where(v => v.PackageKey == package.Key).Select(v => v.Version!).ToListAsync(cancellationToken).ConfigureAwait(false))
+            .Any(v => NpmNames.Comparable(v) == NpmNames.Comparable(version));
+        if (lookalike) return NpmResult.Fail(NpmStatus.NotFound, "There is no such file.");
 
         // The version is already unpublished (the earlier step of the client's sequence): only the file is left.
         var denied = await DenyAsync(caller, PackageAction.Push, name, cancellationToken).ConfigureAwait(false);

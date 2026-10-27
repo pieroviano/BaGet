@@ -39,8 +39,8 @@ read-only mode.
 | Topic | Rule |
 |---|---|
 | Names | `left-pad` or `@scope/name`, lower case (to publish; reading, and proxying a remote repository, also accept npm's legacy upper case names such as `JSONStream`), at most 214 characters, `a-z 0-9 . _ ~ -`, not starting with `.`, `_` or `-`; `node_modules` and `favicon.ico` reserved. An encoded `@scope%2fname` and `@scope/name` are the same package |
-| Versions | semantic versions only (`1.0.0`, `1.0.0-rc.1`, `1.0.0+build`); build metadata does not make a version different |
-| Publish | `PUT /{name}`: the body carries the tarball as base64. It is streamed to a temporary file and decoded to another, never held in memory. Refused (400, nothing stored) when the declared `integrity` (sha512), `shasum` (sha1) or `length` differ from the bytes, when the tarball has no `package.json` or it names another package or version, when the tag is missing or looks like a version. `409` for a published version. Size limit `Npm:MaxPublishBytes` (413); the document apart from the tarballs (manifest, readme) is held in memory and limited to 64 MiB (413) |
+| Versions | semantic versions only (`1.0.0`, `1.0.0-rc.1`, `1.0.0+build`); build metadata does not make a version different, nor does the case of the prerelease label (`1.0.0-Beta` is `1.0.0-beta`) |
+| Publish | `PUT /{name}`: the body carries the tarball as base64. It is streamed to a temporary file and decoded to another, never held in memory. Refused (400, nothing stored) when the declared `integrity` (sha512), `shasum` (sha1) or `length` differ from the bytes, when the tarball has no `package.json` or it names another package or version, when the tag is missing or looks like a version. `409` for a published version (publishes of one version are serialized per process, so a loser never replaces the winner's file). The install fields (`dependencies`, `bin`, `os`, `cpu`, `engines`, `scripts`-derived `hasInstallScript`...) are taken from the tarball's own `package.json`, not from the request's manifest. Size limit `Npm:MaxPublishBytes` (413); the document apart from the tarballs (manifest, readme) is held in memory and limited to 64 MiB (413) |
 | First version | always gets the `latest` tag, whatever tag it was published with. Later publishes move only the tag they name |
 | Ownership | the first publisher of a name owns it (organizations can own); only owners (and administrators) publish versions, tag, deprecate, unpublish. An administrator's push does not take the name over. A name published before accounts has no owner: only the global key and administrators change it |
 | Access model | Read for browsing, installing, searching; **Deploy** to publish and to change dist-tags; **Annotate** to deprecate; **Delete** to unpublish after the window. Package patterns of grants apply to the decoded name. API key scopes: `package:push` publishes new names, `package:pushversion` only new versions of owned names, `package:unlist` deprecates and unpublishes after the window |
@@ -94,7 +94,7 @@ The web server's own body limit applies as well (the shipped host turns Kestrel'
 
 Tarballs: `npm/{name}/-/{file}` below the repository's storage prefix (`repos/{name}/` for repositories other than `default`).
 Tables `NpmPackages`, `NpmVersions`, `NpmDistTags` ([formats](formats.md#data-model-b1)); the manifest of each version is kept as
-published (without the tarball address, which is built from the request), so the packument answers what was published.
+published (without the tarball address, which is built from the request), except the install fields, which come from the tarball's `package.json`, so the packument cannot promise what `npm install` will not run.
 
 ## Tests
 

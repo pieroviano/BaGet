@@ -345,8 +345,8 @@ public class NpmController : ControllerBase, Microsoft.AspNetCore.Mvc.Filters.IA
             return Error(400, "The request is not valid JSON.");
         }
 
-        var userName = body?["name"]?.GetValue<string>();
-        var password = body?["password"]?.GetValue<string>();
+        var userName = body?["name"] is JsonValue nameValue && nameValue.TryGetValue<string>(out var nameText) ? nameText : null;
+        var password = body?["password"] is JsonValue passwordValue && passwordValue.TryGetValue<string>(out var passwordText) ? passwordText : null;
         if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password) || !string.Equals(userName, routeName, StringComparison.OrdinalIgnoreCase))
         {
             return Error(400, "A user name and a password are required.");
@@ -531,7 +531,7 @@ public class NpmController : ControllerBase, Microsoft.AspNetCore.Mvc.Filters.IA
         if (removed.Count == 0) return Json(200, new JsonObject { ["ok"] = true, ["success"] = true });
 
         var tags = (root["dist-tags"] as JsonObject)?
-            .Where(t => t.Value is JsonValue)
+            .Where(t => t.Value is JsonValue tagValue && tagValue.TryGetValue<string>(out _))
             .ToDictionary(t => t.Key, t => t.Value!.GetValue<string>(), StringComparer.Ordinal);
 
         return await RespondHidingAsync(await _registry.UnpublishVersionsAsync(caller, name, removed, tags, cancellationToken), caller, name, cancellationToken);

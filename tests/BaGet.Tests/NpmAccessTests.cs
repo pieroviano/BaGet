@@ -439,6 +439,16 @@ public class NpmAccessTests : IDisposable
     }
 
     [Fact]
+    public async Task ALoginBodyWithANonStringFieldIsA400NotA500()
+    {
+        using var number = await SendAsync(HttpMethod.Put, Registry + "-/user/org.couchdb.user:alice", """{"name":"alice","password":1}""");
+        using var flag = await SendAsync(HttpMethod.Put, Registry + "-/user/org.couchdb.user:alice", """{"name":true,"password":"x"}""");
+
+        Assert.Equal(HttpStatusCode.BadRequest, number.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, flag.StatusCode);
+    }
+
+    [Fact]
     public async Task ABadPasswordAnUnknownUserOrAMismatchedNameIsRefusedWithoutAToken()
     {
         using var badPassword = await LoginAsync("alice", "wrong-Passw0rd!");

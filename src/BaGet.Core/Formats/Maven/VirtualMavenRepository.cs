@@ -52,7 +52,12 @@ public sealed class VirtualMavenRepository : IMavenRepository
     {
         if (path == null) throw new ArgumentNullException(nameof(path));
         if (path.Candidates.Count == 0) return null;
-        if (path.Kind == MavenPathKind.File || path.Candidates.Count == 1) return path.Candidates[0];
+        if (path.Kind == MavenPathKind.File) return path.Candidates[0];
+
+        // A single candidate (a path two folders deep) can still be a group's plugin list: a member that says so (null) makes the
+        // document a group-level one, judged by the repository's Read only.
+        var single = path.Candidates.Count == 1;
+        if (single && (path.GroupOnly == null || path.Candidates[0].Version != null)) return path.Candidates[0];
 
         foreach (var member in await _reader.ReadableMembersAsync(null, cancellationToken).ConfigureAwait(false))
         {
@@ -65,6 +70,8 @@ public sealed class VirtualMavenRepository : IMavenRepository
             {
                 continue;
             }
+
+            if (single && resolved == null) return null;
 
             // A member answers the artifact level when it knows nothing; only the first candidate is a positive answer.
             if (resolved != null && resolved == path.Candidates[0]) return resolved;

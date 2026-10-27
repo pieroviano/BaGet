@@ -179,9 +179,9 @@ public static class NpmNames
         return true;
     }
 
-    /// <summary>The version without build metadata, which npm ignores when it compares versions (<c>1.0.0+a</c> is <c>1.0.0</c>).</summary>
+    /// <summary>The version without build metadata, which npm ignores when it compares versions (<c>1.0.0+a</c> is <c>1.0.0</c>), and in lower case (<c>1.0.0-Beta</c> and <c>1.0.0-beta</c> share a file on a case-insensitive store, so they are one version).</summary>
     public static string Comparable(string version)
-        => SemanticVersion.TryParse(version, out var parsed) ? parsed.ToNormalizedString() : version;
+        => SemanticVersion.TryParse(version, out var parsed) ? parsed.ToNormalizedString().ToLowerInvariant() : version.ToLowerInvariant();
 
     /// <summary>Whether the version carries a prerelease label.</summary>
     public static bool IsPrerelease(string version)
