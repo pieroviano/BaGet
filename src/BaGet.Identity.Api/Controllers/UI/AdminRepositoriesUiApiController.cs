@@ -27,7 +27,7 @@ public sealed class AdminRepositoriesUiApiController : AdminUiApiControllerBase
 
     private AdminRepositoryDeleteUseCase Delete => UseCase<AdminRepositoryDeleteUseCase>();
 
-    private string ReturnPage => Request.Path + Request.QueryString;
+    private string ReturnPage => "~" + Request.Path + Request.QueryString;
 
     // ---------------------------------------------------------------- Repositories
 

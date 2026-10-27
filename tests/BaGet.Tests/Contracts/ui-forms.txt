@@ -2543,7 +2543,7 @@ status=404
 == user GET /r/virt/packages/Contoso.Lib/contact-owners
 status=404
 == user GET /r/virt/packages/Contoso.Lib/manage
-status=403
+status=404
 == user GET /r/virt/scan-artifact
 status=404
 == user GET /r/virt/stats

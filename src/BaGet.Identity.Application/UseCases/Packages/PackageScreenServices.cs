@@ -73,6 +73,22 @@ public sealed class PackageScreenServices
     /// <summary>Whether an external provider is available to sign in again with.</summary>
     public bool CanReauthenticate => _accounts.Value.OpenIdConnect.IsConfigured;
 
+    /// <summary>
+    /// Whether the caller may see the package's pages in the request's repository (Read on the repository and the package). A refusal of the
+    /// owner check answers 404 rather than 403 when this is false, so a private repository is not told from a missing one; the global
+    /// repository filter would say the same, but the controller's own check runs before it.
+    /// </summary>
+    public async Task<bool> CanSeeAsync(ClaimsPrincipal caller, string? packageId, CancellationToken cancellationToken)
+    {
+        var access = (IRepositoryAccess?)Services.GetService(typeof(IRepositoryAccess));
+        if (access == null) return true;
+
+        var repository = Repository.Current;
+        return string.IsNullOrEmpty(packageId)
+            ? await access.CanReadAsync(caller, repository, cancellationToken).ConfigureAwait(false)
+            : await access.CanReadPackageAsync(caller, repository, packageId!, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>The session's principal for the format services (null when it cannot be built).</summary>
     public async Task<BaGetPrincipal?> CallerAsync(ClaimsPrincipal caller)
         => await _sessions.CreateAsync(caller).ConfigureAwait(false);

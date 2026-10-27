@@ -102,7 +102,11 @@ public sealed class PackageManageUseCase
 
         if (!isOwner && !_isAdministrator)
         {
-            return ScreenResult<PackageManageScreen>.Forbidden();
+            // A caller who may not even read the package gets the answer of a missing one (404), not a 403 that tells the repository exists.
+            return _services.Repository.Current.Kind == RepositoryKind.Virtual
+                || !await _services.CanSeeAsync(caller, id, cancellationToken).ConfigureAwait(false)
+                ? ScreenResult<PackageManageScreen>.NotFound()
+                : ScreenResult<PackageManageScreen>.Forbidden();
         }
 
         _actingAsAdministrator = _isAdministrator && !isOwner;

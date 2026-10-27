@@ -62,6 +62,7 @@ public sealed class AdminUserDeletionUseCase : AdminUseCaseBase
         string? password,
         CancellationToken cancellationToken)
     {
+        ThrowIfClosed();
         var (user, refusal) = await FindTargetAsync(caller, name);
         if (refusal != null) return refusal;
 

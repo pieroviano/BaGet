@@ -20,7 +20,7 @@ public sealed class ScanningUiApiController : AccessUiApiControllerBase
 {
     private ScanningUseCase Scanning => UseCase<ScanningUseCase>();
 
-    private string ReturnPage => Request.Path + Request.QueryString;
+    private string ReturnPage => "~" + Request.Path + Request.QueryString;
 
     // ---------------------------------------------------------------- overview
 

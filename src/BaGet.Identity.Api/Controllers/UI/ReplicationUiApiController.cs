@@ -21,7 +21,7 @@ public sealed class ReplicationUiApiController : AccessUiApiControllerBase
 {
     private ReplicationUseCase Replication => UseCase<ReplicationUseCase>();
 
-    private string ReturnPage => Request.Path + Request.QueryString;
+    private string ReturnPage => "~" + Request.Path + Request.QueryString;
 
     // ---------------------------------------------------------------- replications
 

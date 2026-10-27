@@ -20,7 +20,7 @@ public sealed class RetentionUiApiController : AccessUiApiControllerBase
 {
     private RetentionUseCase Retention => UseCase<RetentionUseCase>();
 
-    private string ReturnPage => Request.Path + Request.QueryString;
+    private string ReturnPage => "~" + Request.Path + Request.QueryString;
 
     // ---------------------------------------------------------------- policies
 

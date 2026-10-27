@@ -28,7 +28,7 @@ public sealed class AdminOperationsUiApiController : AdminUiApiControllerBase
     /// <summary>Lists the operations and their status.</summary>
     [HttpGet("operations"), UiApi("AdminOperations", "Index")]
     public async Task<ActionResult<ScreenResult<OperationsViewModel>>> GetOperations(CancellationToken cancellationToken = default)
-        => Respond(await Operations.GetOperationsAsync(User, Request.Path + Request.QueryString, cancellationToken));
+        => Respond(await Operations.GetOperationsAsync(User, "~" + Request.Path + Request.QueryString, cancellationToken));
 
     /// <summary>Starts an operation on a repository.</summary>
     [HttpPost("operations"), UiApi("AdminOperations", "Index")]

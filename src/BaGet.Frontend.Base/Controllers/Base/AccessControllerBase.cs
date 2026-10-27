@@ -59,7 +59,7 @@ public abstract class AccessControllerBase : AdminControllerBase
     /// <summary>The model of the password confirmation partial, with <paramref name="id"/> for the input.</summary>
     [NonAction]
     public ConfirmPasswordView Confirmation(string id)
-        => new ConfirmPasswordView(id, HasPassword, Reauthenticated, CanReauthenticate, Request.Path + Request.QueryString);
+        => new ConfirmPasswordView(id, HasPassword, Reauthenticated, CanReauthenticate, "~" + Request.Path + Request.QueryString);
 
     /// <summary>
     /// Whether the signed-in user may use this screen. The default is server administrators; project screens also admit the
