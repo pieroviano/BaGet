@@ -1,10 +1,11 @@
-# Extension.BaGet.Identity
+# Extension.BaGet.Identity.Api
 
 User accounts, package owners, organizations and per-user API keys for
-[BaGet Extension](https://pieroviano.github.io/BaGet/), with their screens (sign-in, profile, API keys, admin), served by MVC controllers and views.
+[BaGet Extension](https://pieroviano.github.io/BaGet/), with their screens (sign-in, profile, API keys, package management, admin):
+MVC controllers, views and their JSON twins (`/api/ui`).
 
 ```powershell
-dotnet add package Extension.BaGet.Identity
+dotnet add package Extension.BaGet.Identity.Api
 ```
 
 ## Usage
@@ -17,9 +18,13 @@ services.AddBaGetAccounts(configuration);
 `AddBaGetAccounts` reads `Accounts:Enabled` **while registering**, so the configuration must be complete before it
 runs. Disabled, it adds an empty authentication setup and only the global `ApiKey` authenticates.
 
-The business services live in `Extension.BaGet.Identity.Application` (namespace `BaGet.Identity.Application.*`); this package keeps the screens: controllers, views and the MVC infrastructure (`Mvc/`). The base classes of the JSON UI API (`UiApiControllerBase`, `AccountUiApiControllerBase`, `AdminUiApiControllerBase`, `AccessUiApiControllerBase`) are in `Controllers/Base`; `Mvc/UI` holds `UiApiInvoker` (a view controller calls its JSON twin in process) and `UiApiSecurityFilter` (API keys only over HTTP: Bearer or `X-NuGet-ApiKey`; no cookie, no Basic, no antiforgery). The account screens (sign-in side, settings, two-factor, API keys, organizations, My packages/access, profile) are split: their controllers only bind the form and render, their JSON twins are under `Controllers/UI` (`/api/ui/account/...`, `/api/ui/profiles/{name}`; screen only, 403 over HTTP, except the public profile) and the rules are use cases in `Extension.BaGet.Identity.Application`.
+| Package | Holds |
+|---|---|
+| `Extension.BaGet.Identity.Api` (this) | Screens: controllers, views, form models, `AddBaGetAccounts` |
+| `Extension.BaGet.Identity.Base` | MVC infrastructure the screens build on: controller and twin bases, `?handler=` selection, `[RepositoryPage]`, `UiApiInvoker`, `UiApiSecurityFilter`, `RequestPrincipalResolver` |
+| `Extension.BaGet.Identity.Application` | Use cases, DTOs, business services (`BaGet.Identity.Application.*`; no MVC reference) |
 
-`MaintenanceAwareSignInManager` lets a sign-in complete while the read-only `MaintenanceGate` is closed (it skips the
+`MaintenanceAwareSignInManager` (Application) lets a sign-in complete while the read-only `MaintenanceGate` is closed (it skips the
 failed-attempt counter reset; a wrong password is still refused), so administrators can reach the Settings page.
 
 | Setting | Value |
@@ -37,24 +42,20 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 
 Every screen is a controller action and a view; the package ships **no `@page` file**. URLs and `?handler=` form posts are unchanged from the Razor Pages era; a screen is identified by its controller and default GET action (`asp-controller`/`asp-action`, `Url.Action`, `RedirectToAction`), not by a page name (`asp-page`, `Url.Page` and `RedirectToPage` with BaGet page names no longer resolve). The old page-model types (`LoginModel`, `UsersModel`, `AccountPageModel`, ...) were removed (breaking for code that referenced them).
 
-| Folder / type | Role |
+| Folder | Role |
 |---|---|
-| `Controllers/FrontEnd` | The view (screen) controllers, one per feature: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication` |
-| `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths were removed). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
-| `Controllers/UI/`, `Controllers/Base/` | The JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)) and the controller base classes. The models the views read and the logic of every screen are in `Extension.BaGet.Identity.Application` (use cases); no `*Workflow` class is left |
-| `Mvc/Attributes/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
-| `Mvc/UI/ScreenEndpoints` | Whether an action is a screen (an action of a `UiControllerBase`, not a `[FallbackHandler]`) and which screen it belongs to (`ScreenRef`: controller + default GET action); navigation, scanning refusals, repository resolution and the coverage tests use it |
-| `Mvc/Attributes/FallbackHandlerAttribute` | Marks the `NoHandler` action of a manage controller (a stray POST answers 404); not a handler of the screen |
-| `Mvc/Attributes/ImplicitPageHandlerAttribute` | Marks the default `[PageHandler]` action that answers a form posted to the screen's own URL: it renders the screen; not a handler of the route contract |
-| `Mvc/Attributes/RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
-| `Controllers/Base/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (admin or project-admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in a fixed order |
+| `Controllers/FrontEnd` | The view (screen) controllers: `Account*`, `ProfileController`, `PackageManage`, `NpmManage`, `MavenManage`, `DockerManage`, `ContactOwners`, `ScanArtifact`, `ValidationStatusPage`, `AdminUsers`, `AdminOrganizations`, `AdminSettings`, `AdminPackages`, `AdminOperations`, `AdminGroups`, `AdminPermissions`, `AdminProjects`, `AdminAudit`, `AdminRepositories`, `AdminRetention`, `AdminScanning`, `AdminReplication`. Each binds the form, calls its twin in process and renders |
+| `Controllers/UI` | The JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)). Account self-service and package-ownership twins are screen only (403 over HTTP), except the public profile |
+| `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials. A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
+| `Models/Packages` | Form models of the package manage screens (npm, Maven, Docker, scan) |
+| `Extensions` | `AddBaGetAccounts`, `RepositoryLinks` (`Url.RepositoryContent`) |
 
 In a view, link with `asp-controller` / `asp-action` (and `asp-route-handler="X"` for a named handler); an MVC view has no ambient page, so each
-handler form names its controller and action. `AdminControllerBase.Flash(model)` carries `Message`/`Error` across a redirect.
+handler form names its controller and action.
 
 ## Layout
 
-One type per file, no nested types, namespace = `BaGet.Identity` + folder (`CodeLayoutTests`). `Controllers/FrontEnd` screens, `Controllers/UI` JSON twins, `Controllers/Base` bases; `Mvc/Attributes`, `Mvc/Screens`, `Mvc/UI` (twin plumbing), `Security` (credentials, principal resolver), `Extensions`.
+One type per file, no nested types, namespace = `BaGet.Identity` + folder (`CodeLayoutTests`).
 
 ## Links
 
