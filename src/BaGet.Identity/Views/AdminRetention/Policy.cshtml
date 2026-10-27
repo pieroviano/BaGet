@@ -1,4 +1,6 @@
-@model BaGet.Identity.ViewModels.RetentionPolicyViewModel
+@using BaGet.Identity.Application.Models
+@using BaGet.Identity.Controllers.Base
+@model BaGet.Identity.Application.Models.RetentionPolicyViewModel
 @{
     var policy = Model.View!.Policy;
     ViewData["Title"] = "Retention policy " + policy.Name;
@@ -107,7 +109,7 @@
 
     <h2>Rules</h2>
     <form method="post" asp-controller="AdminRetention" asp-action="Policy" asp-route-key="@Model.Key" asp-route-handler="Save" id="retention-edit-form">
-        <partial name="~/Views/Shared/_RetentionPolicyFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.RetentionFieldsView(Model.Form, Model.Repositories, Model.ProjectNames, "edit"))" />
+        <partial name="~/Views/Shared/_RetentionPolicyFields.cshtml" model="@(new RetentionFieldsView(Model.Form, Model.Repositories, Model.ProjectNames, "edit"))" />
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("retention-edit-password")" />
         <button type="submit" class="btn btn-primary">Save</button>
     </form>

@@ -5,7 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application;
-using BaGet.Identity.Pages.Admin;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.UseCases;
+using BaGet.Identity.Controllers.Base;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Mvc;

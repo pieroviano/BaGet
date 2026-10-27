@@ -5,11 +5,13 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The owners' screen for a Maven artifact: its owners, versions and the files of the chosen one, with deletion of a file, a version or the

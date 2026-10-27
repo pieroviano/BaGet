@@ -3,9 +3,10 @@ using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The access audit log: one entry per change to groups, memberships, permission targets, grants, projects, the repositories' project and

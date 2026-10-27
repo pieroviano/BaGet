@@ -1,4 +1,6 @@
-@model BaGet.Identity.ViewModels.ManageViewModel
+@using BaGet.Identity.Application.Models
+@using BaGet.Identity.Extensions
+@model BaGet.Identity.Models.ManageViewModel
 @{
     ViewData["Title"] = $"Manage {Model.Id}";
 }
@@ -307,7 +309,7 @@
                     }
                     else
                     {
-                        <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Action("Index", "PackageManage", new { id = Model.Id }) ?? string.Empty))" />
+                        <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Action("Index", "PackageManage", new { id = Model.Id }) ?? string.Empty))" />
                     }
                     <button type="submit" asp-controller="PackageManage" asp-action="Index" asp-route-handler="HardDeleteAll" class="btn btn-danger"
                             onclick="return confirm('Delete every version of @Model.Id permanently? This cannot be undone.')"

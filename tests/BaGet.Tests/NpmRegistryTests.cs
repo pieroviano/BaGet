@@ -644,7 +644,7 @@ public class NpmRegistryTests : IDisposable
             .ToList();
 
         Assert.NotEmpty(endpoints);
-        Assert.All(endpoints, e => Assert.Equal(RepositoryFormat.Npm, e.Metadata.GetMetadata<BaGet.Web.RepositoryRouteMetadata>()?.Format));
+        Assert.All(endpoints, e => Assert.Equal(RepositoryFormat.Npm, e.Metadata.GetMetadata<BaGet.Web.V3.RepositoryRouteMetadata>()?.Format));
     }
 
     [Fact]

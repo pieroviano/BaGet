@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>One operation of the administration API, as read from the controllers.</summary>
 /// <param name="Method">The HTTP method.</param>
@@ -36,7 +36,7 @@ public sealed record ApiParameter(string Name, string In, Type Type, bool Requir
 /// <summary>
 /// What the administration API offers, read from its controllers: one <see cref="ApiEndpoint"/> per action. The <c>/admin/api</c> page and
 /// the UI-coverage test read this one list, so they cannot differ from the code. The served OpenAPI document is built by
-/// <c>Microsoft.AspNetCore.OpenApi</c> (<see cref="BaGet.Web.OpenApi.ApiDocuments"/>); <see cref="OpenApi"/> is kept only for source compatibility.
+/// <c>Microsoft.AspNetCore.OpenApi</c> (<see cref="BaGet.Web.V3.OpenApi.ApiDocuments"/>); <see cref="OpenApi"/> is kept only for source compatibility.
 /// </summary>
 public static class ApiCatalog
 {

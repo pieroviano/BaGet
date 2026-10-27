@@ -1,4 +1,6 @@
-@model BaGet.Identity.ViewModels.RetentionViewModel
+@using BaGet.Identity.Application.Models
+@using BaGet.Identity.Controllers.Base
+@model BaGet.Identity.Application.Models.RetentionViewModel
 @{
     ViewData["Title"] = "Retention";
 }
@@ -64,7 +66,7 @@
 
     <h2>New policy</h2>
     <form method="post" id="retention-create-form">
-        <partial name="~/Views/Shared/_RetentionPolicyFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.RetentionFieldsView(Model.Form, Model.Repositories, Model.ProjectNames, "new"))" />
+        <partial name="~/Views/Shared/_RetentionPolicyFields.cshtml" model="@(new RetentionFieldsView(Model.Form, Model.Repositories, Model.ProjectNames, "new"))" />
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("retention-create-password")" />
         <button type="submit" class="btn btn-primary">Create</button>
     </form>

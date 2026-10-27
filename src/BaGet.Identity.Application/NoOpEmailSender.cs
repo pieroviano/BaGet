@@ -4,7 +4,7 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Registered while email is not configured. Nothing that needs email is offered in that

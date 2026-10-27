@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.AdminSettingsViewModel
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.AdminSettingsViewModel
 @{
     ViewData["Title"] = "Server settings";
 }
@@ -144,7 +145,7 @@
                         }
                         else
                         {
-                            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
+                            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
                         }
                         <button type="submit" class="btn btn-primary">Save @title</button>
                         @if (string.Equals(s.Key, "Telemetry", StringComparison.OrdinalIgnoreCase) && Model.TelemetrySignals != null)
@@ -215,7 +216,7 @@
                                 }
                                 else
                                 {
-                                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
+                                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/Settings"))" />
                                 }
                                 <button type="submit" class="btn btn-primary" id="log-level-save">Set level</button>
                             </form>

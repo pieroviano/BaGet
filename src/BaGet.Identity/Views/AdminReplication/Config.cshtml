@@ -1,4 +1,6 @@
-@model BaGet.Identity.ViewModels.ReplicationConfigViewModel
+@using BaGet.Identity.Application.Models
+@using BaGet.Identity.Controllers.Base
+@model BaGet.Identity.Application.Models.ReplicationConfigViewModel
 @{
     var config = Model.View!.Config;
     ViewData["Title"] = "Replication " + config.Name;
@@ -105,7 +107,7 @@
 
     <h2>Settings</h2>
     <form method="post" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Save" id="replication-edit-form" autocomplete="off">
-        <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "edit", Model.View.HasApiKey))" />
+        <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new ReplicationFieldsView(Model.Form, Model.Repositories, "edit", Model.View.HasApiKey))" />
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-edit-password")" />
         <button type="submit" class="btn btn-primary">Save</button>
         <button type="submit" class="btn btn-default" asp-controller="AdminReplication" asp-action="Config" asp-route-key="@Model.Key" asp-route-handler="Test" id="replication-test-button">Test connection</button>

@@ -1,4 +1,4 @@
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>
 /// Builds the address of a screen for a use case that has to put one in a message (a password reset link in an email). The implementation

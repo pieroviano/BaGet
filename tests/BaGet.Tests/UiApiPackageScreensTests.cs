@@ -4,7 +4,8 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Services;
+using BaGet.Identity.Application.UseCases;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 using Xunit;
@@ -188,7 +189,7 @@ public class UiApiPackageScreensReadOnlyTests : IDisposable
             new Dictionary<string, string> { { "version", "1.0.0" } },
             action: "packages/Alice.Package/manage?handler=Unlist");
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
-        Assert.Contains(BaGet.Identity.Application.PackageManageUseCase.ReadOnlyMessage, await page.Content.ReadAsStringAsync(token));
+        Assert.Contains(PackageManageUseCase.ReadOnlyMessage, await page.Content.ReadAsStringAsync(token));
 
         using var scope2 = _app.Services.CreateScope();
         Assert.True((await scope2.ServiceProvider.GetRequiredService<IPackageDatabase>().FindOrNullAsync("Alice.Package", NuGetVersion.Parse("1.0.0"), includeUnlisted: true, token))!.Listed);

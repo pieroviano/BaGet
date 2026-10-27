@@ -1,4 +1,6 @@
-@model BaGet.Identity.ViewModels.SettingsViewModel
+@using BaGet.Identity.Application
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.SettingsViewModel
 @{
     ViewData["Title"] = "Account settings";
 }
@@ -25,7 +27,7 @@
                     @foreach (var package in Model.Blockers.LastOwnerPackages)
                     {
                         <li>
-                            <a href="@Url.Content(BaGet.Identity.RepositoryPageLinks.Manage(package.RepositoryName, package.PackageId, package.Format))">@package.PackageId</a>
+                            <a href="@Url.Content(RepositoryPageLinks.Manage(package.RepositoryName, package.PackageId, package.Format))">@package.PackageId</a>
                             @if (package.RepositoryKey != BaGet.Core.Repository.DefaultKey)
                             {
                                 <span class="text-muted">in repository @package.RepositoryName</span>
@@ -79,7 +81,7 @@
         }
         else
         {
-            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
         }
         <button type="submit" class="btn btn-primary">Change email</button>
     </form>
@@ -103,7 +105,7 @@
         </div>
         @if (!Model.HasPassword)
         {
-            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
         }
         <button type="submit" class="btn btn-primary">@(Model.HasPassword ? "Change password" : "Set password")</button>
     </form>
@@ -126,7 +128,7 @@
         }
         else
         {
-            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
         }
         <button type="submit" class="btn btn-danger">Delete my account</button>
     </form>

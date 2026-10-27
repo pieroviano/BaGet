@@ -1,3 +1,4 @@
+@using BaGet.Identity.Application.Services
 @using Microsoft.Extensions.DependencyInjection
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> Site
@@ -44,13 +45,13 @@
     if (Accounts.Value.Enabled && User.Identity?.IsAuthenticated == true)
     {
         // Likewise the administrator check: read from the database, so a demotion shows at once.
-        var administrators = Context.RequestServices.GetService<BaGet.Identity.AdministratorService>();
+        var administrators = Context.RequestServices.GetService<AdministratorService>();
         if (administrators != null)
         {
             isAdministrator = await administrators.IsAdministratorAsync(User, Context.RequestAborted);
         }
 
-        var avatars = Context.RequestServices.GetService<BaGet.Identity.AvatarService>();
+        var avatars = Context.RequestServices.GetService<AvatarService>();
         if (avatars != null)
         {
 #pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.

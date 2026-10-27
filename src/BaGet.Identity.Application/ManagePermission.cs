@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Whether a signed-in user holds the access model's <see cref="AccessAction.Manage"/> on a package in the current

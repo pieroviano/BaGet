@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// What the use cases of the retention, scanning and replication screens share: one change that asks the administrator's password,

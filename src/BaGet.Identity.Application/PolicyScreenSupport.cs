@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// What the retention, scanning and replication use cases share: the lists their forms choose from and the one-line descriptions of

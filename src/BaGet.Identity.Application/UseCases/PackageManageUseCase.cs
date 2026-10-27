@@ -5,12 +5,14 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The owners' screen for a package ID (<c>/packages/{id}/manage</c>): its owners, its versions' listing and deprecation, vulnerabilities and

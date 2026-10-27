@@ -2,6 +2,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Web;
+using BaGet.Web.V3;
+using BaGet.Web.V3.Api;
+using BaGet.Web.V3.Controllers;
+using BaGet.Web.V3.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -112,7 +116,7 @@ public class BaGetEndpointBuilder
     }
 
     /// <summary>
-    /// The administration REST API (<c>/api/v1</c>, <see cref="BaGet.Web.Api.AdminApiController"/>): attribute-routed controllers, so
+    /// The administration REST API (<c>/api/v1</c>, <see cref="AdminApiController"/>): attribute-routed controllers, so
     /// <c>MapControllers</c> maps them (the protocol controllers are mapped through <c>MapRoute</c> and carry no route attribute; the
     /// other attribute-routed controllers are the UI controllers that replace Razor Pages, <c>BaGet.Identity.Mvc.LegacyPageAttribute</c>,
     /// which get their <c>r/{repo}/</c> twin from <see cref="RepositoryActionRouteConvention"/>). The API controllers are not repository
@@ -124,24 +128,24 @@ public class BaGetEndpointBuilder
     /// <summary>
     /// The OpenAPI documents (<c>/openapi/ui.json</c>, <c>/openapi/v1.json</c>, <c>/openapi/protocols.json</c>), the alias
     /// <c>/api/v1/openapi.json</c> (the <c>v1</c> document) and the Scalar viewer at <c>/scalar</c>. Everything is mapped in one group
-    /// whose filter answers 404 to anyone but an administrator (<see cref="BaGet.Web.OpenApi.ApiDocumentationAccess"/>). Not
+    /// whose filter answers 404 to anyone but an administrator (<see cref="ApiDocumentationAccess"/>). Not
     /// repository routes: no <see cref="RepositoryRouteMetadata"/>, no <c>r/{repo}/</c> twin.
     /// </summary>
     public void MapApiDocumentation(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(string.Empty);
         group.AddEndpointFilter(async (context, next) =>
-            await BaGet.Web.OpenApi.ApiDocumentationAccess.IsAllowedAsync(context.HttpContext, context.HttpContext.RequestAborted)
+            await BaGet.Web.V3.OpenApi.ApiDocumentationAccess.IsAllowedAsync(context.HttpContext, context.HttpContext.RequestAborted)
                 ? await next(context)
                 : Results.NotFound());
 
         group.MapOpenApi("/openapi/{documentName}.json");
         // No {documentName} in the pattern: the default document, v1 (the administration API).
-        group.MapOpenApi(BaGet.Web.Api.ApiCatalog.Root + "/openapi.json");
-        group.MapScalarApiReference(BaGet.Web.OpenApi.ApiDocuments.ScalarPath, options =>
+        group.MapOpenApi(BaGet.Web.V3.Api.ApiCatalog.Root + "/openapi.json");
+        group.MapScalarApiReference(BaGet.Web.V3.OpenApi.ApiDocuments.ScalarPath, options =>
         {
             options.WithTitle("BaGet API");
-            foreach (var name in BaGet.Web.OpenApi.ApiDocuments.All) options.AddDocument(name, routePattern: BaGet.Web.OpenApi.ApiDocuments.JsonPath(name));
+            foreach (var name in BaGet.Web.V3.OpenApi.ApiDocuments.All) options.AddDocument(name, routePattern: BaGet.Web.V3.OpenApi.ApiDocuments.JsonPath(name));
         });
     }
 

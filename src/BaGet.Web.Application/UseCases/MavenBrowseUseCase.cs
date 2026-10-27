@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application;
+using BaGet.Identity.Application.Screens;
+using BaGet.Web.Models;
 using Microsoft.Extensions.Options;
 
 namespace BaGet.Web.Application;

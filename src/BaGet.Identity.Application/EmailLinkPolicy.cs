@@ -1,8 +1,7 @@
 using System;
-using System.Linq;
 using BaGet.Core;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Where the links in account emails may point. A link in a password-reset or confirmation

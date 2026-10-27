@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.AuditViewModel
+@using BaGet.Identity.Application.UseCases
+@model BaGet.Identity.Application.Models.AuditViewModel
 @{
     ViewData["Title"] = "Access audit";
 }
@@ -9,7 +10,7 @@
 
     <p class="help-block">
         Every change to groups, memberships, permission targets, grants, projects, a repository's project and its anonymous-read
-        switch, newest first (at most @BaGet.Identity.Application.AdminAuditUseCase.PageSize). Times are UTC.
+        switch, newest first (at most @AdminAuditUseCase.PageSize). Times are UTC.
     </p>
 
     @if (Model.FilterError != null)

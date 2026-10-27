@@ -5,13 +5,13 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Pages.Admin;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The vulnerability scanning screens: the overview of every repository and project, the dashboard of one repository (its findings, its

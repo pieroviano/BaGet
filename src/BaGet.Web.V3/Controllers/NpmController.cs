@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>Reads the package name an npm route carries.</summary>
 public static class NpmRouteNames

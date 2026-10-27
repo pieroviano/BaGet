@@ -5,11 +5,11 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Pages.Admin;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The screen of one repository (<c>/admin/repositories/{name}</c>): shows its feed address and the access model's view of it (who effectively holds

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>
 /// Explicit validation of a screen's input with its DataAnnotations (a use case validates by itself, because the JSON body and the form

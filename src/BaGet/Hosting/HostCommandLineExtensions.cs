@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

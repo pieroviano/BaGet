@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using BaGet.Core;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// App-relative (<c>~/</c>) addresses of a package's pages in a given repository. The one place that decides

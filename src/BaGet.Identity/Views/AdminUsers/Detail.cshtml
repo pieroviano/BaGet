@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.UserDetailViewModel
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.UserDetailViewModel
 @{
     ViewData["Title"] = Model.Account?.UserName ?? "User";
     var userUrl = Url.Content("~/admin/users/" + Uri.EscapeDataString(Model.Account?.UserName ?? string.Empty));
@@ -42,7 +43,7 @@
                 }
                 else
                 {
-                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/UserDetail"))" />
+                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/UserDetail"))" />
                 }
                 <button type="submit" class="btn btn-primary">Approve</button>
             </form>
@@ -105,7 +106,7 @@
                 }
                 else
                 {
-                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/UserDetail"))" />
+                    <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Admin/UserDetail"))" />
                 }
             </form>
         }
@@ -133,13 +134,13 @@
                             }
                         </tbody>
                     </table>
-                    <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@(new BaGet.Identity.Pages.Admin.ConfirmPasswordView("groupsPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Context.Request.Path.ToString()))" />
+                    <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@(new ConfirmPasswordView("groupsPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Context.Request.Path.ToString()))" />
                 </form>
             }
 
             <form method="post" class="form-inline" id="add-group-form">
                 <input type="text" name="group" class="form-control" placeholder="Group name" autocomplete="off" />
-                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@(new BaGet.Identity.Pages.Admin.ConfirmPasswordView("addGroupPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Context.Request.Path.ToString()))" />
+                <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@(new ConfirmPasswordView("addGroupPassword", Model.HasPassword, Model.Reauthenticated, Model.CanReauthenticate, Context.Request.Path.ToString()))" />
                 <button type="submit" class="btn btn-primary" asp-controller="AdminUsers" asp-action="Detail" asp-route-handler="AddGroup">Add to group</button>
             </form>
         </section>

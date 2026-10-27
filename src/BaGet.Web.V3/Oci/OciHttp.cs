@@ -4,10 +4,11 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using BaGet.Core;
+using BaGet.Web.V3.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// The HTTP shape of the OCI Distribution Spec: the JSON error body, the status each error code is answered with, and the

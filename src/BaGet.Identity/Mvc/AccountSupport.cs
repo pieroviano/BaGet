@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application;
+using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;

@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity;
+using BaGet.Identity.Application.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -256,8 +257,8 @@ public class AdminUserActionsTests : IDisposable
     [Fact]
     public void MaskEmailHidesTheLocalPart()
     {
-        Assert.Equal("a***@example.com", BaGet.Identity.ViewModels.UsersViewModel.MaskEmail("alice@example.com"));
-        Assert.Equal("the user's address", BaGet.Identity.ViewModels.UsersViewModel.MaskEmail("nonsense"));
-        Assert.Equal("the user's address", BaGet.Identity.ViewModels.UsersViewModel.MaskEmail(null));
+        Assert.Equal("a***@example.com", UsersViewModel.MaskEmail("alice@example.com"));
+        Assert.Equal("the user's address", UsersViewModel.MaskEmail("nonsense"));
+        Assert.Equal("the user's address", UsersViewModel.MaskEmail(null));
     }
 }

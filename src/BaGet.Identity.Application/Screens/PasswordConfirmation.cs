@@ -1,16 +1,13 @@
 using System;
 using System.Security.Claims;
-using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
-using Microsoft.AspNetCore.Authentication;
+using BaGet.Identity.Application.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>
 /// The check behind every sensitive action of the account and administration screens: the caller types their password again, or, for an

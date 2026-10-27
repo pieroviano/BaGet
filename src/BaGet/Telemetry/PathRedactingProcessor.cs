@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using BaGet.Web;
+using BaGet.Web.V3;
 using OpenTelemetry;
 
 namespace BaGet.Telemetry;

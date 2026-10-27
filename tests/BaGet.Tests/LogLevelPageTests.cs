@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -40,7 +41,7 @@ public class LogLevelPageTests : IDisposable
         await admin.RegisterAsync("root");
         using (var scope = app.Services.CreateScope())
         {
-            await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AdministratorService>()
+            await scope.ServiceProvider.GetRequiredService<AdministratorService>()
                 .PromoteAsync("root", "test", TestContext.Current.CancellationToken);
         }
 

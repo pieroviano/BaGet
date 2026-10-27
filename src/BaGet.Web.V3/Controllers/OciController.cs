@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The OCI Distribution Spec v1.1 of a Docker repository, mounted at the server root (<c>/v2/…</c>, see

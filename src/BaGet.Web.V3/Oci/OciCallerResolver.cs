@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>Who is calling the registry: a registry token, an API key (as the Basic password or a Bearer token), or nobody.</summary>
 public sealed class OciCaller

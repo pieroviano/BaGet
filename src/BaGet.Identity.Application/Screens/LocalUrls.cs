@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>
 /// The rule for a return URL after a sign-in: only a local address is followed, so a sign-in link cannot send the user elsewhere.

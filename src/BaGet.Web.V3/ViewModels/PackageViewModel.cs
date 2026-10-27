@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BaGet.Core;
+using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Html;
 using NuGet.Versioning;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>What the package page shows; filled from the screen the JSON twin answered (<see cref="PackageUiApiController"/>).</summary>
 public sealed class PackageViewModel

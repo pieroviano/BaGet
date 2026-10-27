@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Who may start a vulnerability scan of one version from the web UI: a signed-in user who may manage the package in the request's

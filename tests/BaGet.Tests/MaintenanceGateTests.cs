@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Database.Sqlite;
+using BaGet.Identity.Application.Services;
 using BaGet.Validation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
@@ -52,7 +53,7 @@ public class MaintenanceGateTests : IDisposable
         var user = await AdminTestSupport.FindAsync(app, userName);
         using var scope = app.Services.CreateScope();
         #pragma warning disable CS8602
-        return await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>().CreateAsync(
+        return await scope.ServiceProvider.GetRequiredService<ApiKeyService>().CreateAsync(
             user.Id, "test", new[] { ApiKeyScopes.Push, ApiKeyScopes.Unlist }, "*", null, CancellationToken.None);
         #pragma warning restore CS8602
     }

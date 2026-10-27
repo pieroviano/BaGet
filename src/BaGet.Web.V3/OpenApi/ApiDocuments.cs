@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -13,8 +12,9 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
+using BaGet.Identity.Controllers.Base;
 
-namespace BaGet.Web.OpenApi;
+namespace BaGet.Web.V3.OpenApi;
 
 /// <summary>
 /// The OpenAPI documents of the server (<c>Microsoft.AspNetCore.OpenApi</c>), served at <c>/openapi/{name}.json</c> and browsed with

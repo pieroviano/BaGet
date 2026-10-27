@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Core.Tests.Support;
 using BaGet.Database.Sqlite;
+using BaGet.Identity.Application.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -156,7 +157,7 @@ public class DatabaseCopyTests : IDisposable
         var user = await AdminTestSupport.FindAsync(app, userName);
         using var scope = app.Services.CreateScope();
         #pragma warning disable CS8602
-        return await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>().CreateAsync(
+        return await scope.ServiceProvider.GetRequiredService<ApiKeyService>().CreateAsync(
             user.Id, "test", new[] { ApiKeyScopes.Push }, "*", null, CancellationToken.None);
         #pragma warning restore CS8602
     }

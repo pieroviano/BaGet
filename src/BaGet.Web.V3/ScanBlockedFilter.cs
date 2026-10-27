@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Answers a refusal by the vulnerability scanning policy (<see cref="ScanBlockedException"/>, thrown by a format's routes and

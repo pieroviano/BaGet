@@ -1,11 +1,13 @@
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Mvc;
 using BaGet.Web.Application;
+using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The Terms of Use (<c>/terms</c>) and Privacy Policy (<c>/privacy</c>) pages: the operator-supplied Markdown files

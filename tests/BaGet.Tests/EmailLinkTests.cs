@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -172,7 +173,7 @@ public class EmailLinkTests : IDisposable
     [InlineData("", false)]
     [InlineData("ftp://x", false)]
     public void LinksCanBeBuiltOnlyFromAPublicUrl(string? publicUrl, bool expected)
-        => Assert.Equal(expected, BaGet.Identity.EmailLinkPolicy.CanBuildLinks(publicUrl));
+        => Assert.Equal(expected, EmailLinkPolicy.CanBuildLinks(publicUrl));
 
     // --- S5: forgot password ------------------------------------------------------------
 
@@ -225,16 +226,16 @@ public class EmailLinkTests : IDisposable
     public void TheLimiterAllowsOneMailPerTargetPerWindowAndSixtyRequestsPerClient()
     {
         var time = new MutableTime();
-        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+        var limiter = new PasswordResetRateLimiter(time);
 
         Assert.True(limiter.TryAcquire("client", "alice"));
         Assert.False(limiter.TryAcquire("client", "alice"));
         Assert.False(limiter.TryAcquire("other-client", "alice"));
 
-        time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
+        time.Now += PasswordResetRateLimiter.Window;
         Assert.True(limiter.TryAcquire("client", "alice"));
 
-        for (var i = 0; i < BaGet.Identity.PasswordResetRateLimiter.MaxPerClient - 1; i++)
+        for (var i = 0; i < PasswordResetRateLimiter.MaxPerClient - 1; i++)
         {
             Assert.True(limiter.TryAcquire("client", "target" + i));
         }
@@ -242,7 +243,7 @@ public class EmailLinkTests : IDisposable
         Assert.False(limiter.TryAcquire("client", "one-too-many"));
         Assert.True(limiter.TryAcquire("another-client", "one-too-many"));
 
-        time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
+        time.Now += PasswordResetRateLimiter.Window;
         Assert.True(limiter.TryAcquire("client", "one-too-many"));
     }
 
@@ -250,10 +251,10 @@ public class EmailLinkTests : IDisposable
     public void ASharedOrSpoofedClientAddressNeverBlocksTheFirstResetOfAnAccountSiteWide()
     {
         var time = new MutableTime();
-        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+        var limiter = new PasswordResetRateLimiter(time);
 
         // Every request behind a proxy that sets no forwarded header shares one address.
-        for (var i = 0; i < BaGet.Identity.PasswordResetRateLimiter.MaxPerClient; i++)
+        for (var i = 0; i < PasswordResetRateLimiter.MaxPerClient; i++)
         {
             Assert.True(limiter.TryAcquire("", "account" + i));
         }
@@ -266,7 +267,7 @@ public class EmailLinkTests : IDisposable
     public void ThereIsNoSiteWideCapSoAFloodNeverBlocksAnotherAccount()
     {
         var time = new MutableTime();
-        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+        var limiter = new PasswordResetRateLimiter(time);
 
         // A flood from distinct (spoofed) addresses over many public account names.
         for (var i = 0; i < 5000; i++) Assert.True(limiter.TryAcquire("ip" + i, "account" + i));
@@ -280,7 +281,7 @@ public class EmailLinkTests : IDisposable
     public void TheStateIsBoundedByTheAccountsAndForgottenAfterTheWindow()
     {
         var time = new MutableTime();
-        var limiter = new BaGet.Identity.PasswordResetRateLimiter(time);
+        var limiter = new PasswordResetRateLimiter(time);
         const int accounts = 200;
 
         // Repeated requests for the same accounts, from ever new addresses, record nothing more.
@@ -291,12 +292,12 @@ public class EmailLinkTests : IDisposable
 
         Assert.Equal(accounts, StateSize(limiter));
 
-        time.Now += BaGet.Identity.PasswordResetRateLimiter.Window;
+        time.Now += PasswordResetRateLimiter.Window;
         Assert.True(limiter.TryAcquire("fresh-ip", "account0"));
         Assert.Equal(1, StateSize(limiter));
     }
 
-    private static int StateSize(BaGet.Identity.PasswordResetRateLimiter limiter) => limiter.TrackedCount;
+    private static int StateSize(PasswordResetRateLimiter limiter) => limiter.TrackedCount;
 
     [Fact]
     public async Task RequestsForUnknownNamesUseUpNoAllowance()
@@ -305,7 +306,7 @@ public class EmailLinkTests : IDisposable
         await CreateConfirmedUserAsync(app, "alice", "alice@example.com");
         var browser = NewBrowser(app);
 
-        for (var i = 0; i < BaGet.Identity.PasswordResetRateLimiter.MaxPerClient + 5; i++)
+        for (var i = 0; i < PasswordResetRateLimiter.MaxPerClient + 5; i++)
         {
             using (await ForgotAsync(browser, "nobody" + i)) { }
         }

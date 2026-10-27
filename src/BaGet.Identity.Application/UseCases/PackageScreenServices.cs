@@ -3,10 +3,11 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// Whether the session re-authenticated with the external provider a moment ago (the proof of presence a sensitive action asks of an

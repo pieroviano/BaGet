@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Which controller action stands for which page, read from the registered actions. It is the one place that knows that

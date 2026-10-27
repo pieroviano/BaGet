@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Keeps page links inside the repository being browsed. ASP.NET Core carries ambient route values (here

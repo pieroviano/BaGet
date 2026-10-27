@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.DeleteUserViewModel
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.DeleteUserViewModel
 @{
     ViewData["Title"] = "Delete " + Model.Name;
 }
@@ -59,7 +60,7 @@
             }
             else
             {
-                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/admin/users/" + Uri.EscapeDataString(Model.Name??string.Empty
+                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/admin/users/" + Uri.EscapeDataString(Model.Name??string.Empty
                     ) + "/delete"))" />
             }
 

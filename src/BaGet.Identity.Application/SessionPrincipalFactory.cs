@@ -2,9 +2,10 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Identity;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Turns a signed-in browser session into a <see cref="BaGetPrincipal"/>, so the browser

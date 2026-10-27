@@ -4,7 +4,7 @@ using System.Linq;
 using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Makes the controller actions that replaced Razor Pages reachable at <c>/r/{repo}/…</c> as well as at their own route, for actions marked <see cref="RepositoryPageAttribute"/> (on the

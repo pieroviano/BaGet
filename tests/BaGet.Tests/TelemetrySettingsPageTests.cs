@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Core.Tests.Support;
+using BaGet.Identity.Application.Services;
 using BaGet.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -52,7 +53,7 @@ public class TelemetrySettingsPageTests : IDisposable
         await admin.RegisterAsync("root");
         using (var scope = app.Services.CreateScope())
         {
-            await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AdministratorService>()
+            await scope.ServiceProvider.GetRequiredService<AdministratorService>()
                 .PromoteAsync("root", "test", System.Threading.CancellationToken.None);
         }
 
@@ -299,7 +300,7 @@ public class TelemetrySettingsPageTests : IDisposable
         await admin.RegisterAsync("root");
         using (var scope = app.Services.CreateScope())
         {
-            await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AdministratorService>()
+            await scope.ServiceProvider.GetRequiredService<AdministratorService>()
                 .PromoteAsync("root", "test", System.Threading.CancellationToken.None);
         }
 

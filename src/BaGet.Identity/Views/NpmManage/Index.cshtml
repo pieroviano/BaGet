@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.NpmManageViewModel
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.NpmManageViewModel
 @{
     ViewData["Title"] = "Manage " + Model.Id;
     ViewData["HideSearchBar"] = true;
@@ -150,7 +151,7 @@
         }
         else
         {
-            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Action("Index", "NpmManage", new { id = Model.Id }) ?? string.Empty))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Action("Index", "NpmManage", new { id = Model.Id }) ?? string.Empty))" />
         }
 
         <button type="submit" asp-controller="NpmManage" asp-action="Index" asp-route-id="@package.Name" asp-route-handler="UnpublishAll" class="btn btn-danger" id="unpublish-all"

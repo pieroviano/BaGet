@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Services;
 using BaGet.Web;
 using BaGet.Web.Application;
 using Microsoft.Extensions.DependencyInjection;

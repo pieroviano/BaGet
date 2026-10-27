@@ -1,13 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Core;
+using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Mvc;
-using Microsoft.AspNetCore.Http;
+using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The front page (<c>/</c>, with no search) and the package list (<c>/packages</c>, <c>/?q=…</c>) of a NuGet repository, at its own

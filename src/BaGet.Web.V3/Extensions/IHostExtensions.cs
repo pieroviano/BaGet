@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 public static class IHostExtensions
 {

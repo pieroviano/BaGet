@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>Creates a group.</summary>
 public sealed class CreateGroupRequest

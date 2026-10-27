@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using BaGet.Core;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Allows one contact-owners message per sender per package per <see cref="Window"/>.

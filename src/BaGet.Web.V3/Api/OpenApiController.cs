@@ -3,11 +3,11 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>
 /// Obsolete and no longer routed (<see cref="NonControllerAttribute"/>): the document at <c>/api/v1/openapi.json</c> is now the
-/// <c>v1</c> document of <c>Microsoft.AspNetCore.OpenApi</c> (<see cref="BaGet.Web.OpenApi.ApiDocuments"/>), served by
+/// <c>v1</c> document of <c>Microsoft.AspNetCore.OpenApi</c> (<see cref="BaGet.Web.V3.OpenApi.ApiDocuments"/>), served by
 /// <c>BaGetEndpointBuilder.MapApiDocumentation</c> to administrators. The type stays so existing references still compile.
 /// </summary>
 [NonController]

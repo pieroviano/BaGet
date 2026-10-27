@@ -1,4 +1,6 @@
-namespace BaGet.Web.Application;
+using BaGet.Web.Models;
+
+namespace BaGet.Web.Application.Requests;
 
 /// <summary>
 /// What the second and third step of the NuGet upload send (publish and discard a staged upload): the handle of the staged file and, while accounts are

@@ -2,6 +2,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Web.V3;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Moq;

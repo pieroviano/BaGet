@@ -1,10 +1,11 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Mvc;
+using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// Report abuse (<c>/packages/{id}/{version}/report-abuse</c>, and under <c>/r/{repo}/</c>; 404 in a virtual repository). Replaces the

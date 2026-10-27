@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -6,7 +6,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -20,7 +21,7 @@ namespace BaGet.Tests;
 public class AdministratorTests : IDisposable
 {
     private const string Password = "Passw0rd!";
-    private const int UsersPageSize = BaGet.Identity.ViewModels.UsersViewModel.PageSize;
+    private const int UsersPageSize = UsersViewModel.PageSize;
 
     private readonly ITestOutputHelper _output;
     private readonly List<IDisposable> _disposables = new List<IDisposable>();

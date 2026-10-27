@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The screen that deletes a repository (<c>/admin/repositories/{name}/delete</c>) with no packages, and its history rows. The default repository

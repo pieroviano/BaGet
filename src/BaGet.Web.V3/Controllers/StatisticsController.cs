@@ -1,10 +1,11 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Mvc;
+using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The feed's statistics (<c>/stats</c>, and <c>/r/{repo}/stats</c>; 404 in a virtual repository). Replaces the <c>/Statistics</c>

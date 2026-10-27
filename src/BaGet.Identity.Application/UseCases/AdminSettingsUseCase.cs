@@ -5,12 +5,13 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The fields of a submitted Settings form, per setting key (<c>v:&lt;key&gt;</c> the value, <c>reset:&lt;key&gt;</c>, <c>clear:&lt;key&gt;</c>; a checkbox posts

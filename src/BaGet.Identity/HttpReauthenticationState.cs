@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Identity.Application;
+using BaGet.Identity.Application.UseCases;
 using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 

@@ -2,7 +2,7 @@ using System;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>
 /// The feed address of a repository, as shown to administrators to paste into a client: the format's

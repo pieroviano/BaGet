@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -337,6 +338,6 @@ public class NpmRegistryCliTests
         using var scope = server.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser>>();
         var alice = (await users.FindByNameAsync("alice"))!;
-        Assert.Empty(await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>().ListAsync(alice.Id, TestContext.Current.CancellationToken));
+        Assert.Empty(await scope.ServiceProvider.GetRequiredService<ApiKeyService>().ListAsync(alice.Id, TestContext.Current.CancellationToken));
     }
 }

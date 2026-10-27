@@ -1,4 +1,5 @@
-@model BaGet.Web.ScanFindingsView
+@using BaGet.Identity.Application
+@model BaGet.Web.V3.ScanFindingsView
 @inject BaGet.Core.IScanGate ScanGate
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.ScanningOptions> ScanningOptions
 @{
@@ -7,7 +8,7 @@
 
     var assessment = await ScanGate.AssessAsync(Model.Name, Model.Version, Context.RequestAborted);
     var canScan = assessment.State != BaGet.Core.ScanState.Unavailable
-        && await BaGet.Identity.ScanAccess.CanScanAsync(Context.RequestServices, User, Model.Name, Context.RequestAborted);
+        && await ScanAccess.CanScanAsync(Context.RequestServices, User, Model.Name, Context.RequestAborted);
     var result = assessment.Result;
     string LabelOf(int severity) => severity switch { 3 => "label-danger", 2 => "label-warning", 1 => "label-info", _ => "label-default" };
 }

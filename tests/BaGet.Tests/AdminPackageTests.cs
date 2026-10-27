@@ -7,7 +7,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Services;
+using BaGet.Identity.Application.UseCases;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -373,7 +374,7 @@ public class AdminPackageReadOnlyTests : PackageManagementPageTestBase
             { "password", "Passw0rd!" },
         }, action: "packages/Alice.Package/manage?handler=HardDelete");
 
-        Assert.Contains(BaGet.Identity.Application.PackageManageUseCase.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(PackageManageUseCase.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.NotNull(await FindAsync("Alice.Package", "1.0.0"));
     }
 }

@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>
 /// Describes one operation of the administration REST API for the OpenAPI document (<see cref="ApiCatalog"/>), the

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>
 /// Validates a form with its <c>System.ComponentModel.DataAnnotations</c> attributes, the same rules MVC applies to a bound model, so a

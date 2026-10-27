@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using BaGet.Telemetry;
 using BaGet.Web;
+using BaGet.Web.V3;
 using Xunit;
 
 namespace BaGet.Tests;

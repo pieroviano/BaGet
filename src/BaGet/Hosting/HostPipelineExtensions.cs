@@ -1,7 +1,8 @@
 using System;
 using BaGet.Core;
 using BaGet.Identity;
-using BaGet.Web;
+using BaGet.Identity.Application;
+using BaGet.Web.V3;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

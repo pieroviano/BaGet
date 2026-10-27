@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>
 /// A replication as the API takes it. The peer API key is write only: <see cref="ApiKey"/> empty keeps the stored key on an update (changing

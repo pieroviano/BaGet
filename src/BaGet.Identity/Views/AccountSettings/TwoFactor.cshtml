@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.TwoFactorViewModel
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.TwoFactorViewModel
 @{
     ViewData["Title"] = "Two-factor authentication";
 }
@@ -42,7 +43,7 @@
             }
             else
             {
-                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/TwoFactor"))" />
+                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/TwoFactor"))" />
             }
             <button type="submit" class="btn btn-default">Turn off two-factor authentication</button>
         </form>
@@ -59,7 +60,7 @@
             }
             else
             {
-                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/TwoFactor"))" />
+                <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/TwoFactor"))" />
             }
             <button type="submit" class="btn btn-danger">Reset authenticator</button>
         </form>

@@ -3,10 +3,10 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// <em>Scan now</em> for one version: checks the artifact (and its dependencies, or the image's packages) against the vulnerability source

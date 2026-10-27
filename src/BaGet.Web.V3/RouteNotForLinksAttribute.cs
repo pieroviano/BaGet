@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Lists routes of an action that answer requests but are never produced by link generation. An action with several routes

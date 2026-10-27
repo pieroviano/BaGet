@@ -6,7 +6,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -143,7 +144,7 @@ public class AdminDeleteUserTests : IDisposable
 
         using var response = await DeleteAsync(admin, "alice", soleOwned: "delete");
 
-        Assert.Contains(BaGet.Identity.ViewModels.DeleteUserViewModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Contains(DeleteUserViewModel.ReadOnlyMessage, await response.Content.ReadAsStringAsync(cancellationToken));
         Assert.True(await ExistsAsync(app, "alice"));
         Assert.Single(await VersionsAsync(app, "Alice.Solo"));
         Assert.Single(await OwnersAsync(app, "Alice.Solo"));

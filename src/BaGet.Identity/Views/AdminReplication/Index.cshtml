@@ -1,4 +1,6 @@
-@model BaGet.Identity.ViewModels.ReplicationViewModel
+@using BaGet.Identity.Application.Models
+@using BaGet.Identity.Controllers.Base
+@model BaGet.Identity.Application.Models.ReplicationViewModel
 @{
     ViewData["Title"] = "Replication";
 }
@@ -60,7 +62,7 @@
 
     <h2>New replication</h2>
     <form method="post" id="replication-create-form" autocomplete="off">
-        <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new BaGet.Identity.Pages.Admin.ReplicationFieldsView(Model.Form, Model.Repositories, "new", false))" />
+        <partial name="~/Views/Shared/_ReplicationFields.cshtml" model="@(new ReplicationFieldsView(Model.Form, Model.Repositories, "new", false))" />
         <partial name="~/Views/Shared/_ConfirmPassword.cshtml" model="@Model.Confirmation("replication-create-password")" />
         <button type="submit" class="btn btn-primary">Create</button>
     </form>

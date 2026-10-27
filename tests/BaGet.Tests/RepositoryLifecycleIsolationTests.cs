@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -321,7 +322,7 @@ public class RepositoryOwnershipIsolationTests : IDisposable
         var user = new BaGet.Core.BaGetUser { UserName = userName };
         Assert.True((await users.CreateAsync(user, "Passw0rd!")).Succeeded);
 
-        return await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>()
+        return await scope.ServiceProvider.GetRequiredService<ApiKeyService>()
             .CreateAsync(user.Id, "test", new[] { BaGet.Core.ApiKeyScopes.Push }, "*", null, CancellationToken.None);
     }
 

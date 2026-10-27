@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Builder;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 public static class IApplicationBuilderExtensions
 {

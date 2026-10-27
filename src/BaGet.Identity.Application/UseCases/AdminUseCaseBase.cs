@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// What the use cases of the administration screens share: the signed-in user, the administrator's password confirmation, the read-only gate and

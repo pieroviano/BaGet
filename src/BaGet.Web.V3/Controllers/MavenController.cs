@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The Maven 2 repository protocol of a repository (<c>maven/…</c>): <c>GET</c> and <c>HEAD</c> of files, checksums and the

@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Authentication;
@@ -7,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// The sign-in manager, made to work while the <see cref="MaintenanceGate"/> is closed.

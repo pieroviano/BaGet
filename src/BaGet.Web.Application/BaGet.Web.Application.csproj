@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
     <Description>BaGet Extension's web use cases: the data of the browse, upload and legal screens as plain DTOs, with no MVC or Razor dependency.</Description>
-    <RootNamespace>BaGet.Web</RootNamespace>
+    <RootNamespace>BaGet.Web.Application</RootNamespace>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 

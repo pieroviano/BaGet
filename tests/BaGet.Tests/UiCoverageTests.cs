@@ -5,7 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
+using BaGet.Identity.Application.Services;
 using BaGet.Validation;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

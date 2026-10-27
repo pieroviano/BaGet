@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>
 /// Lets only administrators in. The caller is the principal of an API key (<c>Authorization: Basic</c> password, <c>Bearer</c>,

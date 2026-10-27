@@ -1,6 +1,6 @@
 using BaGet.Core;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>One repository with what a user may do there and the grants behind it (the account and user pages).</summary>
 /// <param name="Repository">The repository.</param>

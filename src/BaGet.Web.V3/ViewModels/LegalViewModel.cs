@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Html;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>What a legal page (Terms of Use, Privacy Policy) shows: its heading and the operator's Markdown, rendered safely.</summary>
 /// <param name="Title">The heading and page title.</param>

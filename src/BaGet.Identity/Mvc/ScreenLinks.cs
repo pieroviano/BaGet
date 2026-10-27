@@ -1,5 +1,6 @@
 using System;
 using BaGet.Identity.Application;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;

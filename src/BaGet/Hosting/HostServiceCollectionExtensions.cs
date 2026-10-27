@@ -1,6 +1,7 @@
 using BaGet.Core;
 using BaGet.Ha;
 using BaGet.Identity;
+using BaGet.Identity.Extensions;
 using BaGet.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;

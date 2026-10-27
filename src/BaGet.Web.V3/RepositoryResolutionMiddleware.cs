@@ -2,11 +2,12 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Selects the repository of the request: the <c>{repo}</c> route value of an <c>/r/{repo}/</c> route, else the
@@ -72,8 +73,8 @@ public class RepositoryResolutionMiddleware
                 {
                     // The JSON twin of a screen answers in its own shape.
                     await context.Response.WriteAsJsonAsync(
-                        BaGet.Identity.Application.ScreenResult<object>.NotFound(),
-                        BaGet.Identity.Application.UiApiJson.Options,
+                        ScreenResult<object>.NotFound(),
+                        UiApiJson.Options,
                         context.RequestAborted);
                     return;
                 }

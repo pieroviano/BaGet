@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.OpenApi;
 
-namespace BaGet.Web.OpenApi;
+namespace BaGet.Web.V3.OpenApi;
 
 /// <summary>
 /// Fills the <c>protocols</c> document from the mapped endpoints. The package protocols are conventionally routed

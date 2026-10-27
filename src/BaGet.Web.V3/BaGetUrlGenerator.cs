@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 // The URLs below are built from the incoming request's "Host" header, which the client
 // controls. The header is validated against the configured allow-list by ASP.NET Core's

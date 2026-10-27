@@ -1,9 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Mvc;
+using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The page of a package (<c>/packages/{id}/{version?}</c>, and under <c>/r/{repo}/</c>): the requested version, else the newest

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.Html;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.Screens;
 
 /// <summary>The JSON of <c>/api/ui</c>: camelCase, enums as their names, nulls left out (the same shape as the administration API).</summary>
 public static class UiApiJson

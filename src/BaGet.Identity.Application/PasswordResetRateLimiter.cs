@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using BaGet.Core;
 
-namespace BaGet.Identity;
+namespace BaGet.Identity.Application;
 
 /// <summary>
 /// Limits "forgot password" mail: one per account per <see cref="Window"/> (the real

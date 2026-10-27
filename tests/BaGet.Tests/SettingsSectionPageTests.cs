@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -37,7 +38,7 @@ public class SettingsSectionPageTests : IDisposable
         await admin.RegisterAsync("root");
         using (var scope = app.Services.CreateScope())
         {
-            await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AdministratorService>()
+            await scope.ServiceProvider.GetRequiredService<AdministratorService>()
                 .PromoteAsync("root", "test", System.Threading.CancellationToken.None);
         }
 

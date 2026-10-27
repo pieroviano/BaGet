@@ -4,9 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Identity.Application;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Controllers.UI;
 using BaGet.Identity.Mvc;
-using BaGet.Identity.Pages.Admin;
-using BaGet.Identity.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Identity.Controllers;

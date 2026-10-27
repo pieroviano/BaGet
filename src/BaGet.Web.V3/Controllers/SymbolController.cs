@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 public class SymbolController : Controller
 {

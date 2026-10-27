@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
@@ -158,7 +159,7 @@ public class AccountApprovalTests : IDisposable
         using (var scope = app.Services.CreateScope())
         {
             var user = (await FindAsync(app, "frank"))!;
-            key = await scope.ServiceProvider.GetRequiredService<BaGet.Identity.ApiKeyService>()
+            key = await scope.ServiceProvider.GetRequiredService<ApiKeyService>()
                 .CreateAsync(user.Id, "k", new[] { ApiKeyScopes.Push }, "*", null, System.Threading.CancellationToken.None);
         }
 

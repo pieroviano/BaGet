@@ -6,7 +6,7 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Turns a <see cref="MaintenanceException"/> (a write refused while the <see cref="MaintenanceGate"/>

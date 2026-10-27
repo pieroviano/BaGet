@@ -5,7 +5,7 @@ using BaGet.Core;
 using BaGet.Protocol.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// What the front page and the package list show: the search the visitor asked for (bound from the query string, same names

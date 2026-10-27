@@ -2,12 +2,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application;
+using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Mvc;
+using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// The repository check of the controller actions that replaced Razor Pages: it applies to an action marked <see cref="RepositoryPageAttribute"/> (on the action or its controller). It runs the same

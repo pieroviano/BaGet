@@ -1,4 +1,4 @@
-using BaGet.Identity.Application;
+using BaGet.Identity.Application.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
-using BaGet.Validation;
+using BaGet.Validation.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 using Xunit;

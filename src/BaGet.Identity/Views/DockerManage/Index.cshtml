@@ -1,4 +1,5 @@
-@model BaGet.Identity.ViewModels.DockerManageViewModel
+@using BaGet.Identity.Application.Models
+@model BaGet.Identity.Application.Models.DockerManageViewModel
 @{
     ViewData["Title"] = "Manage " + Model.Image;
     ViewData["HideSearchBar"] = true;
@@ -92,7 +93,7 @@
         }
         else
         {
-            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new BaGet.Identity.Pages.Account.ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Action("Index", "DockerManage", new { image = info.Name }) ?? string.Empty))" />
+            <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, Url.Action("Index", "DockerManage", new { image = info.Name }) ?? string.Empty))" />
         }
 
         <button type="submit" asp-controller="DockerManage" asp-action="Index" asp-route-image="@info.Name" asp-route-handler="Prune" class="btn btn-default" id="docker-prune">Remove unused layers</button>

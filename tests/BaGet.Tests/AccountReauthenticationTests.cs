@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity;
+using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Extensions;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -222,7 +224,7 @@ public class AccountReauthenticationTests : IDisposable
     {
         var (app, browser, id) = await StartSignedInAsync();
 
-        using (var back = await ReauthenticateAsync(browser, id, authAge: BaGet.Identity.Mvc.AccountControllerBase.ReauthenticationWindow + TimeSpan.FromMinutes(1)))
+        using (var back = await ReauthenticateAsync(browser, id, authAge: AccountControllerBase.ReauthenticationWindow + TimeSpan.FromMinutes(1)))
         {
             Assert.Equal(HttpStatusCode.OK, back.StatusCode);
         }
@@ -263,7 +265,7 @@ public class AccountReauthenticationTests : IDisposable
         var (app, browser, id) = await StartSignedInAsync();
         using (await ReauthenticateAsync(browser, id)) { }
 
-        _time.Now += BaGet.Identity.Mvc.AccountControllerBase.ReauthenticationWindow + TimeSpan.FromSeconds(1);
+        _time.Now += AccountControllerBase.ReauthenticationWindow + TimeSpan.FromSeconds(1);
         using (await ChangeEmailAsync(browser, "")) { }
 
         Assert.Equal("alice@example.com", await EmailAsync(app));

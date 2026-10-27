@@ -1,4 +1,4 @@
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>The version whose scan findings the <c>_ScanFindings</c> partial shows on a package page.</summary>
 /// <param name="Name">The artifact name as the format names it (NuGet id, npm name, Maven <c>group:artifact</c>, Docker image).</param>

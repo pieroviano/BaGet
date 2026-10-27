@@ -1,4 +1,4 @@
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 public class Routes
 {

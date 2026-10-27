@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Database.Sqlite;
 using BaGet.Database.Tests;
+using BaGet.Identity.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
@@ -224,7 +225,7 @@ public class OwnershipForeignKeyTests : IDisposable
         context.OrganizationMembers!.Add(new OrganizationMember { OrganizationKey = null, UserId = user.Id, IsAdmin = false });
         await context.SaveChangesAsync(Token);
 
-        var (_, result) = await scope.ServiceProvider.GetRequiredService<BaGet.Identity.AccountDeletionService>().DeleteAsync(user, Token);
+        var (_, result) = await scope.ServiceProvider.GetRequiredService<AccountDeletionService>().DeleteAsync(user, Token);
 
         Assert.True(result.Succeeded);
         Assert.Empty(await context.OrganizationMembers!.ToListAsync(Token));

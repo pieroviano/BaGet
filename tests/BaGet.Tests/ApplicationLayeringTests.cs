@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Controllers.Base;
 using Xunit;
 
 namespace BaGet.Tests;
@@ -15,14 +17,14 @@ public class ApplicationLayeringTests
 {
     private static readonly Assembly[] ApplicationAssemblies =
     {
-        typeof(BaGet.Identity.Application.ScreenGate).Assembly,
+        typeof(ScreenGate).Assembly,
         typeof(BaGet.Web.Application.LegalUseCase).Assembly,
     };
 
     private static readonly Assembly[] UiAssemblies =
     {
-        typeof(BaGet.Identity.Mvc.UiControllerBase).Assembly,
-        typeof(BaGet.Web.NavLinkTagHelper).Assembly,
+        typeof(UiControllerBase).Assembly,
+        typeof(BaGet.Web.V3.NavLinkTagHelper).Assembly,
     };
 
     [Fact]

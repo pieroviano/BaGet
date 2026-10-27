@@ -5,7 +5,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using BaGet.Identity;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Extensions;
 using BaGet.Web;
+using BaGet.Web.V3;
 using Xunit;
 
 namespace BaGet.Tests.Contracts;
@@ -30,7 +33,7 @@ public class PublicApiSnapshotTests
     {
         typeof(NavLinkTagHelper).Assembly,
         typeof(AccountsServiceCollectionExtensions).Assembly,
-        typeof(BaGet.Identity.Application.ScreenGate).Assembly,
+        typeof(ScreenGate).Assembly,
         typeof(BaGet.Web.Application.LegalUseCase).Assembly,
     };
 

@@ -2,11 +2,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Mvc;
+using BaGet.Web.V3.Controllers.UI;
+using BaGet.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3.Controllers;
 
 /// <summary>
 /// The web pages of a Maven repository: the artifact list (<c>/maven-artifacts</c>), one artifact

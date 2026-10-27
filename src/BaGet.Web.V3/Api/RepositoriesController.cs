@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>A repository in the API's lists.</summary>
 /// <param name="Key">The repository key.</param>

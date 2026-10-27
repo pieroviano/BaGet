@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// The access check of every <c>/v2/{repo}/{image…}/…</c> request, in one place (the routes are

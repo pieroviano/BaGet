@@ -1,4 +1,4 @@
-@model MavenArtifactViewModel
+@model BaGet.Web.Models.MavenArtifactViewModel
 
 @{
     ViewData["Title"] = Model.Info == null ? Model.Group + ":" + Model.Artifact : Model.Info.Name + " " + Model.Selected?.Summary.Version;

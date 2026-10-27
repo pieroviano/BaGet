@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Web;
+namespace BaGet.Web.V3;
 
 /// <summary>
 /// Hides the secrets that a protocol puts in the path of a request, before the path reaches a log event (request line or hosting-scope property: <c>RequestPathRedactingEnricher</c>) or a trace. The query

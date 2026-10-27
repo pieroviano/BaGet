@@ -4,13 +4,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Pages.Admin;
-using BaGet.Identity.ViewModels;
+using BaGet.Identity.Application.Models;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Application;
+namespace BaGet.Identity.Application.UseCases;
 
 /// <summary>
 /// The two package listings of the administrator: the package IDs that have no owner in any repository (those that predate
@@ -123,9 +124,9 @@ internal static class AdminPackageRows
         if (ids.Count == 0) return Array.Empty<AdminPackageRow>();
         #pragma warning restore CS8602
 
-        var summaries = Pages.Account.PackagesModel.Summarise(
+        var summaries = PackagesModel.Summarise(
             ids,
-            await Pages.Account.PackagesModel.ListVersionsAsync(context, ids, cancellationToken));
+            await PackagesModel.ListVersionsAsync(context, ids, cancellationToken));
 
         var lowered = ids.Select(id => id.ToLowerInvariant()).ToList();
         #pragma warning disable CS8602, CS8604
