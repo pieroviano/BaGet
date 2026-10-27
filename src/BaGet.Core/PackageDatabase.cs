@@ -10,6 +10,8 @@ namespace BaGet.Core;
 
 public class PackageDatabase : IPackageDatabase
 {
+    private const int MaxUpdateAttempts = 3;
+
     private readonly IContext _context;
 
     public PackageDatabase(IContext context)
@@ -53,6 +55,36 @@ public class PackageDatabase : IPackageDatabase
             .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
             .AnyAsync(cancellationToken);
         #pragma warning restore CS8604
+    }
+
+    public async Task<IReadOnlyList<Package>> FindManyAsync(
+        IReadOnlyCollection<string> ids,
+        bool includeUnlisted,
+        CancellationToken cancellationToken)
+    {
+        if (ids.Count == 0)
+        {
+            return new List<Package>();
+        }
+
+        var idList = ids.ToList();
+        #pragma warning disable CS8604
+        var query = _context.Packages
+            .Include(p => p.Dependencies)
+            .Include(p => p.PackageTypes)
+            .Include(p => p.TargetFrameworks)
+            .Include(p => p.Deprecation)
+            .Include(p => p.Vulnerabilities)
+            .AsSplitQuery()
+            .Where(p => idList.Contains(p.Id!));
+        #pragma warning restore CS8604
+
+        if (!includeUnlisted)
+        {
+            query = query.Where(p => p.Listed);
+        }
+
+        return await query.ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<Package>> FindAsync(string? id, bool includeUnlisted, CancellationToken cancellationToken)
@@ -115,7 +147,7 @@ public class PackageDatabase : IPackageDatabase
     {
         try
         {
-            await TryUpdatePackageAsync(id, version, p => p.Downloads += 1, cancellationToken);
+            await TryUpdatePackageAsync(id, version, p => p.Downloads += 1, cancellationToken, bestEffort: true);
         }
         catch (MaintenanceException)
         {
@@ -265,27 +297,60 @@ public class PackageDatabase : IPackageDatabase
         #pragma warning restore CS8604
     }
 
+    /// <summary>
+    /// Rows carry a concurrency token on SQL Server and MySQL, so a save racing another writer of the same row
+    /// (a download, an unlist) throws <see cref="DbUpdateConcurrencyException"/>. The change is re-applied to a
+    /// fresh copy of the row up to <see cref="MaxUpdateAttempts"/> times; then the exception is rethrown, or
+    /// dropped when <paramref name="bestEffort"/> (the download counter) is set.
+    /// </summary>
     private async Task<bool> TryUpdatePackageAsync(
         string? id,
         NuGetVersion version,
         Action<Package> action,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool bestEffort = false)
     {
-        #pragma warning disable CS8604
-        var package = await _context.Packages
-            .Where(p => p.Id == id)
-            .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
-            .FirstOrDefaultAsync();
-        #pragma warning restore CS8604
-
-        if (package != null)
+        for (var attempt = 1; ; attempt++)
         {
+            #pragma warning disable CS8604
+            var package = await _context.Packages
+                .Where(p => p.Id == id)
+                .Where(p => p.NormalizedVersionString == version.ToNormalizedString())
+                .FirstOrDefaultAsync(cancellationToken);
+            #pragma warning restore CS8604
+
+            if (package == null)
+            {
+                return false;
+            }
+
             action(package);
-            await _context.SaveChangesAsync(cancellationToken);
 
-            return true;
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+
+                return true;
+            }
+            catch (DbUpdateConcurrencyException e)
+            {
+                foreach (var entry in e.Entries)
+                {
+                    entry.State = EntityState.Detached;
+                }
+
+                if (attempt < MaxUpdateAttempts)
+                {
+                    continue;
+                }
+
+                if (bestEffort)
+                {
+                    return false;
+                }
+
+                throw;
+            }
         }
-
-        return false;
     }
 }

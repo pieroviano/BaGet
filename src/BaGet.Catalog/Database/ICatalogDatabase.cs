@@ -30,6 +30,23 @@ public interface ICatalogDatabase
     Task<IReadOnlyList<DateTime>> GetCommitTimestampsAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// The number of entries and the commit timestamp of the last entry of each full or partial page of
+    /// <paramref name="pageSize"/> entries: all the index needs, without reading every timestamp.
+    /// </summary>
+    /// <remarks>The default derives it from <see cref="GetCommitTimestampsAsync"/>.</remarks>
+    async Task<(int Count, IReadOnlyList<DateTime> PageEnds)> GetPageEndsAsync(int pageSize, CancellationToken cancellationToken)
+    {
+        var all = await GetCommitTimestampsAsync(cancellationToken);
+        var ends = new List<DateTime>();
+        for (var end = pageSize - 1; end < all.Count + pageSize - 1; end += pageSize)
+        {
+            ends.Add(all[Math.Min(end, all.Count - 1)]);
+        }
+
+        return (all.Count, ends);
+    }
+
+    /// <summary>
     /// The entries in commit order, skipping <paramref name="skip"/>.
     /// </summary>
     Task<IReadOnlyList<CatalogEntry>> GetEntriesAsync(int skip, int take, CancellationToken cancellationToken);

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -75,7 +76,13 @@ public class SymbolController : ControllerBase
                         break;
 
                     case SymbolIndexingResult.PackageNotFound:
+                        // With validation on the package is published only when it is released: say so.
                         HttpContext.Response.StatusCode = 404;
+                        HttpContext.Response.ContentType = "text/plain";
+                        await HttpContext.Response.WriteAsync(
+                            "The package this symbol package belongs to is not published. With validation enabled it is "
+                            + "published only after validation passes: push the symbols again then.",
+                            cancellationToken);
                         break;
 
                     case SymbolIndexingResult.Success:

@@ -11,7 +11,7 @@ the endpoints BaGet Extension adds of its own. Every NuGet route below also exis
 | `PackagePublish/2.0.0` | `/api/v2/package` | `PUT` push; `DELETE /{id}/{version}` unlists or hard deletes per [`PackageDeletionBehavior`](../configuration.md#enable-package-hard-deletions); `POST /{id}/{version}` relists |
 | `SymbolPackagePublish/4.9.0` | `/api/v2/symbol` | portable PDBs that match the package's assemblies |
 | `SearchQueryService` | `/v3/search` (also advertised as `/3.0.0-beta`, `/3.0.0-rc`) | results include `deprecation`, `vulnerabilities`, `owners`, `verified` |
-| `SearchAutocompleteService` | `/v3/autocomplete` | also advertised as `/3.0.0-beta`, `/3.0.0-rc` |
+| `SearchAutocompleteService` | `/v3/autocomplete` | also advertised as `/3.0.0-beta`, `/3.0.0-rc`; `take` is clamped to 0..1000 and `skip` to 0 or more on search and autocomplete |
 | `RegistrationsBaseUrl` | `/v3/registration` | entries include `deprecation` and `vulnerabilities`; also advertised as `/3.0.0-beta`, `/3.0.0-rc` |
 | `PackageBaseAddress/3.0.0` | `/v3/package` | |
 | `PackageDetailsUriTemplate/5.1.0` | `/packages/{id}/{version}` | |

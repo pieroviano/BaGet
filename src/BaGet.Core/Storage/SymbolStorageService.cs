@@ -42,10 +42,11 @@ public class SymbolStorageService : ISymbolStorageService
 
     public async Task<Stream?> GetPortablePdbContentStreamOrNullAsync(string filename, string key)
     {
-        var path = GetPathForKey(filename, key);
-
         try
         {
+            // An invalid file name or key (too short, not alphanumeric) is a miss, not a server error.
+            var path = GetPathForKey(filename, key);
+
             return await _storage.GetAsync(path);
         }
         catch
@@ -72,7 +73,7 @@ public class SymbolStorageService : ISymbolStorageService
             throw new ArgumentException(nameof(filename));
         }
 
-        if (!key.All(char.IsLetterOrDigit))
+        if (key.Length < 32 || !key.All(char.IsLetterOrDigit))
         {
             throw new ArgumentException(nameof(key));
         }

@@ -46,7 +46,7 @@ public interface IValidationAdministration
     /// <returns>Null on success, else why not.</returns>
     Task<string?> ReleaseAsync(string submissionId, string? actor, CancellationToken cancellationToken);
 
-    /// <summary>Deletes the staged file and the submission's rows. Audited.</summary>
+    /// <summary>Deletes the staged file and the submission's rows. Audited. A pending submission can be rejected too (one that keeps failing would never leave the queue).</summary>
     /// <returns>Null on success, else why not.</returns>
     Task<string?> RejectAsync(string submissionId, string? actor, CancellationToken cancellationToken);
 }

@@ -53,6 +53,41 @@ public class CatalogDatabase : ICatalogDatabase
         return timestamps.Select(AsUtc).ToList();
     }
 
+    public async Task<(int Count, IReadOnlyList<DateTime> PageEnds)> GetPageEndsAsync(int pageSize, CancellationToken cancellationToken)
+    {
+        #pragma warning disable CS8604
+        var count = await _context.CatalogLeafs.CountAsync(cancellationToken);
+
+        var ends = new List<DateTime>();
+        var pages = (count + pageSize - 1) / pageSize;
+        var lastKey = 0;
+        for (var page = 0; page < pages; page++)
+        {
+            // Keyset paging: each page costs its own size, not the number of entries before it.
+            var isLast = page == pages - 1;
+            var entries = _context.CatalogLeafs.AsNoTracking();
+            if (isLast)
+            {
+                var latest = await entries.OrderByDescending(e => e.Key).Select(e => e.CommitTimestamp).FirstAsync(cancellationToken);
+                ends.Add(AsUtc(latest));
+                break;
+            }
+
+            var end = await entries
+                .Where(e => e.Key > lastKey)
+                .OrderBy(e => e.Key)
+                .Skip(pageSize - 1)
+                .Select(e => new { e.Key, e.CommitTimestamp })
+                .FirstAsync(cancellationToken);
+
+            lastKey = end.Key;
+            ends.Add(AsUtc(end.CommitTimestamp));
+        }
+        #pragma warning restore CS8604
+
+        return (count, ends);
+    }
+
     public async Task<IReadOnlyList<CatalogEntry>> GetEntriesAsync(int skip, int take, CancellationToken cancellationToken)
     {
         #pragma warning disable CS8604

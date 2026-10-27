@@ -132,9 +132,9 @@ public class PackageIndexingService : IPackageIndexingService
 
         // Try to extract all the necessary information from the package.
         Package package;
-        Stream nuspecStream;
-        Stream? readmeStream;
-        Stream? iconStream;
+        Stream? nuspecStream = null;
+        Stream? readmeStream = null;
+        Stream? iconStream = null;
 
         try
         {
@@ -147,37 +147,64 @@ public class PackageIndexingService : IPackageIndexingService
                 package = packageReader.GetPackageMetadata();
                 package.Published = _time.UtcNow;
 
-                nuspecStream = await packageReader.GetNuspecAsync(cancellationToken);
-                nuspecStream = await nuspecStream.AsTemporaryFileStreamAsync(cancellationToken);
+                using (var rawNuspec = await packageReader.GetNuspecAsync(cancellationToken))
+                {
+                    nuspecStream = await rawNuspec.AsTemporaryFileStreamAsync(cancellationToken);
+                }
 
                 if (package.HasReadme)
                 {
-                    readmeStream = await packageReader.GetReadmeAsync(cancellationToken);
-                    readmeStream = await readmeStream.AsTemporaryFileStreamAsync(cancellationToken);
-                }
-                else
-                {
-                    readmeStream = null;
+                    using var rawReadme = await packageReader.GetReadmeAsync(cancellationToken);
+                    readmeStream = await rawReadme.AsTemporaryFileStreamAsync(cancellationToken);
                 }
 
                 if (package.HasEmbeddedIcon)
                 {
-                    iconStream = await packageReader.GetIconAsync(cancellationToken);
-                    iconStream = await iconStream.AsTemporaryFileStreamAsync(cancellationToken);
-                }
-                else
-                {
-                    iconStream = null;
+                    using var rawIcon = await packageReader.GetIconAsync(cancellationToken);
+                    iconStream = await rawIcon.AsTemporaryFileStreamAsync(cancellationToken);
                 }
             }
         }
         catch (Exception e)
         {
+            // The temporary copies are DeleteOnClose files: release them on every path.
+            nuspecStream?.Dispose();
+            readmeStream?.Dispose();
+            iconStream?.Dispose();
+
             _logger.LogError(e, "Uploaded package is invalid");
 
             return PackageIndexingResult.InvalidPackage;
         }
 
+        try
+        {
+            return await IndexExtractedAsync(
+                package,
+                packageStream,
+                nuspecStream!,
+                readmeStream,
+                iconStream,
+                activity,
+                cancellationToken);
+        }
+        finally
+        {
+            nuspecStream?.Dispose();
+            readmeStream?.Dispose();
+            iconStream?.Dispose();
+        }
+    }
+
+    private async Task<PackageIndexingResult> IndexExtractedAsync(
+        Package package,
+        Stream? packageStream,
+        Stream nuspecStream,
+        Stream? readmeStream,
+        Stream? iconStream,
+        Activity? activity,
+        CancellationToken cancellationToken)
+    {
         activity?.SetTag(BaGetDiagnostics.Tags.PackageId, package.Id);
         activity?.SetTag(BaGetDiagnostics.Tags.PackageVersion, package.NormalizedVersionString);
 

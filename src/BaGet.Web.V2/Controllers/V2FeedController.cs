@@ -8,6 +8,7 @@ using BaGet.Web.V2.Models;
 using BaGet.Web.V2.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using NuGet.Versioning;
 
@@ -91,6 +92,7 @@ public class V2FeedController : Controller
     /// </summary>
     public async Task<IActionResult> FindPackagesById(
         [FromQuery] string id,
+        [FromQuery] string semVerLevel,
         CancellationToken cancellationToken)
     {
         // The id arrives as an OData string literal: id='Newtonsoft.Json'.
@@ -103,7 +105,12 @@ public class V2FeedController : Controller
 
         var packages = await FindAsync(id, includeUnlisted: true, cancellationToken);
 
-        return Feed(Project(packages), "FindPackagesById");
+        // A client that did not announce SemVer 2 support cannot parse those versions.
+        var includeSemVer2 = IsSemVer2(semVerLevel);
+
+        return Feed(
+            Project(packages, p => includeSemVer2 || p.SemVerLevel != SemVerLevel.SemVer2),
+            "FindPackagesById");
     }
 
     /// <summary>
@@ -209,31 +216,59 @@ public class V2FeedController : Controller
         var take = Math.Clamp(top ?? DefaultPageSize, 1, MaxPageSize);
         var offset = Math.Max(skip ?? 0, 0);
 
+        var includeSemVer2 = IsSemVer2(semVerLevel);
+
         var response = await _search.SearchAsync(
             new SearchRequest
             {
                 Skip = offset,
                 Take = take,
                 IncludePrerelease = includePrerelease,
-                IncludeSemVer2 = IsSemVer2(semVerLevel),
+                IncludeSemVer2 = includeSemVer2,
                 Query = query,
             },
             cancellationToken);
 
         // Search returns one result per package id, each carrying its versions. V2
-        // lists one entry per version, so the ids are re-read to get full metadata.
-        var result = new List<V2FeedPackage>();
+        // lists one entry per version, so the ids are re-read to get full metadata
+        // (the whole page in one query when the repository is a real one).
+        #pragma warning disable CS8602, CS8604
+        var ids = response.Data.Select(match => match.PackageId).ToList();
+        #pragma warning restore CS8602, CS8604
 
-        #pragma warning disable CS8602
-        foreach (var match in response.Data)
-        #pragma warning restore CS8602
+        var byId = new Dictionary<string, List<Package>>(StringComparer.OrdinalIgnoreCase);
+        if (_virtual?.IsVirtual == true)
         {
-            var packages = await FindAsync(match.PackageId, includeUnlisted: false, cancellationToken);
-
-            result.AddRange(Project(packages));
+            foreach (var id in ids)
+            {
+                byId[id ?? string.Empty] = (await FindAsync(id, includeUnlisted: false, cancellationToken)).ToList();
+            }
+        }
+        else
+        {
+            var found = await _packages.FindManyAsync(ids!, includeUnlisted: false, cancellationToken);
+            foreach (var package in found)
+            {
+                var key = package.Id ?? string.Empty;
+                if (!byId.TryGetValue(key, out var list)) byId[key] = list = new List<Package>();
+                list.Add(package);
+            }
         }
 
-        return Feed(result, title);
+        var result = new List<V2FeedPackage>();
+        foreach (var id in ids)
+        {
+            if (!byId.TryGetValue(id ?? string.Empty, out var versions)) continue;
+
+            // The search matched ids; the V2 entries are versions, so the same filters apply to them.
+            result.AddRange(Project(versions, p =>
+                (includePrerelease || !p.IsPrerelease) && (includeSemVer2 || p.SemVerLevel != SemVerLevel.SemVer2)));
+        }
+
+        // Paging counts ids (the entries are versions): a "next" link is how V2 clients ask for the following ids.
+        var more = ids.Count > 0 && response.TotalHits > offset + ids.Count;
+
+        return Feed(result, title, more ? NextUrl(title, offset + ids.Count) : null);
     }
 
     // The versions of a package in the repository served. A virtual repository has none of its own: it lists the versions
@@ -244,16 +279,18 @@ public class V2FeedController : Controller
             ? await _virtual.FindPackagesAsync(id, includeUnlisted, cancellationToken)
             : await _packages.FindAsync(id, includeUnlisted, cancellationToken);
 
-    private List<V2FeedPackage> Project(IEnumerable<Package> packages)
+    // "include" hides versions from the client, but the latest flags stay relative to all of them.
+    private List<V2FeedPackage> Project(IEnumerable<Package> packages, Func<Package, bool>? include = null)
     {
         #pragma warning disable CS8603
         return V2FeedPackage.FromPackages(
             packages,
-            p => _url.GetPackageDownloadUrl(p.Id, p.Version));
+            p => _url.GetPackageDownloadUrl(p.Id, p.Version),
+            include);
         #pragma warning restore CS8603
     }
 
-    private IActionResult Feed(IReadOnlyList<V2FeedPackage> packages, string title)
+    private IActionResult Feed(IReadOnlyList<V2FeedPackage> packages, string title, string? nextUrl = null)
     {
         var baseUrl = FeedBaseUrl();
         var selfUrl = baseUrl.TrimEnd('/') + "/" + title;
@@ -270,9 +307,21 @@ public class V2FeedController : Controller
             feedTitle: title,
             selfUrl: selfUrl,
             baseUrl: baseUrl,
-            updated: updated);
+            updated: updated,
+            nextUrl: nextUrl);
 
         return Content(document, "application/atom+xml; type=feed; charset=utf-8");
+    }
+
+    // The URL of the following page: this request's query with $skip moved on.
+    private string NextUrl(string title, int skip)
+    {
+        var parameters = Request.Query
+            .Where(q => !string.Equals(q.Key, "$skip", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(q => q.Value.Select(v => new KeyValuePair<string, string?>(q.Key, v)))
+            .Append(new KeyValuePair<string, string?>("$skip", skip.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+        return QueryHelpers.AddQueryString(FeedBaseUrl().TrimEnd('/') + "/" + title, parameters);
     }
 
     /// <summary>

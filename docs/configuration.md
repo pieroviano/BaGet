@@ -250,7 +250,9 @@ older `Install-Package`, and PowerShellGet. It is on by default. To turn it off:
 
 !!! info
     The OData query options `$filter`, `$orderby`, `$select` and `$expand` are ignored; `$skip` and
-    `$top` are honoured.
+    `$top` are honoured. `Search()` and `Packages()` page by package id (`$top` ids, at most 1000) and
+    emit a `next` link while more ids follow; they list only the versions the request allows
+    (`includePrerelease`, and SemVer 2 versions only with `semVerLevel=2.0.0`, like `FindPackagesById()`).
 
 ## Accounts, package owners and API keys
 
@@ -588,7 +590,9 @@ appears. Until then it cannot be found or downloaded. The checks are:
 
 A package that fails is quarantined and never served. Its owners can see why with
 `GET /v3/package/{id}/{version}/validation`, sending their API key in `X-NuGet-ApiKey`.
-Pending validations resume when BaGet Extension restarts.
+Pending validations resume when BaGet Extension restarts. A run that throws (not a failed step) is queued again up to 5 times, after 30 s doubling each time, then stays pending until the next start or an administrator rejects it (a reject stops a validation still running on that node and waits for it, so nothing is published afterwards; the runner also re-checks the submission right before indexing).
+
+**Symbols:** a `.snupkg` needs the published package, which exists only once validation releases it. Pushed earlier, it answers `404` (with the reason in the body) and is not kept: push it again after the release (`dotnet nuget push` of a `.nupkg` sends the `.snupkg` right behind it, so with validation on push the symbols in a second step).
 
 Administrators see and decide on stuck submissions of **every repository** at `/admin/validation`
 (menu: *Validation queue*):
@@ -597,9 +601,9 @@ Administrators see and decide on stuck submissions of **every repository** at `/
 |---|---|
 | Retry | Resets the steps to pending and queues the submission again (needs the staged file) |
 | Release | Indexes the quarantined package although validation failed. Needs the administrator's password; logged as a warning and recorded with `IAdminAudit`; the failed verdicts stay on record |
-| Reject | Deletes the staged file and the submission's rows. Needs the password; audited |
+| Reject | Deletes the staged file and the submission's rows; also for a submission stuck pending. Needs the password; audited |
 
-Release and Reject apply to quarantined submissions only; all three are refused with `503` while the server is read-only for maintenance.
+Release applies to quarantined submissions only, Reject also to pending ones; all three are refused with `503` while the server is read-only for maintenance.
 
 ### Repository signing
 
