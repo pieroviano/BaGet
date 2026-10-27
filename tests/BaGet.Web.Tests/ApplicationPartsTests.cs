@@ -16,12 +16,27 @@ public class ApplicationPartsTests
     [InlineData("BaGet.Web.V2")]
     [InlineData("BaGet.Catalog")]
     [InlineData("BaGet.Validation")]
-    [InlineData("BaGet.Identity")]
+    [InlineData("BaGet.Identity.Api")]
     public void RegistersBaGetAssemblyWithoutEntryAssemblyAttributes(string assemblyName)
     {
         var manager = Manager();
 
         Assert.Contains(manager.ApplicationParts, part => part.Name == assemblyName);
+    }
+
+    [Theory]
+    [InlineData("BaGet.Frontend.Base")]
+    [InlineData("BaGet.Identity.FrontEnd")]
+    [InlineData("BaGet.Web.FrontEnd")]
+    public void AddBaGetFrontEndRegistersTheScreenAssembliesAndTheApiRegistrationDoesNot(string assemblyName)
+    {
+        Assert.DoesNotContain(Manager().ApplicationParts, part => part.Name == assemblyName);
+
+        var services = new ServiceCollection();
+        services.AddControllers().AddBaGetApplicationParts();
+        services.AddBaGetFrontEnd();
+
+        Assert.Contains(Manager(services).ApplicationParts, part => part.Name == assemblyName);
     }
 
     [Fact]

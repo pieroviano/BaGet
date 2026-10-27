@@ -5,6 +5,7 @@ using System.Reflection;
 using BaGet.Core;
 using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
+using BaGet.Web.V3.Api.Catalog;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,8 +15,8 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// A screen is its controller and default GET action (<see cref="ScreenRef"/>). Every name that is typed as text (the catalog, the links a format
-/// module contributes) must resolve to an action that exists; the names written as <c>typeof</c> + <c>nameof</c> (<c>[UiApi]</c>,
-/// <c>[ApiOperation]</c>) are checked by <c>UiApiParityTests</c> and <c>AdminApiAccessTests</c>.
+/// module contributes) must resolve to an action that exists; the names written as text in <c>[UiApi]</c> and
+/// <c>[ApiOperation]</c> are checked here too (the API assemblies cannot reference the view controllers).
 /// </summary>
 public class ScreenCatalogTests : IDisposable
 {
@@ -55,6 +56,30 @@ public class ScreenCatalogTests : IDisposable
         var catalog = ScreenCatalog.All.ToHashSet();
 
         Assert.Empty(Screens().Where(s => !catalog.Contains(s)).Select(s => s.ToString()));
+    }
+
+    private IEnumerable<ControllerActionDescriptor> Actions()
+        => _app.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items.OfType<ControllerActionDescriptor>();
+
+    [Fact]
+    public void EveryUiApiTwinNamesAScreenOfAViewController()
+    {
+        // The twins name their screen by text (the API assemblies cannot reference the view controllers): resolve each against the registered screens.
+        var screens = Screens();
+        var twins = Actions().Select(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>()).Where(a => a != null).ToList();
+
+        Assert.NotEmpty(twins);
+        Assert.Empty(twins.Where(a => !screens.Contains(a!.Screen)).Select(a => a!.Screen.ToString()).Distinct());
+    }
+
+    [Fact]
+    public void EveryApiOperationNamesAScreenOfAViewController()
+    {
+        var screens = Screens();
+        var operations = Actions().Select(a => a.MethodInfo.GetCustomAttribute<ApiOperationAttribute>()).Where(a => a != null).ToList();
+
+        Assert.NotEmpty(operations);
+        Assert.Empty(operations.Where(a => !screens.Contains(a!.UiScreen)).Select(a => a!.UiScreen.ToString()).Distinct());
     }
 
     [Fact]

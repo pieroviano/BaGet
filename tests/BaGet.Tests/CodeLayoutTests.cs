@@ -19,7 +19,8 @@ public class CodeLayoutTests
 {
     private static readonly string[] Projects =
     {
-        "BaGet.Catalog", "BaGet.Frontend.Base", "BaGet.Identity.Api", "BaGet.Identity.Application", "BaGet.Validation", "BaGet.Web.Application", "BaGet.Web.V3",
+        "BaGet.Api.Base", "BaGet.Catalog", "BaGet.Frontend.Base", "BaGet.Identity.Api", "BaGet.Identity.Application", "BaGet.Identity.FrontEnd", "BaGet.Validation", "BaGet.Web.Application",
+        "BaGet.Web.FrontEnd", "BaGet.Web.V3",
     };
 
     /// <summary>
@@ -30,6 +31,7 @@ public class CodeLayoutTests
     {
         ["BaGet.Web.V3/Routing/BaGetEndpointBuilder.cs"] = "BaGet",
         ["BaGet.Web.V3/Extensions/IServiceCollectionExtensions.cs"] = "BaGet",
+        ["BaGet.Web.FrontEnd/Extensions/FrontEndServiceCollectionExtensions.cs"] = "BaGet",
     };
 
     private static readonly Regex RootNamespace = new("<RootNamespace>([^<]+)</RootNamespace>", RegexOptions.Compiled);

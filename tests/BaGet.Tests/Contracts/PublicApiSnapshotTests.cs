@@ -8,13 +8,12 @@ using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Extensions;
 using Xunit;
-using BaGet.Frontend.TagHelpers;
 
 namespace BaGet.Tests.Contracts;
 
 /// <summary>
 /// The public-API contract of the web UI: the public and protected surface
-/// of <c>BaGet.Web.V3</c>, <c>BaGet.Identity.Api</c> and <c>BaGet.Frontend.Base</c> (and of the Application projects their types moved to) is listed in
+/// of <c>BaGet.Web.V3</c>, <c>BaGet.Identity.Api</c>, <c>BaGet.Api.Base</c>, <c>BaGet.Frontend.Base</c>, <c>BaGet.Identity.FrontEnd</c> and <c>BaGet.Web.FrontEnd</c> (and of the Application projects their types moved to) is listed in
 /// <c>Contracts/public-api.txt</c>, one line per type, base type, interface and member. The actual surface must be a <b>superset</b> of
 /// the snapshot: members and types may be added, none may be removed or change signature (a removal is a breaking change: regenerate the
 /// snapshot on purpose). Razor-generated view classes are not public API.
@@ -30,9 +29,12 @@ public class PublicApiSnapshotTests
 
     private static readonly Assembly[] Assemblies =
     {
-        typeof(NavLinkTagHelper).Assembly,
+        typeof(BaGet.Web.V3.Routing.Routes).Assembly,
         typeof(AccountsServiceCollectionExtensions).Assembly,
+        typeof(BaGet.Frontend.Mvc.UI.UiApiAttribute).Assembly,
         typeof(UiControllerBase).Assembly,
+        typeof(BaGet.Identity.Controllers.FrontEnd.AdminUsersController).Assembly,
+        typeof(BaGet.Web.V3.Controllers.FrontEnd.HomeController).Assembly,
         typeof(ScreenGate).Assembly,
         typeof(BaGet.Web.Application.UseCases.LegalUseCase).Assembly,
     };
@@ -40,9 +42,12 @@ public class PublicApiSnapshotTests
     // The assemblies the snapshot was taken from: a type listed under one of them must still resolve through it (moved types are forwarded).
     private static readonly Dictionary<string, Assembly> Original = new(StringComparer.Ordinal)
     {
-        ["BaGet.Web.V3"] = typeof(NavLinkTagHelper).Assembly,
+        ["BaGet.Web.V3"] = typeof(BaGet.Web.V3.Routing.Routes).Assembly,
         ["BaGet.Identity.Api"] = typeof(AccountsServiceCollectionExtensions).Assembly,
+        ["BaGet.Api.Base"] = typeof(BaGet.Frontend.Mvc.UI.UiApiAttribute).Assembly,
         ["BaGet.Frontend.Base"] = typeof(UiControllerBase).Assembly,
+        ["BaGet.Identity.FrontEnd"] = typeof(BaGet.Identity.Controllers.FrontEnd.AdminUsersController).Assembly,
+        ["BaGet.Web.FrontEnd"] = typeof(BaGet.Web.V3.Controllers.FrontEnd.HomeController).Assembly,
     };
 
     /// <summary>The assembly column of a snapshot line is dropped: a moved type is the same line.</summary>

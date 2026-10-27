@@ -18,7 +18,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// Sets a package version's deprecation and vulnerability metadata. These are writes, so
 /// they are authorised exactly like push and delete.
 /// </summary>
-public class PackageMetadataAdminController : Controller
+public class PackageMetadataAdminController : ControllerBase
 {
     private readonly IAuthenticationService _authentication;
     private readonly IPackageAuthorizationService _authorization;

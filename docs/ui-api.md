@@ -72,11 +72,14 @@ plain URLs (package files, symbol files, avatars). `UiApiParityTests` fails for 
 | Project | Holds |
 |---|---|
 | `BaGet.Identity.Application`, `BaGet.Web.Application` | Use cases (`<Area>UseCase`), the DTOs (the JSON `model`), business services. No MVC or Razor reference (`ApplicationLayeringTests`) |
-| `BaGet.Identity`, `BaGet.Web.V3` | Controllers: the `[UiApi]` twin (`Controllers/UI`, base `UiApiControllerBase` family in `Controllers/Base`) and the view controller, which binds the form, calls the twin in process (`UiApiInvoker`) and renders; views; MVC infrastructure |
+| `BaGet.Identity.Api`, `BaGet.Web.V3` | The `[UiApi]` twins (`Controllers/UI`) and the other web APIs; no view controller, no view, no reference to a front end (`ApplicationLayeringTests`) |
+| `BaGet.Api.Base` | What twins and screens share: the twin bases (`UiApiControllerBase` family), `[UiApi]`, `[RepositoryPage]`, `IScreenController`/`ScreenEndpoints`, `UiApiSecurityFilter`, `RequestPrincipalResolver` |
+| `BaGet.Identity.FrontEnd`, `BaGet.Web.FrontEnd` | The view controllers (`Controllers/FrontEnd`), which bind the form, call the twin in process (`UiApiInvoker`) and render, and their views; `AddBaGetFrontEnd()` registers them |
+| `BaGet.Frontend.Base` | MVC base of the screens: `UiControllerBase` family, `UiApiInvoker`, `RepositoryUrlHelper`, `NavLinkTagHelper`, the layout and shared partials |
 
 A use case takes explicit inputs (caller, form, cancellation token), returns a `ScreenResult<T>` and sees no `HttpContext`, `ModelState` or
 `TempData`. The twin's filters do not run in process, so the view controller bases run the same `ScreenGate` first.
-Moved public types keep their name and namespace and are forwarded (`[TypeForwardedTo]`) from the old assembly.
+Types moved to the Application projects keep their name and namespace and are forwarded (`[TypeForwardedTo]`) from the old assembly; the screens moved to the FrontEnd projects (a layering rule: the API assemblies cannot reference them) are not forwarded.
 
 ## Not breaking
 
@@ -93,8 +96,8 @@ test twins for each base at the end of `tests/BaGet.Tests/UiApiAccessTests.cs`.
 | Use case | `BaGet.Web.Application/UseCases` or `BaGet.Identity.Application/UseCases/<area>` | Scoped `<Area>UseCase`, one method per GET and handler; inputs explicit (caller `ClaimsPrincipal`, form DTO, `CancellationToken`); returns `ScreenResult<T>`; sees no `HttpContext`, `ModelState`, `TempData`; validates its form itself; a write calls `MaintenanceGate.ThrowIfClosed`; absolute links from `IUrlGenerator`; no secret in a DTO |
 | DTO | same project, `Models/<area>` (namespace = folder) | Flat, no EF entities; one type per file |
 | Registration | `AddBaGetWebUseCases`, or `AddBaGetAccounts` after its `Enabled` check | `TryAddScoped<<Area>UseCase>()` |
-| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity/Controllers/UI` | `<Feature>UiApiController`; never `[ApiController]`, a `UiControllerBase` or `[AutoValidateAntiforgeryToken]` |
-| View controller | unchanged place | Binds the form, `Api<Twin, Model>(api => ...)`, `Render(...)`; holds no use case |
+| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity.Api/Controllers/UI` | `<Feature>UiApiController`; never `[ApiController]`, a `UiControllerBase` or `[AutoValidateAntiforgeryToken]`; it may not reference the view controller, so `[UiApi]` names the screen by text |
+| View controller | `BaGet.Web.FrontEnd/Controllers/FrontEnd` or `BaGet.Identity.FrontEnd/Controllers/FrontEnd`, view in the same project's `Views/<Controller>/<Action>.cshtml` | Binds the form, `Api<Twin, Model>(api => ...)`, `Render(...)`; holds no use case |
 
 Twin bases: `UiApiControllerBase` (public), `AccountUiApiControllerBase` (override `RequiresSignIn`/`RequiresEmail`; **screen only**: 403 over HTTP),
 `AdminUiApiControllerBase` (administrator key), `AccessUiApiControllerBase` (override `AuthorizeAsync`; writes `503` while read-only; retention, replication and
@@ -106,13 +109,13 @@ repository bases build on these). Every twin is visible in the OpenAPI `ui` docu
 [RepositoryPage(NotOnVirtual = true)]          // same values as the view controller: adds api/ui/r/{repo}/...
 public sealed class StatisticsUiApiController : UiApiControllerBase
 {
-    [HttpGet("stats"), UiApi(typeof(StatisticsController), nameof(StatisticsController.Index))]
+    [HttpGet("stats"), UiApi("Statistics", "Index")]   // view controller without the suffix + its default GET action
     public async Task<ActionResult<ScreenResult<StatisticsViewModel>>> Get(CancellationToken ct)
         => Respond(await _useCase.GetAsync(ct));
 }
 ```
 
-Routes: GET `api/ui/<view path>`; default POST the same path; handler `X` = `api/ui/<path>/<x-kebab-case>` with `[UiApi(typeof(XController), nameof(XController.Index), Handler = "X")]` (the view controller and its default GET action name the screen); route values keep the
+Routes: GET `api/ui/<view path>`; default POST the same path; handler `X` = `api/ui/<path>/<x-kebab-case>` with `[UiApi("X", "Index", Handler = "X")]` (the view controller without the `Controller` suffix and its default GET action name the screen; `ApiOperation(summary, "X", "Index")` takes the same two strings); route values keep the
 view's names. Bodies are `[FromBody]` JSON, uploads `[FromForm]` multipart. Public helpers are `[NonAction]` or non-public. The view action becomes
 `=> Render(await Api<StatisticsUiApiController, StatisticsViewModel>(api => api.Get(ct)), "Index")` and keeps every attribute and its base (whose `ScreenGate` and
 antiforgery already ran: the twin's filters do not run in process).
@@ -120,4 +123,4 @@ antiforgery already ran: the twin's filters do not run in process).
 Checklist: the parity case (page and twin carry the same, statuses correspond) in `UiApiParityTests`; a case per caller kind in `UiApiAccessTests`
 (anonymous, cookie ignored, key, `admin:api` key, limited key, global key, Basic); no password or key in a response; regenerate `Contracts/ui-api.txt` with
 `BAGET_UPDATE_CONTRACTS=1` (never hand-merge); `ui-routes.txt`, `ui-forms.txt` and `public-api.txt` stay unchanged; a `ScreenCatalog` member and a row with its `Controller/Action` token in [UI coverage](ui-coverage.md) for
-a new screen (`ScreenCatalogTests` checks that every catalog entry, `[UiApi]`, `FormatLink` and `ApiOperation` target resolves to a view action).
+a new screen (`ScreenCatalogTests` checks that every catalog entry, `[UiApi]`, `FormatLink` and `ApiOperation` name resolves to a view action: a typo is a failing test, not a compile error).

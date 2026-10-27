@@ -24,7 +24,8 @@ public class ApplicationLayeringTests
     private static readonly Assembly[] UiAssemblies =
     {
         typeof(UiControllerBase).Assembly,
-        typeof(BaGet.Frontend.TagHelpers.NavLinkTagHelper).Assembly,
+        typeof(BaGet.Identity.Controllers.FrontEnd.AdminUsersController).Assembly,
+        typeof(BaGet.Web.V3.Controllers.FrontEnd.HomeController).Assembly,
     };
 
     [Fact]
@@ -43,6 +44,53 @@ public class ApplicationLayeringTests
 
             Assert.True(forbidden.Count == 0, $"{assembly.GetName().Name} references {string.Join(", ", forbidden)}: the Application projects must stay free of MVC, Razor and the UI projects.");
         }
+    }
+
+    private static readonly Assembly[] ApiAssemblies =
+    {
+        typeof(BaGet.Frontend.Mvc.UI.UiApiAttribute).Assembly,
+        typeof(BaGet.Identity.Extensions.AccountsServiceCollectionExtensions).Assembly,
+        typeof(BaGet.Web.V3.Routing.Routes).Assembly,
+    };
+
+    [Fact]
+    public void TheApiAssembliesReferenceNoFrontEndAssemblyAndDeclareNoViewController()
+    {
+        // BaGet.Api.Base, BaGet.Identity.Api and BaGet.Web.V3 serve JSON and protocols only; the screens are in the FrontEnd assemblies.
+        var frontEnd = UiAssemblies.Select(a => a.GetName().Name!).ToList();
+        foreach (var assembly in ApiAssemblies)
+        {
+            var references = assembly.GetReferencedAssemblies().Select(a => a.Name!).Where(frontEnd.Contains).ToList();
+            Assert.True(references.Count == 0, $"{assembly.GetName().Name} references {string.Join(", ", references)}.");
+
+            var views = assembly.GetTypes().Where(t => t.IsClass && (typeof(Microsoft.AspNetCore.Mvc.Controller).IsAssignableFrom(t) || typeof(BaGet.Frontend.Mvc.UI.IScreenController).IsAssignableFrom(t))).Select(t => t.FullName).ToList();
+            Assert.True(views.Count == 0, $"{assembly.GetName().Name} declares view controllers: {string.Join(", ", views)}.");
+        }
+
+        var root = AdminApiAccessTests.RepositoryRoot();
+        foreach (var project in ApiAssemblies.Select(a => a.GetName().Name!))
+        {
+            var folder = System.IO.Path.Combine(root, "src", project);
+            var views = System.IO.Directory.EnumerateFiles(folder, "*.cshtml", System.IO.SearchOption.AllDirectories)
+                .Where(f => !f.Contains(System.IO.Path.DirectorySeparatorChar + "obj" + System.IO.Path.DirectorySeparatorChar))
+                .ToList();
+            Assert.True(views.Count == 0, $"{project} holds views: {string.Join(", ", views)}.");
+
+            var text = System.IO.File.ReadAllText(System.IO.Path.Combine(folder, project + ".csproj"));
+            Assert.DoesNotContain("BaGet.Frontend.Base.csproj", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("FrontEnd.csproj", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("Sdk=\"Microsoft.NET.Sdk.Razor\"", text, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void TheUiAssembliesHoldEveryViewController()
+    {
+        var viewControllers = UiAssemblies.SelectMany(a => a.GetTypes()).Where(t => !t.IsAbstract && typeof(UiControllerBase).IsAssignableFrom(t)).ToList();
+        Assert.NotEmpty(viewControllers);
+
+        // Only the two FrontEnd assemblies declare screens; Frontend.Base holds the bases and the layout.
+        Assert.DoesNotContain(typeof(UiControllerBase).Assembly.GetTypes(), t => !t.IsAbstract && typeof(UiControllerBase).IsAssignableFrom(t));
     }
 
     [Fact]

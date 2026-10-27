@@ -12,7 +12,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// The Package Metadata resource, used to fetch packages' information.
 /// See: https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource
 /// </summary>
-public class PackageMetadataController : Controller
+public class PackageMetadataController : ControllerBase
 {
     private readonly IPackageMetadataService _metadata;
 

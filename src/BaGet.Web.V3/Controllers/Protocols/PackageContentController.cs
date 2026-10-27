@@ -12,7 +12,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// The Package Content resource, used to download content from packages.
 /// See: https://docs.microsoft.com/en-us/nuget/api/package-base-address-resource
 /// </summary>
-public class PackageContentController : Controller
+public class PackageContentController : ControllerBase
 {
     private readonly IPackageContentService _content;
     private readonly IScanGate? _scanGate;

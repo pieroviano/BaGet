@@ -27,7 +27,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// or an API key); the repository of the request is already selected. Errors are the specification's JSON bodies.
 /// </summary>
 [ServiceFilter(typeof(OciAuthorizationFilter))]
-public class OciController : Controller
+public class OciController : ControllerBase
 {
     private readonly IOciRegistry _registry;
     private readonly OciCallerResolver _callers;

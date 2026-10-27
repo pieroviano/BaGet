@@ -22,7 +22,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// <see cref="RequestPrincipalResolver.ResolveForWriteAsync"/> found (an API key as the Basic password; never the browser session).
 /// Errors are plain text, which is what Maven prints.
 /// </summary>
-public class MavenController : Controller
+public class MavenController : ControllerBase, Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 {
     private readonly IMavenRepository _maven;
     private readonly RequestPrincipalResolver _principals;
@@ -54,15 +54,20 @@ public class MavenController : Controller
     /// A remote repository whose upstream cannot answer (and has nothing stored to answer instead) is a bad gateway, not a missing
     /// file: Maven reports a 502 as a transfer failure it may retry elsewhere, where a 404 would be believed and remembered.
     /// </summary>
-    public override void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
+    [NonAction]
+    public void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
     {
         if (context.Exception is MavenUpstreamException e)
         {
             context.Result = Text(StatusCodes.Status502BadGateway, e.Message);
             context.ExceptionHandled = true;
         }
+    }
 
-        base.OnActionExecuted(context);
+    /// <inheritdoc/>
+    [NonAction]
+    public void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+    {
     }
 
     private MavenRequestPath? RequestedPath

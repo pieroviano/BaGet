@@ -10,7 +10,9 @@ Storage, database and search are pluggable and chosen from configuration at runt
 |---|---|
 | `BaGet` | Host and CLI entry point: `Program.cs` (configuration, services, pipeline, commands) |
 | `BaGet.Core` | Domain: entities, `IContext`, `IPackageDatabase`, storage, search, indexing, remote/virtual repositories, format modules (`Formats`: NuGet, npm, Maven, Docker), access model, retention, scanning, replication, operations, high availability (`Ha`), telemetry, options, settings, maintenance gate, database copy |
-| `BaGet.Web.V3` | V3, npm, Maven and OCI controllers (`Controllers/Protocols`), the `/api/v1` administration API (`Controllers/Api`), the UI controllers (`Controllers/FrontEnd`, JSON twins in `Controllers/UI`) and views, `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` (`Routing`) |
+| `BaGet.Web.V3` | V3, npm, Maven and OCI controllers (`Controllers/Protocols`), the `/api/v1` administration API (`Controllers/Api`), the `/api/ui` JSON twins of the screens (`Controllers/UI`), `BaGetEndpointBuilder`, `Routes`, `IUrlGenerator` (`Routing`); no view |
+| `BaGet.Web.FrontEnd`, `BaGet.Identity.FrontEnd` | The web screens: view controllers (`Controllers/FrontEnd`) and views; `AddBaGetFrontEnd()` |
+| `BaGet.Api.Base`, `BaGet.Frontend.Base` | Shared base of the APIs and screens (twin bases, `[UiApi]`, `[RepositoryPage]`); MVC base of the screens (view controller bases, layout, link helpers) |
 | `BaGet.Web.V2` | Legacy V2 OData/Atom feed (`Feeds:EnableV2`) |
 | `BaGet.Identity` | Accounts, API keys, ownership, administrators, access-model, retention, replication, scanning and other admin pages (`Accounts:Enabled`) |
 | `BaGet.Catalog` | V3 catalog resource, writer and rebuild |
@@ -32,7 +34,8 @@ Dependencies point inwards: every project references `BaGet.Core`; only the host
 | `Main` | McMaster `CommandLineApplication`: `import downloads [-r repo]`, `catalog rebuild [-r repo]`, `account reset-password/promote/demote/approve` (`AddBaGetCommands`); the default command runs migrations (while `RunMigrationsAtStartup` is on), promotes initial administrators and runs the host. Unknown arguments pass through to the host. |
 | `AddBaGetSettingsOverrides` | `BAGET_CONFIG_ROOT` base path; inserts `appsettings.Overrides.json` (written by the Settings page) after `appsettings*.json`, before environment variables and the command line. |
 | `AddBaGetHost` | Options binding and validation (`AddBaGetOptions<T>`), web app, accounts, provider registration (`app.AddXyz()` per subsystem). |
-| `AddBaGetWebApplication` | Registers controllers and views (`/packages` is also routed to the home action; every repository page also at `/r/{repo}/…`, see below; Razor Pages stay registered for a host's own pages, BaGet ships none), the catalog and validation services and `StagingSweepWorker`; `AddBaGetApplicationParts` adds every BaGet assembly with controllers or pages (`Web`, `Web.V2`, `Catalog`, `Validation`, `Identity`) as an MVC application part, so a host built without the Web SDK (e.g. a worker service calling `BaGet.Program.Main`) still serves them. A new such assembly must be added there. |
+| `AddBaGetFrontEnd` | Adds the screens to a host: `Frontend.Base`, `Identity.FrontEnd` and `Web.FrontEnd` as MVC application parts, Razor Pages, `RepositoryUrlHelperFactory`. A host that serves only the APIs omits it |
+| `AddBaGetWebApplication` | Registers the web APIs, without the screens (`/packages` is also routed to the home action; every repository page also at `/r/{repo}/…`, see below; Razor Pages stay registered for a host's own pages, BaGet ships none), the catalog and validation services and `StagingSweepWorker`; `AddBaGetApplicationParts` adds every BaGet assembly with controllers or pages (`Web`, `Web.V2`, `Catalog`, `Validation`, `Identity`) as an MVC application part, so a host built without the Web SDK (e.g. a worker service calling `BaGet.Program.Main`) still serves them. A new such assembly must be added there. |
 | `UseBaGetPipeline` | Middleware (below), then `BaGetEndpointBuilder.MapEndpoints`. |
 
 Some configuration is read **while registering services** (e.g. `Accounts:Enabled`, `Email`, provider types),

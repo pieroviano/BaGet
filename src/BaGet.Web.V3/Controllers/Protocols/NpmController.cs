@@ -23,7 +23,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// <see cref="INpmRegistry"/> with the caller <see cref="RequestPrincipalResolver.ResolveForWriteAsync"/> found (an API key,
 /// never the browser session). Bodies are JSON; errors are <c>{"error": "…"}</c>, which is what npm prints.
 /// </summary>
-public class NpmController : Controller
+public class NpmController : ControllerBase, Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 {
     private const string AbbreviatedType = "application/vnd.npm.install-v1+json";
 
@@ -65,15 +65,20 @@ public class NpmController : Controller
     /// A remote repository whose upstream cannot answer (and has nothing stored to answer instead) is a bad gateway, not a missing
     /// package: npm retries a 502 and fails an install on it, where a 404 would be believed.
     /// </summary>
-    public override void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
+    [NonAction]
+    public void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context)
     {
         if (context.Exception is NpmUpstreamException e)
         {
             context.Result = Error(502, e.Message);
             context.ExceptionHandled = true;
         }
+    }
 
-        base.OnActionExecuted(context);
+    /// <inheritdoc/>
+    [NonAction]
+    public void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+    {
     }
 
     private string? RawName => NpmRouteNames.FromRouteValues(RouteData.Values);

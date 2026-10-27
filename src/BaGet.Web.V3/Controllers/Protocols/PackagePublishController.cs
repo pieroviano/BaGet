@@ -11,7 +11,7 @@ using BaGet.Web.V3.Filters;
 
 namespace BaGet.Web.V3.Controllers.Protocols;
 
-public class PackagePublishController : Controller
+public class PackagePublishController : ControllerBase
 {
     private readonly IAuthenticationService _authentication;
     private readonly IPackageAuthorizationService _authorization;

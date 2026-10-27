@@ -1,6 +1,6 @@
 # Extension.BaGet.Web
 
-The NuGet V3 server endpoints and controller/view UI of [BaGet Extension](https://pieroviano.github.io/BaGet/). Use it
+The NuGet V3 server endpoints and the web APIs of [BaGet Extension](https://pieroviano.github.io/BaGet/). Use it
 to embed BaGet in your own ASP.NET Core host.
 
 ```powershell
@@ -15,7 +15,8 @@ builder.Services.AddBaGetWebApplication(app =>
     app.AddSqliteDatabase();   // Extension.BaGet.Database.Sqlite
     app.AddFileStorage();
 });
-builder.Services.AddBaGetAccounts(builder.Configuration); // Extension.BaGet.Identity
+builder.Services.AddBaGetAccounts(builder.Configuration); // Extension.BaGet.Identity.Api
+builder.Services.AddBaGetFrontEnd();                       // Extension.BaGet.Web.FrontEnd: the screens (omit it to serve the APIs only)
 
 // Pick each subsystem from configuration (Database:Type, Storage:Type, Search:Type).
 builder.Services.AddScoped(DependencyInjectionExtensions.GetServiceFromProviders<IContext>);
@@ -41,20 +42,19 @@ Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup
 
 | Item | Role |
 |---|---|
-| `AddBaGetWebApplication` | MVC (controllers and views; Razor Pages stay registered for a host's own pages), `IUrlGenerator`, core services, catalog, validation; registers every BaGet controller assembly as an application part, so hosts without the Web SDK work |
+| `AddBaGetWebApplication` | MVC controllers (the screens come with `AddBaGetFrontEnd`), `IUrlGenerator`, core services, catalog, validation; registers every BaGet API controller assembly as an application part, so hosts without the Web SDK work |
 | `BaGetEndpointBuilder.MapEndpoints` | Maps the V3, V2, catalog and validation routes, each at `/` (default repository) and `/r/{repo}/` |
 | `RepositoryActionRouteConvention` / `RepositoryActionFilter` | The controller actions marked `[RepositoryPage]` (list, package, statistics, upload, ...): the `/r/{repo}/` twin of every route, and the one repository check (`RepositoryPageGate`, which asks `IRepositoryAccess`) |
-| `RepositoryUrlHelperFactory` | Keeps links inside the repository being browsed (adds the request's `repo` to links to repository pages, links by controller and action; no page-name resolution) |
-| `Controllers/FrontEnd`, `Views/`, `ViewModels/` | The UI: `HomeController`, `PackageController`, `StatisticsController`, `ReportAbuseController`, `ApiCatalogController`, `LegalController`, `UploadController`, `NpmBrowseController`, `MavenBrowseController`, `DockerBrowseController`; each view is `Views/<Controller>/<Action>.cshtml`. `Views/Shared` holds the layout and partials (the layout and `_Avatar`/`_ScanFindings` are referenced by name, so a host copy in its own `Views/Shared` or `Pages/Shared` overrides them); a host overrides a view with its own `Views/<Controller>/<Action>.cshtml`. There is no `Pages/` folder (the old forwarding views for `Pages/...` paths were removed; reference `Views/Shared` or name the partial). The old page-model types (`IndexModel`, `PackageModel`, ...) and `RepositoryPageFilter` / `RepositoryPageRouteConvention` were removed (breaking for code that referenced them) |
-| `Controllers/Api/` | The JSON twins of the screens, `GET /api/ui/...` (and `/api/ui/r/{repo}/...`): `[UiApi]` actions on `UiApiControllerBase` that call a use case of `Extension.BaGet.Web.Application` and answer a `ScreenResult<T>`. The view controller calls its twin in process and only renders the answer. Every browse, upload and legal screen has one: `LegalUiApiController`, `StatisticsUiApiController`, the browse twins (`home`/`packages`, package, report abuse, API catalog), `UploadUiApiController` (multipart stage, JSON submit/cancel), `NpmBrowseUiApiController`, `MavenBrowseUiApiController` and `DockerBrowseUiApiController`. A shown screen that carries its own status (an upload refused with 403, a package page that explains a missing package with 404) is answered with it. Authentication: an API key (`Authorization: Bearer` or `X-NuGet-ApiKey`) or anonymous; never the cookie, Basic or antiforgery; see [UI API](https://pieroviano.github.io/BaGet/ui-api/) |
+| Screens | Not here: the view controllers and views (`HomeController`, `PackageController`, `UploadController`, the browse controllers, ...) are in `Extension.BaGet.Web.FrontEnd`, the layout and link helpers (`RepositoryUrlHelperFactory`) in `Extension.BaGet.Frontend.Base` |
+| `Controllers/UI` | The JSON twins of the screens, `GET /api/ui/...` (and `/api/ui/r/{repo}/...`): `[UiApi("Statistics", "Index")]` actions on `UiApiControllerBase` that call a use case of `Extension.BaGet.Web.Application` and answer a `ScreenResult<T>`. The view controller calls its twin in process and only renders the answer. Every browse, upload and legal screen has one: `LegalUiApiController`, `StatisticsUiApiController`, the browse twins (`home`/`packages`, package, report abuse, API catalog), `UploadUiApiController` (multipart stage, JSON submit/cancel), `NpmBrowseUiApiController`, `MavenBrowseUiApiController` and `DockerBrowseUiApiController`. A shown screen that carries its own status (an upload refused with 403, a package page that explains a missing package with 404) is answered with it. Authentication: an API key (`Authorization: Bearer` or `X-NuGet-ApiKey`) or anonymous; never the cookie, Basic or antiforgery; see [UI API](https://pieroviano.github.io/BaGet/ui-api/) |
 | `RepositoryResolutionMiddleware` | Turns the `{repo}` route value into `IRepositoryContext`; unknown repository: `404`, never the default |
 | `MaintenanceMiddleware` | Maps `MaintenanceException` (a write refused while `MaintenanceGate` in `Extension.BaGet.Core` is closed, e.g. during a database copy) to `503` + `Retry-After` |
 | `IUrlGenerator` | Builds every absolute URL the server returns |
-| `wwwroot` | Static files, served at `_content/BaGet.Web` |
+| Static files | `wwwroot` is in the host (`Extension.BaGet.Site`), served at `/` and at `_content/BaGet.Web` |
 
 ## Layout
 
-One type per file, no nested types, namespace = `BaGet.Web.V3` + folder (`CodeLayoutTests`; `BaGetEndpointBuilder` and `IServiceCollectionExtensions` stay in `BaGet`). `Controllers/FrontEnd` screens, `Controllers/UI` JSON twins, `Controllers/Api` `/api/v1` administration REST, `Controllers/Protocols` package protocols (NuGet, npm, Maven, OCI), `Controllers/Base` bases; `Api` (catalog, filters), `Models/{Api,Protocols}`, `Routing`, `Filters`, `Middleware`, `Oci`, `OpenApi`, `ViewModels`, `Workers`, `TagHelpers`, `Extensions`.
+One type per file, no nested types, namespace = `BaGet.Web.V3` + folder (`CodeLayoutTests`; `BaGetEndpointBuilder` and `IServiceCollectionExtensions` stay in `BaGet`). `Controllers/UI` JSON twins, `Controllers/Api` `/api/v1` administration REST, `Controllers/Protocols` package protocols (NuGet, npm, Maven, OCI), `Controllers/Base` bases; `Api` (catalog, filters), `Models/{Api,Protocols}`, `Routing`, `Filters`, `Middleware`, `Oci`, `OpenApi`, `ViewModels` (the API catalog's), `Workers`, `Extensions`.
 
 ## Links
 

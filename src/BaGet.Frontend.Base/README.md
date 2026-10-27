@@ -1,36 +1,31 @@
 # Extension.BaGet.Frontend.Base
 
-The MVC base controllers of the screens of [BaGet Extension](https://pieroviano.github.io/BaGet/): the view and `/api/ui` controller bases with what they need: the `?handler=` selector,
-repository-page routing, the in-process calls to the JSON UI API (`/api/ui`) and request credentials. It has no controller and no view of its own:
-the screens are in `Extension.BaGet.Identity.Api` and `Extension.BaGet.Web.V3`, which reference this package. The administration REST API (`/api/v1`) bases are in `Extension.BaGet.Web.V3`.
+The MVC base of the screens of [BaGet Extension](https://pieroviano.github.io/BaGet/): the view controller bases, the layout and shared partials, and the link helpers.
+It has no controller of its own. The screens are in `Extension.BaGet.Identity.FrontEnd` and `Extension.BaGet.Web.FrontEnd`, which reference this package;
+the `/api/ui` twin bases, `[UiApi]`, `[RepositoryPage]`, `ScreenEndpoints` and `RequestPrincipalResolver` are in `Extension.BaGet.Api.Base`, which this package references.
 
 ```powershell
 dotnet add package Extension.BaGet.Frontend.Base
 ```
 
-Reference it directly only to write your own screens or JSON twins on the same bases; the business services are in
+Reference it directly only to write your own screens on the same bases; the business services are in
 `Extension.BaGet.Identity.Application` (namespace `BaGet.Identity.Application.*`).
 
 ## Contents
 
 | Folder / type | Role |
 |---|---|
-| `Controllers/Base/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Bases of the view controllers: antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (`ScreenGate`: admin or project admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in a fixed order. `AdminControllerBase.Flash(model)` carries `Message`/`Error` across a redirect |
-| `Controllers/Base/UiApiControllerBase` and `AccountUiApiControllerBase`, `AdminUiApiControllerBase`, `AccessUiApiControllerBase` | Bases of the JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)); visible in the OpenAPI `ui` document |
-| `Mvc/Attributes/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query); an unknown handler is the default handler. A screen's actions are those of one controller sharing their route templates |
+| `Controllers/Base/UiControllerBase` (an `IScreenController`) and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Bases of the view controllers: antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (`ScreenGate`: admin or project admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in a fixed order. `AdminControllerBase.Flash(model)` carries `Message`/`Error` across a redirect |
 | `Mvc/Attributes/ImplicitPageHandlerAttribute` | The default POST that renders the screen (a form posted to its own URL); not in the route contract |
-| `Mvc/Attributes/FallbackHandlerAttribute` | The `NoHandler` action of a manage controller (a stray POST answers 404); not a handler of the screen |
-| `Mvc/Attributes/RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
-| `Mvc/Attributes/RequiresSignInAttribute`, `RequiresEmailAttribute` | Account screen gates |
-| `Mvc/Screens` | `ScreenOutcome`, `ScreenLinks`, `AccountSupport`, `AccessSupport`, `PackageControllerSupport`: shared screen rules |
-| `Mvc/UI/ScreenEndpoints` | Whether an action is a screen (an action of a `UiControllerBase`, not a `[FallbackHandler]`) and which one (`ScreenRef`: controller + default GET action); used by navigation, scanning refusals, repository resolution and the coverage tests |
-| `Mvc/UI/UiApiAttribute`, `UiApiInvoker` | `[UiApi(typeof(XController), nameof(XController.Index), Handler = ...)]` names a twin's screen; a view controller calls its twin in process |
-| `Mvc/UI/UiApiSecurityFilter` | `/api/ui` over HTTP: API keys only (Bearer or `X-NuGet-ApiKey`); no cookie, no Basic, no antiforgery |
-| `Security/RequestPrincipalResolver` | Request credentials: API key (Basic password, Bearer, `X-NuGet-ApiKey`), else the cookie session (never on writes) |
+| `Mvc/Screens` | `ScreenOutcome`, `AccessSupport`, `PackageControllerSupport`, `AccountScreen`: shared screen rules |
+| `Mvc/UI/UiApiInvoker` | A view controller calls its twin in process |
+| `Routing` | `RepositoryUrlHelper` / `RepositoryUrlHelperFactory` (links stay inside the repository being browsed), `UiActionMap` |
+| `TagHelpers/NavLinkTagHelper` | `nav-link`: marks the anchor of the current screen |
+| `Views/Shared` | The layout (`_Layout`) and the partials both front ends use; BaGet's views name them (`Layout = "_Layout"`, `<partial name="_Avatar">`), so a host copy in its own `Views/Shared` or `Pages/Shared` overrides them |
 
 ## Layout
 
-One type per file, no nested types, namespace = `BaGet.Identity` + folder (`CodeLayoutTests`).
+One type per file, no nested types, namespace = `BaGet.Frontend` + folder (`CodeLayoutTests`).
 
 ## Links
 

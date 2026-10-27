@@ -10,7 +10,7 @@ namespace BaGet.Web.V3.Controllers.Protocols;
 /// <summary>
 /// The NuGet Service Index. This aids NuGet client to discover this server's services.
 /// </summary>
-public class ServiceIndexController : Controller
+public class ServiceIndexController : ControllerBase
 {
     private readonly IServiceIndexService _serviceIndex;
 

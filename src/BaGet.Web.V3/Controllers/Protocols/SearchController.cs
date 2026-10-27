@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BaGet.Web.V3.Controllers.Protocols;
 
-public class SearchController : Controller
+public class SearchController : ControllerBase
 {
     private readonly ISearchService _searchService;
 

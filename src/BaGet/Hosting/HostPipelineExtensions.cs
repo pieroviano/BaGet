@@ -96,6 +96,10 @@ internal static class HostPipelineExtensions
         });
 
         app.UseStaticFiles();
+
+        // The layout and the package docs link the UI's static files (this host's wwwroot, packed as the Site package) at
+        // /_content/BaGet.Web/..., the URL they had as static web assets of BaGet.Web.V3.
+        app.UseStaticFiles(new StaticFileOptions { FileProvider = app.Environment.WebRootFileProvider, RequestPath = "/_content/BaGet.Web" });
         app.UseRouting();
 
         // Before authentication: /r/{repo}/ selects the repository every later query is filtered by.
