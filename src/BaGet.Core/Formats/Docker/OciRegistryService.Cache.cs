@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -16,6 +17,45 @@ internal static class OciBlobCommits
 {
     private static int _inFlight;
     private static long _started;
+    private static readonly KeyedLocks Locks = new();
+
+    /// <summary>
+    /// Serialises, in this process, the paths of blobs being stored (file committed, then row written) against the same paths being
+    /// removed (row deleted, then file deleted), so a removal never deletes the file of a blob an upload has just recorded.
+    /// Paths are taken in a fixed order, so two callers cannot wait on each other. Dispose to release.
+    /// </summary>
+    public static async Task<IDisposable> LockAsync(IEnumerable<string> paths, CancellationToken cancellationToken)
+    {
+        var held = new List<IDisposable>();
+        try
+        {
+            foreach (var path in paths.Distinct(StringComparer.Ordinal).OrderBy(p => p, StringComparer.Ordinal))
+            {
+                held.Add(await Locks.LockAsync(path, cancellationToken).ConfigureAwait(false));
+            }
+        }
+        catch
+        {
+            foreach (var h in held) h.Dispose();
+
+            throw;
+        }
+
+        return new Group(held);
+    }
+
+    private sealed class Group : IDisposable
+    {
+        private readonly List<IDisposable> _held;
+
+        public Group(List<IDisposable> held) => _held = held;
+
+        public void Dispose()
+        {
+            foreach (var h in _held) h.Dispose();
+            _held.Clear();
+        }
+    }
 
     /// <summary>Commits between "file stored" and "row written" right now.</summary>
     public static int InFlight => Volatile.Read(ref _inFlight);
@@ -170,6 +210,9 @@ public partial class OciRegistryService
 
         var imageKey = await EnsureImageAsync(image, cancellationToken).ConfigureAwait(false);
         _gate.ThrowIfClosed();
+
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        if (await Streaming.GetInfoAsync(BlobPath(digest), cancellationToken).ConfigureAwait(false) == null) return false;
         await RecordBlobAsync(imageKey, digest, existing.Size, cancellationToken, countReferences: true).ConfigureAwait(false);
 
         return true;
@@ -206,6 +249,7 @@ public partial class OciRegistryService
 
     internal async Task<bool> CommitCachedBlobAsync(int imageKey, string digest, string uploadId, OciUpload session, CancellationToken cancellationToken)
     {
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
         StorageCommitResult commit;
         try
         {
@@ -228,6 +272,7 @@ public partial class OciRegistryService
 
         await ForgetSessionAsync(session).ConfigureAwait(false);
         await RecordBlobAsync(imageKey, digest, commit.Length, cancellationToken, countReferences: true).ConfigureAwait(false);
+        await RequireFileAfterAlreadyExistsAsync(commit, imageKey, digest, cancellationToken).ConfigureAwait(false);
 
         return true;
     }

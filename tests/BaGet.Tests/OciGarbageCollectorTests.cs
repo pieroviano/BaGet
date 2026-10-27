@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -567,5 +568,193 @@ public class OciGarbageCollectorTests : IDisposable
         var status = jobs.Get(OciGarbageCollectionOperation.RunName, Repo)!;
         Assert.Equal("root", status.Actor);
         Assert.Contains("Removed: 0 expired", status.Message);
+    }
+
+    // ---- layer usage counts, prune, foreign layers ----
+
+    private static (byte[] Manifest, byte[] Config) ManifestOver(string layerDigest, long layerSize, string seed, string? layerType = null, string? extraLayerFields = null)
+    {
+        var config = Encoding.UTF8.GetBytes($"{{\"architecture\":\"amd64\",\"os\":\"linux\",\"seed\":\"{seed}\"}}");
+        var json = "{\"schemaVersion\":2,\"mediaType\":\"" + OciTestImage.ManifestType + "\","
+            + $"\"config\":{{\"mediaType\":\"{OciTestImage.ConfigType}\",\"digest\":\"{OciTestImage.Digest(config)}\",\"size\":{config.Length}}},"
+            + $"\"layers\":[{{\"mediaType\":\"{layerType ?? OciTestImage.LayerType}\",\"digest\":\"{layerDigest}\",\"size\":{layerSize}{extraLayerFields}}}]}}";
+
+        return (Encoding.UTF8.GetBytes(json), config);
+    }
+
+    private Task<int[]> ManifestCountsAsync()
+        => InRepoAsync(async sp => await sp.GetRequiredService<IContext>().OciBlobLinks!.AsNoTracking().Select(l => l.Manifests).ToArrayAsync(Token));
+
+    [Fact]
+    public async Task AMountOfABlobWhoseFileIsGoneIsRefusedAndRecordsNothing()
+    {
+        var layer = Encoding.UTF8.GetBytes("mounted layer " + new string('m', 100));
+        var digest = OciTestImage.Digest(layer);
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/source", layer);
+            await sp.GetRequiredService<IStorageService>().DeleteAsync(RepositoryStorage.Scope(sp.GetRequiredService<IRepositoryContext>().Current, OciNames.BlobPath(digest)), Token);
+
+            return 0;
+        });
+
+        var mounted = await InRepoAsync(sp => sp.GetRequiredService<IOciRegistry>().MountBlobAsync("team/target", digest, "team/source", Token));
+
+        Assert.False(mounted);
+        Assert.Null(await InRepoAsync(sp => sp.GetRequiredService<IOciRegistry>().GetBlobInfoAsync("team/target", digest, Token)));
+    }
+
+    [Fact]
+    public async Task ASlowMonolithicPutDoesNotHoldTheDigestLockWhileItsBodyIsRead()
+    {
+        var layer = Encoding.UTF8.GetBytes("slow layer " + new string('w', 100));
+        var digest = OciTestImage.Digest(layer);
+        var body = new GatedStream(layer);
+        var slow = InRepoAsync(async sp => await sp.GetRequiredService<IOciRegistry>().PutBlobAsync("team/slow", digest, body, Token));
+        await body.Started.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);
+
+        // The same digest is pushed again and finishes while the first body is still being read.
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/other", layer);
+
+            return 0;
+        }).WaitAsync(TimeSpan.FromSeconds(10), Token);
+
+        body.Release();
+        await slow.WaitAsync(TimeSpan.FromSeconds(10), Token);
+        Assert.NotNull(await InRepoAsync(sp => sp.GetRequiredService<IOciRegistry>().GetBlobInfoAsync("team/slow", digest, Token)));
+    }
+
+    private sealed class GatedStream : MemoryStream
+    {
+        private readonly TaskCompletionSource _gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public GatedStream(byte[] content) : base(content)
+        {
+        }
+
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Release() => _gate.TrySetResult();
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            Started.TrySetResult();
+            await _gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            return await base.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+        }
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            => ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+    }
+
+    [Fact]
+    public async Task ManifestsPushedAtTheSameTimeEachCountAsAUserOfTheirSharedLayer()
+    {
+        var layer = Encoding.UTF8.GetBytes("shared layer " + new string('s', 100));
+        var layerDigest = OciTestImage.Digest(layer);
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/app", layer);
+
+            return 0;
+        });
+
+        var manifests = Enumerable.Range(0, 6).Select(i => ManifestOver(layerDigest, layer.Length, "m" + i)).ToList();
+        await Task.WhenAll(manifests.Select((m, i) => InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/app", m.Config);
+            await sp.GetRequiredService<IOciRegistry>().PutManifestAsync("team/app", "t" + i, OciTestImage.ManifestType, m.Manifest, Token);
+
+            return 0;
+        })));
+
+        // Every manifest uses the shared layer; each of the 6 configs is used by one.
+        var counts = await ManifestCountsAsync();
+        Assert.Equal(6, counts.Max());
+        Assert.Equal(6, counts.Count(c => c == 1));
+
+        // Giving every reference back leaves nothing used.
+        foreach (var m in manifests)
+        {
+            await InRepoAsync(async sp => await sp.GetRequiredService<IOciRegistry>().DeleteManifestAsync("team/app", OciTestImage.Digest(m.Manifest), Token));
+        }
+
+        Assert.All(await ManifestCountsAsync(), c => Assert.Equal(0, c));
+    }
+
+    [Fact]
+    public async Task PruneLeavesTheLooseLayersOfAnImageWithAPushInProgress()
+    {
+        var loose = await PushLooseLayerAsync("team/app", "pruned");
+        await InRepoAsync(async sp => (await sp.GetRequiredService<IOciRegistry>().StartUploadAsync("team/app", Token)).Reference);
+        _clock.Advance(TimeSpan.FromHours(2));
+
+        var result = await InRepoAsync(sp => sp.GetRequiredService<OciRegistryService>().PruneAsync("team/app", Token));
+
+        Assert.Equal(0, result.Blobs);
+        Assert.True(await StoredAsync(OciTestImage.Digest(loose)));
+    }
+
+    [Fact]
+    public async Task PruneRemovesTheLooseLayersOfAnImageWithNoPushInProgress()
+    {
+        var loose = await PushLooseLayerAsync("team/app", "pruned2");
+        _clock.Advance(TimeSpan.FromHours(2));
+
+        var result = await InRepoAsync(sp => sp.GetRequiredService<OciRegistryService>().PruneAsync("team/app", Token));
+
+        Assert.Equal(1, result.Blobs);
+        Assert.False(await StoredAsync(OciTestImage.Digest(loose)));
+    }
+
+    [Fact]
+    public async Task ALayerAManifestUsesCannotBeDeletedAsABlob()
+    {
+        var content = await PushImageAsync("team/app", "1.0");
+
+        var exception = await Assert.ThrowsAsync<OciException>(() => InRepoAsync(async sp =>
+            await sp.GetRequiredService<IOciRegistry>().DeleteBlobAsync("team/app", content.LayerDigests[0], Token)));
+
+        Assert.Equal(OciErrorCode.Unsupported, exception.Code);
+        Assert.True(await StoredAsync(content.LayerDigests[0]));
+    }
+
+    [Fact]
+    public async Task AManifestWithAForeignLayerIsAcceptedWithoutThatLayerBeingStored()
+    {
+        var foreignDigest = OciTestImage.Digest(Encoding.UTF8.GetBytes("a windows base layer"));
+        var (manifest, config) = ManifestOver(foreignDigest, 4096, "foreign", "application/vnd.docker.image.rootfs.foreign.diff.tar.gzip", ",\"urls\":[\"https://mcr.example/layer\"]");
+
+        await InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/app", config);
+            await sp.GetRequiredService<IOciRegistry>().PutManifestAsync("team/app", "win", OciTestImage.ManifestType, manifest, Token);
+
+            return 0;
+        });
+
+        // Only the config is stored and counted.
+        Assert.Equal(new[] { 1 }, await ManifestCountsAsync());
+        Assert.True(await InRepoAsync(async sp => await sp.GetRequiredService<IOciRegistry>().DeleteManifestAsync("team/app", OciTestImage.Digest(manifest), Token)));
+    }
+
+    [Fact]
+    public async Task ALayerWithoutUrlsIsStillRequiredEvenWithAForeignMediaType()
+    {
+        var digest = OciTestImage.Digest(Encoding.UTF8.GetBytes("missing"));
+        var (manifest, config) = ManifestOver(digest, 10, "needs", "application/vnd.docker.image.rootfs.foreign.diff.tar.gzip");
+
+        var exception = await Assert.ThrowsAsync<OciException>(() => InRepoAsync(async sp =>
+        {
+            await PutBlobAsync(sp, "team/app", config);
+            await sp.GetRequiredService<IOciRegistry>().PutManifestAsync("team/app", "x", OciTestImage.ManifestType, manifest, Token);
+
+            return 0;
+        }));
+
+        Assert.Equal(OciErrorCode.ManifestBlobUnknown, exception.Code);
     }
 }

@@ -323,6 +323,10 @@ public sealed class OciGarbageCollector : IOciGarbageCollector
         IReadOnlyList<OciBlobLink> removableLinks = loose;
         IReadOnlyList<OciBlob> removableBlobs = doomed;
         var kept = 0;
+
+        // An upload of a planned blob in this process either records its row before the transaction below (the blob is kept) or stores
+        // its file after the deletion: the digests stay locked from the check to the file deletion (OciBlobCommits).
+        using var blobLocks = await OciBlobCommits.LockAsync(doomed.Select(b => RepositoryStorage.Scope(repository, OciNames.BlobPath(b.Digest!))), cancellationToken).ConfigureAwait(false);
         if (loose.Count > 0 || doomed.Count > 0)
         {
             await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);

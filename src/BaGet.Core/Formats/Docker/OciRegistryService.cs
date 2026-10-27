@@ -395,6 +395,7 @@ public partial class OciRegistryService : IOciRegistry
 
         if (lastChunk != null) await AppendCoreAsync(upload, offset, lastChunk, cancellationToken).ConfigureAwait(false);
 
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
         StorageCommitResult commit;
         try
         {
@@ -425,6 +426,7 @@ public partial class OciRegistryService : IOciRegistry
         _context.OciUploads!.Remove(upload);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await RecordBlobAsync(row.Key, digest, commit.Length, cancellationToken).ConfigureAwait(false);
+        await RequireFileAfterAlreadyExistsAsync(commit, row.Key, digest, cancellationToken).ConfigureAwait(false);
 
         return new OciBlobStored(digest, commit.Length);
     }
@@ -455,12 +457,23 @@ public partial class OciRegistryService : IOciRegistry
         _gate.ThrowIfClosed();
         using var inFlight = OciBlobCommits.Enter();
 
+        // The body is read before the digest is locked: a slow client must not hold up deletes, the GC or other pushes.
         var uploadId = await Streaming.BeginUploadAsync("application/octet-stream", cancellationToken).ConfigureAwait(false);
-        StorageCommitResult commit;
         try
         {
             var data = await OciStreams.NonEmptyAsync(content, cancellationToken).ConfigureAwait(false);
             if (data != null) await Streaming.AppendAsync(uploadId, 0, data, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await TryAbortAsync(uploadId).ConfigureAwait(false);
+            throw;
+        }
+
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        StorageCommitResult commit;
+        try
+        {
             commit = await Streaming.CommitAsync(uploadId, BlobPath(digest), OciNames.HexOf(digest), cancellationToken).ConfigureAwait(false);
         }
         catch (StorageDigestMismatchException)
@@ -476,8 +489,43 @@ public partial class OciRegistryService : IOciRegistry
         if (commit.Result == StoragePutResult.Conflict) throw new InvalidOperationException("The blob store holds different content under this digest.");
 
         await RecordBlobAsync(imageKey, digest, commit.Length, cancellationToken).ConfigureAwait(false);
+        await RequireFileAfterAlreadyExistsAsync(commit, imageKey, digest, cancellationToken).ConfigureAwait(false);
 
         return new OciBlobStored(digest, commit.Length);
+    }
+
+    // A commit onto an existing file reports AlreadyExists; the file may have been removed (by another node, which the in-process
+    // lock cannot see) after the row was written. Look once more: if it is gone, undo the record (else a retrying client's HEAD would
+    // find the row, skip the upload and the blob would be a 404) and fail so the client uploads again.
+    private async Task RequireFileAfterAlreadyExistsAsync(StorageCommitResult commit, int imageKey, string digest, CancellationToken cancellationToken)
+    {
+        if (commit.Result != StoragePutResult.AlreadyExists) return;
+        if (await Streaming.GetInfoAsync(BlobPath(digest), cancellationToken).ConfigureAwait(false) != null) return;
+
+        await UnrecordBlobAsync(imageKey, digest).ConfigureAwait(false);
+
+        throw new OciException(OciErrorCode.BlobUploadInvalid, "The blob was removed while it was being stored: upload it again.", digest);
+    }
+
+    // Takes back RecordBlobAsync for a blob whose file is gone: the image's link, and the blob row when no image holds it. The caller
+    // holds the digest lock.
+    private async Task UnrecordBlobAsync(int imageKey, string digest)
+    {
+        (_context as DbContext)?.ChangeTracker.Clear();
+        await using var transaction = await _context.Database.BeginTransactionAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var blob = await _context.OciBlobs!.FirstOrDefaultAsync(b => b.Digest == digest, CancellationToken.None).ConfigureAwait(false);
+        if (blob == null) return;
+
+        var link = await _context.OciBlobLinks!.FirstOrDefaultAsync(l => l.ImageKey == imageKey && l.BlobKey == blob.Key, CancellationToken.None).ConfigureAwait(false);
+        if (link != null) _context.OciBlobLinks!.Remove(link);
+        await _context.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var holders = await _context.OciBlobLinks!.CountAsync(l => l.BlobKey == blob.Key, CancellationToken.None).ConfigureAwait(false);
+        if (holders == 0) _context.OciBlobs!.Remove(blob);
+        else blob.RefCount = holders;
+        await _context.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     // Records that the image holds the blob (creating the blob row when this is the repository's first copy) and settles the
@@ -535,6 +583,10 @@ public partial class OciRegistryService : IOciRegistry
 
         var imageKey = await EnsureImageAsync(image, cancellationToken).ConfigureAwait(false);
         _gate.ThrowIfClosed();
+
+        // Under the digest lock, and only while the file is there: a delete of the source image may have removed the blob since.
+        using var blobLock = await OciBlobCommits.LockAsync(new[] { BlobPath(digest) }, cancellationToken).ConfigureAwait(false);
+        if (await Streaming.GetInfoAsync(BlobPath(digest), cancellationToken).ConfigureAwait(false) == null) return false;
         await RecordBlobAsync(imageKey, digest, blob.Size, cancellationToken).ConfigureAwait(false);
 
         return true;
@@ -620,8 +672,21 @@ public partial class OciRegistryService : IOciRegistry
                         Created = now,
                     };
                     _context.OciManifests!.Add(manifest);
-                    foreach (var link in links) link.Manifests++;
                     await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+                    // The count is raised in the database (Manifests = Manifests + 1), never written back as a number this request read:
+                    // two pushes using the same layer would otherwise both write the same value and lose one reference.
+                    if (links.Count > 0)
+                    {
+                        var linkKeys = links.Select(l => l.Key).ToList();
+                        var raised = await _context.OciBlobLinks!.Where(l => linkKeys.Contains(l.Key))
+                            .ExecuteUpdateAsync(s => s.SetProperty(l => l.Manifests, l => l.Manifests + 1), cancellationToken).ConfigureAwait(false);
+                        if (raised != linkKeys.Count && checkReferences)
+                        {
+                            // A layer link was removed (a prune) between the check and now.
+                            throw new OciException(OciErrorCode.ManifestBlobUnknown, "The manifest references a blob the repository does not hold.");
+                        }
+                    }
                 }
 
                 string? previousDigest = null;
@@ -662,10 +727,16 @@ public partial class OciRegistryService : IOciRegistry
     // ---- deletes ----------------------------------------------------------------------------------------------------
 
     // Recomputes the holders of each blob and removes the blob (row and file) when no image holds it any more.
+    // The digests are locked (OciBlobCommits) from the holder check to the file deletion: an upload of the same blob in this process
+    // either records its row before the check (the blob is kept) or stores its file after the deletion.
     private async Task ReleaseBlobsAsync(IReadOnlyCollection<int> blobKeys, CancellationToken cancellationToken)
     {
+        var distinct = blobKeys.Distinct().ToList();
+        var digests = await _context.OciBlobs!.AsNoTracking().Where(b => distinct.Contains(b.Key)).Select(b => b.Digest!).ToListAsync(cancellationToken).ConfigureAwait(false);
+        using var blobLocks = await OciBlobCommits.LockAsync(digests.Select(BlobPath), cancellationToken).ConfigureAwait(false);
+
         var files = new List<string>();
-        foreach (var key in blobKeys.Distinct())
+        foreach (var key in distinct)
         {
             var blob = await _context.OciBlobs!.FirstOrDefaultAsync(b => b.Key == key, cancellationToken).ConfigureAwait(false);
             if (blob == null) continue;
@@ -732,12 +803,24 @@ public partial class OciRegistryService : IOciRegistry
                      join b in _context.OciBlobs! on l.BlobKey equals b.Key
                      where l.ImageKey == imageKey && digests.Contains(b.Digest!)
                      select l).ToListAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var link in links) link.Manifests = Math.Max(0, link.Manifests - 1);
+        _gate.ThrowIfClosed();
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
+        // Removing the row first: a second delete of the same manifest fails here (nothing deleted) and gives no reference back twice.
         _context.OciManifests!.Remove(manifest);
         var image = await _context.OciRepositories!.FirstOrDefaultAsync(i => i.Key == imageKey, cancellationToken).ConfigureAwait(false);
         if (image != null) image.Modified = _time.UtcNow;
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        // Lowered in the database (never below 0), like the raise in PutManifestCoreAsync.
+        if (links.Count > 0)
+        {
+            var linkKeys = links.Select(l => l.Key).ToList();
+            await _context.OciBlobLinks!.Where(l => linkKeys.Contains(l.Key) && l.Manifests > 0)
+                .ExecuteUpdateAsync(s => s.SetProperty(l => l.Manifests, l => l.Manifests - 1), cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -777,9 +860,16 @@ public partial class OciRegistryService : IOciRegistry
 
         _gate.ThrowIfClosed();
 
+        // Deleted only while no manifest uses it (the count is checked by the statement itself, not by the read above), so a manifest
+        // pushed in between keeps its layer.
         var blobKey = link.BlobKey;
-        _context.OciBlobLinks!.Remove(link);
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var deleted = await _context.OciBlobLinks!.Where(l => l.Key == link.Key && l.Manifests == 0).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        (_context as DbContext)?.Entry(link).State = EntityState.Detached;
+        if (deleted == 0)
+        {
+            throw new OciException(OciErrorCode.Unsupported, "The blob is used by a manifest of this repository: delete the manifest first.", digest);
+        }
+
         await ReleaseBlobsAsync(new[] { blobKey }, cancellationToken).ConfigureAwait(false);
 
         return true;
@@ -815,19 +905,44 @@ public partial class OciRegistryService : IOciRegistry
         var row = await RequireImageAsync(image, cancellationToken).ConfigureAwait(false);
         _gate.ThrowIfClosed();
 
-        var cutoff = _time.UtcNow - Options.PruneGrace;
-        var stale = await (from l in _context.OciBlobLinks!
-                           join b in _context.OciBlobs! on l.BlobKey equals b.Key
-                           where l.ImageKey == row.Key && l.Manifests == 0 && l.Created < cutoff
-                           select new { Link = l, b.Size }).ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (stale.Count == 0) return new OciPruneResult(0, 0);
+        // Like the garbage collector: an image with a push going on keeps its loose layers (they wait for the manifest).
+        var now = _time.UtcNow;
+        var uploadCutoff = now - Options.UploadExpiry;
+        if (await _context.OciUploads!.AsNoTracking().AnyAsync(u => u.ImageKey == row.Key && u.Updated >= uploadCutoff, cancellationToken).ConfigureAwait(false))
+        {
+            return new OciPruneResult(0, 0);
+        }
 
-        var blobKeys = stale.Select(s => s.Link.BlobKey).ToList();
-        _context.OciBlobLinks!.RemoveRange(stale.Select(s => s.Link));
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var cutoff = now - Options.PruneGrace;
+        var candidates = await (from l in _context.OciBlobLinks!.AsNoTracking()
+                                join b in _context.OciBlobs!.AsNoTracking() on l.BlobKey equals b.Key
+                                where l.ImageKey == row.Key && l.Manifests == 0 && l.Created < cutoff
+                                select new { l.Key, l.BlobKey, b.Size }).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (candidates.Count == 0) return new OciPruneResult(0, 0);
+
+        // The plan is read again and deleted inside one serializable transaction, with the count in the delete's own condition.
+        List<int> blobKeys;
+        long bytes;
+        int removed;
+        await using (var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false))
+        {
+            var candidateKeys = candidates.Select(c => c.Key).ToList();
+            var stillLoose = (await _context.OciBlobLinks!.AsNoTracking().Where(l => candidateKeys.Contains(l.Key) && l.Manifests == 0)
+                .Select(l => l.Key).ToListAsync(cancellationToken).ConfigureAwait(false)).ToHashSet();
+            var stale = candidates.Where(c => stillLoose.Contains(c.Key)).ToList();
+            var staleKeys = stale.Select(s => s.Key).ToList();
+            removed = staleKeys.Count == 0 ? 0 : await _context.OciBlobLinks!.Where(l => staleKeys.Contains(l.Key) && l.Manifests == 0).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+            blobKeys = stale.Select(s => s.BlobKey).ToList();
+            bytes = stale.Sum(s => s.Size);
+        }
+
+        if (removed == 0) return new OciPruneResult(0, 0);
+
         await ReleaseBlobsAsync(blobKeys, cancellationToken).ConfigureAwait(false);
 
-        return new OciPruneResult(stale.Count, stale.Sum(s => s.Size));
+        return new OciPruneResult(removed, bytes);
     }
 
     // ---- the pages --------------------------------------------------------------------------------------------------
