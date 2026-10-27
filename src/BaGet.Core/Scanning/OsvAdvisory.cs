@@ -285,7 +285,7 @@ public static class OsvVersions
     /// <summary>
     /// Compares two versions: semantic versions as such (NuGet and npm versions parse as <see cref="NuGetVersion"/>), anything else
     /// (most Maven versions) by its numeric and textual parts, with <c>alpha &lt; beta &lt; milestone &lt; rc &lt; snapshot &lt;
-    /// release &lt; sp</c> for the usual qualifiers.
+    /// release &lt; sp &lt; any other qualifier</c> (lexically) as in Maven.
     /// </summary>
     public static int Compare(string ecosystem, string left, string right)
     {
@@ -322,7 +322,7 @@ public static class OsvVersions
                 continue;
             }
 
-            var isDigit = char.IsDigit(ch);
+            var isDigit = char.IsAsciiDigit(ch);
             if (digits != null && digits != isDigit) Flush();
             digits = isDigit;
             current.Append(char.ToLowerInvariant(ch));
@@ -341,16 +341,21 @@ public static class OsvVersions
 
     private static int CompareToken(string? x, string? y)
     {
-        var xn = x != null && x.All(char.IsDigit);
-        var yn = y != null && y.All(char.IsDigit);
+        var xn = x != null && x.All(char.IsAsciiDigit);
+        var yn = y != null && y.All(char.IsAsciiDigit);
         if ((x == null || xn) && (y == null || yn))
         {
             return Number(x).CompareTo(Number(y));
         }
 
         // A number beats a qualifier of the same position (1.0.1 > 1.0-rc), a missing token ranks as the release itself.
-        return Rank(x).CompareTo(Rank(y));
+        var byRank = Rank(x).CompareTo(Rank(y));
+
+        // Maven puts an unknown qualifier (jre, android...) after the release and orders two of them lexically.
+        return byRank != 0 || Rank(x) != UnknownRank ? byRank : string.CompareOrdinal(x, y);
     }
+
+    private const int UnknownRank = 120;
 
     private static System.Numerics.BigInteger Number(string? value)
         => string.IsNullOrEmpty(value) ? System.Numerics.BigInteger.Zero : System.Numerics.BigInteger.Parse(value);
@@ -358,7 +363,7 @@ public static class OsvVersions
     private static int Rank(string? token)
     {
         if (token == null || token.Length == 0) return 100;
-        if (token.All(char.IsDigit)) return 200;
+        if (token.All(char.IsAsciiDigit)) return 200;
         return token switch
         {
             "alpha" or "a" => 10,
@@ -368,7 +373,7 @@ public static class OsvVersions
             "snapshot" => 50,
             "ga" or "final" or "release" => 100,
             "sp" => 110,
-            _ => 60,
+            _ => UnknownRank,
         };
     }
 }

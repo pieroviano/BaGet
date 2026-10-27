@@ -48,32 +48,19 @@ public partial class S3StorageService : IStreamingStorageService, IListableStora
 
     public async Task<Stream> GetAsync(string path, CancellationToken cancellationToken = default)
     {
-        var stream = new MemoryStream();
-
+        // The response stream is handed out as it is (disposing it releases the connection): the object is never held in memory.
+        GetObjectResponse response;
         try
         {
-            using (var request = await _client.GetObjectAsync(_bucket, PrepareKey(path), cancellationToken))
-            {
-                await request.ResponseStream.CopyToAsync(stream);
-            }
-
-            stream.Seek(0, SeekOrigin.Begin);
+            response = await _client.GetObjectAsync(_bucket, PrepareKey(path), cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception)
+        catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
-            stream.Dispose();
-
-            // Unresolved: IStorageService.GetAsync is documented to return null when the
-            // content is missing, but no implementation does - FileStorageService throws
-            // FileNotFoundException and callers such as
-            // SymbolStorageService.GetPortablePdbContentStreamOrNullAsync catch instead of
-            // null-checking. Mapping S3's NoSuchKey to null here alone would hide missing
-            // content from PackageStorageService, so the mismatch belongs to the interface
-            // and is left for a change that fixes every implementation at once.
-            throw;
+            // The one "missing content" exception of IStorageService.GetAsync, as FileStorageService throws.
+            throw new FileNotFoundException("The object '" + path + "' does not exist.", path, e);
         }
 
-        return stream;
+        return new OwnedReadStream(response.ResponseStream, response);
     }
 
     public Task<Uri> GetDownloadUriAsync(string path, CancellationToken cancellationToken = default)
@@ -91,12 +78,9 @@ public partial class S3StorageService : IStreamingStorageService, IListableStora
     {
         if (content == null) throw new ArgumentNullException(nameof(content));
 
-        using (var seekableContent = new MemoryStream())
+        // A temporary file, not a MemoryStream: a large package is never held in managed memory.
+        using (var seekableContent = await StreamingStreams.SpoolAsync(content, cancellationToken).ConfigureAwait(false))
         {
-            await content.CopyToAsync(seekableContent, DefaultCopyBufferSize, cancellationToken);
-
-            seekableContent.Seek(0, SeekOrigin.Begin);
-
             try
             {
                 await _client.PutObjectAsync(new PutObjectRequest

@@ -280,7 +280,7 @@ public class PackageIndexingService : IPackageIndexingService
 
         await _notifier.PackageChangedAsync(package.Id, package.Version, cancellationToken);
 
-        _scanGate?.RequestScan(package.Id!, package.NormalizedVersionString!);
+        if (_scanGate != null) await _scanGate.RegisterStoredAsync(package.Id!, package.NormalizedVersionString!, cancellationToken).ConfigureAwait(false);
 
         return PackageIndexingResult.Success;
     }

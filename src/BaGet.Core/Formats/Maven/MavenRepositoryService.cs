@@ -810,7 +810,7 @@ public class MavenRepositoryService : IMavenRepository
             await PruneSnapshotsAsync(coordinate, versionRow!.Key, settings.MaxSnapshotBuilds, cancellationToken).ConfigureAwait(false);
         }
 
-        _scanGate?.RequestScan(name, version);
+        if (_scanGate != null) await _scanGate.RegisterStoredAsync(name, version, cancellationToken).ConfigureAwait(false);
 
         return MavenResult.Created($"Deployed {fileName}.", name);
     }
@@ -994,7 +994,7 @@ public class MavenRepositoryService : IMavenRepository
                 artifact.Modified = now;
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-                _scanGate?.RequestScan(coordinate.Name, version);
+                if (_scanGate != null) await _scanGate.RegisterStoredAsync(coordinate.Name, version, cancellationToken).ConfigureAwait(false);
 
                 return;
             }

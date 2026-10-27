@@ -493,7 +493,7 @@ public class NpmRegistryService : INpmRegistry
             throw;
         }
 
-        _scanGate?.RequestScan(name, version);
+        if (_scanGate != null) await _scanGate.RegisterStoredAsync(name, version, cancellationToken).ConfigureAwait(false);
 
         return true;
     }
@@ -736,7 +736,7 @@ public class NpmRegistryService : INpmRegistry
         }
 
         await _authorization.OnPushedAsync(caller!, name, isNewPackage, cancellationToken).ConfigureAwait(false);
-        _scanGate?.RequestScan(name, version);
+        if (_scanGate != null) await _scanGate.RegisterStoredAsync(name, version, cancellationToken).ConfigureAwait(false);
 
         return NpmResult.Created($"Published {name}@{version}.", name);
     }

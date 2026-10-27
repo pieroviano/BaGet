@@ -96,6 +96,26 @@ public class ScanningNpmTests
     }
 
     [Fact]
+    public async Task StoringAnArtifactAgainForgetsTheVerdictOfTheEarlierOneSoItIsNotTakenForScanned()
+    {
+        await using var harness = await StartAsync();
+        harness.Osv.Add("npm", "lib", "1.0.0", "GHSA-old", "CRITICAL");
+        await PublishAsync(harness, "lib", "1.0.0");
+        await harness.ScanAsync("web", "lib", "1.0.0");
+        Assert.NotNull(await harness.ResultAsync("web", "lib", "1.0.0"));
+
+        // What every store path calls once the new bytes are stored (a re-publish after a delete, a Maven redeploy).
+        await harness.RunAsync("web", async sp =>
+        {
+            await sp.GetRequiredService<IScanGate>().RegisterStoredAsync("lib", "1.0.0", TestContext.Current.CancellationToken);
+
+            return 0;
+        });
+
+        Assert.Null(await harness.ResultAsync("web", "lib", "1.0.0"));
+    }
+
+    [Fact]
     public async Task ACleanVersionIsRecordedAsScannedWithNoFindings()
     {
         await using var harness = await StartAsync();

@@ -92,6 +92,34 @@ public static class StreamingStreams
         => System.Runtime.InteropServices.MemoryMarshal.TryGetArray(memory, out var segment) && segment.Array != null
             ? new MemoryStream(segment.Array, segment.Offset, segment.Count, writable: false)
             : new MemoryStream(memory.ToArray(), writable: false);
+
+    /// <summary>
+    /// Copies <paramref name="content"/> to a temporary file and returns it, positioned at 0 and seekable; disposing it deletes the file.
+    /// Providers upload from it so a large object is never held in managed memory.
+    /// </summary>
+    public static async Task<Stream> SpoolAsync(Stream content, CancellationToken cancellationToken)
+    {
+        if (content == null) throw new ArgumentNullException(nameof(content));
+
+        var file = new FileStream(
+            Path.Combine(Path.GetTempPath(), "baget-spool-" + Guid.NewGuid().ToString("N")),
+            FileMode.CreateNew,
+            FileAccess.ReadWrite,
+            FileShare.None,
+            81920,
+            FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+        try
+        {
+            await content.CopyToAsync(file, 81920, cancellationToken).ConfigureAwait(false);
+            file.Position = 0;
+            return file;
+        }
+        catch
+        {
+            await file.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
 }
 
 /// <summary>A read stream that disposes the object that owns it (a download response) with it.</summary>

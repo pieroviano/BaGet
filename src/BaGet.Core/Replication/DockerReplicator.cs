@@ -145,8 +145,8 @@ public sealed class DockerReplicator : IFormatReplicator
             }
 
             // The same rule as a push to the registry: an image is judged once stored (and a scan queued when nothing refuses it), and a
-            // refused one is taken back. Indexes, signatures and other artifacts are not images.
-            if (OciNames.ImageManifestTypes.Contains(manifest.MediaType, StringComparer.Ordinal) && put.SubjectDigest == null)
+            // refused one is taken back. Indexes and artifacts whose config is not an image config are not images (`subject`/`artifactType` are ignored).
+            if (DockerFormatScanner.IsImage(manifest.MediaType, System.Text.Encoding.UTF8.GetString(manifest.Content)))
             {
                 try
                 {

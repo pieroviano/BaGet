@@ -33,9 +33,17 @@ public partial class BlobStorageService : IStreamingStorageService, IListableSto
 
     public async Task<Stream> GetAsync(string path, CancellationToken cancellationToken)
     {
-        return await _container
-            .GetBlockBlobReference(path)
-            .OpenReadAsync(cancellationToken);
+        try
+        {
+            return await _container
+                .GetBlockBlobReference(path)
+                .OpenReadAsync(cancellationToken);
+        }
+        catch (StorageException e) when (e.RequestInformation?.HttpStatusCode == 404)
+        {
+            // The one "missing content" exception of IStorageService.GetAsync, as FileStorageService throws.
+            throw new FileNotFoundException("The blob '" + path + "' does not exist.", path, e);
+        }
     }
 
     public Task<Uri> GetDownloadUriAsync(string path, CancellationToken cancellationToken)

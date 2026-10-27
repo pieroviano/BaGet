@@ -612,8 +612,8 @@ public class OciController : ControllerBase
         var put = await _registry.PutManifestAsync(path.Image, path.Reference!, mediaType, buffer.ToArray(), cancellationToken);
 
         // An image cannot be inspected before it is stored: with a deploy threshold in force it is scanned now and removed again when
-        // it reaches it (403 DENIED); otherwise a scan is queued. Indexes, signatures and other artifacts are not images.
-        if (mediaType != null && OciNames.ImageManifestTypes.Contains(mediaType, StringComparer.Ordinal) && put.SubjectDigest == null)
+        // it reaches it (403 DENIED); otherwise a scan is queued. Indexes and artifacts whose config is not an image config are not images; `subject` and `artifactType` are ignored.
+        if (DockerFormatScanner.IsImage(mediaType, Encoding.UTF8.GetString(buffer.GetBuffer(), 0, (int)buffer.Length)))
         {
             try
             {

@@ -92,7 +92,7 @@ containers; the tests skip when it does not. Maven: `ClientContainers.MavenAsync
 ## Streaming storage (B2)
 
 `IStreamingStorageService : IStorageService` (`BaGet.Core/Storage`) is the capability a format with huge blobs (Docker layers,
-many GB) needs; `PutAsync` takes a whole stream and the cloud providers buffer it. Nothing is added to `IStorageService`, so
+many GB) needs; `PutAsync` takes a whole stream; S3, GCS and Aliyun spool it to a temporary file (not memory) before uploading, and S3/GCS/Aliyun/Azure `GetAsync` of a missing object throws `FileNotFoundException`, like the file store. Nothing is added to `IStorageService`, so
 existing providers and tests are unaffected.
 
 | Call | Meaning |

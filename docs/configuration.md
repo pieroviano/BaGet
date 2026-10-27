@@ -191,9 +191,8 @@ This setting also labels the button on a package's management page: it reads "Un
 by default and "Delete this version permanently" with `HardDelete`, so the page never offers a
 deletion the server would only unlist. Two things a hard delete does *not* do: it leaves indexed
 symbols being served from `api/download/symbols/...` (delete them first from the Manage page's *Symbols* list),
-and it does not update an external search
-index, so with `Search:Type=AzureSearch` the version can still appear in search results until it is
-reindexed.
+and an external search index (`Search:Type=AzureSearch`) is re-indexed for the ID after every unlist, relist
+and delete (`SearchIndexChangeHandler`).
 
 Administrators (see [Administrators](#administrators)) can always hard-delete from a package's management
 page, after confirming their password, even with the default `Unlist`. The NuGet `DELETE` API keeps

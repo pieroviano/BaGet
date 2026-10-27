@@ -104,6 +104,13 @@ public interface IScanGate
 
     /// <summary>Queues a scan of a version that was just stored (no-op when scanning is off).</summary>
     void RequestScan(string name, string version);
+
+    /// <summary>
+    /// What every store path calls once an artifact is stored: forgets the result of an earlier artifact of the same name and
+    /// version (it describes other bytes, and would count as a scan for "block unscanned") and then <see cref="RequestScan"/>.
+    /// A failure to forget is logged, never thrown: the artifact is already stored.
+    /// </summary>
+    Task RegisterStoredAsync(string name, string version, CancellationToken cancellationToken);
 }
 
 /// <summary>The scoped <see cref="IScanGate"/>.</summary>
@@ -119,6 +126,7 @@ public sealed class ScanGate : IScanGate
     private readonly IVirtualRepositories _virtuals;
     private readonly ILogger<ScanGate> _logger;
     private readonly ClusterRuntime? _cluster;
+    private readonly VirtualRepositoryReader? _reader;
 
     public ScanGate(
         IScanService scans,
@@ -130,9 +138,11 @@ public sealed class ScanGate : IScanGate
         IContext context,
         IVirtualRepositories virtuals,
         ILogger<ScanGate> logger,
-        ClusterRuntime? cluster = null)
+        ClusterRuntime? cluster = null,
+        VirtualRepositoryReader? reader = null)
     {
         _cluster = cluster;
+        _reader = reader;
         _scans = scans ?? throw new ArgumentNullException(nameof(scans));
         _policies = policies ?? throw new ArgumentNullException(nameof(policies));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -179,8 +189,12 @@ public sealed class ScanGate : IScanGate
         var repository = _repository.Current;
         if (repository.Kind == RepositoryKind.Virtual)
         {
-            // The member that holds the version answers; one with no result for it is unscanned and says nothing.
-            var members = await _virtuals.EffectiveMembersAsync(repository, cancellationToken).ConfigureAwait(false);
+            // The member that holds the version answers; one with no result for it is unscanned and says nothing. Only the members
+            // the caller can read count, as on the content path (which serves the first of them): judging a member the caller cannot
+            // read would let another member's copy through on its verdict.
+            var members = _reader != null
+                ? await _reader.ReadableMembersAsync(name, cancellationToken).ConfigureAwait(false)
+                : await _virtuals.EffectiveMembersAsync(repository, cancellationToken).ConfigureAwait(false);
             foreach (var member in members)
             {
                 using var scope = _scopes.CreateRepositoryScope(member);
@@ -323,6 +337,24 @@ public sealed class ScanGate : IScanGate
     public void RequestScan(string name, string version)
     {
         if (Active && _options.Value.ScanOnDeploy) Enqueue(name, version);
+    }
+
+    /// <inheritdoc/>
+    public async Task RegisterStoredAsync(string name, string version, CancellationToken cancellationToken)
+    {
+        if (Active)
+        {
+            try
+            {
+                await _scans.ForgetAsync(name, version, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _logger.LogWarning(e, "The earlier scan result of {Name} {Version} could not be forgotten", name, version);
+            }
+        }
+
+        RequestScan(name, version);
     }
 
     private void Enqueue(string name, string version)

@@ -51,6 +51,12 @@ public interface IScanService
     Task<ScanResult?> FindAsync(string name, string version, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Forgets the stored result of a version whose artifact was just stored again (a re-publish after a delete, a Maven redeploy or
+    /// a new snapshot build): the old verdict is about other bytes. No-op without a result.
+    /// </summary>
+    Task ForgetAsync(string name, string version, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Scans one version now and stores the result (and, for NuGet, the vulnerability resource's entries). A failed scan is stored
     /// as such (<see cref="ScanResult.Error"/>) and returned.
     /// </summary>

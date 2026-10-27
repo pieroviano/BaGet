@@ -302,6 +302,7 @@ public static partial class DependencyInjectionExtensions
         // database service should be used for search. This effect is achieved by deferring
         // the database search service's registration until the very end.
         services.TryAddTransient<ISearchIndexer>(provider => provider.GetRequiredService<NullSearchIndexer>());
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IPackageChangeHandler, SearchIndexChangeHandler>());
         services.TryAddTransient<ISearchService>(provider => provider.GetRequiredService<DatabaseSearchService>());
 
         // A virtual repository is searched through its members; a host that registers its own search service after this

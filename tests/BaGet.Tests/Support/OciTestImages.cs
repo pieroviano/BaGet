@@ -29,7 +29,7 @@ public sealed class OciTestImage
     public static string Digest(byte[] content) => "sha256:" + Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant();
 
     /// <summary>An image with <paramref name="layers"/> layers of distinct content derived from <paramref name="seed"/>.</summary>
-    public static OciTestImage Create(string seed, int layers = 1, string os = "linux", string architecture = "amd64", string? subject = null, string? artifactType = null, int layerSize = 64)
+    public static OciTestImage Create(string seed, int layers = 1, string os = "linux", string architecture = "amd64", string? subject = null, string? artifactType = null, int layerSize = 64, string configType = ConfigType)
     {
         var config = Encoding.UTF8.GetBytes($"{{\"architecture\":\"{architecture}\",\"os\":\"{os}\",\"seed\":\"{seed}\"}}");
         var blobs = Enumerable.Range(0, layers)
@@ -45,7 +45,7 @@ public sealed class OciTestImage
 
         var json = new StringBuilder("{\"schemaVersion\":2,\"mediaType\":\"" + ManifestType + "\"");
         if (artifactType != null) json.Append($",\"artifactType\":\"{artifactType}\"");
-        json.Append($",\"config\":{{\"mediaType\":\"{ConfigType}\",\"digest\":\"{configDigest}\",\"size\":{config.Length}}}");
+        json.Append($",\"config\":{{\"mediaType\":\"{configType}\",\"digest\":\"{configDigest}\",\"size\":{config.Length}}}");
         json.Append(",\"layers\":[");
         json.Append(string.Join(",", blobs.Select((b, i) => $"{{\"mediaType\":\"{LayerType}\",\"digest\":\"{layerDigests[i]}\",\"size\":{b.Length}}}")));
         json.Append(']');
