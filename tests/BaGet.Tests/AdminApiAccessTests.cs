@@ -7,13 +7,14 @@ using System.Net.Http;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using BaGet.Web.V3.Api;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Web.V3.Api.Catalog;
 
 namespace BaGet.Tests;
 
@@ -198,7 +199,7 @@ public class AdminApiAccessTests : IDisposable
         var paths = answer.Json["paths"]!.AsObject();
         // A page is a Razor Page or a controller action that replaced one (it keeps the page's name, LegacyPageAttribute).
         var pages = provider.ActionDescriptors.Items.OfType<PageActionDescriptor>().Select(p => p.ViewEnginePath)
-            .Concat(provider.ActionDescriptors.Items.SelectMany(a => a.EndpointMetadata.OfType<BaGet.Identity.Mvc.LegacyPageAttribute>().Select(l => l.PageName)))
+            .Concat(provider.ActionDescriptors.Items.SelectMany(a => a.EndpointMetadata.OfType<BaGet.Identity.Mvc.Attributes.LegacyPageAttribute>().Select(l => l.PageName)))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var docs = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "ui-coverage.md"));
         foreach (var endpoint in endpoints)

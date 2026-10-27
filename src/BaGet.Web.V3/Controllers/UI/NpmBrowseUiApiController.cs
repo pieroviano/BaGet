@@ -4,12 +4,13 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc;
-using BaGet.Web.Application;
 using BaGet.Web.V3.Extensions;
-using BaGet.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.UI;
+using BaGet.Web.Application.Models.Npm;
+using BaGet.Web.Application.UseCases;
 
 namespace BaGet.Web.V3.Controllers.UI;
 

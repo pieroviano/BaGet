@@ -1,4 +1,4 @@
-@model BaGet.Identity.Application.Models.PermissionsViewModel
+@model BaGet.Identity.Application.Models.Access.PermissionsViewModel
 @{
     ViewData["Title"] = "Permission targets";
 }
@@ -37,7 +37,7 @@
                             <span class="label label-info">Built-in</span>
                         }
                     </td>
-                    <td><code>@BaGet.Identity.Mvc.AccessSupport.Join(target.RepositoryPatterns)</code></td>
+                    <td><code>@BaGet.Identity.Mvc.Screens.AccessSupport.Join(target.RepositoryPatterns)</code></td>
                     <td>
                         <code>@(BaGet.Core.AccessPatterns.DescribeScope(target.IncludePatterns, target.ExcludePatterns) ?? "*")</code>
                     </td>

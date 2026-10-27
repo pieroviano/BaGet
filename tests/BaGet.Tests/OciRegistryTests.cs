@@ -12,6 +12,7 @@ using BaGet.Web.V3.Controllers;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using BaGet.Web.V3.Controllers.Protocols;
 
 namespace BaGet.Tests;
 
@@ -345,7 +346,7 @@ public class OciRegistryTests : IDisposable
     [InlineData(OciPathKind.Upload, "DELETE", OciActions.Push)]
     public void EveryRouteMapsToTheActionTheModelNames(OciPathKind kind, string method, OciActions expected)
     {
-        Assert.Equal(expected, Web.V3.OciHttp.Required(method, kind));
+        Assert.Equal(expected, Web.V3.Oci.OciHttp.Required(method, kind));
     }
 
     [Fact]
@@ -355,13 +356,13 @@ public class OciRegistryTests : IDisposable
         {
             foreach (var method in new[] { "OPTIONS", "TRACE", "CONNECT" })
             {
-                Assert.Null(Web.V3.OciHttp.Required(method, kind));
+                Assert.Null(Web.V3.Oci.OciHttp.Required(method, kind));
             }
         }
 
-        Assert.Null(Web.V3.OciHttp.Required("POST", OciPathKind.Blob));
-        Assert.Null(Web.V3.OciHttp.Required("PUT", OciPathKind.TagList));
-        Assert.Null(Web.V3.OciHttp.Required("DELETE", OciPathKind.TagList));
+        Assert.Null(Web.V3.Oci.OciHttp.Required("POST", OciPathKind.Blob));
+        Assert.Null(Web.V3.Oci.OciHttp.Required("PUT", OciPathKind.TagList));
+        Assert.Null(Web.V3.Oci.OciHttp.Required("DELETE", OciPathKind.TagList));
     }
 
     [Fact]
@@ -369,20 +370,20 @@ public class OciRegistryTests : IDisposable
     {
         // Deny by default: a route of the Docker format that did not resolve and authorize itself would be read like a NuGet route.
         var endpoints = _app.Services.GetServices<Microsoft.AspNetCore.Routing.EndpointDataSource>().SelectMany(s => s.Endpoints).OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>()
-            .Where(e => e.Metadata.GetMetadata<Web.V3.RepositoryRouteMetadata>()?.Format == RepositoryFormat.Docker)
+            .Where(e => e.Metadata.GetMetadata<Web.V3.Routing.RepositoryRouteMetadata>()?.Format == RepositoryFormat.Docker)
             .ToList();
 
         Assert.NotEmpty(endpoints);
         foreach (var endpoint in endpoints)
         {
-            var metadata = endpoint.Metadata.GetMetadata<Web.V3.RepositoryRouteMetadata>()!;
+            var metadata = endpoint.Metadata.GetMetadata<Web.V3.Routing.RepositoryRouteMetadata>()!;
             Assert.True(metadata.ResolvesRepositoryItself && metadata.AuthorizesItself, endpoint.RoutePattern.RawText);
             Assert.StartsWith("v2", endpoint.RoutePattern.RawText);
             Assert.Equal("Oci", endpoint.RoutePattern.RequiredValues["controller"]);
         }
 
         // Every other action of the controller sits behind the authorization filter (the attribute is on the class).
-        Assert.Contains(typeof(OciController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ServiceFilterAttribute), inherit: true).Cast<Microsoft.AspNetCore.Mvc.ServiceFilterAttribute>(), a => a.ServiceType == typeof(Web.V3.OciAuthorizationFilter));
+        Assert.Contains(typeof(OciController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ServiceFilterAttribute), inherit: true).Cast<Microsoft.AspNetCore.Mvc.ServiceFilterAttribute>(), a => a.ServiceType == typeof(Web.V3.Oci.OciAuthorizationFilter));
         var actions = typeof(OciController).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly);
         Assert.Equal(new[] { "Base", "Delete", "Get", "Patch", "Post", "Put", "Token" }, actions.Select(a => a.Name).OrderBy(n => n).ToArray());
     }

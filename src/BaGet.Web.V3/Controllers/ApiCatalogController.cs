@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc;
 using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Web.V3.ViewModels;
 
 namespace BaGet.Web.V3.Controllers;
 

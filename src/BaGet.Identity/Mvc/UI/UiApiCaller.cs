@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using BaGet.Core;
-using BaGet.Identity.Application;
-using BaGet.Web;
 using Microsoft.AspNetCore.Http;
+using BaGet.Identity.Application.Security;
+using BaGet.Identity.Security;
 
 namespace BaGet.Identity.Mvc.UI;
 

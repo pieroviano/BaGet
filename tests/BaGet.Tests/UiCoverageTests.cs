@@ -5,11 +5,11 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
-using BaGet.Validation;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Validation.Pipeline;
 
 namespace BaGet.Tests;
 

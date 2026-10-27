@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc;
 using BaGet.Web.V3.Controllers.UI;
-using BaGet.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Web.Application.Models.Npm;
 
 namespace BaGet.Web.V3.Controllers;
 
@@ -16,7 +16,7 @@ namespace BaGet.Web.V3.Controllers;
 /// browser upload (<c>/npm-upload</c>). They replace the Razor Pages <c>NpmPackages</c>, <c>NpmPackage</c> and <c>NpmUpload</c>: same URLs, same <c>asp-page</c> names
 /// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository, on
 /// the package for the package page, the right to publish for the upload; 404 in a repository that is not npm's). Views are in
-/// <c>Views/NpmBrowse/</c>. The work is <see cref="BaGet.Web.Application.NpmBrowseUseCase"/>, reached through the JSON twin
+/// <c>Views/NpmBrowse/</c>. The work is <see cref="BaGet.Web.Application.UseCases.NpmBrowseUseCase"/>, reached through the JSON twin
 /// <see cref="NpmBrowseUiApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class NpmBrowseController : UiControllerBase

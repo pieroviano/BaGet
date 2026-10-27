@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Security;
 
 namespace BaGet.Web.V3.OpenApi;
 

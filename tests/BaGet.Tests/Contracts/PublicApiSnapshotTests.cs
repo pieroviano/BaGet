@@ -4,12 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using BaGet.Identity;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Extensions;
-using BaGet.Web;
-using BaGet.Web.V3;
 using Xunit;
+using BaGet.Web.V3.TagHelpers;
 
 namespace BaGet.Tests.Contracts;
 
@@ -34,7 +32,7 @@ public class PublicApiSnapshotTests
         typeof(NavLinkTagHelper).Assembly,
         typeof(AccountsServiceCollectionExtensions).Assembly,
         typeof(ScreenGate).Assembly,
-        typeof(BaGet.Web.Application.LegalUseCase).Assembly,
+        typeof(BaGet.Web.Application.UseCases.LegalUseCase).Assembly,
     };
 
     // The assemblies the snapshot was taken from: a type listed under one of them must still resolve through it (moved types are forwarded).

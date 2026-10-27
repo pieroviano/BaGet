@@ -2,10 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
+using BaGet.Web.Application.Models.Browse;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>The statistics screen (<c>/stats</c>, <c>/r/{repo}/stats</c> in the request's repository): the feed's totals and lists.</summary>
 public sealed class StatisticsUseCase

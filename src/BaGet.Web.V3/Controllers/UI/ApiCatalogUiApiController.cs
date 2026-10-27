@@ -3,10 +3,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc;
 using BaGet.Web.V3.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using BaGet.Identity.Mvc.UI;
+using BaGet.Web.V3.Api.Catalog;
+using BaGet.Web.V3.Controllers.Base;
+using BaGet.Web.V3.ViewModels;
 
 namespace BaGet.Web.V3.Controllers.UI;
 

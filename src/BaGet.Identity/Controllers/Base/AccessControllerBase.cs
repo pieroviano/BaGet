@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
-using BaGet.Identity.Application.Models;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using BaGet.Identity.Application.Models.Policies;
+using BaGet.Identity.Application.Models.Shared;
+using BaGet.Identity.Mvc.Screens;
 
 namespace BaGet.Identity.Controllers.Base;
 

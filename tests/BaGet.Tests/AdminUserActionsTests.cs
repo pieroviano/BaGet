@@ -6,12 +6,11 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
-using BaGet.Identity.Application.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Models.Users;
 
 namespace BaGet.Tests;
 

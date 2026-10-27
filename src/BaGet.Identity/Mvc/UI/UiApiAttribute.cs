@@ -1,6 +1,7 @@
 using System;
+using BaGet.Identity.Mvc.Attributes;
 
-namespace BaGet.Identity.Mvc;
+namespace BaGet.Identity.Mvc.UI;
 
 /// <summary>
 /// Marks a controller action of <c>/api/ui</c> as the JSON twin of a screen: <c>[UiApi("/Admin/Users")]</c> names the screen by its page

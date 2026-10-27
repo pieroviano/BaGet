@@ -2,12 +2,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using BaGet.Web.Application.Models.Packages;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>What a legal page (Terms of Use, Privacy Policy) shows: its heading and the operator's Markdown rendered to safe HTML.</summary>
 /// <param name="Title">The heading and page title.</param>

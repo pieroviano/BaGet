@@ -7,8 +7,9 @@ using BaGet.Core;
 using BaGet.Web.V3.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Web.V3.Controllers.Protocols;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.Oci;
 
 /// <summary>What the authorization filter worked out for a request, handed to <see cref="OciController"/>.</summary>
 /// <param name="Path">The parsed path: kind, image and reference.</param>

@@ -11,7 +11,7 @@
     var autocompleteUrl = Context.RequestServices.GetService<BaGet.Core.IUrlGenerator>()?.GetAutocompleteResourceUrl();
 
     // No Upload entry where an upload is impossible (read-only, a closed maintenance gate, nothing to authenticate with).
-    var canUpload = BaGet.Web.UploadAvailability.IsPossible(
+    var canUpload = BaGet.Web.Application.Services.UploadAvailability.IsPossible(
         Options.Value, Accounts.Value, Context.RequestServices.GetService<BaGet.Core.MaintenanceGate>());
 
     // The repository this page shows. Links in the header stay inside it ("r/{name}/" in front), and a page that acts
@@ -31,7 +31,7 @@
         _ => nuGet,
     };
     // A repository page is a controller action marked [RepositoryPage].
-    var isRepositoryPage = ViewContext.ActionDescriptor.EndpointMetadata.OfType<BaGet.Identity.Mvc.RepositoryPageAttribute>().Any();
+    var isRepositoryPage = ViewContext.ActionDescriptor.EndpointMetadata.OfType<BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute>().Any();
     IReadOnlyList<BaGet.Core.RepositoryInfo> switchable = Array.Empty<BaGet.Core.RepositoryInfo>();
     if (isRepositoryPage && RepositoryAccess.SupportsMultipleRepositories)
     {

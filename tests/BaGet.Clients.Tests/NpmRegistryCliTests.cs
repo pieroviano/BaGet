@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Clients.Tests;
 

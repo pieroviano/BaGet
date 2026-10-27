@@ -2,12 +2,11 @@ using System;
 using System.IO;
 using System.Linq;
 using BaGet.Core;
-using BaGet.Identity;
-using BaGet.Identity.Application;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using Xunit;
+using BaGet.Identity.Application.Email;
 
 namespace BaGet.Tests;
 

@@ -5,8 +5,11 @@ using BaGet.Core;
 using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Html;
 using NuGet.Versioning;
+using BaGet.Web.Application.Models.Packages;
+using BaGet.Web.Application.Screens;
+using BaGet.Web.Application.Snippets;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.ViewModels;
 
 /// <summary>What the package page shows; filled from the screen the JSON twin answered (<see cref="PackageUiApiController"/>).</summary>
 public sealed class PackageViewModel

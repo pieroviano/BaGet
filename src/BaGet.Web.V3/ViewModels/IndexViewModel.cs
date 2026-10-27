@@ -4,8 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using BaGet.Core;
 using BaGet.Protocol.Models;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Web.Application.Models.Browse;
+using BaGet.Web.Application.Screens;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.ViewModels;
 
 /// <summary>
 /// What the front page and the package list show: the search the visitor asked for (bound from the query string, same names

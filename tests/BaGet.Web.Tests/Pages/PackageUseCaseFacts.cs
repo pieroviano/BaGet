@@ -5,11 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Web.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NuGet.Versioning;
 using Xunit;
+using BaGet.Web.Application.Screens;
+using BaGet.Web.Application.UseCases;
 
 namespace BaGet.Web.Tests;
 

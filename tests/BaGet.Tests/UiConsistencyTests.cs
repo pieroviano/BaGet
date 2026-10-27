@@ -5,12 +5,12 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

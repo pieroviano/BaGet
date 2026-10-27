@@ -1,16 +1,20 @@
 using System;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Extensions;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Application.Services;
-using BaGet.Identity.Application.UseCases;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.RateLimiting;
+using BaGet.Identity.Application.Security;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Ownership;
+using BaGet.Identity.Application.UseCases.Account;
+using BaGet.Identity.Security;
 
 namespace BaGet.Identity.Extensions;
 
@@ -68,7 +72,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<AccountOverviewUseCase>();
         services.TryAddScoped<ProfileUseCase>();
         services.TryAddScoped<AdminUserCreationService>();
-        services.TryAddScoped<IScreenLinks, Mvc.ScreenLinks>();
+        services.TryAddScoped<IScreenLinks, Mvc.Screens.ScreenLinks>();
         services.AddBaGetAdminUseCases();
         services.TryAddSingleton<ContactRateLimiter>();
         services.TryAddSingleton<PasswordResetRateLimiter>();

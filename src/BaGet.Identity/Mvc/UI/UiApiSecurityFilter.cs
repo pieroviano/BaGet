@@ -1,9 +1,8 @@
 using System.Threading.Tasks;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Web;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using BaGet.Identity.Security;
 
 namespace BaGet.Identity.Mvc.UI;
 

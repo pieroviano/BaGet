@@ -4,11 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
 using BaGet.Protocol.Models;
+using BaGet.Web.Application.Models.Browse;
+using BaGet.Web.Application.Screens;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The front page and the package list (<c>/</c>, <c>/packages</c>, <c>/?q=…</c>, and under <c>/r/{repo}/</c>) of a NuGet repository: the

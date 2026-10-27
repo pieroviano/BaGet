@@ -2,9 +2,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Protocol.Models;
-using BaGet.Web.Application;
 using Moq;
 using Xunit;
+using BaGet.Web.Application.Models.Browse;
+using BaGet.Web.Application.UseCases;
 
 namespace BaGet.Web.Tests;
 

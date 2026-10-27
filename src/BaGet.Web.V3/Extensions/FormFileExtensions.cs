@@ -1,5 +1,5 @@
-using BaGet.Web.Application;
 using Microsoft.AspNetCore.Http;
+using BaGet.Web.Application.Models.Upload;
 
 namespace BaGet.Web.V3.Extensions;
 

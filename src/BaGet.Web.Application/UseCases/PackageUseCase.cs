@@ -6,15 +6,19 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
+using BaGet.Identity.Application.Links;
+using BaGet.Identity.Application.Security;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Ownership;
+using BaGet.Web.Application.Models.Packages;
+using BaGet.Web.Application.Screens;
+using BaGet.Web.Application.Snippets;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The package page (<c>/packages/{id}/{version?}</c>, and under <c>/r/{repo}/</c>): finds the version to show (the requested one, else

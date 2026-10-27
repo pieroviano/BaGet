@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using BaGet.Identity.Application.Models;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Application.Models.Shared;
 
 namespace BaGet.Identity.Controllers.Base;
 

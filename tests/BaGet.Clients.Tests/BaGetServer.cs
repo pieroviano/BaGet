@@ -4,16 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Web;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
-using BaGet.Web.V3;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Web.V3.Extensions;
 
 namespace BaGet.Clients.Tests;
 

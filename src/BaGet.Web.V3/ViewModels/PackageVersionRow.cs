@@ -6,7 +6,7 @@ using BaGet.Web.V3.Controllers.UI;
 using Microsoft.AspNetCore.Html;
 using NuGet.Versioning;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.ViewModels;
 
 /// <summary>One row of the versions table of the package page.</summary>
 public sealed record PackageVersionRow

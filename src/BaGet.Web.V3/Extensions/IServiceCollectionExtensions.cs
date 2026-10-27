@@ -3,19 +3,22 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using BaGet.Catalog;
 using BaGet.Core;
-using BaGet.Identity;
 using BaGet.Identity.Extensions;
-using BaGet.Web.Application;
-using BaGet.Web;
 using BaGet.Web.V3.OpenApi;
 using BaGet.Web.V2.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
-using BaGet.Validation.Controllers;
 using BaGet.Validation.Extensions;
-using BaGet.Web.V3;
 using BaGet.Web.V3.Controllers;
+using BaGet.Identity.Security;
+using BaGet.Validation.Controllers.Protocols;
+using BaGet.Web.Application.Extensions;
+using BaGet.Web.V3.Controllers.Protocols;
+using BaGet.Web.V3.Filters;
+using BaGet.Web.V3.Oci;
+using BaGet.Web.V3.Routing;
+using BaGet.Web.V3.Workers;
 
 namespace BaGet;
 

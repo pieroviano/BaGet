@@ -5,16 +5,17 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Web.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NuGet.Packaging;
 using NuGet.Versioning;
+using BaGet.Web.Application.Models.Packages;
+using BaGet.Web.Application.Models.Upload;
+using BaGet.Web.Application.Services;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 using NuGetPackageType = NuGet.Packaging.Core.PackageType;
 

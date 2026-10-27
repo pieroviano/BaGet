@@ -10,9 +10,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
-using BaGet.Identity.Application.Services;
-using BaGet.Identity.Mvc;
 using BaGet.Web.V3.OpenApi;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
@@ -21,6 +18,8 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Tests;
 

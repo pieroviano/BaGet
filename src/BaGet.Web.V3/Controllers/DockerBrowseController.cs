@@ -3,10 +3,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc;
 using BaGet.Web.V3.Controllers.UI;
-using BaGet.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Web.Application.Models.Docker;
 
 namespace BaGet.Web.V3.Controllers;
 
@@ -15,7 +15,7 @@ namespace BaGet.Web.V3.Controllers;
 /// (<c>/docker-images/{image}</c>, <c>?digest=</c> for a manifest). They replace the Razor Pages <c>DockerImages</c> and
 /// <c>DockerImage</c>: same URLs, same <c>asp-page</c> names
 /// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository and,
-/// for the image page, on the image; 404 in a repository that is not Docker's). Views are in <c>Views/DockerBrowse/</c>. The work is <see cref="BaGet.Web.Application.DockerBrowseUseCase"/>, reached through the JSON twin
+/// for the image page, on the image; 404 in a repository that is not Docker's). Views are in <c>Views/DockerBrowse/</c>. The work is <see cref="BaGet.Web.Application.UseCases.DockerBrowseUseCase"/>, reached through the JSON twin
 /// <see cref="DockerBrowseUiApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class DockerBrowseController : UiControllerBase

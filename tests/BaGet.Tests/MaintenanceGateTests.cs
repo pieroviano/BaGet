@@ -8,13 +8,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Database.Sqlite;
-using BaGet.Identity.Application.Services;
-using BaGet.Validation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Validation.Pipeline;
+using BaGet.Validation.Queue;
 
 namespace BaGet.Tests;
 

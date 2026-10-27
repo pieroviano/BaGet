@@ -6,12 +6,13 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Xunit;
+using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.RateLimiting;
 
 namespace BaGet.Tests;
 

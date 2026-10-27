@@ -1,5 +1,5 @@
 @using BaGet.Identity.Application.Models
-@model BaGet.Identity.Application.Models.UserDetailViewModel
+@model BaGet.Identity.Application.Models.Users.UserDetailViewModel
 @{
     ViewData["Title"] = Model.Account?.UserName ?? "User";
     var userUrl = Url.Content("~/admin/users/" + Uri.EscapeDataString(Model.Account?.UserName ?? string.Empty));

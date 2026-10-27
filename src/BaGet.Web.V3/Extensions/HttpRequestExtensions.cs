@@ -6,7 +6,7 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using NuGet.Packaging;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.Extensions;
 
 public static class HttpRequestExtensions
 {

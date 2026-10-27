@@ -5,13 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using BaGet.Protocol.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

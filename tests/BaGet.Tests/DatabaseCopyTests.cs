@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Core.Tests.Support;
 using BaGet.Database.Sqlite;
-using BaGet.Identity.Application.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

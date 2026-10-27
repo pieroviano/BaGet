@@ -6,7 +6,7 @@ using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Mvc;
+namespace BaGet.Identity.Mvc.UI;
 
 /// <summary>What the in-process call of a JSON twin produced: its <see cref="ScreenResult{T}"/>, or the plain action result it answered with.</summary>
 /// <typeparam name="T">The screen's model.</typeparam>

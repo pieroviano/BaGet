@@ -9,12 +9,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Validation;
-using BaGet.Validation.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
 using NuGet.Packaging.Signing;
 using Xunit;
+using BaGet.Validation.Controllers.Protocols;
+using BaGet.Validation.Pipeline;
 
 namespace BaGet.Tests;
 

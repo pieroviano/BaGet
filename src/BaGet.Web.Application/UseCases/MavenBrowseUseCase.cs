@@ -5,12 +5,15 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Web.Models;
 using Microsoft.Extensions.Options;
+using BaGet.Web.Application.Models.Maven;
+using BaGet.Web.Application.Models.Packages;
+using BaGet.Web.Application.Models.Upload;
+using BaGet.Web.Application.Services;
+using BaGet.Web.Application.Snippets;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The screens of a Maven repository: the artifact list (<c>/maven-artifacts</c>) with the configuration that points Maven and Gradle at the

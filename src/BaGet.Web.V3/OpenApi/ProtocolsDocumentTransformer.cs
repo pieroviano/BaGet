@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.OpenApi;
+using BaGet.Web.V3.Routing;
 
 namespace BaGet.Web.V3.OpenApi;
 

@@ -3,9 +3,9 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Identity.Application.Screens;
 

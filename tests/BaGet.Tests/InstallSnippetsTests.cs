@@ -1,6 +1,6 @@
 using System.Linq;
-using BaGet.Web;
 using Xunit;
+using BaGet.Web.Application.Snippets;
 
 namespace BaGet.Tests;
 

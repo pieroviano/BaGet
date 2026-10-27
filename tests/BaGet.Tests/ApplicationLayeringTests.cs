@@ -18,13 +18,13 @@ public class ApplicationLayeringTests
     private static readonly Assembly[] ApplicationAssemblies =
     {
         typeof(ScreenGate).Assembly,
-        typeof(BaGet.Web.Application.LegalUseCase).Assembly,
+        typeof(BaGet.Web.Application.UseCases.LegalUseCase).Assembly,
     };
 
     private static readonly Assembly[] UiAssemblies =
     {
         typeof(UiControllerBase).Assembly,
-        typeof(BaGet.Web.V3.NavLinkTagHelper).Assembly,
+        typeof(BaGet.Web.V3.TagHelpers.NavLinkTagHelper).Assembly,
     };
 
     [Fact]
@@ -80,8 +80,8 @@ public class ApplicationLayeringTests
             .Select(t => t.FullName!)
             .ToList();
 
-        Assert.Contains("BaGet.Web.Application.LegalUseCase", useCases);
-        Assert.Contains("BaGet.Web.Application.StatisticsUseCase", useCases);
+        Assert.Contains("BaGet.Web.Application.UseCases.LegalUseCase", useCases);
+        Assert.Contains("BaGet.Web.Application.UseCases.StatisticsUseCase", useCases);
         Assert.DoesNotContain(UiAssemblies.SelectMany(a => a.GetTypes()), t => t.Name.EndsWith("UseCase", StringComparison.Ordinal));
     }
 

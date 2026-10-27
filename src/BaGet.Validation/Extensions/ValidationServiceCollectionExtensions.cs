@@ -1,8 +1,10 @@
 using BaGet.Core;
-using BaGet.Validation.Controllers;
 using BaGet.Validation.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using BaGet.Validation.Pipeline;
+using BaGet.Validation.Queue;
+using BaGet.Validation.Signing;
 
 namespace BaGet.Validation.Extensions;
 

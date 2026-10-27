@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using BaGet.Web.V3.Filters;
+using BaGet.Web.V3.Routing;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.Oci;
 
 /// <summary>
 /// The access check of every <c>/v2/{repo}/{image…}/…</c> request, in one place (the routes are

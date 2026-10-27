@@ -1,8 +1,11 @@
 using BaGet.Identity.Application.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using BaGet.Web.Application.Models.Packages;
+using BaGet.Web.Application.Services;
+using BaGet.Web.Application.UseCases;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.Extensions;
 
 /// <summary>Registration of the use cases of the web screens.</summary>
 public static class WebApplicationServiceCollectionExtensions

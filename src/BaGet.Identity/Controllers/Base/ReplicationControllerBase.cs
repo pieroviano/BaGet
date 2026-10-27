@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using Microsoft.Extensions.DependencyInjection;
+using BaGet.Identity.Application.UseCases.Policies;
 
 namespace BaGet.Identity.Controllers.Base;
 

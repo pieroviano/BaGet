@@ -8,12 +8,12 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Core.Tests.Support;
-using BaGet.Identity.Application.Services;
 using BaGet.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

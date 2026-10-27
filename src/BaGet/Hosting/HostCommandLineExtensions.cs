@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet;
 

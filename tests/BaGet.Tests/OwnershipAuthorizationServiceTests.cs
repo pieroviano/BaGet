@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using BaGet.Identity.Application.Services.Ownership;
 
 namespace BaGet.Tests;
 

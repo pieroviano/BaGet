@@ -2,12 +2,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using BaGet.Web.Application.Screens;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The Terms of Use (<c>/terms</c>) and Privacy Policy (<c>/privacy</c>) screens: the operator-supplied Markdown files

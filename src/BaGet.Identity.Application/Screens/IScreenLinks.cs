@@ -1,3 +1,5 @@
+using BaGet.Identity.Application.Email;
+
 namespace BaGet.Identity.Application.Screens;
 
 /// <summary>

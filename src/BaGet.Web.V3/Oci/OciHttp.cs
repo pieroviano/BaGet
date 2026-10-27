@@ -8,7 +8,7 @@ using BaGet.Web.V3.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.Oci;
 
 /// <summary>
 /// The HTTP shape of the OCI Distribution Spec: the JSON error body, the status each error code is answered with, and the

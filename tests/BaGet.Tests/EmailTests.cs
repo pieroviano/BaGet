@@ -4,9 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity;
-using BaGet.Identity.Application;
-using BaGet.Identity.Application.Services;
 using BaGet.Identity.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Xunit;
+using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

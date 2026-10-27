@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
 using BaGet.Telemetry;
-using BaGet.Web;
-using BaGet.Web.V3;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
+using BaGet.Web.V3.Extensions;
 
 namespace BaGet;
 

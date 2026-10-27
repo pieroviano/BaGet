@@ -6,9 +6,9 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

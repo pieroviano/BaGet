@@ -1,4 +1,4 @@
-@model BaGet.Web.Models.NpmPackageViewModel
+@model BaGet.Web.Application.Models.Npm.NpmPackageViewModel
 
 @{
     ViewData["Title"] = Model.Package == null ? Model.Id : Model.Package.Name + " " + Model.Selected?.Version;

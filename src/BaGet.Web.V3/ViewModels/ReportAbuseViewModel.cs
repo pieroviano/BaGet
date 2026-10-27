@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.ViewModels;
 
 /// <summary>The report-abuse form and its outcome. The field names (Reason, Details, ReporterEmail) are the contract of the form.</summary>
 public sealed class ReportAbuseViewModel

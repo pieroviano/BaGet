@@ -5,11 +5,12 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Web.Models;
+using BaGet.Web.Application.Models.Docker;
+using BaGet.Web.Application.Models.Packages;
+using BaGet.Web.Application.Snippets;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The screens of a Docker repository: the image list (<c>/docker-images</c>) with the commands that point Docker at the registry, and one image

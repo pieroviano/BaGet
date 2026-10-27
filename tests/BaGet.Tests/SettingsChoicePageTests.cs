@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
@@ -13,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
 using Npgsql;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Tests;
 

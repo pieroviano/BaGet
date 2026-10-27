@@ -2,10 +2,11 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using BaGet.Identity.Application.Models.Shared;
+using BaGet.Identity.Application.Security;
 
 namespace BaGet.Identity.Application.Screens;
 

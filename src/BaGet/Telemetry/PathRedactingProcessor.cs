@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using BaGet.Web.V3;
 using OpenTelemetry;
+using BaGet.Web.V3.Logging;
 
 namespace BaGet.Telemetry;
 

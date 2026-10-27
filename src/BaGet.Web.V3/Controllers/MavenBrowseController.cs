@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc;
 using BaGet.Web.V3.Controllers.UI;
-using BaGet.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Web.Application.Models.Maven;
 
 namespace BaGet.Web.V3.Controllers;
 
@@ -16,7 +16,7 @@ namespace BaGet.Web.V3.Controllers;
 /// (<c>/maven-artifacts/{group}/{artifact}/{version?}</c>) and the browser deployment (<c>/maven-upload</c>). They replace the Razor
 /// Pages <c>MavenArtifacts</c>, <c>MavenArtifact</c> and <c>MavenUpload</c>: same URLs, same <c>asp-page</c> names (<see cref="LegacyPageAttribute"/>), same repository rules
 /// (<see cref="RepositoryPageAttribute"/>: Read on the repository, on <c>group:artifact</c> for the artifact page, the right to
-/// publish for the upload; 404 in a repository that is not Maven's). Views are in <c>Views/MavenBrowse/</c>. The work is <see cref="BaGet.Web.Application.MavenBrowseUseCase"/>, reached through the JSON twin
+/// publish for the upload; 404 in a repository that is not Maven's). Views are in <c>Views/MavenBrowse/</c>. The work is <see cref="BaGet.Web.Application.UseCases.MavenBrowseUseCase"/>, reached through the JSON twin
 /// <see cref="MavenBrowseUiApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class MavenBrowseController : UiControllerBase

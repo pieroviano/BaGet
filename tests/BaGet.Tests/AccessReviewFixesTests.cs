@@ -6,12 +6,14 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Organizations;
+using BaGet.Identity.Application.Services.Ownership;
 
 namespace BaGet.Tests;
 

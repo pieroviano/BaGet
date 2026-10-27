@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.ViewModels;
 
 /// <summary>What the REST API page shows (also the model of its JSON twin).</summary>
 /// <param name="Endpoints">Every operation, ordered by path.</param>

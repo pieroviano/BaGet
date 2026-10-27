@@ -1,14 +1,16 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Models;
 using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Controllers.UI;
-using BaGet.Identity.Mvc;
 using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using BaGet.Identity.Application.Models.Packages;
+using BaGet.Identity.Models.Packages;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.Screens;
 
 namespace BaGet.Identity.Controllers;
 

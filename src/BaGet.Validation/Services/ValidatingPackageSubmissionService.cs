@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NuGet.Packaging;
+using BaGet.Validation.Pipeline;
+using BaGet.Validation.Queue;
 
 namespace BaGet.Validation.Services;
 

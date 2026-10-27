@@ -1,4 +1,4 @@
-@model BaGet.Identity.Application.Models.ProjectDetailViewModel
+@model BaGet.Identity.Application.Models.Access.ProjectDetailViewModel
 @{
     ViewData["Title"] = "Project " + Model.Name;
     var project = Model.Project?.Project;
@@ -143,7 +143,7 @@
                     {
                         <tr>
                             <td><a href="@Url.Action("Detail", "AdminPermissions", new { name = target.Name })">@target.Name</a></td>
-                            <td><code>@BaGet.Identity.Mvc.AccessSupport.Join(target.RepositoryPatterns)</code></td>
+                            <td><code>@BaGet.Identity.Mvc.Screens.AccessSupport.Join(target.RepositoryPatterns)</code></td>
                             <td>@target.GrantCount</td>
                         </tr>
                     }

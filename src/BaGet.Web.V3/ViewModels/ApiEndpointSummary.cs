@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.ViewModels;
 
 /// <summary>One operation of the REST API as the page (and the JSON twin) lists it: flat, with no reflection objects.</summary>
 /// <param name="Method">The HTTP method.</param>

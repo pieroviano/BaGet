@@ -3,8 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Http;
+using BaGet.Identity.Security;
 
-namespace BaGet.Web.V3;
+namespace BaGet.Web.V3.Oci;
 
 /// <summary>
 /// Finds out who calls the registry and what that caller may do, in one place for the routes and the token endpoint. A

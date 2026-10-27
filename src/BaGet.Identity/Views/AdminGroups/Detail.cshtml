@@ -1,4 +1,4 @@
-@model BaGet.Identity.Application.Models.GroupDetailViewModel
+@model BaGet.Identity.Application.Models.Access.GroupDetailViewModel
 @{
     ViewData["Title"] = "Group " + Model.Name;
     var group = Model.Group?.Group;
@@ -109,7 +109,7 @@
                     {
                         <tr>
                             <td><a href="@Url.Action("Detail", "AdminPermissions", new { name = grant.Target })">@grant.Target</a></td>
-                            <td>@BaGet.Identity.Mvc.AccessSupport.Words(grant.Actions)</td>
+                            <td>@BaGet.Identity.Mvc.Screens.AccessSupport.Words(grant.Actions)</td>
                         </tr>
                     }
                 </tbody>

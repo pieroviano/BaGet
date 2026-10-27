@@ -7,9 +7,6 @@ using System.Reflection;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Mvc;
-using BaGet.Web;
-using BaGet.Web.V3;
 using BaGet.Web.V3.Api;
 using BaGet.Web.V3.OpenApi;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +17,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Mvc.UI;
+using BaGet.Web.V3.Api.Catalog;
+using BaGet.Web.V3.Routing;
 
 namespace BaGet.Tests;
 

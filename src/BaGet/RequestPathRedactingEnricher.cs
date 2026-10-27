@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using BaGet.Web.V3;
 using Serilog.Core;
 using Serilog.Events;
+using BaGet.Web.V3.Logging;
 
 namespace BaGet;
 

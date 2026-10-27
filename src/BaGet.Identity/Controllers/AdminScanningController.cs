@@ -1,11 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Identity.Application.Models;
 using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Controllers.UI;
-using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using BaGet.Identity.Application.Models.Policies;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers;
 

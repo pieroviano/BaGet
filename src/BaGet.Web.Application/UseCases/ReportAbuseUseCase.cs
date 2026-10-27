@@ -5,12 +5,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Versioning;
+using BaGet.Web.Application.Models.Browse;
+using BaGet.Web.Application.Screens;
 
-namespace BaGet.Web.Application;
+namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The report-abuse screen (<c>/packages/{id}/{version}/report-abuse</c>, and under <c>/r/{repo}/</c>; 404 in a virtual repository):

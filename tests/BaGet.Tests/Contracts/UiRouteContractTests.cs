@@ -4,11 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using BaGet.Identity.Mvc.Attributes;
 
 namespace BaGet.Tests.Contracts;
 

@@ -7,11 +7,11 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Versioning;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Identity.Application.Services.Ownership;
 
 namespace BaGet.Tests;
 

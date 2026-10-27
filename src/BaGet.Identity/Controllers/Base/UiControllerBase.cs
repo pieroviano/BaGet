@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.Base;
 

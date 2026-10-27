@@ -7,12 +7,13 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Services;
-using BaGet.Identity.Application.UseCases;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Ownership;
+using BaGet.Identity.Application.UseCases.Packages;
 
 namespace BaGet.Tests;
 

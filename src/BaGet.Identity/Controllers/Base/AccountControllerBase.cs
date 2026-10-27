@@ -2,15 +2,17 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Application.Services;
-using BaGet.Identity.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Ownership;
+using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.Screens;
 
 namespace BaGet.Identity.Controllers.Base;
 

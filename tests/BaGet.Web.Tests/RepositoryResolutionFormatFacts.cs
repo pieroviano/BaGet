@@ -2,11 +2,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Web.V3;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Moq;
 using Xunit;
+using BaGet.Web.V3.Middleware;
+using BaGet.Web.V3.Routing;
 
 namespace BaGet.Web.Tests;
 

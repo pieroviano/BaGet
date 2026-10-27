@@ -1,7 +1,8 @@
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Application.UseCases;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using BaGet.Identity.Application.UseCases.Account;
+using BaGet.Identity.Application.UseCases.Packages;
 
 namespace BaGet.Identity.Application.Extensions;
 

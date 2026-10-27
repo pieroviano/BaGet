@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 using BaGet;
-using BaGet.Web.V3;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
+using BaGet.Web.V3.Extensions;
 
 namespace BaGetWebApplication;
 
