@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Configuration;
-using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using Xunit;

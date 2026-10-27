@@ -1,4 +1,3 @@
-using BaGet.Core;
 using BaGet.Identity.Application.Models.Shared;
 
 namespace BaGet.Identity.Application.Models.Policies;

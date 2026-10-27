@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Web.V3.Extensions;
 

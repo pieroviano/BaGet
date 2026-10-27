@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application.Screens;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NuGet.Packaging;

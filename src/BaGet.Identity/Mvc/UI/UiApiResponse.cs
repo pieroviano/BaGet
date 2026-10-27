@@ -1,10 +1,5 @@
-using System;
-using System.Threading.Tasks;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BaGet.Identity.Mvc.UI;
 

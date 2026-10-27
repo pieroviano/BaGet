@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.Services.Accounts;
-using BaGet.Identity.Mvc.Attributes;
 using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.Base;

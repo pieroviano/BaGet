@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Net;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using Xunit;
 

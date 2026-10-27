@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

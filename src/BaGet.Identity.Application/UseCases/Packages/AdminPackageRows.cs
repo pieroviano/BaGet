@@ -4,10 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Application.Screens;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.Models.Packages;
 
 namespace BaGet.Identity.Application.UseCases.Packages;

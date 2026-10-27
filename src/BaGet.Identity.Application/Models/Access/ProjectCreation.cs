@@ -1,6 +1,3 @@
-using System.Text.Json.Serialization;
-using BaGet.Core;
-
 namespace BaGet.Identity.Application.Models.Access;
 
 /// <summary>A new project.</summary>

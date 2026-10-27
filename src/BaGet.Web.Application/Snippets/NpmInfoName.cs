@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace BaGet.Web.Application.Snippets;
 
 /// <summary>Name helpers that the pages need without the validation of <see cref="BaGet.Core.NpmNames"/>.</summary>

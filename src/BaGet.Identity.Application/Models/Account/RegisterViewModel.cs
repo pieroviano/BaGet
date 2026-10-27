@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace BaGet.Identity.Application.Models.Account;
 
 /// <summary>The registration screen. A request binds <see cref="RegisterForm"/>, never this type; the passwords are always empty here.</summary>

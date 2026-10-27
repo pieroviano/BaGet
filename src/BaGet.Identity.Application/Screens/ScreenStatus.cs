@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
-
 namespace BaGet.Identity.Application.Screens;
 
 /// <summary>What a use case decided about a screen.</summary>

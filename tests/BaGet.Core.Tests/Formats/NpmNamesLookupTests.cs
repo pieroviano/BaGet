@@ -1,4 +1,3 @@
-using BaGet.Core;
 using Xunit;
 
 namespace BaGet.Core.Tests.Formats;

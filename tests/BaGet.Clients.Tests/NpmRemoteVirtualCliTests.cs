@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using BaGet.Core;
 using Xunit;
 using static BaGet.Clients.Tests.NpmRegistryCliTests;
 

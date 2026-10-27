@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using BaGet.Core;
-using Microsoft.EntityFrameworkCore;
 using BaGet.Web.Application.Models.Browse;
 
 namespace BaGet.Web.Application.Screens;

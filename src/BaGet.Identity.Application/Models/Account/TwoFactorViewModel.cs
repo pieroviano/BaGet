@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using BaGet.Core;
 
 namespace BaGet.Identity.Application.Models.Account;
 

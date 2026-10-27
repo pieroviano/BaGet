@@ -7,7 +7,6 @@ using System.Net.Http;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Web.V3.Api;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;

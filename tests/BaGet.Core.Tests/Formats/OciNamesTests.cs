@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using BaGet.Core;
 using Xunit;
 
 namespace BaGet.Core.Tests;

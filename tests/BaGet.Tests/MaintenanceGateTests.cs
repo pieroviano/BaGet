@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Database.Sqlite;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

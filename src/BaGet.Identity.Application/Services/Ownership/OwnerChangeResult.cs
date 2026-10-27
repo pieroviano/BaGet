@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using Microsoft.EntityFrameworkCore;
-
 namespace BaGet.Identity.Application.Services.Ownership;
 
 public enum OwnerChangeResult

@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using BaGet.Core;
 using Xunit;
 
 namespace BaGet.Core.Tests.Formats;

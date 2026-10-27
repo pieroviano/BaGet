@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace BaGet.Identity.Application.Models.Packages;
 
 /// <summary>

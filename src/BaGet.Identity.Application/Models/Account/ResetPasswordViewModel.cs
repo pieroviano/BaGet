@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-
 namespace BaGet.Identity.Application.Models.Account;
 
 /// <summary>The screen behind the link of a password reset email. A request binds <see cref="ResetPasswordForm"/>, never this type.</summary>

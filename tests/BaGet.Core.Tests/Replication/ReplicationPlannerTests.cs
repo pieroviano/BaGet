@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using BaGet.Core;
 using Xunit;
 
 namespace BaGet.Core.Tests.Replication;

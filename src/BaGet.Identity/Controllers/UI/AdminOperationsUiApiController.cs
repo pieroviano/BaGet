@@ -8,6 +8,7 @@ using BaGet.Identity.Application.Models.Repositories;
 using BaGet.Identity.Application.Models.Settings;
 using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.UseCases.Admin;
+using BaGet.Identity.Controllers.FrontEnd;
 using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.UI;

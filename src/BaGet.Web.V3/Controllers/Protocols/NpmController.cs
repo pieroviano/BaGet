@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 using BaGet.Identity.Security;
 using BaGet.Web.V3.Filters;

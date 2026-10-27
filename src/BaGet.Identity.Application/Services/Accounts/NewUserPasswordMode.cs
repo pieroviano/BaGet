@@ -1,11 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-
 namespace BaGet.Identity.Application.Services.Accounts;
 
 /// <summary>How an administrator-created account gets its first password.</summary>

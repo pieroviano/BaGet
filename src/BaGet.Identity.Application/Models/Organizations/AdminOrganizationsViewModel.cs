@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BaGet.Core;
 using BaGet.Identity.Application.Services.Organizations;
 
 namespace BaGet.Identity.Application.Models.Organizations;

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using BaGet.Core;
 
 namespace BaGet.Web.Application.Models.Packages;
 

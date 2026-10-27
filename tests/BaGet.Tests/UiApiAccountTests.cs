@@ -11,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Web.V3.OpenApi;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;

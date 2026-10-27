@@ -1,6 +1,3 @@
-using System.Text.Json.Serialization;
-using BaGet.Core;
-
 namespace BaGet.Identity.Application.Models.Access;
 
 // Enum members read their names (like the answers write them): a body says "Group", not 2.

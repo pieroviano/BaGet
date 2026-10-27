@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Core.Tests.Support;
 using BaGet.Telemetry;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;

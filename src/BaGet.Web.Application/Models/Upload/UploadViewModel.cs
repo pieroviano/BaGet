@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Html;
 using BaGet.Web.Application.UseCases;
 
 namespace BaGet.Web.Application.Models.Upload;

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using BaGet.Core;
-
 namespace BaGet.Identity.Application.Models.Organizations;
 
 /// <summary>One member of an organization (a flat record, so the screen's JSON names its fields).</summary>

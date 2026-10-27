@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BaGet.Core;
 using BaGet.Database.Sqlite;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;

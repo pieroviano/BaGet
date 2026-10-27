@@ -12,7 +12,6 @@ using System.Xml.Linq;
 using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Configuration;
-using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using Xunit;

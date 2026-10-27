@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using BaGet.Identity.Application.Models.Policies;
 using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.UseCases.Policies;
+using BaGet.Identity.Controllers.FrontEnd;
 using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.UI;

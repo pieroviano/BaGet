@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;

@@ -5,6 +5,7 @@ using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Identity.Application.Models.Repositories;
 using BaGet.Identity.Application.UseCases.Admin;
+using BaGet.Identity.Controllers.FrontEnd;
 using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.UI;

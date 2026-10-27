@@ -9,6 +9,7 @@ using BaGet.Identity.Mvc.UI;
 using BaGet.Web.Application.Models.Browse;
 using BaGet.Web.Application.Screens;
 using BaGet.Web.Application.UseCases;
+using BaGet.Web.V3.Controllers.FrontEnd;
 
 namespace BaGet.Web.V3.Controllers.UI;
 

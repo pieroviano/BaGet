@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using BaGet.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using BaGet.Identity.Application.Services.Accounts;

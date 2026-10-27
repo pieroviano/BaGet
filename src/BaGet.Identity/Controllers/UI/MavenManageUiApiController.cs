@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.Models.Packages;
 using BaGet.Identity.Application.UseCases.Packages;
+using BaGet.Identity.Controllers.FrontEnd;
 using BaGet.Identity.Models.Packages;
 using BaGet.Identity.Mvc.Attributes;
 using BaGet.Identity.Mvc.UI;

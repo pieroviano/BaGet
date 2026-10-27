@@ -1,9 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using BaGet.Core;
-using BaGet.Web.V3.Controllers.UI;
-using Microsoft.AspNetCore.Html;
 using NuGet.Versioning;
 
 namespace BaGet.Web.V3.ViewModels;

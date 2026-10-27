@@ -1,11 +1,3 @@
-using System;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
-
 namespace BaGet.Identity.Application.UseCases.Account;
 
 /// <summary>What a password-confirmed screen shows about how the caller can confirm.</summary>

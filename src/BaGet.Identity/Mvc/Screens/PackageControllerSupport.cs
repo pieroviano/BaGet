@@ -1,5 +1,4 @@
 using System.Reflection;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using BaGet.Identity.Mvc.Attributes;

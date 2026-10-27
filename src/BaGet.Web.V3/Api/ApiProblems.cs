@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.V3.Models.Api;
 

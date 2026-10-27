@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using BaGet.Core;
 using Microsoft.Extensions.Options;
 using Xunit;
 

@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Catalog;
 using BaGet.Core;
-using BaGet.Protocol.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

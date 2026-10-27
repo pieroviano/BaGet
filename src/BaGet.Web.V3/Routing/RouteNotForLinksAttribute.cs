@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace BaGet.Web.V3.Routing;
 

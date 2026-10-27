@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using BaGet.Core;
 using BaGet.Identity.Application.Models.Repositories;
 
 namespace BaGet.Identity.Application.Models.Account;

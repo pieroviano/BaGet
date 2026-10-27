@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Core;
 using Xunit;
 
 namespace BaGet.Core.Tests.Formats;

@@ -1,11 +1,5 @@
-using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Core;
-using Microsoft.Extensions.Options;
-using NuGet.Common;
-using NuGet.Packaging.Signing;
 
 namespace BaGet.Validation.Pipeline;
 

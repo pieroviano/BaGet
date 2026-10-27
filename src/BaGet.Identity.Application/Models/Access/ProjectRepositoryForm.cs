@@ -1,6 +1,3 @@
-using System.Text.Json.Serialization;
-using BaGet.Core;
-
 namespace BaGet.Identity.Application.Models.Access;
 
 /// <summary>Putting a repository in a project or taking it out.</summary>

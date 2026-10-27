@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
 using BaGet.Core;
 
 namespace BaGet.Identity.Application.Models.Policies;

@@ -1,15 +1,11 @@
 using System.Linq;
-using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Web.V3.Api;
-using BaGet.Web.V3.Controllers.FrontEnd;
 using BaGet.Web.V3.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Scalar.AspNetCore;
-using BaGet.Web.V3.Api.Catalog;
 using BaGet.Web.V3.Controllers.Base;
 using BaGet.Web.V3.Controllers.Protocols;
 using BaGet.Web.V3.Filters;

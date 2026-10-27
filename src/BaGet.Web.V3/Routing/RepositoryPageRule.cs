@@ -1,11 +1,4 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using BaGet.Core;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 using BaGet.Web.V3.Filters;
 
 namespace BaGet.Web.V3.Routing;

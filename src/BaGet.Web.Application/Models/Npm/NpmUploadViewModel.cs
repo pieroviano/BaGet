@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BaGet.Core;
-using Microsoft.AspNetCore.Html;
 
 namespace BaGet.Web.Application.Models.Npm;
 

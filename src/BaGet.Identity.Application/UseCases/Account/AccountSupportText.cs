@@ -1,11 +1,4 @@
-using System;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 
 namespace BaGet.Identity.Application.UseCases.Account;
 

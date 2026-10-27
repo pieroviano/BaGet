@@ -1,7 +1,6 @@
 using System;
 using BaGet.Core;
 using Microsoft.EntityFrameworkCore;
-using Microting.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace BaGet.Database.MySql;
 

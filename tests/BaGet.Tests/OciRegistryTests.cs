@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Web.V3.Controllers.FrontEnd;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

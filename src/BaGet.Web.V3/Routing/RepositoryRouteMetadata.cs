@@ -1,11 +1,4 @@
-using System;
-using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Web.V3.Controllers.FrontEnd;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
 using BaGet.Web.V3.Filters;
 using BaGet.Web.V3.Middleware;
 

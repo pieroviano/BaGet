@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using BaGet.Core;
 using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Identity.Application.Models.Settings;

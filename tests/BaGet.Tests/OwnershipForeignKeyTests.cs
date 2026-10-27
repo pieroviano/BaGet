@@ -8,7 +8,6 @@ using BaGet.Core;
 using BaGet.Database.Sqlite;
 using BaGet.Database.Tests;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using BaGet.Identity.Application.Services.Accounts;

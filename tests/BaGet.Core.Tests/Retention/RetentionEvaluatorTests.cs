@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BaGet.Core;
 using Xunit;
 
 namespace BaGet.Core.Tests.Retention;

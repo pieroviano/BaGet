@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using BaGet.Core;
-using BaGet.Protocol.Models;
 
 namespace BaGet.Web.Application.Models.Browse;
 

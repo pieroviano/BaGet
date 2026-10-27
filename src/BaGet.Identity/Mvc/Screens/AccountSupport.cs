@@ -1,13 +1,10 @@
 using System;
-using System.Text;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Controllers.Base;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using BaGet.Identity.Application.Email;

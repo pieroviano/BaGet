@@ -1,10 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using BaGet.Identity.Application.Screens;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using BaGet.Web.Application.Models.Packages;
 
 namespace BaGet.Web.Application.UseCases;

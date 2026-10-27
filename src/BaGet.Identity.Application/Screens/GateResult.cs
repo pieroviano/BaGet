@@ -1,11 +1,3 @@
-using System;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-
 namespace BaGet.Identity.Application.Screens;
 
 /// <summary>The gate's decision and what it learned on the way.</summary>

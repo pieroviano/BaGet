@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace BaGet.Identity.Application.Models.Account;
 
 /// <summary>The "forgot password" screen. A request binds <see cref="ForgotPasswordForm"/>, never this type.</summary>

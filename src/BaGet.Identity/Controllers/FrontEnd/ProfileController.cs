@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Controllers.Base;
 using BaGet.Identity.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;

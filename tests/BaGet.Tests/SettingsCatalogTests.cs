@@ -8,7 +8,6 @@ using System.Text.RegularExpressions;
 using BaGet.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Xunit;
 
 namespace BaGet.Tests;

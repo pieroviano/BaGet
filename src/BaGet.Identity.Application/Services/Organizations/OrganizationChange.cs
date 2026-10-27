@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Core;
-using Microsoft.EntityFrameworkCore;
-
 namespace BaGet.Identity.Application.Services.Organizations;
 
 /// <summary>The outcome of an administrator's change to an organization.</summary>

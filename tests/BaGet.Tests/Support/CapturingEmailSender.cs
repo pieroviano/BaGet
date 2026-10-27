@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using Microsoft.AspNetCore.Identity;

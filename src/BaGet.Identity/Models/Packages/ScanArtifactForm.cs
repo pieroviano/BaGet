@@ -1,10 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace BaGet.Identity.Models.Packages;
 
 /// <summary>The body of the scan twin's POST: the artifact and version to scan, and where the link back goes.</summary>
