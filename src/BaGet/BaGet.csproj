@@ -14,6 +14,7 @@
     <IsPublishable>true</IsPublishable>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);NU5119;NU5104</NoWarn>
+    <PackageId>Extension.$(MSBuildProjectName).Site</PackageId>
   </PropertyGroup>
 
   <ItemGroup>

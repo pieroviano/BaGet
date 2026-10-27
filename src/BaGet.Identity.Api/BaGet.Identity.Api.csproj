@@ -8,7 +8,7 @@
     <RootNamespace>BaGet.Identity</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>
-    <PackageId>Extension.$(MSBuildProjectName).UI</PackageId>
+    <PackageId>Extension.$(MSBuildProjectName)</PackageId>
   </PropertyGroup>
 
   <ItemGroup>

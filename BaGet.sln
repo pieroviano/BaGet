@@ -62,7 +62,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Catalog", "src\BaGet.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Web.V2", "src\BaGet.Web.V2\BaGet.Web.V2.csproj", "{6F4FBCFC-6887-4401-A0B7-A856C91011BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity", "src\BaGet.Identity\BaGet.Identity.csproj", "{C8689F3D-B2C3-4B67-B2D6-6727AD11103D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity.Api", "src\BaGet.Identity.Api\BaGet.Identity.Api.csproj", "{C8689F3D-B2C3-4B67-B2D6-6727AD11103D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Validation", "src\BaGet.Validation\BaGet.Validation.csproj", "{E2D03D72-23F2-409E-B895-45BAEEC75768}"
 EndProject
@@ -72,7 +72,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 	ProjectSection(SolutionItems) = preProject
 		docs\access-control.md = docs\access-control.md
 		docs\admin-api.md = docs\admin-api.md
-		docs\scalar.md = docs\scalar.md
 		docs\configuration.md = docs\configuration.md
 		docs\devops-manual.md = docs\devops-manual.md
 		docs\docker-registry.md = docs\docker-registry.md
@@ -87,6 +86,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 		docs\replication.md = docs\replication.md
 		docs\repositories.md = docs\repositories.md
 		docs\retention.md = docs\retention.md
+		docs\scalar.md = docs\scalar.md
 		docs\ui-api.md = docs\ui-api.md
 		docs\ui-coverage.md = docs\ui-coverage.md
 		docs\user-manual.md = docs\user-manual.md
