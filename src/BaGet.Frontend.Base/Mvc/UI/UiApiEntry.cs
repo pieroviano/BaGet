@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// The in-process call of a twin's <em>entry check</em>: a screen whose first step (ownership, a Delete permission, a valid name) must run

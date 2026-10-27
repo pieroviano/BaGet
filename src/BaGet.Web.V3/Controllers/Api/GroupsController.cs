@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using BaGet.Web.V3.Api.Catalog;
 using BaGet.Web.V3.Models.Api;
 using BaGet.Web.V3.Api;
-using BaGet.Identity.Controllers.Base;
 using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet.Web.V3.Controllers.Api;

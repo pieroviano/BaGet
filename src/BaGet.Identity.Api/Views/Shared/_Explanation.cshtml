@@ -1,9 +1,10 @@
+@using BaGet.Frontend.Mvc.Screens
 @model BaGet.Core.AccessExplanation
 
 @* The actions someone holds in a repository and the grants behind them (shared by the account, user and repository pages). *@
 <p>
     <strong>Actions:</strong>
-    <span class="access-actions">@BaGet.Identity.Mvc.Screens.AccessSupport.Words(Model.Actions)</span>
+    <span class="access-actions">@AccessSupport.Words(Model.Actions)</span>
 </p>
 @if (Model.Override != null)
 {
@@ -25,9 +26,9 @@ else
                 <tr>
                     <td>@reason.Source</td>
                     <td>@reason.Principal</td>
-                    <td>@BaGet.Identity.Mvc.Screens.AccessSupport.Words(reason.Granted)</td>
+                    <td>@AccessSupport.Words(reason.Granted)</td>
                     <td>
-                        @BaGet.Identity.Mvc.Screens.AccessSupport.Words(reason.Effective)
+                        @AccessSupport.Words(reason.Effective)
                         @if (reason.Note != null)
                         {
                             <br /><small class="text-muted">@reason.Note</small>

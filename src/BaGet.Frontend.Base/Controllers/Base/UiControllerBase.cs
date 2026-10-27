@@ -1,13 +1,13 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.UI;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of every controller that serves a screen of BaGet's own web UI. What it gives a screen:

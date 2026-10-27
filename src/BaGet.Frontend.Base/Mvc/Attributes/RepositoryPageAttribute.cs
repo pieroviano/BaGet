@@ -1,7 +1,7 @@
 using System;
 using BaGet.Core;
 
-namespace BaGet.Identity.Mvc.Attributes;
+namespace BaGet.Frontend.Mvc.Attributes;
 
 /// <summary>
 /// Marks a controller action (or a whole controller) as a <em>repository page</em>: a page that acts on the request's

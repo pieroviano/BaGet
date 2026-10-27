@@ -1,16 +1,16 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.Models.Packages;
 using BaGet.Identity.Application.UseCases.Packages;
 using BaGet.Identity.Controllers.FrontEnd;
 using BaGet.Identity.Models.Packages;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.UI;
 

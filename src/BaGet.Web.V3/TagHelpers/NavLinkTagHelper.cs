@@ -1,8 +1,8 @@
 using System;
+using BaGet.Frontend.Mvc.UI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Web.V3.TagHelpers;
 

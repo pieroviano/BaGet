@@ -1,9 +1,9 @@
 using System.Reflection;
+using BaGet.Frontend.Mvc.Attributes;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
-using BaGet.Identity.Mvc.Attributes;
 
-namespace BaGet.Identity.Mvc.Screens;
+namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>What the package-management controllers share: reading the request.</summary>
 internal static class PackageControllerSupport

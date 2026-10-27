@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
-using BaGet.Identity.Security;
 using BaGet.Web.V3.Routing;
 
 namespace BaGet.Web.V3.Filters;

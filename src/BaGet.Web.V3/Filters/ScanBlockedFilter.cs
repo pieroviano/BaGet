@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Net;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.UI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -27,7 +28,7 @@ public sealed class ScanBlockedFilter : IExceptionFilter
 
         // A screen of the web UI: a Razor Page of the host, or an action of one of BaGet's view controllers.
         if (context.ActionDescriptor is PageActionDescriptor
-            || BaGet.Identity.Mvc.UI.ScreenEndpoints.IsScreen(context.ActionDescriptor))
+            || ScreenEndpoints.IsScreen(context.ActionDescriptor))
         {
             var encoded = WebUtility.HtmlEncode(reason);
             context.Result = new ContentResult

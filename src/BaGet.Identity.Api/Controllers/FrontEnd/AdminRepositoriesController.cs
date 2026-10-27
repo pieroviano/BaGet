@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Identity.Controllers.Base;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Identity.Application.Models.Repositories;
 using BaGet.Identity.Application.Models.Shared;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.FrontEnd;
 

@@ -8,15 +8,15 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
 using BaGet.Identity.Application.Security;
 using BaGet.Identity.Application.Services.Accounts;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Tests;
 

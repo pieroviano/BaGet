@@ -3,11 +3,11 @@ using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using BaGet.Identity.Security;
 using BaGet.Web.V3.Filters;
 
 namespace BaGet.Web.V3.Controllers.Protocols;

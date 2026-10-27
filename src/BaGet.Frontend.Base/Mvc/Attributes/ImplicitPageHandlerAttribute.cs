@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Identity.Mvc.Attributes;
+namespace BaGet.Frontend.Mvc.Attributes;
 
 /// <summary>
 /// Marks the default action (<see cref="PageHandlerAttribute"/> without a name) that stands for a verb the page had <em>no</em>

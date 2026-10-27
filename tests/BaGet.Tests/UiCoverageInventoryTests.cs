@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.UI;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Tests;
 
@@ -80,7 +81,7 @@ public class UiCoverageInventoryTests : IDisposable
             .ToList();
         // A view controller serves screens: EveryScreenIsNamedInTheCoverageTable audits each by its controller and action.
         // It is recognised by its base class (a fallback action such as NoHandler is no screen, but its controller is).
-        var pageControllers = all.Where(d => typeof(BaGet.Identity.Controllers.Base.UiControllerBase).IsAssignableFrom(d.ControllerTypeInfo.AsType())).Select(d => d.ControllerName).ToHashSet();
+        var pageControllers = all.Where(d => typeof(UiControllerBase).IsAssignableFrom(d.ControllerTypeInfo.AsType())).Select(d => d.ControllerName).ToHashSet();
         var controllers = all
             .Select(d => d.ControllerName)
             .Where(c => !pageControllers.Contains(c))

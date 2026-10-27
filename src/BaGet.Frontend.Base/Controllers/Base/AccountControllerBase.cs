@@ -2,19 +2,19 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.Screens;
+using BaGet.Identity.Application.Email;
 using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Ownership;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using BaGet.Identity.Application.Email;
-using BaGet.Identity.Application.Services.Accounts;
-using BaGet.Identity.Application.Services.Ownership;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.Screens;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Shared by the account screens. The screens are always compiled in, but

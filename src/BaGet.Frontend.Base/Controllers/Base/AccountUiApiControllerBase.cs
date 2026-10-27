@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using BaGet.Identity.Mvc.Attributes;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the account screens' JSON twins: accounts enabled (else 404), mail configured when <see cref="RequiresEmail"/>, signed in when

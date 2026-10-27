@@ -1,5 +1,7 @@
 using System;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.Screens;
+using BaGet.Frontend.Security;
 using BaGet.Identity.Application.Extensions;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +16,6 @@ using BaGet.Identity.Application.Security;
 using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Identity.Application.Services.Ownership;
 using BaGet.Identity.Application.UseCases.Account;
-using BaGet.Identity.Security;
 
 namespace BaGet.Identity.Extensions;
 
@@ -72,7 +73,7 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<AccountOverviewUseCase>();
         services.TryAddScoped<ProfileUseCase>();
         services.TryAddScoped<AdminUserCreationService>();
-        services.TryAddScoped<IScreenLinks, Mvc.Screens.ScreenLinks>();
+        services.TryAddScoped<IScreenLinks, ScreenLinks>();
         services.AddBaGetAdminUseCases();
         services.TryAddSingleton<ContactRateLimiter>();
         services.TryAddSingleton<PasswordResetRateLimiter>();

@@ -1,17 +1,17 @@
 using System;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Controllers.Base;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using BaGet.Identity.Application.Email;
-using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Application.Security;
 
-namespace BaGet.Identity.Mvc.Screens;
+namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>
 /// The rules of the account screens used by the controller base (<see cref="AccountControllerBase"/>) and the workflows.

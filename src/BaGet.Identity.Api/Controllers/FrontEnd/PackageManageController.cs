@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using BaGet.Identity.Controllers.Base;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.Screens;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Controllers.UI;
-using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using BaGet.Identity.Application.Models.Packages;
 using BaGet.Identity.Application.UseCases.Packages;
 using BaGet.Identity.Models.Packages;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.Screens;
 
 namespace BaGet.Identity.Controllers.FrontEnd;
 

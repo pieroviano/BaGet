@@ -1,3 +1,4 @@
+@using BaGet.Frontend.Mvc.Attributes
 @using Microsoft.Extensions.DependencyInjection
 @using BaGet.Identity.Application.Screens
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
@@ -31,7 +32,7 @@
         _ => nuGet,
     };
     // A repository page is a controller action marked [RepositoryPage].
-    var isRepositoryPage = ViewContext.ActionDescriptor.EndpointMetadata.OfType<BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute>().Any();
+    var isRepositoryPage = ViewContext.ActionDescriptor.EndpointMetadata.OfType<RepositoryPageAttribute>().Any();
     IReadOnlyList<BaGet.Core.RepositoryInfo> switchable = Array.Empty<BaGet.Core.RepositoryInfo>();
     if (isRepositoryPage && RepositoryAccess.SupportsMultipleRepositories)
     {

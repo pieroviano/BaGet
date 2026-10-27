@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 
-namespace BaGet.Identity.Mvc.Screens;
+namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>
 /// <see cref="IScreenLinks"/> for the MVC screens: resolves a screen (controller and action) with the request's

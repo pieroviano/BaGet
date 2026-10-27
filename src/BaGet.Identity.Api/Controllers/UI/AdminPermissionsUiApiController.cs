@@ -1,8 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +11,6 @@ using BaGet.Identity.Application.Models.Access;
 using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.UseCases.Access;
 using BaGet.Identity.Controllers.FrontEnd;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.UI;
 

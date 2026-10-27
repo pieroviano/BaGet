@@ -1,14 +1,14 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Mvc.UI;
+using BaGet.Identity.Application.UseCases.Access;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using BaGet.Identity.Application.UseCases.Access;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the access-control screens' JSON twins (groups, permissions, projects, audit; retention and replication build on it), like

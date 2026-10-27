@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Identity.Mvc.Attributes;
+namespace BaGet.Frontend.Mvc.Attributes;
 
 /// <summary>
 /// The action needs a signed-in user; a visitor is challenged (the per-action form of

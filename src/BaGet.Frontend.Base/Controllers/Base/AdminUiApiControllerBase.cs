@@ -1,7 +1,7 @@
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the administrator screens' JSON twins: the caller is an administrator's API key with the <c>admin:api</c> scope and no repository limit

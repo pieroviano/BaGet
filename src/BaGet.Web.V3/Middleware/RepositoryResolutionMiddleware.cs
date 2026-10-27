@@ -2,11 +2,13 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
+using BaGet.Frontend.Security;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using BaGet.Identity.Security;
 using BaGet.Web.V3.Routing;
 
 namespace BaGet.Web.V3.Middleware;
@@ -50,8 +52,8 @@ public class RepositoryResolutionMiddleware
         var endpoint = context.GetEndpoint();
         // A page is a Razor Page of the host or an action of one of BaGet's view controllers.
         var isPage = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.RazorPages.PageActionDescriptor>() != null
-            || BaGet.Identity.Mvc.UI.ScreenEndpoints.IsScreen(endpoint)
-            || endpoint?.Metadata.GetMetadata<BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute>() != null;
+            || ScreenEndpoints.IsScreen(endpoint)
+            || endpoint?.Metadata.GetMetadata<RepositoryPageAttribute>() != null;
         var metadata = endpoint?.Metadata.GetMetadata<RepositoryRouteMetadata>();
         var format = metadata?.Format ?? RepositoryFormat.NuGet;
 
@@ -71,7 +73,7 @@ public class RepositoryResolutionMiddleware
             if (found == null || (!isPage && found.Format != format))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                if (endpoint?.Metadata.GetMetadata<BaGet.Identity.Mvc.UI.UiApiAttribute>() != null)
+                if (endpoint?.Metadata.GetMetadata<UiApiAttribute>() != null)
                 {
                     // The JSON twin of a screen answers in its own shape.
                     await context.Response.WriteAsJsonAsync(

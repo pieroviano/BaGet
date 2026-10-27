@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.UI;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -198,7 +199,7 @@ public class AdminApiAccessTests : IDisposable
         var paths = answer.Json["paths"]!.AsObject();
         // A screen is a controller action of a view controller, named by its controller and the action that shows it.
         var pages = provider.ActionDescriptors.Items
-            .Select(a => BaGet.Identity.Mvc.UI.ScreenEndpoints.ScreenOf(a)?.ToString())
+            .Select(a => ScreenEndpoints.ScreenOf(a)?.ToString())
             .Where(s => s != null)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var docs = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "ui-coverage.md"));

@@ -2,8 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Security;
 using Microsoft.AspNetCore.Http;
-using BaGet.Identity.Security;
 
 namespace BaGet.Web.V3.Oci;
 

@@ -1,7 +1,7 @@
 using System;
 using BaGet.Identity.Application.Screens;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// Marks a controller action of <c>/api/ui</c> as the JSON twin of a screen: <c>[UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index))]</c>

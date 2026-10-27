@@ -7,12 +7,12 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Tests;
 

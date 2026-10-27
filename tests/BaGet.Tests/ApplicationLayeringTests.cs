@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Xunit;
 
 namespace BaGet.Tests;
@@ -92,7 +92,7 @@ public class ApplicationLayeringTests
         // external-provider step, which has no twin.
         var viewControllers = UiAssemblies
             .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsAbstract && typeof(BaGet.Identity.Controllers.Base.UiControllerBase).IsAssignableFrom(t))
+            .Where(t => !t.IsAbstract && typeof(UiControllerBase).IsAssignableFrom(t))
             .ToList();
 
         Assert.NotEmpty(viewControllers);

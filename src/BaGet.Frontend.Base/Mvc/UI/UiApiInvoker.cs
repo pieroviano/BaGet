@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// Calls a JSON twin from its view controller without an HTTP hop (decision D1). The twin is created like MVC creates a controller

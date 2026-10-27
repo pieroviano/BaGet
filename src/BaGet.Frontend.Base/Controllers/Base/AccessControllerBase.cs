@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.Screens;
+using BaGet.Identity.Application.Models.Policies;
+using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
-using BaGet.Identity.Application.Models.Policies;
-using BaGet.Identity.Application.Models.Shared;
-using BaGet.Identity.Mvc.Screens;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the access-control screens (groups, permission targets, projects, audit). Signed in, accounts enabled, an administrator, unless a screen widens it to a project's administrators

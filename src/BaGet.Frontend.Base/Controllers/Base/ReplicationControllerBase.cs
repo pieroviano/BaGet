@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.UseCases.Policies;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the replication screens. The access screens' rules

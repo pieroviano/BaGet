@@ -1,10 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using BaGet.Identity.Security;
 
 namespace BaGet.Web.V3.OpenApi;
 

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using BaGet.Identity.Mvc.Attributes;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Web.V3.Routing;
 

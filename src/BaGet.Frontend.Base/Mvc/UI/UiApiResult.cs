@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// The HTTP answer of a <see cref="ScreenResult{T}"/> on <c>/api/ui</c>: always <c>application/json</c> written with

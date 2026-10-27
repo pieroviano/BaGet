@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 
-namespace BaGet.Identity.Mvc.Attributes;
+namespace BaGet.Frontend.Mvc.Attributes;
 
 /// <summary>
 /// Selects a controller action by the <c>handler</c> value of the request, the way a Razor Page selects <c>OnPostApprove</c>

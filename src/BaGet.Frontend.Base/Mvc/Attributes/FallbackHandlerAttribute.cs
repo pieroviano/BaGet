@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Identity.Mvc.Attributes;
+namespace BaGet.Frontend.Mvc.Attributes;
 
 /// <summary>
 /// Marks the action of a screen that only answers a request no handler of the screen claims (a stray <c>POST</c> without a known

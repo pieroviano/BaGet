@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 
-namespace BaGet.Identity.Security;
+namespace BaGet.Frontend.Security;
 
 /// <summary>
 /// Credentials sent with <c>Authorization: Basic</c>, which is what NuGet clients (dotnet, nuget.exe, Visual Studio,

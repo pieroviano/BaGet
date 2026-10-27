@@ -2,7 +2,7 @@ using System;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Identity.Mvc.Screens;
+namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>
 /// What an account workflow decided, independent of the programming model that runs it: show the screen again, or leave for

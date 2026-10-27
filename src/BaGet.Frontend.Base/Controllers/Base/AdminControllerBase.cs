@@ -1,13 +1,13 @@
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.UI;
+using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services.Accounts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
-using BaGet.Identity.Application.Models.Shared;
-using BaGet.Identity.Application.Services.Accounts;
-using BaGet.Identity.Mvc.UI;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the administrator screens. Signed in, accounts enabled (see

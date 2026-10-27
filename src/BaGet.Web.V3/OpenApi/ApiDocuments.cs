@@ -4,12 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using BaGet.Frontend.Controllers.Base;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
-using BaGet.Identity.Controllers.Base;
 
 namespace BaGet.Web.V3.OpenApi;
 

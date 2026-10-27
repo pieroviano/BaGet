@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Controllers.Base;
+using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Extensions;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;

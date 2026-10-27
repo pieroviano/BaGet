@@ -1,4 +1,5 @@
 using System;
+using BaGet.Frontend.Mvc.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
@@ -10,7 +11,7 @@ namespace BaGet.Web.V3.Routing;
 /// <c>repo</c>) only to links that target the <i>same</i> action, so <c>Url.Action("Show", "Package")</c>, <c>asp-controller="Package"</c> and
 /// <c>RedirectToAction("Index", "PackageManage")</c> on a <c>/r/second/…</c> page would otherwise drop the prefix and leave the repository.
 /// This helper adds the request's <c>repo</c> as an explicit route value to every link to a controller action marked
-/// <see cref="BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute"/> that does not name one itself. An explicit value always wins, and
+/// <see cref="RepositoryPageAttribute"/> that does not name one itself. An explicit value always wins, and
 /// <c>repo = null</c> is the way to leave for the default repository. A link to any other action is untouched, so no stray <c>?repo=</c>
 /// appears on it. Razor Pages of a host are not touched either: BaGet's screens are controllers, and a screen is addressed by its controller
 /// and action (<c>Url.Action</c>, <c>asp-controller</c>/<c>asp-action</c>, <c>RedirectToAction</c>), never by a page name.

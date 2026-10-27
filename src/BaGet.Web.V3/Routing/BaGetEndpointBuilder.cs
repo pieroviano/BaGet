@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Scalar.AspNetCore;
-using BaGet.Identity.Controllers.Base;
 using BaGet.Web.V3.Controllers.Protocols;
 using BaGet.Web.V3.Filters;
 using BaGet.Web.V3.Middleware;

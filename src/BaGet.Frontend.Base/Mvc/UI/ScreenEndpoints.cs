@@ -2,16 +2,16 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.Attributes;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Mvc.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Routing;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// Tells the endpoints of BaGet's own web UI from every other endpoint and names the screen an action belongs to. A screen is an action of

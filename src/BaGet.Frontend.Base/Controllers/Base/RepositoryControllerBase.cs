@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using BaGet.Identity.Application.Models.Shared;
+using Microsoft.AspNetCore.Mvc;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the repository administration screens that change a remote repository's upstream or empty its cache. They ask for the administrator's password again (or a recent sign-in with the

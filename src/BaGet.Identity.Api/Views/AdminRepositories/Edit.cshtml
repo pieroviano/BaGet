@@ -1,3 +1,4 @@
+@using BaGet.Frontend.Mvc.Screens
 @model BaGet.Identity.Application.Models.Repositories.RepositoryEditViewModel
 @{
     ViewData["Title"] = "Repository " + Model.Name;
@@ -395,7 +396,7 @@
                 </p>
                 <table class="table" id="repository-access">
                     <tbody>
-                        @foreach (var action in BaGet.Identity.Mvc.Screens.AccessSupport.AllActions)
+                        @foreach (var action in AccessSupport.AllActions)
                         {
                             var who = Model.Access.Who(action);
                             var remoteDeploy = action == BaGet.Core.AccessAction.Deploy && Model.Repository?.Kind == BaGet.Core.RepositoryKind.Remote;

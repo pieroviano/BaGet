@@ -7,9 +7,9 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using BaGet.Identity.Security;
 using BaGet.Web.V3.Filters;
 using BaGet.Web.V3.Routing;
 

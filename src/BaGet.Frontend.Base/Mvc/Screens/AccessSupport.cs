@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Controllers.Base;
-using Microsoft.Extensions.DependencyInjection;
+using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Models.Policies;
 using BaGet.Identity.Application.UseCases.Access;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Mvc.Screens;
+namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>
 /// The thin forwards of the access screens' pattern helpers (the code is in <see cref="AccessPatternSupport"/>)

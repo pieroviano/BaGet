@@ -2,19 +2,19 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BaGet.Core;
-using BaGet.Identity.Controllers.Base;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services.Accounts;
+using BaGet.Identity.Application.Services.Ownership;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using BaGet.Identity.Application.Email;
-using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Application.Services.Accounts;
-using BaGet.Identity.Application.Services.Ownership;
 
-namespace BaGet.Identity.Mvc.Screens;
+namespace BaGet.Frontend.Mvc.Screens;
 
 /// <summary>
 /// What an account workflow needs from the request, whatever hosts it (<see cref="AccountControllerBase"/>). The services are resolved per call: they are

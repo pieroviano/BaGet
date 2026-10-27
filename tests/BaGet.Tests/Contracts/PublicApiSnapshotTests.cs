@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using BaGet.Frontend.Controllers.Base;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Extensions;
 using Xunit;
@@ -31,7 +32,7 @@ public class PublicApiSnapshotTests
     {
         typeof(NavLinkTagHelper).Assembly,
         typeof(AccountsServiceCollectionExtensions).Assembly,
-        typeof(BaGet.Identity.Controllers.Base.UiControllerBase).Assembly,
+        typeof(UiControllerBase).Assembly,
         typeof(ScreenGate).Assembly,
         typeof(BaGet.Web.Application.UseCases.LegalUseCase).Assembly,
     };
@@ -41,7 +42,7 @@ public class PublicApiSnapshotTests
     {
         ["BaGet.Web.V3"] = typeof(NavLinkTagHelper).Assembly,
         ["BaGet.Identity.Api"] = typeof(AccountsServiceCollectionExtensions).Assembly,
-        ["BaGet.Frontend.Base"] = typeof(BaGet.Identity.Controllers.Base.UiControllerBase).Assembly,
+        ["BaGet.Frontend.Base"] = typeof(UiControllerBase).Assembly,
     };
 
     /// <summary>The assembly column of a snapshot line is dropped: a moved type is the same line.</summary>

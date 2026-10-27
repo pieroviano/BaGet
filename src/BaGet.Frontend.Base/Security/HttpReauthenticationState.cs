@@ -1,11 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using BaGet.Frontend.Mvc.Screens;
 using BaGet.Identity.Application.UseCases.Account;
-using BaGet.Identity.Mvc.Screens;
+using Microsoft.AspNetCore.Http;
 
-namespace BaGet.Identity.Security;
+namespace BaGet.Frontend.Security;
 
 /// <summary>
 /// <see cref="IReauthenticationState"/> over the request's sign-in cookie: whether the session re-authenticated with the external

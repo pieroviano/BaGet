@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using BaGet.Frontend.Mvc.Attributes;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using BaGet.Identity.Mvc.Attributes;
 
 namespace BaGet.Web.V3.Routing;
 

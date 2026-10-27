@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Reflection;
+using BaGet.Frontend.Mvc.Attributes;
 using BaGet.Identity.Controllers.FrontEnd;
-using BaGet.Identity.Mvc.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 

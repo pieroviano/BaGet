@@ -1,12 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
+using BaGet.Frontend.Controllers.Base;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using BaGet.Identity.Application.Models.Repositories;
 using BaGet.Identity.Application.UseCases.Admin;
 using BaGet.Identity.Controllers.FrontEnd;
-using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Identity.Controllers.UI;
 

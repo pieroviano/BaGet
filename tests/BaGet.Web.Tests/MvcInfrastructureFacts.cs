@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -15,7 +16,6 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.Routing;
 using Xunit;
-using BaGet.Identity.Mvc.Attributes;
 using BaGet.Web.V3.Routing;
 using BaGet.Web.V3.TagHelpers;
 

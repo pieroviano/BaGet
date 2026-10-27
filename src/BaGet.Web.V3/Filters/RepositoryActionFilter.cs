@@ -1,12 +1,12 @@
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.Attributes;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Identity.Application.Screens;
-using BaGet.Identity.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Filters;
-using BaGet.Identity.Mvc.Attributes;
 using BaGet.Web.V3.Routing;
 
 namespace BaGet.Web.V3.Filters;

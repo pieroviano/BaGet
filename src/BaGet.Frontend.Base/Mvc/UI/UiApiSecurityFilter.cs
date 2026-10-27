@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
+using BaGet.Frontend.Security;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
-using BaGet.Identity.Security;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// Authenticates a request to <c>/api/ui</c> over HTTP before any action runs, like <c>/api/v1</c>: <b>API keys only</b>.

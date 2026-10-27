@@ -1,6 +1,6 @@
 using System;
 
-namespace BaGet.Identity.Mvc.Attributes;
+namespace BaGet.Frontend.Mvc.Attributes;
 
 /// <summary>
 /// The action answers 404 while no mail is configured (the per-action form of <c>AccountControllerBase.RequiresEmail</c>, for a

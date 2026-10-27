@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
-using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.UseCases.Policies;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Frontend.Controllers.Base;
 
 /// <summary>
 /// Base of the retention screens (policies, a policy's report, legal holds). The access screens' rules (administrators only, 404 for anyone else, redirect where there is no

@@ -5,7 +5,7 @@ using BaGet.Core;
 using Microsoft.AspNetCore.Http;
 using IAuthenticationService = BaGet.Core.IAuthenticationService;
 
-namespace BaGet.Identity.Security;
+namespace BaGet.Frontend.Security;
 
 /// <summary>
 /// Who is calling: the principal behind the request's credentials, for the read checks. Credentials are, in order, the

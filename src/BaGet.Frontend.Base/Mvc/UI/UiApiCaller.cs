@@ -1,10 +1,10 @@
 using System.Security.Claims;
 using BaGet.Core;
-using Microsoft.AspNetCore.Http;
+using BaGet.Frontend.Security;
 using BaGet.Identity.Application.Security;
-using BaGet.Identity.Security;
+using Microsoft.AspNetCore.Http;
 
-namespace BaGet.Identity.Mvc.UI;
+namespace BaGet.Frontend.Mvc.UI;
 
 /// <summary>
 /// Who calls <c>/api/ui</c> over HTTP: an API key sent as <c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c> (headers a web page cannot make a browser
