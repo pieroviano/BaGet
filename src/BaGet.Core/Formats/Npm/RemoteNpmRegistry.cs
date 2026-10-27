@@ -122,6 +122,8 @@ public sealed class RemoteNpmRegistry : INpmRegistry
         var document = answer.Document!;
         var manifest = FindVersion(document, version, out var upstreamVersion);
         if (manifest == null) return null;
+        // Stored under the upstream's spelling only: a file name with other build metadata (or case) is a different URL, not a second copy.
+        if (!string.Equals(upstreamVersion, version, StringComparison.Ordinal)) return null;
 
         var dist = manifest["dist"] as JsonObject;
         var announcedIntegrity = Text(dist?["integrity"]);
@@ -339,6 +341,14 @@ public sealed class RemoteNpmRegistry : INpmRegistry
     {
         upstreamVersion = null;
         if (document["versions"] is not JsonObject versions) return null;
+
+        // The exact spelling first: an upstream may list versions that differ only in case.
+        if (versions[version] is JsonObject exact)
+        {
+            upstreamVersion = version;
+
+            return exact;
+        }
 
         var wanted = NpmNames.Comparable(version);
         foreach (var pair in versions)

@@ -61,16 +61,44 @@ public sealed class RemoteMavenRepository : IMavenRepository
     {
         if (path == null) throw new ArgumentNullException(nameof(path));
         if (path.Candidates.Count == 0) return null;
-        if (path.Kind == MavenPathKind.File || path.Candidates.Count == 1) return path.Candidates[0];
+        if (path.Kind == MavenPathKind.File) return path.Candidates[0];
+
+        // A single candidate (a path two folders deep) can still be a group's plugin list, which names no artifact.
+        var single = path.Candidates.Count == 1;
+        if (single && (path.GroupOnly == null || path.Candidates[0].Version != null)) return path.Candidates[0];
 
         var upstream = await _upstream.ResolveAsync(cancellationToken).ConfigureAwait(false);
         if (upstream != null)
         {
             var answer = await _upstream.GetMetadataAsync(upstream, path.Plain.RelativePath, cancellationToken).ConfigureAwait(false);
-            if (answer.Status == MavenUpstreamStatus.Found && Identify(answer.Content!, path.Candidates) is { } match) return match;
+            if (answer.Status == MavenUpstreamStatus.Found)
+            {
+                if (Identify(answer.Content!, path.Candidates) is { } match) return match;
+
+                // Not about the artifact: a group-level document is judged by the repository's Read, not by an unrelated artifact's.
+                if (single && IsGroupLevel(answer.Content!)) return null;
+            }
         }
 
+        if (single) return path.Candidates[0];
+
         return await _local.ResolveAsync(path, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A group-level document: a plugin list with no artifactId of its own.
+    internal static bool IsGroupLevel(byte[] metadata)
+    {
+        try
+        {
+            using var reader = XmlReader.Create(new MemoryStream(metadata), new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null });
+            var root = XDocument.Load(reader).Root;
+
+            return root?.Element("plugins") != null && string.IsNullOrWhiteSpace(root.Element("artifactId")?.Value);
+        }
+        catch (XmlException)
+        {
+            return false;
+        }
     }
 
     // The candidate a metadata document is about: the artifact its groupId and artifactId name; the version level when it names a version.

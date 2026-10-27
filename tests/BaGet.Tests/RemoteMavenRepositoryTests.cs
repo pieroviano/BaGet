@@ -461,6 +461,19 @@ public class RemoteMavenRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task AGroupsPluginListIsNotJudgedByAnUnrelatedArtifactsName()
+    {
+        // org/acme/maven-metadata.xml can be artifact org:acme or the plugin list of group org.acme: the document decides.
+        _upstream.SetMetadata("org/acme/maven-metadata.xml", "<metadata><plugins><plugin><name>P</name><prefix>p</prefix><artifactId>acme-maven-plugin</artifactId></plugin></plugins></metadata>");
+        await CreateRemoteAsync();
+
+        using var scope = await _app.CreateRepositoryScopeAsync(Remote, Cancel);
+        var path = MavenNames.ParsePath("org/acme/maven-metadata.xml")!;
+
+        Assert.Null(await scope.ServiceProvider.GetRequiredService<IMavenRepository>().ResolveAsync(path, Cancel));
+    }
+
+    [Fact]
     public async Task TheGroupLevelMetadataThatResolvesPluginPrefixesIsTheUpstreams()
     {
         const string xml = "<metadata><plugins><plugin><name>Maven Dependency Plugin</name><prefix>dependency</prefix><artifactId>maven-dependency-plugin</artifactId></plugin></plugins></metadata>";

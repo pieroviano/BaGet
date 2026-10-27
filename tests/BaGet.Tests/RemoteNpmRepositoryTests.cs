@@ -149,6 +149,33 @@ public class RemoteNpmRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task ATarballFileNameWithOtherBuildMetadataIsNotFoundAndCachesNothing()
+    {
+        _upstream.Add("meta-pkg", "1.0.0");
+        await CreateRemoteAsync();
+
+        using var other = await TarballAsync("meta-pkg", "1.0.0+x");
+        Assert.Equal(HttpStatusCode.NotFound, other.StatusCode);
+        Assert.Null(await StoredAsync("meta-pkg"));
+
+        // The real URL still works and is cached under the upstream's spelling.
+        using var real = await TarballAsync("meta-pkg", "1.0.0");
+        Assert.Equal(HttpStatusCode.OK, real.StatusCode);
+        Assert.Equal("1.0.0", Assert.Single((await StoredAsync("meta-pkg"))!.Versions).Version);
+    }
+
+    [Fact]
+    public async Task AnUpstreamListingVersionsThatDifferOnlyInCaseServesEachByItsOwnSpelling()
+    {
+        _upstream.Add("case-pkg", "1.0.0-Beta", "1.0.0-beta");
+        await CreateRemoteAsync();
+
+        using var lower = await TarballAsync("case-pkg", "1.0.0-beta");
+        Assert.Equal(HttpStatusCode.OK, lower.StatusCode);
+        Assert.Equal(_upstream.Tarball("case-pkg", "1.0.0-beta").Bytes, await lower.Content.ReadAsByteArrayAsync(Cancel));
+    }
+
+    [Fact]
     public async Task ALegacyUpperCaseNameIsServedFromTheUpstreamAndItsTarballIsCached()
     {
         _upstream.Add("JSONStream", "1.3.5");

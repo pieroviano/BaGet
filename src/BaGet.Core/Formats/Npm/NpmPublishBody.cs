@@ -140,7 +140,7 @@ public static class NpmPublishBody
             foreach (var range in ranges)
             {
                 var attachmentNode = (root["_attachments"] as JsonObject)?[range.Name] as JsonObject;
-                var contentType = attachmentNode?["content_type"]?.GetValue<string>();
+                var contentType = attachmentNode?["content_type"] is JsonValue typeValue && typeValue.TryGetValue<string>(out var typeText) ? typeText : null;
                 long? declared = null;
                 if (attachmentNode?["length"] is JsonValue lengthValue && lengthValue.TryGetValue<long>(out var l)) declared = l;
 
