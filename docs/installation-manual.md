@@ -54,7 +54,7 @@ SettingsOverridesPath=/var/baget/appsettings.Overrides.json
 3. Run it:
 
 ```
-docker run --rm --name nuget-server -p 5555:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" baget:latest
+docker run --rm --name nuget-server -p 6060:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" baget:latest
 ```
 
 Keep `SettingsOverridesPath` and the log path inside the mounted volume, or a recreated container loses them.
