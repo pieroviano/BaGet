@@ -397,12 +397,16 @@ public sealed class ReplicationWorker : BackgroundService
             await using var lease = await _lease.TryAcquireAsync(ReplicationJobs.LeaseName(run.ConfigKey), cancellationToken).ConfigureAwait(false);
             if (lease == null) continue;
 
+            // The row was read before the lease: the run may have finished meanwhile. Judge it again, and save while the lease is held.
+            var key = run.Key;
+            var stillRunning = await context.ReplicationRuns!.AsNoTracking().AnyAsync(r => r.Key == key && r.Status == ReplicationRunStatus.Running, cancellationToken).ConfigureAwait(false);
+            if (!stillRunning) continue;
+
             run.Status = ReplicationRunStatus.Interrupted;
             run.Finished = _time.UtcNow;
             run.Error = "The server stopped during this run; start the replication again to continue.";
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
-
-        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Whether the schedule of <paramref name="config"/> is due at <paramref name="now"/>.</summary>

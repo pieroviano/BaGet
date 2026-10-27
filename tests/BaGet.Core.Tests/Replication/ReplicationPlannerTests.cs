@@ -81,6 +81,20 @@ public class ReplicationPlannerTests
     }
 
     [Fact]
+    public void AnItemTheTargetChangedAfterItWasCopiedIsNotDeletedUnlessTheSourceWins()
+    {
+        var ledger = new[] { I("app", "latest", "sha-a") };
+        var target = new[] { I("app", "latest", "sha-b") };
+
+        var keep = Plan(Array.Empty<ReplicaItem>(), target, ledger, ReplicationConflict.TargetWins, deletes: true);
+        Assert.Empty(keep.Delete);
+        Assert.Equal(new[] { "app latest" }, Keys(keep.Forget));
+
+        var win = Plan(Array.Empty<ReplicaItem>(), target, ledger, ReplicationConflict.SourceWins, deletes: true);
+        Assert.Equal(new[] { "app latest" }, Keys(win.Delete));
+    }
+
+    [Fact]
     public void ALedgerEntryGoneFromBothSidesIsForgottenAndOneStillAtTheSourceIsLeftAlone()
     {
         var ledger = new[] { I("gone", "1"), I("kept", "1") };

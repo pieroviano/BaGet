@@ -71,7 +71,12 @@ public static class ReplicationPlanner
             if (sourceByKey.ContainsKey(entry)) continue;
 
             plan.Examined++;
-            if (propagateDeletes && targetByKey.TryGetValue(entry, out var held)) plan.Delete.Add(held);
+            if (propagateDeletes && targetByKey.TryGetValue(entry, out var held))
+            {
+                // Content the target changed after it was replicated is deleted only when the source wins; else it is left alone.
+                if (!entry.DiffersFrom(held) || conflict == ReplicationConflict.SourceWins) plan.Delete.Add(held);
+                else plan.Forget.Add(entry);
+            }
             else plan.Forget.Add(entry);
         }
 

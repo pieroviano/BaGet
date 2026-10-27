@@ -933,6 +933,7 @@ in-memory gate (`MaintenanceGate`). It is not a setting and is never saved: a re
 | Validation worker | logs a warning, keeps the submission pending and retries every 30 s |
 | Pages | show a "Read-only" banner with the reason |
 
+- A database copy is refused on a node with `Ha:Enabled` (cluster nodes cannot be made read-only together).
 - After a job that needs a restart (a successful database copy) the gate is closed **until restart**: writes accepted
   before the restart would land in the old database and be lost.
 - In a cluster ([High availability](high-availability.md)) a closure made by `Close` (a running copy) is shared by every node
