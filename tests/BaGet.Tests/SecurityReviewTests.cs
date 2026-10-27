@@ -71,6 +71,31 @@ public class SecurityReviewTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, served.StatusCode);
     }
 
+    [Theory]
+    [InlineData("api/v2/FindPackagesById()?id='Secret.Pkg'&id='x'")]
+    [InlineData("api/v2/Packages()?id='Secret.Pkg'&id='x'")]
+    [InlineData("v3/autocomplete?id=Secret.Pkg&id=x")]
+    public async Task ARepeatedIdQueryKeyDoesNotHideAnExactNameExclusion(string path)
+    {
+        await CreateUserAsync(_app, "alice");
+        await PushAsync(_app, "alice", "Secret.Pkg");
+
+        await AdministerAsync(async a =>
+        {
+            await a.DeleteTargetAsync(BuiltInNames.AnyoneReads, null, CancellationToken.None);
+            await a.CreateTargetAsync("public except secret", new[] { "default" }, null, new[] { "Secret.Pkg" }, null, null, CancellationToken.None);
+            var everyone = await a.ResolvePrincipalAsync(PrincipalType.Group, BuiltInNames.Everyone, CancellationToken.None);
+            await a.SetGrantAsync("public except secret", PrincipalType.Group, everyone!, AccessAction.Read, null, CancellationToken.None);
+
+            return 0;
+        });
+
+        using var client = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     [Fact]
     public async Task TheManagePageAsksTheProtocolsPermissionPerHandler()
     {

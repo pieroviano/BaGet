@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Frontend.Security;
@@ -40,10 +41,11 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         var evaluator = services.GetRequiredService<IAccessEvaluator>();
         var repository = services.GetRequiredService<IRepositoryContext>().Current;
         var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
-        if (packageId == null && http.Request.Query.TryGetValue("id", out var queryId) && !string.IsNullOrWhiteSpace(queryId.ToString()))
+        if (packageId == null && http.Request.Query.TryGetValue("id", out var queryId) && !string.IsNullOrWhiteSpace(queryId.FirstOrDefault()))
         {
-            // V2 FindPackagesById()/Packages() and v3/autocomplete name the package in the query string.
-            packageId = queryId.ToString();
+            // V2 FindPackagesById()/Packages() and v3/autocomplete name the package in the query string. MVC binds the FIRST value of a
+            // repeated key, so that is the one judged (ToString() would join them and match no exclusion).
+            packageId = queryId.FirstOrDefault();
         }
 
         packageId = UnquoteLiteral(packageId);
