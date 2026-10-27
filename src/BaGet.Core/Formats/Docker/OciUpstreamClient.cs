@@ -726,8 +726,12 @@ public sealed class OciUpstreamClient
 
         for (var attempt = 0; ; attempt++)
         {
-            var response = await SendFollowingRedirectsAsync(transport, method, uri, accept, range, authorization, origin, cancellationToken).ConfigureAwait(false);
+            var (response, answeredBy) = await SendFollowingRedirectsAsync(transport, method, uri, accept, range, authorization, origin, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode != HttpStatusCode.Unauthorized || attempt >= 1) return response;
+
+            // A challenge is answered only when it came from the registry's own origin. A 401 from where a redirect led (a CDN, an
+            // object store) names a realm that host chose: the credentials must not go there. The caller sees a plain 401 (an absence).
+            if (!SameOrigin(answeredBy, origin)) return response;
 
             var challenges = response.Headers.WwwAuthenticate;
             var bearer = challenges.FirstOrDefault(c => string.Equals(c.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase));
@@ -759,7 +763,8 @@ public sealed class OciUpstreamClient
         }
     }
 
-    private async Task<HttpResponseMessage> SendFollowingRedirectsAsync(
+    // The response and the address that answered it (the last hop of the redirects).
+    private async Task<(HttpResponseMessage Response, Uri AnsweredBy)> SendFollowingRedirectsAsync(
         UpstreamTransport transport,
         HttpMethod method,
         Uri uri,
@@ -780,7 +785,7 @@ public sealed class OciUpstreamClient
             if (authorization != null && SameOrigin(current, origin)) request.Headers.Authorization = authorization;
 
             var response = await transport.Http!.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-            if (!IsRedirect(response.StatusCode) || response.Headers.Location == null) return response;
+            if (!IsRedirect(response.StatusCode) || response.Headers.Location == null) return (response, current);
 
             var next = new Uri(current, response.Headers.Location);
             response.Dispose();

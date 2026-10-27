@@ -10,7 +10,8 @@ namespace BaGet.Core;
 /// <param name="MediaType">The media type.</param>
 /// <param name="Digest">The digest (<c>sha256:…</c>).</param>
 /// <param name="Size">The announced size.</param>
-public sealed record OciParsedDescriptor(string MediaType, string Digest, long Size);
+/// <param name="Foreign">Whether it is a foreign (non-distributable) layer: a foreign or non-distributable media type with <c>urls</c>. Clients never upload these, so the registry neither requires nor counts them.</param>
+public sealed record OciParsedDescriptor(string MediaType, string Digest, long Size, bool Foreign = false);
 
 /// <summary>An entry of an index: a child manifest with the platform it is for.</summary>
 /// <param name="Descriptor">The child.</param>
@@ -46,9 +47,9 @@ public sealed class OciParsedManifest
     /// <summary>The document's <c>annotations</c>.</summary>
     public IReadOnlyDictionary<string, string> Annotations { get; init; } = new Dictionary<string, string>();
 
-    /// <summary>The distinct blob digests the manifest uses (config and layers).</summary>
+    /// <summary>The distinct blob digests the manifest uses (config and layers), foreign layers excluded (they are not stored here).</summary>
     public IEnumerable<string> BlobDigests
-        => (Config == null ? Layers : Layers.Prepend(Config)).Select(d => d.Digest).Distinct(StringComparer.Ordinal);
+        => (Config == null ? Layers : Layers.Prepend(Config)).Where(d => !d.Foreign).Select(d => d.Digest).Distinct(StringComparer.Ordinal);
 }
 
 /// <summary>
@@ -187,7 +188,10 @@ public static class OciManifestParser
         if (!OciNames.IsValidDigest(digest)) throw new OciException(OciErrorCode.DigestInvalid, $"{where} uses a digest algorithm this registry does not store (only sha256 is supported).", digest);
         if (!element.TryGetProperty("size", out var size) || size.ValueKind != JsonValueKind.Number || !size.TryGetInt64(out var bytes) || bytes < 0) throw Invalid($"{where} needs a size.");
 
-        return new OciParsedDescriptor(mediaType, digest, bytes);
+        var foreign = (mediaType.Contains("foreign", StringComparison.OrdinalIgnoreCase) || mediaType.Contains("nondistributable", StringComparison.OrdinalIgnoreCase))
+                      && element.TryGetProperty("urls", out var urls) && urls.ValueKind == JsonValueKind.Array && urls.GetArrayLength() > 0;
+
+        return new OciParsedDescriptor(mediaType, digest, bytes, foreign);
     }
 
     private static IReadOnlyDictionary<string, string> Annotations(JsonElement root)

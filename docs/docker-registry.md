@@ -50,7 +50,7 @@ never an API key, and last `Oci:TokenLifetime` (5 minutes). A revoked permission
 | `PATCH …/blobs/uploads/{ref}` | append a chunk (`202`); `Content-Range` start must equal the upload length, else `416` with the real `Range` |
 | `PUT …/blobs/uploads/{ref}?digest=` | optional last chunk, SHA-256 verified while streaming, `201`. A wrong digest is `400 DIGEST_INVALID` and ends the session |
 | `GET`/`DELETE …/blobs/uploads/{ref}` | `204` with the current `Range`; `204` cancel |
-| `PUT …/manifests/{tag or digest}` | `201`; the `Content-Type` must be an OCI or Docker v2 manifest/index type; every config, layer or child manifest must already be in the image (`400 MANIFEST_BLOB_UNKNOWN`); the digest in the URL must match; max `Oci:MaxManifestBytes` (4 MiB, `413`); `OCI-Subject` header when there is a subject |
+| `PUT …/manifests/{tag or digest}` | `201`; the `Content-Type` must be an OCI or Docker v2 manifest/index type; every config, layer or child manifest must already be in the image (`400 MANIFEST_BLOB_UNKNOWN`), except foreign (non-distributable) layers, i.e. a `foreign`/`nondistributable` media type with `urls`, which are neither required nor stored nor counted; the digest in the URL must match; max `Oci:MaxManifestBytes` (4 MiB, `413`); `OCI-Subject` header when there is a subject |
 | `HEAD`/`GET …/manifests/{tag or digest}` | the bytes exactly as pushed, `Docker-Content-Digest` |
 | `DELETE …/manifests/{digest}` | removes the manifest and its tags (`202`); `…/manifests/{tag}` removes the tag only |
 | `DELETE …/blobs/{digest}` | removes the blob from the image (`202`); `405 UNSUPPORTED` while a manifest of the image uses it |
@@ -114,7 +114,7 @@ The report (shown on the Operations page after the run) says how many of each, t
 |---|---|---|
 | Browse | `/docker-images?q=` | whoever may read the repository; lists only images the visitor may read; login, pull, push, buildx and daemon snippets |
 | Image | `/docker-images/{image}` | readers of the image: tags, manifests (type, platform, layers, size). `?digest=` shows one manifest: config and layers with sizes, an index's platforms with links to each manifest, annotations, the referrers (signatures, SBOMs; `&artifactType=` narrows them like the API filter), the document |
-| Manage | `/docker-manage/{image}` | signed-in users with **Delete** on the image: delete a tag, a manifest (with its tags), remove unused layers (older than `Oci:PruneGrace`), delete the whole image; each asks the password |
+| Manage | `/docker-manage/{image}` | signed-in users with **Delete** on the image: delete a tag, a manifest (with its tags), remove unused layers (older than `Oci:PruneGrace`; like the garbage collector, not while the image has an open upload session), delete the whole image; each asks the password |
 
 Docker pages are 404 in other formats' repositories and theirs are 404 in a Docker one. In a remote repository the browse and image pages list the cached images, show only the pull commands, and *Manage* is 404. There is no upload page: images are pushed with the CLI (and the NuGet upload page does not offer Docker repositories).
 

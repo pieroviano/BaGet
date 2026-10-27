@@ -471,6 +471,24 @@ public class RemoteOciRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task AChallengeFromTheHostARedirectLedToIsNotAnsweredWithTheCredential()
+    {
+        _upstream.AddImage("team/app", "1.0", "a");
+        _upstream.RedirectBlobs = true;
+        _upstream.CdnChallenges = true;
+        var layer = _upstream.LayersOf("team/app", "1.0")[0];
+        await CreateRemoteAsync();
+        (await GetAsync(ManifestPath("team/app", "1.0"))).Dispose();
+
+        using var response = await GetAsync(BlobPath("team/app", layer));
+
+        // The 401 came from the CDN, not the registry: its realm is never asked for a token (and so never given the credential).
+        Assert.NotEmpty(_upstream.CdnRequests);
+        Assert.Empty(_upstream.OtherRealmRequests);
+        Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ALayerThatDoesNotHaveItsDigestIsNeverKept()
     {
         _upstream.AddImage("team/app", "1.0", "a");

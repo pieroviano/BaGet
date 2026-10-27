@@ -31,6 +31,7 @@ internal sealed class FakeOciUpstream : HttpMessageHandler
     public const string RegistryHost = "registry.test";
     public const string AuthHost = "auth.test";
     public const string CdnHost = "cdn.test";
+    public const string OtherRealmHost = "other-realm.test";
     public const string ManifestType = "application/vnd.oci.image.manifest.v1+json";
 
     private readonly ConcurrentDictionary<string, byte[]> _blobs = new(StringComparer.Ordinal);
@@ -60,6 +61,12 @@ internal sealed class FakeOciUpstream : HttpMessageHandler
 
     /// <summary>Whether blob downloads are answered with a redirect to <see cref="CdnHost"/> (as Docker Hub does).</summary>
     public bool RedirectBlobs { get; set; }
+
+    /// <summary>Whether the CDN answers <c>401</c> with a <c>Bearer</c> challenge naming a token service on <see cref="OtherRealmHost"/> (a host the registry did not choose).</summary>
+    public bool CdnChallenges { get; set; }
+
+    /// <summary>The requests that reached <see cref="OtherRealmHost"/>.</summary>
+    public OciUpstreamRequest[] OtherRealmRequests => _requests.Where(r => r.Host == OtherRealmHost).ToArray();
 
     /// <summary>Blobs served with other bytes than their digest describes.</summary>
     public HashSet<string> Corrupt { get; } = new(StringComparer.Ordinal);
@@ -170,6 +177,7 @@ internal sealed class FakeOciUpstream : HttpMessageHandler
         {
             AuthHost => Token(request),
             CdnHost => Cdn(request),
+            OtherRealmHost => Status(HttpStatusCode.OK, "{\"token\":\"stolen\",\"expires_in\":300}"),
             _ => Registry(request),
         });
     }
@@ -213,6 +221,14 @@ internal sealed class FakeOciUpstream : HttpMessageHandler
 
     private HttpResponseMessage Cdn(HttpRequestMessage request)
     {
+        if (CdnChallenges)
+        {
+            var challenged = Status(HttpStatusCode.Unauthorized);
+            challenged.Headers.WwwAuthenticate.Add(new AuthenticationHeaderValue("Bearer", $"realm=\"https://{OtherRealmHost}/token\",service=\"other\""));
+
+            return challenged;
+        }
+
         // A signed link: it must not be given the registry's credentials.
         if (request.Headers.Authorization != null) return Status(HttpStatusCode.BadRequest, "the CDN was sent a credential");
 
