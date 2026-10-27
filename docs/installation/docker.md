@@ -43,10 +43,12 @@ For a full list of configurations, please refer to [BaGet Extension's configurat
 docker build -t baget .
 ```
 
+The build context is the repository root: the image needs `Directory.Build.props` and `SignKey.snk` (strong naming) next to `src/`. `.dockerignore` keeps out everything else, including the local data of a developer run (`src/BaGet/appsettings.Overrides.json`, `baget.db`, `packages/`...).
+
 You can now run BaGet Extension:
 
 ```
-docker run --rm --name nuget-server -p 5555:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" baget:latest   # or <image>:latest for the pulled image
+docker run --rm --name nuget-server -p 6060:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" baget:latest   # or <image>:latest for the pulled image
 ```
 
 ## Publish packages
@@ -54,13 +56,13 @@ docker run --rm --name nuget-server -p 5555:80 --env-file baget.env -v "$(pwd)/b
 Publish your first package with:
 
 ```
-dotnet nuget push -s http://localhost:5555/v3/index.json -k NUGET-SERVER-API-KEY package.1.0.0.nupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json -k NUGET-SERVER-API-KEY package.1.0.0.nupkg
 ```
 
 Publish your first [symbol package](https://docs.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg) with:
 
 ```
-dotnet nuget push -s http://localhost:5555/v3/index.json -k NUGET-SERVER-API-KEY symbol.package.1.0.0.snupkg
+dotnet nuget push -s http://localhost:6060/v3/index.json -k NUGET-SERVER-API-KEY symbol.package.1.0.0.snupkg
 ```
 
 !!! warning
@@ -79,7 +81,7 @@ services:
   baget:
     image: <your BaGet Extension image>
     ports:
-      - "5555:80"
+      - "6060:80"
     environment:
       - Telemetry__Enabled=true
       - Telemetry__Otlp__Endpoint=http://jaeger:4317
@@ -99,13 +101,13 @@ OpenTelemetry Collector instead. The same keys can be changed live on the Settin
 
 ## Browse packages
 
-You can browse packages by opening the URL [`http://localhost:5555/`](http://localhost:5555/) in your browser.
+You can browse packages by opening the URL [`http://localhost:6060/`](http://localhost:6060/) in your browser.
 
 ## Restore packages
 
 You can restore packages by using the following package source:
 
-`http://localhost:5555/v3/index.json`
+`http://localhost:6060/v3/index.json`
 
 Some helpful guides:
 
@@ -116,6 +118,6 @@ Some helpful guides:
 
 You can load symbols by using the following symbol location:
 
-`http://localhost:5555/api/download/symbols`
+`http://localhost:6060/api/download/symbols`
 
 For Visual Studio, please refer to the [Configure Debugging](https://docs.microsoft.com/en-us/visualstudio/debugger/specify-symbol-dot-pdb-and-source-files-in-the-visual-studio-debugger?view=vs-2017#configure-symbol-locations-and-loading-options) guide.

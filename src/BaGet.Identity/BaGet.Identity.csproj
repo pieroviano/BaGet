@@ -38,4 +38,10 @@
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The views are compiled into this assembly; their .cshtml are not deployment files. Publishing them would
+         collide with the other Razor library's Views/_ViewImports.cshtml and _ViewStart.cshtml (NETSDK1152). -->
+    <Content Update="Views\**\*.cshtml" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>
