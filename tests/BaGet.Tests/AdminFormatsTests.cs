@@ -39,7 +39,7 @@ internal sealed class FakeNpmModule : IFormatModule
     }
 
     public IReadOnlyList<FormatLink> RepositoryLinks(RepositoryInfo repository)
-        => new[] { new FormatLink("registry", "Registry", null, "npm/") };
+        => new[] { new FormatLink("registry", "Registry", null, null, "npm/") };
 
     public async Task<IReadOnlyDictionary<int, int>> CountArtifactsAsync(IContext context, CancellationToken cancellationToken)
         => await context.NpmPackages!.IgnoreQueryFilters().GroupBy(p => p.RepositoryKey)

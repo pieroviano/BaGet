@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ public class UsersController : AdminApiController
 
     /// <summary>Lists users.</summary>
     [HttpGet]
-    [ApiOperation("List users, optionally by a name fragment", "/Admin/Users", Response = typeof(UserDto), PagedList = true)]
+    [ApiOperation("List users, optionally by a name fragment", typeof(AdminUsersController), nameof(AdminUsersController.Index), Response = typeof(UserDto), PagedList = true)]
     public async Task<IActionResult> List(string? q, int? page, int? pageSize)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -56,7 +57,7 @@ public class UsersController : AdminApiController
 
     /// <summary>One user.</summary>
     [HttpGet("{name}")]
-    [ApiOperation("Show a user with groups, project roles, organizations and API keys", "/Admin/UserDetail", Response = typeof(UserDetailDto))]
+    [ApiOperation("Show a user with groups, project roles, organizations and API keys", typeof(AdminUsersController), nameof(AdminUsersController.Detail), Response = typeof(UserDetailDto))]
     public async Task<IActionResult> Get(string name)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -91,7 +92,7 @@ public class UsersController : AdminApiController
 
     /// <summary>What the user may do in each repository.</summary>
     [HttpGet("{name}/access")]
-    [ApiOperation("Show what a user may do in each repository, and the grants behind it (for one package id with ?package=)", "/Admin/UserDetail", Response = typeof(UserAccessDto))]
+    [ApiOperation("Show what a user may do in each repository, and the grants behind it (for one package id with ?package=)", typeof(AdminUsersController), nameof(AdminUsersController.Detail), Response = typeof(UserAccessDto))]
     public async Task<IActionResult> Access(string name, string? package)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -114,7 +115,7 @@ public class UsersController : AdminApiController
 
     /// <summary>Creates an account.</summary>
     [HttpPost]
-    [ApiOperation("Create a user (with a given or a generated password, returned once)", "/Admin/Users", Confirm = true, Response = typeof(CreatedUserDto), Status = 201)]
+    [ApiOperation("Create a user (with a given or a generated password, returned once)", typeof(AdminUsersController), nameof(AdminUsersController.Index), Confirm = true, Response = typeof(CreatedUserDto), Status = 201)]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -132,7 +133,7 @@ public class UsersController : AdminApiController
 
     /// <summary>Promotes or demotes a user.</summary>
     [HttpPut("{name}/administrator")]
-    [ApiOperation("Make a user an administrator or take the flag away (never the last administrator)", "/Admin/Users", Confirm = true, Response = typeof(UserDto))]
+    [ApiOperation("Make a user an administrator or take the flag away (never the last administrator)", typeof(AdminUsersController), nameof(AdminUsersController.Index), Confirm = true, Response = typeof(UserDto))]
     public async Task<IActionResult> SetAdministrator(string name, [FromBody] AdministratorRequest request)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -152,7 +153,7 @@ public class UsersController : AdminApiController
 
     /// <summary>Adds the user to a group.</summary>
     [HttpPut("{name}/groups/{group}")]
-    [ApiOperation("Add a user to a group", "/Admin/UserDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Add a user to a group", typeof(AdminUsersController), nameof(AdminUsersController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> AddGroup(string name, string group)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -168,7 +169,7 @@ public class UsersController : AdminApiController
 
     /// <summary>Removes the user from a group.</summary>
     [HttpDelete("{name}/groups/{group}")]
-    [ApiOperation("Remove a user from a group", "/Admin/UserDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Remove a user from a group", typeof(AdminUsersController), nameof(AdminUsersController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> RemoveGroup(string name, string group)
     {
         if (AccountsDisabled() is { } disabled) return disabled;
@@ -184,7 +185,7 @@ public class UsersController : AdminApiController
 
     /// <summary>Revokes one of the user's keys.</summary>
     [HttpDelete("{name}/keys/{key:int}")]
-    [ApiOperation("Revoke one of a user's API keys", "/Admin/UserDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Revoke one of a user's API keys", typeof(AdminUsersController), nameof(AdminUsersController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> RevokeKey(string name, int key)
     {
         if (AccountsDisabled() is { } disabled) return disabled;

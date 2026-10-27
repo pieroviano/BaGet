@@ -16,7 +16,7 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 public sealed class ApiCatalogController : AdminControllerBase
 {
     /// <summary>Lists the operations.</summary>
-    [Route("admin/api"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Api")]
+    [Route("admin/api"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index()
         => Render(await Api<ApiCatalogUiApiController, ApiCatalogViewModel>(api => api.Get()), "Index");
 }

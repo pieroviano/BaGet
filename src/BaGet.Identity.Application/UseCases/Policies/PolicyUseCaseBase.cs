@@ -34,7 +34,7 @@ public abstract class PolicyUseCaseBase : AdminUseCaseBase
         string? password,
         bool confirm,
         Func<Task<string>> change,
-        string screen,
+        ScreenRef screen,
         IReadOnlyDictionary<string, object?>? route)
     {
         ThrowIfClosed();

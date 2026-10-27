@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -23,19 +24,19 @@ public class RetentionController : AdminApiController
 
     /// <summary>Lists policies.</summary>
     [HttpGet("policies")]
-    [ApiOperation("List retention policies with their last run", "/Admin/Retention", Response = typeof(RetentionPolicyDto), PagedList = true)]
+    [ApiOperation("List retention policies with their last run", typeof(AdminRetentionController), nameof(AdminRetentionController.Index), Response = typeof(RetentionPolicyDto), PagedList = true)]
     public async Task<IActionResult> List(int? page, int? pageSize)
         => RespondPage((await Retention.ListPoliciesAsync(Cancellation)).Select(p => new RetentionPolicyDto(p, Jobs.Get(p.Policy.Key))).ToList(), page, pageSize);
 
     /// <summary>One policy.</summary>
     [HttpGet("policies/{key:int}")]
-    [ApiOperation("Show a retention policy with its last run and report", "/Admin/RetentionPolicy", Response = typeof(RetentionPolicyDto))]
+    [ApiOperation("Show a retention policy with its last run and report", typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Response = typeof(RetentionPolicyDto))]
     public async Task<IActionResult> Get(int key)
         => await Retention.GetPolicyAsync(key, Cancellation) is { } policy ? Respond(new RetentionPolicyDto(policy, Jobs.Get(key))) : ApiProblems.NotFound($"retention policy {key}");
 
     /// <summary>Creates a policy.</summary>
     [HttpPost("policies")]
-    [ApiOperation("Create a retention policy", "/Admin/Retention", Confirm = true, Response = typeof(RetentionPolicyDto), Status = 201)]
+    [ApiOperation("Create a retention policy", typeof(AdminRetentionController), nameof(AdminRetentionController.Index), Confirm = true, Response = typeof(RetentionPolicyDto), Status = 201)]
     public async Task<IActionResult> Create([FromBody] RetentionPolicyRequest request)
     {
         ThrowIfClosed();
@@ -48,7 +49,7 @@ public class RetentionController : AdminApiController
 
     /// <summary>Replaces a policy's rules.</summary>
     [HttpPut("policies/{key:int}")]
-    [ApiOperation("Replace a retention policy's scope and rules", "/Admin/RetentionPolicy", Confirm = true, Response = typeof(RetentionPolicyDto))]
+    [ApiOperation("Replace a retention policy's scope and rules", typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Confirm = true, Response = typeof(RetentionPolicyDto))]
     public async Task<IActionResult> Update(int key, [FromBody] RetentionPolicyRequest request)
     {
         ThrowIfClosed();
@@ -62,7 +63,7 @@ public class RetentionController : AdminApiController
 
     /// <summary>Deletes a policy.</summary>
     [HttpDelete("policies/{key:int}")]
-    [ApiOperation("Delete a retention policy (what it deleted stays deleted)", "/Admin/RetentionPolicy", Confirm = true, Status = 204)]
+    [ApiOperation("Delete a retention policy (what it deleted stays deleted)", typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Confirm = true, Status = 204)]
     public async Task<IActionResult> Delete(int key)
     {
         ThrowIfClosed();
@@ -76,7 +77,7 @@ public class RetentionController : AdminApiController
 
     /// <summary>Starts a dry run.</summary>
     [HttpPost("policies/{key:int}/dry-run")]
-    [ApiOperation("Start a dry run of a policy: the report of what a run would delete (nothing is deleted)", "/Admin/RetentionPolicy", Response = typeof(RetentionJobStatus), Status = 202)]
+    [ApiOperation("Start a dry run of a policy: the report of what a run would delete (nothing is deleted)", typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Response = typeof(RetentionJobStatus), Status = 202)]
     public async Task<IActionResult> DryRun(int key)
     {
         if (await Retention.GetPolicyAsync(key, Cancellation) == null) return ApiProblems.NotFound($"retention policy {key}");
@@ -87,7 +88,7 @@ public class RetentionController : AdminApiController
 
     /// <summary>Starts a run that deletes.</summary>
     [HttpPost("policies/{key:int}/run")]
-    [ApiOperation("Start a run of a policy: the versions it selects are deleted", "/Admin/RetentionPolicy", Confirm = true, Response = typeof(RetentionJobStatus), Status = 202)]
+    [ApiOperation("Start a run of a policy: the versions it selects are deleted", typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Confirm = true, Response = typeof(RetentionJobStatus), Status = 202)]
     public async Task<IActionResult> Run(int key)
     {
         ThrowIfClosed();
@@ -102,7 +103,7 @@ public class RetentionController : AdminApiController
 
     /// <summary>The last run of a policy.</summary>
     [HttpGet("policies/{key:int}/run")]
-    [ApiOperation("Show the last run (or dry run) of a policy with its report", "/Admin/RetentionPolicy", Response = typeof(RetentionJobStatus))]
+    [ApiOperation("Show the last run (or dry run) of a policy with its report", typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Response = typeof(RetentionJobStatus))]
     public async Task<IActionResult> LastRun(int key)
     {
         if (await Retention.GetPolicyAsync(key, Cancellation) == null) return ApiProblems.NotFound($"retention policy {key}");
@@ -112,13 +113,13 @@ public class RetentionController : AdminApiController
 
     /// <summary>Lists legal holds.</summary>
     [HttpGet("holds")]
-    [ApiOperation("List legal holds, optionally of one repository", "/Admin/RetentionHolds", Response = typeof(RetentionHoldView), PagedList = true)]
+    [ApiOperation("List legal holds, optionally of one repository", typeof(AdminRetentionController), nameof(AdminRetentionController.Holds), Response = typeof(RetentionHoldView), PagedList = true)]
     public async Task<IActionResult> Holds(string? repository, int? page, int? pageSize)
         => RespondPage(await Retention.ListHoldsAsync(string.IsNullOrWhiteSpace(repository) ? null : repository, Cancellation), page, pageSize);
 
     /// <summary>Places a hold.</summary>
     [HttpPost("holds")]
-    [ApiOperation("Place a legal hold on an artifact (retention never deletes it)", "/Admin/RetentionHolds", Response = typeof(RetentionHold), Status = 201)]
+    [ApiOperation("Place a legal hold on an artifact (retention never deletes it)", typeof(AdminRetentionController), nameof(AdminRetentionController.Holds), Response = typeof(RetentionHold), Status = 201)]
     public async Task<IActionResult> AddHold([FromBody] HoldRequest request)
     {
         ThrowIfClosed();
@@ -129,7 +130,7 @@ public class RetentionController : AdminApiController
 
     /// <summary>Lifts a hold.</summary>
     [HttpDelete("holds/{key:int}")]
-    [ApiOperation("Lift a legal hold", "/Admin/RetentionHolds", Confirm = true, Status = 204)]
+    [ApiOperation("Lift a legal hold", typeof(AdminRetentionController), nameof(AdminRetentionController.Holds), Confirm = true, Status = 204)]
     public async Task<IActionResult> RemoveHold(int key)
     {
         ThrowIfClosed();

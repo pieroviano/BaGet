@@ -23,20 +23,18 @@ namespace BaGet.Identity.Controllers.UI;
 [RepositoryPage(AnyFormat = true, NotOnVirtual = true)]
 public sealed class ScanArtifactUiApiController : AccountUiApiControllerBase
 {
-    private const string Screen = "/Packages/Scan";
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
     private ScanArtifactUseCase UseCase => HttpContext.RequestServices.GetRequiredService<ScanArtifactUseCase>();
 
     /// <summary>Shows the form (and the stored result) of the version.</summary>
-    [HttpGet, UiApi(Screen)]
+    [HttpGet, UiApi(typeof(ScanArtifactController), nameof(ScanArtifactController.Index))]
     public async Task<ActionResult<ScreenResult<ScanViewModel>>> Get(string? name, string? version, string? returnUrl, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, name, version, returnUrl, BackUrl(returnUrl), cancellationToken));
 
     /// <summary>Scans the version now (or queues it, for an image) and shows the outcome.</summary>
-    [HttpPost, UiApi(Screen)]
+    [HttpPost, UiApi(typeof(ScanArtifactController), nameof(ScanArtifactController.Index))]
     public async Task<ActionResult<ScreenResult<ScanViewModel>>> Scan([FromBody] ScanArtifactForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.ScanAsync(User, form?.Name, form?.Version, form?.ReturnUrl, BackUrl(form?.ReturnUrl), cancellationToken));
 

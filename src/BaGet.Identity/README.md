@@ -35,8 +35,7 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 
 ## Screens: MVC controllers and views
 
-Every screen is a controller action and a view; the package ships **no `@page` file**. URLs, `?handler=` form posts and page names (`asp-page`,
-`Url.Page`, `RedirectToPage`) are unchanged from the Razor Pages era. The old page-model types (`LoginModel`, `UsersModel`, `AccountPageModel`, ...) were removed (breaking for code that referenced them).
+Every screen is a controller action and a view; the package ships **no `@page` file**. URLs and `?handler=` form posts are unchanged from the Razor Pages era; a screen is identified by its controller and default GET action (`asp-controller`/`asp-action`, `Url.Action`, `RedirectToAction`), not by a page name (`asp-page`, `Url.Page` and `RedirectToPage` with BaGet page names no longer resolve). The old page-model types (`LoginModel`, `UsersModel`, `AccountPageModel`, ...) were removed (breaking for code that referenced them).
 
 | Folder / type | Role |
 |---|---|
@@ -44,7 +43,8 @@ Every screen is a controller action and a view; the package ships **no `@page` f
 | `Views/<Controller>/<Action>.cshtml` | The screens; `Views/Shared` holds the partials (the old `Pages/...` partial paths were removed). A host overrides a view with its own `Views/<Controller>/<Action>.cshtml` |
 | `Controllers/UI/`, `Controllers/Base/` | The JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)) and the controller base classes. The models the views read and the logic of every screen are in `Extension.BaGet.Identity.Application` (use cases); no `*Workflow` class is left |
 | `Mvc/Attributes/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query), like `OnPostApprove`; an unknown handler is the default handler |
-| `Mvc/Attributes/LegacyPageAttribute` | The page name a controller action replaces (`/Admin/Users`): `Url.Page`, `asp-page` and `RedirectToPage` keep resolving; navigation, `ApiOperation.UiPage` and the coverage tests use it |
+| `Mvc/UI/ScreenEndpoints` | Whether an action is a screen (an action of a `UiControllerBase`, not a `[FallbackHandler]`) and which screen it belongs to (`ScreenRef`: controller + default GET action); navigation, scanning refusals, repository resolution and the coverage tests use it |
+| `Mvc/Attributes/FallbackHandlerAttribute` | Marks the `NoHandler` action of a manage controller (a stray POST answers 404); not a handler of the screen |
 | `Mvc/Attributes/ImplicitPageHandlerAttribute` | Marks the default `[PageHandler]` action that answers a form posted to the screen's own URL: it renders the screen; not a handler of the route contract |
 | `Mvc/Attributes/RepositoryPageAttribute` | The action acts on the request's repository: `/r/{repo}/` twin routes and the repository check (format, upload, not on virtual / remote) |
 | `Controllers/Base/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (admin or project-admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in a fixed order |

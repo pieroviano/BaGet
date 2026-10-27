@@ -119,7 +119,7 @@ public class BaGetEndpointBuilder
     /// <summary>
     /// The administration REST API (<c>/api/v1</c>, <see cref="AdminApiController"/>): attribute-routed controllers, so
     /// <c>MapControllers</c> maps them (the protocol controllers are mapped through <c>MapRoute</c> and carry no route attribute; the
-    /// other attribute-routed controllers are the UI controllers that replace Razor Pages, <c>BaGet.Identity.Mvc.Attributes.LegacyPageAttribute</c>,
+    /// other attribute-routed controllers are the UI controllers (<c>BaGet.Identity.Controllers.Base.UiControllerBase</c>),
     /// which get their <c>r/{repo}/</c> twin from <see cref="RepositoryActionRouteConvention"/>). The API controllers are not repository
     /// routes: they carry no <see cref="RepositoryRouteMetadata"/>, no <c>r/{repo}/</c> twin, and authorize themselves with an
     /// administrator's API key.

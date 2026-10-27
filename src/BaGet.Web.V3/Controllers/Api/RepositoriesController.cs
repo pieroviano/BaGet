@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Lists repositories, optionally by format, kind or a name fragment.</summary>
     [HttpGet]
-    [ApiOperation("List repositories (filter by format, kind or name)", "/Admin/Repositories", Response = typeof(RepositoryDto), PagedList = true)]
+    [ApiOperation("List repositories (filter by format, kind or name)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Index), Response = typeof(RepositoryDto), PagedList = true)]
     public async Task<IActionResult> List(string? format, string? kind, string? q, int? page, int? pageSize)
     {
         var all = await _administration.ListAsync(Cancellation);
@@ -47,7 +48,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>The formats and what each asks for.</summary>
     [HttpGet("/api/v1/formats")]
-    [ApiOperation("List the package formats and the kinds and fields each offers", "/Admin/Formats", Response = typeof(FormatDto))]
+    [ApiOperation("List the package formats and the kinds and fields each offers", typeof(AdminOperationsController), nameof(AdminOperationsController.Formats), Response = typeof(FormatDto))]
     public IActionResult Formats()
         => Respond(_formats.Modules.Select(m => new FormatDto(
             m.Format.ToString(),
@@ -59,7 +60,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>One repository with its kind's details.</summary>
     [HttpGet("{name}")]
-    [ApiOperation("Show a repository with its upstream, cache or members", "/Admin/RepositoryEdit", Response = typeof(RepositoryDetailDto))]
+    [ApiOperation("Show a repository with its upstream, cache or members", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Response = typeof(RepositoryDetailDto))]
     public async Task<IActionResult> Get(string name)
     {
         var summary = await _administration.FindAsync(name, Cancellation);
@@ -103,7 +104,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Who may do what in the repository (the effective-access panel of RepositoryEdit).</summary>
     [HttpGet("{name}/access")]
-    [ApiOperation("Show who holds which action in a repository, and why", "/Admin/RepositoryEdit", Response = typeof(RepositoryAccessSummary))]
+    [ApiOperation("Show who holds which action in a repository, and why", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Response = typeof(RepositoryAccessSummary))]
     public async Task<IActionResult> Access(string name)
     {
         var info = await _repositories.FindAsync(name, Cancellation);
@@ -114,7 +115,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Creates a repository.</summary>
     [HttpPost]
-    [ApiOperation("Create a local, remote or virtual repository of any format (remote asks for the password)", "/Admin/Repositories", Confirm = true, Response = typeof(RepositoryDto), Status = 201)]
+    [ApiOperation("Create a local, remote or virtual repository of any format (remote asks for the password)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Index), Confirm = true, Response = typeof(RepositoryDto), Status = 201)]
     public async Task<IActionResult> Create([FromBody] CreateRepositoryRequest request)
     {
         ThrowIfClosed();
@@ -171,7 +172,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Changes a repository's anonymous-read switch.</summary>
     [HttpPatch("{name}")]
-    [ApiOperation("Switch a repository's anonymous read (a remote repository asks for the password)", "/Admin/RepositoryEdit", Confirm = true, Response = typeof(RepositoryDto))]
+    [ApiOperation("Switch a repository's anonymous read (a remote repository asks for the password)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Confirm = true, Response = typeof(RepositoryDto))]
     public async Task<IActionResult> Patch(string name, [FromBody] PatchRepositoryRequest request)
     {
         ThrowIfClosed();
@@ -192,7 +193,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Deletes an empty repository.</summary>
     [HttpDelete("{name}")]
-    [ApiOperation("Delete an empty repository (refused for default, a repository with packages, or a virtual member)", "/Admin/RepositoryDelete", Status = 204)]
+    [ApiOperation("Delete an empty repository (refused for default, a repository with packages, or a virtual member)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.DeleteRepository), Status = 204)]
     public async Task<IActionResult> Delete(string name)
     {
         ThrowIfClosed();
@@ -208,7 +209,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Replaces a remote repository's upstream.</summary>
     [HttpPut("{name}/remote")]
-    [ApiOperation("Change a remote repository's upstream and settings", "/Admin/RepositoryEdit", Confirm = true, Response = typeof(RemoteSettingsDto))]
+    [ApiOperation("Change a remote repository's upstream and settings", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Confirm = true, Response = typeof(RemoteSettingsDto))]
     public async Task<IActionResult> UpdateRemote(string name, [FromBody] RemoteSettingsRequest request)
     {
         ThrowIfClosed();
@@ -224,7 +225,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Asks an upstream whether it answers; saves nothing.</summary>
     [HttpPost("{name}/remote/test")]
-    [ApiOperation("Test a remote repository's upstream with unsaved settings (saves nothing)", "/Admin/RepositoryEdit", Confirm = true, Response = typeof(RemoteConnectionResult))]
+    [ApiOperation("Test a remote repository's upstream with unsaved settings (saves nothing)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Confirm = true, Response = typeof(RemoteConnectionResult))]
     public async Task<IActionResult> TestRemote(string name, [FromBody] RemoteSettingsRequest request)
     {
         var remotes = Service<IRemoteRepositoryAdministration>();
@@ -245,7 +246,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>What a remote repository stores and remembers.</summary>
     [HttpGet("{name}/remote/cache")]
-    [ApiOperation("Show what a remote repository stores and remembers", "/Admin/RepositoryEdit", Response = typeof(RemoteCacheOverview))]
+    [ApiOperation("Show what a remote repository stores and remembers", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Response = typeof(RemoteCacheOverview))]
     public async Task<IActionResult> Cache(string name)
     {
         var remotes = Service<IRemoteRepositoryAdministration>();
@@ -256,7 +257,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Deletes everything a remote repository stored.</summary>
     [HttpPost("{name}/remote/purge")]
-    [ApiOperation("Purge a remote repository's cache (deletes what it stored)", "/Admin/RepositoryEdit", Confirm = true, Response = typeof(PurgeResult))]
+    [ApiOperation("Purge a remote repository's cache (deletes what it stored)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Confirm = true, Response = typeof(PurgeResult))]
     public async Task<IActionResult> Purge(string name)
     {
         ThrowIfClosed();
@@ -270,7 +271,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Deletes one cached package of a remote repository.</summary>
     [HttpPost("{name}/remote/purge-package")]
-    [ApiOperation("Purge one cached package of a remote repository", "/Admin/RepositoryEdit", Confirm = true, Response = typeof(PurgeResult))]
+    [ApiOperation("Purge one cached package of a remote repository", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Confirm = true, Response = typeof(PurgeResult))]
     public async Task<IActionResult> PurgePackage(string name, [FromBody] PurgePackageRequest request)
     {
         ThrowIfClosed();
@@ -303,7 +304,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Replaces a virtual repository's members and deploy repository.</summary>
     [HttpPut("{name}/virtual")]
-    [ApiOperation("Replace a virtual repository's members, their order and its deploy repository", "/Admin/RepositoryEdit", Response = typeof(VirtualDto))]
+    [ApiOperation("Replace a virtual repository's members, their order and its deploy repository", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Response = typeof(VirtualDto))]
     public async Task<IActionResult> UpdateVirtual(string name, [FromBody] VirtualRequest request)
     {
         ThrowIfClosed();
@@ -322,7 +323,7 @@ public class RepositoriesController : AdminApiController
 
     /// <summary>Which member would answer for a package version.</summary>
     [HttpPost("{name}/virtual/preview")]
-    [ApiOperation("Show where a package version would come from in a virtual repository (fetches and stores nothing)", "/Admin/RepositoryEdit", Response = typeof(PreviewDto))]
+    [ApiOperation("Show where a package version would come from in a virtual repository (fetches and stores nothing)", typeof(AdminRepositoriesController), nameof(AdminRepositoriesController.Edit), Response = typeof(PreviewDto))]
     public async Task<IActionResult> Preview(string name, [FromBody] PreviewRequest request)
     {
         var virtuals = Service<IVirtualRepositoryAdministration>();

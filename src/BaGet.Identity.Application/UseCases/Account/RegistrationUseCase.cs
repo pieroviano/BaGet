@@ -298,7 +298,7 @@ public sealed class RegistrationUseCase
             await _users.ConfirmEmailAsync(user, await _users.GenerateEmailConfirmationTokenAsync(user));
         }
 
-        return ScreenResult<ResetPasswordViewModel>.GoTo(new ScreenNext("/Account/Login"));
+        return ScreenResult<ResetPasswordViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountLogin));
     }
 
     private static ScreenResult<ResetPasswordViewModel> Refuse(ResetPasswordViewModel model, string message)

@@ -69,7 +69,7 @@
                     <td>
                         @foreach (var link in Model.LinksOf(repository))
                         {
-                            <a class="repository-@link.Id" href="@(link.Page != null ? Url.Page(link.Page, new { repo = repository.IsDefault ? null : repository.Name }) ?? string.Empty : Model.BaseUrl(repository) + link.Path)">@link.Label</a>
+                            <a class="repository-@link.Id" href="@(link.Controller != null && link.Action != null ? Url.Action(link.Action, link.Controller, new { repo = repository.IsDefault ? null : repository.Name }) ?? string.Empty : Model.BaseUrl(repository) + link.Path)">@link.Label</a>
                             <span> | </span>
                         }
                         <a href="@Url.Action("Edit", "AdminRepositories", new { name = repository.Name })">Edit</a>

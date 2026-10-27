@@ -18,8 +18,8 @@ namespace BaGet.Identity.Application.UseCases.Policies;
 /// </summary>
 public sealed class ReplicationUseCase : PolicyUseCaseBase
 {
-    private const string ReplicationsScreen = "/Admin/Replication";
-    private const string ConfigScreen = "/Admin/ReplicationConfig";
+    private static readonly ScreenRef ReplicationsScreen = ScreenCatalog.AdminReplication;
+    private static readonly ScreenRef ConfigScreen = ScreenCatalog.AdminReplicationConfig;
 
     private readonly IReplicationAdministration _replication;
     private readonly ReplicationJobs _jobs;

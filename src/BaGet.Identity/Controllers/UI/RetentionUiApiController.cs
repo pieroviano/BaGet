@@ -26,57 +26,57 @@ public sealed class RetentionUiApiController : AccessUiApiControllerBase
     // ---------------------------------------------------------------- policies
 
     /// <summary>Lists the policies and the form that creates one.</summary>
-    [HttpGet(""), UiApi("/Admin/Retention")]
+    [HttpGet(""), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Index))]
     public async Task<ActionResult<ScreenResult<RetentionViewModel>>> GetPolicies(CancellationToken cancellationToken = default)
         => Respond(await Retention.GetPoliciesAsync(User, ReturnPage, cancellationToken));
 
     /// <summary>Creates a policy and opens it.</summary>
-    [HttpPost(""), UiApi("/Admin/Retention")]
+    [HttpPost(""), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Index))]
     public async Task<ActionResult<ScreenResult<RetentionViewModel>>> Create([FromBody] RetentionPolicyBody? body, CancellationToken cancellationToken = default)
         => Respond(await Retention.CreateAsync(User, body, ReturnPage, cancellationToken));
 
     // ---------------------------------------------------------------- one policy
 
     /// <summary>Shows one policy, its last run and report.</summary>
-    [HttpGet("{key:int}"), UiApi("/Admin/RetentionPolicy")]
+    [HttpGet("{key:int}"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Policy))]
     public async Task<ActionResult<ScreenResult<RetentionPolicyViewModel>>> GetPolicy(int key, CancellationToken cancellationToken = default)
         => Respond(await Retention.GetPolicyAsync(User, key, ReturnPage, cancellationToken));
 
     /// <summary>Saves the rules.</summary>
-    [HttpPost("{key:int}/save"), UiApi("/Admin/RetentionPolicy", Handler = "Save")]
+    [HttpPost("{key:int}/save"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Handler = "Save")]
     public async Task<ActionResult<ScreenResult<RetentionPolicyViewModel>>> Save(int key, [FromBody] RetentionPolicyBody? body, CancellationToken cancellationToken = default)
         => Respond(await Retention.SaveAsync(User, key, body, cancellationToken));
 
     /// <summary>Starts a dry run: the report of what a run would delete.</summary>
-    [HttpPost("{key:int}/dry-run"), UiApi("/Admin/RetentionPolicy", Handler = "DryRun")]
+    [HttpPost("{key:int}/dry-run"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Handler = "DryRun")]
     public async Task<ActionResult<ScreenResult<RetentionPolicyViewModel>>> DryRun(int key, CancellationToken cancellationToken = default)
         => Respond(await Retention.DryRunAsync(User, key, cancellationToken));
 
     /// <summary>Starts a run that deletes.</summary>
-    [HttpPost("{key:int}/run"), UiApi("/Admin/RetentionPolicy", Handler = "Run")]
+    [HttpPost("{key:int}/run"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Handler = "Run")]
     public async Task<ActionResult<ScreenResult<RetentionPolicyViewModel>>> Run(int key, [FromBody] PasswordForm? body, CancellationToken cancellationToken = default)
         => Respond(await Retention.RunAsync(User, key, body?.Password, cancellationToken));
 
     /// <summary>Deletes the policy (what it deleted stays deleted).</summary>
-    [HttpPost("{key:int}/delete"), UiApi("/Admin/RetentionPolicy", Handler = "Delete")]
+    [HttpPost("{key:int}/delete"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Policy), Handler = "Delete")]
     public async Task<ActionResult<ScreenResult<RetentionPolicyViewModel>>> Delete(int key, [FromBody] PasswordForm? body, CancellationToken cancellationToken = default)
         => Respond(await Retention.DeleteAsync(User, key, body?.Password, cancellationToken));
 
     // ---------------------------------------------------------------- holds
 
     /// <summary>Lists the legal holds (of <c>?repository=</c> only, when given).</summary>
-    [HttpGet("holds"), UiApi("/Admin/RetentionHolds")]
+    [HttpGet("holds"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Holds))]
     public async Task<ActionResult<ScreenResult<RetentionHoldsViewModel>>> GetHolds([FromQuery] string? repository, CancellationToken cancellationToken = default)
         => Respond(await Retention.GetHoldsAsync(User, repository, ReturnPage, cancellationToken));
 
     /// <summary>Places a hold.</summary>
-    [HttpPost("holds/add"), UiApi("/Admin/RetentionHolds", Handler = "Add")]
+    [HttpPost("holds/add"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Holds), Handler = "Add")]
     public async Task<ActionResult<ScreenResult<RetentionHoldsViewModel>>> AddHold(
         [FromQuery] string? repository, [FromBody] RetentionHoldForm? form, CancellationToken cancellationToken = default)
         => Respond(await Retention.AddHoldAsync(User, repository, form, ReturnPage, cancellationToken));
 
     /// <summary>Lifts a hold.</summary>
-    [HttpPost("holds/remove"), UiApi("/Admin/RetentionHolds", Handler = "Remove")]
+    [HttpPost("holds/remove"), UiApi(typeof(AdminRetentionController), nameof(AdminRetentionController.Holds), Handler = "Remove")]
     public async Task<ActionResult<ScreenResult<RetentionHoldsViewModel>>> RemoveHold(
         [FromQuery] string? repository, [FromBody] RetentionHoldRemoval? removal, CancellationToken cancellationToken = default)
         => Respond(await Retention.RemoveHoldAsync(User, repository, removal, cancellationToken));

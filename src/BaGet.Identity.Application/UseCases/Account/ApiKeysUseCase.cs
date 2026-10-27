@@ -128,7 +128,7 @@ public sealed class ApiKeysUseCase
     {
         await _keys.RevokeAsync(_users.GetUserId(caller), key, cancellationToken);
 
-        return ScreenResult<ApiKeysViewModel>.GoTo(new ScreenNext("/Account/ApiKeys"));
+        return ScreenResult<ApiKeysViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountApiKeys));
     }
 
     private static IReadOnlyList<string> ScopesFor(bool administrator) => administrator ? ApiKeyScopes.Assignable : ApiKeyScopes.All;

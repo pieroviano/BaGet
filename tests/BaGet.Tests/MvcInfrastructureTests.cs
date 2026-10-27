@@ -17,7 +17,7 @@ namespace BaGet.Tests;
 /// <summary>
 /// The controller infrastructure that replaces the Razor Pages programming model, driven through the real pipeline with test
 /// controllers: antiforgery, handler selection by <c>?handler=</c>, the controller bases' gates (accounts, sign-in, administrator,
-/// read-only), the <c>r/{repo}/</c> twin and the repository rules of <c>[RepositoryPage]</c>, and links through the legacy page name.
+/// read-only), the <c>r/{repo}/</c> twin and the repository rules of <c>[RepositoryPage]</c>, and links to repository pages.
 /// </summary>
 public class MvcInfrastructureTests : IDisposable
 {
@@ -201,13 +201,13 @@ public class MvcInfrastructureTests : IDisposable
     }
 
     [Fact]
-    public async Task LinksToARepositoryPageStayInsideTheRepository_ThroughTheActionAndThroughThePageName()
+    public async Task LinksToARepositoryPageStayInsideTheRepository_ThroughTheActionNameWithAndWithoutTheController()
     {
         var plain = await ReadAsync(await _anonymous.GetAsync("test-ui/repo/links"));
         var inSecond = await ReadAsync(await _anonymous.GetAsync("r/second/test-ui/repo/links"));
 
-        Assert.Equal("/test-ui/repo|/test-ui/repo|/test-ui/repo", plain);
-        Assert.Equal("/r/second/test-ui/repo|/r/second/test-ui/repo|/r/second/test-ui/repo", inSecond);
+        Assert.Equal("/test-ui/repo|/test-ui/repo", plain);
+        Assert.Equal("/r/second/test-ui/repo|/r/second/test-ui/repo", inSecond);
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public class MvcInfrastructureTests : IDisposable
     }
 
     [Fact]
-    public async Task ARedirectToAPageNameFollowsTheControllerActionThatReplacedIt()
+    public async Task ARedirectToARepositoryActionStaysInTheRepository()
     {
         using var response = await _anonymous.GetAsync("r/second/test-ui/repo/redirect");
 
@@ -277,7 +277,6 @@ public sealed class TestAccessController : AccessControllerBase
 
 /// <summary>A repository page: <c>/test-ui/repo</c> and <c>/r/{repo}/test-ui/repo</c> in NuGet repositories that are not virtual.</summary>
 [Route("test-ui/repo")]
-[LegacyPage("/Test/RepoPage")]
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class TestRepositoryController : UiControllerBase
 {
@@ -286,10 +285,10 @@ public sealed class TestRepositoryController : UiControllerBase
 
     [HttpGet("links")]
     public IActionResult Links()
-        => Content(string.Join("|", Url.Action(nameof(Index)), Url.Action(nameof(Index), "TestRepository"), Url.Page("/Test/RepoPage")));
+        => Content(string.Join("|", Url.Action(nameof(Index)), Url.Action(nameof(Index), "TestRepository")));
 
     [HttpGet("redirect")]
-    public IActionResult Redirect() => RedirectToPage("/Test/RepoPage");
+    public IActionResult Redirect() => RedirectToAction(nameof(Index));
 }
 
 /// <summary>A repository page whose own check answers first.</summary>

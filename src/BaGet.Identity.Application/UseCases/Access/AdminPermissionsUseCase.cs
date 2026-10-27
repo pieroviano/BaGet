@@ -20,8 +20,8 @@ namespace BaGet.Identity.Application.UseCases.Access;
 /// </summary>
 public sealed class AdminPermissionsUseCase : AccessUseCaseBase
 {
-    private const string ListScreen = "/Admin/Permissions";
-    private const string DetailScreen = "/Admin/PermissionDetail";
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminPermissions;
+    private static readonly ScreenRef DetailScreen = ScreenCatalog.AdminPermissionDetail;
 
     /// <summary>Creates the use case.</summary>
     public AdminPermissionsUseCase(
@@ -185,7 +185,7 @@ public sealed class AdminPermissionsUseCase : AccessUseCaseBase
 
             return caller.IsServerAdministrator || project == null
                 ? Back<PermissionDetailViewModel>(ListScreen, null, message, error)
-                : Back<PermissionDetailViewModel>("/Admin/ProjectDetail", Route(("name", project)), message, error);
+                : Back<PermissionDetailViewModel>(ScreenCatalog.AdminProjectDetail, Route(("name", project)), message, error);
         });
     }
 

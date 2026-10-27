@@ -31,12 +31,12 @@ public sealed class ReportAbuseUiApiController : UiApiControllerBase
     }
 
     /// <summary>The empty form.</summary>
-    [HttpGet("packages/{id}/{version}/report-abuse"), UiApi("/ReportAbuse")]
+    [HttpGet("packages/{id}/{version}/report-abuse"), UiApi(typeof(ReportAbuseController), nameof(ReportAbuseController.Show))]
     public Task<ActionResult<ScreenResult<ReportAbuseScreen>>> Get(string? id, string? version)
         => Task.FromResult(Respond(_reports.Get(id, version)));
 
     /// <summary>Records the report.</summary>
-    [HttpPost("packages/{id}/{version}/report-abuse"), UiApi("/ReportAbuse")]
+    [HttpPost("packages/{id}/{version}/report-abuse"), UiApi(typeof(ReportAbuseController), nameof(ReportAbuseController.Show))]
     public async Task<ActionResult<ScreenResult<ReportAbuseScreen>>> Submit(string? id, string? version, [FromBody] ReportAbuseForm form, CancellationToken cancellationToken)
         => Respond(await _reports.SubmitAsync(id, version, form, cancellationToken));
 }

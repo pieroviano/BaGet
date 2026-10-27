@@ -19,12 +19,12 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 public sealed class ReportAbuseController : UiControllerBase
 {
     /// <summary>The empty form.</summary>
-    [Route("packages/{id}/{version}/report-abuse"), HttpGet, HttpHead, PageHandler, LegacyPage("/ReportAbuse")]
+    [Route("packages/{id}/{version}/report-abuse"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Show(string? id, string? version)
         => Render(await Api<ReportAbuseUiApiController, ReportAbuseScreen>(api => api.Get(id, version)), "Show", ToViewModel);
 
     /// <summary>Records the report.</summary>
-    [Route("packages/{id}/{version}/report-abuse"), HttpPost, PageHandler, LegacyPage("/ReportAbuse")]
+    [Route("packages/{id}/{version}/report-abuse"), HttpPost, PageHandler]
     public async Task<IActionResult> Submit(string? id, string? version, ReportAbuseViewModel model, CancellationToken cancellationToken)
     {
         // The use case validates the form itself (same rules, same field names), so the errors of model binding are dropped, not shown twice.

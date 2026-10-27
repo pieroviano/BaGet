@@ -24,7 +24,7 @@ public sealed class ProfileUiApiController : AccountUiApiControllerBase
     protected override bool CookieOnly => false;
 
     /// <summary>The profile named <paramref name="name"/>; 404 when neither a user nor an organization has it.</summary>
-    [HttpGet("{name}"), UiApi("/Profiles/Profile")]
+    [HttpGet("{name}"), UiApi(typeof(ProfileController), nameof(ProfileController.Profile))]
     public async Task<ActionResult<ScreenResult<ProfileViewModel>>> Profile(string? name, CancellationToken cancellationToken)
         => Respond(await UseCase<ProfileUseCase>().ShowAsync(User, name, cancellationToken));
 }

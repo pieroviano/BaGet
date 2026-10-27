@@ -36,25 +36,25 @@ public sealed class MavenBrowseUiApiController : UiApiControllerBase
     }
 
     /// <summary>The artifact list with a search box and the client configuration.</summary>
-    [HttpGet("maven-artifacts"), UiApi("/MavenArtifacts")]
+    [HttpGet("maven-artifacts"), UiApi(typeof(MavenBrowseController), nameof(MavenBrowseController.Artifacts))]
     [RepositoryPage(Format = RepositoryFormat.Maven)]
     public async Task<ActionResult<ScreenResult<MavenArtifactsViewModel>>> Artifacts(string? q, int p = 1, CancellationToken cancellationToken = default)
         => Respond(await _maven.ArtifactsAsync(q, p, User, cancellationToken));
 
     /// <summary>One artifact: versions, files, POM, the dependency to copy.</summary>
-    [HttpGet("maven-artifacts/{group}/{artifact}/{version?}"), UiApi("/MavenArtifact")]
+    [HttpGet("maven-artifacts/{group}/{artifact}/{version?}"), UiApi(typeof(MavenBrowseController), nameof(MavenBrowseController.Artifact))]
     [RepositoryPage(Format = RepositoryFormat.Maven)]
     public async Task<ActionResult<ScreenResult<MavenArtifactViewModel>>> Artifact(string? group, string? artifact, string? version, CancellationToken cancellationToken = default)
         => Respond(await _maven.ArtifactAsync(group, artifact, version, User, cancellationToken));
 
     /// <summary>The upload form's state.</summary>
-    [HttpGet("maven-upload"), UiApi("/MavenUpload")]
+    [HttpGet("maven-upload"), UiApi(typeof(MavenBrowseController), nameof(MavenBrowseController.Upload))]
     [RepositoryPage(Format = RepositoryFormat.Maven, Upload = true)]
     public async Task<ActionResult<ScreenResult<MavenUploadViewModel>>> Upload(CancellationToken cancellationToken)
         => Respond(await _maven.UploadFormAsync(User, cancellationToken));
 
     /// <summary>Deploys the chosen files under the given coordinates.</summary>
-    [HttpPost("maven-upload"), UiApi("/MavenUpload")]
+    [HttpPost("maven-upload"), UiApi(typeof(MavenBrowseController), nameof(MavenBrowseController.Upload))]
     [RepositoryPage(Format = RepositoryFormat.Maven, Upload = true)]
     public async Task<ActionResult<ScreenResult<MavenUploadViewModel>>> UploadPost(
         string? groupId,

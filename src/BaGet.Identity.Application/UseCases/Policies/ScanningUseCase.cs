@@ -22,8 +22,8 @@ namespace BaGet.Identity.Application.UseCases.Policies;
 /// </summary>
 public sealed class ScanningUseCase : PolicyUseCaseBase
 {
-    private const string RepositoryScreen = "/Admin/ScanRepository";
-    private const string ProjectScreen = "/Admin/ScanProject";
+    private static readonly ScreenRef RepositoryScreen = ScreenCatalog.AdminScanRepository;
+    private static readonly ScreenRef ProjectScreen = ScreenCatalog.AdminScanProject;
 
     private readonly IServiceProvider _services;
     private readonly IOptionsSnapshot<ScanningOptions> _options;
@@ -190,15 +190,15 @@ public sealed class ScanningUseCase : PolicyUseCaseBase
         switch (info.Format)
         {
             case RepositoryFormat.NuGet:
-                return new ScreenLink("/Package", Route(("id", name), ("version", version), ("repo", repo)));
+                return new ScreenLink(ScreenCatalog.Package, Route(("id", name), ("version", version), ("repo", repo)));
             case RepositoryFormat.Npm:
-                return new ScreenLink("/NpmPackage", Route(("id", name), ("version", version), ("repo", repo)));
+                return new ScreenLink(ScreenCatalog.NpmPackage, Route(("id", name), ("version", version), ("repo", repo)));
             case RepositoryFormat.Maven:
                 return MavenNames.TryParseArtifactName(name, out var group, out var artifact)
-                    ? new ScreenLink("/MavenArtifact", Route(("group", group), ("artifact", artifact), ("version", version), ("repo", repo)))
+                    ? new ScreenLink(ScreenCatalog.MavenArtifact, Route(("group", group), ("artifact", artifact), ("version", version), ("repo", repo)))
                     : null;
             case RepositoryFormat.Docker:
-                return new ScreenLink("/DockerImage", Route(("image", name), ("digest", version), ("repo", repo)));
+                return new ScreenLink(ScreenCatalog.DockerImage, Route(("image", name), ("digest", version), ("repo", repo)));
             default:
                 return null;
         }

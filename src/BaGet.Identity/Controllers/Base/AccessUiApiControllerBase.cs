@@ -29,9 +29,9 @@ public abstract class AccessUiApiControllerBase : AdminUiApiControllerBase
     protected async Task<AccessCaller> CallerAsync(CancellationToken cancellationToken)
         => new(User, await Gate.IsAdministratorAsync(User, KeyCaller, cancellationToken));
 
-    /// <summary>The page name of the screen the running action serves (<see cref="UiApiAttribute.Screen"/>), so a base can widen one screen of a controller.</summary>
+    /// <summary>The screen the running action serves (<see cref="UiApiAttribute.Screen"/>), so a base can widen one screen of a controller.</summary>
     [NonAction]
-    protected string? ScreenName()
+    protected ScreenRef? CurrentScreen()
         => ControllerContext.ActionDescriptor.EndpointMetadata.OfType<UiApiAttribute>().FirstOrDefault()?.Screen;
 
     /// <inheritdoc/>

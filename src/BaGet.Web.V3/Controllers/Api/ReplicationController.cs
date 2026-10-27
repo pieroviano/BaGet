@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -30,19 +31,19 @@ public class ReplicationController : AdminApiController
 
     /// <summary>Lists replications.</summary>
     [HttpGet("configs")]
-    [ApiOperation("List replications with their last run", "/Admin/Replication", Response = typeof(ReplicationDto), PagedList = true)]
+    [ApiOperation("List replications with their last run", typeof(AdminReplicationController), nameof(AdminReplicationController.Index), Response = typeof(ReplicationDto), PagedList = true)]
     public async Task<IActionResult> List(int? page, int? pageSize)
         => RespondPage((await Replication.ListAsync(Cancellation)).Select(Dto).ToList(), page, pageSize);
 
     /// <summary>One replication.</summary>
     [HttpGet("configs/{key:int}")]
-    [ApiOperation("Show a replication", "/Admin/ReplicationConfig", Response = typeof(ReplicationDto))]
+    [ApiOperation("Show a replication", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Response = typeof(ReplicationDto))]
     public async Task<IActionResult> Get(int key)
         => await Replication.GetAsync(key, Cancellation) is { } view ? Respond(Dto(view)) : ApiProblems.NotFound($"replication {key}");
 
     /// <summary>Creates a replication.</summary>
     [HttpPost("configs")]
-    [ApiOperation("Create a replication", "/Admin/Replication", Confirm = true, Response = typeof(ReplicationDto), Status = 201)]
+    [ApiOperation("Create a replication", typeof(AdminReplicationController), nameof(AdminReplicationController.Index), Confirm = true, Response = typeof(ReplicationDto), Status = 201)]
     public async Task<IActionResult> Create([FromBody] ReplicationRequest request)
     {
         ThrowIfClosed();
@@ -55,7 +56,7 @@ public class ReplicationController : AdminApiController
 
     /// <summary>Replaces a replication's settings.</summary>
     [HttpPut("configs/{key:int}")]
-    [ApiOperation("Replace a replication's settings", "/Admin/ReplicationConfig", Confirm = true, Response = typeof(ReplicationDto))]
+    [ApiOperation("Replace a replication's settings", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Confirm = true, Response = typeof(ReplicationDto))]
     public async Task<IActionResult> Update(int key, [FromBody] ReplicationRequest request)
     {
         ThrowIfClosed();
@@ -69,7 +70,7 @@ public class ReplicationController : AdminApiController
 
     /// <summary>Deletes a replication.</summary>
     [HttpDelete("configs/{key:int}")]
-    [ApiOperation("Delete a replication with its log (what it copied stays where it is)", "/Admin/ReplicationConfig", Confirm = true, Status = 204)]
+    [ApiOperation("Delete a replication with its log (what it copied stays where it is)", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Confirm = true, Status = 204)]
     public async Task<IActionResult> Delete(int key)
     {
         ThrowIfClosed();
@@ -83,7 +84,7 @@ public class ReplicationController : AdminApiController
 
     /// <summary>Tests a peer connection.</summary>
     [HttpPost("test")]
-    [ApiOperation("Test the connection to a peer with the given settings (nothing is saved; a stored key is used while the address is unchanged)", "/Admin/ReplicationConfig", Confirm = true, Response = typeof(ReplicationTestResult))]
+    [ApiOperation("Test the connection to a peer with the given settings (nothing is saved; a stored key is used while the address is unchanged)", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Confirm = true, Response = typeof(ReplicationTestResult))]
     public async Task<IActionResult> Test([FromBody] ReplicationRequest request, int? key)
     {
         if (await RequireConfirmationAsync() is { } refusal) return refusal;
@@ -93,12 +94,12 @@ public class ReplicationController : AdminApiController
 
     /// <summary>Starts a run.</summary>
     [HttpPost("configs/{key:int}/run")]
-    [ApiOperation("Start a run of a replication", "/Admin/ReplicationConfig", Confirm = true, Response = typeof(ReplicationDto), Status = 202)]
+    [ApiOperation("Start a run of a replication", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Confirm = true, Response = typeof(ReplicationDto), Status = 202)]
     public Task<IActionResult> Run(int key) => StartAsync(key, "manual", resume: false);
 
     /// <summary>Starts a run that continues the last interrupted or failed one.</summary>
     [HttpPost("configs/{key:int}/resume")]
-    [ApiOperation("Start a run that continues the last interrupted or failed run of a replication", "/Admin/ReplicationConfig", Confirm = true, Response = typeof(ReplicationDto), Status = 202)]
+    [ApiOperation("Start a run that continues the last interrupted or failed run of a replication", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Confirm = true, Response = typeof(ReplicationDto), Status = 202)]
     public Task<IActionResult> Resume(int key) => StartAsync(key, "resume", resume: true);
 
     private async Task<IActionResult> StartAsync(int key, string trigger, bool resume)
@@ -125,7 +126,7 @@ public class ReplicationController : AdminApiController
 
     /// <summary>Stops the running replication.</summary>
     [HttpPost("configs/{key:int}/stop")]
-    [ApiOperation("Ask the running replication to stop (it ends as interrupted and can be resumed)", "/Admin/ReplicationConfig", Status = 202)]
+    [ApiOperation("Ask the running replication to stop (it ends as interrupted and can be resumed)", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Status = 202)]
     public async Task<IActionResult> Stop(int key)
     {
         if (await Replication.GetAsync(key, Cancellation) == null) return ApiProblems.NotFound($"replication {key}");
@@ -135,7 +136,7 @@ public class ReplicationController : AdminApiController
 
     /// <summary>The log.</summary>
     [HttpGet("configs/{key:int}/runs")]
-    [ApiOperation("List the runs of a replication, newest first (status, counts, the first failures and conflicts)", "/Admin/ReplicationConfig", Response = typeof(ReplicationRun), PagedList = true)]
+    [ApiOperation("List the runs of a replication, newest first (status, counts, the first failures and conflicts)", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Response = typeof(ReplicationRun), PagedList = true)]
     public async Task<IActionResult> Runs(int key, int? page, int? pageSize)
     {
         if (await Replication.GetAsync(key, Cancellation) == null) return ApiProblems.NotFound($"replication {key}");
@@ -145,13 +146,13 @@ public class ReplicationController : AdminApiController
 
     /// <summary>One run.</summary>
     [HttpGet("runs/{key:int}")]
-    [ApiOperation("Show one run of the replication log", "/Admin/ReplicationConfig", Response = typeof(ReplicationRun))]
+    [ApiOperation("Show one run of the replication log", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Response = typeof(ReplicationRun))]
     public async Task<IActionResult> GetRun(int key)
         => await Replication.GetRunAsync(key, Cancellation) is { } run ? Respond(run) : ApiProblems.NotFound($"replication run {key}");
 
     /// <summary>What a repository holds.</summary>
     [HttpGet("inventory/{repository}")]
-    [ApiOperation("List what a repository holds in the form replication compares (what a peer asks; summary=true: only the count)", "/Admin/ReplicationConfig", Response = typeof(ReplicationInventory))]
+    [ApiOperation("List what a repository holds in the form replication compares (what a peer asks; summary=true: only the count)", typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Response = typeof(ReplicationInventory))]
     public async Task<IActionResult> Inventory(string repository, bool summary = false)
         => await Service<IReplicationInventory>().GetAsync(repository, summary, Cancellation) is { } inventory
             ? Respond(inventory)

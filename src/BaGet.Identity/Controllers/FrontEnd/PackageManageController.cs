@@ -22,7 +22,7 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// <see cref="PackageManageUseCase"/>), which this controller calls in process and renders.
 /// </summary>
 /// <remarks>
-/// <see cref="LegacyPageAttribute"/> sits on the actions, not on the class: the fallback <c>NoHandler</c> is not a page handler.
+/// The fallback <c>NoHandler</c> is marked <see cref="FallbackHandlerAttribute"/>: it is not a handler of the screen.
 /// The ownership / administrator check runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter.
 /// </remarks>
 [Route("packages/{id}/manage")]
@@ -55,47 +55,47 @@ public sealed class PackageManageController : AccountControllerBase
     }
 
     /// <summary>The screen.</summary>
-    [HttpGet, HttpHead, PageHandler, LegacyPage("/Packages/Manage")]
+    [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Get(Id!, cancellationToken)));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost, PageHandler("AddOwner"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("AddOwner")]
     public async Task<IActionResult> AddOwner(string ownerName, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.AddOwner(Id!, new PackageManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost, PageHandler("RemoveOwner"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("RemoveOwner")]
     public async Task<IActionResult> RemoveOwner(string ownerName, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.RemoveOwner(Id!, new PackageManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Unlists a version.</summary>
-    [HttpPost, PageHandler("Unlist"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("Unlist")]
     public async Task<IActionResult> Unlist(string version, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Unlist(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Relists a version.</summary>
-    [HttpPost, PageHandler("Relist"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("Relist")]
     public async Task<IActionResult> Relist(string version, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Relist(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Deletes a version as the server is configured to (unlist or permanent).</summary>
-    [HttpPost, PageHandler("Delete"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("Delete")]
     public async Task<IActionResult> Delete(string version, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Delete(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Permanently deletes a version (administrators, after the password).</summary>
-    [HttpPost, PageHandler("HardDelete"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("HardDelete")]
     public async Task<IActionResult> HardDelete(string version, string? password, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.HardDelete(Id!, new PackageManageHardDeleteForm { Version = version, Password = password }, cancellationToken)));
 
     /// <summary>Permanently deletes every version and the owners (administrators, after the password).</summary>
-    [HttpPost, PageHandler("HardDeleteAll"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("HardDeleteAll")]
     public async Task<IActionResult> HardDeleteAll(string? password, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.HardDeleteAll(Id!, new PackageManagePasswordForm { Password = password }, cancellationToken)));
 
     /// <summary>Deprecates a version.</summary>
-    [HttpPost, PageHandler("Deprecate"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("Deprecate")]
     public async Task<IActionResult> Deprecate(
         string version,
         List<string>? reasons,
@@ -109,12 +109,12 @@ public sealed class PackageManageController : AccountControllerBase
             cancellationToken)));
 
     /// <summary>Removes a version's deprecation.</summary>
-    [HttpPost, PageHandler("Undeprecate"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("Undeprecate")]
     public async Task<IActionResult> Undeprecate(string version, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Undeprecate(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Adds a vulnerability to a version.</summary>
-    [HttpPost, PageHandler("AddVulnerability"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("AddVulnerability")]
     public async Task<IActionResult> AddVulnerability(
         string version,
         string? advisoryUrl,
@@ -127,22 +127,22 @@ public sealed class PackageManageController : AccountControllerBase
             cancellationToken)));
 
     /// <summary>Removes a vulnerability from a version.</summary>
-    [HttpPost, PageHandler("RemoveVulnerability"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("RemoveVulnerability")]
     public async Task<IActionResult> RemoveVulnerability(string version, int key, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.RemoveVulnerability(Id!, new PackageManageRemoveVulnerabilityForm { Version = version, Key = key }, cancellationToken)));
 
     /// <summary>Marks or unmarks the ID as verified (administrators).</summary>
-    [HttpPost, PageHandler("SetVerified"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("SetVerified")]
     public async Task<IActionResult> SetVerified(bool verified, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.SetVerified(Id!, new PackageManageVerifiedForm { Verified = verified }, cancellationToken)));
 
     /// <summary>Deletes the PDBs recorded for a version.</summary>
-    [HttpPost, PageHandler("DeleteSymbols"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("DeleteSymbols")]
     public async Task<IActionResult> DeleteSymbols(string version, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.DeleteSymbols(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Resolves an abuse report.</summary>
-    [HttpPost, PageHandler("ResolveReport"), LegacyPage("/Packages/Manage")]
+    [HttpPost, PageHandler("ResolveReport")]
     public async Task<IActionResult> ResolveReport(int key, CancellationToken cancellationToken)
         => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.ResolveReport(Id!, new PackageManageReportForm { Key = key }, cancellationToken)));
 
@@ -150,10 +150,10 @@ public sealed class PackageManageController : AccountControllerBase
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without
     /// <c>?handler=</c>: the antiforgery check has already run, and there is nothing to do, so the answer is 404. (A Razor Page
     /// with only named POST handlers behaved alike for the caller; without this action routing would answer 404 before the
-    /// antiforgery filter and an unprotected POST would not be refused with 400.) It carries no <see cref="LegacyPageAttribute"/>:
-    /// it is not one of the page's handlers, so it stays out of the route contract.
+    /// antiforgery filter and an unprotected POST would not be refused with 400.) It is marked
+    /// <see cref="FallbackHandlerAttribute"/>: it is not one of the screen's handlers, so it stays out of the route contract.
     /// </summary>
-    [HttpPost, PageHandler]
+    [HttpPost, PageHandler, FallbackHandler]
     public IActionResult NoHandler() => NotFound();
 
     private IActionResult Present(UiApiResponse<PackageManageScreen> response)

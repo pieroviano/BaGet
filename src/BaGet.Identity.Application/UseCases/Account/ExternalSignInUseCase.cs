@@ -112,7 +112,7 @@ public sealed class ExternalSignInUseCase
 
         if (result.RequiresTwoFactor)
         {
-            return ScreenResult<LoginViewModel>.GoTo(new ScreenNext("/Account/LoginWith2fa", new Dictionary<string, object?> { ["ReturnUrl"] = returnUrl }));
+            return ScreenResult<LoginViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountLoginWith2fa, new Dictionary<string, object?> { ["ReturnUrl"] = returnUrl }));
         }
 
         if (result.IsLockedOut) return Refuse(model, SignInUseCase.LockedMessage);

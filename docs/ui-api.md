@@ -42,7 +42,7 @@ password the screen asks for, sent in the body. The HTML screens keep their cook
 | `status` | `Ok`, `Invalid`, `NotFound`, `Forbidden`, `SignIn`, `Next` |
 | `model` | What the screen renders (also on `Invalid`, so the form can be shown again) |
 | `errors` | Field name to messages; `""` = the whole form |
-| `next` | After a write: `screen` (page name such as `/Admin/Users`), `routeValues`, flash `message` or `error` |
+| `next` | After a write: `screen` (`{ "controller": "AdminUsers", "action": "Index" }`), `routeValues`, flash `message` or `error` |
 | `statusCode` | Set when the screen itself answers with a code (an upload refused with `403`, a missing package explained with `404`) |
 
 | `status` | HTTP |
@@ -93,7 +93,7 @@ test twins for each base at the end of `tests/BaGet.Tests/UiApiAccessTests.cs`.
 | Use case | `BaGet.Web.Application/UseCases` or `BaGet.Identity.Application/UseCases/<area>` | Scoped `<Area>UseCase`, one method per GET and handler; inputs explicit (caller `ClaimsPrincipal`, form DTO, `CancellationToken`); returns `ScreenResult<T>`; sees no `HttpContext`, `ModelState`, `TempData`; validates its form itself; a write calls `MaintenanceGate.ThrowIfClosed`; absolute links from `IUrlGenerator`; no secret in a DTO |
 | DTO | same project, `Models/<area>` (namespace = folder) | Flat, no EF entities; one type per file |
 | Registration | `AddBaGetWebUseCases`, or `AddBaGetAccounts` after its `Enabled` check | `TryAddScoped<<Area>UseCase>()` |
-| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity/Controllers/UI` | `<Feature>UiApiController`; never `[ApiController]`, `[LegacyPage]` or `[AutoValidateAntiforgeryToken]` |
+| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity/Controllers/UI` | `<Feature>UiApiController`; never `[ApiController]`, a `UiControllerBase` or `[AutoValidateAntiforgeryToken]` |
 | View controller | unchanged place | Binds the form, `Api<Twin, Model>(api => ...)`, `Render(...)`; holds no use case |
 
 Twin bases: `UiApiControllerBase` (public), `AccountUiApiControllerBase` (override `RequiresSignIn`/`RequiresEmail`; **screen only**: 403 over HTTP),
@@ -106,18 +106,18 @@ repository bases build on these). Every twin is visible in the OpenAPI `ui` docu
 [RepositoryPage(NotOnVirtual = true)]          // same values as the view controller: adds api/ui/r/{repo}/...
 public sealed class StatisticsUiApiController : UiApiControllerBase
 {
-    [HttpGet("stats"), UiApi("/Statistics")]
+    [HttpGet("stats"), UiApi(typeof(StatisticsController), nameof(StatisticsController.Index))]
     public async Task<ActionResult<ScreenResult<StatisticsViewModel>>> Get(CancellationToken ct)
         => Respond(await _useCase.GetAsync(ct));
 }
 ```
 
-Routes: GET `api/ui/<view path>`; default POST the same path; handler `X` = `api/ui/<path>/<x-kebab-case>` with `[UiApi("/Page", Handler = "X")]`; route values keep the
+Routes: GET `api/ui/<view path>`; default POST the same path; handler `X` = `api/ui/<path>/<x-kebab-case>` with `[UiApi(typeof(XController), nameof(XController.Index), Handler = "X")]` (the view controller and its default GET action name the screen); route values keep the
 view's names. Bodies are `[FromBody]` JSON, uploads `[FromForm]` multipart. Public helpers are `[NonAction]` or non-public. The view action becomes
 `=> Render(await Api<StatisticsUiApiController, StatisticsViewModel>(api => api.Get(ct)), "Index")` and keeps every attribute and its base (whose `ScreenGate` and
 antiforgery already ran: the twin's filters do not run in process).
 
 Checklist: the parity case (page and twin carry the same, statuses correspond) in `UiApiParityTests`; a case per caller kind in `UiApiAccessTests`
 (anonymous, cookie ignored, key, `admin:api` key, limited key, global key, Basic); no password or key in a response; regenerate `Contracts/ui-api.txt` with
-`BAGET_UPDATE_CONTRACTS=1` (never hand-merge); `ui-routes.txt`, `ui-forms.txt` and `public-api.txt` stay unchanged; a row in [UI coverage](ui-coverage.md) for
-a new screen.
+`BAGET_UPDATE_CONTRACTS=1` (never hand-merge); `ui-routes.txt`, `ui-forms.txt` and `public-api.txt` stay unchanged; a `ScreenCatalog` member and a row with its `Controller/Action` token in [UI coverage](ui-coverage.md) for
+a new screen (`ScreenCatalogTests` checks that every catalog entry, `[UiApi]`, `FormatLink` and `ApiOperation` target resolves to a view action).

@@ -16,7 +16,7 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminRepositoryDeleteUseCase : AdminUseCaseBase
 {
-    private const string ListScreen = "/Admin/Repositories";
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminRepositories;
 
     private readonly IRepositoryAdministration _administration;
     private readonly IVirtualRepositoryAdministration _virtuals;

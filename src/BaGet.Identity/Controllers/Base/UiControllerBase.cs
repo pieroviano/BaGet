@@ -19,8 +19,8 @@ namespace BaGet.Identity.Controllers.Base;
 /// <item><description><b>Filters.</b> The controller's own <c>OnActionExecuting</c>/<c>OnActionExecutionAsync</c> override runs first, before
 /// the global <c>RepositoryActionFilter</c>.</description></item>
 /// </list>
-/// A UI controller also carries <see cref="LegacyPageAttribute"/> (its page name) and, for a page of a repository,
-/// <see cref="RepositoryPageAttribute"/>.
+/// A screen is identified by its controller and its default GET action (<see cref="BaGet.Identity.Application.Screens.ScreenRef"/>); a UI controller
+/// of a repository's page also carries <see cref="RepositoryPageAttribute"/>.
 /// </summary>
 /// <remarks>
 /// <para><b>How to migrate a page</b>: the page's
@@ -61,8 +61,8 @@ public abstract class UiControllerBase : Controller
     /// <summary>
     /// Turns the answer of a twin into this controller's result: a plain action result the twin returned is returned unchanged; Ok and Invalid
     /// render <paramref name="view"/> (errors copied into <c>ModelState</c>, the result's status code applied); NotFound is 404, SignIn a challenge
-    /// (the sign-in redirect), Forbidden a bare 403 (what a page answered), Next sets the flash message and redirects to the next screen by its page
-    /// name (the repository stays), or to its local address.
+    /// (the sign-in redirect), Forbidden a bare 403 (what a page answered), Next sets the flash message and redirects to the next screen by its
+    /// controller and action (the repository stays), or to its local address.
     /// </summary>
     /// <param name="response">What <c>Api</c> returned.</param>
     /// <param name="view">The view to render.</param>
@@ -126,7 +126,7 @@ public abstract class UiControllerBase : Controller
 
                 return next.LocalUrl != null
                     ? new LocalRedirectResult(next.LocalUrl) { UrlHelper = Url }
-                    : new RedirectToPageResult(next.Screen, pageHandler: null, routeValues: next.RouteValues, fragment: next.Fragment) { UrlHelper = Url };
+                    : new RedirectToActionResult(next.Screen!.Action, next.Screen.Controller, next.RouteValues, fragment: next.Fragment) { UrlHelper = Url };
 
             default:
                 throw new InvalidOperationException($"Unknown screen status {screen.Status}.");

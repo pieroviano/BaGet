@@ -22,17 +22,17 @@ public sealed class AccountPackagesUiApiController : AccountUiApiControllerBase
     protected override bool RequiresSignIn => true;
 
     /// <summary>The package IDs the user owns, per repository.</summary>
-    [HttpGet("packages"), UiApi("/Account/Packages")]
+    [HttpGet("packages"), UiApi(typeof(AccountPackagesController), nameof(AccountPackagesController.Packages))]
     public async Task<ActionResult<ScreenResult<AccountPackagesViewModel>>> Packages(CancellationToken cancellationToken)
         => Respond(await UseCase<AccountOverviewUseCase>().ShowPackagesAsync(User, cancellationToken));
 
     /// <summary>What the user may do in each repository (optionally for one package ID).</summary>
-    [HttpGet("access"), UiApi("/Account/Access")]
+    [HttpGet("access"), UiApi(typeof(AccountPackagesController), nameof(AccountPackagesController.Access))]
     public async Task<ActionResult<ScreenResult<AccountAccessViewModel>>> Access(string? package, CancellationToken cancellationToken)
         => Respond(await UseCase<AccountOverviewUseCase>().ShowAccessAsync(User, package, cancellationToken));
 
     /// <summary>The user's own profile: continues at <c>next.localUrl</c> (<c>~/profiles/{name}</c>).</summary>
-    [HttpGet("profile"), UiApi("/Account/Profile")]
+    [HttpGet("profile"), UiApi(typeof(AccountPackagesController), nameof(AccountPackagesController.MyProfile))]
     public ActionResult<ScreenResult<EmptyScreen>> MyProfile()
         => Respond(UseCase<AccountOverviewUseCase>().ShowMyProfile(User));
 }

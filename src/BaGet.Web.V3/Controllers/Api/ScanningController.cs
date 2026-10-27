@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,7 @@ public class ScanningController : AccessApiController
 {
     /// <summary>The overview.</summary>
     [HttpGet]
-    [ApiOperation("Show whether scanning is on and every repository's numbers and policy", "/Admin/Scanning", Response = typeof(ScanOverviewDto))]
+    [ApiOperation("Show whether scanning is on and every repository's numbers and policy", typeof(AdminScanningController), nameof(AdminScanningController.Index), Response = typeof(ScanOverviewDto))]
     public async Task<IActionResult> Overview()
     {
         var options = Service<IOptionsSnapshot<ScanningOptions>>().Value;
@@ -37,7 +38,7 @@ public class ScanningController : AccessApiController
 
     /// <summary>One repository's dashboard.</summary>
     [HttpGet("repositories/{name}")]
-    [ApiOperation("Show a repository's scan numbers, its own policy and the last scan", "/Admin/ScanRepository", Response = typeof(ScanDashboardDto))]
+    [ApiOperation("Show a repository's scan numbers, its own policy and the last scan", typeof(AdminScanningController), nameof(AdminScanningController.Repository), Response = typeof(ScanDashboardDto))]
     public async Task<IActionResult> Repository(string name)
     {
         var repository = await FindAsync(name);
@@ -50,7 +51,7 @@ public class ScanningController : AccessApiController
 
     /// <summary>The versions with findings.</summary>
     [HttpGet("repositories/{name}/results")]
-    [ApiOperation("List the scanned versions with findings of at least a severity, worst first", "/Admin/ScanRepository", Response = typeof(ScanResult), PagedList = true)]
+    [ApiOperation("List the scanned versions with findings of at least a severity, worst first", typeof(AdminScanningController), nameof(AdminScanningController.Repository), Response = typeof(ScanResult), PagedList = true)]
     public async Task<IActionResult> Results(string name, int? min, int? page, int? pageSize)
     {
         var repository = await FindAsync(name);
@@ -68,7 +69,7 @@ public class ScanningController : AccessApiController
 
     /// <summary>Saves a repository's policy.</summary>
     [HttpPut("repositories/{name}/policy")]
-    [ApiOperation("Set a repository's scanning policy (all thresholds empty removes it)", "/Admin/ScanRepository", Confirm = true, Response = typeof(EffectiveScanPolicy))]
+    [ApiOperation("Set a repository's scanning policy (all thresholds empty removes it)", typeof(AdminScanningController), nameof(AdminScanningController.Repository), Confirm = true, Response = typeof(EffectiveScanPolicy))]
     public async Task<IActionResult> SetPolicy(string name, [FromBody] ScanPolicyRequest request)
     {
         ThrowIfClosed();
@@ -85,7 +86,7 @@ public class ScanningController : AccessApiController
 
     /// <summary>Starts a scan.</summary>
     [HttpPost("repositories/{name}/scan")]
-    [ApiOperation("Scan every artifact of a repository in the background", "/Admin/ScanRepository", Response = typeof(AdminJobStatus), Status = 202)]
+    [ApiOperation("Scan every artifact of a repository in the background", typeof(AdminScanningController), nameof(AdminScanningController.Repository), Response = typeof(AdminJobStatus), Status = 202)]
     public async Task<IActionResult> Scan(string name)
     {
         ThrowIfClosed();
@@ -106,7 +107,7 @@ public class ScanningController : AccessApiController
 
     /// <summary>A project's policy.</summary>
     [HttpGet("projects/{name}/policy")]
-    [ApiOperation("Show a project's scanning policy", "/Admin/ScanProject", Response = typeof(ScanPolicy))]
+    [ApiOperation("Show a project's scanning policy", typeof(AdminScanningController), nameof(AdminScanningController.Project), Response = typeof(ScanPolicy))]
     public async Task<IActionResult> ProjectPolicy(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -120,7 +121,7 @@ public class ScanningController : AccessApiController
 
     /// <summary>Saves a project's policy.</summary>
     [HttpPut("projects/{name}/policy")]
-    [ApiOperation("Set a project's scanning policy (all thresholds empty removes it)", "/Admin/ScanProject", Confirm = true, Status = 204)]
+    [ApiOperation("Set a project's scanning policy (all thresholds empty removes it)", typeof(AdminScanningController), nameof(AdminScanningController.Project), Confirm = true, Status = 204)]
     public async Task<IActionResult> SetProjectPolicy(string name, [FromBody] ScanPolicyRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;

@@ -50,6 +50,6 @@ public abstract class AdminUseCaseBase
     }
 
     /// <summary>The action is over: go to <paramref name="screen"/> and show the message or the error there (the flash message).</summary>
-    protected static ScreenResult<T> Back<T>(string screen, IReadOnlyDictionary<string, object?>? route, string? message, string? error)
+    protected static ScreenResult<T> Back<T>(ScreenRef screen, IReadOnlyDictionary<string, object?>? route, string? message, string? error)
         => ScreenResult<T>.GoTo(new ScreenNext(screen, route, message, error));
 }

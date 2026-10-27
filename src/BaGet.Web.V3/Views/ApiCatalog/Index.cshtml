@@ -49,14 +49,14 @@
                     <td>@endpoint.Summary</td>
                     <td>@(endpoint.Confirm ? "password" : "-")</td>
                     <td>
-                        @{ var link = Url.Page(endpoint.UiPage); }
+                        @{ var link = Url.Action(endpoint.UiScreen.Action, endpoint.UiScreen.Controller); }
                         @if (link != null)
                         {
-                            <a href="@link">@endpoint.UiPage</a>
+                            <a href="@link">@endpoint.UiScreen.Controller/@endpoint.UiScreen.Action</a>
                         }
                         else
                         {
-                            <code>@endpoint.UiPage</code>
+                            <code>@endpoint.UiScreen.Controller/@endpoint.UiScreen.Action</code>
                         }
                     </td>
                 </tr>

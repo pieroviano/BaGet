@@ -15,7 +15,6 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// controller calls in process and renders.
 /// </summary>
 [Route("packages/{id}/contact-owners")]
-[LegacyPage("/Packages/ContactOwners")]
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class ContactOwnersController : AccountControllerBase
 {

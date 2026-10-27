@@ -1,8 +1,8 @@
 using System;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Web.V3.TagHelpers;
 
@@ -10,7 +10,6 @@ namespace BaGet.Web.V3.TagHelpers;
 public class NavLinkTagHelper : TagHelper
 {
     private const string ActiveClass = "active";
-    private const string IndexPage = "/Index";
     private const string PackagesPath = "/packages";
 
     private readonly IHttpContextAccessor _accessor;
@@ -20,8 +19,13 @@ public class NavLinkTagHelper : TagHelper
         _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
     }
 
-    [HtmlAttributeName("asp-page")]
-    public string? Page { get; set; }
+    /// <summary>The controller the link points at (<c>asp-controller</c>); with <see cref="Action"/> it names the screen the link is active on.</summary>
+    [HtmlAttributeName("asp-controller")]
+    public string? Controller { get; set; }
+
+    /// <summary>The action the link points at (<c>asp-action</c>).</summary>
+    [HtmlAttributeName("asp-action")]
+    public string? Action { get; set; }
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
@@ -60,35 +64,23 @@ public class NavLinkTagHelper : TagHelper
     private bool IsActiveLink()
     {
         var httpContext = _accessor.HttpContext;
-        var metadata = httpContext?.GetEndpoint()?.Metadata;
-        if (metadata == null) return false;
+        if (httpContext == null) return false;
 
-        // The page of the endpoint: a Razor Page's view engine path, or the page name a controller action carries after the page
-        // moved to a controller (LegacyPageAttribute); an area page is never the current one.
-        string? pagePath;
-        var pageDescriptor = metadata.GetMetadata<PageActionDescriptor>();
-        if (pageDescriptor != null)
-        {
-            if (pageDescriptor.AreaName != null) return false;
-            pagePath = pageDescriptor.ViewEnginePath;
-        }
-        else
-        {
-            pagePath = metadata.GetMetadata<LegacyPageAttribute>()?.PageName;
-        }
+        // The screen of the endpoint: the controller and default GET action of the screen the current action belongs to.
+        var screen = ScreenEndpoints.ScreenOf(httpContext.GetEndpoint());
+        if (screen == null) return false;
 
-        if (pagePath == null) return false;
-
-        // When the link names a page, that name alone decides whether it is active.
+        // When the link names a screen, that name alone decides whether it is active.
         // Falling through to the path check below would light up every nav link on the
         // pages that check covers.
-        if (!string.IsNullOrEmpty(Page))
+        if (!string.IsNullOrEmpty(Controller) || !string.IsNullOrEmpty(Action))
         {
-            return pagePath == Page;
+            return string.Equals(screen.Controller, Controller, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(screen.Action, Action, StringComparison.OrdinalIgnoreCase);
         }
 
-        // The packages link names no page: both "/" and "/packages" render the index.
-        if (pagePath != IndexPage) return false;
+        // The packages link names no screen: both "/" and "/packages" render the index.
+        if (screen != ScreenCatalog.Index) return false;
 
         // Routing is case-insensitive and tolerates a trailing slash, so the comparison
         // must be too.

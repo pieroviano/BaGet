@@ -23,7 +23,7 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminUsersUseCase : AdminUseCaseBase
 {
-    private const string Screen = "/Admin/Users";
+    private static readonly ScreenRef Screen = ScreenCatalog.AdminUsers;
 
     private readonly IContext _context;
     private readonly AvatarService _avatars;
@@ -174,7 +174,7 @@ public sealed class AdminUsersUseCase : AdminUseCaseBase
         else
         {
             // No rate limiter: an administrator acts, and no one can use this to probe for accounts.
-            var template = _links.AbsoluteLink("/Account/ResetPassword", PasswordResetLinkSender.Template);
+            var template = _links.AbsoluteLink(ScreenCatalog.AccountResetPassword, PasswordResetLinkSender.Template);
             if (PasswordResetLinkSender.TryEnqueue(_services, user.Id, template))
             {
                 _logger.LogWarning("{Admin} sent a password reset link to {User}", current.UserName, user.UserName);
@@ -243,7 +243,7 @@ public sealed class AdminUsersUseCase : AdminUseCaseBase
         string message;
         if (mode == NewUserPasswordMode.Invited)
         {
-            var template = _links.AbsoluteLink("/Account/ResetPassword", PasswordResetLinkSender.Template);
+            var template = _links.AbsoluteLink(ScreenCatalog.AccountResetPassword, PasswordResetLinkSender.Template);
             message = PasswordResetLinkSender.TryEnqueue(_services, created.User.Id, template)
                 ? $"{created.User.UserName} was created. An invitation was sent to {UsersViewModel.MaskEmail(created.User.Email)}."
                 : $"{created.User.UserName} was created, but the mail queue is full, so no invitation was sent. Use Reset password, Email a reset link.";

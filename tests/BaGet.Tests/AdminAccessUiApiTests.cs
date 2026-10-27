@@ -179,7 +179,7 @@ public class AdminAccessUiApiTests : IDisposable
         var deleted = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/permissions/shop-target/delete", new { password = Password });
 
         Assert.Equal("Next", Status(deleted));
-        Assert.Equal("/Admin/Permissions", deleted.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminPermissions/Index", JsonScreen.Name(deleted.Json!["next"]!["screen"]!));
         Assert.Null(await WithAsync(a => a.GetTargetAsync("shop-target", Token)));
 
         // The pattern preview of a project target only ever shows the project's repositories.
@@ -211,7 +211,7 @@ public class AdminAccessUiApiTests : IDisposable
         var withKey = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/groups", new { name = "key-group", description = "by key" });
         Assert.Equal(HttpStatusCode.OK, withKey.Status);
         Assert.Equal("Next", Status(withKey));
-        Assert.Equal("/Admin/GroupDetail", withKey.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminGroups/Detail", JsonScreen.Name(withKey.Json!["next"]!["screen"]!));
         Assert.Equal("key-group", withKey.Json["next"]!["routeValues"]!["name"]!.GetValue<string>());
         Assert.Equal("Group key-group was created.", withKey.Json["next"]!["message"]!.GetValue<string>());
 
@@ -326,12 +326,12 @@ public class AdminAccessUiApiTests : IDisposable
         Assert.Equal("The member was removed.", removed.Json!["next"]!["message"]!.GetValue<string>());
 
         var deleted = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/groups/crew/delete", new { password = Password });
-        Assert.Equal("/Admin/Groups", deleted.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminGroups/Index", JsonScreen.Name(deleted.Json!["next"]!["screen"]!));
         Assert.Null(await WithAsync(a => a.GetGroupAsync("crew", Token)));
 
         // A built-in group cannot be deleted: the detail screen says why.
         var builtIn = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/groups/Everyone/delete", new { password = Password });
-        Assert.Equal("/Admin/GroupDetail", builtIn.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminGroups/Detail", JsonScreen.Name(builtIn.Json!["next"]!["screen"]!));
         Assert.False(string.IsNullOrEmpty(builtIn.Json["next"]!["error"]!.GetValue<string>()));
     }
 
@@ -339,7 +339,7 @@ public class AdminAccessUiApiTests : IDisposable
     public async Task APermissionTargetGetsPatternsAGrantAndALastGoodbye()
     {
         var created = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/permissions", new { name = "docs", repositoryPatterns = "def*", includePatterns = "Contoso.*" });
-        Assert.Equal("/Admin/PermissionDetail", created.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminPermissions/Detail", JsonScreen.Name(created.Json!["next"]!["screen"]!));
 
         var preview = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/permissions/docs/preview", new { repositoryPatterns = "def*", includePatterns = "Contoso.*", testPackage = "Contoso.Core" });
         Assert.Equal(new[] { "default" }, preview.Json!["model"]!["preview"]!["repositories"]!.AsArray().Select(r => r!.GetValue<string>()).ToArray());
@@ -361,7 +361,7 @@ public class AdminAccessUiApiTests : IDisposable
         Assert.Equal("The grant was removed.", removed.Json!["next"]!["message"]!.GetValue<string>());
 
         var gone = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/permissions/docs/delete", new { password = Password });
-        Assert.Equal("/Admin/Permissions", gone.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminPermissions/Index", JsonScreen.Name(gone.Json!["next"]!["screen"]!));
         Assert.Null(await WithAsync(a => a.GetTargetAsync("docs", Token)));
 
         var unknown = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/permissions/global-target/set-grant", new { principalType = "Group", principalName = "nobody", actions = new[] { "Read" }, password = Password });
@@ -375,7 +375,7 @@ public class AdminAccessUiApiTests : IDisposable
     public async Task AProjectIsCreatedStaffedAssignedAndDeleted()
     {
         var created = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/projects", new { name = "fresh", displayName = " Fresh " });
-        Assert.Equal("/Admin/ProjectDetail", created.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminProjects/Detail", JsonScreen.Name(created.Json!["next"]!["screen"]!));
 
         var member = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/projects/fresh/set-member", new { type = "User", principalName = "bob", role = "Admin", password = Password });
         Assert.Equal("bob is now Admin of fresh.", member.Json!["next"]!["message"]!.GetValue<string>());
@@ -398,7 +398,7 @@ public class AdminAccessUiApiTests : IDisposable
         Assert.Equal("Repository default is no longer in fresh.", unassigned.Json!["next"]!["message"]!.GetValue<string>());
 
         var deleted = await AsAdminAsync(HttpMethod.Post, "/api/ui/admin/projects/fresh/delete", new { password = Password });
-        Assert.Equal("/Admin/Projects", deleted.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminProjects/Index", JsonScreen.Name(deleted.Json!["next"]!["screen"]!));
         Assert.Null(await WithAsync(a => a.GetProjectAsync("fresh", Token)));
     }
 

@@ -16,7 +16,7 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 public sealed class ProfileController : AccountControllerBase
 {
     /// <summary>The profile named <paramref name="name"/>; 404 when neither a user nor an organization has it.</summary>
-    [Route("profiles/{name}"), HttpGet, HttpHead, PageHandler, LegacyPage("/Profiles/Profile")]
+    [Route("profiles/{name}"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Profile(string? name, CancellationToken cancellationToken)
         => Render(await Api<ProfileUiApiController, ProfileViewModel>(api => api.Profile(name, cancellationToken)), "Profile");
 }

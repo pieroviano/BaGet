@@ -1,4 +1,5 @@
 using System;
+using BaGet.Identity.Application.Screens;
 using BaGet.Web.V3.Controllers.Base;
 using BaGet.Web.V3.Models.Api;
 
@@ -6,8 +7,8 @@ namespace BaGet.Web.V3.Api.Catalog;
 
 /// <summary>
 /// Describes one operation of the administration REST API for the OpenAPI document (<see cref="ApiCatalog"/>), the
-/// <c>/admin/api</c> page and the UI-coverage audit: what it does, the Razor page that offers the same operation
-/// (<see cref="UiPage"/>, the CLAUDE.md rule "every service has a UI counterpart"), the type of its success body and whether it
+/// <c>/admin/api</c> page and the UI-coverage audit: what it does, the screen that offers the same operation
+/// (<see cref="UiController"/> and <see cref="UiAction"/>, the CLAUDE.md rule "every service has a UI counterpart"), the type of its success body and whether it
 /// needs the password confirmation that page asks for. Every action of an <see cref="AdminApiController"/> carries one; a test fails
 /// for an action without it.
 /// </summary>
@@ -15,18 +16,34 @@ namespace BaGet.Web.V3.Api.Catalog;
 public sealed class ApiOperationAttribute : Attribute
 {
     /// <param name="summary">One sentence, imperative ("Create a group").</param>
-    /// <param name="uiPage">The Razor page path that offers the operation, such as <c>/Admin/Groups</c>.</param>
-    public ApiOperationAttribute(string summary, string uiPage)
+    /// <param name="uiController">The view controller of the screen that offers the operation, such as <c>typeof(AdminGroupsController)</c>.</param>
+    /// <param name="uiAction">The action of that controller that shows the screen, such as <c>nameof(AdminGroupsController.Index)</c>.</param>
+    public ApiOperationAttribute(string summary, Type uiController, string uiAction)
     {
         Summary = summary ?? throw new ArgumentNullException(nameof(summary));
-        UiPage = uiPage ?? throw new ArgumentNullException(nameof(uiPage));
+        UiController = uiController ?? throw new ArgumentNullException(nameof(uiController));
+        UiAction = uiAction ?? throw new ArgumentNullException(nameof(uiAction));
     }
 
     /// <summary>What the operation does.</summary>
     public string Summary { get; }
 
-    /// <summary>The Razor page that offers the same operation.</summary>
-    public string UiPage { get; }
+    /// <summary>The view controller of the screen that offers the same operation.</summary>
+    public Type UiController { get; }
+
+    /// <summary>The action of <see cref="UiController"/> that shows that screen.</summary>
+    public string UiAction { get; }
+
+    /// <summary>The screen that offers the same operation (controller name without the suffix, and action).</summary>
+    public ScreenRef UiScreen
+    {
+        get
+        {
+            var name = UiController.Name;
+
+            return new ScreenRef(name.EndsWith("Controller", StringComparison.Ordinal) ? name.Substring(0, name.Length - "Controller".Length) : name, UiAction);
+        }
+    }
 
     /// <summary>
     /// Whether the page asks the administrator's password again for this operation, so the API asks for the

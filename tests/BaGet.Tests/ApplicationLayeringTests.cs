@@ -92,8 +92,7 @@ public class ApplicationLayeringTests
         // external-provider step, which has no twin.
         var viewControllers = UiAssemblies
             .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsAbstract && t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .Any(m => m.GetCustomAttributes(inherit: false).Any(a => a.GetType().Name == "LegacyPageAttribute")))
+            .Where(t => !t.IsAbstract && typeof(BaGet.Identity.Controllers.Base.UiControllerBase).IsAssignableFrom(t))
             .ToList();
 
         Assert.NotEmpty(viewControllers);

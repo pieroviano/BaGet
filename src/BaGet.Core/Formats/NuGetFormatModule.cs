@@ -53,16 +53,16 @@ public class NuGetFormatModule : IFormatModule
     {
         var links = new List<FormatLink>
         {
-            new FormatLink("browse", "Browse", "/Index"),
-            new FormatLink("upload", "Upload", "/Upload", NeedsUploads: true),
-            new FormatLink("v2", "V2 feed", null, "api/v2"),
-            new FormatLink("vulnerabilities", "Vulnerabilities", null, "v3/vulnerabilities/index.json"),
+            new FormatLink("browse", "Browse", "Home", "Index"),
+            new FormatLink("upload", "Upload", "Upload", "Index", NeedsUploads: true),
+            new FormatLink("v2", "V2 feed", null, null, "api/v2"),
+            new FormatLink("vulnerabilities", "Vulnerabilities", null, null, "v3/vulnerabilities/index.json"),
         };
 
         if (repository.Kind == RepositoryKind.Local)
         {
-            links.Add(new FormatLink("catalog", "Catalog", null, "v3/catalog/index.json"));
-            links.Add(new FormatLink("signatures", "Signatures", null, "v3/repository-signatures/index.json"));
+            links.Add(new FormatLink("catalog", "Catalog", null, null, "v3/catalog/index.json"));
+            links.Add(new FormatLink("signatures", "Signatures", null, null, "v3/repository-signatures/index.json"));
         }
 
         return links;

@@ -29,7 +29,7 @@ public sealed class StatisticsUiApiController : UiApiControllerBase
     }
 
     /// <summary>The feed's statistics.</summary>
-    [HttpGet("stats"), UiApi("/Statistics")]
+    [HttpGet("stats"), UiApi(typeof(StatisticsController), nameof(StatisticsController.Index))]
     public async Task<ActionResult<ScreenResult<StatisticsViewModel>>> Get(CancellationToken cancellationToken)
         => Respond(await _statistics.GetAsync(cancellationToken));
 }

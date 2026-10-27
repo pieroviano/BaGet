@@ -31,11 +31,11 @@ public sealed class ApiCatalogUiApiController : AdminUiApiControllerBase
     }
 
     /// <summary>The operations of the REST API.</summary>
-    [HttpGet("api"), UiApi("/Admin/Api")]
+    [HttpGet("api"), UiApi(typeof(ApiCatalogController), nameof(ApiCatalogController.Index))]
     public Task<ActionResult<ScreenResult<ApiCatalogViewModel>>> Get()
     {
         var endpoints = ApiCatalog.Endpoints(_actions)
-            .Select(e => new ApiEndpointSummary(e.Method, e.Path, e.Operation.Summary, e.Operation.UiPage, e.Operation.Confirm))
+            .Select(e => new ApiEndpointSummary(e.Method, e.Path, e.Operation.Summary, e.Operation.UiScreen, e.Operation.Confirm))
             .ToList();
         var model = new ApiCatalogViewModel(
             endpoints,

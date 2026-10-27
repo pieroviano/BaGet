@@ -24,98 +24,98 @@ public sealed class AccountUiApiController : AccountUiApiControllerBase
     // ----- login
 
     /// <summary>The sign-in form.</summary>
-    [HttpGet("login"), UiApi("/Account/Login")]
+    [HttpGet("login"), UiApi(typeof(AccountController), nameof(AccountController.Login))]
     public ActionResult<ScreenResult<LoginViewModel>> Login(string? returnUrl)
         => Respond(UseCase<SignInUseCase>().ShowLogin(returnUrl));
 
     /// <summary>Signs in. Success sets the session cookie and continues at <c>next.localUrl</c> (the local return URL, else the site root), or at the second-factor screen.</summary>
-    [HttpPost("login"), UiApi("/Account/Login")]
+    [HttpPost("login"), UiApi(typeof(AccountController), nameof(AccountController.Login))]
     public async Task<ActionResult<ScreenResult<LoginViewModel>>> LoginPost([FromBody] LoginForm? form)
         => Respond(await UseCase<SignInUseCase>().LoginAsync(form));
 
     // ----- loginwith2fa
 
     /// <summary>The authenticator code form (back to sign-in without the half-signed-in cookie).</summary>
-    [HttpGet("loginwith2fa"), UiApi("/Account/LoginWith2fa")]
+    [HttpGet("loginwith2fa"), UiApi(typeof(AccountController), nameof(AccountController.LoginWith2fa))]
     public async Task<ActionResult<ScreenResult<TwoFactorLoginViewModel>>> LoginWith2fa(bool rememberMe, string? returnUrl)
         => Respond(await UseCase<SignInUseCase>().ShowTwoFactorAsync(rememberMe, returnUrl));
 
     /// <summary>Completes the sign-in with an authenticator code.</summary>
-    [HttpPost("loginwith2fa"), UiApi("/Account/LoginWith2fa")]
+    [HttpPost("loginwith2fa"), UiApi(typeof(AccountController), nameof(AccountController.LoginWith2fa))]
     public async Task<ActionResult<ScreenResult<TwoFactorLoginViewModel>>> LoginWith2faPost([FromBody] TwoFactorLoginForm? form)
         => Respond(await UseCase<SignInUseCase>().TwoFactorAsync(form));
 
     // ----- loginwithrecoverycode
 
     /// <summary>The recovery code form.</summary>
-    [HttpGet("loginwithrecoverycode"), UiApi("/Account/LoginWithRecoveryCode")]
+    [HttpGet("loginwithrecoverycode"), UiApi(typeof(AccountController), nameof(AccountController.LoginWithRecoveryCode))]
     public async Task<ActionResult<ScreenResult<RecoveryCodeLoginViewModel>>> LoginWithRecoveryCode(string? returnUrl)
         => Respond(await UseCase<SignInUseCase>().ShowRecoveryCodeAsync(returnUrl));
 
     /// <summary>Completes the sign-in with a recovery code (each works once).</summary>
-    [HttpPost("loginwithrecoverycode"), UiApi("/Account/LoginWithRecoveryCode")]
+    [HttpPost("loginwithrecoverycode"), UiApi(typeof(AccountController), nameof(AccountController.LoginWithRecoveryCode))]
     public async Task<ActionResult<ScreenResult<RecoveryCodeLoginViewModel>>> LoginWithRecoveryCodePost([FromBody] RecoveryCodeLoginForm? form)
         => Respond(await UseCase<SignInUseCase>().RecoveryCodeAsync(form));
 
     // ----- logout
 
     /// <summary>The sign-out screen.</summary>
-    [HttpGet("logout"), UiApi("/Account/Logout")]
+    [HttpGet("logout"), UiApi(typeof(AccountController), nameof(AccountController.Logout))]
     public ActionResult<ScreenResult<EmptyScreen>> Logout()
         => Respond(UseCase<SignInUseCase>().ShowLogout());
 
     /// <summary>Signs the user out.</summary>
-    [HttpPost("logout"), UiApi("/Account/Logout")]
+    [HttpPost("logout"), UiApi(typeof(AccountController), nameof(AccountController.Logout))]
     public async Task<ActionResult<ScreenResult<EmptyScreen>>> LogoutPost()
         => Respond(await UseCase<SignInUseCase>().LogoutAsync());
 
     // ----- register
 
     /// <summary>The registration form (404 while <c>Accounts:AllowRegistration</c> is off).</summary>
-    [HttpGet("register"), UiApi("/Account/Register")]
+    [HttpGet("register"), UiApi(typeof(AccountController), nameof(AccountController.Register))]
     public ActionResult<ScreenResult<RegisterViewModel>> Register(string? returnUrl)
         => Respond(UseCase<RegistrationUseCase>().ShowRegister(returnUrl));
 
     /// <summary>Creates an account (and signs it in when no confirmation or approval is pending).</summary>
-    [HttpPost("register"), UiApi("/Account/Register")]
+    [HttpPost("register"), UiApi(typeof(AccountController), nameof(AccountController.Register))]
     public async Task<ActionResult<ScreenResult<RegisterViewModel>>> RegisterPost([FromBody] RegisterForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase<RegistrationUseCase>().RegisterAsync(form, cancellationToken));
 
     // ----- confirmemail
 
     /// <summary>The target of the links in confirmation emails (a GET that confirms the address, like the page).</summary>
-    [HttpGet("confirmemail"), UiApi("/Account/ConfirmEmail"), RequiresEmail]
+    [HttpGet("confirmemail"), UiApi(typeof(AccountController), nameof(AccountController.ConfirmEmail)), RequiresEmail]
     public async Task<ActionResult<ScreenResult<ConfirmEmailViewModel>>> ConfirmEmail(string? userId, string? code, string? email)
         => Respond(await UseCase<RegistrationUseCase>().ConfirmEmailAsync(User, userId, code, email));
 
     // ----- forgotpassword
 
     /// <summary>The "forgot password" form.</summary>
-    [HttpGet("forgotpassword"), UiApi("/Account/ForgotPassword"), RequiresEmail]
+    [HttpGet("forgotpassword"), UiApi(typeof(AccountController), nameof(AccountController.ForgotPassword)), RequiresEmail]
     public ActionResult<ScreenResult<ForgotPasswordViewModel>> ForgotPassword()
         => Respond(UseCase<RegistrationUseCase>().ShowForgotPassword());
 
     /// <summary>Asks for a reset link. The answer is the same whether or not an account matches.</summary>
-    [HttpPost("forgotpassword"), UiApi("/Account/ForgotPassword"), RequiresEmail]
+    [HttpPost("forgotpassword"), UiApi(typeof(AccountController), nameof(AccountController.ForgotPassword)), RequiresEmail]
     public async Task<ActionResult<ScreenResult<ForgotPasswordViewModel>>> ForgotPasswordPost([FromBody] ForgotPasswordForm? form)
         => Respond(await UseCase<RegistrationUseCase>().ForgotPasswordAsync(form, HttpContext.Connection.RemoteIpAddress?.ToString()));
 
     // ----- resetpassword
 
     /// <summary>The new-password form behind the link of a reset email.</summary>
-    [HttpGet("resetpassword"), UiApi("/Account/ResetPassword"), RequiresEmail]
+    [HttpGet("resetpassword"), UiApi(typeof(AccountController), nameof(AccountController.ResetPassword)), RequiresEmail]
     public ActionResult<ScreenResult<ResetPasswordViewModel>> ResetPassword(string? userId, string? code)
         => Respond(UseCase<RegistrationUseCase>().ShowResetPassword(userId, code));
 
     /// <summary>Sets the new password from the link; success continues at the sign-in screen.</summary>
-    [HttpPost("resetpassword"), UiApi("/Account/ResetPassword"), RequiresEmail]
+    [HttpPost("resetpassword"), UiApi(typeof(AccountController), nameof(AccountController.ResetPassword)), RequiresEmail]
     public async Task<ActionResult<ScreenResult<ResetPasswordViewModel>>> ResetPasswordPost([FromBody] ResetPasswordForm? form)
         => Respond(await UseCase<RegistrationUseCase>().ResetPasswordAsync(form));
 
     // ----- reauthenticate
 
     /// <summary>The "confirm it is you" screen (the button that starts the provider's sign-in is browser-only).</summary>
-    [HttpGet("reauthenticate"), UiApi("/Account/Reauthenticate"), RequiresSignIn]
+    [HttpGet("reauthenticate"), UiApi(typeof(AccountController), nameof(AccountController.Reauthenticate)), RequiresSignIn]
     public ActionResult<ScreenResult<ReauthenticateViewModel>> Reauthenticate(string? returnUrl)
         => Respond(ExternalSignInUseCase.ShowReauthenticate(returnUrl));
 }

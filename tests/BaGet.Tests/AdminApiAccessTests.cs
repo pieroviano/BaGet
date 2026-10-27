@@ -196,15 +196,16 @@ public class AdminApiAccessTests : IDisposable
         Assert.NotEmpty(endpoints);
 
         var paths = answer.Json["paths"]!.AsObject();
-        // A page is a Razor Page or a controller action that replaced one (it keeps the page's name, LegacyPageAttribute).
-        var pages = provider.ActionDescriptors.Items.OfType<PageActionDescriptor>().Select(p => p.ViewEnginePath)
-            .Concat(provider.ActionDescriptors.Items.SelectMany(a => a.EndpointMetadata.OfType<BaGet.Identity.Mvc.Attributes.LegacyPageAttribute>().Select(l => l.PageName)))
+        // A screen is a controller action of a view controller, named by its controller and the action that shows it.
+        var pages = provider.ActionDescriptors.Items
+            .Select(a => BaGet.Identity.Mvc.UI.ScreenEndpoints.ScreenOf(a)?.ToString())
+            .Where(s => s != null)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var docs = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "ui-coverage.md"));
         foreach (var endpoint in endpoints)
         {
             Assert.NotNull(paths[endpoint.Path]?[endpoint.Method.ToLowerInvariant()]);
-            Assert.True(pages.Contains(endpoint.Operation.UiPage), $"{endpoint.Method} {endpoint.Path}: the page {endpoint.Operation.UiPage} does not exist.");
+            Assert.True(pages.Contains(endpoint.Operation.UiScreen.ToString()), $"{endpoint.Method} {endpoint.Path}: the screen {endpoint.Operation.UiScreen} does not exist.");
             Assert.True(docs.Contains($"`{endpoint.Method} {endpoint.Path}`", StringComparison.Ordinal), $"docs/ui-coverage.md does not list `{endpoint.Method} {endpoint.Path}`.");
         }
     }

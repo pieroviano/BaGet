@@ -24,8 +24,6 @@ namespace BaGet.Identity.Controllers.UI;
 [RepositoryPage(Format = RepositoryFormat.Docker, NotOnVirtual = true)]
 public sealed class DockerManageUiApiController : AccountUiApiControllerBase
 {
-    private const string Screen = "/Packages/DockerManage";
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
@@ -37,27 +35,27 @@ public sealed class DockerManageUiApiController : AccountUiApiControllerBase
         => UseCase.EnterAsync(User, image, isWrite, cancellationToken);
 
     /// <summary>The screen.</summary>
-    [HttpGet("{**image}"), UiApi(Screen)]
+    [HttpGet("{**image}"), UiApi(typeof(DockerManageController), nameof(DockerManageController.Index))]
     public async Task<ActionResult<ScreenResult<DockerManageViewModel>>> Get(string? image, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, image, cancellationToken));
 
     /// <summary>Deletes a tag, after the password.</summary>
-    [HttpPost("delete-tag/{**image}"), UiApi(Screen, Handler = "DeleteTag")]
+    [HttpPost("delete-tag/{**image}"), UiApi(typeof(DockerManageController), nameof(DockerManageController.Index), Handler = "DeleteTag")]
     public async Task<ActionResult<ScreenResult<DockerManageViewModel>>> DeleteTag(string? image, [FromBody] DockerManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteTagAsync(User, image, form?.Tag, form?.Password, cancellationToken));
 
     /// <summary>Deletes a manifest with its tags, after the password.</summary>
-    [HttpPost("delete-manifest/{**image}"), UiApi(Screen, Handler = "DeleteManifest")]
+    [HttpPost("delete-manifest/{**image}"), UiApi(typeof(DockerManageController), nameof(DockerManageController.Index), Handler = "DeleteManifest")]
     public async Task<ActionResult<ScreenResult<DockerManageViewModel>>> DeleteManifest(string? image, [FromBody] DockerManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteManifestAsync(User, image, form?.Digest, form?.Password, cancellationToken));
 
     /// <summary>Removes the layers no manifest uses, after the password.</summary>
-    [HttpPost("prune/{**image}"), UiApi(Screen, Handler = "Prune")]
+    [HttpPost("prune/{**image}"), UiApi(typeof(DockerManageController), nameof(DockerManageController.Index), Handler = "Prune")]
     public async Task<ActionResult<ScreenResult<DockerManageViewModel>>> Prune(string? image, [FromBody] DockerManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.PruneAsync(User, image, form?.Password, cancellationToken));
 
     /// <summary>Deletes the whole image, after the password.</summary>
-    [HttpPost("delete-image/{**image}"), UiApi(Screen, Handler = "DeleteImage")]
+    [HttpPost("delete-image/{**image}"), UiApi(typeof(DockerManageController), nameof(DockerManageController.Index), Handler = "DeleteImage")]
     public async Task<ActionResult<ScreenResult<DockerManageViewModel>>> DeleteImage(string? image, [FromBody] DockerManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteImageAsync(User, image, form?.Password, cancellationToken));
 }

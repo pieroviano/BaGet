@@ -65,7 +65,7 @@ the schema shows (e.g. `password`). A wrong one counts as a failed sign-in and c
 | `status` | `Ok`, `Invalid`, `NotFound`, `Forbidden`, `SignIn`, `Next` |
 | `model` | the data the screen renders (present also when `Invalid`, so a form can be shown again) |
 | `errors` | field name -> messages (`""` = the whole form) |
-| `next` | after a write: where to go (`screen` = page name such as `/Admin/Users`, `routeValues`, or a validated `localUrl`; `fragment`) and the flash `message` or `error` |
+| `next` | after a write: where to go (`screen` = `{ controller, action }` such as `AdminUsers` / `Index`, `routeValues`, or a validated `localUrl`; `fragment`) and the flash `message` or `error` |
 | `statusCode` | set when the screen itself answers with a specific code |
 
 HTTP status: `200` (Ok, Next), `400` (Invalid), `401` (SignIn), `403` (Forbidden), `404` (NotFound), `503` while the server is read-only

@@ -208,7 +208,7 @@ public sealed class DockerManageUseCase
 
         _logger.LogWarning("{User} deleted Docker image {Image}", caller.Identity?.Name, image);
 
-        return ScreenResult<DockerManageViewModel>.GoTo(new ScreenNext("/DockerImages"));
+        return ScreenResult<DockerManageViewModel>.GoTo(new ScreenNext(ScreenCatalog.DockerImages));
     }
 
     /// <summary>Null when the signed-in user confirmed with their password, otherwise the screen to show.</summary>

@@ -112,11 +112,11 @@ public abstract class AccountControllerBase : UiControllerBase
         => AccountSupport.DecodeToken(code);
 
     /// <summary>
-    /// An absolute link to an account page, for an email. Built only from <c>Site:PublicUrl</c>, never from the request's host or
+    /// An absolute link to an account screen, for an email. Built only from <c>Site:PublicUrl</c>, never from the request's host or
     /// scheme: see <see cref="EmailLinkPolicy"/>.
     /// </summary>
-    protected string PageLink(string page, object values)
-        => AccountSupport.PageLink(HttpContext, Url, page, values);
+    protected string AbsoluteLink(ScreenRef screen, object values)
+        => AccountSupport.AbsoluteLink(HttpContext, Url, screen, values);
 
     /// <summary>How long a sign-in with the external provider counts as proof of presence for a sensitive action.</summary>
     public static TimeSpan ReauthenticationWindow => AccountSupport.ReauthenticationWindow;

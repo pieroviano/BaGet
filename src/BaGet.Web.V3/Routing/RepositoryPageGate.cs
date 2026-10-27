@@ -84,12 +84,12 @@ internal static class RepositoryPageGate
             // header lead, so it sends the visitor to the format's own browse page; anything else is not there.
             var browse = rule.FrontPage
                 ? services.GetRequiredService<FormatRegistry>().Find(repository.Format)?.RepositoryLinks(repository)
-                    .FirstOrDefault(l => l.Id == "browse" && l.Page != null)
+                    .FirstOrDefault(l => l.Id == "browse" && l.Controller != null && l.Action != null)
                 : null;
 
             return browse == null
                 ? new NotFoundResult()
-                : new RedirectToPageResult(browse.Page, new { repo = repository.IsDefault ? null : repository.Name });
+                : new RedirectToActionResult(browse.Action!, browse.Controller, new { repo = repository.IsDefault ? null : repository.Name });
         }
 
         if (allowed && repository.Kind == RepositoryKind.Remote && rule.NotOnRemote)

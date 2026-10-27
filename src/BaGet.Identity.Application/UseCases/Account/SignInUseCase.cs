@@ -69,7 +69,7 @@ public sealed class SignInUseCase
         if (result.RequiresTwoFactor)
         {
             return ScreenResult<LoginViewModel>.GoTo(new ScreenNext(
-                "/Account/LoginWith2fa",
+                ScreenCatalog.AccountLoginWith2fa,
                 new Dictionary<string, object?> { ["ReturnUrl"] = form.ReturnUrl, ["RememberMe"] = form.RememberMe }));
         }
 
@@ -123,7 +123,7 @@ public sealed class SignInUseCase
     /// <summary>Without the half-signed-in cookie there is nothing to complete: back to the first step.</summary>
     public async Task<ScreenResult<TwoFactorLoginViewModel>> ShowTwoFactorAsync(bool rememberMe, string? returnUrl)
     {
-        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<TwoFactorLoginViewModel>.GoTo(new ScreenNext("/Account/Login"));
+        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<TwoFactorLoginViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountLogin));
 
         return ScreenResult<TwoFactorLoginViewModel>.Ok(new TwoFactorLoginViewModel { RememberMe = rememberMe, ReturnUrl = returnUrl });
     }
@@ -131,7 +131,7 @@ public sealed class SignInUseCase
     /// <summary>The authenticator code was posted.</summary>
     public async Task<ScreenResult<TwoFactorLoginViewModel>> TwoFactorAsync(TwoFactorLoginForm? form)
     {
-        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<TwoFactorLoginViewModel>.GoTo(new ScreenNext("/Account/Login"));
+        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<TwoFactorLoginViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountLogin));
 
         var model = new TwoFactorLoginViewModel { RememberMe = form?.RememberMe ?? false, ReturnUrl = form?.ReturnUrl };
         var errors = ScreenValidator.Validate(form);
@@ -154,7 +154,7 @@ public sealed class SignInUseCase
     /// <summary>Without the half-signed-in cookie there is nothing to complete: back to the first step.</summary>
     public async Task<ScreenResult<RecoveryCodeLoginViewModel>> ShowRecoveryCodeAsync(string? returnUrl)
     {
-        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<RecoveryCodeLoginViewModel>.GoTo(new ScreenNext("/Account/Login"));
+        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<RecoveryCodeLoginViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountLogin));
 
         return ScreenResult<RecoveryCodeLoginViewModel>.Ok(new RecoveryCodeLoginViewModel { ReturnUrl = returnUrl });
     }
@@ -162,7 +162,7 @@ public sealed class SignInUseCase
     /// <summary>The recovery code was posted. Each code works once.</summary>
     public async Task<ScreenResult<RecoveryCodeLoginViewModel>> RecoveryCodeAsync(RecoveryCodeLoginForm? form)
     {
-        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<RecoveryCodeLoginViewModel>.GoTo(new ScreenNext("/Account/Login"));
+        if (await _signIn.GetTwoFactorAuthenticationUserAsync() == null) return ScreenResult<RecoveryCodeLoginViewModel>.GoTo(new ScreenNext(ScreenCatalog.AccountLogin));
 
         var model = new RecoveryCodeLoginViewModel { ReturnUrl = form?.ReturnUrl };
         var errors = ScreenValidator.Validate(form);

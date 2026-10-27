@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Identity.Application.Services.Ownership;
 
@@ -54,7 +55,7 @@ internal sealed class AccountScreen
 
     public DateTime UtcNow => Services.GetRequiredService<SystemTime>().UtcNow;
 
-    public string PageLink(string page, object values) => AccountSupport.PageLink(HttpContext, Url, page, values);
+    public string AbsoluteLink(ScreenRef screen, object values) => AccountSupport.AbsoluteLink(HttpContext, Url, screen, values);
 
     public Task<bool> IsConfirmedAsync(BaGetUser? user, string? password)
         => AccountSupport.IsConfirmedAsync(UserManager, HttpContext, user, password);

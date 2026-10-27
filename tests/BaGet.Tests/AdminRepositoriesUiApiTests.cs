@@ -170,7 +170,7 @@ public class AdminRepositoriesUiApiTests : IDisposable
 
         var withKey = await AdminAsync(HttpMethod.Post, "/api/ui/admin/repositories", new { name = "keyed" });
         Assert.Equal("Next", Status(withKey));
-        Assert.Equal("/Admin/Repositories", withKey.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminRepositories/Index", JsonScreen.Name(withKey.Json!["next"]!["screen"]!));
         Assert.Equal("Repository keyed was created.", withKey.Json["next"]!["message"]!.GetValue<string>());
     }
 
@@ -236,7 +236,7 @@ public class AdminRepositoriesUiApiTests : IDisposable
 
         var virtualRepository = await AdminAsync(HttpMethod.Post, "/api/ui/admin/repositories/create/virtual", new { name = "everything" });
         Assert.Equal("Next", Status(virtualRepository));
-        Assert.Equal("/Admin/RepositoryEdit", virtualRepository.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminRepositories/Edit", JsonScreen.Name(virtualRepository.Json!["next"]!["screen"]!));
         Assert.Equal("everything", virtualRepository.Json["next"]!["routeValues"]!["name"]!.GetValue<string>());
         Assert.Equal(RepositoryKind.Virtual, (await _app.Services.GetRequiredService<IRepositoryService>().FindAsync("everything", Token))!.Kind);
 

@@ -54,7 +54,7 @@ public class DockerFormatModule : IFormatModule
     /// <inheritdoc/>
     public IReadOnlyList<FormatLink> RepositoryLinks(RepositoryInfo repository) => new[]
     {
-        new FormatLink("browse", "Browse", "/DockerImages"),
+        new FormatLink("browse", "Browse", "DockerBrowse", "Images"),
     };
 
     /// <inheritdoc/>

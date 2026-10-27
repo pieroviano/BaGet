@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Tests;
 
@@ -62,9 +62,9 @@ public class UiCoverageInventoryTests : IDisposable
     /// <summary>Pages with no capability of their own: sign-in and legal pages, covered by the "Register, confirm email, sign in" row.</summary>
     private static readonly HashSet<string> AccountPages = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/Account/ConfirmEmail", "/Account/ForgotPassword", "/Account/Login", "/Account/LoginWith2fa", "/Account/LoginWithRecoveryCode",
-        "/Account/Logout", "/Account/Reauthenticate", "/Account/Register", "/Account/ResetPassword", "/Account/Profile",
-        "/Admin/AccessUnavailable", "/Privacy", "/Terms",
+        "Account/ConfirmEmail", "Account/ForgotPassword", "Account/Login", "Account/LoginWith2fa", "Account/LoginWithRecoveryCode",
+        "Account/Logout", "Account/Reauthenticate", "Account/Register", "Account/ResetPassword", "AccountPackages/MyProfile",
+        "AdminOperations/AccessUnavailable", "Legal/Privacy", "Legal/Terms",
     };
 
     private static string Docs => File.ReadAllText(Path.Combine(AdminApiAccessTests.RepositoryRoot(), "docs", "ui-coverage.md"));
@@ -78,9 +78,9 @@ public class UiCoverageInventoryTests : IDisposable
             // The JSON twins of the screens (api/ui) are covered through their screen: UiApiParityTests requires each to serve one.
             .Where(d => d.AttributeRouteInfo?.Template?.StartsWith("api/ui/", StringComparison.Ordinal) != true)
             .ToList();
-        // A controller that stands in for a Razor Page is a page: EveryRazorPageIsNamedInTheCoverageTable audits it by its page name.
-        // It is recognised by any action carrying LegacyPage (a fallback action such as NoHandler deliberately does not).
-        var pageControllers = all.Where(d => d.EndpointMetadata.OfType<LegacyPageAttribute>().Any()).Select(d => d.ControllerName).ToHashSet();
+        // A view controller serves screens: EveryScreenIsNamedInTheCoverageTable audits each by its controller and action.
+        // It is recognised by its base class (a fallback action such as NoHandler is no screen, but its controller is).
+        var pageControllers = all.Where(d => typeof(BaGet.Identity.Controllers.Base.UiControllerBase).IsAssignableFrom(d.ControllerTypeInfo.AsType())).Select(d => d.ControllerName).ToHashSet();
         var controllers = all
             .Select(d => d.ControllerName)
             .Where(c => !pageControllers.Contains(c))
@@ -98,20 +98,14 @@ public class UiCoverageInventoryTests : IDisposable
         foreach (var mapped in ControllerRows.Keys) Assert.Contains(mapped, controllers);
     }
 
-    /// <summary>Pages the table names by a phrase, not by class name or URL segment.</summary>
-    private static readonly Dictionary<string, string> PagesNamedByText = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["/Index"] = "Home and `/` search",
-        ["/Account/ApiKeys"] = "Account API keys",
-    };
-
     [Fact]
-    public void EveryRazorPageIsNamedInTheCoverageTable()
+    public void EveryScreenIsNamedInTheCoverageTable()
     {
-        // A page is a Razor Page or a controller action that replaced one (it keeps the page's name, LegacyPageAttribute).
+        // A screen is a Razor Page of a host or an action of a view controller, named `Controller/Action` (controller without the suffix and the
+        // action that shows the screen): docs/ui-coverage.md writes that token in the row of the capability the screen serves.
         var endpoints = _app.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
         var pages = endpoints
-            .Select(e => (Name: e.Metadata.GetMetadata<CompiledPageActionDescriptor>()?.ViewEnginePath ?? e.Metadata.GetMetadata<LegacyPageAttribute>()?.PageName, Template: e.RoutePattern.RawText ?? string.Empty))
+            .Select(e => (Name: e.Metadata.GetMetadata<CompiledPageActionDescriptor>()?.ViewEnginePath ?? ScreenEndpoints.ScreenOf(e)?.ToString(), Template: e.RoutePattern.RawText ?? string.Empty))
             .Where(p => p.Name != null)
             .GroupBy(p => p.Name!, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.Select(p => p.Template).ToList(), StringComparer.OrdinalIgnoreCase);
@@ -121,15 +115,8 @@ public class UiCoverageInventoryTests : IDisposable
         bool Named(string page, IEnumerable<string> templates)
         {
             if (AccountPages.Contains(page)) return true;
-            if (PagesNamedByText.TryGetValue(page, out var phrase)) return docs.Contains(phrase, StringComparison.Ordinal);
-            if (Regex.IsMatch(docs, $@"\b{Regex.Escape(page.Substring(page.LastIndexOf('/') + 1))}\b")) return true;
 
-            // By URL: the last literal segment of a route (`docker-images`, `report-abuse`, `validation`).
-            return templates.Any(t =>
-            {
-                var literal = t.Split('/').LastOrDefault(segment => segment.Length > 0 && !segment.StartsWith('{') && !segment.StartsWith('@'));
-                return literal != null && literal != "Index" && docs.Contains(literal, StringComparison.OrdinalIgnoreCase);
-            });
+            return docs.Contains("`" + page + "`", StringComparison.Ordinal);
         }
 
         var missing = pages.Where(p => !Named(p.Key, p.Value)).Select(p => p.Key).ToList();

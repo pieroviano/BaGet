@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Application.Security;
 
 namespace BaGet.Identity.Mvc.Screens;
@@ -39,17 +40,17 @@ internal static class AccountSupport
         => !string.IsNullOrEmpty(returnUrl) && url.IsLocalUrl(returnUrl) ? returnUrl : url.Content("~/") ?? "/";
 
     /// <summary>
-    /// An absolute link to an account page, for an email. Built only from <c>Site:PublicUrl</c>, never from the request's host
+    /// An absolute link to an account screen, for an email. Built only from <c>Site:PublicUrl</c>, never from the request's host
     /// or scheme: see <see cref="EmailLinkPolicy"/>.
     /// </summary>
-    public static string PageLink(HttpContext httpContext, IUrlHelper url, string page, object values)
+    public static string AbsoluteLink(HttpContext httpContext, IUrlHelper url, ScreenRef screen, object values)
     {
         var publicUrl = httpContext.RequestServices.GetRequiredService<IOptions<SiteOptions>>().Value.PublicUrl;
 
         if (EmailLinkPolicy.TryParsePublicUrl(publicUrl, out var root))
         {
             // The path includes the request's path base, which the public URL replaces.
-            var path = url.Page(page, pageHandler: null, values: values) ?? string.Empty;
+            var path = url.Action(screen.Action, screen.Controller, values) ?? string.Empty;
             var pathBase = httpContext.Request.PathBase;
             if (pathBase.HasValue && path.StartsWith(pathBase.Value, StringComparison.OrdinalIgnoreCase))
             {

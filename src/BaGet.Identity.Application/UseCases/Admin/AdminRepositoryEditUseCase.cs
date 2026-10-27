@@ -28,8 +28,8 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminRepositoryEditUseCase : AdminUseCaseBase
 {
-    private const string ListScreen = "/Admin/Repositories";
-    private const string EditScreen = "/Admin/RepositoryEdit";
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminRepositories;
+    private static readonly ScreenRef EditScreen = ScreenCatalog.AdminRepositoryEdit;
 
     private readonly IRepositoryAdministration _administration;
     private readonly IRepositoryService _repositories;
@@ -394,9 +394,10 @@ public sealed class AdminRepositoryEditUseCase : AdminUseCaseBase
         if (repository == null) return false;
 
         var module = _formats.Find(repository.Format);
-        model.BrowsePage = module
+        var browse = module
             ?.RepositoryLinks(new RepositoryInfo(repository.Key, repository.Name, repository.Format, repository.Kind))
-            .FirstOrDefault(l => l.Id == "browse" && l.Page != null)?.Page ?? "/Index";
+            .FirstOrDefault(l => l.Id == "browse" && l.Controller != null && l.Action != null);
+        model.BrowseScreen = browse == null ? ScreenCatalog.Index : new ScreenRef(browse.Controller!, browse.Action!);
         model.FeedUrl = _feeds.For(repository.Name, module?.FeedPath ?? "v3/index.json");
 
         var info = (await _repositories.ListAsync(cancellationToken)).FirstOrDefault(r => r.Name == repository.Name);

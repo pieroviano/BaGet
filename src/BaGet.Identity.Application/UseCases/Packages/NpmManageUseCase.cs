@@ -256,7 +256,7 @@ public sealed class NpmManageUseCase
         // The last version takes the package with it: nothing left to manage.
         if (result.Succeeded && await _registry.GetPackageAsync(_name, cancellationToken).ConfigureAwait(false) == null)
         {
-            return ScreenResult<NpmManageViewModel>.GoTo(new ScreenNext("/NpmPackages"));
+            return ScreenResult<NpmManageViewModel>.GoTo(new ScreenNext(ScreenCatalog.NpmPackages));
         }
 
         return await DoneAsync(caller, result, $"{_name}@{version} is unpublished. Its tarball is deleted.", cancellationToken).ConfigureAwait(false);
@@ -276,7 +276,7 @@ public sealed class NpmManageUseCase
 
         _logger.LogWarning("{User} unpublished npm package {Package}", caller.Identity?.Name, _name);
 
-        return ScreenResult<NpmManageViewModel>.GoTo(new ScreenNext("/NpmPackages"));
+        return ScreenResult<NpmManageViewModel>.GoTo(new ScreenNext(ScreenCatalog.NpmPackages));
     }
 
     /// <summary>Null when the signed-in user confirmed with their password, otherwise the screen to show.</summary>

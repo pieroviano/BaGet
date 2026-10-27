@@ -62,37 +62,37 @@ public sealed class MavenManageController : AccountControllerBase
     }
 
     /// <summary>The screen.</summary>
-    [HttpGet, HttpHead, PageHandler, LegacyPage("/Packages/MavenManage")]
+    [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.Get(Group, Artifact, SelectedVersion, cancellationToken)));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost, PageHandler("AddOwner"), LegacyPage("/Packages/MavenManage")]
+    [HttpPost, PageHandler("AddOwner")]
     public async Task<IActionResult> AddOwner(string ownerName, CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.AddOwner(Group, Artifact, new MavenManageForm { Version = SelectedVersion, OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost, PageHandler("RemoveOwner"), LegacyPage("/Packages/MavenManage")]
+    [HttpPost, PageHandler("RemoveOwner")]
     public async Task<IActionResult> RemoveOwner(string ownerName, CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.RemoveOwner(Group, Artifact, new MavenManageForm { Version = SelectedVersion, OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Deletes one file of the chosen version, after the password.</summary>
-    [HttpPost, PageHandler("DeleteFile"), LegacyPage("/Packages/MavenManage")]
+    [HttpPost, PageHandler("DeleteFile")]
     public async Task<IActionResult> DeleteFile(string? fileName, string? password, CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.DeleteFile(Group, Artifact, new MavenManageForm { Version = SelectedVersion, FileName = fileName, Password = password }, cancellationToken)));
 
     /// <summary>Deletes one version, after the password.</summary>
-    [HttpPost, PageHandler("DeleteVersion"), LegacyPage("/Packages/MavenManage")]
+    [HttpPost, PageHandler("DeleteVersion")]
     public async Task<IActionResult> DeleteVersion(string? version, string? password, CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.DeleteVersion(Group, Artifact, new MavenManageForm { Version = version, Password = password }, cancellationToken)));
 
     /// <summary>Deletes the whole artifact, after the password.</summary>
-    [HttpPost, PageHandler("DeleteArtifact"), LegacyPage("/Packages/MavenManage")]
+    [HttpPost, PageHandler("DeleteArtifact")]
     public async Task<IActionResult> DeleteArtifact(string? password, CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.DeleteArtifact(Group, Artifact, new MavenManageForm { Version = SelectedVersion, Password = password }, cancellationToken)));
 
     /// <summary>Deletes old snapshot builds of a version, after the password.</summary>
-    [HttpPost, PageHandler("Cleanup"), LegacyPage("/Packages/MavenManage")]
+    [HttpPost, PageHandler("Cleanup")]
     public async Task<IActionResult> Cleanup(string? version, string? keep, string? password, CancellationToken cancellationToken)
         => Present(await Api<MavenManageUiApiController, MavenManageViewModel>(api => api.Cleanup(Group, Artifact, new MavenManageForm { Version = version, Keep = keep, Password = password }, cancellationToken)));
 
@@ -100,10 +100,10 @@ public sealed class MavenManageController : AccountControllerBase
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without
     /// <c>?handler=</c>: the antiforgery check has already run, and there is nothing to do, so the answer is 404. (A Razor Page
     /// with only named POST handlers behaved alike for the caller; without this action routing would answer 404 before the
-    /// antiforgery filter and an unprotected POST would not be refused with 400.) It carries no <see cref="LegacyPageAttribute"/>:
-    /// it is not one of the page's handlers, so it stays out of the route contract.
+    /// antiforgery filter and an unprotected POST would not be refused with 400.) It is marked
+    /// <see cref="FallbackHandlerAttribute"/>: it is not one of the screen's handlers, so it stays out of the route contract.
     /// </summary>
-    [HttpPost, PageHandler]
+    [HttpPost, PageHandler, FallbackHandler]
     public IActionResult NoHandler() => NotFound();
 
     private IActionResult Present(UiApiResponse<MavenManageViewModel> response) => Render(response, ViewName);

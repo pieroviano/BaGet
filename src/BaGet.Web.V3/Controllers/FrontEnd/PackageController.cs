@@ -18,7 +18,7 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 public sealed class PackageController : UiControllerBase
 {
     /// <summary>Shows the package.</summary>
-    [Route("packages/{id}/{version?}"), HttpGet, HttpHead, PageHandler, LegacyPage("/Package")]
+    [Route("packages/{id}/{version?}"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Show(string id, string? version, CancellationToken cancellationToken)
         => Render(await Api<PackageUiApiController, PackageScreen>(api => api.Get(id, version, cancellationToken)), "Show", PackageViewModel.From);
 }

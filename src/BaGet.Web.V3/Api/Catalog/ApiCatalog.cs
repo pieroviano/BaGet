@@ -227,7 +227,7 @@ public static class ApiCatalog
             ["tags"] = new JsonArray(endpoint.Tag),
             ["parameters"] = parameters,
             ["responses"] = responses,
-            ["x-baget-ui-page"] = endpoint.Operation.UiPage,
+            ["x-baget-ui-screen"] = endpoint.Operation.UiScreen.Controller + "/" + endpoint.Operation.UiScreen.Action,
             ["x-baget-confirm"] = endpoint.Operation.Confirm,
         };
         if (body != null) operation["requestBody"] = body;

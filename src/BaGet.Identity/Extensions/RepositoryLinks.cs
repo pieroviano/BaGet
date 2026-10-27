@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BaGet.Identity.Extensions;
 
 /// <summary>
-/// Links to a repository's pages that keep the package ID or user name exactly as written. <c>Url.Page</c> lowercases
+/// Links to a repository's pages that keep the package ID or user name exactly as written. <c>Url.Action</c> lowercases
 /// the whole path (<c>RouteOptions.LowercaseUrls</c>), which would turn <c>Contoso.Lib</c> into <c>contoso.lib</c> in
 /// every link and in the heading of the page it opens; these keep the case and add the <c>r/{name}/</c> prefix of the
 /// repository instead.

@@ -54,8 +54,8 @@ public class RepositoryActionFilter : IAsyncActionFilter
                     null => null,
                     ChallengeResult => new UiApiResult(ScreenResult<object>.SignIn()),
                     NotFoundResult => new UiApiResult(ScreenResult<object>.NotFound()),
-                    RedirectToPageResult redirect => new UiApiResult(ScreenResult<object>.GoTo(new ScreenNext(
-                        redirect.PageName!,
+                    RedirectToActionResult redirect => new UiApiResult(ScreenResult<object>.GoTo(new ScreenNext(
+                        new ScreenRef(redirect.ControllerName!, redirect.ActionName!),
                         redirect.RouteValues?.ToDictionary(p => p.Key, p => (object?)p.Value)))),
                     _ => result,
                 };

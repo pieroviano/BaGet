@@ -347,7 +347,7 @@
                 </tbody>
             </table>
             <p>
-                <a id="remote-browse" href="@Url.Page(Model.BrowsePage, new { repo = Model.Repository?.Name })">Browse the cached packages</a>
+                <a id="remote-browse" href="@Url.Action(Model.BrowseScreen.Action, Model.BrowseScreen.Controller, new { repo = Model.Repository?.Name })">Browse the cached packages</a>
             </p>
 
             <form method="post" asp-controller="AdminRepositories" asp-action="Edit" asp-route-name="@Model.Name" asp-route-handler="Purge" id="remote-purge-form">

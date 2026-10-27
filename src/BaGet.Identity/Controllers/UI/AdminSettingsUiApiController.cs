@@ -23,12 +23,12 @@ public sealed class AdminSettingsUiApiController : AdminUiApiControllerBase
     private AdminSettingsUseCase Settings => UseCase<AdminSettingsUseCase>();
 
     /// <summary>Shows the settings; <paramref name="section"/> is the id of the section to show.</summary>
-    [HttpGet(""), UiApi("/Admin/Settings")]
+    [HttpGet(""), UiApi(typeof(AdminSettingsController), nameof(AdminSettingsController.Index))]
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> Get(string? section = null)
         => Respond(await Settings.GetAsync(User, section));
 
     /// <summary>The progress of the database copy.</summary>
-    [HttpGet("copy-status"), UiApi("/Admin/Settings", Handler = "CopyStatus")]
+    [HttpGet("copy-status"), UiApi(typeof(AdminSettingsController), nameof(AdminSettingsController.Index), Handler = "CopyStatus")]
     public ActionResult<ScreenResult<DatabaseCopyStatusView>> GetCopyStatus()
         => Respond(Settings.GetCopyStatus());
 
@@ -36,22 +36,22 @@ public sealed class AdminSettingsUiApiController : AdminUiApiControllerBase
     /// Saves the settings of one section: the body names the section, the password and the fields (<c>v:&lt;key&gt;</c> values, <c>reset:&lt;key&gt;</c>,
     /// <c>clear:&lt;key&gt;</c>, <c>copyData</c>), each an array of strings.
     /// </summary>
-    [HttpPost(""), UiApi("/Admin/Settings")]
+    [HttpPost(""), UiApi(typeof(AdminSettingsController), nameof(AdminSettingsController.Index))]
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> Save([FromBody] SettingsSubmission? submission, CancellationToken cancellationToken = default)
         => Respond(await Settings.SaveAsync(User, Normalize(submission), cancellationToken));
 
     /// <summary>Sets the lowest level logged for one source.</summary>
-    [HttpPost("set-log-level"), UiApi("/Admin/Settings", Handler = "SetLogLevel")]
+    [HttpPost("set-log-level"), UiApi(typeof(AdminSettingsController), nameof(AdminSettingsController.Index), Handler = "SetLogLevel")]
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> SetLogLevel([FromBody] LogLevelForm? form, CancellationToken cancellationToken = default)
         => Respond(await Settings.SetLogLevelAsync(User, form?.Source, form?.Level, form?.Password, cancellationToken));
 
     /// <summary>Removes a per-source level saved on this screen.</summary>
-    [HttpPost("remove-log-level"), UiApi("/Admin/Settings", Handler = "RemoveLogLevel")]
+    [HttpPost("remove-log-level"), UiApi(typeof(AdminSettingsController), nameof(AdminSettingsController.Index), Handler = "RemoveLogLevel")]
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> RemoveLogLevel([FromBody] LogLevelForm? form, CancellationToken cancellationToken = default)
         => Respond(await Settings.RemoveLogLevelAsync(User, form?.Source, form?.Password, cancellationToken));
 
     /// <summary>Sends one test span to the posted, unsaved telemetry endpoint (<c>v:Telemetry:Otlp:*</c> fields) and answers the outcome; nothing is saved.</summary>
-    [HttpPost("test-telemetry"), UiApi("/Admin/Settings", Handler = "TestTelemetry")]
+    [HttpPost("test-telemetry"), UiApi(typeof(AdminSettingsController), nameof(AdminSettingsController.Index), Handler = "TestTelemetry")]
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> TestTelemetry([FromBody] SettingsSubmission? submission, CancellationToken cancellationToken = default)
         => Respond(await Settings.TestTelemetryAsync(User, Normalize(submission), cancellationToken));
 

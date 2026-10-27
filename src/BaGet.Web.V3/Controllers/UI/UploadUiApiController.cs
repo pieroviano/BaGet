@@ -35,17 +35,17 @@ public sealed class UploadUiApiController : UiApiControllerBase
     }
 
     /// <summary>Step one: the form.</summary>
-    [HttpGet, UiApi("/Upload")]
+    [HttpGet, UiApi(typeof(UploadController), nameof(UploadController.Index))]
     public Task<ActionResult<ScreenResult<UploadViewModel>>> Get(string? id)
         => Task.FromResult(Respond(_upload.Show(User, id)));
 
     /// <summary>Stages the chosen file and describes what it contains.</summary>
-    [HttpPost("stage"), UiApi("/Upload", Handler = "Stage")]
+    [HttpPost("stage"), UiApi(typeof(UploadController), nameof(UploadController.Index), Handler = "Stage")]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Stage(string? id, IFormFile? package, string? apiKey, CancellationToken cancellationToken)
         => Respond(await _upload.StageAsync(User, KeyCaller, id, package.ToUploadedFile(), apiKey, cancellationToken));
 
     /// <summary>Publishes the staged upload.</summary>
-    [HttpPost("submit"), UiApi("/Upload", Handler = "Submit")]
+    [HttpPost("submit"), UiApi(typeof(UploadController), nameof(UploadController.Index), Handler = "Submit")]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Submit(string? id, [FromBody] UploadTokenRequest? request, CancellationToken cancellationToken)
     {
         request ??= new UploadTokenRequest();
@@ -54,7 +54,7 @@ public sealed class UploadUiApiController : UiApiControllerBase
     }
 
     /// <summary>Discards the staged upload.</summary>
-    [HttpPost("cancel"), UiApi("/Upload", Handler = "Cancel")]
+    [HttpPost("cancel"), UiApi(typeof(UploadController), nameof(UploadController.Index), Handler = "Cancel")]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Cancel(string? id, [FromBody] UploadTokenRequest? request, CancellationToken cancellationToken)
     {
         request ??= new UploadTokenRequest();

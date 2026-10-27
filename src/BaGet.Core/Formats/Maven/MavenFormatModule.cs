@@ -51,9 +51,9 @@ public class MavenFormatModule : IFormatModule
     /// <inheritdoc/>
     public IReadOnlyList<FormatLink> RepositoryLinks(RepositoryInfo repository) => new[]
     {
-        new FormatLink("browse", "Browse", "/MavenArtifacts"),
-        new FormatLink("upload", "Upload", "/MavenUpload", NeedsUploads: true),
-        new FormatLink("repository", "Repository", null, "maven/"),
+        new FormatLink("browse", "Browse", "MavenBrowse", "Artifacts"),
+        new FormatLink("upload", "Upload", "MavenBrowse", "Upload", NeedsUploads: true),
+        new FormatLink("repository", "Repository", null, null, "maven/"),
     };
 
     /// <inheritdoc/>

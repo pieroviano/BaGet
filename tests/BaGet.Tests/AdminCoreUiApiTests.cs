@@ -166,7 +166,7 @@ public class AdminCoreUiApiTests : IDisposable
         var withKey = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/users/promote", body, key: _adminKey);
         Assert.Equal(HttpStatusCode.OK, withKey.Status);
         Assert.Equal("Next", Status(withKey));
-        Assert.Equal("/Admin/Users", withKey.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminUsers/Index", JsonScreen.Name(withKey.Json!["next"]!["screen"]!));
         Assert.Equal("alice is now an administrator.", withKey.Json["next"]!["message"]!.GetValue<string>());
         Assert.True((await FindAsync(_app, "alice"))!.IsAdministrator);
 
@@ -262,7 +262,7 @@ public class AdminCoreUiApiTests : IDisposable
 
         var deleted = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/users/bob/delete", new { soleOwned = "keep", password = Password }, key: _adminKey);
         Assert.Equal("Next", Status(deleted));
-        Assert.Equal("/Admin/Users", deleted.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminUsers/Index", JsonScreen.Name(deleted.Json!["next"]!["screen"]!));
         Assert.Null(await FindAsync(_app, "bob"));
     }
 
@@ -272,7 +272,7 @@ public class AdminCoreUiApiTests : IDisposable
         var answer = await SendAsync(_anonymous, HttpMethod.Post, "/api/ui/admin/organizations/acme/rename", new { newName = "acme2", password = Password }, key: _adminKey);
 
         Assert.Equal("Next", Status(answer));
-        Assert.Equal("/Admin/OrganizationDetail", answer.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminOrganizations/Detail", JsonScreen.Name(answer.Json!["next"]!["screen"]!));
         Assert.Equal("acme2", answer.Json["next"]!["routeValues"]!["name"]!.GetValue<string>());
         Assert.Equal(HttpStatusCode.OK, (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/organizations/acme2")).Status);
         Assert.Equal(HttpStatusCode.NotFound, (await AsAdminAsync(HttpMethod.Get, "/api/ui/admin/organizations/acme")).Status);

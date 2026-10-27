@@ -19,7 +19,7 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminSettingsUseCase : AdminUseCaseBase
 {
-    private const string Screen = "/Admin/Settings";
+    private static readonly ScreenRef Screen = ScreenCatalog.AdminSettings;
 
     private readonly SettingsService _settings;
     private readonly DatabaseCopyService _copier;

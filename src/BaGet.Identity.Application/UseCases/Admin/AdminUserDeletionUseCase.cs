@@ -19,7 +19,7 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminUserDeletionUseCase : AdminUseCaseBase
 {
-    private const string UsersScreen = "/Admin/Users";
+    private static readonly ScreenRef UsersScreen = ScreenCatalog.AdminUsers;
 
     private readonly AccountDeletionService _deletion;
     private readonly IOptionsSnapshot<BaGetOptions> _options;

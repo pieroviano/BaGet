@@ -21,17 +21,17 @@ public sealed class AccountPackagesController : AccountControllerBase
     protected override bool RequiresSignIn => true;
 
     /// <summary>The package IDs the user owns, per repository.</summary>
-    [Route("account/packages"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Packages")]
+    [Route("account/packages"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Packages(CancellationToken cancellationToken)
         => Render(await Api<AccountPackagesUiApiController, AccountPackagesViewModel>(api => api.Packages(cancellationToken)), "Packages");
 
     /// <summary>What the user may do in each repository.</summary>
-    [Route("account/access"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Access")]
+    [Route("account/access"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Access(string? package, CancellationToken cancellationToken)
         => Render(await Api<AccountPackagesUiApiController, AccountAccessViewModel>(api => api.Access(package, cancellationToken)), "Access");
 
     /// <summary>The signed-in user's own profile: forwards to <c>/profiles/{name}</c>.</summary>
-    [Route("account/profile"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Profile")]
+    [Route("account/profile"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> MyProfile()
         => Render(await Api<AccountPackagesUiApiController, EmptyScreen>(api => api.MyProfile()), "MyProfile", _ => null);
 }

@@ -50,8 +50,8 @@ HostFiltering → (Dev: exception page, status code pages) → ForwardedHeaders 
 - Every protocol route exists at `/` (the `default` repository) and under `/r/{repo}/`; `RepositoryResolutionMiddleware`
   selects the repository from the route (`404` if unknown) and `IUrlGenerator` keeps advertised URLs inside it.
 - The repository pages (controller actions marked `[RepositoryPage]`) get an `r/{repo}/` twin of each route (`RepositoryActionRouteConvention`);
-  `RepositoryUrlHelper` adds the request's `repo` to links to those actions (ASP.NET Core would drop it between different actions) and resolves
-  a legacy page name (`/Admin/Users`, `LegacyPageAttribute`) to its action. `IRepositoryAccess` decides which repositories the switcher, the
+  `RepositoryUrlHelper` adds the request's `repo` to links to those actions (ASP.NET Core would drop it between different actions) (a screen is
+  its controller and default GET action, `ScreenRef`). `IRepositoryAccess` decides which repositories the switcher, the
   upload picker and `RepositoryActionFilter` offer.
 - `MaintenanceMiddleware` turns a `MaintenanceException` into `503` + `Retry-After`.
 

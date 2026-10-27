@@ -75,24 +75,24 @@ public class UiApiParityTests : IDisposable
 
         // (screen, handler) pairs of the view actions.
         var views = actions
-            .Where(a => a.EndpointMetadata.OfType<LegacyPageAttribute>().Any())
-            .Select(a => (Screen: a.EndpointMetadata.OfType<LegacyPageAttribute>().Last().PageName, Handler: a.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name))
+            .Where(a => ScreenEndpoints.ScreenOf(a) != null)
+            .Select(a => (Screen: ScreenEndpoints.ScreenOf(a)!.ToString(), Handler: a.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name))
             .ToHashSet();
 
-        var missing = twins.Where(p => !views.Contains((p.Api!.Screen, p.Api.Handler))).Select(p => $"{p.Action.DisplayName} -> {p.Api!.Screen} handler={p.Api.Handler}").ToList();
+        var missing = twins.Where(p => !views.Contains((p.Api!.Screen.ToString(), p.Api.Handler))).Select(p => $"{p.Action.DisplayName} -> {p.Api!.Screen} handler={p.Api.Handler}").ToList();
 
         Assert.True(missing.Count == 0, "UI API actions without a view action of that screen and handler:" + Environment.NewLine + string.Join(Environment.NewLine, missing));
     }
 
     [Fact]
-    public void AUiApiActionIsNeverALegacyPageAndLivesUnderApiUi()
+    public void AUiApiActionIsNeverAScreenAndLivesUnderApiUi()
     {
         using var app = new BaGetApplication(_output);
 
         foreach (var action in Actions(app).Where(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>() != null))
         {
-            // Not [LegacyPage]: the route snapshot of the screens (ui-routes.txt) must not see the API.
-            Assert.Empty(action.EndpointMetadata.OfType<LegacyPageAttribute>());
+            // Not a view controller: the route snapshot of the screens (ui-routes.txt) must not see the API.
+            Assert.False(ScreenEndpoints.IsScreen(action));
             Assert.StartsWith("api/ui/", action.AttributeRouteInfo!.Template!, StringComparison.Ordinal);
             // [ApiController] would answer 400 by itself over HTTP but not in process.
             Assert.DoesNotContain(action.ControllerTypeInfo.GetCustomAttributes(inherit: true), a => a.GetType().Name == "ApiControllerAttribute");
@@ -105,26 +105,26 @@ public class UiApiParityTests : IDisposable
         using var app = new BaGetApplication(_output, configOverrides: new Dictionary<string, string> { { "Accounts:Enabled", "true" } });
         var actions = Actions(app);
 
-        var served = actions.Select(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>()?.Screen).Where(s => s != null).ToHashSet();
+        var served = actions.Select(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>()?.Screen.ToString()).Where(s => s != null).ToHashSet();
         var screens = actions
-            .SelectMany(a => a.EndpointMetadata.OfType<LegacyPageAttribute>().Take(1))
-            .Select(a => a.PageName)
+            .Select(a => ScreenEndpoints.ScreenOf(a)?.ToString())
+            .Where(s => s != null)
             .Distinct()
-            .Where(s => !served.Contains(s))
+            .Where(s => !served.Contains(s!))
             .ToList();
 
         Assert.True(screens.Count == 0, "Screens without a [UiApi] twin:" + Environment.NewLine + string.Join(Environment.NewLine, screens));
     }
 
     // Steps with no JSON twin because they only redirect the browser to the external sign-in provider and back (the challenge and its callback, which
-    // set the session cookie; the same for signing in again to re-authenticate): (screen page name, handler, method). Nothing else may be missing; a default POST that only re-renders its screen
+    // set the session cookie; the same for signing in again to re-authenticate): (screen as Controller/Action, handler, method). Nothing else may be missing; a default POST that only re-renders its screen
     // ([ImplicitPageHandler]) is no operation and needs no twin.
     private static readonly HashSet<(string Screen, string? Handler, string Method)> BrowserOnly = new()
     {
-        ("/Account/Login", "External", "POST"),
-        ("/Account/Login", "Callback", "GET"),
-        ("/Account/Reauthenticate", null, "POST"),
-        ("/Account/Reauthenticate", "Callback", "GET"),
+        ("Account/Login", "External", "POST"),
+        ("Account/Login", "Callback", "GET"),
+        ("Account/Reauthenticate", null, "POST"),
+        ("Account/Reauthenticate", "Callback", "GET"),
     };
 
     // An action with no HTTP method constraint answers any method: demand a twin for GET and POST, never skip it.
@@ -143,14 +143,14 @@ public class UiApiParityTests : IDisposable
 
         var twins = actions
             .Where(a => a.MethodInfo.GetCustomAttribute<UiApiAttribute>() != null)
-            .SelectMany(a => MethodsOf(a).Select(m => (a.MethodInfo.GetCustomAttribute<UiApiAttribute>()!.Screen, a.MethodInfo.GetCustomAttribute<UiApiAttribute>()!.Handler, Method: m)))
+            .SelectMany(a => MethodsOf(a).Select(m => (a.MethodInfo.GetCustomAttribute<UiApiAttribute>()!.Screen.ToString(), a.MethodInfo.GetCustomAttribute<UiApiAttribute>()!.Handler, Method: m)))
             .ToHashSet();
 
         var missing = new List<string>();
         var seen = new HashSet<(string, string?, string)>();
-        foreach (var view in actions.Where(a => a.EndpointMetadata.OfType<LegacyPageAttribute>().Any() && !a.EndpointMetadata.OfType<ImplicitPageHandlerAttribute>().Any()))
+        foreach (var view in actions.Where(a => ScreenEndpoints.IsScreen(a) && !a.EndpointMetadata.OfType<ImplicitPageHandlerAttribute>().Any()))
         {
-            var screen = view.EndpointMetadata.OfType<LegacyPageAttribute>().Last().PageName;
+            var screen = ScreenEndpoints.ScreenOf(view)!.ToString();
             var handler = view.MethodInfo.GetCustomAttribute<PageHandlerAttribute>()?.Name;
             foreach (var method in MethodsOf(view).Where(m => m is "GET" or "POST"))
             {

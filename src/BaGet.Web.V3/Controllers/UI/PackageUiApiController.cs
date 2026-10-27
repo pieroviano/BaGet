@@ -31,7 +31,7 @@ public sealed class PackageUiApiController : UiApiControllerBase
     }
 
     /// <summary>Shows the package.</summary>
-    [HttpGet("packages/{id}/{version?}"), UiApi("/Package")]
+    [HttpGet("packages/{id}/{version?}"), UiApi(typeof(PackageController), nameof(PackageController.Show))]
     public async Task<ActionResult<ScreenResult<PackageScreen>>> Get(string id, string? version, CancellationToken cancellationToken)
     {
         var result = await _package.GetAsync(id, version, User, cancellationToken);

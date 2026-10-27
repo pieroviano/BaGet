@@ -21,8 +21,6 @@ namespace BaGet.Identity.Controllers.UI;
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class PackageManageUiApiController : AccountUiApiControllerBase
 {
-    private const string Screen = "/Packages/Manage";
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
@@ -35,77 +33,77 @@ public sealed class PackageManageUiApiController : AccountUiApiControllerBase
         => UseCase.EnterAsync(User, id, handler, isWrite, cancellationToken);
 
     /// <summary>The screen.</summary>
-    [HttpGet, UiApi(Screen)]
+    [HttpGet, UiApi(typeof(PackageManageController), nameof(PackageManageController.Index))]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> Get(string id, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, id, cancellationToken));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost("add-owner"), UiApi(Screen, Handler = "AddOwner")]
+    [HttpPost("add-owner"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "AddOwner")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> AddOwner(string id, [FromBody] PackageManageOwnerForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.AddOwnerAsync(User, id, form?.OwnerName, cancellationToken));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost("remove-owner"), UiApi(Screen, Handler = "RemoveOwner")]
+    [HttpPost("remove-owner"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "RemoveOwner")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> RemoveOwner(string id, [FromBody] PackageManageOwnerForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveOwnerAsync(User, id, form?.OwnerName, cancellationToken));
 
     /// <summary>Unlists a version.</summary>
-    [HttpPost("unlist"), UiApi(Screen, Handler = "Unlist")]
+    [HttpPost("unlist"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "Unlist")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> Unlist(string id, [FromBody] PackageManageVersionForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UnlistAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Relists a version.</summary>
-    [HttpPost("relist"), UiApi(Screen, Handler = "Relist")]
+    [HttpPost("relist"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "Relist")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> Relist(string id, [FromBody] PackageManageVersionForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RelistAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Deletes a version as the server is configured to (unlist or permanent).</summary>
-    [HttpPost("delete"), UiApi(Screen, Handler = "Delete")]
+    [HttpPost("delete"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "Delete")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> Delete(string id, [FromBody] PackageManageVersionForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Permanently deletes a version (administrators, after the password).</summary>
-    [HttpPost("hard-delete"), UiApi(Screen, Handler = "HardDelete")]
+    [HttpPost("hard-delete"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "HardDelete")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> HardDelete(string id, [FromBody] PackageManageHardDeleteForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.HardDeleteAsync(User, id, form?.Version, form?.Password, cancellationToken));
 
     /// <summary>Permanently deletes every version and the owners (administrators, after the password).</summary>
-    [HttpPost("hard-delete-all"), UiApi(Screen, Handler = "HardDeleteAll")]
+    [HttpPost("hard-delete-all"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "HardDeleteAll")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> HardDeleteAll(string id, [FromBody] PackageManagePasswordForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.HardDeleteAllAsync(User, id, form?.Password, cancellationToken));
 
     /// <summary>Deprecates a version.</summary>
-    [HttpPost("deprecate"), UiApi(Screen, Handler = "Deprecate")]
+    [HttpPost("deprecate"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "Deprecate")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> Deprecate(string id, [FromBody] PackageManageDeprecateForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeprecateAsync(User, id, form?.Version, form?.Reasons, form?.Message, form?.AlternatePackageId, form?.AlternateVersionRange, cancellationToken));
 
     /// <summary>Removes a version's deprecation.</summary>
-    [HttpPost("undeprecate"), UiApi(Screen, Handler = "Undeprecate")]
+    [HttpPost("undeprecate"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "Undeprecate")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> Undeprecate(string id, [FromBody] PackageManageVersionForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UndeprecateAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Adds a vulnerability to a version.</summary>
-    [HttpPost("add-vulnerability"), UiApi(Screen, Handler = "AddVulnerability")]
+    [HttpPost("add-vulnerability"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "AddVulnerability")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> AddVulnerability(string id, [FromBody] PackageManageVulnerabilityForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.AddVulnerabilityAsync(User, id, form?.Version, form?.AdvisoryUrl, form?.Severity ?? 0, form?.VersionRange, cancellationToken));
 
     /// <summary>Removes a vulnerability from a version.</summary>
-    [HttpPost("remove-vulnerability"), UiApi(Screen, Handler = "RemoveVulnerability")]
+    [HttpPost("remove-vulnerability"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "RemoveVulnerability")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> RemoveVulnerability(string id, [FromBody] PackageManageRemoveVulnerabilityForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveVulnerabilityAsync(User, id, form?.Version, form?.Key ?? 0, cancellationToken));
 
     /// <summary>Marks or unmarks the ID as verified (administrators).</summary>
-    [HttpPost("set-verified"), UiApi(Screen, Handler = "SetVerified")]
+    [HttpPost("set-verified"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "SetVerified")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> SetVerified(string id, [FromBody] PackageManageVerifiedForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.SetVerifiedAsync(User, id, form?.Verified ?? false, cancellationToken));
 
     /// <summary>Deletes the PDBs recorded for a version.</summary>
-    [HttpPost("delete-symbols"), UiApi(Screen, Handler = "DeleteSymbols")]
+    [HttpPost("delete-symbols"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "DeleteSymbols")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> DeleteSymbols(string id, [FromBody] PackageManageVersionForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteSymbolsAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Resolves an abuse report.</summary>
-    [HttpPost("resolve-report"), UiApi(Screen, Handler = "ResolveReport")]
+    [HttpPost("resolve-report"), UiApi(typeof(PackageManageController), nameof(PackageManageController.Index), Handler = "ResolveReport")]
     public async Task<ActionResult<ScreenResult<PackageManageScreen>>> ResolveReport(string id, [FromBody] PackageManageReportForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.ResolveReportAsync(User, id, form?.Key ?? 0, cancellationToken));
 }

@@ -21,8 +21,8 @@ public sealed class AdminGroupsUseCase : AccessUseCaseBase
     /// <summary>How many users a member search lists.</summary>
     public const int SearchSize = 20;
 
-    private const string ListScreen = "/Admin/Groups";
-    private const string DetailScreen = "/Admin/GroupDetail";
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminGroups;
+    private static readonly ScreenRef DetailScreen = ScreenCatalog.AdminGroupDetail;
 
     /// <summary>Creates the use case.</summary>
     public AdminGroupsUseCase(

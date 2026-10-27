@@ -27,7 +27,7 @@ public sealed class ValidationStatusUiApiController : AccountUiApiControllerBase
     private ValidationStatusUseCase UseCase => HttpContext.RequestServices.GetRequiredService<ValidationStatusUseCase>();
 
     /// <summary>The submissions of the ID.</summary>
-    [HttpGet, UiApi("/Packages/ValidationStatus")]
+    [HttpGet, UiApi(typeof(ValidationStatusPageController), nameof(ValidationStatusPageController.Index))]
     public async Task<ActionResult<ScreenResult<ValidationStatusViewModel>>> Get(string? id, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, id, cancellationToken));
 }

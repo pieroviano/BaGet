@@ -45,7 +45,7 @@ public class UiApiContractTests : IDisposable
             var api = action?.MethodInfo.GetCustomAttribute<UiApiAttribute>();
             var methods = endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods.Select(m => m.ToUpperInvariant()).OrderBy(m => m, StringComparer.Ordinal) ?? Enumerable.Empty<string>();
 
-            lines.Add($"{template.ToLowerInvariant()}\t{string.Join(" ", methods)}\t{api?.Screen ?? "-"}\t{api?.Handler ?? "-"}\torder={endpoint.Order}");
+            lines.Add($"{template.ToLowerInvariant()}\t{string.Join(" ", methods)}\t{api?.Screen.ToString() ?? "-"}\t{api?.Handler ?? "-"}\torder={endpoint.Order}");
         }
 
         Assert.True(lines.Count >= 5, "expected the antiforgery endpoint and the pilot screens (legal, statistics) with their repository twins");

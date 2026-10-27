@@ -21,8 +21,8 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminRepositoriesUseCase : AdminUseCaseBase
 {
-    private const string ListScreen = "/Admin/Repositories";
-    private const string EditScreen = "/Admin/RepositoryEdit";
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminRepositories;
+    private static readonly ScreenRef EditScreen = ScreenCatalog.AdminRepositoryEdit;
 
     private readonly IRepositoryService _repositories;
     private readonly IRepositoryAdministration _administration;

@@ -20,8 +20,8 @@ namespace BaGet.Identity.Application.UseCases.Access;
 /// </summary>
 public sealed class AdminProjectsUseCase : AccessUseCaseBase
 {
-    private const string ListScreen = "/Admin/Projects";
-    private const string DetailScreen = "/Admin/ProjectDetail";
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminProjects;
+    private static readonly ScreenRef DetailScreen = ScreenCatalog.AdminProjectDetail;
 
     /// <summary>Creates the use case.</summary>
     public AdminProjectsUseCase(
@@ -137,7 +137,7 @@ public sealed class AdminProjectsUseCase : AccessUseCaseBase
                 Actor(caller),
                 cancellationToken);
 
-            return Back<ProjectDetailViewModel>("/Admin/PermissionDetail", Route(("name", target.Name)), $"Permission target {target.Name} was created. Add grants to it.", null);
+            return Back<ProjectDetailViewModel>(ScreenCatalog.AdminPermissionDetail, Route(("name", target.Name)), $"Permission target {target.Name} was created. Add grants to it.", null);
         }
         catch (AccessModelException e)
         {

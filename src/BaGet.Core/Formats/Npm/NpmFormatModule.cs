@@ -46,9 +46,9 @@ public class NpmFormatModule : IFormatModule
     /// <inheritdoc/>
     public IReadOnlyList<FormatLink> RepositoryLinks(RepositoryInfo repository) => new[]
     {
-        new FormatLink("browse", "Browse", "/NpmPackages"),
-        new FormatLink("upload", "Upload", "/NpmUpload", NeedsUploads: true),
-        new FormatLink("registry", "Registry", null, "npm/"),
+        new FormatLink("browse", "Browse", "NpmBrowse", "Packages"),
+        new FormatLink("upload", "Upload", "NpmBrowse", "Upload", NeedsUploads: true),
+        new FormatLink("registry", "Registry", null, null, "npm/"),
     };
 
     /// <inheritdoc/>

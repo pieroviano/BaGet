@@ -6,16 +6,17 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Mvc.UI;
 
 namespace BaGet.Tests.Contracts;
 
 /// <summary>
-/// Reads the UI endpoints (Razor Pages today, controller actions that stand in for a page later) out of an endpoint data
+/// Reads the UI endpoints (Razor Pages of a host, controller actions of the screens) out of an endpoint data
 /// source in one model-independent shape, so the same snapshot describes a page before and after its migration.
 /// </summary>
 internal static class UiRoutes
 {
-    /// <summary>One UI endpoint: the page name, the route template as authored (lower case) and what it answers.</summary>
+    /// <summary>One UI endpoint: the screen (Razor Page view engine path, or <c>Controller/Action</c>), the route template as authored (lower case) and what it answers.</summary>
     internal sealed record Entry(string Page, string Template, int Order, IReadOnlyList<string> Handlers)
     {
         public override string ToString() => $"{Template}\t{Page}\torder={Order}\t{string.Join(" ", Handlers)}";
@@ -32,7 +33,7 @@ internal static class UiRoutes
             var template = (endpoint.RoutePattern.RawText ?? string.Empty).ToLowerInvariant().TrimStart('/');
             var page = endpoint.Metadata.GetMetadata<CompiledPageActionDescriptor>();
             var action = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
-            var legacy = endpoint.Metadata.GetMetadata<LegacyPageAttribute>();
+            var screen = action == null ? null : ScreenEndpoints.ScreenOf(action);
 
             string name;
             IEnumerable<string> handlers;
@@ -45,10 +46,10 @@ internal static class UiRoutes
                     .Where(h => HttpVerbs.Contains(h.HttpMethod ?? string.Empty)) // OnPageHandlerExecuting & co. parse as method "Page": filters, not handlers
                     .Select(h => $"{h.HttpMethod?.ToUpperInvariant()}:{h.Name}");
             }
-            else if (action != null && legacy != null)
+            else if (action != null && screen != null)
             {
-                // A controller action that stands in for a page: the same description (HEAD collapsed into GET).
-                name = legacy.PageName;
+                // A controller action of a screen: the same description (HEAD collapsed into GET), the screen named by controller and action.
+                name = screen.ToString();
                 var handlerAttribute = action.MethodInfo.GetCustomAttribute<PageHandlerAttribute>();
                 var handler = handlerAttribute?.Name;
                 var verbs = endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods

@@ -34,7 +34,7 @@ public sealed class IndexUiApiController : UiApiControllerBase
     }
 
     /// <summary>The front page of the repository, or the results when the query asks for something.</summary>
-    [HttpGet("home"), UiApi("/Index")]
+    [HttpGet("home"), UiApi(typeof(HomeController), nameof(HomeController.Index))]
     public Task<ActionResult<ScreenResult<IndexScreen>>> Home(
         [FromQuery(Name = "q")] string? query,
         [FromQuery(Name = "p")] int pageIndex = 1,
@@ -46,7 +46,7 @@ public sealed class IndexUiApiController : UiApiControllerBase
         => GetAsync(new IndexQuery(query, pageIndex, packageType, framework, prerelease, sortBy), !Request.Query.ContainsKey("q"), cancellationToken);
 
     /// <summary>One page of the package list.</summary>
-    [HttpGet("packages"), UiApi("/Index")]
+    [HttpGet("packages"), UiApi(typeof(HomeController), nameof(HomeController.Index))]
     public Task<ActionResult<ScreenResult<IndexScreen>>> Packages(
         [FromQuery(Name = "q")] string? query,
         [FromQuery(Name = "p")] int pageIndex = 1,

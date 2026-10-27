@@ -22,37 +22,37 @@ public sealed class AdminGroupsUiApiController : AccessUiApiControllerBase
     private AdminGroupsUseCase Groups => UseCase<AdminGroupsUseCase>();
 
     /// <summary>Lists the groups.</summary>
-    [HttpGet(""), UiApi("/Admin/Groups")]
+    [HttpGet(""), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Index))]
     public async Task<ActionResult<ScreenResult<GroupsViewModel>>> List(CancellationToken cancellationToken = default)
         => Respond(await Groups.ListAsync(await CallerAsync(cancellationToken), cancellationToken));
 
     /// <summary>Creates a group and points at it.</summary>
-    [HttpPost(""), UiApi("/Admin/Groups")]
+    [HttpPost(""), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Index))]
     public async Task<ActionResult<ScreenResult<GroupsViewModel>>> Create([FromBody] GroupCreation? form, CancellationToken cancellationToken = default)
         => Respond(await Groups.CreateAsync(await CallerAsync(cancellationToken), form ?? new GroupCreation(null, null), cancellationToken));
 
     /// <summary>Shows one group, with the member search for <paramref name="q"/>.</summary>
-    [HttpGet("{name}"), UiApi("/Admin/GroupDetail")]
+    [HttpGet("{name}"), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Detail))]
     public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> Get(string name, string? q, CancellationToken cancellationToken = default)
         => Respond(await Groups.GetAsync(await CallerAsync(cancellationToken), name, q, cancellationToken));
 
     /// <summary>Renames the group.</summary>
-    [HttpPost("{name}/rename"), UiApi("/Admin/GroupDetail", Handler = "Rename")]
+    [HttpPost("{name}/rename"), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Handler = "Rename")]
     public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> Rename(string name, [FromBody] GroupRename? form, CancellationToken cancellationToken = default)
         => Respond(await Groups.RenameAsync(await CallerAsync(cancellationToken), name, form ?? new GroupRename(null), cancellationToken));
 
     /// <summary>Adds a user to the group.</summary>
-    [HttpPost("{name}/add-member"), UiApi("/Admin/GroupDetail", Handler = "AddMember")]
+    [HttpPost("{name}/add-member"), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Handler = "AddMember")]
     public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> AddMember(string name, [FromBody] GroupMemberChange? form, CancellationToken cancellationToken = default)
         => Respond(await Groups.AddMemberAsync(await CallerAsync(cancellationToken), name, form ?? new GroupMemberChange(null, null), cancellationToken));
 
     /// <summary>Removes a user from the group.</summary>
-    [HttpPost("{name}/remove-member"), UiApi("/Admin/GroupDetail", Handler = "RemoveMember")]
+    [HttpPost("{name}/remove-member"), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Handler = "RemoveMember")]
     public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> RemoveMember(string name, [FromBody] GroupMemberChange? form, CancellationToken cancellationToken = default)
         => Respond(await Groups.RemoveMemberAsync(await CallerAsync(cancellationToken), name, form ?? new GroupMemberChange(null, null), cancellationToken));
 
     /// <summary>Deletes the group with the grants and project roles that name it.</summary>
-    [HttpPost("{name}/delete"), UiApi("/Admin/GroupDetail", Handler = "Delete")]
+    [HttpPost("{name}/delete"), UiApi(typeof(AdminGroupsController), nameof(AdminGroupsController.Detail), Handler = "Delete")]
     public async Task<ActionResult<ScreenResult<GroupDetailViewModel>>> Delete(string name, [FromBody] PasswordForm? form, CancellationToken cancellationToken = default)
         => Respond(await Groups.DeleteAsync(await CallerAsync(cancellationToken), name, form ?? new PasswordForm(null), cancellationToken));
 }

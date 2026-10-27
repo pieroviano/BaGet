@@ -23,7 +23,7 @@ namespace BaGet.Web.Tests;
 
 /// <summary>
 /// The building blocks controllers use to replace Razor Pages without changing a URL: the <c>r/{repo}/</c> twin of an action's
-/// routes, handler selection by <c>?handler=</c>, the legacy page name in links and navigation.
+/// routes, handler selection by <c>?handler=</c>, links to repository actions and navigation.
 /// </summary>
 public class MvcInfrastructureFacts
 {
@@ -209,10 +209,17 @@ public class MvcInfrastructureFacts
 
     // ---- NavLinkTagHelper ----
 
-    private static NavLinkTagHelper NavLinkOn(params object[] metadata)
+    private static NavLinkTagHelper NavLinkOn(Type controller, string action)
     {
+        var descriptor = new ControllerActionDescriptor
+        {
+            ControllerName = controller.Name.Replace("Controller", string.Empty),
+            ActionName = action,
+            ControllerTypeInfo = controller.GetTypeInfo(),
+            MethodInfo = controller.GetMethod(action)!,
+        };
         var http = new DefaultHttpContext();
-        http.SetEndpoint(new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(metadata), "test"));
+        http.SetEndpoint(new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(descriptor), "test"));
 
         return new NavLinkTagHelper(new HttpContextAccessor { HttpContext = http });
     }
@@ -226,18 +233,26 @@ public class MvcInfrastructureFacts
     }
 
     [Fact]
-    public void ANavLinkIsActiveOnTheControllerActionThatCarriesItsPageName()
+    public void ANavLinkIsActiveOnEveryActionOfTheScreenItPointsAt()
     {
-        var helper = NavLinkOn(new LegacyPageAttribute("/Statistics"));
-        helper.Page = "/Statistics";
-        Assert.True(IsActive(helper));
+        // The Upload screen is UploadController.Index; a handler of it (POST ?handler=Stage) is the same screen.
+        var onScreen = NavLinkOn(typeof(BaGet.Web.V3.Controllers.FrontEnd.UploadController), "Index");
+        onScreen.Controller = "Upload";
+        onScreen.Action = "Index";
+        Assert.True(IsActive(onScreen));
 
-        var other = NavLinkOn(new LegacyPageAttribute("/Statistics"));
-        other.Page = "/Upload";
+        var onHandler = NavLinkOn(typeof(BaGet.Web.V3.Controllers.FrontEnd.UploadController), "Stage");
+        onHandler.Controller = "Upload";
+        onHandler.Action = "Index";
+        Assert.True(IsActive(onHandler));
+
+        var other = NavLinkOn(typeof(BaGet.Web.V3.Controllers.FrontEnd.UploadController), "Index");
+        other.Controller = "Statistics";
+        other.Action = "Index";
         Assert.False(IsActive(other));
     }
 
-    // ---- RepositoryUrlHelper: legacy page names, actions ----
+    // ---- RepositoryUrlHelper: actions ----
 
     private sealed class FakeActions : IActionDescriptorCollectionProvider
     {
@@ -246,10 +261,9 @@ public class MvcInfrastructureFacts
         public ActionDescriptorCollection ActionDescriptors { get; }
     }
 
-    private static ControllerActionDescriptor Action(string controller, string action, string? page, bool repository, string? handler = null, string verb = "GET")
+    private static ControllerActionDescriptor Action(string controller, string action, bool repository, string? handler = null, string verb = "GET")
     {
         var metadata = new List<object>();
-        if (page != null) metadata.Add(new LegacyPageAttribute(page));
         if (repository) metadata.Add(new RepositoryPageAttribute());
         var method = handler == null
             ? typeof(HandlerController).GetMethod(verb == "GET" ? "Index" : "Post")!
@@ -290,42 +304,9 @@ public class MvcInfrastructureFacts
     private static RouteValueDictionary Values(object? values) => values as RouteValueDictionary ?? new RouteValueDictionary(values);
 
     [Fact]
-    public void ALinkToAPageThatBecameAControllerActionResolvesToItKeepingTheHandlerAndTheValues()
+    public void ALinkToARepositoryActionKeepsTheAmbientRepository()
     {
-        var (helper, inner) = HelperFor(null, Action("AdminUsers", "Index", "/Admin/Users", false), Action("AdminUsers", "Approve", "/Admin/Users", false, "Approve", "POST"));
-
-        helper.Page("/Admin/Users", "Approve", new { name = "alice" });
-
-        var values = Values(inner.LastRoute!.Values);
-        Assert.False(values.ContainsKey("page"));
-        Assert.Equal("AdminUsers", values["controller"]);
-        Assert.Equal("Index", values["action"]);
-        Assert.Equal("Approve", values["handler"]);
-        Assert.Equal("alice", values["name"]);
-    }
-
-    [Fact]
-    public void ARazorPageOfThatNameWins_AndAnUnknownPageIsLeftAlone()
-    {
-        var razor = new PageActionDescriptor { ViewEnginePath = "/Admin/Users", RelativePath = "/Pages/Admin/Users.cshtml" };
-        var (helper, inner) = HelperFor(null, razor, Action("AdminUsers", "Index", "/Admin/Users", false));
-
-        helper.Page("/Admin/Users");
-        Assert.Equal("/Admin/Users", Values(inner.LastRoute!.Values)["page"]);
-
-        helper.Page("/Nowhere");
-        Assert.Equal("/Nowhere", Values(inner.LastRoute!.Values)["page"]);
-    }
-
-    [Fact]
-    public void ALinkToARepositoryActionKeepsTheAmbientRepository_ThroughThePageNameAndThroughAnAction()
-    {
-        var (helper, inner) = HelperFor("second", Action("Statistics", "Index", "/Statistics", true));
-
-        helper.Page("/Statistics");
-        var values = Values(inner.LastRoute!.Values);
-        Assert.Equal("second", values["repo"]);
-        Assert.Equal("Statistics", values["controller"]);
+        var (helper, inner) = HelperFor("second", Action("Statistics", "Index", true));
 
         helper.Action("Index", "Statistics");
         Assert.Equal("second", Values(inner.LastAction!.Values)["repo"]);
@@ -339,10 +320,7 @@ public class MvcInfrastructureFacts
     [Fact]
     public void ALinkToAnActionThatIsNotARepositoryPageIsLeftAlone()
     {
-        var (helper, inner) = HelperFor("second", Action("Legal", "Privacy", "/Privacy", false));
-
-        helper.Page("/Privacy");
-        Assert.False(Values(inner.LastRoute!.Values).ContainsKey("repo"));
+        var (helper, inner) = HelperFor("second", Action("Legal", "Privacy", false));
 
         helper.Action("Privacy", "Legal");
         Assert.False(Values(inner.LastAction!.Values).ContainsKey("repo"));

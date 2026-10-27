@@ -1,30 +1,45 @@
 using System;
-using BaGet.Identity.Mvc.Attributes;
+using BaGet.Identity.Application.Screens;
 
 namespace BaGet.Identity.Mvc.UI;
 
 /// <summary>
-/// Marks a controller action of <c>/api/ui</c> as the JSON twin of a screen: <c>[UiApi("/Admin/Users")]</c> names the screen by its page
-/// name (the <see cref="LegacyPageAttribute"/> of the view action it serves), and <see cref="Handler"/> the <c>?handler=</c> it mirrors
-/// (null = the screen itself). The attribute is data for the parity and coverage tests and for the OpenAPI document; it is never
-/// <see cref="LegacyPageAttribute"/>, so the route snapshot of the screens (<c>ui-routes.txt</c>) does not see the API.
+/// Marks a controller action of <c>/api/ui</c> as the JSON twin of a screen: <c>[UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index))]</c>
+/// names the screen by the view controller and the default GET action that serve it (<see cref="Screen"/>), and <see cref="Handler"/> the
+/// <c>?handler=</c> it mirrors (null = the screen itself). The attribute is data for the parity and coverage tests and for the OpenAPI
+/// document; a twin is never a <c>UiControllerBase</c>, so the route snapshot of the screens (<c>ui-routes.txt</c>) does not see the API.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public sealed class UiApiAttribute : Attribute
 {
-    /// <param name="screen">The page name of the screen this action serves, as <c>asp-page</c> writes it (<c>/Admin/Users</c>).</param>
-    public UiApiAttribute(string screen)
-    {
-        if (string.IsNullOrWhiteSpace(screen) || screen[0] != '/')
-        {
-            throw new ArgumentException("A screen name starts with '/', like /Admin/Users.", nameof(screen));
-        }
+    private const string ControllerSuffix = "Controller";
 
-        Screen = screen;
+    /// <param name="controller">The view controller of the screen this action serves (<c>typeof(AdminUsersController)</c>).</param>
+    /// <param name="action">The action of that controller that shows the screen (<c>nameof(AdminUsersController.Index)</c>).</param>
+    public UiApiAttribute(Type controller, string action)
+    {
+        Controller = controller ?? throw new ArgumentNullException(nameof(controller));
+        if (string.IsNullOrWhiteSpace(action)) throw new ArgumentException("A screen names its action.", nameof(action));
+
+        Action = action;
     }
 
-    /// <summary>The screen this action serves (<c>/Admin/Users</c>).</summary>
-    public string Screen { get; }
+    /// <summary>The view controller of the screen this action serves.</summary>
+    public Type Controller { get; }
+
+    /// <summary>The action of <see cref="Controller"/> that shows the screen.</summary>
+    public string Action { get; }
+
+    /// <summary>The screen this action serves, as <c>asp-controller</c>/<c>asp-action</c> name it.</summary>
+    public ScreenRef Screen
+    {
+        get
+        {
+            var name = Controller.Name;
+
+            return new ScreenRef(name.EndsWith(ControllerSuffix, StringComparison.Ordinal) ? name.Substring(0, name.Length - ControllerSuffix.Length) : name, Action);
+        }
+    }
 
     /// <summary>The page handler this action mirrors (<c>Approve</c> for <c>?handler=Approve</c>), or null for the screen itself (GET) or its default POST.</summary>
     public string? Handler { get; set; }

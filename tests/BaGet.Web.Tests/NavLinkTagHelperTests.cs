@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Xunit;
 using BaGet.Web.V3.TagHelpers;
@@ -31,10 +32,10 @@ public class NavLinkTagHelperTests
             new Dictionary<object, object>(),
             "test");
 
+    // The current endpoint is an action of a real view controller: "Upload" is UploadController.Index, "Index" is HomeController.Index.
     private static IHttpContextAccessor Accessor(
-        string viewEnginePath,
+        string screen,
         string requestPath = "/",
-        string? areaName = null,
         bool withEndpoint = true,
         bool withHttpContext = true)
     {
@@ -48,10 +49,13 @@ public class NavLinkTagHelperTests
 
         if (withEndpoint)
         {
-            var descriptor = new PageActionDescriptor
+            var controller = screen == "Upload" ? typeof(BaGet.Web.V3.Controllers.FrontEnd.UploadController) : typeof(BaGet.Web.V3.Controllers.FrontEnd.HomeController);
+            var descriptor = new ControllerActionDescriptor
             {
-                ViewEnginePath = viewEnginePath,
-                AreaName = areaName,
+                ControllerName = controller.Name.Replace("Controller", string.Empty),
+                ActionName = "Index",
+                ControllerTypeInfo = controller.GetTypeInfo(),
+                MethodInfo = controller.GetMethod("Index")!,
             };
 
             httpContext.SetEndpoint(new Endpoint(
@@ -71,7 +75,7 @@ public class NavLinkTagHelperTests
     [Fact]
     public void MarksTheLinkForTheCurrentPageActive()
     {
-        var target = new NavLinkTagHelper(Accessor("/Upload")) { Page = "/Upload" };
+        var target = new NavLinkTagHelper(Accessor("Upload")) { Controller = "Upload", Action = "Index" };
         var output = Output();
 
         target.Process(Context(), output);
@@ -82,7 +86,7 @@ public class NavLinkTagHelperTests
     [Fact]
     public void LeavesALinkForAnotherPageAlone()
     {
-        var target = new NavLinkTagHelper(Accessor("/Index")) { Page = "/Upload" };
+        var target = new NavLinkTagHelper(Accessor("Index")) { Controller = "Upload", Action = "Index" };
         var output = Output();
 
         target.Process(Context(), output);
@@ -95,7 +99,7 @@ public class NavLinkTagHelperTests
     {
         // The helper targets any element carrying "nav-link", so it must add its class
         // rather than replace whatever the markup specified.
-        var target = new NavLinkTagHelper(Accessor("/Upload")) { Page = "/Upload" };
+        var target = new NavLinkTagHelper(Accessor("Upload")) { Controller = "Upload", Action = "Index" };
         var output = Output(("class", "nav-item highlighted"));
 
         target.Process(Context(), output);
@@ -109,7 +113,7 @@ public class NavLinkTagHelperTests
     [Fact]
     public void DoesNotAddTheClassTwice()
     {
-        var target = new NavLinkTagHelper(Accessor("/Upload")) { Page = "/Upload" };
+        var target = new NavLinkTagHelper(Accessor("Upload")) { Controller = "Upload", Action = "Index" };
         var output = Output(("class", "active"));
 
         target.Process(Context(), output);
@@ -120,10 +124,8 @@ public class NavLinkTagHelperTests
     [Fact]
     public void IsNotActiveWithoutAnHttpContext()
     {
-        var target = new NavLinkTagHelper(Accessor("/Upload", withHttpContext: false))
-        {
-            Page = "/Upload",
-        };
+        var target = new NavLinkTagHelper(Accessor("Upload", withHttpContext: false))
+        { Controller = "Upload", Action = "Index" };
         var output = Output();
 
         target.Process(Context(), output);
@@ -134,24 +136,8 @@ public class NavLinkTagHelperTests
     [Fact]
     public void IsNotActiveWithoutAnEndpoint()
     {
-        var target = new NavLinkTagHelper(Accessor("/Upload", withEndpoint: false))
-        {
-            Page = "/Upload",
-        };
-        var output = Output();
-
-        target.Process(Context(), output);
-
-        Assert.Null(ClassOf(output));
-    }
-
-    [Fact]
-    public void IsNotActiveForAPageInAnArea()
-    {
-        var target = new NavLinkTagHelper(Accessor("/Upload", areaName: "Admin"))
-        {
-            Page = "/Upload",
-        };
+        var target = new NavLinkTagHelper(Accessor("Upload", withEndpoint: false))
+        { Controller = "Upload", Action = "Index" };
         var output = Output();
 
         target.Process(Context(), output);
@@ -164,9 +150,9 @@ public class NavLinkTagHelperTests
     [InlineData("/")]
     public void ThePackagesLinkIsActiveOnBothOfItsRoutes(string requestPath)
     {
-        // _Layout.cshtml links to /packages with no asp-page, and both / and /packages
+        // _Layout.cshtml links to /packages with no asp-controller, and both / and /packages
         // render the Index page.
-        var target = new NavLinkTagHelper(Accessor("/Index", requestPath));
+        var target = new NavLinkTagHelper(Accessor("Index", requestPath));
         var output = Output();
 
         target.Process(Context(), output);
@@ -180,7 +166,7 @@ public class NavLinkTagHelperTests
     public void ThePackagesLinkIsActiveWhateverTheCaseOfTheRequestPath(string requestPath)
     {
         // Routing is case-insensitive, so these all render the package list.
-        var target = new NavLinkTagHelper(Accessor("/Index", requestPath));
+        var target = new NavLinkTagHelper(Accessor("Index", requestPath));
         var output = Output();
 
         target.Process(Context(), output);
@@ -191,7 +177,7 @@ public class NavLinkTagHelperTests
     [Fact]
     public void ThePackagesLinkIsActiveWithATrailingSlash()
     {
-        var target = new NavLinkTagHelper(Accessor("/Index", "/packages/"));
+        var target = new NavLinkTagHelper(Accessor("Index", "/packages/"));
         var output = Output();
 
         target.Process(Context(), output);
@@ -202,7 +188,7 @@ public class NavLinkTagHelperTests
     [Fact]
     public void ThePackagesLinkIsNotActiveOnAnUnrelatedPath()
     {
-        var target = new NavLinkTagHelper(Accessor("/Index", "/something-else"));
+        var target = new NavLinkTagHelper(Accessor("Index", "/something-else"));
         var output = Output();
 
         target.Process(Context(), output);

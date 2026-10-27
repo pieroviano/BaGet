@@ -22,8 +22,8 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminOrganizationsUseCase : AdminUseCaseBase
 {
-    private const string DetailScreen = "/Admin/OrganizationDetail";
-    private const string ListScreen = "/Admin/Organizations";
+    private static readonly ScreenRef DetailScreen = ScreenCatalog.AdminOrganizationDetail;
+    private static readonly ScreenRef ListScreen = ScreenCatalog.AdminOrganizations;
 
     private readonly PackageOwnershipService _ownership;
     private readonly ILogger<AdminOrganizationsUseCase> _logger;
@@ -214,7 +214,7 @@ public sealed class AdminOrganizationsUseCase : AdminUseCaseBase
         model.Members = rows.OrderBy(r => r.UserName, StringComparer.OrdinalIgnoreCase).ToList();
         model.OwnedPackageIds = await _ownership.CountOwnedPackageIdsAsync(model.Organization.Name, cancellationToken);
 
-        await Confirmation.LoadAsync(model, caller, DetailScreen);
+        await Confirmation.LoadForRequestAsync(model, caller);
 
         return true;
     }

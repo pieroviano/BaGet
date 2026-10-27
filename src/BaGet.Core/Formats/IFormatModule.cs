@@ -120,7 +120,8 @@ public sealed record FormatCreateField(string Name, string Label, string? Help =
 /// <summary>A link a format contributes to the administration of a repository.</summary>
 /// <param name="Id">A stable identifier (<c>browse</c>, <c>upload</c>); becomes the CSS class <c>repository-{id}</c>.</param>
 /// <param name="Label">The visible text.</param>
-/// <param name="Page">The Razor page it opens (<c>/Index</c>), given the repository's <c>repo</c> route value; null when <paramref name="Path"/> is used.</param>
+/// <param name="Controller">The MVC controller (without the suffix) of the screen it opens (<c>Home</c>), given the repository's <c>repo</c> route value; null when <paramref name="Path"/> is used.</param>
+/// <param name="Action">The action of that controller that shows the screen (<c>Index</c>); null when <paramref name="Path"/> is used.</param>
 /// <param name="Path">Otherwise a path under the repository base (<c>npm/</c>).</param>
 /// <param name="NeedsUploads">Shown only for repositories that take uploads (not a remote one, nor a virtual one without a deploy repository).</param>
-public sealed record FormatLink(string Id, string Label, string? Page, string? Path = null, bool NeedsUploads = false);
+public sealed record FormatLink(string Id, string Label, string? Controller, string? Action, string? Path = null, bool NeedsUploads = false);

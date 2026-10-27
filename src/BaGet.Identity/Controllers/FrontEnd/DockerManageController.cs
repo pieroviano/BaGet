@@ -51,27 +51,27 @@ public sealed class DockerManageController : AccountControllerBase
     }
 
     /// <summary>The screen.</summary>
-    [HttpGet, HttpHead, PageHandler, LegacyPage("/Packages/DockerManage")]
+    [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
         => Present(await Api<DockerManageUiApiController, DockerManageViewModel>(api => api.Get(Image, cancellationToken)));
 
     /// <summary>Deletes a tag, after the password.</summary>
-    [HttpPost, PageHandler("DeleteTag"), LegacyPage("/Packages/DockerManage")]
+    [HttpPost, PageHandler("DeleteTag")]
     public async Task<IActionResult> DeleteTag(string? tag, string? password, CancellationToken cancellationToken)
         => Present(await Api<DockerManageUiApiController, DockerManageViewModel>(api => api.DeleteTag(Image, new DockerManageForm { Tag = tag, Password = password }, cancellationToken)));
 
     /// <summary>Deletes a manifest with its tags, after the password.</summary>
-    [HttpPost, PageHandler("DeleteManifest"), LegacyPage("/Packages/DockerManage")]
+    [HttpPost, PageHandler("DeleteManifest")]
     public async Task<IActionResult> DeleteManifest(string? digest, string? password, CancellationToken cancellationToken)
         => Present(await Api<DockerManageUiApiController, DockerManageViewModel>(api => api.DeleteManifest(Image, new DockerManageForm { Digest = digest, Password = password }, cancellationToken)));
 
     /// <summary>Removes the layers no manifest uses, after the password.</summary>
-    [HttpPost, PageHandler("Prune"), LegacyPage("/Packages/DockerManage")]
+    [HttpPost, PageHandler("Prune")]
     public async Task<IActionResult> Prune(string? password, CancellationToken cancellationToken)
         => Present(await Api<DockerManageUiApiController, DockerManageViewModel>(api => api.Prune(Image, new DockerManageForm { Password = password }, cancellationToken)));
 
     /// <summary>Deletes the whole image, after the password.</summary>
-    [HttpPost, PageHandler("DeleteImage"), LegacyPage("/Packages/DockerManage")]
+    [HttpPost, PageHandler("DeleteImage")]
     public async Task<IActionResult> DeleteImage(string? password, CancellationToken cancellationToken)
         => Present(await Api<DockerManageUiApiController, DockerManageViewModel>(api => api.DeleteImage(Image, new DockerManageForm { Password = password }, cancellationToken)));
 
@@ -79,10 +79,10 @@ public sealed class DockerManageController : AccountControllerBase
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without
     /// <c>?handler=</c>: the antiforgery check has already run, and there is nothing to do, so the answer is 404. (A Razor Page
     /// with only named POST handlers behaved alike for the caller; without this action routing would answer 404 before the
-    /// antiforgery filter and an unprotected POST would not be refused with 400.) It carries no <see cref="LegacyPageAttribute"/>:
-    /// it is not one of the page's handlers, so it stays out of the route contract.
+    /// antiforgery filter and an unprotected POST would not be refused with 400.) It is marked
+    /// <see cref="FallbackHandlerAttribute"/>: it is not one of the screen's handlers, so it stays out of the route contract.
     /// </summary>
-    [HttpPost, PageHandler]
+    [HttpPost, PageHandler, FallbackHandler]
     public IActionResult NoHandler() => NotFound();
 
     private IActionResult Present(UiApiResponse<DockerManageViewModel> response) => Render(response, ViewName);

@@ -6,6 +6,7 @@ the screens (controllers, views) are in [`Extension.BaGet.Identity`](https://www
 
 | Type | Role |
 |---|---|
+| `ScreenRef`, `ScreenCatalog` | A screen is its controller and default GET action (`AdminUsers/Index`); the catalog has one member per screen, used by `ScreenNext`, `ScreenLink` and `IScreenLinks` |
 | `ScreenResult<T>` | What a use case returns for a screen: `Status` (Ok, Invalid, NotFound, Forbidden, SignIn, Next), `Model`, `Errors`, `Next`. The JSON UI API serialises it as it is |
 | `ScreenGate` | Who may use a screen: accounts on, mail, signed in, administrator (or project administrator), access model present, server writable. View controllers and the JSON API both ask it |
 | `SignInUseCase`, `RegistrationUseCase`, `ExternalSignInUseCase`, `AccountSettingsUseCase`, `TwoFactorUseCase`, `ApiKeysUseCase`, `AccountOverviewUseCase`, `ProfileUseCase` | The rules of the account screens (sign-in, two-factor steps, registration, mail round trips, settings, API keys, organizations, My packages/access, profile), registered by `AddBaGetAccounts`; the forms and screen models are in `Models/<area>` |

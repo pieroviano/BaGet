@@ -12,15 +12,13 @@ internal sealed class ScreenOutcome
 {
     private readonly ScreenOutcomeKind _kind;
     private readonly string? _text;
-    private readonly object? _values;
     private readonly AuthenticationProperties? _properties;
     private readonly int _status;
 
-    private ScreenOutcome(ScreenOutcomeKind kind, string? text = null, object? values = null, AuthenticationProperties? properties = null, int status = 0)
+    private ScreenOutcome(ScreenOutcomeKind kind, string? text = null, AuthenticationProperties? properties = null, int status = 0)
     {
         _kind = kind;
         _text = text;
-        _values = values;
         _properties = properties;
         _status = status;
     }
@@ -44,9 +42,6 @@ internal sealed class ScreenOutcome
     /// <summary>A local redirect to exactly <paramref name="url"/> (which must be local: an application-relative address).</summary>
     public static ScreenOutcome LocalExact(string url) => new(ScreenOutcomeKind.LocalExact, url);
 
-    /// <summary>A redirect to another page, by its page name (<c>/Account/Login</c>).</summary>
-    public static ScreenOutcome ToPage(string page, object? values = null) => new(ScreenOutcomeKind.Page, page, values);
-
     /// <summary>A bare status code.</summary>
     public static ScreenOutcome Status(int code) => new(ScreenOutcomeKind.Status, status: code);
 
@@ -61,7 +56,6 @@ internal sealed class ScreenOutcome
             case ScreenOutcomeKind.ChallengeWith: return new ChallengeResult(_text!, _properties);
             case ScreenOutcomeKind.Local: return new LocalRedirectResult(AccountSupport.LocalTarget(url, _text)) { UrlHelper = url };
             case ScreenOutcomeKind.LocalExact: return new LocalRedirectResult(_text!) { UrlHelper = url };
-            case ScreenOutcomeKind.Page: return new RedirectToPageResult(_text, _values) { UrlHelper = url };
             case ScreenOutcomeKind.Status: return new StatusCodeResult(_status);
             default: throw new InvalidOperationException();
         }

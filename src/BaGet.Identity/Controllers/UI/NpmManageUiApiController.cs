@@ -23,8 +23,6 @@ namespace BaGet.Identity.Controllers.UI;
 [RepositoryPage(Format = RepositoryFormat.Npm, NotOnVirtual = true, NotOnRemote = true)]
 public sealed class NpmManageUiApiController : AccountUiApiControllerBase
 {
-    private const string Screen = "/Packages/NpmManage";
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
@@ -36,47 +34,47 @@ public sealed class NpmManageUiApiController : AccountUiApiControllerBase
         => UseCase.EnterAsync(User, id, handler, isWrite, cancellationToken);
 
     /// <summary>The screen.</summary>
-    [HttpGet("{*id}"), UiApi(Screen)]
+    [HttpGet("{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index))]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Get(string? id, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, id, cancellationToken));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost("add-owner/{*id}"), UiApi(Screen, Handler = "AddOwner")]
+    [HttpPost("add-owner/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "AddOwner")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> AddOwner(string? id, [FromBody] NpmManageOwnerForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.AddOwnerAsync(User, id, form?.OwnerName, cancellationToken));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost("remove-owner/{*id}"), UiApi(Screen, Handler = "RemoveOwner")]
+    [HttpPost("remove-owner/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "RemoveOwner")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> RemoveOwner(string? id, [FromBody] NpmManageOwnerForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveOwnerAsync(User, id, form?.OwnerName, cancellationToken));
 
     /// <summary>Points a dist-tag at a version.</summary>
-    [HttpPost("set-tag/{*id}"), UiApi(Screen, Handler = "SetTag")]
+    [HttpPost("set-tag/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "SetTag")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> SetTag(string? id, [FromBody] NpmManageTagForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.SetTagAsync(User, id, form?.Tag, form?.Version, cancellationToken));
 
     /// <summary>Removes a dist-tag.</summary>
-    [HttpPost("remove-tag/{*id}"), UiApi(Screen, Handler = "RemoveTag")]
+    [HttpPost("remove-tag/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "RemoveTag")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> RemoveTag(string? id, [FromBody] NpmManageTagForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveTagAsync(User, id, form?.Tag, cancellationToken));
 
     /// <summary>Deprecates a version.</summary>
-    [HttpPost("deprecate/{*id}"), UiApi(Screen, Handler = "Deprecate")]
+    [HttpPost("deprecate/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "Deprecate")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Deprecate(string? id, [FromBody] NpmManageDeprecateForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeprecateAsync(User, id, form?.Version, form?.Message, cancellationToken));
 
     /// <summary>Removes a version's deprecation.</summary>
-    [HttpPost("undeprecate/{*id}"), UiApi(Screen, Handler = "Undeprecate")]
+    [HttpPost("undeprecate/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "Undeprecate")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Undeprecate(string? id, [FromBody] NpmManageDeprecateForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UndeprecateAsync(User, id, form?.Version, cancellationToken));
 
     /// <summary>Unpublishes one version, after the password is confirmed.</summary>
-    [HttpPost("unpublish/{*id}"), UiApi(Screen, Handler = "Unpublish")]
+    [HttpPost("unpublish/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "Unpublish")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> Unpublish(string? id, [FromBody] NpmManageUnpublishForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UnpublishAsync(User, id, form?.Version, form?.Password, cancellationToken));
 
     /// <summary>Unpublishes every version, after the password is confirmed.</summary>
-    [HttpPost("unpublish-all/{*id}"), UiApi(Screen, Handler = "UnpublishAll")]
+    [HttpPost("unpublish-all/{*id}"), UiApi(typeof(NpmManageController), nameof(NpmManageController.Index), Handler = "UnpublishAll")]
     public async Task<ActionResult<ScreenResult<NpmManageViewModel>>> UnpublishAll(string? id, [FromBody] NpmManageUnpublishForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.UnpublishAllAsync(User, id, form?.Password, cancellationToken));
 }

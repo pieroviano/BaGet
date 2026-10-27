@@ -27,49 +27,49 @@ public sealed class ReplicationUiApiController : AccessUiApiControllerBase
     // ---------------------------------------------------------------- replications
 
     /// <summary>Lists the replications and the form that creates one.</summary>
-    [HttpGet(""), UiApi("/Admin/Replication")]
+    [HttpGet(""), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Index))]
     public async Task<ActionResult<ScreenResult<ReplicationViewModel>>> GetReplications(CancellationToken cancellationToken = default)
         => Respond(await Replication.GetReplicationsAsync(User, ReturnPage, cancellationToken));
 
     /// <summary>Creates a replication and opens it.</summary>
-    [HttpPost(""), UiApi("/Admin/Replication")]
+    [HttpPost(""), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Index))]
     public async Task<ActionResult<ScreenResult<ReplicationViewModel>>> Create([FromBody] ReplicationBody? body, CancellationToken cancellationToken = default)
         => Respond(await Replication.CreateAsync(User, body, ReturnPage, cancellationToken));
 
     // ---------------------------------------------------------------- one replication
 
     /// <summary>Shows one replication with its log.</summary>
-    [HttpGet("{key:int}"), UiApi("/Admin/ReplicationConfig")]
+    [HttpGet("{key:int}"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config))]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> GetConfig(int key, CancellationToken cancellationToken = default)
         => Respond(await Replication.GetConfigAsync(User, key, ReturnPage, cancellationToken));
 
     /// <summary>Saves the settings.</summary>
-    [HttpPost("{key:int}/save"), UiApi("/Admin/ReplicationConfig", Handler = "Save")]
+    [HttpPost("{key:int}/save"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Handler = "Save")]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> Save(int key, [FromBody] ReplicationBody? body, CancellationToken cancellationToken = default)
         => Respond(await Replication.SaveAsync(User, key, body, cancellationToken));
 
     /// <summary>Tests the connection with the typed settings; saves nothing.</summary>
-    [HttpPost("{key:int}/test"), UiApi("/Admin/ReplicationConfig", Handler = "Test")]
+    [HttpPost("{key:int}/test"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Handler = "Test")]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> Test(int key, [FromBody] ReplicationBody? body, CancellationToken cancellationToken = default)
         => Respond(await Replication.TestAsync(User, key, body, ReturnPage, cancellationToken));
 
     /// <summary>Starts a run.</summary>
-    [HttpPost("{key:int}/run"), UiApi("/Admin/ReplicationConfig", Handler = "Run")]
+    [HttpPost("{key:int}/run"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Handler = "Run")]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> Run(int key, [FromBody] PasswordForm? body, CancellationToken cancellationToken = default)
         => Respond(await Replication.RunAsync(User, key, body?.Password, cancellationToken));
 
     /// <summary>Starts a run that continues the last interrupted or failed one.</summary>
-    [HttpPost("{key:int}/resume"), UiApi("/Admin/ReplicationConfig", Handler = "Resume")]
+    [HttpPost("{key:int}/resume"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Handler = "Resume")]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> Resume(int key, [FromBody] PasswordForm? body, CancellationToken cancellationToken = default)
         => Respond(await Replication.ResumeAsync(User, key, body?.Password, cancellationToken));
 
     /// <summary>Asks the running replication to stop; it ends as interrupted and can be resumed.</summary>
-    [HttpPost("{key:int}/stop"), UiApi("/Admin/ReplicationConfig", Handler = "Stop")]
+    [HttpPost("{key:int}/stop"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Handler = "Stop")]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> Stop(int key, CancellationToken cancellationToken = default)
         => Respond(await Replication.StopAsync(key, cancellationToken));
 
     /// <summary>Deletes the configuration with its log.</summary>
-    [HttpPost("{key:int}/delete"), UiApi("/Admin/ReplicationConfig", Handler = "Delete")]
+    [HttpPost("{key:int}/delete"), UiApi(typeof(AdminReplicationController), nameof(AdminReplicationController.Config), Handler = "Delete")]
     public async Task<ActionResult<ScreenResult<ReplicationConfigViewModel>>> Delete(int key, [FromBody] PasswordForm? body, CancellationToken cancellationToken = default)
         => Respond(await Replication.DeleteAsync(User, key, body?.Password, cancellationToken));
 }

@@ -19,7 +19,7 @@ namespace BaGet.Identity.Controllers.UI;
 public sealed class AdminAuditUiApiController : AccessUiApiControllerBase
 {
     /// <summary>Lists the entries that match the filter.</summary>
-    [HttpGet(""), UiApi("/Admin/Audit")]
+    [HttpGet(""), UiApi(typeof(AdminAuditController), nameof(AdminAuditController.Index))]
     public async Task<ActionResult<ScreenResult<AuditViewModel>>> Get(string? actor, string? subject, string? from, string? to, CancellationToken cancellationToken = default)
         => Respond(await UseCase<AdminAuditUseCase>().GetAsync(new AuditQuery(actor, subject, from, to), cancellationToken));
 }

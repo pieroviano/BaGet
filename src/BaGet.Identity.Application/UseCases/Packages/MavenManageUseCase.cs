@@ -246,7 +246,7 @@ public sealed class MavenManageUseCase
 
         _logger.LogWarning("{User} deleted Maven artifact {Artifact}", caller.Identity?.Name, Name);
 
-        return ScreenResult<MavenManageViewModel>.GoTo(new ScreenNext("/MavenArtifacts"));
+        return ScreenResult<MavenManageViewModel>.GoTo(new ScreenNext(ScreenCatalog.MavenArtifacts));
     }
 
     /// <summary>Deletes the builds of a snapshot version older than the newest <paramref name="keep"/>.</summary>
@@ -275,7 +275,7 @@ public sealed class MavenManageUseCase
     {
         if (result.Succeeded && await _maven.GetArtifactAsync(_group, _artifact, cancellationToken).ConfigureAwait(false) == null)
         {
-            return ScreenResult<MavenManageViewModel>.GoTo(new ScreenNext("/MavenArtifacts"));
+            return ScreenResult<MavenManageViewModel>.GoTo(new ScreenNext(ScreenCatalog.MavenArtifacts));
         }
 
         return await DoneAsync(caller, result, success, cancellationToken).ConfigureAwait(false);

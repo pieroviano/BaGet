@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,13 +20,13 @@ public class ProjectsController : AccessApiController
 {
     /// <summary>Lists projects.</summary>
     [HttpGet]
-    [ApiOperation("List projects with their repository and member counts", "/Admin/Projects", Response = typeof(ProjectSummary), PagedList = true)]
+    [ApiOperation("List projects with their repository and member counts", typeof(AdminProjectsController), nameof(AdminProjectsController.Index), Response = typeof(ProjectSummary), PagedList = true)]
     public async Task<IActionResult> List(int? page, int? pageSize)
         => Unavailable() ?? RespondPage(await AccessAdmin.ListProjectsAsync(Cancellation), page, pageSize);
 
     /// <summary>One project.</summary>
     [HttpGet("{name}")]
-    [ApiOperation("Show a project with its repositories, members and permission targets", "/Admin/ProjectDetail", Response = typeof(ProjectDetails))]
+    [ApiOperation("Show a project with its repositories, members and permission targets", typeof(AdminProjectsController), nameof(AdminProjectsController.Detail), Response = typeof(ProjectDetails))]
     public async Task<IActionResult> Get(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -35,7 +36,7 @@ public class ProjectsController : AccessApiController
 
     /// <summary>Creates a project.</summary>
     [HttpPost]
-    [ApiOperation("Create a project", "/Admin/Projects", Response = typeof(ProjectSummary), Status = 201)]
+    [ApiOperation("Create a project", typeof(AdminProjectsController), nameof(AdminProjectsController.Index), Response = typeof(ProjectSummary), Status = 201)]
     public async Task<IActionResult> Create([FromBody] CreateProjectRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -49,7 +50,7 @@ public class ProjectsController : AccessApiController
 
     /// <summary>Deletes a project; its repositories stay.</summary>
     [HttpDelete("{name}")]
-    [ApiOperation("Delete a project with its members and targets (its repositories stay)", "/Admin/ProjectDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Delete a project with its members and targets (its repositories stay)", typeof(AdminProjectsController), nameof(AdminProjectsController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> Delete(string name)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -64,7 +65,7 @@ public class ProjectsController : AccessApiController
 
     /// <summary>Gives a user or group a role.</summary>
     [HttpPut("{name}/members")]
-    [ApiOperation("Give a user or group a role in a project", "/Admin/ProjectDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Give a user or group a role in a project", typeof(AdminProjectsController), nameof(AdminProjectsController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> SetMember(string name, [FromBody] ProjectMemberRequest request)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -86,7 +87,7 @@ public class ProjectsController : AccessApiController
 
     /// <summary>Takes a user or group out of a project.</summary>
     [HttpDelete("{name}/members/{type}/{principal}")]
-    [ApiOperation("Remove a user or group from a project", "/Admin/ProjectDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Remove a user or group from a project", typeof(AdminProjectsController), nameof(AdminProjectsController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> RemoveMember(string name, string type, string principal)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -102,7 +103,7 @@ public class ProjectsController : AccessApiController
 
     /// <summary>Puts a repository in the project.</summary>
     [HttpPut("{name}/repositories/{repository}")]
-    [ApiOperation("Put a repository in a project (it leaves any project it was in)", "/Admin/ProjectDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Put a repository in a project (it leaves any project it was in)", typeof(AdminProjectsController), nameof(AdminProjectsController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> AssignRepository(string name, string repository)
     {
         if (Unavailable() is { } unavailable) return unavailable;
@@ -117,7 +118,7 @@ public class ProjectsController : AccessApiController
 
     /// <summary>Takes a repository out of the project.</summary>
     [HttpDelete("{name}/repositories/{repository}")]
-    [ApiOperation("Take a repository out of a project", "/Admin/ProjectDetail", Confirm = true, Status = 204)]
+    [ApiOperation("Take a repository out of a project", typeof(AdminProjectsController), nameof(AdminProjectsController.Detail), Confirm = true, Status = 204)]
     public async Task<IActionResult> UnassignRepository(string name, string repository)
     {
         if (Unavailable() is { } unavailable) return unavailable;

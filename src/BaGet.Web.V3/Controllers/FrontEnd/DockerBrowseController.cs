@@ -13,15 +13,14 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 /// <summary>
 /// The web pages of a Docker repository: the image list (<c>/docker-images</c>) and one image
 /// (<c>/docker-images/{image}</c>, <c>?digest=</c> for a manifest). They replace the Razor Pages <c>DockerImages</c> and
-/// <c>DockerImage</c>: same URLs, same <c>asp-page</c> names
-/// (<see cref="LegacyPageAttribute"/>), same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository and,
+/// <c>DockerImage</c>: same URLs, same repository rules (<see cref="RepositoryPageAttribute"/>: Read on the repository and,
 /// for the image page, on the image; 404 in a repository that is not Docker's). Views are in <c>Views/DockerBrowse/</c>. The work is <see cref="BaGet.Web.Application.UseCases.DockerBrowseUseCase"/>, reached through the JSON twin
 /// <see cref="DockerBrowseUiApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class DockerBrowseController : UiControllerBase
 {
     /// <summary>The image list with a search box and the client commands.</summary>
-    [Route("docker-images"), HttpGet, HttpHead, PageHandler, LegacyPage("/DockerImages")]
+    [Route("docker-images"), HttpGet, HttpHead, PageHandler]
     [RepositoryPage(Format = RepositoryFormat.Docker)]
     public async Task<IActionResult> Images(
         string? q,
@@ -34,7 +33,7 @@ public sealed class DockerBrowseController : UiControllerBase
     }
 
     /// <summary>One image: tags, manifests, and with <c>?digest=</c> one manifest in full.</summary>
-    [Route("docker-images/{**image}"), HttpGet, HttpHead, PageHandler, LegacyPage("/DockerImage")]
+    [Route("docker-images/{**image}"), HttpGet, HttpHead, PageHandler]
     [RepositoryPage(Format = RepositoryFormat.Docker)]
     public async Task<IActionResult> Image(string? image, string? digest, string? artifactType, CancellationToken cancellationToken = default)
         => Render(await Api<DockerBrowseUiApiController, DockerImageViewModel>(api => api.Image(image, digest, artifactType, cancellationToken)), "Image");

@@ -21,8 +21,6 @@ namespace BaGet.Identity.Controllers.UI;
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class ContactOwnersUiApiController : AccountUiApiControllerBase
 {
-    private const string Screen = "/Packages/ContactOwners";
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
@@ -32,12 +30,12 @@ public sealed class ContactOwnersUiApiController : AccountUiApiControllerBase
     private ContactOwnersUseCase UseCase => HttpContext.RequestServices.GetRequiredService<ContactOwnersUseCase>();
 
     /// <summary>The form's state; 404 when the package has no owner.</summary>
-    [HttpGet, UiApi(Screen)]
+    [HttpGet, UiApi(typeof(ContactOwnersController), nameof(ContactOwnersController.Index))]
     public async Task<ActionResult<ScreenResult<ContactOwnersViewModel>>> Get(string? id, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, id, cancellationToken));
 
     /// <summary>Sends the message to the owners (400 with the field errors when the message is missing or too long).</summary>
-    [HttpPost, UiApi(Screen)]
+    [HttpPost, UiApi(typeof(ContactOwnersController), nameof(ContactOwnersController.Index))]
     public async Task<ActionResult<ScreenResult<ContactOwnersViewModel>>> Send(string? id, [FromBody] ContactOwnersForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.SendAsync(User, id, form?.Message, form?.CopyToSelf ?? false, cancellationToken));
 }

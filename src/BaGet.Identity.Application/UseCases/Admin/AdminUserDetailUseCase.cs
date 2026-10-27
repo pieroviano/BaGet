@@ -24,7 +24,7 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 /// </summary>
 public sealed class AdminUserDetailUseCase : AdminUseCaseBase
 {
-    private const string Screen = "/Admin/UserDetail";
+    private static readonly ScreenRef Screen = ScreenCatalog.AdminUserDetail;
 
     private readonly IContext _context;
     private readonly ApiKeyService _apiKeys;

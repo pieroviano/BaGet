@@ -16,7 +16,6 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// process and renders.
 /// </summary>
 [Route("scan-artifact")]
-[LegacyPage("/Packages/Scan")]
 [RepositoryPage(AnyFormat = true, NotOnVirtual = true)]
 public sealed class ScanArtifactController : AccountControllerBase
 {

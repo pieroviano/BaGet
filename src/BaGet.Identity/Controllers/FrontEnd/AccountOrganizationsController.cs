@@ -20,19 +20,19 @@ public sealed class AccountOrganizationsController : AccountControllerBase
     protected override bool RequiresSignIn => true;
 
     /// <summary>The organizations of the user.</summary>
-    [Route("account/organizations"), HttpGet, HttpHead, PageHandler, LegacyPage("/Account/Organizations")]
+    [Route("account/organizations"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Organizations(CancellationToken cancellationToken)
         => Render(await Api<AccountOrganizationsUiApiController, OrganizationsViewModel>(api => api.Organizations(cancellationToken)), "Organizations");
 
     /// <summary>Create an organization.</summary>
-    [Route("account/organizations"), HttpPost, PageHandler("Create"), LegacyPage("/Account/Organizations")]
+    [Route("account/organizations"), HttpPost, PageHandler("Create")]
     public async Task<IActionResult> OrganizationsCreate(string name, CancellationToken cancellationToken)
         => Render(
             await Api<AccountOrganizationsUiApiController, OrganizationsViewModel>(api => api.OrganizationsCreate(new CreateOrganizationForm { Name = name }, cancellationToken)),
             "Organizations");
 
     /// <summary>Add a member (organization administrators only).</summary>
-    [Route("account/organizations"), HttpPost, PageHandler("AddMember"), LegacyPage("/Account/Organizations")]
+    [Route("account/organizations"), HttpPost, PageHandler("AddMember")]
     public async Task<IActionResult> OrganizationsAddMember(string organization, string userName, bool isAdmin, CancellationToken cancellationToken)
         => Render(
             await Api<AccountOrganizationsUiApiController, OrganizationsViewModel>(api => api.OrganizationsAddMember(
@@ -41,7 +41,7 @@ public sealed class AccountOrganizationsController : AccountControllerBase
             "Organizations");
 
     /// <summary>Remove a member (an administrator removes anyone; any member may leave).</summary>
-    [Route("account/organizations"), HttpPost, PageHandler("RemoveMember"), LegacyPage("/Account/Organizations")]
+    [Route("account/organizations"), HttpPost, PageHandler("RemoveMember")]
     public async Task<IActionResult> OrganizationsRemoveMember(string organization, string? userName, CancellationToken cancellationToken)
         => Render(
             await Api<AccountOrganizationsUiApiController, OrganizationsViewModel>(api => api.OrganizationsRemoveMember(

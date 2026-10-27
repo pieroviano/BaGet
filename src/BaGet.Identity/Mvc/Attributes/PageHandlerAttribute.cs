@@ -20,9 +20,9 @@ namespace BaGet.Identity.Mvc.Attributes;
 /// <item><description><c>[PageHandler("Approve")]</c> next to <c>[HttpPost]</c>: the action runs for a POST whose handler is
 /// <c>Approve</c>.</description></item>
 /// <item><description><c>[PageHandler]</c> without a name: the <em>default handler</em>, <c>OnGet</c> / <c>OnPost</c> of the
-/// page. It runs when the request names no handler <b>or a handler that no action of the same page (same
-/// <see cref="LegacyPageAttribute"/> name; the whole controller when there is none) and HTTP method has</b> (Razor Pages: an
-/// unknown handler is the default handler). A repeated <c>handler</c> key counts by its first value, as in Razor Pages. The default handler of a page that also has named handlers
+/// page. It runs when the request names no handler <b>or a handler that no action of the same screen (same
+/// controller and route template, see <see cref="ScreenOf"/>; the whole controller when the action has none) and HTTP method has</b> (Razor Pages: an
+/// unknown handler is the default handler). A repeated <c>handler</c> key counts by its first value, as in Razor Pages. The default handler of a screen that also has named handlers
 /// must carry the attribute, else a request naming a handler would match both and be ambiguous.</description></item>
 /// </list>
 /// A <c>HEAD</c> request is answered by the <c>GET</c> handlers, so declare <c>[HttpGet, HttpHead]</c> on them. The attribute
@@ -31,8 +31,7 @@ namespace BaGet.Identity.Mvc.Attributes;
 /// </summary>
 /// <remarks>
 /// Usage: <c>[HttpGet, PageHandler("CopyStatus")] CopyStatus()</c> answers <c>?handler=CopyStatus</c>, and <c>[HttpPost, PageHandler] Post()</c> (or just <c>[HttpPost]</c> when no sibling has a name). Forms keep
-/// <c>asp-page-handler="Approve"</c> (the legacy page mapping, see <see cref="LegacyPageAttribute"/>) or use
-/// <c>asp-route-handler="Approve"</c> with <c>asp-controller</c>/<c>asp-action</c>: both render <c>?handler=Approve</c>.
+/// <c>asp-route-handler="Approve"</c> with <c>asp-controller</c>/<c>asp-action</c> (or <c>Url.Action(..., new { handler = "Approve" })</c>), which renders <c>?handler=Approve</c>.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
@@ -41,7 +40,7 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
     public const string HandlerKey = "handler";
 
     private static readonly ConcurrentDictionary<Type, IReadOnlyList<NamedPageHandler>> Siblings = new();
-    private static readonly ConcurrentDictionary<MethodInfo, string> Pages = new();
+    private static readonly ConcurrentDictionary<MethodInfo, string> Screens = new();
 
     /// <param name="name">The handler name (<c>?handler=name</c>), or null for the default handler.</param>
     public PageHandlerAttribute(string? name = null)
@@ -83,9 +82,9 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
             return string.Equals(Name, requested, StringComparison.OrdinalIgnoreCase);
         }
 
-        // The default handler: valid unless a sibling of the same page that answers this HTTP method is named like the request.
-        // Only the same page counts: a controller serving several pages must not let one page's handler names knock out
-        // another page's default handler (Razor Pages looks at one page's handlers).
+        // The default handler: valid unless a sibling of the same screen that answers this HTTP method is named like the request.
+        // Only the same screen counts: a controller serving several screens must not let one screen's handler names knock out
+        // another screen's default handler (Razor Pages looked at one page's handlers).
         if (requested == null || action is not ControllerActionDescriptor controllerAction)
         {
             return true;
@@ -95,10 +94,10 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
         if (HttpMethods.IsHead(verb)) verb = HttpMethods.Get;
 
         // A descriptor built by hand may have no method: it then belongs to the whole controller.
-        var page = controllerAction.MethodInfo is { } method ? PageOf(method) : string.Empty;
+        var screen = controllerAction.MethodInfo is { } method ? ScreenOf(method) : string.Empty;
 
         return !Siblings.GetOrAdd(controllerAction.ControllerTypeInfo.AsType(), NamedHandlersOf)
-            .Any(h => (page.Length == 0 || h.Page.Length == 0 || h.Page == page)
+            .Any(h => (screen.Length == 0 || h.Screen.Length == 0 || h.Screen == screen)
                       && string.Equals(h.Name, requested, StringComparison.OrdinalIgnoreCase)
                       && (h.Verbs.Count == 0 || h.Verbs.Contains(verb, StringComparer.OrdinalIgnoreCase)));
     }
@@ -112,22 +111,23 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
             if (handler?.Name == null) continue;
 
             var verbs = method.GetCustomAttributes<HttpMethodAttribute>(inherit: true).SelectMany(a => a.HttpMethods).ToList();
-            result.Add(new NamedPageHandler(handler.Name, verbs, PageOf(method)));
+            result.Add(new NamedPageHandler(handler.Name, verbs, ScreenOf(method)));
         }
 
         return result;
     }
 
     /// <summary>
-    /// The page an action belongs to: its <see cref="LegacyPageAttribute"/> name (method, then controller), else the empty key
-    /// (the whole controller is one page). A controller serving several pages names each action's page, see
-    /// <see cref="LegacyPageAttribute"/>. An action without a name (a fallback such as <c>PackageManageController.NoHandler</c>)
-    /// is compared with every named handler of its controller, and a named handler without one counts for every page.
+    /// The screen an action belongs to: the route templates of its own attributes (<c>[Route]</c>, <c>[HttpGet("x")]</c>), sorted and joined, which every
+    /// action of one screen shares (a screen's handlers post to its URL); the empty key when it names none (the controller's own route is its
+    /// only route, so the whole controller is one screen). An action with the empty key (a fallback such as <c>PackageManageController.NoHandler</c>)
+    /// is compared with every named handler of its controller, and a named handler with the empty key counts for every screen.
     /// </summary>
-    private static string PageOf(MethodInfo method) => Pages.GetOrAdd(method, m =>
-    {
-        var legacy = m.GetCustomAttribute<LegacyPageAttribute>(inherit: true)
-                     ?? m.DeclaringType?.GetCustomAttribute<LegacyPageAttribute>(inherit: true);
-        return legacy?.PageName ?? string.Empty;
-    });
+    internal static string ScreenOf(MethodInfo method) => Screens.GetOrAdd(method, m => string.Join(
+        "|",
+        m.GetCustomAttributes<Attribute>(inherit: true)
+            .OfType<IRouteTemplateProvider>()
+            .Select(p => p.Template)
+            .Where(template => template != null)
+            .OrderBy(template => template, StringComparer.Ordinal)));
 }

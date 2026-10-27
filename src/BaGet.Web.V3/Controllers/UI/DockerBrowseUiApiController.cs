@@ -31,13 +31,13 @@ public sealed class DockerBrowseUiApiController : UiApiControllerBase
     }
 
     /// <summary>The image list with a search box and the client commands.</summary>
-    [HttpGet("docker-images"), UiApi("/DockerImages")]
+    [HttpGet("docker-images"), UiApi(typeof(DockerBrowseController), nameof(DockerBrowseController.Images))]
     [RepositoryPage(Format = RepositoryFormat.Docker)]
     public async Task<ActionResult<ScreenResult<DockerImagesViewModel>>> Images(string? q, int p = 1, CancellationToken cancellationToken = default)
         => Respond(await _docker.ImagesAsync(q, p, User, cancellationToken));
 
     /// <summary>One image: tags, manifests, and with <c>digest</c> one manifest in full.</summary>
-    [HttpGet("docker-images/{**image}"), UiApi("/DockerImage")]
+    [HttpGet("docker-images/{**image}"), UiApi(typeof(DockerBrowseController), nameof(DockerBrowseController.Image))]
     [RepositoryPage(Format = RepositoryFormat.Docker)]
     public async Task<ActionResult<ScreenResult<DockerImageViewModel>>> Image(string? image, string? digest, string? artifactType, CancellationToken cancellationToken = default)
         => Respond(await _docker.ImageAsync(image, digest, artifactType, User, cancellationToken));

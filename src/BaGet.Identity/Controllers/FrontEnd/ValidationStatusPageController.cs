@@ -15,7 +15,6 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// process and renders.
 /// </summary>
 [Route("packages/{id}/validation")]
-[LegacyPage("/Packages/ValidationStatus")]
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class ValidationStatusPageController : AccountControllerBase
 {

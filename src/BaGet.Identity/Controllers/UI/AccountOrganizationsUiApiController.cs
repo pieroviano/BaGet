@@ -22,22 +22,22 @@ public sealed class AccountOrganizationsUiApiController : AccountUiApiController
     protected override bool RequiresSignIn => true;
 
     /// <summary>The organizations of the user.</summary>
-    [HttpGet, UiApi("/Account/Organizations")]
+    [HttpGet, UiApi(typeof(AccountOrganizationsController), nameof(AccountOrganizationsController.Organizations))]
     public async Task<ActionResult<ScreenResult<OrganizationsViewModel>>> Organizations(CancellationToken cancellationToken)
         => Respond(await UseCase<AccountOverviewUseCase>().ShowOrganizationsAsync(User, cancellationToken));
 
     /// <summary>Create an organization.</summary>
-    [HttpPost("create"), UiApi("/Account/Organizations", Handler = "Create")]
+    [HttpPost("create"), UiApi(typeof(AccountOrganizationsController), nameof(AccountOrganizationsController.Organizations), Handler = "Create")]
     public async Task<ActionResult<ScreenResult<OrganizationsViewModel>>> OrganizationsCreate([FromBody] CreateOrganizationForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase<AccountOverviewUseCase>().CreateOrganizationAsync(User, form, cancellationToken));
 
     /// <summary>Add a member (organization administrators only; 403 otherwise).</summary>
-    [HttpPost("add-member"), UiApi("/Account/Organizations", Handler = "AddMember")]
+    [HttpPost("add-member"), UiApi(typeof(AccountOrganizationsController), nameof(AccountOrganizationsController.Organizations), Handler = "AddMember")]
     public async Task<ActionResult<ScreenResult<OrganizationsViewModel>>> OrganizationsAddMember([FromBody] AddOrganizationMemberForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase<AccountOverviewUseCase>().AddMemberAsync(User, form, cancellationToken));
 
     /// <summary>Remove a member (an administrator removes anyone; any member may leave; 403 otherwise).</summary>
-    [HttpPost("remove-member"), UiApi("/Account/Organizations", Handler = "RemoveMember")]
+    [HttpPost("remove-member"), UiApi(typeof(AccountOrganizationsController), nameof(AccountOrganizationsController.Organizations), Handler = "RemoveMember")]
     public async Task<ActionResult<ScreenResult<OrganizationsViewModel>>> OrganizationsRemoveMember([FromBody] RemoveOrganizationMemberForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase<AccountOverviewUseCase>().RemoveMemberAsync(User, form, cancellationToken));
 }

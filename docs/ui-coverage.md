@@ -4,20 +4,20 @@ Every operation the server offers (REST, CLI, service) is reachable from the web
 This page maps each capability to its page. Pages in repository scope also exist as `/r/{name}/...`. "Admin" = an
 administrator signed in (others get 404). "Password" = the administrator's password (or a fresh external sign-in) is
 asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed) and, on package pages, refuses in
-`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, UI action (page name from `[LegacyPage]`) or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none. Every screen also has a JSON twin under `/api/ui` ([UI API](ui-api.md)); the twin is covered by its screen's row (no row of its own) and `UiApiParityTests` fails for a screen without one.
+`IsReadOnlyMode`. Tests: `UiCoverageTests` and the page test of each area; `UiCoverageInventoryTests` fails when a controller, screen (`Controller/Action` of a view controller) or CLI command has no row here, and `AdminApiAccessTests` when a REST operation has none. Every screen also has a JSON twin under `/api/ui` ([UI API](ui-api.md)); the twin is covered by its screen's row (no row of its own) and `UiApiParityTests` fails for a screen without one.
 
 ## NuGet protocol (per repository)
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
 | Service index `v3/index.json` | REST | Admin Repositories / RepositoryEdit (feed URL + copy); Upload page (feed URLs) | read |
-| Search, autocomplete | REST | Home and `/` search (filters, sort, paging); type-ahead on both search boxes | read |
-| Package page, versions, dependents, readme, icon, download | REST | `/packages/{id}/{version}`, download link | read |
+| Search, autocomplete | REST | Home and `/` search (`Home/Index`; filters, sort, paging); type-ahead on both search boxes | read |
+| Package page, versions, dependents, readme, icon, download | REST | `/packages/{id}/{version}` (`Package/Show`), download link | read |
 | Registration, flat container, `.nuspec` | REST | machine-only; the package page links the downloads | read |
-| Push `.nupkg` | REST (`PUT api/v2/package`) | `/upload` (stage, review, publish) | Push |
+| Push `.nupkg` | REST (`PUT api/v2/package`) | `/upload` (`Upload/Index`; stage, review, publish) | Push |
 | Push `.snupkg` / symbols | REST (`api/v2/symbol`) | `/upload` (symbol package) | Push |
 | Symbol download | REST | machine-only (debugger); symbols listed and deleted on Manage | read |
-| Unlist / relist / delete | REST (`DELETE`, `POST`) | Manage: Unlist, Relist, Delete; permanent delete asks Password | Manage (owner) |
+| Unlist / relist / delete | REST (`DELETE`, `POST`) | Manage (`PackageManage/Index`): Unlist, Relist, Delete; permanent delete asks Password | Manage (owner) |
 | Deprecation (reasons, message, alternate ID and version range) | REST | Manage: Deprecate / Remove | Manage |
 | Vulnerabilities | REST | Manage: add / remove | Manage |
 | V2 feed | REST (`api/v2`) | Repositories: "V2 feed" link | read |
@@ -25,18 +25,18 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Catalog index, pages, leaves | REST | Repositories: "Catalog" link (local repositories) | read |
 | Catalog rebuild | CLI `catalog rebuild -r` | Admin Operations | Admin, audited |
 | Repository signatures, certificate | REST | Repositories: "Signatures" link (local repositories) | read |
-| Validation status of a submission | REST (`v3/package/{id}/{v}/validation`) | `/packages/{id}/validation`, linked from Manage | Push or Manage |
+| Validation status of a submission | REST (`v3/package/{id}/{v}/validation`) | `/packages/{id}/validation` (`ValidationStatusPage/Index`), linked from Manage | Push or Manage |
 | Import downloads | CLI `import downloads -r` | Admin Operations | Admin, audited |
-| Report abuse | page | `/packages/{id}/{v}/report-abuse` | read |
+| Report abuse | page | `/packages/{id}/{v}/report-abuse` (`ReportAbuse/Show`) | read |
 
 ## npm registry (per repository, `npm/`)
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
-| Search `-/v1/search` | REST | `/npm-packages` | read |
-| Packument, tarball | REST | `/npm-packages/{name}` (versions, tags, downloads) | read |
-| Publish | REST (`PUT {name}`) | `/npm-upload` (file, tag) | Push |
-| Dist-tags set / remove | REST | NpmManage | Manage |
+| Search `-/v1/search` | REST | `/npm-packages` (`NpmBrowse/Packages`) | read |
+| Packument, tarball | REST | `/npm-packages/{name}` (`NpmBrowse/Package`; versions, tags, downloads) | read |
+| Publish | REST (`PUT {name}`) | `/npm-upload` (`NpmBrowse/Upload`; file, tag) | Push |
+| Dist-tags set / remove | REST | NpmManage (`NpmManage/Index`) | Manage |
 | Deprecate / undeprecate a version | REST | NpmManage | Manage |
 | Unpublish a version / all | REST (`DELETE`) | NpmManage | Manage + Password |
 | Owners | REST | NpmManage | Manage |
@@ -48,9 +48,9 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
-| Read file, checksum, `maven-metadata.xml` | REST (`GET`/`HEAD`) | `/maven-artifacts` (browse, search), `/maven-artifacts/{group}/{artifact}/{version}` (files with sizes and checksums, POM view, download links) | read |
-| Deploy (`mvn deploy`, `PUT`) | REST | `/maven-upload` (coordinates, file, optional POM), `settings.xml` and `distributionManagement` snippets on browse and upload | Deploy |
-| Delete a file | REST (`DELETE`) | MavenManage | Manage + Password |
+| Read file, checksum, `maven-metadata.xml` | REST (`GET`/`HEAD`) | `/maven-artifacts` (`MavenBrowse/Artifacts`; browse, search), `/maven-artifacts/{group}/{artifact}/{version}` (`MavenBrowse/Artifact`; files with sizes and checksums, POM view, download links) | read |
+| Deploy (`mvn deploy`, `PUT`) | REST | `/maven-upload` (`MavenBrowse/Upload`; coordinates, file, optional POM), `settings.xml` and `distributionManagement` snippets on browse and upload | Deploy |
+| Delete a file | REST (`DELETE`) | MavenManage (`MavenManage/Index`) | Manage + Password |
 | Delete a version / the artifact | service | MavenManage | Manage + Password |
 | Snapshot clean-up (keep newest N builds) | service | MavenManage | Manage + Password |
 | Owners | service | MavenManage | Manage |
@@ -67,9 +67,9 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 |---|---|---|---|
 | Version check `GET /v2/` | REST | machine-only handshake (the browse page shows the registry address and `docker login`) | none (401 challenge) |
 | Token service `GET /v2/token` (`docker login`) | REST | machine-only; Account API keys creates the key used as the password; the browse page shows the login, `curl` and daemon snippets | API key / anonymous |
-| Pull: blobs (ranges), manifests, tag list, referrers (`?artifactType=` filter: the *Referrers* form on `?digest=`) | REST | `/docker-images` (browse, search), `/docker-images/{image}` (tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, referrers such as signatures and SBOMs, the document) | Read |
+| Pull: blobs (ranges), manifests, tag list, referrers (`?artifactType=` filter: the *Referrers* form on `?digest=`) | REST | `/docker-images` (`DockerBrowse/Images`; browse, search), `/docker-images/{image}` (`DockerBrowse/Image`; tags, manifests, platforms of an index), `?digest=` (config, layers with sizes, annotations, referrers such as signatures and SBOMs, the document) | Read |
 | Push: upload sessions (monolithic, chunked, mount), manifests | REST | machine-only (Docker CLI); the browse and image pages show the push, `buildx` and pull commands | Deploy |
-| Delete a tag | REST (`DELETE manifests/{tag}`) | DockerManage | Delete + Password |
+| Delete a tag | REST (`DELETE manifests/{tag}`) | DockerManage (`DockerManage/Index`) | Delete + Password |
 | Delete a manifest (with its tags) | REST (`DELETE manifests/{digest}`) | DockerManage | Delete + Password |
 | Delete a blob from an image | REST (`DELETE blobs/{digest}`) | covered by *Remove unused layers* (a blob in use is refused) | Delete |
 | Remove unused layers | service | DockerManage | Delete + Password |
@@ -87,14 +87,14 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
 | Findings of a version (NuGet, npm, Maven, Docker image) | service (`IScanService`) | the *Vulnerabilities* section of `/packages/{id}/{version}`, `/npm-packages/{name}`, `/maven-artifacts/...`, `/docker-images/{image}?digest=` | read |
-| Scan a version now | service | `/scan-artifact` (linked from that section) | signed in, Manage on the package |
+| Scan a version now | service | `/scan-artifact` (`ScanArtifact/Index`; linked from that section) | signed in, Manage on the package |
 | Scan a whole repository | service, operation `vulnerability-scan` | Admin Scanning > repository (*Scan the whole repository now*); Admin Operations | Admin, audited |
 | Counts by severity, versions with findings, engines in use | service | Admin Scanning, Admin Scanning > repository | Admin |
 | Policy of a repository (warn, block download, block deploy, block unscanned) | service (`IScanPolicyService`) | Admin Scanning > repository | Admin + Password, audited |
 | Policy of a project | service | Admin Scanning > project (linked from the project) | Admin + Password, audited |
 | 403 with the reason on download and deploy | REST (every format's routes) | package pages explain a refusal; the Upload pages show it | read / Deploy |
 | NuGet vulnerability resource | REST | Manage lists the scanner's entries read-only | read |
-| Scanning options (`Scanning:*`) | `appsettings.Overrides.json` | Admin Settings | Admin + Password |
+| Scanning options (`Scanning:*`) | `appsettings.Overrides.json` | Admin Settings (`AdminSettings/Index`) | Admin + Password |
 
 ## Repositories (Admin)
 
@@ -116,7 +116,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 |---|---|---|---|
 | Groups: create, rename, delete, members | `IAccessAdministration` | Groups, GroupDetail | Admin + Password |
 | Permission targets: create, edit, delete, grants, restore built-ins | service | Permissions, PermissionDetail | Admin + Password |
-| Preview ("who can do what") | service | Permissions / PermissionDetail / ProjectDetail: Preview; Account Access (own access) | Admin |
+| Preview ("who can do what") | service | Permissions / PermissionDetail / ProjectDetail: Preview; Account Access (`AccountPackages/Access`, own access) | Admin |
 | Projects: create, members, repositories, delete | service | Projects, ProjectDetail | Admin + Password |
 | Audit trail (filter actor, subject, dates) | service | Audit | Admin |
 
@@ -126,32 +126,32 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 |---|---|---|---|
 | Register, confirm email, sign in (password, 2FA, recovery code, external) | pages | Account pages | anonymous |
 | Forgot / reset password | pages | ForgotPassword, ResetPassword | anonymous |
-| Change password / email, delete account | service | Account Settings | signed in + Password |
-| Two-factor: enable, disable, reset | service | TwoFactor | signed in + Password |
-| API keys: scopes, glob, expiry, repositories; revoke | service | Account API keys | signed in |
-| Organizations: create, members | service | Account Organizations | signed in |
-| Organizations: rename, delete, admin flag | service | Admin Organizations, OrganizationDetail | Admin + Password |
+| Change password / email, delete account | service | Account Settings (`AccountSettings/Settings`) | signed in + Password |
+| Two-factor: enable, disable, reset | service | TwoFactor (`AccountSettings/TwoFactor`) | signed in + Password |
+| API keys: scopes, glob, expiry, repositories; revoke | service | Account API keys (`AccountSettings/ApiKeysIndex`) | signed in |
+| Organizations: create, members | service | Account Organizations (`AccountOrganizations/Organizations`) | signed in |
+| Organizations: rename, delete, admin flag | service | Admin Organizations, OrganizationDetail (`AdminOrganizations/Index`, `AdminOrganizations/Detail`) | Admin + Password |
 | Package owners add / remove, verified flag | service | Manage (verified: Admin) | Manage |
-| Contact owners | service | `/packages/{id}/contact-owners` | signed in, SMTP |
-| Profiles, packages of an owner | pages | `/profiles/{name}`, Account Packages | read |
+| Contact owners | service | `/packages/{id}/contact-owners` (`ContactOwners/Index`) | signed in, SMTP |
+| Profiles, packages of an owner | pages | `/profiles/{name}` (`Profile/Profile`), Account Packages (`AccountPackages/Packages`); all packages: Admin Packages (`AdminPackages/Index`) | read |
 | Approve a self-registered account (`Accounts:RequireApproval`) | CLI `account approve`, service (`AccountApprovalService`) | Admin Users and Admin UserDetail: *Approve* (both show *Awaiting approval*); reject = Delete | Admin + Password, 503 while read-only |
 | Users: create, invite, promote (also approves), demote | CLI `account promote\|demote`, service | Admin Users | Admin + Password |
 | Reset password, with `--email` | CLI `account reset-password [--email]` | Admin Users: Generate a password (+ optional email) | Admin + Password |
 | Send reset link | service | Admin Users | Admin + Password, SMTP |
-| Delete user, user's packages and keys | service | DeleteUser, UserDetail, UserPackages | Admin + Password |
+| Delete user, user's packages and keys | service | DeleteUser, UserDetail, UserPackages (`AdminUsers/DeleteUser`, `AdminUsers/UserPackages`) | Admin + Password |
 
 ## Operations and server
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
-| Validation queue: retry, release, reject | service | Admin Validation | Admin (+ Password) |
-| Abuse reports: resolve, reopen | service | Admin Abuse; Manage for the owner | Admin / Manage |
+| Validation queue: retry, release, reject | service | Admin Validation (`AdminOperations/Validation`) | Admin (+ Password) |
+| Abuse reports: resolve, reopen | service | Admin Abuse (`AdminOperations/Abuse`); Manage for the owner | Admin / Manage |
 | Settings (every options section), restart-required marks | `appsettings.Overrides.json` | Admin Settings | Admin + Password |
 | Logging: default minimum level (live), Windows event log switch and source (restart) | `Serilog` section | Admin Settings > Serilog | Admin + Password |
 | Logging: level per source (`Serilog:MinimumLevel:Override`, live): list with where each is set, set, remove (only what the page saved) | `SettingsService.SetLogLevelOverrideAsync` | Admin Settings > Serilog > *Log levels per source* | Admin + Password, 503 while read-only |
 | Database copy (copy all data, status) | service | Admin Settings (database section) | Admin + Password |
 | Telemetry settings, status, connection test | service | Admin Settings (telemetry section) | Admin + Password |
-| Statistics | service | `/statistics` | read |
+| Statistics | service | `/statistics` (`Statistics/Index`) | read |
 | Read-only gate banner | MaintenanceGate | every page | - |
 | Retention policies: create, change, enable, delete (rules, name patterns, schedule) per repository or project | service (`IRetentionAdministration`) | Admin Retention (`/admin/retention`, `/admin/retention/{id}`) | Admin + Password, audited |
 | Retention: dry run (what a run would delete), run now, last report, scheduled runs | service (`RetentionEngine`, `RetentionJobs`, `RetentionWorker`) | Admin Retention > policy: *Dry run* (no password), *Run now* (Password); the schedule field | Admin (+ Password), audited, 503 while read-only (run) |
@@ -159,7 +159,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Download times (last download per version, for the *unused* rule) | in memory (`ArtifactUsageRecorder`) | shown as *Last download* in a retention report | Admin |
 | Replication configurations: create, change, enable, delete (local repository, push or pull, peer address and repository, peer API key, schedule, on deploy, delete propagation, conflict rule) | service (`IReplicationAdministration`) | Admin Replication (`/admin/replication`, `/admin/replication/{id}`) | Admin + Password, audited |
 | Replication: test connection, run now, resume an interrupted or failed run, stop, log of runs (status, counts, first failures and conflicts) | service (`ReplicationEngine`, `ReplicationJobs`, `ReplicationWorker`) | Admin Replication > configuration: *Test connection*, *Run now*, *Resume* (Password), *Stop*, the log table | Admin (+ Password), audited, 503 while read-only |
-| Cluster status: nodes with health and read-only state, job leases and their holder, the shared store, this node's health checks (database, storage, shared store) | service (`IClusterStatusService`, `ReadinessService`) | Admin Cluster (`/admin/cluster`, *Check again*) | Admin |
+| Cluster status: nodes with health and read-only state, job leases and their holder, the shared store, this node's health checks (database, storage, shared store) | service (`IClusterStatusService`, `ReadinessService`) | Admin Cluster (`AdminOperations/Cluster`, `/admin/cluster`, *Check again*) | Admin |
 | High availability settings (`Ha:*`: enable, Redis connection string, node name, key prefix, lease and sync intervals), restart-required marks | settings | Admin Settings > Ha | Admin + Password |
 | Health probes for a load balancer: `/health/live`, `/health/ready` (database, storage, shared store) | REST (anonymous, no detail in the body) | Admin Cluster > *This node's health checks* shows the same checks with their detail | - |
 | Replication inventory (what a repository holds, for a peer to compare) | service (`IReplicationInventory`) | Admin Replication > configuration: *the local repository holds N items* | Admin |
@@ -170,86 +170,86 @@ Every operation below has the page that offers the same operation and the same g
 
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
-| List access-audit entries, newest first, optionally by actor, subject or time | REST `GET /api/v1/audit` | `/Admin/Audit` | Admin key |
-| List the package formats and the kinds and fields each offers | REST `GET /api/v1/formats` | `/Admin/Formats` | Admin key |
-| List groups with their member counts | REST `GET /api/v1/groups` | `/Admin/Groups` | Admin key |
-| Create a group | REST `POST /api/v1/groups` | `/Admin/Groups` | Admin key |
-| Delete a group with the grants and project roles that name it | REST `DELETE /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key + password |
-| Show a group with its members and the grants naming it | REST `GET /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key |
-| Rename a group | REST `PATCH /api/v1/groups/{name}` | `/Admin/GroupDetail` | Admin key |
-| Remove a user from a group | REST `DELETE /api/v1/groups/{name}/members/{user}` | `/Admin/GroupDetail` | Admin key + password |
-| Add a user to a group | REST `PUT /api/v1/groups/{name}/members/{user}` | `/Admin/GroupDetail` | Admin key + password |
-| Download the OpenAPI 3 description of this API (also `/openapi/{ui,v1,protocols}.json`, browsed at `/scalar`) | REST `GET /api/v1/openapi.json` | `/Admin/Api` | Admin key or admin cookie |
-| List the operations this server offers, the repositories each applies to and their last runs | REST `GET /api/v1/operations` | `/Admin/Operations` | Admin key |
-| Show the last run of an operation on a repository | REST `GET /api/v1/operations/{operation}/repositories/{repository}` | `/Admin/Operations` | Admin key |
-| Start an operation on a repository (one that deletes data asks for the password) | REST `POST /api/v1/operations/{operation}/repositories/{repository}` | `/Admin/Operations` | Admin key + password |
-| List permission targets | REST `GET /api/v1/permission-targets` | `/Admin/Permissions` | Admin key |
-| Create a permission target (add grants afterwards) | REST `POST /api/v1/permission-targets` | `/Admin/Permissions` | Admin key |
-| Preview which repositories (and whether a package) a set of patterns selects; saves nothing | REST `POST /api/v1/permission-targets/preview` | `/Admin/Permissions` | Admin key |
-| Re-create the built-in groups and permission targets that are missing | REST `POST /api/v1/permission-targets/restore-built-ins` | `/Admin/Permissions` | Admin key + password |
-| Delete a permission target and its grants | REST `DELETE /api/v1/permission-targets/{name}` | `/Admin/PermissionDetail` | Admin key + password |
-| Show a permission target with its grants | REST `GET /api/v1/permission-targets/{name}` | `/Admin/PermissionDetail` | Admin key |
-| Replace a permission target's repository and package patterns | REST `PUT /api/v1/permission-targets/{name}` | `/Admin/PermissionDetail` | Admin key + password |
-| Give a user, group or organization actions through a permission target (none removes the grant) | REST `PUT /api/v1/permission-targets/{name}/grants` | `/Admin/PermissionDetail` | Admin key + password |
-| List projects with their repository and member counts | REST `GET /api/v1/projects` | `/Admin/Projects` | Admin key |
-| Create a project | REST `POST /api/v1/projects` | `/Admin/Projects` | Admin key |
-| Delete a project with its members, targets and retention/scan policies (its repositories stay) | REST `DELETE /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key + password |
-| Show a project with its repositories, members and permission targets | REST `GET /api/v1/projects/{name}` | `/Admin/ProjectDetail` | Admin key |
-| Give a user or group a role in a project | REST `PUT /api/v1/projects/{name}/members` | `/Admin/ProjectDetail` | Admin key + password |
-| Remove a user or group from a project | REST `DELETE /api/v1/projects/{name}/members/{type}/{principal}` | `/Admin/ProjectDetail` | Admin key + password |
-| Take a repository out of a project | REST `DELETE /api/v1/projects/{name}/repositories/{repository}` | `/Admin/ProjectDetail` | Admin key + password |
-| Put a repository in a project (it leaves any project it was in) | REST `PUT /api/v1/projects/{name}/repositories/{repository}` | `/Admin/ProjectDetail` | Admin key + password |
-| List repositories (filter by format, kind or name) | REST `GET /api/v1/repositories` | `/Admin/Repositories` | Admin key |
-| Create a local, remote or virtual repository of any format (remote asks for the password) | REST `POST /api/v1/repositories` | `/Admin/Repositories` | Admin key + password |
-| Delete an empty repository (refused for default, a repository with packages, or a virtual member) | REST `DELETE /api/v1/repositories/{name}` | `/Admin/RepositoryDelete` | Admin key |
-| Show a repository with its upstream, cache or members | REST `GET /api/v1/repositories/{name}` | `/Admin/RepositoryEdit` | Admin key |
-| Switch a repository's anonymous read (a remote repository asks for the password) | REST `PATCH /api/v1/repositories/{name}` | `/Admin/RepositoryEdit` | Admin key + password |
-| Show who holds which action in a repository, and why | REST `GET /api/v1/repositories/{name}/access` | `/Admin/RepositoryEdit` | Admin key |
-| Change a remote repository's upstream and settings | REST `PUT /api/v1/repositories/{name}/remote` | `/Admin/RepositoryEdit` | Admin key + password |
-| Show what a remote repository stores and remembers | REST `GET /api/v1/repositories/{name}/remote/cache` | `/Admin/RepositoryEdit` | Admin key |
-| Purge a remote repository's cache (deletes what it stored) | REST `POST /api/v1/repositories/{name}/remote/purge` | `/Admin/RepositoryEdit` | Admin key + password |
-| Purge one cached package of a remote repository | REST `POST /api/v1/repositories/{name}/remote/purge-package` | `/Admin/RepositoryEdit` | Admin key + password |
-| Test a remote repository's upstream with unsaved settings (saves nothing) | REST `POST /api/v1/repositories/{name}/remote/test` | `/Admin/RepositoryEdit` | Admin key + password |
-| Replace a virtual repository's members, their order and its deploy repository | REST `PUT /api/v1/repositories/{name}/virtual` | `/Admin/RepositoryEdit` | Admin key |
-| Show where a package version would come from in a virtual repository (fetches and stores nothing) | REST `POST /api/v1/repositories/{name}/virtual/preview` | `/Admin/RepositoryEdit` | Admin key |
-| List legal holds, optionally of one repository | REST `GET /api/v1/retention/holds` | `/Admin/RetentionHolds` | Admin key |
-| Place a legal hold on an artifact (retention never deletes it) | REST `POST /api/v1/retention/holds` | `/Admin/RetentionHolds` | Admin key |
-| Lift a legal hold | REST `DELETE /api/v1/retention/holds/{key}` | `/Admin/RetentionHolds` | Admin key + password |
-| List retention policies with their last run | REST `GET /api/v1/retention/policies` | `/Admin/Retention` | Admin key |
-| Create a retention policy | REST `POST /api/v1/retention/policies` | `/Admin/Retention` | Admin key + password |
-| Delete a retention policy (what it deleted stays deleted) | REST `DELETE /api/v1/retention/policies/{key}` | `/Admin/RetentionPolicy` | Admin key + password |
-| Show a retention policy with its last run and report | REST `GET /api/v1/retention/policies/{key}` | `/Admin/RetentionPolicy` | Admin key |
-| Replace a retention policy's scope and rules | REST `PUT /api/v1/retention/policies/{key}` | `/Admin/RetentionPolicy` | Admin key + password |
-| Start a dry run of a policy: the report of what a run would delete (nothing is deleted) | REST `POST /api/v1/retention/policies/{key}/dry-run` | `/Admin/RetentionPolicy` | Admin key |
-| Show the last run (or dry run) of a policy with its report | REST `GET /api/v1/retention/policies/{key}/run` | `/Admin/RetentionPolicy` | Admin key |
-| Start a run of a policy: the versions it selects are deleted | REST `POST /api/v1/retention/policies/{key}/run` | `/Admin/RetentionPolicy` | Admin key + password |
-| List replications with their last run | REST `GET /api/v1/replication/configs` | `/Admin/Replication` | Admin key |
-| Create a replication | REST `POST /api/v1/replication/configs` | `/Admin/Replication` | Admin key + password |
-| Show a replication | REST `GET /api/v1/replication/configs/{key}` | `/Admin/ReplicationConfig` | Admin key |
-| Replace a replication's settings | REST `PUT /api/v1/replication/configs/{key}` | `/Admin/ReplicationConfig` | Admin key + password |
-| Delete a replication with its log (what it copied stays where it is) | REST `DELETE /api/v1/replication/configs/{key}` | `/Admin/ReplicationConfig` | Admin key + password |
-| Test the connection to a peer with the given settings (nothing is saved; a stored key is used while the address is unchanged) | REST `POST /api/v1/replication/test` | `/Admin/ReplicationConfig` | Admin key + password |
-| Start a run of a replication | REST `POST /api/v1/replication/configs/{key}/run` | `/Admin/ReplicationConfig` | Admin key + password |
-| Start a run that continues the last interrupted or failed run of a replication | REST `POST /api/v1/replication/configs/{key}/resume` | `/Admin/ReplicationConfig` | Admin key + password |
-| Ask the running replication to stop (it ends as interrupted and can be resumed) | REST `POST /api/v1/replication/configs/{key}/stop` | `/Admin/ReplicationConfig` | Admin key |
-| List the runs of a replication, newest first (status, counts, the first failures and conflicts) | REST `GET /api/v1/replication/configs/{key}/runs` | `/Admin/ReplicationConfig` | Admin key |
-| Show one run of the replication log | REST `GET /api/v1/replication/runs/{key}` | `/Admin/ReplicationConfig` | Admin key |
-| List what a repository holds in the form replication compares (what a peer asks; summary=true: only the count) | REST `GET /api/v1/replication/inventory/{repository}` | `/Admin/ReplicationConfig` | Admin key |
-| Show whether scanning is on and every repository's numbers and policy | REST `GET /api/v1/scanning` | `/Admin/Scanning` | Admin key |
-| Show a project's scanning policy | REST `GET /api/v1/scanning/projects/{name}/policy` | `/Admin/ScanProject` | Admin key |
-| Set a project's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/projects/{name}/policy` | `/Admin/ScanProject` | Admin key + password |
-| Show a repository's scan numbers, its own policy and the last scan | REST `GET /api/v1/scanning/repositories/{name}` | `/Admin/ScanRepository` | Admin key |
-| Set a repository's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/repositories/{name}/policy` | `/Admin/ScanRepository` | Admin key + password |
-| List the scanned versions with findings of at least a severity, worst first | REST `GET /api/v1/scanning/repositories/{name}/results` | `/Admin/ScanRepository` | Admin key |
-| Scan every artifact of a repository in the background | REST `POST /api/v1/scanning/repositories/{name}/scan` | `/Admin/ScanRepository` | Admin key |
-| List users, optionally by a name fragment | REST `GET /api/v1/users` | `/Admin/Users` | Admin key |
-| Create a user (with a given or a generated password, returned once) | REST `POST /api/v1/users` | `/Admin/Users` | Admin key + password |
-| Show a user with groups, project roles, organizations and API keys | REST `GET /api/v1/users/{name}` | `/Admin/UserDetail` | Admin key |
-| Show what a user may do in each repository, and the grants behind it (for one package id with ?package=) | REST `GET /api/v1/users/{name}/access` | `/Admin/UserDetail` | Admin key |
-| Make a user an administrator or take the flag away (never the last administrator) | REST `PUT /api/v1/users/{name}/administrator` | `/Admin/Users` | Admin key + password |
-| Remove a user from a group | REST `DELETE /api/v1/users/{name}/groups/{group}` | `/Admin/UserDetail` | Admin key + password |
-| Add a user to a group | REST `PUT /api/v1/users/{name}/groups/{group}` | `/Admin/UserDetail` | Admin key + password |
-| Revoke one of a user's API keys | REST `DELETE /api/v1/users/{name}/keys/{key}` | `/Admin/UserDetail` | Admin key + password |
+| List access-audit entries, newest first, optionally by actor, subject or time | REST `GET /api/v1/audit` | `AdminAudit/Index` | Admin key |
+| List the package formats and the kinds and fields each offers | REST `GET /api/v1/formats` | `AdminOperations/Formats` | Admin key |
+| List groups with their member counts | REST `GET /api/v1/groups` | `AdminGroups/Index` | Admin key |
+| Create a group | REST `POST /api/v1/groups` | `AdminGroups/Index` | Admin key |
+| Delete a group with the grants and project roles that name it | REST `DELETE /api/v1/groups/{name}` | `AdminGroups/Detail` | Admin key + password |
+| Show a group with its members and the grants naming it | REST `GET /api/v1/groups/{name}` | `AdminGroups/Detail` | Admin key |
+| Rename a group | REST `PATCH /api/v1/groups/{name}` | `AdminGroups/Detail` | Admin key |
+| Remove a user from a group | REST `DELETE /api/v1/groups/{name}/members/{user}` | `AdminGroups/Detail` | Admin key + password |
+| Add a user to a group | REST `PUT /api/v1/groups/{name}/members/{user}` | `AdminGroups/Detail` | Admin key + password |
+| Download the OpenAPI 3 description of this API (also `/openapi/{ui,v1,protocols}.json`, browsed at `/scalar`) | REST `GET /api/v1/openapi.json` | `ApiCatalog/Index` | Admin key or admin cookie |
+| List the operations this server offers, the repositories each applies to and their last runs | REST `GET /api/v1/operations` | `AdminOperations/Index` | Admin key |
+| Show the last run of an operation on a repository | REST `GET /api/v1/operations/{operation}/repositories/{repository}` | `AdminOperations/Index` | Admin key |
+| Start an operation on a repository (one that deletes data asks for the password) | REST `POST /api/v1/operations/{operation}/repositories/{repository}` | `AdminOperations/Index` | Admin key + password |
+| List permission targets | REST `GET /api/v1/permission-targets` | `AdminPermissions/Index` | Admin key |
+| Create a permission target (add grants afterwards) | REST `POST /api/v1/permission-targets` | `AdminPermissions/Index` | Admin key |
+| Preview which repositories (and whether a package) a set of patterns selects; saves nothing | REST `POST /api/v1/permission-targets/preview` | `AdminPermissions/Index` | Admin key |
+| Re-create the built-in groups and permission targets that are missing | REST `POST /api/v1/permission-targets/restore-built-ins` | `AdminPermissions/Index` | Admin key + password |
+| Delete a permission target and its grants | REST `DELETE /api/v1/permission-targets/{name}` | `AdminPermissions/Detail` | Admin key + password |
+| Show a permission target with its grants | REST `GET /api/v1/permission-targets/{name}` | `AdminPermissions/Detail` | Admin key |
+| Replace a permission target's repository and package patterns | REST `PUT /api/v1/permission-targets/{name}` | `AdminPermissions/Detail` | Admin key + password |
+| Give a user, group or organization actions through a permission target (none removes the grant) | REST `PUT /api/v1/permission-targets/{name}/grants` | `AdminPermissions/Detail` | Admin key + password |
+| List projects with their repository and member counts | REST `GET /api/v1/projects` | `AdminProjects/Index` | Admin key |
+| Create a project | REST `POST /api/v1/projects` | `AdminProjects/Index` | Admin key |
+| Delete a project with its members, targets and retention/scan policies (its repositories stay) | REST `DELETE /api/v1/projects/{name}` | `AdminProjects/Detail` | Admin key + password |
+| Show a project with its repositories, members and permission targets | REST `GET /api/v1/projects/{name}` | `AdminProjects/Detail` | Admin key |
+| Give a user or group a role in a project | REST `PUT /api/v1/projects/{name}/members` | `AdminProjects/Detail` | Admin key + password |
+| Remove a user or group from a project | REST `DELETE /api/v1/projects/{name}/members/{type}/{principal}` | `AdminProjects/Detail` | Admin key + password |
+| Take a repository out of a project | REST `DELETE /api/v1/projects/{name}/repositories/{repository}` | `AdminProjects/Detail` | Admin key + password |
+| Put a repository in a project (it leaves any project it was in) | REST `PUT /api/v1/projects/{name}/repositories/{repository}` | `AdminProjects/Detail` | Admin key + password |
+| List repositories (filter by format, kind or name) | REST `GET /api/v1/repositories` | `AdminRepositories/Index` | Admin key |
+| Create a local, remote or virtual repository of any format (remote asks for the password) | REST `POST /api/v1/repositories` | `AdminRepositories/Index` | Admin key + password |
+| Delete an empty repository (refused for default, a repository with packages, or a virtual member) | REST `DELETE /api/v1/repositories/{name}` | `AdminRepositories/DeleteRepository` | Admin key |
+| Show a repository with its upstream, cache or members | REST `GET /api/v1/repositories/{name}` | `AdminRepositories/Edit` | Admin key |
+| Switch a repository's anonymous read (a remote repository asks for the password) | REST `PATCH /api/v1/repositories/{name}` | `AdminRepositories/Edit` | Admin key + password |
+| Show who holds which action in a repository, and why | REST `GET /api/v1/repositories/{name}/access` | `AdminRepositories/Edit` | Admin key |
+| Change a remote repository's upstream and settings | REST `PUT /api/v1/repositories/{name}/remote` | `AdminRepositories/Edit` | Admin key + password |
+| Show what a remote repository stores and remembers | REST `GET /api/v1/repositories/{name}/remote/cache` | `AdminRepositories/Edit` | Admin key |
+| Purge a remote repository's cache (deletes what it stored) | REST `POST /api/v1/repositories/{name}/remote/purge` | `AdminRepositories/Edit` | Admin key + password |
+| Purge one cached package of a remote repository | REST `POST /api/v1/repositories/{name}/remote/purge-package` | `AdminRepositories/Edit` | Admin key + password |
+| Test a remote repository's upstream with unsaved settings (saves nothing) | REST `POST /api/v1/repositories/{name}/remote/test` | `AdminRepositories/Edit` | Admin key + password |
+| Replace a virtual repository's members, their order and its deploy repository | REST `PUT /api/v1/repositories/{name}/virtual` | `AdminRepositories/Edit` | Admin key |
+| Show where a package version would come from in a virtual repository (fetches and stores nothing) | REST `POST /api/v1/repositories/{name}/virtual/preview` | `AdminRepositories/Edit` | Admin key |
+| List legal holds, optionally of one repository | REST `GET /api/v1/retention/holds` | `AdminRetention/Holds` | Admin key |
+| Place a legal hold on an artifact (retention never deletes it) | REST `POST /api/v1/retention/holds` | `AdminRetention/Holds` | Admin key |
+| Lift a legal hold | REST `DELETE /api/v1/retention/holds/{key}` | `AdminRetention/Holds` | Admin key + password |
+| List retention policies with their last run | REST `GET /api/v1/retention/policies` | `AdminRetention/Index` | Admin key |
+| Create a retention policy | REST `POST /api/v1/retention/policies` | `AdminRetention/Index` | Admin key + password |
+| Delete a retention policy (what it deleted stays deleted) | REST `DELETE /api/v1/retention/policies/{key}` | `AdminRetention/Policy` | Admin key + password |
+| Show a retention policy with its last run and report | REST `GET /api/v1/retention/policies/{key}` | `AdminRetention/Policy` | Admin key |
+| Replace a retention policy's scope and rules | REST `PUT /api/v1/retention/policies/{key}` | `AdminRetention/Policy` | Admin key + password |
+| Start a dry run of a policy: the report of what a run would delete (nothing is deleted) | REST `POST /api/v1/retention/policies/{key}/dry-run` | `AdminRetention/Policy` | Admin key |
+| Show the last run (or dry run) of a policy with its report | REST `GET /api/v1/retention/policies/{key}/run` | `AdminRetention/Policy` | Admin key |
+| Start a run of a policy: the versions it selects are deleted | REST `POST /api/v1/retention/policies/{key}/run` | `AdminRetention/Policy` | Admin key + password |
+| List replications with their last run | REST `GET /api/v1/replication/configs` | `AdminReplication/Index` | Admin key |
+| Create a replication | REST `POST /api/v1/replication/configs` | `AdminReplication/Index` | Admin key + password |
+| Show a replication | REST `GET /api/v1/replication/configs/{key}` | `AdminReplication/Config` | Admin key |
+| Replace a replication's settings | REST `PUT /api/v1/replication/configs/{key}` | `AdminReplication/Config` | Admin key + password |
+| Delete a replication with its log (what it copied stays where it is) | REST `DELETE /api/v1/replication/configs/{key}` | `AdminReplication/Config` | Admin key + password |
+| Test the connection to a peer with the given settings (nothing is saved; a stored key is used while the address is unchanged) | REST `POST /api/v1/replication/test` | `AdminReplication/Config` | Admin key + password |
+| Start a run of a replication | REST `POST /api/v1/replication/configs/{key}/run` | `AdminReplication/Config` | Admin key + password |
+| Start a run that continues the last interrupted or failed run of a replication | REST `POST /api/v1/replication/configs/{key}/resume` | `AdminReplication/Config` | Admin key + password |
+| Ask the running replication to stop (it ends as interrupted and can be resumed) | REST `POST /api/v1/replication/configs/{key}/stop` | `AdminReplication/Config` | Admin key |
+| List the runs of a replication, newest first (status, counts, the first failures and conflicts) | REST `GET /api/v1/replication/configs/{key}/runs` | `AdminReplication/Config` | Admin key |
+| Show one run of the replication log | REST `GET /api/v1/replication/runs/{key}` | `AdminReplication/Config` | Admin key |
+| List what a repository holds in the form replication compares (what a peer asks; summary=true: only the count) | REST `GET /api/v1/replication/inventory/{repository}` | `AdminReplication/Config` | Admin key |
+| Show whether scanning is on and every repository's numbers and policy | REST `GET /api/v1/scanning` | `AdminScanning/Index` | Admin key |
+| Show a project's scanning policy | REST `GET /api/v1/scanning/projects/{name}/policy` | `AdminScanning/Project` | Admin key |
+| Set a project's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/projects/{name}/policy` | `AdminScanning/Project` | Admin key + password |
+| Show a repository's scan numbers, its own policy and the last scan | REST `GET /api/v1/scanning/repositories/{name}` | `AdminScanning/Repository` | Admin key |
+| Set a repository's scanning policy (all thresholds empty removes it) | REST `PUT /api/v1/scanning/repositories/{name}/policy` | `AdminScanning/Repository` | Admin key + password |
+| List the scanned versions with findings of at least a severity, worst first | REST `GET /api/v1/scanning/repositories/{name}/results` | `AdminScanning/Repository` | Admin key |
+| Scan every artifact of a repository in the background | REST `POST /api/v1/scanning/repositories/{name}/scan` | `AdminScanning/Repository` | Admin key |
+| List users, optionally by a name fragment | REST `GET /api/v1/users` | `AdminUsers/Index` | Admin key |
+| Create a user (with a given or a generated password, returned once) | REST `POST /api/v1/users` | `AdminUsers/Index` | Admin key + password |
+| Show a user with groups, project roles, organizations and API keys | REST `GET /api/v1/users/{name}` | `AdminUsers/Detail` | Admin key |
+| Show what a user may do in each repository, and the grants behind it (for one package id with ?package=) | REST `GET /api/v1/users/{name}/access` | `AdminUsers/Detail` | Admin key |
+| Make a user an administrator or take the flag away (never the last administrator) | REST `PUT /api/v1/users/{name}/administrator` | `AdminUsers/Index` | Admin key + password |
+| Remove a user from a group | REST `DELETE /api/v1/users/{name}/groups/{group}` | `AdminUsers/Detail` | Admin key + password |
+| Add a user to a group | REST `PUT /api/v1/users/{name}/groups/{group}` | `AdminUsers/Detail` | Admin key + password |
+| Revoke one of a user's API keys | REST `DELETE /api/v1/users/{name}/keys/{key}` | `AdminUsers/Detail` | Admin key + password |
 
 ## Audit method and gaps closed
 

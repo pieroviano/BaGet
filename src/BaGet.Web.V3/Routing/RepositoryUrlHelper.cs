@@ -6,23 +6,14 @@ using Microsoft.AspNetCore.Routing;
 namespace BaGet.Web.V3.Routing;
 
 /// <summary>
-/// Keeps page links inside the repository being browsed. ASP.NET Core carries ambient route values (here
-/// <c>repo</c>) only to links that target the <i>same</i> page, so <c>Url.Page("/Upload")</c>,
-/// <c>asp-page="/Package"</c> and <c>RedirectToPage("/Packages/Manage")</c> on a <c>/r/second/…</c> page would
-/// otherwise drop the prefix and leave the repository. This helper adds the request's <c>repo</c> as an explicit route
-/// value to every link to a repository page (a page whose action is marked <see cref="BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute"/>) that does
-/// not name one itself. An explicit value always wins, and <c>repo = null</c> is the way to leave for the default
-/// repository. A link to any other page is untouched, so no stray <c>?repo=</c> appears on it.
-/// <para>
-/// The same holds for links to controller actions that are repository pages (<c>Url.Action</c>, <c>asp-action</c>,
-/// <c>RedirectToAction</c> to an action marked <see cref="BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute"/>).
-/// </para>
-/// <para>
-/// <b>Legacy page names.</b> A link to a page that is a Razor Page no more (<c>Url.Page("/Admin/Users")</c>, <c>asp-page</c>,
-/// <c>RedirectToPage</c>, in BaGet's views, a host's views or a redirect) is resolved to the controller action that carries
-/// <see cref="BaGet.Identity.Mvc.Attributes.LegacyPageAttribute"/> with that name (<see cref="UiActionMap"/>), keeping <c>handler</c> (as
-/// <c>?handler=</c>, like a page) and every other route value, so a page can move to a controller without any link changing.
-/// </para>
+/// Keeps links to repository pages inside the repository being browsed. ASP.NET Core carries ambient route values (here
+/// <c>repo</c>) only to links that target the <i>same</i> action, so <c>Url.Action("Show", "Package")</c>, <c>asp-controller="Package"</c> and
+/// <c>RedirectToAction("Index", "PackageManage")</c> on a <c>/r/second/…</c> page would otherwise drop the prefix and leave the repository.
+/// This helper adds the request's <c>repo</c> as an explicit route value to every link to a controller action marked
+/// <see cref="BaGet.Identity.Mvc.Attributes.RepositoryPageAttribute"/> that does not name one itself. An explicit value always wins, and
+/// <c>repo = null</c> is the way to leave for the default repository. A link to any other action is untouched, so no stray <c>?repo=</c>
+/// appears on it. Razor Pages of a host are not touched either: BaGet's screens are controllers, and a screen is addressed by its controller
+/// and action (<c>Url.Action</c>, <c>asp-controller</c>/<c>asp-action</c>, <c>RedirectToAction</c>), never by a page name.
 /// </summary>
 public class RepositoryUrlHelper : IUrlHelper
 {
@@ -85,53 +76,5 @@ public class RepositoryUrlHelper : IUrlHelper
     public string? Link(string? routeName, object? values) => _inner.Link(routeName, values);
 
     /// <inheritdoc/>
-    public string? RouteUrl(UrlRouteContext routeContext)
-    {
-        if (routeContext == null) throw new ArgumentNullException(nameof(routeContext));
-
-        var values = routeContext.Values as RouteValueDictionary
-            ?? (routeContext.Values == null ? new RouteValueDictionary() : new RouteValueDictionary(routeContext.Values));
-
-        if (routeContext.RouteName == null && values.TryGetValue("page", out var page) && page is string pageName)
-        {
-            var changed = false;
-
-            if (!values.ContainsKey(Routes.RepositoryRouteKey)
-                && ActionContext.RouteData.Values.TryGetValue(Routes.RepositoryRouteKey, out var repo) && repo is string name
-                && IsRepositoryPage(pageName))
-            {
-                values[Routes.RepositoryRouteKey] = name;
-                changed = true;
-            }
-
-            // A page that is a controller action now: the same URL, found through the action that replaced it.
-            if (_actions != null && _actions.TryResolveLegacyPage(pageName, out var target))
-            {
-                values.Remove("page");
-                values["controller"] = target.Controller;
-                values["action"] = target.Action;
-                if (values.TryGetValue("handler", out var handler) && string.IsNullOrEmpty(handler as string)) values.Remove("handler");
-                changed = true;
-            }
-
-            if (changed)
-            {
-                routeContext = new UrlRouteContext
-                {
-                    RouteName = routeContext.RouteName,
-                    Values = values,
-                    Protocol = routeContext.Protocol,
-                    Host = routeContext.Host,
-                    Fragment = routeContext.Fragment,
-                };
-            }
-        }
-
-        return _inner.RouteUrl(routeContext);
-    }
-
-    // Page() has already turned a relative page name into an absolute one (UrlHelperBase.NormalizeRouteValuesForPage),
-    // so the value is compared as MVC knows pages.
-    // A helper built without the action map (the public constructor) knows no repository page.
-    private bool IsRepositoryPage(string pageName) => _actions != null && _actions.IsRepositoryPage(pageName);
+    public string? RouteUrl(UrlRouteContext routeContext) => _inner.RouteUrl(routeContext);
 }

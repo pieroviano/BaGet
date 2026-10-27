@@ -35,37 +35,37 @@ public sealed class AdminUsersUiApiController : AdminUiApiControllerBase
     // ---------------------------------------------------------------- Users
 
     /// <summary>Lists the users, filtered by <paramref name="q"/> (user name contains), one page of them.</summary>
-    [HttpGet(""), UiApi("/Admin/Users")]
+    [HttpGet(""), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index))]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> List(string? q, [FromQuery(Name = "p")] int pageNumber = 1, CancellationToken cancellationToken = default)
         => Respond(await Users.GetAsync(User, q, pageNumber, cancellationToken));
 
     /// <summary>Enables a self-registered account that waits for approval.</summary>
-    [HttpPost("approve"), UiApi("/Admin/Users", Handler = "Approve")]
+    [HttpPost("approve"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index), Handler = "Approve")]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> Approve([FromBody] UserChange? change, CancellationToken cancellationToken = default)
         => Respond(await Users.ApproveAsync(User, change ?? new UserChange(null, null), cancellationToken));
 
     /// <summary>Makes a user an administrator.</summary>
-    [HttpPost("promote"), UiApi("/Admin/Users", Handler = "Promote")]
+    [HttpPost("promote"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index), Handler = "Promote")]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> Promote([FromBody] UserChange? change, CancellationToken cancellationToken = default)
         => Respond(await Users.PromoteAsync(User, change ?? new UserChange(null, null), cancellationToken));
 
     /// <summary>Removes a user's administrator flag.</summary>
-    [HttpPost("demote"), UiApi("/Admin/Users", Handler = "Demote")]
+    [HttpPost("demote"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index), Handler = "Demote")]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> Demote([FromBody] UserChange? change, CancellationToken cancellationToken = default)
         => Respond(await Users.DemoteAsync(User, change ?? new UserChange(null, null), cancellationToken));
 
     /// <summary>Replaces a user's password with a generated one, which the answer carries once (<c>generatedPassword</c>).</summary>
-    [HttpPost("reset-password"), UiApi("/Admin/Users", Handler = "ResetPassword")]
+    [HttpPost("reset-password"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index), Handler = "ResetPassword")]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> ResetPassword([FromBody] UserChange? change, CancellationToken cancellationToken = default)
         => Shown(await Users.ResetPasswordAsync(User, change ?? new UserChange(null, null), cancellationToken));
 
     /// <summary>Mails a user a password reset link.</summary>
-    [HttpPost("send-reset-link"), UiApi("/Admin/Users", Handler = "SendResetLink")]
+    [HttpPost("send-reset-link"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index), Handler = "SendResetLink")]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> SendResetLink([FromBody] UserChange? change, CancellationToken cancellationToken = default)
         => Respond(await Users.SendResetLinkAsync(User, change ?? new UserChange(null, null), cancellationToken));
 
     /// <summary>Creates an account (typed, generated or invited password). A generated password is in the answer once.</summary>
-    [HttpPost("create"), UiApi("/Admin/Users", Handler = "Create")]
+    [HttpPost("create"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Index), Handler = "Create")]
     public async Task<ActionResult<ScreenResult<UsersViewModel>>> Create([FromBody] UserCreation? creation, CancellationToken cancellationToken = default)
         => Shown(await Users.CreateAsync(User, creation ?? new UserCreation(null, null, null, false, null), cancellationToken));
 
@@ -80,46 +80,46 @@ public sealed class AdminUsersUiApiController : AdminUiApiControllerBase
     // ---------------------------------------------------------------- UserDetail
 
     /// <summary>Shows one account. <paramref name="package"/> is a package ID to evaluate the effective permissions for.</summary>
-    [HttpGet("{name}"), UiApi("/Admin/UserDetail")]
+    [HttpGet("{name}"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Detail))]
     public async Task<ActionResult<ScreenResult<UserDetailViewModel>>> Get(string name, string? package, CancellationToken cancellationToken = default)
         => Respond(await Detail.GetAsync(User, name, package, cancellationToken));
 
     /// <summary>Enables the account when it waits for approval.</summary>
-    [HttpPost("{name}/approve"), UiApi("/Admin/UserDetail", Handler = "Approve")]
+    [HttpPost("{name}/approve"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Detail), Handler = "Approve")]
     public async Task<ActionResult<ScreenResult<UserDetailViewModel>>> ApproveAccount(string name, [FromBody] PasswordForm? form, CancellationToken cancellationToken = default)
         => Respond(await Detail.ApproveAsync(User, name, form?.Password, cancellationToken));
 
     /// <summary>Revokes one of the account's API keys.</summary>
-    [HttpPost("{name}/revoke-key"), UiApi("/Admin/UserDetail", Handler = "RevokeKey")]
+    [HttpPost("{name}/revoke-key"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Detail), Handler = "RevokeKey")]
     public async Task<ActionResult<ScreenResult<UserDetailViewModel>>> RevokeKey(string name, [FromBody] UserKeyForm? form, CancellationToken cancellationToken = default)
         => Respond(await Detail.RevokeKeyAsync(User, name, form?.Key ?? 0, form?.Password, cancellationToken));
 
     /// <summary>Adds the account to a group.</summary>
-    [HttpPost("{name}/add-group"), UiApi("/Admin/UserDetail", Handler = "AddGroup")]
+    [HttpPost("{name}/add-group"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Detail), Handler = "AddGroup")]
     public async Task<ActionResult<ScreenResult<UserDetailViewModel>>> AddGroup(string name, [FromBody] UserGroupForm? form, CancellationToken cancellationToken = default)
         => Respond(await Detail.AddGroupAsync(User, name, form?.Group, form?.Password, cancellationToken));
 
     /// <summary>Removes the account from a group.</summary>
-    [HttpPost("{name}/remove-group"), UiApi("/Admin/UserDetail", Handler = "RemoveGroup")]
+    [HttpPost("{name}/remove-group"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.Detail), Handler = "RemoveGroup")]
     public async Task<ActionResult<ScreenResult<UserDetailViewModel>>> RemoveGroup(string name, [FromBody] UserGroupForm? form, CancellationToken cancellationToken = default)
         => Respond(await Detail.RemoveGroupAsync(User, name, form?.Group, form?.Password, cancellationToken));
 
     // ---------------------------------------------------------------- DeleteUser
 
     /// <summary>Shows what deleting the account does.</summary>
-    [HttpGet("{name}/delete"), UiApi("/Admin/DeleteUser")]
+    [HttpGet("{name}/delete"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.DeleteUser))]
     public async Task<ActionResult<ScreenResult<DeleteUserViewModel>>> GetDeletion(string name, CancellationToken cancellationToken = default)
         => Respond(await Deletion.GetAsync(User, name, cancellationToken));
 
     /// <summary>Deletes the account after the administrator's password.</summary>
-    [HttpPost("{name}/delete"), UiApi("/Admin/DeleteUser")]
+    [HttpPost("{name}/delete"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.DeleteUser))]
     public async Task<ActionResult<ScreenResult<DeleteUserViewModel>>> Delete(string name, [FromBody] UserDeletionForm? form, CancellationToken cancellationToken = default)
         => Respond(await Deletion.DeleteAsync(User, name, form?.SoleOwned, form?.Password, cancellationToken));
 
     // ---------------------------------------------------------------- UserPackages
 
     /// <summary>Lists the package IDs one user owns.</summary>
-    [HttpGet("{name}/packages"), UiApi("/Admin/UserPackages"), RepositoryPage]
+    [HttpGet("{name}/packages"), UiApi(typeof(AdminUsersController), nameof(AdminUsersController.UserPackages)), RepositoryPage]
     public async Task<ActionResult<ScreenResult<UserPackagesViewModel>>> GetPackages(string name, CancellationToken cancellationToken = default)
         => Respond(await Packages.GetUserAsync(name, cancellationToken));
 }

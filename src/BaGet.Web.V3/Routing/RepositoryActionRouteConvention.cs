@@ -14,8 +14,8 @@ namespace BaGet.Web.V3.Routing;
 /// (<see cref="UiApiAttribute"/>, routed under <see cref="ApiPrefix"/>) the prefix goes after <c>api/ui/</c>.
 /// <para>
 /// Link generation, as for pages: the twin has a lower <c>Order</c> than the original. Without a <c>repo</c> value (explicit or
-/// ambient from the current <c>/r/{repo}/</c> request) the twin cannot be filled in, so <c>Url.Action</c>, <c>asp-action</c>,
-/// <c>Url.Page</c> (through the legacy page name) and <c>RedirectToAction</c> produce the plain URL; with one they produce the
+/// ambient from the current <c>/r/{repo}/</c> request) the twin cannot be filled in, so <c>Url.Action</c>, <c>asp-action</c>
+/// and <c>RedirectToAction</c> produce the plain URL; with one they produce the
 /// repository URL, so links stay inside the repository being browsed. Passing <c>repo = null</c> explicitly leaves it. The twin is
 /// a selector of the same action, not a second route attribute on a second action: that makes link generation ambiguous.
 /// </para>

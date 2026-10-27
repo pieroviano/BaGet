@@ -23,9 +23,9 @@ namespace BaGet.Identity.Application.UseCases.Admin;
 public sealed class AdminOperationsUseCase : AdminUseCaseBase
 {
     private const string NotConfirmedToStart = "The confirmation is incorrect, so nothing was started.";
-    private const string OperationsScreen = "/Admin/Operations";
-    private const string ValidationScreen = "/Admin/Validation";
-    private const string AbuseScreen = "/Admin/Abuse";
+    private static readonly ScreenRef OperationsScreen = ScreenCatalog.AdminOperations;
+    private static readonly ScreenRef ValidationScreen = ScreenCatalog.AdminValidation;
+    private static readonly ScreenRef AbuseScreen = ScreenCatalog.AdminAbuse;
 
     private readonly IServiceProvider _services;
     private readonly AdminJobService _jobs;

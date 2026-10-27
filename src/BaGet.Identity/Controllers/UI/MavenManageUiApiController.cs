@@ -23,8 +23,6 @@ namespace BaGet.Identity.Controllers.UI;
 [RepositoryPage(Format = RepositoryFormat.Maven, NotOnVirtual = true, NotOnRemote = true)]
 public sealed class MavenManageUiApiController : AccountUiApiControllerBase
 {
-    private const string Screen = "/Packages/MavenManage";
-
     /// <inheritdoc/>
     protected override bool RequiresSignIn => true;
 
@@ -36,37 +34,37 @@ public sealed class MavenManageUiApiController : AccountUiApiControllerBase
         => UseCase.EnterAsync(User, group, artifact, version, handler, isWrite, cancellationToken);
 
     /// <summary>The screen.</summary>
-    [HttpGet, UiApi(Screen)]
+    [HttpGet, UiApi(typeof(MavenManageController), nameof(MavenManageController.Index))]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> Get(string? group, string? artifact, [FromQuery] string? version, CancellationToken cancellationToken)
         => Respond(await UseCase.GetAsync(User, group, artifact, version, cancellationToken));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost("add-owner"), UiApi(Screen, Handler = "AddOwner")]
+    [HttpPost("add-owner"), UiApi(typeof(MavenManageController), nameof(MavenManageController.Index), Handler = "AddOwner")]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> AddOwner(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.AddOwnerAsync(User, group, artifact, form?.Version, form?.OwnerName, cancellationToken));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost("remove-owner"), UiApi(Screen, Handler = "RemoveOwner")]
+    [HttpPost("remove-owner"), UiApi(typeof(MavenManageController), nameof(MavenManageController.Index), Handler = "RemoveOwner")]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> RemoveOwner(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.RemoveOwnerAsync(User, group, artifact, form?.Version, form?.OwnerName, cancellationToken));
 
     /// <summary>Deletes one file of the chosen version, after the password.</summary>
-    [HttpPost("delete-file"), UiApi(Screen, Handler = "DeleteFile")]
+    [HttpPost("delete-file"), UiApi(typeof(MavenManageController), nameof(MavenManageController.Index), Handler = "DeleteFile")]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> DeleteFile(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteFileAsync(User, group, artifact, form?.Version, form?.FileName, form?.Password, cancellationToken));
 
     /// <summary>Deletes one version, after the password.</summary>
-    [HttpPost("delete-version"), UiApi(Screen, Handler = "DeleteVersion")]
+    [HttpPost("delete-version"), UiApi(typeof(MavenManageController), nameof(MavenManageController.Index), Handler = "DeleteVersion")]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> DeleteVersion(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteVersionAsync(User, group, artifact, form?.Version, form?.Version, form?.Password, cancellationToken));
 
     /// <summary>Deletes the whole artifact, after the password.</summary>
-    [HttpPost("delete-artifact"), UiApi(Screen, Handler = "DeleteArtifact")]
+    [HttpPost("delete-artifact"), UiApi(typeof(MavenManageController), nameof(MavenManageController.Index), Handler = "DeleteArtifact")]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> DeleteArtifact(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.DeleteArtifactAsync(User, group, artifact, form?.Version, form?.Password, cancellationToken));
 
     /// <summary>Deletes old snapshot builds of a version, after the password.</summary>
-    [HttpPost("cleanup"), UiApi(Screen, Handler = "Cleanup")]
+    [HttpPost("cleanup"), UiApi(typeof(MavenManageController), nameof(MavenManageController.Index), Handler = "Cleanup")]
     public async Task<ActionResult<ScreenResult<MavenManageViewModel>>> Cleanup(string? group, string? artifact, [FromBody] MavenManageForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase.CleanupAsync(User, group, artifact, form?.Version, form?.Version, form?.Keep, form?.Password, cancellationToken));
 }

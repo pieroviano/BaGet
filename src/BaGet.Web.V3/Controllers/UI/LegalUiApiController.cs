@@ -27,12 +27,12 @@ public sealed class LegalUiApiController : UiApiControllerBase
     }
 
     /// <summary>The Privacy Policy.</summary>
-    [HttpGet("privacy"), UiApi("/Privacy")]
+    [HttpGet("privacy"), UiApi(typeof(LegalController), nameof(LegalController.Privacy))]
     public async Task<ActionResult<ScreenResult<LegalScreen>>> Privacy(CancellationToken cancellationToken)
         => Respond(await _legal.PrivacyAsync(cancellationToken));
 
     /// <summary>The Terms of Use.</summary>
-    [HttpGet("terms"), UiApi("/Terms")]
+    [HttpGet("terms"), UiApi(typeof(LegalController), nameof(LegalController.Terms))]
     public async Task<ActionResult<ScreenResult<LegalScreen>>> Terms(CancellationToken cancellationToken)
         => Respond(await _legal.TermsAsync(cancellationToken));
 }

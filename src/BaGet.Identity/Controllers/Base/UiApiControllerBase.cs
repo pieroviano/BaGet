@@ -23,7 +23,7 @@ namespace BaGet.Identity.Controllers.Base;
 /// <item><description><b>Filters do not run in process</b>: the view controller's base runs the same <see cref="ScreenGate"/> before it calls the
 /// twin, and its own antiforgery validation and cookie session.</description></item>
 /// </list>
-/// A twin is marked <see cref="UiApiAttribute"/> (never <see cref="LegacyPageAttribute"/>), routed under <c>api/ui/</c> (a repository
+/// A twin is marked <see cref="UiApiAttribute"/> (never a view controller), routed under <c>api/ui/</c> (a repository
 /// screen also at <c>api/ui/r/{repo}/...</c> through <see cref="RepositoryPageAttribute"/>), and takes the request body as JSON
 /// (<c>[FromBody]</c>) or multipart (<c>[FromForm]</c>, file uploads).
 /// </summary>
@@ -84,7 +84,7 @@ public abstract class UiApiControllerBase : ControllerBase
         {
             GateOutcome.SignIn => ScreenResult<object>.SignIn(),
             GateOutcome.Forbidden => ScreenResult<object>.Forbidden(),
-            GateOutcome.AccessUnavailable => ScreenResult<object>.GoTo(new ScreenNext("/Admin/AccessUnavailable")),
+            GateOutcome.AccessUnavailable => ScreenResult<object>.GoTo(new ScreenNext(ScreenCatalog.AdminAccessUnavailable)),
             _ => ScreenResult<object>.NotFound(),
         };
 }

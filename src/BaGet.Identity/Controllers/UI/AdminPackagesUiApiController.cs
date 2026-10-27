@@ -20,7 +20,7 @@ namespace BaGet.Identity.Controllers.UI;
 public sealed class AdminPackagesUiApiController : AdminUiApiControllerBase
 {
     /// <summary>Lists the ownerless IDs of every repository, <paramref name="pageNumber"/> being one-based.</summary>
-    [HttpGet(""), UiApi("/Admin/Packages"), RepositoryPage]
+    [HttpGet(""), UiApi(typeof(AdminPackagesController), nameof(AdminPackagesController.Index)), RepositoryPage]
     public async Task<ActionResult<ScreenResult<AdminPackagesViewModel>>> List([FromQuery(Name = "p")] int pageNumber = 1, CancellationToken cancellationToken = default)
         => Respond(await UseCase<AdminPackagesUseCase>().GetOwnerlessAsync(pageNumber, cancellationToken));
 }

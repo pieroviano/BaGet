@@ -13,7 +13,7 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 /// <summary>
 /// The NuGet upload page (<c>/upload</c>, <c>/r/{repo}/upload</c>): uploading through the browser in two steps, the first stages
 /// the file and shows what it contains (<c>?handler=Stage</c>), the second publishes it (<c>?handler=Submit</c>) or discards it
-/// (<c>?handler=Cancel</c>). It replaces the Razor Page <c>Upload</c>: same URLs, forms and <c>asp-page</c> name (<see cref="LegacyPageAttribute"/>). The repository rule is
+/// (<c>?handler=Cancel</c>). It replaces the Razor Page <c>Upload</c>: same URLs and forms. The repository rule is
 /// <see cref="RepositoryPageAttribute.Upload"/>: the caller needs the right to publish, and a virtual repository continues in its
 /// deploy repository. View: <c>Views/Upload/Index.cshtml</c>. The work is <see cref="UploadUseCase"/>, reached through the JSON twin
 /// <see cref="UploadUiApiController"/> in process; this controller only renders what it answers.
@@ -24,7 +24,6 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 /// use case; the antiforgery token is validated by <see cref="UiControllerBase"/>.
 /// </remarks>
 [Route("upload")]
-[LegacyPage("/Upload")]
 [RepositoryPage(Upload = true)]
 public sealed class UploadController : UiControllerBase
 {

@@ -1,4 +1,5 @@
 @using Microsoft.Extensions.DependencyInjection
+@using BaGet.Identity.Application.Screens
 @inject Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> Accounts
 @inject Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.SiteOptions> Site
 @inject BaGet.Core.IRepositoryContext RepositoryContext
@@ -101,11 +102,12 @@
                         @* A Docker image is pushed with the Docker CLI: no upload page. *@
                         @if (canUpload && repository.Format != BaGet.Core.RepositoryFormat.Docker)
                         {
-                            <li role="presentation"><a asp-area="" asp-page="@(isNpm ? "/NpmUpload" : repository.Format == BaGet.Core.RepositoryFormat.Maven ? "/MavenUpload" : "/Upload")" role="tab" nav-link><span>Upload</span></a></li>
+                            var uploadScreen = isNpm ? ScreenCatalog.NpmUpload : repository.Format == BaGet.Core.RepositoryFormat.Maven ? ScreenCatalog.MavenUpload : ScreenCatalog.Upload;
+                            <li role="presentation"><a asp-area="" asp-controller="@uploadScreen.Controller" asp-action="@uploadScreen.Action" role="tab" nav-link><span>Upload</span></a></li>
                         }
                         @if (RepositoryContext.Current.Kind != BaGet.Core.RepositoryKind.Virtual && !hasOwnPages)
                         {
-                            <li role="presentation"><a asp-area="" asp-page="/Statistics" role="tab" nav-link><span>Statistics</span></a></li>
+                            <li role="presentation"><a asp-area="" asp-controller="Statistics" asp-action="Index" role="tab" nav-link><span>Statistics</span></a></li>
                         }
                         <li role="presentation">
                             <a role="tab" href="https://pieroviano.github.io/BaGet/" target="_blank" rel="noopener noreferrer">

@@ -90,7 +90,7 @@ public abstract class AccessControllerBase : AdminControllerBase
 
         if (gate.Outcome == GateOutcome.AccessUnavailable)
         {
-            context.Result = RedirectToPage("/Admin/AccessUnavailable");
+            context.Result = RedirectToAction(ScreenCatalog.AdminAccessUnavailable.Action, ScreenCatalog.AdminAccessUnavailable.Controller);
             return;
         }
 

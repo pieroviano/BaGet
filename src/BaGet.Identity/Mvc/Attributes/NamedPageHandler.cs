@@ -2,5 +2,5 @@ using System.Collections.Generic;
 
 namespace BaGet.Identity.Mvc.Attributes;
 
-/// <summary>A named handler (<c>OnPostApprove</c>-style action) of a controller: its name, the HTTP methods it answers and its page.</summary>
-internal sealed record NamedPageHandler(string Name, IReadOnlyList<string> Verbs, string Page);
+/// <summary>A named handler (<c>OnPostApprove</c>-style action) of a controller: its name, the HTTP methods it answers and its screen (see <see cref="PageHandlerAttribute.ScreenOf"/>).</summary>
+internal sealed record NamedPageHandler(string Name, IReadOnlyList<string> Verbs, string Screen);

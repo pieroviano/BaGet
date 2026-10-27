@@ -17,9 +17,9 @@ namespace BaGet.Identity.Application.UseCases.Policies;
 /// </summary>
 public sealed class RetentionUseCase : PolicyUseCaseBase
 {
-    private const string PoliciesScreen = "/Admin/Retention";
-    private const string PolicyScreen = "/Admin/RetentionPolicy";
-    private const string HoldsScreen = "/Admin/RetentionHolds";
+    private static readonly ScreenRef PoliciesScreen = ScreenCatalog.AdminRetention;
+    private static readonly ScreenRef PolicyScreen = ScreenCatalog.AdminRetentionPolicy;
+    private static readonly ScreenRef HoldsScreen = ScreenCatalog.AdminRetentionHolds;
 
     private readonly IRetentionAdministration _retention;
     private readonly RetentionJobs _jobs;

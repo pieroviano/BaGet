@@ -69,7 +69,7 @@ public static class UiApiInvoker
 
             default:
                 // Any other answer (a redirect, a file) is passed on as it is; the decision is "next" for lack of a better word.
-                return new UiApiResponse<TModel>(ScreenResult<TModel>.GoTo(new ScreenNext(string.Empty)), action.Result);
+                return new UiApiResponse<TModel>(ScreenResult<TModel>.GoTo(new ScreenNext(null)), action.Result);
         }
     }
 }

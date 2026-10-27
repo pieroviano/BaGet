@@ -1,3 +1,4 @@
+using BaGet.Identity.Controllers.FrontEnd;
 using System;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -13,7 +14,7 @@ public class AuditController : AccessApiController
 {
     /// <summary>The audit entries, newest first.</summary>
     [HttpGet]
-    [ApiOperation("List access-audit entries, newest first, optionally by actor, subject or time", "/Admin/Audit", Response = typeof(AccessAuditEntry), PagedList = true)]
+    [ApiOperation("List access-audit entries, newest first, optionally by actor, subject or time", typeof(AdminAuditController), nameof(AdminAuditController.Index), Response = typeof(AccessAuditEntry), PagedList = true)]
     public async Task<IActionResult> List(string? actor, string? subject, DateTime? from, DateTime? to, int? page, int? pageSize)
     {
         if (Unavailable() is { } unavailable) return unavailable;

@@ -116,7 +116,7 @@ public class PolicyScreensUiApiTests : IDisposable
     {
         var created = await AdminAsync(HttpMethod.Post, "/api/ui/admin/retention", PolicyBody(name, enabled: enabled));
         Assert.Equal("Next", Status(created));
-        Assert.Equal("/Admin/RetentionPolicy", created.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminRetention/Policy", JsonScreen.Name(created.Json!["next"]!["screen"]!));
 
         return created.Json["next"]!["routeValues"]!["key"]!.GetValue<int>();
     }
@@ -325,7 +325,7 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Status);
 
         var deleted = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/retention/{key}/delete", new { password = Password });
-        Assert.Equal("/Admin/Retention", deleted.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminRetention/Index", JsonScreen.Name(deleted.Json!["next"]!["screen"]!));
         Assert.Equal(HttpStatusCode.NotFound, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/retention/{key}")).Status);
     }
 
@@ -384,7 +384,7 @@ public class PolicyScreensUiApiTests : IDisposable
 
         var saved = await AdminAsync(HttpMethod.Post, "/api/ui/admin/scanning/default/policy", new { warn = "1", blockDownload = "3", blockUnscanned = true, password = Password });
         Assert.Equal("The scanning policy of default was saved.", NextMessage(saved));
-        Assert.Equal("/Admin/ScanRepository", saved.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminScanning/Repository", JsonScreen.Name(saved.Json!["next"]!["screen"]!));
 
         var dashboard = (await AdminAsync(HttpMethod.Get, "/api/ui/admin/scanning/default?min=1&p=0")).Json!["model"]!;
         Assert.Equal(1, dashboard["own"]!["warnSeverity"]!.GetValue<int>());
@@ -438,7 +438,7 @@ public class PolicyScreensUiApiTests : IDisposable
         var finding = Assert.Single(dashboard["findings"]!.AsArray())!;
         var link = dashboard["packageLinks"]![finding["key"]!.GetValue<int>().ToString(System.Globalization.CultureInfo.InvariantCulture)]!;
 
-        Assert.Equal("/Package", link["screen"]!.GetValue<string>());
+        Assert.Equal("Package/Show", JsonScreen.Name(link["screen"]!));
         Assert.Equal("linked.package", link["routeValues"]!["id"]!.GetValue<string>());
         Assert.Equal("1.0.0", link["routeValues"]!["version"]!.GetValue<string>());
         Assert.Contains("/packages/linked.package/1.0.0", await _root.GetPageAsync("/admin/scanning/default"), StringComparison.OrdinalIgnoreCase);
@@ -506,7 +506,7 @@ public class PolicyScreensUiApiTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Status);
 
         var deleted = await AdminAsync(HttpMethod.Post, $"/api/ui/admin/replication/{key}/delete", new { password = Password });
-        Assert.Equal("/Admin/Replication", deleted.Json!["next"]!["screen"]!.GetValue<string>());
+        Assert.Equal("AdminReplication/Index", JsonScreen.Name(deleted.Json!["next"]!["screen"]!));
         Assert.Equal(HttpStatusCode.NotFound, (await AdminAsync(HttpMethod.Get, $"/api/ui/admin/replication/{key}")).Status);
     }
 }

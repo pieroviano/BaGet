@@ -50,47 +50,47 @@ public sealed class NpmManageController : AccountControllerBase
     }
 
     /// <summary>The screen.</summary>
-    [HttpGet, HttpHead, PageHandler, LegacyPage("/Packages/NpmManage")]
+    [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Get(Id, cancellationToken)));
 
     /// <summary>Adds an owner.</summary>
-    [HttpPost, PageHandler("AddOwner"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("AddOwner")]
     public async Task<IActionResult> AddOwner(string ownerName, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.AddOwner(Id, new NpmManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Removes an owner.</summary>
-    [HttpPost, PageHandler("RemoveOwner"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("RemoveOwner")]
     public async Task<IActionResult> RemoveOwner(string ownerName, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.RemoveOwner(Id, new NpmManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Points a dist-tag at a version.</summary>
-    [HttpPost, PageHandler("SetTag"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("SetTag")]
     public async Task<IActionResult> SetTag(string tag, string version, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.SetTag(Id, new NpmManageTagForm { Tag = tag, Version = version }, cancellationToken)));
 
     /// <summary>Removes a dist-tag.</summary>
-    [HttpPost, PageHandler("RemoveTag"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("RemoveTag")]
     public async Task<IActionResult> RemoveTag(string tag, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.RemoveTag(Id, new NpmManageTagForm { Tag = tag }, cancellationToken)));
 
     /// <summary>Deprecates a version.</summary>
-    [HttpPost, PageHandler("Deprecate"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("Deprecate")]
     public async Task<IActionResult> Deprecate(string version, string? message, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Deprecate(Id, new NpmManageDeprecateForm { Version = version, Message = message }, cancellationToken)));
 
     /// <summary>Removes a version's deprecation.</summary>
-    [HttpPost, PageHandler("Undeprecate"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("Undeprecate")]
     public async Task<IActionResult> Undeprecate(string version, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Undeprecate(Id, new NpmManageDeprecateForm { Version = version }, cancellationToken)));
 
     /// <summary>Unpublishes one version, after the password is confirmed.</summary>
-    [HttpPost, PageHandler("Unpublish"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("Unpublish")]
     public async Task<IActionResult> Unpublish(string version, string? password, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Unpublish(Id, new NpmManageUnpublishForm { Version = version, Password = password }, cancellationToken)));
 
     /// <summary>Unpublishes every version, after the password is confirmed.</summary>
-    [HttpPost, PageHandler("UnpublishAll"), LegacyPage("/Packages/NpmManage")]
+    [HttpPost, PageHandler("UnpublishAll")]
     public async Task<IActionResult> UnpublishAll(string? password, CancellationToken cancellationToken)
         => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.UnpublishAll(Id, new NpmManageUnpublishForm { Password = password }, cancellationToken)));
 
@@ -98,10 +98,10 @@ public sealed class NpmManageController : AccountControllerBase
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without
     /// <c>?handler=</c>: the antiforgery check has already run, and there is nothing to do, so the answer is 404. (A Razor Page
     /// with only named POST handlers behaved alike for the caller; without this action routing would answer 404 before the
-    /// antiforgery filter and an unprotected POST would not be refused with 400.) It carries no <see cref="LegacyPageAttribute"/>:
-    /// it is not one of the page's handlers, so it stays out of the route contract.
+    /// antiforgery filter and an unprotected POST would not be refused with 400.) It is marked
+    /// <see cref="FallbackHandlerAttribute"/>: it is not one of the screen's handlers, so it stays out of the route contract.
     /// </summary>
-    [HttpPost, PageHandler]
+    [HttpPost, PageHandler, FallbackHandler]
     public IActionResult NoHandler() => NotFound();
 
     private IActionResult Present(UiApiResponse<NpmManageViewModel> response) => Render(response, ViewName);

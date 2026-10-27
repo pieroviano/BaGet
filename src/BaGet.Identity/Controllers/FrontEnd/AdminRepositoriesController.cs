@@ -17,8 +17,7 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// The administrator's repository screens: the list with the create forms (<c>/admin/repositories</c>), one repository
 /// (<c>/admin/repositories/{name}</c>: anonymous read, upstream, cache, members, Maven settings) and its deletion
 /// (<c>/admin/repositories/{name}/delete</c>). They replace the Razor Pages <c>/Admin/Repositories</c>,
-/// <c>/Admin/RepositoryEdit</c> and <c>/Admin/RepositoryDelete</c> (same URLs, same <c>?handler=</c> values, same
-/// <c>asp-page</c> names through <see cref="LegacyPageAttribute"/>); the work is done by the JSON twin
+/// <c>/Admin/RepositoryEdit</c> and <c>/Admin/RepositoryDelete</c> (same URLs, same <c>?handler=</c> values); the work is done by the JSON twin
 /// (<see cref="AdminRepositoriesUiApiController"/>) and this controller only renders its answers.
 /// Administrators only; every write is refused with 503 while the read-only gate is closed, and the changes that hand out
 /// credentials or delete data ask for the administrator's password again, as the pages did.
@@ -28,17 +27,17 @@ public sealed class AdminRepositoriesController : RepositoryControllerBase
     // ---------------------------------------------------------------- Repositories
 
     /// <summary>Lists the repositories (narrowed by <c>format</c>, <c>kind</c>, <c>q</c>) and shows the create forms.</summary>
-    [Route("admin/repositories"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/Repositories")]
+    [Route("admin/repositories"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(string? format, string? kind, string? q, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.GetRepositories(format, kind, q, cancellationToken)), "Index");
 
     /// <summary>Creates a local NuGet repository.</summary>
-    [Route("admin/repositories"), HttpPost, PageHandler, LegacyPage("/Admin/Repositories")]
+    [Route("admin/repositories"), HttpPost, PageHandler]
     public async Task<IActionResult> Create(string? name, RemoteFormModel? remote, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.Create(new RepositoryCreateForm { Name = name, Remote = remote ?? new RemoteFormModel() }, cancellationToken)), "Index");
 
     /// <summary>Creates a local repository of a format other than NuGet from the posted <c>field:*</c> values.</summary>
-    [Route("admin/repositories"), HttpPost, PageHandler("Format"), LegacyPage("/Admin/Repositories")]
+    [Route("admin/repositories"), HttpPost, PageHandler("Format")]
     public async Task<IActionResult> CreateFormat(string? name, RemoteFormModel? remote, string? format, bool anonymousRead = true, CancellationToken cancellationToken = default)
         => Show(
             await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.CreateFormat(
@@ -47,7 +46,7 @@ public sealed class AdminRepositoriesController : RepositoryControllerBase
             "Index");
 
     /// <summary>Creates a virtual repository with no members.</summary>
-    [Route("admin/repositories"), HttpPost, PageHandler("Virtual"), LegacyPage("/Admin/Repositories")]
+    [Route("admin/repositories"), HttpPost, PageHandler("Virtual")]
     public async Task<IActionResult> CreateVirtual(string? name, RemoteFormModel? remote, string? format = null, bool anonymousRead = true, CancellationToken cancellationToken = default)
         => Show(
             await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.CreateVirtual(
@@ -56,7 +55,7 @@ public sealed class AdminRepositoriesController : RepositoryControllerBase
             "Index");
 
     /// <summary>Creates a remote repository from the posted upstream settings, after the administrator's password.</summary>
-    [Route("admin/repositories"), HttpPost, PageHandler("Remote"), LegacyPage("/Admin/Repositories")]
+    [Route("admin/repositories"), HttpPost, PageHandler("Remote")]
     public async Task<IActionResult> CreateRemote(string? name, RemoteFormModel? remote, string? password, string? anonymousRead, string? format = null, CancellationToken cancellationToken = default)
         => Show(
             await Api<AdminRepositoriesUiApiController, RepositoriesViewModel>(api => api.CreateRemote(
@@ -83,57 +82,57 @@ public sealed class AdminRepositoriesController : RepositoryControllerBase
     // ---------------------------------------------------------------- RepositoryEdit
 
     /// <summary>Shows one repository.</summary>
-    [Route("admin/repositories/{name}"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Edit(string name, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.GetRepository(name, cancellationToken)), "Edit");
 
     /// <summary>Saves the repository.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler, LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler]
     public async Task<IActionResult> Save(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Save(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Saves the policy of a local Maven repository.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("MavenSettings"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("MavenSettings")]
     public async Task<IActionResult> MavenSettings(string name, RepositoryEditForm? form, string? policy, string? redeploy, string? snapshotBuilds, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.MavenSettings(name, Body(form, null, policy: policy, redeploy: redeploy, snapshotBuilds: snapshotBuilds), cancellationToken)), "Edit");
 
     /// <summary>Asks a remote repository's upstream with the unsaved values and saves nothing.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Test"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Test")]
     public async Task<IActionResult> Test(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Test(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Deletes everything a remote repository cached.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Purge"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Purge")]
     public async Task<IActionResult> Purge(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Purge(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Deletes one cached package of a remote repository.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("PurgePackage"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("PurgePackage")]
     public async Task<IActionResult> PurgePackage(string name, RepositoryEditForm? form, string? password, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.PurgePackage(name, Body(form, password), cancellationToken)), "Edit");
 
     /// <summary>Adds a member at the end of a virtual repository.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("AddMember"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("AddMember")]
     public async Task<IActionResult> AddMember(string name, RepositoryEditForm? form, string? member, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.AddMember(name, Body(form, null, member: member), cancellationToken)), "Edit");
 
     /// <summary>Removes a member of a virtual repository.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("RemoveMember"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("RemoveMember")]
     public async Task<IActionResult> RemoveMember(string name, RepositoryEditForm? form, string? member, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.RemoveMember(name, Body(form, null, member: member), cancellationToken)), "Edit");
 
     /// <summary>Moves a member of a virtual repository up or down.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("MoveMember"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("MoveMember")]
     public async Task<IActionResult> MoveMember(string name, RepositoryEditForm? form, string? member, string? direction, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.MoveMember(name, Body(form, null, member: member, direction: direction), cancellationToken)), "Edit");
 
     /// <summary>Sets the member of a virtual repository that receives uploads.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Deploy"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Deploy")]
     public async Task<IActionResult> Deploy(string name, RepositoryEditForm? form, string? deploy, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Deploy(name, Body(form, null, deploy: deploy), cancellationToken)), "Edit");
 
     /// <summary>Shows where a package version would come from in a virtual repository.</summary>
-    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Preview"), LegacyPage("/Admin/RepositoryEdit")]
+    [Route("admin/repositories/{name}"), HttpPost, PageHandler("Preview")]
     public async Task<IActionResult> Preview(string name, RepositoryEditForm? form, CancellationToken cancellationToken)
         => Show(await Api<AdminRepositoriesUiApiController, RepositoryEditViewModel>(api => api.Preview(name, Body(form, null), cancellationToken)), "Edit");
 
@@ -165,12 +164,12 @@ public sealed class AdminRepositoriesController : RepositoryControllerBase
     // ---------------------------------------------------------------- RepositoryDelete
 
     /// <summary>Shows what deleting the repository does.</summary>
-    [Route("admin/repositories/{name}/delete"), HttpGet, HttpHead, PageHandler, LegacyPage("/Admin/RepositoryDelete")]
+    [Route("admin/repositories/{name}/delete"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> DeleteRepository(string name, CancellationToken cancellationToken)
         => Render(await Api<AdminRepositoriesUiApiController, RepositoryDeleteViewModel>(api => api.GetDeletion(name, cancellationToken)), "Delete", modelShowsFormErrors: true);
 
     /// <summary>Deletes the repository, then returns to the list.</summary>
-    [Route("admin/repositories/{name}/delete"), HttpPost, PageHandler, LegacyPage("/Admin/RepositoryDelete")]
+    [Route("admin/repositories/{name}/delete"), HttpPost, PageHandler]
     public async Task<IActionResult> DeleteRepositoryConfirmed(string name, CancellationToken cancellationToken)
         => Render(await Api<AdminRepositoriesUiApiController, RepositoryDeleteViewModel>(api => api.DeleteRepository(name, cancellationToken)), "Delete", modelShowsFormErrors: true);
 }

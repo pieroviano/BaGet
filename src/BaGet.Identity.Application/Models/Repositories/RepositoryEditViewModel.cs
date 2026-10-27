@@ -1,3 +1,4 @@
+using BaGet.Identity.Application.Screens;
 using System;
 using System.Collections.Generic;
 using BaGet.Core;
@@ -69,8 +70,8 @@ public sealed class RepositoryEditViewModel : ConfirmationModel, IFlashMessage
     /// <summary>Who effectively holds each action in the repository; null for the default repository when the database has no access model.</summary>
     public RepositoryAccessSummary? Access { get; internal set; }
 
-    /// <summary>The page of the repository's format that lists its packages (<c>/Index</c> for NuGet, <c>/NpmPackages</c> for npm).</summary>
-    public string BrowsePage { get; internal set; } = "/Index";
+    /// <summary>The screen of the repository's format that lists its packages (<c>Home/Index</c> for NuGet, <c>NpmBrowse/Packages</c> for npm).</summary>
+    public ScreenRef BrowseScreen { get; internal set; } = ScreenCatalog.Index;
 
     /// <summary>The repository's feed address.</summary>
     public string FeedUrl { get; internal set; } = string.Empty;

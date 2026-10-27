@@ -22,37 +22,37 @@ public sealed class AdminOrganizationsUiApiController : AdminUiApiControllerBase
     private AdminOrganizationsUseCase Organizations => UseCase<AdminOrganizationsUseCase>();
 
     /// <summary>Lists the organizations.</summary>
-    [HttpGet(""), UiApi("/Admin/Organizations")]
+    [HttpGet(""), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Index))]
     public async Task<ActionResult<ScreenResult<AdminOrganizationsViewModel>>> List(CancellationToken cancellationToken = default)
         => Respond(await Organizations.ListAsync(cancellationToken));
 
     /// <summary>Shows one organization.</summary>
-    [HttpGet("{name}"), UiApi("/Admin/OrganizationDetail")]
+    [HttpGet("{name}"), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Detail))]
     public async Task<ActionResult<ScreenResult<OrganizationDetailViewModel>>> Get(string name, CancellationToken cancellationToken = default)
         => Respond(await Organizations.GetAsync(User, name, cancellationToken));
 
     /// <summary>Renames the organization.</summary>
-    [HttpPost("{name}/rename"), UiApi("/Admin/OrganizationDetail", Handler = "Rename")]
+    [HttpPost("{name}/rename"), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Detail), Handler = "Rename")]
     public async Task<ActionResult<ScreenResult<OrganizationDetailViewModel>>> Rename(string name, [FromBody] OrganizationRenameForm? form, CancellationToken cancellationToken = default)
         => Respond(await Organizations.RenameAsync(User, name, form?.NewName, form?.Password, cancellationToken));
 
     /// <summary>Deletes the organization (refused while it owns packages).</summary>
-    [HttpPost("{name}/delete"), UiApi("/Admin/OrganizationDetail", Handler = "Delete")]
+    [HttpPost("{name}/delete"), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Detail), Handler = "Delete")]
     public async Task<ActionResult<ScreenResult<OrganizationDetailViewModel>>> Delete(string name, [FromBody] PasswordForm? form, CancellationToken cancellationToken = default)
         => Respond(await Organizations.DeleteAsync(User, name, form?.Password, cancellationToken));
 
     /// <summary>Adds a user to the organization.</summary>
-    [HttpPost("{name}/add-member"), UiApi("/Admin/OrganizationDetail", Handler = "AddMember")]
+    [HttpPost("{name}/add-member"), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Detail), Handler = "AddMember")]
     public async Task<ActionResult<ScreenResult<OrganizationDetailViewModel>>> AddMember(string name, [FromBody] OrganizationMemberForm? form, CancellationToken cancellationToken = default)
         => Respond(await Organizations.AddMemberAsync(User, name, form?.UserName, form?.IsAdmin ?? false, form?.Password, cancellationToken));
 
     /// <summary>Makes a member an administrator of the organization, or not.</summary>
-    [HttpPost("{name}/set-admin"), UiApi("/Admin/OrganizationDetail", Handler = "SetAdmin")]
+    [HttpPost("{name}/set-admin"), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Detail), Handler = "SetAdmin")]
     public async Task<ActionResult<ScreenResult<OrganizationDetailViewModel>>> SetAdmin(string name, [FromBody] OrganizationMemberForm? form, CancellationToken cancellationToken = default)
         => Respond(await Organizations.SetAdminAsync(User, name, form?.UserName, form?.IsAdmin ?? false, form?.Password, cancellationToken));
 
     /// <summary>Removes a member from the organization.</summary>
-    [HttpPost("{name}/remove-member"), UiApi("/Admin/OrganizationDetail", Handler = "RemoveMember")]
+    [HttpPost("{name}/remove-member"), UiApi(typeof(AdminOrganizationsController), nameof(AdminOrganizationsController.Detail), Handler = "RemoveMember")]
     public async Task<ActionResult<ScreenResult<OrganizationDetailViewModel>>> RemoveMember(string name, [FromBody] OrganizationMemberForm? form, CancellationToken cancellationToken = default)
         => Respond(await Organizations.RemoveMemberAsync(User, name, form?.UserName, form?.Password, cancellationToken));
 }
