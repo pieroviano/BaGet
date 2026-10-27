@@ -46,16 +46,10 @@ public partial class AliyunStorageService : IStreamingStorageService, IListableS
 
             return ossObject.ResponseStream;
         }
-        catch (Exception)
+        catch (global::Aliyun.OSS.Common.OssException e) when (e.ErrorCode == "NoSuchKey")
         {
-            // Unresolved: IStorageService.GetAsync is documented to return null when the
-            // content is missing, but no implementation does - FileStorageService throws
-            // FileNotFoundException and callers such as
-            // SymbolStorageService.GetPortablePdbContentStreamOrNullAsync catch instead of
-            // null-checking. Mapping OSS's NoSuchKey to null here alone would hide missing
-            // content from PackageStorageService, so the mismatch belongs to the interface
-            // and is left for a change that fixes every implementation at once.
-            throw;
+            // The one "missing content" exception of IStorageService.GetAsync, as FileStorageService throws.
+            throw new FileNotFoundException("The object '" + path + "' does not exist.", path, e);
         }
     }
 
@@ -72,10 +66,9 @@ public partial class AliyunStorageService : IStreamingStorageService, IListableS
 
         var key = PrepareKey(path);
 
-        using (var seekableContent = new MemoryStream())
+        // A temporary file, not a MemoryStream: a large package is never held in managed memory.
+        using (var seekableContent = await StreamingStreams.SpoolAsync(content, cancellationToken).ConfigureAwait(false))
         {
-            await content.CopyToAsync(seekableContent, DefaultCopyBufferSize, cancellationToken);
-
             // Storing the same content twice is not a failure, storing different content
             // at a taken key is. OSS does signal the latter itself, through the
             // "x-oss-forbid-overwrite" request header and a 409 "FileAlreadyExists"

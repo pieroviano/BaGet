@@ -86,7 +86,10 @@ public static class AwsApplicationExtensions
         string roleSessionName)
     {
         var assumedCredentials = new AssumeRoleAWSCredentials(credentials, roleArn, roleSessionName);
-        var immutableCredentials = await credentials.GetCredentialsAsync();
+
+        // The check is on the assumed credentials (temporary ones always carry a session token), not on the base credentials:
+        // long-term IAM user keys, the usual base for assuming a role, have none.
+        var immutableCredentials = await assumedCredentials.GetCredentialsAsync();
 
         if (string.IsNullOrWhiteSpace(immutableCredentials.Token))
         {

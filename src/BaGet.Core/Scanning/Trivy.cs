@@ -153,7 +153,25 @@ public sealed class ProcessTrivyRunner : ITrivyRunner
             var error = ReadCappedAsync(process.StandardError, timeout.Token);
             try
             {
-                await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+                // A reader that hits the output cap stops draining the pipe and the child would block on it until the timeout:
+                // watch the readers too and kill the process as soon as one fails.
+                var exited = process.WaitForExitAsync(timeout.Token);
+                // Task.WhenAll would wait for the other reader too, which never ends while the child blocks on the full pipe.
+                var pending = new List<Task> { exited, output, error };
+                while (!exited.IsCompleted)
+                {
+                    var done = await Task.WhenAny(pending).ConfigureAwait(false);
+                    if (done == exited) break;
+                    await done.ConfigureAwait(false);
+                    pending.Remove(done);
+                }
+
+                await exited.ConfigureAwait(false);
+            }
+            catch (ScanUnavailableException)
+            {
+                try { process.Kill(entireProcessTree: true); } catch (Exception) { /* already gone */ }
+                throw;
             }
             catch (OperationCanceledException)
             {

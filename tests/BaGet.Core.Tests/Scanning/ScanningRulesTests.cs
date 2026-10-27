@@ -1,6 +1,9 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -92,6 +95,10 @@ public class ScanningRulesTests
     [InlineData("Maven", "1.0-sp1", "1.0", 1)]
     [InlineData("Maven", "1.0.Final", "1.0", 0)]
     [InlineData("Maven", "2.9.10.1", "2.9.10", 1)]
+    [InlineData("Maven", "2.0-jre", "2.0", 1)]
+    [InlineData("Maven", "2.0-android", "2.0-jre", -1)]
+    [InlineData("Maven", "2.0-jre", "2.0-sp", 1)]
+    [InlineData("Maven", "1.0.١", "1.0", 1)]
     public void VersionsAreOrderedTheWayTheirEcosystemOrdersThem(string ecosystem, string left, string right, int expected)
     {
         Assert.Equal(expected, Math.Sign(OsvVersions.Compare(ecosystem, left, right)));
@@ -416,5 +423,30 @@ public class ScanningRulesTests
 
         await Assert.ThrowsAsync<ScanUnavailableException>(
             () => source.QueryAsync(new[] { new ScanComponent("npm", "x", "1.0.0") }, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task AConnectionDroppedWhileTheBodyIsReadIsReportedAsAnUnavailableSource()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var server = Task.Run(async () =>
+        {
+            using var client = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+            var stream = client.GetStream();
+            var buffer = new byte[4096];
+            _ = await stream.ReadAsync(buffer, TestContext.Current.CancellationToken);
+            var head = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 1000\r\n\r\n{\"results\":[");
+            await stream.WriteAsync(head);
+            await stream.FlushAsync();
+            client.Client.LingerState = new LingerOption(true, 0);
+        }, TestContext.Current.CancellationToken);
+
+        var source = new OsvVulnerabilitySource(new Options(new ScanningOptions { OsvUrl = "http://127.0.0.1:" + port }), new OsvState());
+
+        await Assert.ThrowsAsync<ScanUnavailableException>(
+            () => source.QueryAsync(new[] { new ScanComponent("npm", "x", "1.0.0") }, TestContext.Current.CancellationToken));
+        await server;
     }
 }

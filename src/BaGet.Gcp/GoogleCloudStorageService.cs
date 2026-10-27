@@ -36,12 +36,34 @@ public partial class GoogleCloudStorageService : IStreamingStorageService, IList
 
     public async Task<Stream> GetAsync(string path, CancellationToken cancellationToken = default)
     {
-        using (var storage = await CreateClientAsync())
+        // Spooled to a temporary file (deleted on dispose), not to a MemoryStream: the object is never held in managed memory.
+        using (var storage = await CreateClientAsync().ConfigureAwait(false))
         {
-            var stream = new MemoryStream();
-            await storage.DownloadObjectAsync(_bucketName, CoercePath(path), stream, cancellationToken: cancellationToken);
-            stream.Position = 0;
-            return stream;
+            var file = new FileStream(
+                Path.Combine(Path.GetTempPath(), "baget-gcs-" + Guid.NewGuid().ToString("N")),
+                FileMode.CreateNew,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                81920,
+                FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+            try
+            {
+                await storage.DownloadObjectAsync(_bucketName, CoercePath(path), file, cancellationToken: cancellationToken).ConfigureAwait(false);
+                file.Position = 0;
+                return file;
+            }
+            catch (GoogleApiException e) when (e.HttpStatusCode == HttpStatusCode.NotFound)
+            {
+                await file.DisposeAsync().ConfigureAwait(false);
+
+                // The one "missing content" exception of IStorageService.GetAsync, as FileStorageService throws.
+                throw new FileNotFoundException("The object '" + path + "' does not exist.", path, e);
+            }
+            catch
+            {
+                await file.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
         }
     }
 
@@ -53,11 +75,10 @@ public partial class GoogleCloudStorageService : IStreamingStorageService, IList
 
     public async Task<StoragePutResult> PutAsync(string path, Stream content, string contentType, CancellationToken cancellationToken = default)
     {
-        using (var storage = await CreateClientAsync())
-        using (var seekableContent = new MemoryStream())
+        using (var storage = await CreateClientAsync().ConfigureAwait(false))
+        // A temporary file, not a MemoryStream: a large package is never held in managed memory.
+        using (var seekableContent = await StreamingStreams.SpoolAsync(content, cancellationToken).ConfigureAwait(false))
         {
-            await content.CopyToAsync(seekableContent, 65536, cancellationToken);
-            seekableContent.Position = 0;
 
             var objectName = CoercePath(path);
 

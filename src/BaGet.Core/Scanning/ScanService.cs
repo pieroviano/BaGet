@@ -108,6 +108,16 @@ public sealed class ScanService : IScanService
     }
 
     /// <inheritdoc/>
+    public async Task ForgetAsync(string name, string version, CancellationToken cancellationToken)
+    {
+        if (_context is NullContext) return;
+        var key = Normalize(name, version);
+        if (key == null) return;
+
+        await RemoveAsync(key.Value.Name, key.Value.Version, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
     public async Task<ScanResult?> ScanAsync(string name, string version, CancellationToken cancellationToken)
     {
         _gate.ThrowIfClosed();
@@ -214,7 +224,32 @@ public sealed class ScanService : IScanService
                 }
             }
 
-            var result = await ScanAsync(artifact.Name, artifact.Version, cancellationToken).ConfigureAwait(false);
+            ScanResult? result;
+            try
+            {
+                result = await ScanAsync(artifact.Name, artifact.Version, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e) when (e is not OperationCanceledException && e is not MaintenanceException)
+            {
+                // One bad artifact must not end the sweep of the repository (the artifacts after it would never be rescanned):
+                // record the failure on it and go on.
+                _logger.LogWarning(e, "Scan of {Name} {Version} in {Repository} failed", artifact.Name, artifact.Version, Repository.Name);
+                result = null;
+
+                // A save that failed half way leaves its entities tracked; they would fail every later save of the sweep.
+                (_context as Microsoft.EntityFrameworkCore.DbContext)?.ChangeTracker.Clear();
+                try
+                {
+                    await StoreFailureAsync(key.Value.Name, key.Value.Version, "scan", e.GetType().Name + ": " + e.Message, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception inner) when (inner is not OperationCanceledException && inner is not MaintenanceException)
+                {
+                    _logger.LogWarning(inner, "The failure of {Name} {Version} could not be recorded", artifact.Name, artifact.Version);
+                }
+
+                failed++;
+            }
+
             if (result == null) continue;
             if (result.Error != null && result.ScannedAt == null) failed++;
             else

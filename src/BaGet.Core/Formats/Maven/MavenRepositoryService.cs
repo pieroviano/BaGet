@@ -810,10 +810,13 @@ public class MavenRepositoryService : IMavenRepository
             await PruneSnapshotsAsync(coordinate, versionRow!.Key, settings.MaxSnapshotBuilds, cancellationToken).ConfigureAwait(false);
         }
 
-        _scanGate?.RequestScan(name, version);
+        if (_scanGate != null) await _scanGate.RegisterStoredAsync(name, version, cancellationToken, contentChanged: IsScannedFile(parts)).ConfigureAwait(false);
 
         return MavenResult.Created($"Deployed {fileName}.", name);
     }
+
+    /// <summary>The scan reads only the main POM, so any other file of the version says nothing new to the scanner.</summary>
+    private static bool IsScannedFile(MavenFileParts parts) => parts.Classifier == null && parts.Extension == "pom";
 
     private static string? Cut(string? value, int length)
         => string.IsNullOrWhiteSpace(value) ? null : value.Length <= length ? value : value.Substring(0, length);
@@ -994,7 +997,7 @@ public class MavenRepositoryService : IMavenRepository
                 artifact.Modified = now;
                 await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-                _scanGate?.RequestScan(coordinate.Name, version);
+                if (_scanGate != null) await _scanGate.RegisterStoredAsync(coordinate.Name, version, cancellationToken, contentChanged: IsScannedFile(parts)).ConfigureAwait(false);
 
                 return;
             }

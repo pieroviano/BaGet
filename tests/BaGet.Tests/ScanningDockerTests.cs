@@ -131,6 +131,41 @@ public class ScanningDockerTests
     }
 
     [Fact]
+    public async Task ABlockDownloadPolicyOfAPrivateMemberStillRefusesAPullThroughAVirtualRepositoryWithARegistryToken()
+    {
+        var (harness, trivy) = await StartAsync();
+        await using var _ = harness;
+        await harness.App.CreateDockerRepositoryAsync("secret", anonymousRead: false, cancellationToken: TestContext.Current.CancellationToken);
+        using (var scope = harness.App.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>().CreateAsync(
+                "all",
+                new VirtualRepositorySettings { Members = new List<string> { "secret" } },
+                TestContext.Current.CancellationToken,
+                actor: null,
+                anonymousRead: true,
+                RepositoryFormat.Docker);
+        }
+
+        trivy.Hits.Add(Hit("CVE-2024-0009", Critical));
+        var vulnerable = OciTestImage.Create("hidden");
+        (await PushImageAsync(harness, "secret/app", "latest", vulnerable)).Dispose();
+        await harness.ScanAsync("secret", "app", vulnerable.ManifestDigest);
+        await harness.SetPolicyAsync("secret", blockDownload: High);
+
+        // docker login with the key: the token (not the key) reaches the private member through the virtual repository.
+        using var tokenResponse = await SendAsync(harness, HttpMethod.Get, "/v2/token?service=BaGet&scope=" + Uri.EscapeDataString("repository:all/app:pull"));
+        Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
+        using var json = JsonDocument.Parse(await TextAsync(tokenResponse));
+        using var pull = new HttpRequestMessage(HttpMethod.Get, "/v2/all/app/manifests/latest");
+        pull.Headers.Authorization = new AuthenticationHeaderValue("Bearer", json.RootElement.GetProperty("token").GetString());
+
+        using var response = await harness.Client.SendAsync(pull, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task AnImageWithoutFindingsAboveTheThresholdIsPulledAsUsual()
     {
         var (harness, trivy) = await StartAsync();
@@ -215,22 +250,24 @@ public class ScanningDockerTests
     }
 
     [Fact]
-    public async Task OnlyImageManifestsAreScannedNotIndexesOrArtifactsThatRefer()
+    public async Task OnlyImageManifestsAreScannedNotIndexesOrArtifactsWithAForeignConfig()
     {
         var (harness, trivy) = await StartAsync();
         await using var _ = harness;
         var image = OciTestImage.Create("platform");
         (await PushImageAsync(harness, "libs/app", "latest", image)).Dispose();
-        var signature = OciTestImage.Create("signature", subject: image.ManifestDigest, artifactType: "application/vnd.dev.cosign.artifact.sig.v1+json");
-        (await PushImageAsync(harness, "libs/app", "sig", signature)).Dispose();
+        // artifactType and subject are self-declared and ignored by runtimes: such a manifest with an image config is still an image.
+        var disguised = OciTestImage.Create("disguised", subject: image.ManifestDigest, artifactType: "application/x-foo");
+        (await PushImageAsync(harness, "libs/app", "disguised", disguised)).Dispose();
 
         var artifacts = await harness.RunAsync("libs", sp => sp.GetFormatService<IFormatScanner>(RepositoryFormat.Docker)!.ListArtifactsAsync(TestContext.Current.CancellationToken));
 
-        Assert.Equal(new[] { image.ManifestDigest }, artifacts.Select(a => a.Version).ToArray());
-        Assert.True(DockerFormatScanner.IsImage(OciTestImage.ManifestType, OciTestImage.ConfigType, null));
-        Assert.False(DockerFormatScanner.IsImage(OciTestImage.IndexType, null, null));
-        Assert.False(DockerFormatScanner.IsImage(OciTestImage.ManifestType, "application/vnd.dev.cosign.artifact.sig.v1+json", null));
-        Assert.False(DockerFormatScanner.IsImage(OciTestImage.ManifestType, OciTestImage.ConfigType, "sha256:abc"));
+        Assert.Equal(new[] { image.ManifestDigest, disguised.ManifestDigest }.OrderBy(d => d), artifacts.Select(a => a.Version).OrderBy(d => d));
+        const string Config = "{\"config\":{\"mediaType\":\"{0}\"}}";
+        Assert.True(DockerFormatScanner.IsImage(OciTestImage.ManifestType, Config.Replace("{0}", OciTestImage.ConfigType)));
+        Assert.False(DockerFormatScanner.IsImage(OciTestImage.IndexType, "{\"manifests\":[]}"));
+        Assert.False(DockerFormatScanner.IsImage(OciTestImage.ManifestType, Config.Replace("{0}", "application/vnd.dev.cosign.artifact.sig.v1+json")));
+        Assert.False(DockerFormatScanner.IsImage(OciTestImage.ManifestType, "not json"));
     }
 
     [Fact]
@@ -253,13 +290,37 @@ public class ScanningDockerTests
         await using var _ = harness;
         var image = OciTestImage.Create("signed");
         (await PushImageAsync(harness, "libs/app", "latest", image)).Dispose();
-        var signature = OciTestImage.Create("sig", subject: image.ManifestDigest, artifactType: "application/vnd.dev.cosign.artifact.sig.v1+json");
+        var signature = OciTestImage.Create("sig", subject: image.ManifestDigest, artifactType: "application/vnd.dev.cosign.artifact.sig.v1+json", configType: "application/vnd.dev.cosign.artifact.sig.v1+json");
         (await PushImageAsync(harness, "libs/app", "sig", signature)).Dispose();
         await harness.SetPolicyAsync("libs", blockUnscanned: true);
 
         using var pull = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/" + signature.ManifestDigest);
 
         Assert.Equal(HttpStatusCode.OK, pull.StatusCode);
+    }
+
+    [Fact]
+    public async Task AnImageThatDeclaresAnArtifactTypeAndASubjectIsStillJudgedOnPushAndOnPull()
+    {
+        var (harness, trivy) = await StartAsync();
+        await using var _ = harness;
+        var anchor = OciTestImage.Create("anchor");
+        (await PushImageAsync(harness, "libs/app", "latest", anchor)).Dispose();
+        var disguised = OciTestImage.Create("disguised-pull", subject: anchor.ManifestDigest, artifactType: "application/x-foo");
+        (await PushImageAsync(harness, "libs/app", "disguised", disguised)).Dispose();
+        await harness.SetPolicyAsync("libs", blockUnscanned: true);
+
+        using var pull = await SendAsync(harness, HttpMethod.Get, "/v2/libs/app/manifests/" + disguised.ManifestDigest);
+
+        Assert.Equal(HttpStatusCode.Forbidden, pull.StatusCode);
+
+        trivy.Hits.Add(Hit("CVE-2024-0011", Critical));
+        await harness.SetPolicyAsync("libs", blockDeploy: High);
+        var bad = OciTestImage.Create("disguised-push", subject: anchor.ManifestDigest, artifactType: "application/x-foo");
+
+        using var put = await PushImageAsync(harness, "libs/app", "bad", bad);
+
+        Assert.Equal(HttpStatusCode.Forbidden, put.StatusCode);
     }
 
     [Fact]
