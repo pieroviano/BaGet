@@ -65,7 +65,7 @@ Keep `SettingsOverridesPath` and the log path inside the mounted volume, or a re
 2. Publish the host (`dotnet publish` generates `web.config`) and copy it to the site folder.
 3. Create an application pool: no managed code, integrated pipeline.
 4. Create a site on that pool with your host name and port (the Kestrel endpoint is not used in-process).
-5. Grant the pool identity write access to the folder if the app cannot persist its state ([IIS proxy](installation/iis-proxy.md)): the data protection key ring is written to `DataProtection-Keys` beside the overrides file (set `DataProtection:KeyPath` for another folder), so a pool without a loaded user profile no longer loses its keys.
+5. Grant the pool identity write access to the folder (required: startup stops if the key folder cannot be written; [IIS proxy](installation/iis-proxy.md)): the data protection key ring is written to `DataProtection-Keys` beside the overrides file (set `DataProtection:KeyPath` for another folder), so a pool without a loaded user profile no longer loses its keys.
 
 ## 6. Choose a database, storage and search
 

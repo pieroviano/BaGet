@@ -135,6 +135,18 @@ public class HostHardeningTests : IDisposable
     }
 
     [Fact]
+    public void AKeyFolderThatCannotBeWrittenStopsStartupWithAMessageNamingTheSetting()
+    {
+        var file = Path.Combine(_directory, "not-a-folder");
+        File.WriteAllText(file, "x");
+
+        var e = Assert.Throws<InvalidOperationException>(() => HostDataProtectionExtensions.EnsureWritable(Path.Combine(file, "keys")));
+
+        Assert.Contains("DataProtection:KeyPath", e.Message);
+        HostDataProtectionExtensions.EnsureWritable(Path.Combine(_directory, "keys"));
+    }
+
+    [Fact]
     public async Task InvalidConfigurationExitsWithOne()
     {
         await using var app = Build("Database:Type=NoSuchDatabase");

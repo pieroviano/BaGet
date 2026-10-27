@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using BaGet.Core;
 using Microsoft.AspNetCore.DataProtection;
@@ -26,9 +27,32 @@ internal static class HostDataProtectionExtensions
         var keyPath = configuration.GetSection(nameof(BaGetOptions.DataProtection)).Get<DataProtectionKeyOptions>()?.KeyPath;
         var folder = ResolveKeyFolder(keyPath, overridesPath);
 
-        services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(folder));
+        EnsureWritable(folder);
+
+        var builder = services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(folder));
+
+        // On Windows the framework default encrypted the keys at rest with DPAPI; keep that (machine scope: an IIS pool identity may have no
+        // loaded user profile). Elsewhere the keys are plain XML, so the folder must be protected by the file system (see docs/configuration.md).
+        if (OperatingSystem.IsWindows()) builder.ProtectKeysWithDpapi(protectToLocalMachine: true);
 
         return services;
+    }
+
+    /// <summary>Stops startup with a clear message when the key folder cannot be created or written, instead of failing every protect call later.</summary>
+    internal static void EnsureWritable(string folder)
+    {
+        try
+        {
+            Directory.CreateDirectory(folder);
+            var probe = Path.Combine(folder, $".write-test-{Guid.NewGuid():N}");
+            File.WriteAllText(probe, string.Empty);
+            File.Delete(probe);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            throw new InvalidOperationException(
+                $"The data protection key folder '{folder}' cannot be written ({e.Message}). Grant the application write access to it or set DataProtection:KeyPath to a writable folder.", e);
+        }
     }
 
     /// <summary>The absolute key folder: <paramref name="keyPath"/> (relative to the overrides file's folder), else the default beside the file.</summary>

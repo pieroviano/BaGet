@@ -44,10 +44,10 @@ forwarded headers are ignored: the client address is the proxy's and an `https` 
 
 The key ring encrypts remote repository passwords, replication peer keys, sessions, antiforgery and registry tokens and
 reset/confirmation links. A single node keeps it in `DataProtection:KeyPath` (default: a `DataProtection-Keys` folder beside the
-[overrides file](#settings-page); a relative path starts at that file's folder), as plain XML files: treat the folder like the
+[overrides file](#settings-page); a relative path starts at that file's folder), as XML files, encrypted with DPAPI (machine scope) on Windows and **plain XML elsewhere**: treat the folder like the
 database and **keep it on a persistent volume** (in Docker it is inside `/var/baget` when `SettingsOverridesPath` is). Losing it
 makes stored passwords unreadable (remote upstreams are then called anonymously) and signs everyone out. In a cluster
-(`Ha:Enabled`) the keys are in the database and this key is ignored. Restart required; not on the Settings page.
+(`Ha:Enabled`) the keys are in the database and this key is ignored. The folder must be writable: startup stops with a message naming `DataProtection:KeyPath` otherwise. Restart required; not on the Settings page.
 
 ## Exit codes
 
@@ -259,7 +259,7 @@ where an upload cannot work: read-only mode, a closed maintenance gate, or accou
 | Operating note | |
 | --- | --- |
 | Temporary space | Each upload is spooled to `ASPNETCORE_TEMP` (else the system temporary directory) before it is staged, so a browser upload needs free space there equal to the package's size, on top of the staged copy. |
-| Size ceiling | About 2 GB on the upload and push endpoints, which carry `[UploadSizeLimit]` (the NuGet and symbol push, the NuGet, npm and Maven upload screens and their `/api/ui` twins); every other form is limited to 1 MiB (`FormOptions.MultipartBodyLengthLimit`, since antiforgery validation buffers the whole form of any POST, anonymous ones included). Beyond it the request is rejected with a bare `400` before the page runs, so the page cannot explain it. Under IIS in-process, `IISServerOptions.MaxRequestBodySize` caps uploads at 250 MB and `requestLimits/maxAllowedContentLength` in `web.config` at 30 MB - the ceilings the push endpoint already has. |
+| Size ceiling | No multipart limit of its own on the upload and push endpoints, which carry `[UploadSizeLimit]` (the NuGet and symbol push, the NuGet, npm and Maven upload screens and their `/api/ui` twins); every other form is limited to 1 MiB (`FormOptions.MultipartBodyLengthLimit`, since antiforgery validation buffers the whole form of any POST, anonymous ones included). Beyond it the request is rejected with a bare `400` before the page runs, so the page cannot explain it. Under IIS in-process, `IISServerOptions.MaxRequestBodySize` caps uploads at 250 MB and `requestLimits/maxAllowedContentLength` in `web.config` at 30 MB - the ceilings the push endpoint already has. |
 | Unconfirmed uploads | Staged under `staging/` in the configured store, and removed when the preview is confirmed or discarded. Whatever nobody comes back to is swept after 24 hours - on `FileSystem` and `Null` storage; the cloud providers cannot list a prefix yet, so abandoned uploads there accumulate. |
 | `Storage:Path` | Do not point it at the web root: static files would then serve the store, `staging/` and `validation/` included. That is a pre-existing misconfiguration rather than something uploads introduce. |
 
