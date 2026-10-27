@@ -143,7 +143,7 @@ public sealed class AccountOverviewUseCase
         var access = _services.GetRequiredService<IRepositoryAccess>();
         var scopes = _services.GetRequiredService<IServiceScopeFactory>();
         var userId = _users.GetUserId(caller);
-        var groups = new List<PackagesModel.RepositoryPackages>();
+        var groups = new List<RepositoryPackages>();
 
         foreach (var repository in await access.ReadableAsync(caller, cancellationToken))
         {
@@ -162,17 +162,17 @@ public sealed class AccountOverviewUseCase
 
             if (repository.Format == RepositoryFormat.Npm)
             {
-                groups.Add(new PackagesModel.RepositoryPackages(repository, await PackagesModel.SummariseNpmAsync(scope.ServiceProvider.GetRequiredService<INpmRegistry>(), ids, cancellationToken)));
+                groups.Add(new RepositoryPackages(repository, await PackagesModel.SummariseNpmAsync(scope.ServiceProvider.GetRequiredService<INpmRegistry>(), ids, cancellationToken)));
                 continue;
             }
 
             if (repository.Format == RepositoryFormat.Maven)
             {
-                groups.Add(new PackagesModel.RepositoryPackages(repository, await PackagesModel.SummariseMavenAsync(scope.ServiceProvider.GetRequiredService<IMavenRepository>(), ids, cancellationToken)));
+                groups.Add(new RepositoryPackages(repository, await PackagesModel.SummariseMavenAsync(scope.ServiceProvider.GetRequiredService<IMavenRepository>(), ids, cancellationToken)));
                 continue;
             }
 
-            groups.Add(new PackagesModel.RepositoryPackages(
+            groups.Add(new RepositoryPackages(
                 repository,
                 PackagesModel.Summarise(ids, await PackagesModel.ListVersionsAsync(
                     scope.ServiceProvider.GetRequiredService<IContext>(), ids, cancellationToken))));

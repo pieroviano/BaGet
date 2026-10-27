@@ -20,7 +20,7 @@ namespace BaGet.Web.V3;
 internal sealed class UiActionMap
 {
     private readonly IActionDescriptorCollectionProvider _actions;
-    private Snapshot? _snapshot;
+    private UiActionMapSnapshot? _snapshot;
 
     public UiActionMap(IActionDescriptorCollectionProvider actions)
     {
@@ -49,7 +49,7 @@ internal sealed class UiActionMap
     public bool IsRepositoryAction(string controller, string action)
         => Current().RepositoryActions.Contains(controller + "/" + action);
 
-    private Snapshot Current()
+    private UiActionMapSnapshot Current()
     {
         var collection = _actions.ActionDescriptors;
         var snapshot = Volatile.Read(ref _snapshot);
@@ -82,7 +82,7 @@ internal sealed class UiActionMap
             if (!legacy.TryGetValue(name, out var existing) || rank < existing.Rank) legacy[name] = (action, rank);
         }
 
-        snapshot = new Snapshot(
+        snapshot = new UiActionMapSnapshot(
             collection.Version,
             razorPages,
             legacy.ToDictionary(p => p.Key, p => (p.Value.Descriptor.ControllerName, p.Value.Descriptor.ActionName), StringComparer.OrdinalIgnoreCase),
@@ -102,11 +102,4 @@ internal sealed class UiActionMap
 
         return isGet ? (handler == null ? 0 : 1) : 2;
     }
-
-    private sealed record Snapshot(
-        int Version,
-        HashSet<string> RazorPages,
-        Dictionary<string, (string Controller, string Action)> LegacyPages,
-        HashSet<string> RepositoryLegacyPages,
-        HashSet<string> RepositoryActions);
 }

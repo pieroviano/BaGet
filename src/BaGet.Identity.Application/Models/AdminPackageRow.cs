@@ -8,6 +8,6 @@ namespace BaGet.Identity.Application.Models;
 /// <param name="Owners">The names of its owners; empty for an ownerless ID.</param>
 /// <param name="RepositoryName">The repository the ID is in; ownership and versions are per repository.</param>
 public record AdminPackageRow(
-    PackagesModel.OwnedPackage Package,
+    OwnedPackage Package,
     IReadOnlyList<string> Owners,
     string RepositoryName = Repository.DefaultName);

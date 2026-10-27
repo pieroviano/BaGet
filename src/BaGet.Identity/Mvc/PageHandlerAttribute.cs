@@ -40,7 +40,7 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
     /// <summary>The route value and query string key that names the handler.</summary>
     public const string HandlerKey = "handler";
 
-    private static readonly ConcurrentDictionary<Type, IReadOnlyList<NamedHandler>> Siblings = new();
+    private static readonly ConcurrentDictionary<Type, IReadOnlyList<NamedPageHandler>> Siblings = new();
     private static readonly ConcurrentDictionary<MethodInfo, string> Pages = new();
 
     /// <param name="name">The handler name (<c>?handler=name</c>), or null for the default handler.</param>
@@ -103,16 +103,16 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
                       && (h.Verbs.Count == 0 || h.Verbs.Contains(verb, StringComparer.OrdinalIgnoreCase)));
     }
 
-    private static IReadOnlyList<NamedHandler> NamedHandlersOf(Type controller)
+    private static IReadOnlyList<NamedPageHandler> NamedHandlersOf(Type controller)
     {
-        var result = new List<NamedHandler>();
+        var result = new List<NamedPageHandler>();
         foreach (var method in controller.GetMethods(BindingFlags.Public | BindingFlags.Instance))
         {
             var handler = method.GetCustomAttribute<PageHandlerAttribute>();
             if (handler?.Name == null) continue;
 
             var verbs = method.GetCustomAttributes<HttpMethodAttribute>(inherit: true).SelectMany(a => a.HttpMethods).ToList();
-            result.Add(new NamedHandler(handler.Name, verbs, PageOf(method)));
+            result.Add(new NamedPageHandler(handler.Name, verbs, PageOf(method)));
         }
 
         return result;
@@ -130,6 +130,4 @@ public sealed class PageHandlerAttribute : ActionMethodSelectorAttribute
                      ?? m.DeclaringType?.GetCustomAttribute<LegacyPageAttribute>(inherit: true);
         return legacy?.PageName ?? string.Empty;
     });
-
-    private sealed record NamedHandler(string Name, IReadOnlyList<string> Verbs, string Page);
 }

@@ -168,23 +168,13 @@ public sealed class AdminOrganizationsUseCase : AdminUseCaseBase
     private void Log(BaGetUser admin, string template, string? oldValue, string? newValue)
         => _logger.LogWarning("{Admin} " + template, admin.UserName, oldValue, newValue);
 
-    /// <summary>What a change decided: the (possibly new) name of the organization and the message or error to show.</summary>
-    private sealed class Outcome
-    {
-        public string? Name { get; set; }
-
-        public string? Message { get; set; }
-
-        public string? Error { get; set; }
-    }
-
     // Refuse during maintenance, confirm the password, run the change, then show the (possibly renamed) screen.
     private async Task<ScreenResult<OrganizationDetailViewModel>> ActAsync(
         ClaimsPrincipal caller,
         string? name,
         string? password,
         CancellationToken cancellationToken,
-        Func<BaGetUser, Outcome, Task> change)
+        Func<BaGetUser, OrganizationChangeOutcome, Task> change)
     {
         ThrowIfClosed();
 
@@ -193,7 +183,7 @@ public sealed class AdminOrganizationsUseCase : AdminUseCaseBase
 
         if (await _ownership.FindOrganizationAsync(name, cancellationToken) == null) return ScreenResult<OrganizationDetailViewModel>.NotFound();
 
-        var outcome = new Outcome { Name = name };
+        var outcome = new OrganizationChangeOutcome { Name = name };
         if (!await Confirmation.IsConfirmedAsync(current, password))
         {
             outcome.Error = NotConfirmed;

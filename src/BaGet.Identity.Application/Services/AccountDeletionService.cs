@@ -380,9 +380,7 @@ public class AccountDeletionService
         if (_context is DbContext context) context.ChangeTracker.Clear();
     }
 
-    private sealed record Membership(int Key, string? Name, bool IsLastAdmin, int OtherMembers);
-
-    private async Task<IReadOnlyList<Membership>> OrganizationsToLeaveAsync(BaGetUser? user, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<OrganizationMembership>> OrganizationsToLeaveAsync(BaGetUser? user, CancellationToken cancellationToken)
     {
         #pragma warning disable CS8602, CS8604
         var mine = await _context.OrganizationMembers
@@ -392,7 +390,7 @@ public class AccountDeletionService
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8602, CS8604
 
-        var result = new List<Membership>();
+        var result = new List<OrganizationMembership>();
         foreach (var membership in mine)
         {
             #pragma warning disable CS8602
@@ -403,7 +401,7 @@ public class AccountDeletionService
                 .ToListAsync(cancellationToken);
             #pragma warning restore CS8602
 
-            result.Add(new Membership(
+            result.Add(new OrganizationMembership(
                 membership.OrganizationKey.GetValueOrDefault(),
                 membership.Name,
                 membership.IsAdmin && !others.Any(isAdmin => isAdmin),

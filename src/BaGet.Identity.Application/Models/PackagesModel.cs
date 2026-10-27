@@ -140,44 +140,4 @@ public static class PackagesModel
 
         return owned;
     }
-
-    /// <summary>
-    /// The columns the summary needs, and nothing else.
-    /// </summary>
-    internal class OwnedVersion
-    {
-        public string? Id { get; set; }
-
-        public string? NormalizedVersion { get; set; }
-
-        public string? OriginalVersion { get; set; }
-
-        public bool Listed { get; set; }
-
-        public long Downloads { get; set; }
-    }
-
-    /// <summary>
-    /// The packages the user owns in one repository.
-    /// </summary>
-    public sealed record RepositoryPackages(RepositoryInfo Repository, IReadOnlyList<OwnedPackage> Packages);
-
-    /// <summary>
-    /// One owned package ID, summarised across its versions.
-    /// </summary>
-    public class OwnedPackage
-    {
-        public string? Id { get; set; }
-
-        /// <summary>
-        /// The highest version, listed or not, or null when no version remains.
-        /// </summary>
-        public string? LatestVersion { get; set; }
-
-        public bool LatestVersionIsListed { get; set; }
-
-        public int VersionCount { get; set; }
-
-        public long Downloads { get; set; }
-    }
 }
