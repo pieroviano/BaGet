@@ -48,6 +48,12 @@ public static class RemoteAddressPolicy
 
         if (address.AddressFamily == AddressFamily.InterNetworkV6)
         {
+            // IPv6 forms that carry an IPv4 address are judged by the address they carry: IPv4-compatible ::a.b.c.d,
+            // NAT64 64:ff9b::/96 and 6to4 2002::/16. Local-use NAT64 64:ff9b:1::/48 is refused whole.
+            var embedded = EmbeddedIPv4(bytes);
+            if (embedded != null) return IsBlocked(embedded);
+            if (bytes[0] == 0x00 && bytes[1] == 0x64 && bytes[2] == 0xff && bytes[3] == 0x9b && bytes[4] == 0x00 && bytes[5] == 0x01) return true;
+
             return address.IsIPv6LinkLocal
                 || address.IsIPv6SiteLocal
                 || address.IsIPv6Multicast
@@ -55,6 +61,29 @@ public static class RemoteAddressPolicy
         }
 
         return true;
+    }
+
+    private static IPAddress? EmbeddedIPv4(byte[] v6)
+    {
+        var tail = new byte[4];
+        if (v6.Take(12).All(b => b == 0) && !(v6[12] == 0 && v6[13] == 0 && v6[14] == 0 && v6[15] <= 1))
+        {
+            Array.Copy(v6, 12, tail, 0, 4);                                   // ::a.b.c.d (:: and ::1 are judged as IPv6)
+        }
+        else if (v6[0] == 0x00 && v6[1] == 0x64 && v6[2] == 0xff && v6[3] == 0x9b && v6.Skip(4).Take(8).All(b => b == 0))
+        {
+            Array.Copy(v6, 12, tail, 0, 4);                                   // 64:ff9b::/96
+        }
+        else if (v6[0] == 0x20 && v6[1] == 0x02)
+        {
+            Array.Copy(v6, 2, tail, 0, 4);                                    // 2002::/16, the IPv4 address follows the prefix
+        }
+        else
+        {
+            return null;
+        }
+
+        return new IPAddress(tail);
     }
 
     /// <summary>

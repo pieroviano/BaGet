@@ -83,8 +83,12 @@ public sealed class AccountSettingsUseCase
 
             // Adding the first password to an external-only account would turn a stolen
             // session into a password for it, so it needs the same fresh proof.
+            // The current password goes through the same check as every confirmation (lockout first, a wrong one counted), so this
+            // form cannot be used to guess it without limit.
             var result = hasPassword
-                ? await _users.ChangePasswordAsync(user, form!.CurrentPassword ?? string.Empty, newPassword)
+                ? await AccountConfirmation.IsConfirmedAsync(_users, Http, user, form!.CurrentPassword)
+                    ? await _users.ChangePasswordAsync(user, form.CurrentPassword ?? string.Empty, newPassword)
+                    : IdentityResult.Failed(new IdentityError { Code = "PasswordMismatch", Description = "Incorrect password." })
                 : await AccountConfirmation.HasReauthenticatedRecentlyAsync(Http)
                     ? await _users.AddPasswordAsync(user, newPassword)
                     : IdentityResult.Failed(new IdentityError { Description = "Sign in again with your provider first, then set the password." });

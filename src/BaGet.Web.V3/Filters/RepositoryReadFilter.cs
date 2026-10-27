@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Frontend.Security;
@@ -40,6 +41,15 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         var evaluator = services.GetRequiredService<IAccessEvaluator>();
         var repository = services.GetRequiredService<IRepositoryContext>().Current;
         var packageId = context.RouteData.Values.TryGetValue("id", out var id) ? id as string : null;
+        if (packageId == null && http.Request.Query.TryGetValue("id", out var queryId) && !string.IsNullOrWhiteSpace(queryId.FirstOrDefault()))
+        {
+            // V2 FindPackagesById()/Packages() and v3/autocomplete name the package in the query string. MVC binds the FIRST value of a
+            // repeated key, so that is the one judged (ToString() would join them and match no exclusion).
+            packageId = queryId.FirstOrDefault();
+        }
+
+        packageId = UnquoteLiteral(packageId);
+        if (string.IsNullOrEmpty(packageId)) packageId = null;
         Func<Task<string?>>? resolveName = null;
         if (route.Format == RepositoryFormat.Npm)
         {
@@ -116,5 +126,19 @@ public class RepositoryReadFilter : IAsyncResourceFilter
         {
             context.Result = new NotFoundResult();
         }
+    }
+
+    /// <summary>
+    /// The V2 feed names a package as an OData string literal (<c>Id='X'</c>); the access patterns must see the bare id,
+    /// whatever form the client wrote.
+    /// </summary>
+    internal static string? UnquoteLiteral(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+
+        var trimmed = value!.Trim();
+        return trimmed.Length >= 2 && trimmed[0] == '\'' && trimmed[trimmed.Length - 1] == '\''
+            ? trimmed.Substring(1, trimmed.Length - 2).Replace("''", "'")
+            : trimmed;
     }
 }

@@ -188,6 +188,13 @@ public class RemoteUpstreamSecurityTests
     [InlineData("::", true)]
     [InlineData("fc00::1", true)]
     [InlineData("::ffff:127.0.0.1", true)]
+    [InlineData("64:ff9b::a9fe:a9fe", true)]
+    [InlineData("64:ff9b::808:808", false)]
+    [InlineData("64:ff9b:1::1", true)]
+    [InlineData("2002:a9fe:a9fe::1", true)]
+    [InlineData("2002:808:808::1", false)]
+    [InlineData("::169.254.169.254", true)]
+    [InlineData("::8.8.8.8", false)]
     public void AddressClassification(string address, bool blocked)
         => Assert.Equal(blocked, RemoteAddressPolicy.IsBlocked(IPAddress.Parse(address)));
 

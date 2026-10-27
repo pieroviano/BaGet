@@ -92,10 +92,11 @@ public sealed class PackageManageUseCase
     {
         var isOwner = await _services.Ownership.IsOwnerAsync(_services.Users.GetUserId(caller), caller.Identity?.Name, id, cancellationToken).ConfigureAwait(false);
         _isAdministrator = await _services.Administrators.IsAdministratorAsync(caller, cancellationToken).ConfigureAwait(false);
-        // An owner also needs the Manage permission in this repository (a seeded target gives every signed-in user
-        // that, so nothing changes until an administrator narrows it); an administrator holds every action.
+        // An owner also needs a management permission in this repository (a seeded target gives every signed-in user
+        // all of them, so nothing changes until an administrator narrows it); an administrator holds every action. Each
+        // handler then asks for the action the protocol asks for the same change (RequireAsync).
         if (isOwner && !_isAdministrator
-            && !await ManagePermission.HeldAsync(_services.Services, caller, id, cancellationToken).ConfigureAwait(false))
+            && !await ManagePermission.HeldAnyAsync(_services.Services, caller, id, cancellationToken).ConfigureAwait(false))
         {
             isOwner = false;
         }
@@ -125,6 +126,18 @@ public sealed class PackageManageUseCase
         return null;
     }
 
+    /// <summary>
+    /// Null when the user may do what the handler does: an administrator, or an owner holding the access model action the protocol
+    /// endpoints require for the same change (Delete to unlist, relist and delete, Annotate to deprecate and edit vulnerabilities,
+    /// Manage for owners); otherwise the answer that ends the request.
+    /// </summary>
+    private async Task<ScreenResult<PackageManageScreen>?> RequireAsync(ClaimsPrincipal caller, string? id, AccessAction action, CancellationToken cancellationToken)
+    {
+        if (_isAdministrator || await ManagePermission.HeldAsync(_services.Services, caller, id, action, cancellationToken).ConfigureAwait(false)) return null;
+
+        return ScreenResult<PackageManageScreen>.Forbidden();
+    }
+
     /// <summary>The GET handler: loads the screen, 404 when the ID has neither versions nor owners.</summary>
     public async Task<ScreenResult<PackageManageScreen>> GetAsync(ClaimsPrincipal caller, string? id, CancellationToken cancellationToken)
     {
@@ -144,6 +157,9 @@ public sealed class PackageManageUseCase
         var refusal = await EnterAsync(caller, id, "AddOwner", true, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
+        refusal = await RequireAsync(caller, id, AccessAction.Manage, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
         var result = string.IsNullOrWhiteSpace(ownerName)
             ? OwnerChangeResult.UnknownAccount
             : await _services.Ownership.AddOwnerAsync(id, ownerName.Trim(), cancellationToken).ConfigureAwait(false);
@@ -155,6 +171,9 @@ public sealed class PackageManageUseCase
     public async Task<ScreenResult<PackageManageScreen>> RemoveOwnerAsync(ClaimsPrincipal caller, string? id, string? ownerName, CancellationToken cancellationToken)
     {
         var refusal = await EnterAsync(caller, id, "RemoveOwner", true, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
+        refusal = await RequireAsync(caller, id, AccessAction.Manage, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
         #pragma warning disable CS8604
@@ -170,6 +189,9 @@ public sealed class PackageManageUseCase
         var refusal = await EnterAsync(caller, id, "Unlist", true, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
+        refusal = await RequireAsync(caller, id, AccessAction.Delete, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
         return await ChangeVersionAsync(caller, id, version, v => _packages.UnlistPackageAsync(id!, v, cancellationToken), "unlisted", cancellationToken).ConfigureAwait(false);
     }
 
@@ -177,6 +199,9 @@ public sealed class PackageManageUseCase
     public async Task<ScreenResult<PackageManageScreen>> RelistAsync(ClaimsPrincipal caller, string? id, string? version, CancellationToken cancellationToken)
     {
         var refusal = await EnterAsync(caller, id, "Relist", true, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
+        refusal = await RequireAsync(caller, id, AccessAction.Delete, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
         return await ChangeVersionAsync(caller, id, version, v => _packages.RelistPackageAsync(id!, v, cancellationToken), "relisted", cancellationToken).ConfigureAwait(false);
@@ -190,6 +215,9 @@ public sealed class PackageManageUseCase
     public async Task<ScreenResult<PackageManageScreen>> DeleteAsync(ClaimsPrincipal caller, string? id, string? version, CancellationToken cancellationToken)
     {
         var refusal = await EnterAsync(caller, id, "Delete", true, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
+        refusal = await RequireAsync(caller, id, AccessAction.Delete, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
         // Read-only mode is refused for every handler at once, in EnterAsync, as the push endpoint's DELETE refuses before anything is touched.
@@ -320,6 +348,9 @@ public sealed class PackageManageUseCase
         var refusal = await EnterAsync(caller, id, "Deprecate", true, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
+        refusal = await RequireAsync(caller, id, AccessAction.Annotate, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
         reasons = reasons?.Where(r => PackageDeprecation.KnownReasons.Contains(r, StringComparer.Ordinal)).Distinct().ToList();
         if (reasons == null || reasons.Count == 0)
         {
@@ -356,6 +387,9 @@ public sealed class PackageManageUseCase
         var refusal = await EnterAsync(caller, id, "Undeprecate", true, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
+        refusal = await RequireAsync(caller, id, AccessAction.Annotate, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
         return await ChangeVersionAsync(caller, id, version, v => _packages.RemoveDeprecationAsync(id!, v, cancellationToken), "no longer deprecated", cancellationToken).ConfigureAwait(false);
     }
 
@@ -372,6 +406,9 @@ public sealed class PackageManageUseCase
         var refusal = await EnterAsync(caller, id, "AddVulnerability", true, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
+        refusal = await RequireAsync(caller, id, AccessAction.Annotate, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
         var added = new PackageVulnerability
         {
             AdvisoryUrl = advisoryUrl?.Trim(),
@@ -386,6 +423,9 @@ public sealed class PackageManageUseCase
     public async Task<ScreenResult<PackageManageScreen>> RemoveVulnerabilityAsync(ClaimsPrincipal caller, string? id, string? version, int key, CancellationToken cancellationToken)
     {
         var refusal = await EnterAsync(caller, id, "RemoveVulnerability", true, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
+        refusal = await RequireAsync(caller, id, AccessAction.Annotate, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
         return await ChangeVulnerabilitiesAsync(caller, id, version, current => current.Where(v => v.Key != key).ToList(), "updated (vulnerability removed)", cancellationToken).ConfigureAwait(false);
@@ -452,6 +492,9 @@ public sealed class PackageManageUseCase
         var refusal = await EnterAsync(caller, id, "DeleteSymbols", true, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
+        refusal = await RequireAsync(caller, id, AccessAction.Delete, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
         if (!NuGetVersion.TryParse(version, out var parsed)) return ScreenResult<PackageManageScreen>.NotFound();
 
         var removed = await _symbols.DeleteAsync(id!, parsed, cancellationToken).ConfigureAwait(false);
@@ -469,6 +512,9 @@ public sealed class PackageManageUseCase
     public async Task<ScreenResult<PackageManageScreen>> ResolveReportAsync(ClaimsPrincipal caller, string? id, int key, CancellationToken cancellationToken)
     {
         var refusal = await EnterAsync(caller, id, "ResolveReport", true, cancellationToken).ConfigureAwait(false);
+        if (refusal != null) return refusal;
+
+        refusal = await RequireAsync(caller, id, AccessAction.Manage, cancellationToken).ConfigureAwait(false);
         if (refusal != null) return refusal;
 
         var lowerId = id!.ToLowerInvariant();

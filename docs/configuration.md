@@ -117,7 +117,7 @@ metadata address `169.254.169.254`). Internal feeds are a normal use, hence the 
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `Remote:BlockPrivateAddresses` | `false` | refuse upstreams that are `localhost`, loopback, private (RFC 1918, `fc00::/7`), link-local, carrier-grade NAT or otherwise non-public. Live (no restart) |
+| `Remote:BlockPrivateAddresses` | `false` | refuse upstreams that are `localhost`, loopback, private (RFC 1918, `fc00::/7`), link-local, carrier-grade NAT or otherwise non-public, IPv6 forms that carry an IPv4 address (NAT64, 6to4, IPv4-compatible) judged by the address they carry. While on, the system proxy is not used (the target must be seen). Live (no restart) |
 
 Enforced when a repository is created or saved (the host name or literal address in the URL), when *Test connection* runs
 (also after DNS resolution) and on every connection a V3 or npm upstream client opens (a name that later resolves to a private

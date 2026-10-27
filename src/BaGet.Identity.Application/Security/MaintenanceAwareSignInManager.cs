@@ -46,15 +46,16 @@ public class MaintenanceAwareSignInManager : SignInManager<BaGetUser>
         => !user.PendingApproval && await base.CanSignInAsync(user);
 
     /// <summary>
-    /// For an account awaiting approval Identity answers "not allowed" before it looks at the password or the lockout,
+    /// For an account that may not sign in yet (awaiting approval, or an unconfirmed email) Identity answers "not allowed" before it looks at the password or the lockout,
     /// which would let anyone guess passwords without limit and learn from the answer which one is right. Here the
     /// lockout is honoured first (a locked-out account answers "locked out" whatever the password), a wrong password
     /// is a counted failed attempt (a write, so refused while the gate is closed like any failed sign-in), and only
-    /// the right one answers "not allowed". Nothing about the password is learned from a locked-out account.
+    /// the right one answers "not allowed". Nothing about the password is learned from a locked-out account, and the existence of an
+    /// unconfirmed account is not revealed to a wrong password.
     /// </summary>
     public override async Task<SignInResult> CheckPasswordSignInAsync(BaGetUser user, string password, bool lockoutOnFailure)
     {
-        if (user is not { PendingApproval: true }) return await base.CheckPasswordSignInAsync(user!, password, lockoutOnFailure);
+        if (user == null || await CanSignInAsync(user)) return await base.CheckPasswordSignInAsync(user!, password, lockoutOnFailure);
 
         if (await UserManager.IsLockedOutAsync(user)) return SignInResult.LockedOut;
 

@@ -152,12 +152,12 @@ public sealed class PackageUseCase
         return ScreenResult<PackageScreen>.Ok(screen);
     }
 
-    // The rule of the management page itself: an owner holding the Manage permission in this repository, or an administrator.
+    // The rule of the management page itself: an owner holding a management permission in this repository, or an administrator.
     private async Task<bool> CanManageAsync(ClaimsPrincipal user, PackageOwnershipService ownership, string? packageId, CancellationToken cancellationToken)
     {
         var userId = _services.GetService<UserManager<BaGetUser>>()?.GetUserId(user);
         if (await ownership.IsOwnerAsync(userId, user.Identity?.Name, packageId, cancellationToken)
-            && await ManagePermission.HeldAsync(_services, user, packageId, cancellationToken)) return true;
+            && await ManagePermission.HeldAnyAsync(_services, user, packageId, cancellationToken)) return true;
 
         var administrators = _services.GetService<AdministratorService>();
         return administrators != null && await administrators.IsAdministratorAsync(user, cancellationToken);

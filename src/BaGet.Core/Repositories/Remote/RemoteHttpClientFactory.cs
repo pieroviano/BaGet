@@ -91,8 +91,14 @@ public class RemoteHttpClientFactory : IRemoteHttpClientFactory
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
         };
 
-        // With a proxy the connection goes to the proxy, whose address is the administrator's own choice.
-        if (_options != null) handler.ConnectCallback = ConnectAsync;
+        if (_options != null)
+        {
+            handler.ConnectCallback = ConnectAsync;
+
+            // Through a proxy the connect callback would see the proxy's address, not the target's: while the policy is on
+            // (read per request, so the setting stays live) the system proxy is not used and the target is connected to directly.
+            handler.Proxy = new PolicyAwareProxy(() => _options.CurrentValue.BlockPrivateAddresses);
+        }
 
         return handler;
     }
