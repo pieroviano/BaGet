@@ -40,6 +40,7 @@ public sealed class UploadUiApiController : UiApiControllerBase
 
     /// <summary>Stages the chosen file and describes what it contains.</summary>
     [HttpPost("stage"), UiApi("Upload", "Index", Handler = "Stage")]
+    [UploadSizeLimit]
     public async Task<ActionResult<ScreenResult<UploadViewModel>>> Stage(string? id, IFormFile? package, string? apiKey, CancellationToken cancellationToken)
         => Respond(await _upload.StageAsync(User, KeyCaller, id, package.ToUploadedFile(), apiKey, cancellationToken));
 

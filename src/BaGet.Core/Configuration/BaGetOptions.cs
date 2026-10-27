@@ -93,4 +93,8 @@ public class BaGetOptions
     public TelemetryOptions? Telemetry { get; set; }
 
     public HaOptions? Ha { get; set; }
+
+    public ProxyOptions? Proxy { get; set; }
+
+    public DataProtectionKeyOptions? DataProtection { get; set; }
 }

@@ -24,6 +24,12 @@ namespace BaGet.Web.V3.Middleware;
 /// </summary>
 public class RepositoryResolutionMiddleware
 {
+    /// <summary>
+    /// The <see cref="HttpContext.Items"/> key the middleware sets on every request it sees; <c>RepositoryResolutionGuardFilter</c>
+    /// refuses a <c>{repo}</c> route that lacks it (a host that forgot <c>UseRepositoryResolution</c>).
+    /// </summary>
+    public const string ResolvedItemKey = "BaGet.RepositoryResolution";
+
     private readonly RequestDelegate _next;
 
     public RepositoryResolutionMiddleware(RequestDelegate next)
@@ -37,6 +43,8 @@ public class RepositoryResolutionMiddleware
         IRepositoryService repositories,
         IRequestCaller caller)
     {
+        context.Items[ResolvedItemKey] = true;
+
         // Who is asking, for code in Core that filters by the caller's rights (a virtual repository reads only the members
         // the caller may read). Credentials are read when something asks, after authentication has run.
         caller.Use(async cancellationToken =>

@@ -48,6 +48,7 @@ public sealed class NpmBrowseController : UiControllerBase
     /// <summary>Publishes the chosen tarball with the dist-tag <paramref name="tag"/> (default <c>latest</c>).</summary>
     [Route("npm-upload"), HttpPost, PageHandler]
     [RepositoryPage(Format = RepositoryFormat.Npm, Upload = true)]
+    [UploadSizeLimit]
     public async Task<IActionResult> UploadPost(IFormFile? package, string? tag, string? apiKey, CancellationToken cancellationToken)
         => Render(await Api<NpmBrowseUiApiController, NpmUploadViewModel>(api => api.UploadPost(package, tag, apiKey, cancellationToken)), "Upload");
 }

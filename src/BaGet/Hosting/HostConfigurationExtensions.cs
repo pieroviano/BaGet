@@ -57,9 +57,15 @@ internal static class HostConfigurationExtensions
             FileProvider = new PhysicalFileProvider(directory, ExclusionFilters.None),
         };
 
-        var index = configuration.Sources.ToList().FindLastIndex(s => s is JsonConfigurationSource) + 1;
+        // After the last appsettings*.json, not after the last JSON source: user secrets (Development) are a JSON source too and
+        // would otherwise end up below the overrides file, which then outranks them.
+        var index = configuration.Sources.ToList().FindLastIndex(IsAppSettingsSource) + 1;
         configuration.Sources.Insert(index, source);
 
         return path;
     }
+
+    private static bool IsAppSettingsSource(IConfigurationSource source)
+        => source is JsonConfigurationSource json
+            && Path.GetFileName(json.Path ?? string.Empty).StartsWith("appsettings", StringComparison.OrdinalIgnoreCase);
 }

@@ -64,6 +64,9 @@ internal static class HostServiceCollectionExtensions
         // services, so the shared lease replaces the in-process one.
         services.AddBaGetHa(configuration);
 
+        // A single node keeps its data protection key ring in a folder (cluster mode keeps it in the database, above).
+        services.AddBaGetDataProtection(configuration, overridesPath);
+
         // You can swap between implementations of subsystems like storage and search using BaGet's configuration.
         // Each subsystem's implementation has a provider that reads the configuration to determine if it should be
         // activated. BaGet will run through all its providers until it finds one that is active.

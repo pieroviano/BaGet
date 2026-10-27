@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Frontend.Mvc.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -47,6 +48,7 @@ public class PackagePublishController : ControllerBase
 
     // See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#push-a-package
     [RemoteRepositoryReadOnly]
+    [UploadSizeLimit]
     public async Task Upload(CancellationToken cancellationToken)
     {
         var principal = _options.Value.IsReadOnlyMode

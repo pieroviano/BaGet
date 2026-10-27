@@ -55,6 +55,7 @@ public sealed class MavenBrowseUiApiController : UiApiControllerBase
     /// <summary>Deploys the chosen files under the given coordinates.</summary>
     [HttpPost("maven-upload"), UiApi("MavenBrowse", "Upload")]
     [RepositoryPage(Format = RepositoryFormat.Maven, Upload = true)]
+    [UploadSizeLimit]
     public async Task<ActionResult<ScreenResult<MavenUploadViewModel>>> UploadPost(
         string? groupId,
         string? artifactId,

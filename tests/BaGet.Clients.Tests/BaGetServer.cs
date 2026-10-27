@@ -71,6 +71,8 @@ public sealed class BaGetServer : IAsyncDisposable
             ["Serilog:WriteTo:File:Enabled"] = "false",
             ["Serilog:EventLog:Enabled"] = "false",
             ["Kestrel:Endpoints:Http:Url"] = "http://0.0.0.0:0",
+            // The shipped appsettings.json exports traces to localhost:4317; a test server must not.
+            ["Telemetry:Enabled"] = "false",
         };
         foreach (var pair in settings ?? new Dictionary<string, string>()) all[pair.Key] = pair.Value;
 

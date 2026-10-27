@@ -49,6 +49,7 @@ public sealed class MavenBrowseController : UiControllerBase
     /// <summary>Deploys the chosen files under the given coordinates.</summary>
     [Route("maven-upload"), HttpPost, PageHandler]
     [RepositoryPage(Format = RepositoryFormat.Maven, Upload = true)]
+    [UploadSizeLimit]
     public async Task<IActionResult> UploadPost(
         string? groupId,
         string? artifactId,

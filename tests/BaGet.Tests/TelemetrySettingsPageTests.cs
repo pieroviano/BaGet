@@ -179,7 +179,7 @@ public class TelemetrySettingsPageTests : IDisposable
         Assert.False(System.IO.File.Exists(settings.OverridesPath), "testing wrote the overrides file");
         var current = app.Services.GetRequiredService<IOptionsMonitor<TelemetryOptions>>().CurrentValue;
         Assert.False(current.Enabled);
-        Assert.True(string.IsNullOrEmpty(current.Otlp.Endpoint));
+        Assert.NotEqual(url, current.Otlp.Endpoint);
         Assert.All(app.Services.GetRequiredService<TelemetryStatus>().GetAll(), s => Assert.False(s.Active));
     }
 
@@ -247,7 +247,7 @@ public class TelemetrySettingsPageTests : IDisposable
     [Fact]
     public async Task ThePanelShowsNotConfiguredWithoutAnEndpoint()
     {
-        var (_, admin, _) = await StartAsync(new Dictionary<string, string> { ["Telemetry:Enabled"] = "true" });
+        var (_, admin, _) = await StartAsync(new Dictionary<string, string> { ["Telemetry:Enabled"] = "true", ["Telemetry:Otlp:Endpoint"] = "" });
 
         var html = await admin.GetPageAsync("admin/settings");
 

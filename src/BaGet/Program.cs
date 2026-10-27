@@ -13,13 +13,23 @@ namespace BaGet;
 /// </summary>
 public partial class Program
 {
-    public static async Task Main(string[] args)
+    /// <summary>
+    /// Builds the application and runs the command line. The exit code is the command's (0 = done, 1 = refused or failed) or 1
+    /// when the configuration is invalid, so a script or a supervisor (<c>restart: on-failure</c>, systemd) sees the failure.
+    /// </summary>
+    public static async Task<int> Main(string[] args)
     {
         var app = BuildApplication(args);
 
+        return await RunAsync(app, args);
+    }
+
+    /// <summary>Validates the options of <paramref name="app"/>, then runs the command line (or the server) and returns the exit code.</summary>
+    internal static async Task<int> RunAsync(WebApplication app, string[] args)
+    {
         if (!app.ValidateStartupOptions())
         {
-            return;
+            return 1;
         }
 
         var commands = new CommandLineApplication
@@ -43,9 +53,11 @@ public partial class Program
             await app.RunMigrationsAsync(cancellationToken);
             await app.BootstrapAdministratorsAsync(cancellationToken);
             await app.RunAsync(cancellationToken);
+
+            return 0;
         });
 
-        await commands.ExecuteAsync(args);
+        return await commands.ExecuteAsync(args);
     }
 
     /// <summary>
