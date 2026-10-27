@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using BaGet.Core;
+using BaGet.Identity.Api;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using BaGet.Web.V3.Middleware;
 
-namespace BaGet.Web.V3.Api.Filters;
+namespace BaGet.Identity.Api.Filters;
 
 /// <summary>
 /// Turns what the administration services throw into problem answers: an unknown thing is 404, input they refuse is 400, a state
@@ -34,7 +34,7 @@ public sealed class ApiExceptionFilterAttribute : Attribute, IExceptionFilter
         {
             if (e is MaintenanceException maintenance)
             {
-                http.Response.Headers["Retry-After"] = MaintenanceMiddleware.RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
+                http.Response.Headers["Retry-After"] = MaintenanceGate.RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
 
                 return ApiProblems.Create(503, "read-only", "The server is read-only", $"The server is read-only for maintenance ({maintenance.Reason}). Try again later.");
             }

@@ -1,7 +1,7 @@
 using System;
 using BaGet.Identity.Application.Screens;
-using BaGet.Web.V3.Controllers.Base;
-using BaGet.Web.V3.Models.Api;
+using BaGet.Identity.Controllers.Base;
+using BaGet.Identity.Models.Api;
 
 namespace BaGet.Web.V3.Api.Catalog;
 

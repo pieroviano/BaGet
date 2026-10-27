@@ -19,7 +19,7 @@ public class CodeLayoutTests
 {
     private static readonly string[] Projects =
     {
-        "BaGet.Catalog", "BaGet.Identity", "BaGet.Identity.Application", "BaGet.Validation", "BaGet.Web.Application", "BaGet.Web.V3",
+        "BaGet.Catalog", "BaGet.Identity.Api", "BaGet.Identity.Application", "BaGet.Identity.Base", "BaGet.Validation", "BaGet.Web.Application", "BaGet.Web.V3",
     };
 
     /// <summary>

@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+using BaGet.Identity.Api;
 using BaGet.Identity.Security;
 
-namespace BaGet.Web.V3.Api.Filters;
+namespace BaGet.Identity.Api.Filters;
 
 /// <summary>
 /// Lets only administrators in. The caller is the principal of an API key (<c>Authorization: Basic</c> password, <c>Bearer</c>,

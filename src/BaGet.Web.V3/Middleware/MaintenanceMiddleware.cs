@@ -15,9 +15,6 @@ namespace BaGet.Web.V3.Middleware;
 /// </summary>
 public class MaintenanceMiddleware
 {
-    /// <summary>Seconds advertised in <c>Retry-After</c>.</summary>
-    internal const int RetryAfterSeconds = 60;
-
     private readonly RequestDelegate _next;
     private readonly ILogger<MaintenanceMiddleware> _logger;
 
@@ -40,7 +37,7 @@ public class MaintenanceMiddleware
 
             context.Response.Clear();
             context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable;
-            context.Response.Headers["Retry-After"] = RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
+            context.Response.Headers["Retry-After"] = MaintenanceGate.RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
             context.Response.ContentType = "text/plain; charset=utf-8";
             await context.Response.WriteAsync(
                 $"The server is read-only for maintenance ({maintenance.Reason}). Try again later.");

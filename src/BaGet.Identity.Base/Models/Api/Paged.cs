@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BaGet.Web.V3.Models.Api;
+namespace BaGet.Identity.Models.Api;
 
 /// <summary>A page of a list: <c>?page=</c> (from 1) and <c>?pageSize=</c> (at most <see cref="MaxPageSize"/>).</summary>
 /// <typeparam name="T">The item type.</typeparam>

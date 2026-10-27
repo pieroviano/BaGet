@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BaGet.Identity.Mvc.UI;
 using BaGet.Web.V3.Api.Catalog;
-using BaGet.Web.V3.Controllers.Base;
 using BaGet.Web.V3.Controllers.FrontEnd;
 using BaGet.Web.V3.ViewModels;
 

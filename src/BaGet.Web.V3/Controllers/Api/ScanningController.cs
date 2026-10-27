@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using BaGet.Web.V3.Api.Catalog;
+using BaGet.Identity.Models.Api;
 using BaGet.Web.V3.Models.Api;
-using BaGet.Web.V3.Api;
-using BaGet.Web.V3.Controllers.Base;
+using BaGet.Identity.Api;
+using BaGet.Identity.Controllers.Base;
 
 namespace BaGet.Web.V3.Controllers.Api;
 
