@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using BaGet.Core;
-using BaGet.Identity.Api;
+using BaGet.Web.V3.Api;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace BaGet.Identity.Api.Filters;
+namespace BaGet.Web.V3.Api.Filters;
 
 /// <summary>
 /// Turns what the administration services throw into problem answers: an unknown thing is 404, input they refuse is 400, a state

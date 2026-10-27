@@ -12,9 +12,9 @@ using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Identity.Application.Services.Ownership;
 using BaGet.Web.V3.Api.Catalog;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Models.Api;
 using BaGet.Web.V3.Models.Api;
-using BaGet.Identity.Api;
+using BaGet.Web.V3.Api;
+using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet.Web.V3.Controllers.Api;
 

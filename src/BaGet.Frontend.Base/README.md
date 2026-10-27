@@ -1,11 +1,11 @@
-# Extension.BaGet.Identity.Base
+# Extension.BaGet.Frontend.Base
 
-The MVC infrastructure behind the screens of [BaGet Extension](https://pieroviano.github.io/BaGet/): controller bases, the `?handler=` selector,
+The MVC base controllers of the screens of [BaGet Extension](https://pieroviano.github.io/BaGet/): the view and `/api/ui` controller bases with what they need: the `?handler=` selector,
 repository-page routing, the in-process calls to the JSON UI API (`/api/ui`) and request credentials. It has no controller and no view of its own:
-the screens are in `Extension.BaGet.Identity.Api`, which references this package (so do hosts through `Extension.BaGet.Web.V3`).
+the screens are in `Extension.BaGet.Identity.Api` and `Extension.BaGet.Web.V3`, which reference this package. The administration REST API (`/api/v1`) bases are in `Extension.BaGet.Web.V3`.
 
 ```powershell
-dotnet add package Extension.BaGet.Identity.Base
+dotnet add package Extension.BaGet.Frontend.Base
 ```
 
 Reference it directly only to write your own screens or JSON twins on the same bases; the business services are in
@@ -17,9 +17,6 @@ Reference it directly only to write your own screens or JSON twins on the same b
 |---|---|
 | `Controllers/Base/UiControllerBase` and `AccountControllerBase`, `AdminControllerBase`, `AccessControllerBase`, `RepositoryControllerBase`, `RetentionControllerBase`, `ReplicationControllerBase` | Bases of the view controllers: antiforgery on every POST (`[AutoValidateAntiforgeryToken]`) and the shared checks (`ScreenGate`: admin or project admin, `NullContext` redirect, maintenance gate on POST, password confirmation) in a fixed order. `AdminControllerBase.Flash(model)` carries `Message`/`Error` across a redirect |
 | `Controllers/Base/UiApiControllerBase` and `AccountUiApiControllerBase`, `AdminUiApiControllerBase`, `AccessUiApiControllerBase` | Bases of the JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)); visible in the OpenAPI `ui` document |
-| `Controllers/Base/AdminApiController`, `AccessApiController` | Bases of the administration REST API (`/api/v1`, controllers in `Extension.BaGet.Web.V3`): JSON with `ApiJson`, paging with `Paged<T>`, `X-Confirm-Password` confirmation |
-| `Api/ApiProblems`, `Api/ApiJson`, `Models/Api/Paged` | `/api/v1` answers: `application/problem+json` with a stable `code`, camelCase JSON with enums by name, pages of at most 200 |
-| `Api/Filters/AdminApiAuthorizeAttribute`, `ApiExceptionFilterAttribute` | `/api/v1`: an administrator's unlimited `admin:api` key or the global `ApiKey` (never the cookie); service exceptions mapped to 404/400/409/422, a closed gate to 503 + `Retry-After` |
 | `Mvc/Attributes/PageHandlerAttribute` | Picks the action by `?handler=` (route value, then query); an unknown handler is the default handler. A screen's actions are those of one controller sharing their route templates |
 | `Mvc/Attributes/ImplicitPageHandlerAttribute` | The default POST that renders the screen (a form posted to its own URL); not in the route contract |
 | `Mvc/Attributes/FallbackHandlerAttribute` | The `NoHandler` action of a manage controller (a stray POST answers 404); not a handler of the screen |

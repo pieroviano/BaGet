@@ -11,8 +11,8 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using BaGet.Identity.Controllers.Base;
-using BaGet.Identity.Models.Api;
 using BaGet.Web.V3.Models.Api;
+using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet.Web.V3.Api.Catalog;
 

@@ -13,7 +13,7 @@ namespace BaGet.Tests.Contracts;
 
 /// <summary>
 /// The public-API contract of the web UI: the public and protected surface
-/// of <c>BaGet.Web.V3</c> and <c>BaGet.Identity</c> (and of the Application projects their types moved to) is listed in
+/// of <c>BaGet.Web.V3</c>, <c>BaGet.Identity.Api</c> and <c>BaGet.Frontend.Base</c> (and of the Application projects their types moved to) is listed in
 /// <c>Contracts/public-api.txt</c>, one line per type, base type, interface and member. The actual surface must be a <b>superset</b> of
 /// the snapshot: members and types may be added, none may be removed or change signature (a removal is a breaking change: regenerate the
 /// snapshot on purpose). Razor-generated view classes are not public API.
@@ -31,6 +31,7 @@ public class PublicApiSnapshotTests
     {
         typeof(NavLinkTagHelper).Assembly,
         typeof(AccountsServiceCollectionExtensions).Assembly,
+        typeof(BaGet.Identity.Controllers.Base.UiControllerBase).Assembly,
         typeof(ScreenGate).Assembly,
         typeof(BaGet.Web.Application.UseCases.LegalUseCase).Assembly,
     };
@@ -39,7 +40,8 @@ public class PublicApiSnapshotTests
     private static readonly Dictionary<string, Assembly> Original = new(StringComparer.Ordinal)
     {
         ["BaGet.Web.V3"] = typeof(NavLinkTagHelper).Assembly,
-        ["BaGet.Identity"] = typeof(AccountsServiceCollectionExtensions).Assembly,
+        ["BaGet.Identity.Api"] = typeof(AccountsServiceCollectionExtensions).Assembly,
+        ["BaGet.Frontend.Base"] = typeof(BaGet.Identity.Controllers.Base.UiControllerBase).Assembly,
     };
 
     /// <summary>The assembly column of a snapshot line is dropped: a moved type is the same line.</summary>

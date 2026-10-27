@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
-using BaGet.Identity.Api.Filters;
-using BaGet.Identity.Models.Api;
-using BaGet.Identity.Api;
+using BaGet.Web.V3.Api.Filters;
+using BaGet.Web.V3.Models.Api;
+using BaGet.Web.V3.Api;
 
-namespace BaGet.Identity.Controllers.Base;
+namespace BaGet.Web.V3.Controllers.Base;
 
 /// <summary>
 /// Base of the administration REST API (<c>/api/v1</c>): <see cref="AdminApiAuthorizeAttribute"/> and

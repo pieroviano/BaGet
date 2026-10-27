@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-using BaGet.Identity.Models.Api;
+using BaGet.Web.V3.Models.Api;
 
-namespace BaGet.Identity.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>Builds the RFC 9457 problem answers of the API (<c>application/problem+json</c>).</summary>
 public static class ApiProblems

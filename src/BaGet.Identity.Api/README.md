@@ -21,7 +21,7 @@ runs. Disabled, it adds an empty authentication setup and only the global `ApiKe
 | Package | Holds |
 |---|---|
 | `Extension.BaGet.Identity.Api` (this) | Screens: controllers, views, form models, `AddBaGetAccounts` |
-| `Extension.BaGet.Identity.Base` | MVC infrastructure the screens build on: controller and twin bases, `?handler=` selection, `[RepositoryPage]`, `UiApiInvoker`, `UiApiSecurityFilter`, `RequestPrincipalResolver` |
+| `Extension.BaGet.Frontend.Base` | MVC infrastructure the screens build on: controller and twin bases, `?handler=` selection, `[RepositoryPage]`, `UiApiInvoker`, `UiApiSecurityFilter`, `RequestPrincipalResolver` |
 | `Extension.BaGet.Identity.Application` | Use cases, DTOs, business services (`BaGet.Identity.Application.*`; no MVC reference) |
 
 `MaintenanceAwareSignInManager` (Application) lets a sign-in complete while the read-only `MaintenanceGate` is closed (it skips the

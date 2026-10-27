@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BaGet.Identity.Api;
+namespace BaGet.Web.V3.Api;
 
 /// <summary>The JSON the API writes: camelCase, enums as their names, nulls left out.</summary>
 public static class ApiJson

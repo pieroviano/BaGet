@@ -9,6 +9,7 @@ using BaGet.Identity.Mvc.UI;
 using BaGet.Web.V3.Api.Catalog;
 using BaGet.Web.V3.Controllers.FrontEnd;
 using BaGet.Web.V3.ViewModels;
+using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet.Web.V3.Controllers.UI;
 

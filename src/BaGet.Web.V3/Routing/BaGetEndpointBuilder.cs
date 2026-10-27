@@ -12,6 +12,7 @@ using BaGet.Web.V3.Filters;
 using BaGet.Web.V3.Middleware;
 using BaGet.Web.V3.Oci;
 using BaGet.Web.V3.Routing;
+using BaGet.Web.V3.Controllers.Base;
 
 namespace BaGet;
 
