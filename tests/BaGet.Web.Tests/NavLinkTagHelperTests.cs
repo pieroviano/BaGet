@@ -160,6 +160,22 @@ public class NavLinkTagHelperTests
         Assert.Equal("active", ClassOf(output));
     }
 
+    [Fact]
+    public void AHostLinkToARazorPageIsNotTakenForThePackagesLink()
+    {
+        // A host layout may keep <a asp-page="/MyPage" nav-link>; it names no BaGet screen, so the home page must not light it.
+        var target = new NavLinkTagHelper(Accessor("Index", "/"));
+        var context = new TagHelperContext(
+            new TagHelperAttributeList { { "asp-page", "/MyPage" }, { "nav-link", string.Empty } },
+            new Dictionary<object, object>(),
+            "test");
+        var output = Output();
+
+        target.Process(context, output);
+
+        Assert.Null(ClassOf(output));
+    }
+
     [Theory]
     [InlineData("/Packages")]
     [InlineData("/PACKAGES")]

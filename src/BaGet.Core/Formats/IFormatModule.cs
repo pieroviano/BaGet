@@ -117,11 +117,44 @@ public sealed record FormatUsage(int Artifacts, bool PendingWork);
 /// <param name="Options">For a choice: the allowed values; null for free text.</param>
 public sealed record FormatCreateField(string Name, string Label, string? Help = null, bool Required = false, IReadOnlyList<string>? Options = null);
 
-/// <summary>A link a format contributes to the administration of a repository.</summary>
-/// <param name="Id">A stable identifier (<c>browse</c>, <c>upload</c>); becomes the CSS class <c>repository-{id}</c>.</param>
-/// <param name="Label">The visible text.</param>
-/// <param name="Controller">The MVC controller (without the suffix) of the screen it opens (<c>Home</c>), given the repository's <c>repo</c> route value; null when <paramref name="Path"/> is used.</param>
-/// <param name="Action">The action of that controller that shows the screen (<c>Index</c>); null when <paramref name="Path"/> is used.</param>
-/// <param name="Path">Otherwise a path under the repository base (<c>npm/</c>).</param>
-/// <param name="NeedsUploads">Shown only for repositories that take uploads (not a remote one, nor a virtual one without a deploy repository).</param>
-public sealed record FormatLink(string Id, string Label, string? Controller, string? Action, string? Path = null, bool NeedsUploads = false);
+/// <summary>A link a format contributes to the administration of a repository: to one of its screens or to a path under its base.</summary>
+/// <remarks>Built with <see cref="ToScreen"/> or <see cref="ToPath"/>: the constructor is private, so a call written for the older
+/// <c>(Id, Label, Page, Path)</c> shape fails to compile instead of putting the path in <see cref="Action"/>.</remarks>
+public sealed record FormatLink
+{
+    private FormatLink(string id, string label, string? controller, string? action, string? path, bool needsUploads)
+    {
+        Id = id;
+        Label = label;
+        Controller = controller;
+        Action = action;
+        Path = path;
+        NeedsUploads = needsUploads;
+    }
+
+    /// <summary>A link to a screen of the repository (<c>Home</c>/<c>Index</c>), given the repository's <c>repo</c> route value.</summary>
+    public static FormatLink ToScreen(string id, string label, string controller, string action, bool needsUploads = false)
+        => new(id, label, controller ?? throw new ArgumentNullException(nameof(controller)), action ?? throw new ArgumentNullException(nameof(action)), null, needsUploads);
+
+    /// <summary>A link to a path under the repository base (<c>npm/</c>).</summary>
+    public static FormatLink ToPath(string id, string label, string path, bool needsUploads = false)
+        => new(id, label, null, null, path ?? throw new ArgumentNullException(nameof(path)), needsUploads);
+
+    /// <summary>A stable identifier (<c>browse</c>, <c>upload</c>); becomes the CSS class <c>repository-{id}</c>.</summary>
+    public string Id { get; }
+
+    /// <summary>The visible text.</summary>
+    public string Label { get; }
+
+    /// <summary>The MVC controller (without the suffix) of the screen it opens; null for a path link.</summary>
+    public string? Controller { get; }
+
+    /// <summary>The action of that controller that shows the screen; null for a path link.</summary>
+    public string? Action { get; }
+
+    /// <summary>A path under the repository base; null for a screen link.</summary>
+    public string? Path { get; }
+
+    /// <summary>Shown only for repositories that take uploads (not a remote one, nor a virtual one without a deploy repository).</summary>
+    public bool NeedsUploads { get; }
+}

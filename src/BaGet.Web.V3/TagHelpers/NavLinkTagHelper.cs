@@ -29,7 +29,7 @@ public class NavLinkTagHelper : TagHelper
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        if (!IsActiveLink())
+        if (!IsActiveLink(context))
         {
             return;
         }
@@ -61,8 +61,12 @@ public class NavLinkTagHelper : TagHelper
         return $"{classes} {ActiveClass}";
     }
 
-    private bool IsActiveLink()
+    private bool IsActiveLink(TagHelperContext context)
     {
+        // A link to a Razor Page (a host's own, in an overridden layout) never names a BaGet screen, so it is never the
+        // current one here; without this it would fall into the packages-link case below.
+        if (context.AllAttributes.ContainsName("asp-page")) return false;
+
         var httpContext = _accessor.HttpContext;
         if (httpContext == null) return false;
 
