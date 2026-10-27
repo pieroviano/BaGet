@@ -72,7 +72,7 @@ plain URLs (package files, symbol files, avatars). `UiApiParityTests` fails for 
 | Project | Holds |
 |---|---|
 | `BaGet.Identity.Application`, `BaGet.Web.Application` | Use cases (`<Area>UseCase`), the DTOs (the JSON `model`), business services. No MVC or Razor reference (`ApplicationLayeringTests`) |
-| `BaGet.Identity`, `BaGet.Web.V3` | Controllers: the `[UiApi]` twin (`Controllers/Api`, base `UiApiControllerBase` family) and the view controller, which binds the form, calls the twin in process (`UiApiInvoker`) and renders; views; MVC infrastructure |
+| `BaGet.Identity`, `BaGet.Web.V3` | Controllers: the `[UiApi]` twin (`Controllers/UI`, base `UiApiControllerBase` family in `Controllers/Base`) and the view controller, which binds the form, calls the twin in process (`UiApiInvoker`) and renders; views; MVC infrastructure |
 
 A use case takes explicit inputs (caller, form, cancellation token), returns a `ScreenResult<T>` and sees no `HttpContext`, `ModelState` or
 `TempData`. The twin's filters do not run in process, so the view controller bases run the same `ScreenGate` first.
@@ -90,10 +90,10 @@ test twins for each base at the end of `tests/BaGet.Tests/UiApiAccessTests.cs`.
 
 | Piece | Where | Rule |
 |---|---|---|
-| Use case | `BaGet.Web.Application/UseCases` or `BaGet.Identity.Application/UseCases` | Scoped `<Area>UseCase`, one method per GET and handler; inputs explicit (caller `ClaimsPrincipal`, form DTO, `CancellationToken`); returns `ScreenResult<T>`; sees no `HttpContext`, `ModelState`, `TempData`; validates its form itself; a write calls `MaintenanceGate.ThrowIfClosed`; absolute links from `IUrlGenerator`; no secret in a DTO |
-| DTO | same project, same namespace as the old view model | Flat, no EF entities; a public one listed in `public-api.txt` needs `[TypeForwardedTo]` in `TypeForwards.cs` of the old assembly |
+| Use case | `BaGet.Web.Application/UseCases` or `BaGet.Identity.Application/UseCases/<area>` | Scoped `<Area>UseCase`, one method per GET and handler; inputs explicit (caller `ClaimsPrincipal`, form DTO, `CancellationToken`); returns `ScreenResult<T>`; sees no `HttpContext`, `ModelState`, `TempData`; validates its form itself; a write calls `MaintenanceGate.ThrowIfClosed`; absolute links from `IUrlGenerator`; no secret in a DTO |
+| DTO | same project, `Models/<area>` (namespace = folder) | Flat, no EF entities; one type per file |
 | Registration | `AddBaGetWebUseCases`, or `AddBaGetAccounts` after its `Enabled` check | `TryAddScoped<<Area>UseCase>()` |
-| JSON twin | `BaGet.Web.V3/Controllers/Api` or `BaGet.Identity/Controllers/Api` | `<Feature>UiApiController`; never `[ApiController]`, `[LegacyPage]` or `[AutoValidateAntiforgeryToken]` |
+| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity/Controllers/UI` | `<Feature>UiApiController`; never `[ApiController]`, `[LegacyPage]` or `[AutoValidateAntiforgeryToken]` |
 | View controller | unchanged place | Binds the form, `Api<Twin, Model>(api => ...)`, `Render(...)`; holds no use case |
 
 Twin bases: `UiApiControllerBase` (public), `AccountUiApiControllerBase` (override `RequiresSignIn`/`RequiresEmail`; **screen only**: 403 over HTTP),

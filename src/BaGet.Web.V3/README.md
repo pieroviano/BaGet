@@ -52,6 +52,10 @@ Run migrations with `host.RunMigrationsAsync()` (honours `RunMigrationsAtStartup
 | `IUrlGenerator` | Builds every absolute URL the server returns |
 | `wwwroot` | Static files, served at `_content/BaGet.Web` |
 
+## Layout
+
+One type per file, no nested types, namespace = `BaGet.Web.V3` + folder (`CodeLayoutTests`; `BaGetEndpointBuilder` and `IServiceCollectionExtensions` stay in `BaGet`). `Controllers/` screens, `Controllers/UI` JSON twins, `Controllers/Api` `/api/v1` administration REST, `Controllers/Protocols` package protocols (NuGet, npm, Maven, OCI), `Controllers/Base` bases; `Api` (catalog, filters), `Models/{Api,Protocols}`, `Routing`, `Filters`, `Middleware`, `Oci`, `OpenApi`, `ViewModels`, `Workers`, `TagHelpers`, `Extensions`.
+
 ## Links
 
 [Documentation](https://pieroviano.github.io/BaGet/) · [Configuration](https://pieroviano.github.io/BaGet/configuration/) · [Server API](https://pieroviano.github.io/BaGet/advanced/api/) · [Source](https://github.com/pieroviano/BaGet)

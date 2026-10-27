@@ -7,3 +7,7 @@ data (readme Markdown to safe HTML, install snippets, dependency and framework g
 
 A use case takes its inputs explicitly, returns a `ScreenResult<T>` (see `Extension.BaGet.Identity.Application`) and never sees `HttpContext`, `ModelState`
 or `TempData`. `AddBaGetWebUseCases` registers them; `AddBaGetWebApplication` calls it.
+
+## Layout
+
+One type per file, namespace = `BaGet.Web.Application` + folder (`CodeLayoutTests`): `UseCases`, `Screens`, `Snippets`, `Services`, `Models/{Browse,Packages,Npm,Maven,Docker,Upload}`, `Extensions`.

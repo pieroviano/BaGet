@@ -28,6 +28,10 @@ Administrators retry, release (index anyway, audited) or reject quarantined subm
 | `ValidationWorker` | Hosted service that runs the validators |
 | Routes | `v3/package/{id}/{version}/validation` (status), `v3/repository-signatures/index.json` |
 
+## Layout
+
+One type per file, namespace = `BaGet.Validation` + folder (`CodeLayoutTests`): `Pipeline` (validators, runner), `Queue`, `Signing`, `Services`, `Models`, `Controllers/Protocols`, `Extensions`.
+
 ## Links
 
 [Configuration](https://pieroviano.github.io/BaGet/configuration/) · [Source](https://github.com/pieroviano/BaGet)
