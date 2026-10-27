@@ -247,6 +247,14 @@ public class CatalogWriter : IPackageChangeHandler
             var handle = await _lease.TryAcquireAsync(job, cancellationToken);
             if (handle != null) return handle;
 
+            // A store that cannot be reached is not another node holding the lease: waiting would block every commit
+            // (and, through the lock, every push) for the whole wait and then lose the entry. Commit under the local lock.
+            if (_lease is IJobLeaseAvailability availability && !await availability.IsAvailableAsync(cancellationToken))
+            {
+                _logger.LogWarning("The lease store is unreachable; committing catalog entry for '{Job}' without the cross-node lease.", job);
+                return null;
+            }
+
             if (DateTime.UtcNow >= deadline)
             {
                 throw new TimeoutException($"The catalog commit lease '{job}' stayed with another node for {LeaseWait.TotalSeconds:0} s.");

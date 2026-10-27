@@ -109,7 +109,7 @@ public class V2FeedController : Controller
         var includeSemVer2 = IsSemVer2(semVerLevel);
 
         return Feed(
-            Project(packages.Where(p => includeSemVer2 || p.SemVerLevel != SemVerLevel.SemVer2)),
+            Project(packages, p => includeSemVer2 || p.SemVerLevel != SemVerLevel.SemVer2),
             "FindPackagesById");
     }
 
@@ -261,8 +261,8 @@ public class V2FeedController : Controller
             if (!byId.TryGetValue(id ?? string.Empty, out var versions)) continue;
 
             // The search matched ids; the V2 entries are versions, so the same filters apply to them.
-            result.AddRange(Project(versions.Where(p =>
-                (includePrerelease || !p.IsPrerelease) && (includeSemVer2 || p.SemVerLevel != SemVerLevel.SemVer2))));
+            result.AddRange(Project(versions, p =>
+                (includePrerelease || !p.IsPrerelease) && (includeSemVer2 || p.SemVerLevel != SemVerLevel.SemVer2)));
         }
 
         // Paging counts ids (the entries are versions): a "next" link is how V2 clients ask for the following ids.
@@ -279,12 +279,14 @@ public class V2FeedController : Controller
             ? await _virtual.FindPackagesAsync(id, includeUnlisted, cancellationToken)
             : await _packages.FindAsync(id, includeUnlisted, cancellationToken);
 
-    private List<V2FeedPackage> Project(IEnumerable<Package> packages)
+    // "include" hides versions from the client, but the latest flags stay relative to all of them.
+    private List<V2FeedPackage> Project(IEnumerable<Package> packages, Func<Package, bool>? include = null)
     {
         #pragma warning disable CS8603
         return V2FeedPackage.FromPackages(
             packages,
-            p => _url.GetPackageDownloadUrl(p.Id, p.Version));
+            p => _url.GetPackageDownloadUrl(p.Id, p.Version),
+            include);
         #pragma warning restore CS8603
     }
 

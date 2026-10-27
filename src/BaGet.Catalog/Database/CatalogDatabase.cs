@@ -59,16 +59,29 @@ public class CatalogDatabase : ICatalogDatabase
         var count = await _context.CatalogLeafs.CountAsync(cancellationToken);
 
         var ends = new List<DateTime>();
-        for (var end = pageSize - 1; end < count + pageSize - 1; end += pageSize)
+        var pages = (count + pageSize - 1) / pageSize;
+        var lastKey = 0;
+        for (var page = 0; page < pages; page++)
         {
-            var timestamp = await _context.CatalogLeafs
-                .AsNoTracking()
+            // Keyset paging: each page costs its own size, not the number of entries before it.
+            var isLast = page == pages - 1;
+            var entries = _context.CatalogLeafs.AsNoTracking();
+            if (isLast)
+            {
+                var latest = await entries.OrderByDescending(e => e.Key).Select(e => e.CommitTimestamp).FirstAsync(cancellationToken);
+                ends.Add(AsUtc(latest));
+                break;
+            }
+
+            var end = await entries
+                .Where(e => e.Key > lastKey)
                 .OrderBy(e => e.Key)
-                .Skip(Math.Min(end, count - 1))
-                .Select(e => e.CommitTimestamp)
+                .Skip(pageSize - 1)
+                .Select(e => new { e.Key, e.CommitTimestamp })
                 .FirstAsync(cancellationToken);
 
-            ends.Add(AsUtc(timestamp));
+            lastKey = end.Key;
+            ends.Add(AsUtc(end.CommitTimestamp));
         }
         #pragma warning restore CS8604
 

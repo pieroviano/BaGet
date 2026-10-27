@@ -11,7 +11,7 @@ namespace BaGet.Core;
 /// time, and a lease that could not be renewed is reported (the job itself is not interrupted). When the store cannot be reached the
 /// lease is refused, so a job is skipped rather than run twice.
 /// </summary>
-public sealed class ClusterJobLease : IJobLease
+public sealed class ClusterJobLease : IJobLease, IJobLeaseAvailability
 {
     private readonly ClusterRuntime _cluster;
     private readonly ILogger<ClusterJobLease> _logger;
@@ -44,6 +44,19 @@ public sealed class ClusterJobLease : IJobLease
         }
 
         return new Held(store, key, value, job, _cluster.LeaseDuration, _logger);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _cluster.Store!.PingAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            return false;
+        }
     }
 
     private sealed class Held : IAsyncDisposable

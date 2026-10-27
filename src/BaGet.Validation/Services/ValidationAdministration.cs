@@ -150,6 +150,12 @@ public sealed class ValidationAdministration : IValidationAdministration
     {
         _gate?.ThrowIfClosed();
 
+        // A validator may be running on it: stop that first, or it would publish what is being rejected.
+        if (!await PackageValidationRunner.StopRunAsync(submissionId, cancellationToken).ConfigureAwait(false))
+        {
+            return "That submission is being validated and did not stop in time; try again.";
+        }
+
         var (steps, error) = await LoadAsync(submissionId, cancellationToken);
         if (error != null) return error;
 

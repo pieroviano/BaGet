@@ -41,9 +41,13 @@ internal class V2FeedPackage
     /// Project a set of versions of one package. The whole set is needed at once
     /// because the latest-version flags are relative to it.
     /// </summary>
+    /// <param name="packages">Every version, whatever the client may see.</param>
+    /// <param name="downloadUrl">The download URL of a version.</param>
+    /// <param name="include">Which versions are returned; the flags are still computed over all of <paramref name="packages"/>.</param>
     public static List<V2FeedPackage> FromPackages(
         IEnumerable<Package> packages,
-        Func<Package, string> downloadUrl)
+        Func<Package, string> downloadUrl,
+        Func<Package, bool>? include = null)
     {
         var ordered = packages
             .OrderByDescending(p => p.Version)
@@ -55,6 +59,7 @@ internal class V2FeedPackage
         var latest = ordered.FirstOrDefault(p => p.Listed && !p.IsPrerelease);
 
         return ordered
+            .Where(p => include == null || include(p))
             .Select(p => FromPackage(p, downloadUrl(p), ReferenceEquals(p, latest), ReferenceEquals(p, absoluteLatest)))
             .ToList();
     }

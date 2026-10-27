@@ -33,6 +33,29 @@ public class PackageValidationRunner
     private readonly IRepositoryContext _repository;
     private readonly IRepositoryService _repositories;
 
+    // Submissions being validated by this process: a reject cancels the run and waits for it to end.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, ActiveRun> Running = new();
+
+    private sealed class ActiveRun
+    {
+        public CancellationTokenSource Cancel { get; } = new();
+        public TaskCompletionSource<bool> Finished { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+
+    /// <summary>
+    /// Stops this process's validation of the submission, if any, and waits (bounded) until it has ended, so nothing is
+    /// published after the caller removes the submission. False when it did not end in time.
+    /// </summary>
+    internal static async Task<bool> StopRunAsync(string submissionId, CancellationToken cancellationToken)
+    {
+        if (!Running.TryGetValue(submissionId, out var run)) return true;
+
+        run.Cancel.Cancel();
+        var finished = await Task.WhenAny(run.Finished.Task, Task.Delay(TimeSpan.FromSeconds(30), cancellationToken));
+
+        return finished == run.Finished.Task;
+    }
+
     public PackageValidationRunner(
         IContext context,
         IStorageService storage,
@@ -73,6 +96,30 @@ public class PackageValidationRunner
     }
 
     public async Task RunAsync(string submissionId, CancellationToken cancellationToken)
+    {
+        var run = new ActiveRun();
+        Running[submissionId] = run;
+        try
+        {
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, run.Cancel.Token);
+            try
+            {
+                await RunTrackedAsync(submissionId, linked.Token);
+            }
+            catch (OperationCanceledException) when (run.Cancel.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("Validation of submission {SubmissionId} was stopped because it is being rejected", submissionId);
+            }
+        }
+        finally
+        {
+            Running.TryRemove(submissionId, out _);
+            run.Finished.TrySetResult(true);
+            run.Cancel.Dispose();
+        }
+    }
+
+    private async Task RunTrackedAsync(string submissionId, CancellationToken cancellationToken)
     {
         // Costs nothing without a listener. A submission with nothing pending (already finished) is not a validation.
         using var activity = BaGetDiagnostics.Source.StartActivity(BaGetDiagnostics.Spans.PackageValidate);
@@ -171,6 +218,19 @@ public class PackageValidationRunner
 
             _logger.LogWarning("Submission {SubmissionId} failed validation and is quarantined", submissionId);
             return "Failed";
+        }
+
+        // Rejected (rows gone) while the validators ran, possibly on another node: do not publish what was refused.
+        #pragma warning disable CS8604
+        var stillPending = await _context.PackageValidations
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .AnyAsync(v => v.SubmissionId == submissionId && v.Type == PackageValidation.IndexType && v.State == PackageValidationState.Pending, cancellationToken);
+        #pragma warning restore CS8604
+        if (!stillPending)
+        {
+            _logger.LogWarning("Submission {SubmissionId} was rejected while it was validated; not indexed", submissionId);
+            return null;
         }
 
         var indexError = await IndexAsync(package, _options.Value.RepositorySigningServiceIndexUrl, cancellationToken);

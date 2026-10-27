@@ -590,7 +590,7 @@ appears. Until then it cannot be found or downloaded. The checks are:
 
 A package that fails is quarantined and never served. Its owners can see why with
 `GET /v3/package/{id}/{version}/validation`, sending their API key in `X-NuGet-ApiKey`.
-Pending validations resume when BaGet Extension restarts. A run that throws (not a failed step) is queued again up to 5 times, after 30 s doubling each time, then stays pending until the next start or an administrator rejects it.
+Pending validations resume when BaGet Extension restarts. A run that throws (not a failed step) is queued again up to 5 times, after 30 s doubling each time, then stays pending until the next start or an administrator rejects it (a reject stops a validation still running on that node and waits for it, so nothing is published afterwards; the runner also re-checks the submission right before indexing).
 
 **Symbols:** a `.snupkg` needs the published package, which exists only once validation releases it. Pushed earlier, it answers `404` (with the reason in the body) and is not kept: push it again after the release (`dotnet nuget push` of a `.nupkg` sends the `.snupkg` right behind it, so with validation on push the symbols in a second step).
 
