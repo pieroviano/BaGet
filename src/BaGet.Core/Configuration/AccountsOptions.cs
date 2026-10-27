@@ -42,7 +42,7 @@ public class AccountsOptions
 
     /// <summary>
     /// Whether a server with no users at all creates the administrator "Admin" at startup, with a
-    /// well-known default password that must be changed at the first sign-in. Turn it off to bootstrap
+    /// well-known default password ("Admin1234!") to change at the first sign-in (every start warns until it is). Turn it off to bootstrap
     /// only through <see cref="InitialAdministrators"/> or the "account promote" command.
     /// </summary>
     [RestartRequired]

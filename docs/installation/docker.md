@@ -69,7 +69,7 @@ dotnet nuget push -s http://localhost:6060/v3/index.json -k NUGET-SERVER-API-KEY
     `NUGET-SERVER-API-KEY` is only the example value in `baget.env`: change it to a secret value. With an empty `ApiKey` and [accounts](../configuration.md#accounts-package-owners-and-api-keys) on, a push needs a user API key from `/account/apikeys`. See [Configure BaGet Extension](#configure-baget-extension).
 
 !!! info
-    On a server with no users, the first start creates the administrator `Admin` / `Admin1234!` (`Accounts:CreateDefaultAdministrator`); change that password at once. See [Administrators](../configuration.md#administrators).
+    On a server with no users, the first start creates the administrator `Admin` / `Admin1234!` (`Accounts:CreateDefaultAdministrator`); change that password at once. See [Default administrator](../configuration.md#default-administrator).
 
 ## Tracing with Jaeger
 

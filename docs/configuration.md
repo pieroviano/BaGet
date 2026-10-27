@@ -332,6 +332,22 @@ reaches `/admin/users` (the "Users" entry of the account menu), where they promo
 accounts, each time confirming with their password (or by signing in again with the provider, for an
 account without one). Everyone else, and every request while accounts are off, gets 404 there.
 
+#### Default administrator
+
+| | |
+| --- | --- |
+| User name | `Admin` |
+| Password | `Admin1234!` |
+| Created | at startup, only when accounts are on (`Accounts:Enabled`, the default) and the database has **no users at all** (a fresh install) |
+| Not created | when any user exists (an upgraded server, or users registered first), or `Accounts:CreateDefaultAdministrator` is `false` |
+
+The password is public: sign in at `/account/login` and change it at once on **Account > Settings** (`/account/settings`).
+Every start logs a warning while `Admin` still has it; nothing else forces the change. `Admin` is an ordinary account:
+once another administrator exists it can be demoted or deleted on `/admin/users`.
+
+Lost access: `baget account reset-password Admin` sets a generated password (printed once) and switches off two-factor
+authentication, and `baget account promote <user>` makes any existing account an administrator (see the table below).
+
 ```json
 "Accounts": {
     "InitialAdministrators": "alice;bob"

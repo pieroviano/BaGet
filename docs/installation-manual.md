@@ -33,7 +33,7 @@ Step-by-step installation of BaGet Extension. Per-platform details are in the li
 
 - The port comes from `Kestrel:Endpoints:Http:Url` in `appsettings.json`; `--urls` and `ASPNETCORE_URLS` have no effect. Override with the environment variable `Kestrel__Endpoints__Http__Url`.
 - Migrations run at startup (`RunMigrationsAtStartup`, on by default).
-- On a server with no users, startup creates the administrator `Admin` / `Admin1234!`. Change the password at once ([Administrators](configuration.md#administrators)).
+- On a server with no users, startup creates the administrator `Admin` / `Admin1234!`. Change the password at once ([Default administrator](configuration.md#default-administrator)).
 
 ## 4. Install with Docker
 

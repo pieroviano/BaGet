@@ -13,7 +13,7 @@ Task-oriented guide to BaGet Extension: install, sign in, publish, consume, admi
 
 - Default address `http://localhost:6060` (`Kestrel__Endpoints__Http__Url` changes it; `--urls` has no effect).
 - The first start applies database migrations.
-- With no users, startup creates the administrator `Admin` / `Admin1234!`. Change the password at once ([Administrators](configuration.md#administrators)).
+- With no users, startup creates the administrator `Admin` / `Admin1234!`. Change the password at once ([Default administrator](configuration.md#default-administrator)).
 
 ## 2. Sign in and API keys
 

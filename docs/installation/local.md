@@ -8,7 +8,7 @@
 1. Browse `http://localhost:6060/` in your browser
 
 !!! info
-    On a server with no users, the first start creates the administrator `Admin` / `Admin1234!` (`Accounts:CreateDefaultAdministrator`); change that password at once. See [Administrators](../configuration.md#administrators).
+    On a server with no users, the first start creates the administrator `Admin` / `Admin1234!` (`Accounts:CreateDefaultAdministrator`); change that password at once. See [Default administrator](../configuration.md#default-administrator).
 
 !!! info
     The port comes from `Kestrel:Endpoints` in `appsettings.json`, which takes precedence over
