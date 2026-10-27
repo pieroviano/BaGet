@@ -131,6 +131,41 @@ public class ScanningDockerTests
     }
 
     [Fact]
+    public async Task ABlockDownloadPolicyOfAPrivateMemberStillRefusesAPullThroughAVirtualRepositoryWithARegistryToken()
+    {
+        var (harness, trivy) = await StartAsync();
+        await using var _ = harness;
+        await harness.App.CreateDockerRepositoryAsync("secret", anonymousRead: false, cancellationToken: TestContext.Current.CancellationToken);
+        using (var scope = harness.App.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IVirtualRepositoryAdministration>().CreateAsync(
+                "all",
+                new VirtualRepositorySettings { Members = new List<string> { "secret" } },
+                TestContext.Current.CancellationToken,
+                actor: null,
+                anonymousRead: true,
+                RepositoryFormat.Docker);
+        }
+
+        trivy.Hits.Add(Hit("CVE-2024-0009", Critical));
+        var vulnerable = OciTestImage.Create("hidden");
+        (await PushImageAsync(harness, "secret/app", "latest", vulnerable)).Dispose();
+        await harness.ScanAsync("secret", "app", vulnerable.ManifestDigest);
+        await harness.SetPolicyAsync("secret", blockDownload: High);
+
+        // docker login with the key: the token (not the key) reaches the private member through the virtual repository.
+        using var tokenResponse = await SendAsync(harness, HttpMethod.Get, "/v2/token?service=BaGet&scope=" + Uri.EscapeDataString("repository:all/app:pull"));
+        Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
+        using var json = JsonDocument.Parse(await TextAsync(tokenResponse));
+        using var pull = new HttpRequestMessage(HttpMethod.Get, "/v2/all/app/manifests/latest");
+        pull.Headers.Authorization = new AuthenticationHeaderValue("Bearer", json.RootElement.GetProperty("token").GetString());
+
+        using var response = await harness.Client.SendAsync(pull, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task AnImageWithoutFindingsAboveTheThresholdIsPulledAsUsual()
     {
         var (harness, trivy) = await StartAsync();

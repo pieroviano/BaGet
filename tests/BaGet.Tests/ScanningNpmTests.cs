@@ -116,6 +116,26 @@ public class ScanningNpmTests
     }
 
     [Fact]
+    public async Task APublishAfterAnUnpublishOfTheSameVersionStartsWithoutTheEarlierVerdict()
+    {
+        await using var harness = await StartAsync();
+        harness.Osv.Add("npm", "lib", "1.0.0", "GHSA-old", "CRITICAL");
+        await PublishAsync(harness, "lib", "1.0.0");
+        await harness.ScanAsync("web", "lib", "1.0.0");
+        Assert.NotNull(await harness.ResultAsync("web", "lib", "1.0.0"));
+
+        using (var remove = NpmTestPackages.Json(HttpMethod.Delete, NpmTestPackages.Path(Registry, "lib") + "/-rev/1-abc", token: ScanningHarness.Key))
+        {
+            Assert.Equal(HttpStatusCode.OK, (await harness.Client.SendAsync(remove, TestContext.Current.CancellationToken)).StatusCode);
+        }
+
+        // The tarball is new bytes: the verdict about the deleted one must be gone, whichever step dropped it.
+        using var again = await PublishAsync(harness, "lib", "1.0.0");
+        Assert.Equal(HttpStatusCode.Created, again.StatusCode);
+        Assert.Null(await harness.ResultAsync("web", "lib", "1.0.0"));
+    }
+
+    [Fact]
     public async Task ACleanVersionIsRecordedAsScannedWithNoFindings()
     {
         await using var harness = await StartAsync();

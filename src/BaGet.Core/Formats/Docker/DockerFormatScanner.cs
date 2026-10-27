@@ -52,8 +52,11 @@ public sealed class DockerFormatScanner : IFormatScanner
     {
         if (_context is NullContext) return Array.Empty<ScanArtifact>();
 
+        // Indexes and other artifacts are cut in SQL, so their (large) content is never loaded.
+        var imageTypes = OciNames.ImageManifestTypes.ToArray();
         var rows = await _context.OciManifests!
             .AsNoTracking()
+            .Where(m => imageTypes.Contains(m.MediaType!))
             .Join(_context.OciRepositories!, m => m.ImageKey, r => r.Key, (m, r) => new { r.Name, m.Digest, m.MediaType, m.Content })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);

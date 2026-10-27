@@ -108,9 +108,10 @@ public interface IScanGate
     /// <summary>
     /// What every store path calls once an artifact is stored: forgets the result of an earlier artifact of the same name and
     /// version (it describes other bytes, and would count as a scan for "block unscanned") and then <see cref="RequestScan"/>.
-    /// A failure to forget is logged, never thrown: the artifact is already stored.
+    /// A failure to forget is logged, never thrown: the artifact is already stored. <paramref name="contentChanged"/> false (a file the
+    /// scanner does not read, e.g. a Maven classifier jar) keeps the result and only queues a scan.
     /// </summary>
-    Task RegisterStoredAsync(string name, string version, CancellationToken cancellationToken);
+    Task RegisterStoredAsync(string name, string version, CancellationToken cancellationToken, bool contentChanged = true);
 }
 
 /// <summary>The scoped <see cref="IScanGate"/>.</summary>
@@ -127,6 +128,7 @@ public sealed class ScanGate : IScanGate
     private readonly ILogger<ScanGate> _logger;
     private readonly ClusterRuntime? _cluster;
     private readonly VirtualRepositoryReader? _reader;
+    private readonly IOciRequestAccess? _ociAccess;
 
     public ScanGate(
         IScanService scans,
@@ -139,8 +141,10 @@ public sealed class ScanGate : IScanGate
         IVirtualRepositories virtuals,
         ILogger<ScanGate> logger,
         ClusterRuntime? cluster = null,
-        VirtualRepositoryReader? reader = null)
+        VirtualRepositoryReader? reader = null,
+        IOciRequestAccess? ociAccess = null)
     {
+        _ociAccess = ociAccess;
         _cluster = cluster;
         _reader = reader;
         _scans = scans ?? throw new ArgumentNullException(nameof(scans));
@@ -192,9 +196,27 @@ public sealed class ScanGate : IScanGate
             // The member that holds the version answers; one with no result for it is unscanned and says nothing. Only the members
             // the caller can read count, as on the content path (which serves the first of them): judging a member the caller cannot
             // read would let another member's copy through on its verdict.
-            var members = _reader != null
-                ? await _reader.ReadableMembersAsync(name, cancellationToken).ConfigureAwait(false)
-                : await _virtuals.EffectiveMembersAsync(repository, cancellationToken).ConfigureAwait(false);
+            // A Docker pull is judged like the registry judges it (IOciRequestAccess: the registry token's grants or the key), since
+            // the caller of the reader cannot see a registry token and would look anonymous.
+            IReadOnlyList<RepositoryInfo> members;
+            if (repository.Format == RepositoryFormat.Docker && _ociAccess != null)
+            {
+                var all = await _virtuals.EffectiveMembersAsync(repository, cancellationToken).ConfigureAwait(false);
+                var allowed = new List<RepositoryInfo>();
+                foreach (var candidate in all)
+                {
+                    if (await _ociAccess.CanPullAsync(candidate, name, cancellationToken).ConfigureAwait(false)) allowed.Add(candidate);
+                }
+
+                members = allowed;
+            }
+            else
+            {
+                members = _reader != null
+                    ? await _reader.ReadableMembersAsync(name, cancellationToken).ConfigureAwait(false)
+                    : await _virtuals.EffectiveMembersAsync(repository, cancellationToken).ConfigureAwait(false);
+            }
+
             foreach (var member in members)
             {
                 using var scope = _scopes.CreateRepositoryScope(member);
@@ -340,9 +362,9 @@ public sealed class ScanGate : IScanGate
     }
 
     /// <inheritdoc/>
-    public async Task RegisterStoredAsync(string name, string version, CancellationToken cancellationToken)
+    public async Task RegisterStoredAsync(string name, string version, CancellationToken cancellationToken, bool contentChanged = true)
     {
-        if (Active)
+        if (Active && contentChanged)
         {
             try
             {

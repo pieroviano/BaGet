@@ -100,6 +100,24 @@ public class TrivyRunnerTests : IDisposable
     }
 
     [Fact]
+    public async Task OutputOverTheCapStopsTheProcessAtOnceInsteadOfWaitingForTheTimeout()
+    {
+        // Prints more than the cap on stdout, then keeps stderr (and the process) open.
+        var script = Script(Windows
+            ? "powershell -NoProfile -Command \"$s='x'*1048576; 1..70|foreach{[Console]::Out.Write($s)}; Start-Sleep 60\""
+            : "yes | head -c 70000000\nsleep 60");
+        var options = Options(script);
+        options.TrivyTimeout = TimeSpan.FromSeconds(50);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        var error = await Assert.ThrowsAsync<ScanUnavailableException>(
+            () => new ProcessTrivyRunner().ScanImageAsync(options, "registry.test/libs/app@sha256:abc", TestContext.Current.CancellationToken));
+
+        Assert.Contains("64 MB", error.Message);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(40), "the cap should end the scan, not the timeout");
+    }
+
+    [Fact]
     public async Task AMissingExecutableIsReported()
     {
         var options = Options(Path.Combine(_directory, "no-such-trivy"));

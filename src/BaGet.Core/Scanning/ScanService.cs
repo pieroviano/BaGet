@@ -235,6 +235,9 @@ public sealed class ScanService : IScanService
                 // record the failure on it and go on.
                 _logger.LogWarning(e, "Scan of {Name} {Version} in {Repository} failed", artifact.Name, artifact.Version, Repository.Name);
                 result = null;
+
+                // A save that failed half way leaves its entities tracked; they would fail every later save of the sweep.
+                (_context as Microsoft.EntityFrameworkCore.DbContext)?.ChangeTracker.Clear();
                 try
                 {
                     await StoreFailureAsync(key.Value.Name, key.Value.Version, "scan", e.GetType().Name + ": " + e.Message, cancellationToken).ConfigureAwait(false);
