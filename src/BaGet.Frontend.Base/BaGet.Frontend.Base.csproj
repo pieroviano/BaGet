@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageTags>NuGet</PackageTags>
-    <Description>BaGet Extension's user accounts, package owners and per-user API keys.</Description>
+    <Description>BaGet Extension's shared MVC infrastructure for the screens: view controller bases, layout and shared partials, tag helpers.</Description>
     <RootNamespace>BaGet.Frontend</RootNamespace>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <Nullable>enable</Nullable>

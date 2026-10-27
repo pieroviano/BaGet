@@ -31,7 +31,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="BaGet.Tests" Key="$(BaGetPublicKey)" />
     <InternalsVisibleTo Include="BaGet.Identity.FrontEnd" Key="$(BaGetPublicKey)" />
-    <InternalsVisibleTo Include="BaGet.Frontend.Base" Key="$(BaGetPublicKey)" />
   </ItemGroup>
 
 </Project>

@@ -79,7 +79,7 @@ plain URLs (package files, symbol files, avatars). `UiApiParityTests` fails for 
 
 A use case takes explicit inputs (caller, form, cancellation token), returns a `ScreenResult<T>` and sees no `HttpContext`, `ModelState` or
 `TempData`. The twin's filters do not run in process, so the view controller bases run the same `ScreenGate` first.
-Types moved to the Application projects keep their name and namespace and are forwarded (`[TypeForwardedTo]`) from the old assembly; the screens moved to the FrontEnd projects (a layering rule: the API assemblies cannot reference them) are not forwarded.
+Moved types are not forwarded (`[TypeForwardedTo]`): code compiled against an older BaGet must be recompiled.
 
 ## Not breaking
 

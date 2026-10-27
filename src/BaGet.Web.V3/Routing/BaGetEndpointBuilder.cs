@@ -3,7 +3,9 @@ using BaGet.Core;
 using BaGet.Web.V3.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Scalar.AspNetCore;
 using BaGet.Web.V3.Controllers.Protocols;
@@ -74,7 +76,9 @@ public class BaGetEndpointBuilder
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapRazorPages();
+        // Razor Pages (a host's own pages) exist only when the host registered the screens (AddBaGetFrontEnd calls
+        // AddRazorPages); an API-only host has none, and MapRazorPages would throw without their services.
+        if (endpoints.ServiceProvider.GetService<PageLoader>() != null) endpoints.MapRazorPages();
 
         MapServiceIndexRoutes(endpoints);
         MapPackagePublishRoutes(endpoints);
