@@ -97,7 +97,9 @@ public sealed class MavenManageUseCase
         _isAdministrator = await _services.Administrators.IsAdministratorAsync(caller, cancellationToken).ConfigureAwait(false);
         if (!isOwner && !_isAdministrator)
         {
-            return ScreenResult<MavenManageViewModel>.Forbidden();
+            return await _services.CanSeeAsync(caller, Name, cancellationToken).ConfigureAwait(false)
+                ? ScreenResult<MavenManageViewModel>.Forbidden()
+                : ScreenResult<MavenManageViewModel>.NotFound();
         }
 
         _actingAsAdministrator = _isAdministrator && !isOwner;

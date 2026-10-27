@@ -127,11 +127,14 @@ public sealed class AdminUsersUseCase : AdminUseCaseBase
     /// </summary>
     public async Task<ScreenResult<UsersViewModel>> ResetPasswordAsync(ClaimsPrincipal caller, UserChange change, CancellationToken cancellationToken)
     {
+        ThrowIfClosed();
         var current = await CurrentAsync(caller);
         if (current == null) return ScreenResult<UsersViewModel>.SignIn();
 
         var refusal = await RefuseAsync(current, change.UserName, change.Password);
         if (refusal != null) return BackToUsers(change.Q, change.PageNumber, null, refusal);
+
+        if (string.IsNullOrWhiteSpace(change.UserName)) return BackToUsers(change.Q, change.PageNumber, null, "There is no user with that name.");
 
         var generated = await _recovery.ResetPasswordAsync(change.UserName!, cancellationToken, change.ResetEmail);
         if (generated == null) return BackToUsers(change.Q, change.PageNumber, null, "There is no user with that name.");
@@ -155,6 +158,7 @@ public sealed class AdminUsersUseCase : AdminUseCaseBase
     {
         if (!EmailConfigured) return ScreenResult<UsersViewModel>.NotFound();
 
+        ThrowIfClosed();
         var current = await CurrentAsync(caller);
         if (current == null) return ScreenResult<UsersViewModel>.SignIn();
 
@@ -162,7 +166,7 @@ public sealed class AdminUsersUseCase : AdminUseCaseBase
         if (refusal != null) return BackToUsers(change.Q, change.PageNumber, null, refusal);
 
         string? message = null, error = null;
-        var user = await Users.FindByNameAsync(change.UserName!);
+        var user = string.IsNullOrWhiteSpace(change.UserName) ? null : await Users.FindByNameAsync(change.UserName);
         if (user == null)
         {
             error = "There is no user with that name.";
@@ -272,6 +276,7 @@ public sealed class AdminUsersUseCase : AdminUseCaseBase
 
     private async Task<ScreenResult<UsersViewModel>> ChangeAsync(ClaimsPrincipal caller, UserChange change, bool promote, CancellationToken cancellationToken)
     {
+        ThrowIfClosed();
         var current = await CurrentAsync(caller);
         if (current == null) return ScreenResult<UsersViewModel>.SignIn();
 

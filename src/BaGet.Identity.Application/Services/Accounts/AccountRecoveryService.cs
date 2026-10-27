@@ -31,6 +31,8 @@ public class AccountRecoveryService
     /// </summary>
     public async Task<string?> ResetPasswordAsync(string? userName, CancellationToken cancellationToken, string? email = null)
     {
+        if (string.IsNullOrWhiteSpace(userName)) return null;
+
         #pragma warning disable CS8604
         var user = await _users.FindByNameAsync(userName);
         #pragma warning restore CS8604

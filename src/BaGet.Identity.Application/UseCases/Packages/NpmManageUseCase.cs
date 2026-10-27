@@ -96,7 +96,9 @@ public sealed class NpmManageUseCase
         _isAdministrator = await _services.Administrators.IsAdministratorAsync(caller, cancellationToken).ConfigureAwait(false);
         if (!isOwner && !_isAdministrator)
         {
-            return ScreenResult<NpmManageViewModel>.Forbidden();
+            return await _services.CanSeeAsync(caller, _name, cancellationToken).ConfigureAwait(false)
+                ? ScreenResult<NpmManageViewModel>.Forbidden()
+                : ScreenResult<NpmManageViewModel>.NotFound();
         }
 
         _actingAsAdministrator = _isAdministrator && !isOwner;

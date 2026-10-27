@@ -56,14 +56,14 @@ public sealed class PasswordConfirmation
     }
 
     /// <summary>
-    /// <see cref="LoadAsync"/> with the page to come back to after signing in again being the URL (path and query) of the request being served, as the
+    /// <see cref="LoadAsync"/> with the page to come back to after signing in again being the URL (path and query, application-relative with <c>~</c> so a path base is kept) of the request being served, as the
     /// access screens always did. Through the in-process call of a view controller that is the screen's own address.
     /// </summary>
     public Task LoadForRequestAsync(ConfirmationModel model, ClaimsPrincipal caller)
     {
         var request = _http.HttpContext?.Request;
 
-        return LoadAsync(model, caller, request == null ? null : request.Path + request.QueryString);
+        return LoadAsync(model, caller, request == null ? null : "~" + request.Path + request.QueryString);
     }
 
     /// <summary>The check behind every sensitive action, for a caller that holds its own <see cref="HttpContext"/> (the rule lives in <see cref="AccountConfirmation"/>).</summary>

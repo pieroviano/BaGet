@@ -336,7 +336,7 @@ public sealed class ExternalSignInUseCase
         await _signIn.SignInWithClaimsAsync(user, properties, kept);
         #pragma warning restore CS8620
 
-        return ScreenResult<ReauthenticateViewModel>.GoTo(ScreenNext.Local(LocalUrls.Target(returnUrl)));
+        return ScreenResult<ReauthenticateViewModel>.GoTo(ScreenNext.Local(LocalUrls.AppRelative(LocalUrls.Target(returnUrl))));
     }
 
     private static ScreenResult<ReauthenticateViewModel> Refuse(ReauthenticateViewModel model, string message)

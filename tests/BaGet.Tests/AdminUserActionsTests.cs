@@ -228,6 +228,35 @@ public class AdminUserActionsTests : IDisposable
     }
 
     [Fact]
+    public async Task TheEmailLinkAndTheDeletionAreRefusedWhileTheGateIsClosed()
+    {
+        var (app, admin) = await StartAsync(email: true);
+        await CreateUserAsync(app, "alice", email: "alice@example.com");
+        Assert.Contains("SendResetLink", await admin.GetPageAsync("admin/users")); // token taken while the gate is open
+        app.Services.GetRequiredService<MaintenanceGate>().CloseUntilRestart("test");
+
+        using (var send = await PostAsync(admin, "SendResetLink", "alice"))
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, send.StatusCode);
+        }
+
+        using (var sendWithoutName = await PostAsync(admin, "SendResetLink", ""))
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, sendWithoutName.StatusCode);
+        }
+
+        using (var delete = await admin.PostAsync("admin/users", new Dictionary<string, string> { { "password", Password } },
+            action: "admin/users/alice/delete"))
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, delete.StatusCode);
+        }
+
+        await Task.Delay(300, TestContext.Current.CancellationToken);
+        Assert.DoesNotContain(app.Services.GetRequiredService<CapturingEmailSender>().Sent, m => m.Kind == "reset-link");
+        Assert.True(await CanSignInAsync(app, "alice", Password));
+    }
+
+    [Fact]
     public async Task TheEmailLinkNeedsAnAddress()
     {
         var (app, admin) = await StartAsync(email: true);

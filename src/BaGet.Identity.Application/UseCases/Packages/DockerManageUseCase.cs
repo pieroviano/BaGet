@@ -81,7 +81,9 @@ public sealed class DockerManageUseCase
         var principal = await _services.CallerAsync(caller).ConfigureAwait(false);
         if (principal == null || !await _access.IsAllowedAsync(principal, current, image!, OciActions.Delete, cancellationToken).ConfigureAwait(false))
         {
-            return ScreenResult<DockerManageViewModel>.Forbidden();
+            return await _services.CanSeeAsync(caller, image, cancellationToken).ConfigureAwait(false)
+                ? ScreenResult<DockerManageViewModel>.Forbidden()
+                : ScreenResult<DockerManageViewModel>.NotFound();
         }
 
         if (isWrite)
