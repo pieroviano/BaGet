@@ -107,6 +107,16 @@ public class WebUiReviewFixesTests : IDisposable
         Assert.True(LocalUrls.IsLocal(model.ReturnPage));
     }
 
+    [Theory]
+    [InlineData("/admin/users/bob", "~/admin/users/bob")]
+    [InlineData("/Admin/Settings", "~/Admin/Settings")]
+    [InlineData("~/admin/groups/x?a=1", "~/admin/groups/x?a=1")]
+    [InlineData("//evil.example", "~/")]
+    [InlineData("https://evil.example", "~/")]
+    [InlineData(null, "~/")]
+    public void AReauthenticationReturnAddressIsWrittenApplicationRelative(string? url, string expected)
+        => Assert.Equal(expected, LocalUrls.AppRelative(LocalUrls.Target(url)));
+
     private sealed class TestModel : ConfirmationModel
     {
     }

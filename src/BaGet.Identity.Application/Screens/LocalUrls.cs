@@ -41,6 +41,12 @@ public static class LocalUrls
     /// <summary><paramref name="returnUrl"/> when it is local, else the site root.</summary>
     public static string Target(string? returnUrl) => IsLocal(returnUrl) ? returnUrl! : Root;
 
+    /// <summary>
+    /// A local address written application-relative (<c>~/x</c>), so the redirect adds the path base; a root-relative <c>/x</c> written by a
+    /// view or a caller that does not know the path base would otherwise leave the application. Other values are returned unchanged.
+    /// </summary>
+    public static string AppRelative(string url) => url.Length > 0 && url[0] == '/' && IsLocal(url) ? "~" + url : url;
+
     private static bool HasControlCharacter(ReadOnlySpan<char> text)
     {
         foreach (var c in text)
