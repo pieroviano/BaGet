@@ -28,7 +28,7 @@ builder.Services.AddTransient(DependencyInjectionExtensions.GetServiceFromProvid
 var app = builder.Build();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseRepositoryResolution();     // /r/{repo}/ selects the repository (404 if unknown); required, else /r/x would serve the default one
+app.UseRepositoryResolution();     // /r/{repo}/ selects the repository (404 if unknown); required: without it a /r/{repo}/ request is answered 500 (RepositoryResolutionGuardFilter), never served from the default repository
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseOperationCancelledMiddleware();

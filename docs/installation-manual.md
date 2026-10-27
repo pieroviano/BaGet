@@ -57,7 +57,7 @@ SettingsOverridesPath=/var/baget/appsettings.Overrides.json
 docker run --rm --name nuget-server -p 6060:80 --env-file baget.env -v "$(pwd)/baget-data:/var/baget" baget:latest
 ```
 
-Keep `SettingsOverridesPath` and the log path inside the mounted volume, or a recreated container loses them.
+Keep `SettingsOverridesPath` and the log path inside the mounted volume, or a recreated container loses them. The data protection key ring (`DataProtection-Keys`) is created beside the overrides file, so with the setting above it is in the volume too; without it a recreated container makes stored remote passwords unreadable and signs everyone out ([Data protection keys](configuration.md#data-protection-keys)). If the container is reached through a proxy or published port, the client address is the Docker gateway: list the proxy in `Proxy:TrustedProxies` / `Proxy:TrustedNetworks`.
 
 ## 5. Install on IIS
 
@@ -65,7 +65,7 @@ Keep `SettingsOverridesPath` and the log path inside the mounted volume, or a re
 2. Publish the host (`dotnet publish` generates `web.config`) and copy it to the site folder.
 3. Create an application pool: no managed code, integrated pipeline.
 4. Create a site on that pool with your host name and port (the Kestrel endpoint is not used in-process).
-5. Grant the pool identity write access to the folder if the app cannot persist its state ([IIS proxy](installation/iis-proxy.md)).
+5. Grant the pool identity write access to the folder if the app cannot persist its state ([IIS proxy](installation/iis-proxy.md)): the data protection key ring is written to `DataProtection-Keys` beside the overrides file (set `DataProtection:KeyPath` for another folder), so a pool without a loaded user profile no longer loses its keys.
 
 ## 6. Choose a database, storage and search
 
@@ -88,7 +88,7 @@ Docker registry repositories need a storage that can stream (not `Null`): [Packa
 | Set `ApiKey` or create user keys | Global `ApiKey` setting, or `/account/apikeys` |
 | Publish a package | `dotnet nuget push -s http://localhost:6060/v3/index.json -k <key> pkg.nupkg` |
 | Add the feed to clients | Source `http://localhost:6060/v3/index.json`; symbols `http://localhost:6060/api/download/symbols` |
-| Behind a reverse proxy / HTTPS | Terminate TLS at the proxy; forwarded headers and path base are honoured |
+| Behind a reverse proxy / HTTPS | Terminate TLS at the proxy; the path base is honoured, forwarded headers only from trusted proxies (loopback by default: list yours in `Proxy:TrustedProxies` / `Proxy:TrustedNetworks`, see [Configuration](configuration.md#reverse-proxies-and-forwarded-headers)) |
 | Import existing packages | [nuget.org](import/nugetorg.md), [NuGet.Server](import/nugetserver.md), [local feeds](import/local-feeds.md) |
 
 Next: the [user manual](user-manual.md).

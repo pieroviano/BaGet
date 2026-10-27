@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.Configuration.Memory;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,6 +59,21 @@ public class BaGetApplication : WebApplicationFactory<Program>
         var storagePath = Path.Combine(tempPath, "Packages");
 
         Directory.CreateDirectory(tempPath);
+
+        // The shipped appsettings.json turns telemetry export on (Jaeger on localhost:4317). A test host must start with it off, but a
+        // startup key (UseSetting) would shadow what a telemetry test saves through SettingsService, and a seeded overrides file would
+        // change the Settings page ("reset to default" boxes). So the default is an in-memory source placed right below the overrides
+        // file: it outranks appsettings.json, a save outranks it, and nothing it holds shows as overridden.
+        var overridesFile = SettingsOverridesStore.DefaultFileName;
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            var index = configuration.Sources.ToList().FindIndex(s => s is JsonConfigurationSource json && json.Path == overridesFile);
+            var source = new MemoryConfigurationSource
+            {
+                InitialData = new Dictionary<string, string?> { { "Telemetry:Enabled", "false" } },
+            };
+            configuration.Sources.Insert(index < 0 ? configuration.Sources.Count : index, source);
+        });
 
         // Setup the integration test configuration.
         var settings = new Dictionary<string, string>

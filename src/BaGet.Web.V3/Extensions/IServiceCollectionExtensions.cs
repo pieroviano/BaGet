@@ -35,6 +35,9 @@ public static class IServiceCollectionExtensions
                 // The one read check of every repository page (404 when the caller may not see the repository): the controller
                 // actions marked [RepositoryPage], and the /r/{repo}/ twin of their routes.
                 options.Filters.Add<RepositoryActionFilter>();
+
+                // Refuses a /r/{repo}/ request that never went through UseRepositoryResolution (else it would be served from `default`).
+                options.Filters.Add<RepositoryResolutionGuardFilter>();
                 options.Conventions.Add(new RouteNotForLinksConvention());
                 options.Conventions.Add(new RepositoryActionRouteConvention());
 

@@ -82,8 +82,7 @@ public static partial class DependencyInjectionExtensions
         services.AddBaGetOptions<SiteOptions>(nameof(BaGetOptions.Site));
         services.AddBaGetOptions<ValidationOptions>(nameof(BaGetOptions.Validation));
         services.AddBaGetOptions<TelemetryOptions>(nameof(BaGetOptions.Telemetry));
-        services.AddBaGetOptions<HaOptions>(nameof(BaGetOptions.Ha));
-        services.AddBaGetOptions<SerilogOptions>("Serilog");
+        services.AddBaGetOptions<HaOptions>(nameof(BaGetOptions.Ha));        services.AddBaGetOptions<SerilogOptions>("Serilog");
         services.AddBaGetOptions<SearchOptions>(nameof(BaGetOptions.Search));
         services.AddBaGetOptions<StorageOptions>(nameof(BaGetOptions.Storage));
     }

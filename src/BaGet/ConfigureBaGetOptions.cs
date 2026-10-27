@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using BaGet.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -31,6 +32,9 @@ public class ConfigureBaGetOptions
     /// The <see cref="BaGetOptions.AllowedHosts"/> entry that disables host filtering.
     /// </summary>
     public const string AllowAnyHost = "*";
+
+    /// <summary>The multipart body limit of an ordinary form (1 MiB); upload and push endpoints raise it.</summary>
+    public const long DefaultFormLimit = 1024 * 1024;
 
     private readonly IConfiguration _configuration;
 
@@ -64,17 +68,49 @@ public class ConfigureBaGetOptions
 
     public void Configure(FormOptions options)
     {
-        options.MultipartBodyLengthLimit = int.MaxValue;
+        // Antiforgery validation buffers the whole form of every POST, anonymous ones included: keep the default small.
+        // The upload and push endpoints raise it themselves (see UploadSizeLimitAttribute).
+        options.MultipartBodyLengthLimit = DefaultFormLimit;
     }
 
     public void Configure(ForwardedHeadersOptions options)
     {
         options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
-        // Do not restrict to local network/proxy
-        options.KnownNetworks.Clear();
-        options.KnownProxies.Clear();
+        var proxy = _configuration.GetSection(nameof(BaGetOptions.Proxy)).Get<ProxyOptions>() ?? new ProxyOptions();
+
+        if (proxy.TrustAnyProxy)
+        {
+            // Explicit opt-in: believe every sender (only safe when clients cannot reach BaGet except through the proxy).
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+            return;
+        }
+
+        // Default: the framework's loopback-only trust, plus what the operator listed.
+        foreach (var address in SplitList(proxy.TrustedProxies))
+        {
+            if (!IPAddress.TryParse(address, out var ip))
+            {
+                throw new InvalidOperationException($"'Proxy:TrustedProxies' contains '{address}', which is not an IP address.");
+            }
+
+            options.KnownProxies.Add(ip);
+        }
+
+        foreach (var network in SplitList(proxy.TrustedNetworks))
+        {
+            if (!System.Net.IPNetwork.TryParse(network, out var parsed))
+            {
+                throw new InvalidOperationException($"'Proxy:TrustedNetworks' contains '{network}', which is not a network in CIDR form (10.0.0.0/8).");
+            }
+
+            options.KnownIPNetworks.Add(parsed);
+        }
     }
+
+    private static IEnumerable<string> SplitList(string? value)
+        => (value ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     public void Configure(HostFilteringOptions options)
     {

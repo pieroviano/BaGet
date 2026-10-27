@@ -34,6 +34,7 @@ public sealed class UploadController : UiControllerBase
 
     /// <summary>Stages the chosen file and shows what it contains.</summary>
     [HttpPost, PageHandler("Stage")]
+    [UploadSizeLimit]
     public async Task<IActionResult> Stage(string? id, IFormFile? package, string? apiKey, CancellationToken cancellationToken)
         => Render(await Api<UploadUiApiController, UploadViewModel>(api => api.Stage(id, package, apiKey, cancellationToken)), "Index");
 

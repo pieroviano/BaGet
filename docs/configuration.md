@@ -15,12 +15,44 @@ You can modify BaGet Extension's configurations by editing the `appsettings.json
 | `RunMigrationsAtStartup` | `true` | apply pending database migrations when BaGet Extension starts |
 | `SettingsOverridesPath` | empty (= `appsettings.Overrides.json`) | the file the [Settings page](#settings-page) saves to; relative paths start at the content root (or `BAGET_CONFIG_ROOT`) |
 | `Urls` | none | the ASP.NET Core listening-address key; ineffective while `Kestrel:Endpoints` is set, see [Listening address](#listening-address) |
+| `Proxy:TrustedProxies`, `Proxy:TrustedNetworks`, `Proxy:TrustAnyProxy` | loopback only | which reverse proxies may set `X-Forwarded-For`/`-Proto`, see [Reverse proxies](#reverse-proxies-and-forwarded-headers) |
+| `DataProtection:KeyPath` | `DataProtection-Keys` beside the overrides file | folder of the key ring, see [Data protection keys](#data-protection-keys) |
 
 ## Listening address
 
 The shipped `appsettings.json` sets `Kestrel:Endpoints:Http:Url` to `http://localhost:6060`. That
 setting outranks `--urls` and `ASPNETCORE_URLS`, which therefore have no effect. Override it with the
 environment variable `Kestrel__Endpoints__Http__Url`, or edit the file.
+
+## Reverse proxies and forwarded headers
+
+BaGet Extension reads the client address and scheme from `X-Forwarded-For` / `X-Forwarded-Proto`, **only when the
+request comes from a trusted proxy**. By default that is loopback only (the framework default), so a client that
+reaches the server directly cannot spoof its address (the per-client rate limits and the log) or the scheme.
+These keys are read at startup, from `appsettings.json`, environment variables or the command line (not the Settings page).
+
+| Key | Meaning |
+| --- | --- |
+| `Proxy:TrustedProxies` | proxy addresses separated by `;`, added to loopback: `10.0.0.5;fd00::1` |
+| `Proxy:TrustedNetworks` | proxy networks in CIDR form separated by `;`: `10.0.0.0/8;172.16.0.0/12` |
+| `Proxy:TrustAnyProxy` | `true` believes every sender (the behaviour before this setting existed). Only safe when clients can reach BaGet through the proxy alone |
+
+An address or network that does not parse stops startup. Behind a proxy on another address without any of these, the
+forwarded headers are ignored: the client address is the proxy's and an `https` front end looks like `http`.
+
+## Data protection keys
+
+The key ring encrypts remote repository passwords, replication peer keys, sessions, antiforgery and registry tokens and
+reset/confirmation links. A single node keeps it in `DataProtection:KeyPath` (default: a `DataProtection-Keys` folder beside the
+[overrides file](#settings-page); a relative path starts at that file's folder), as plain XML files: treat the folder like the
+database and **keep it on a persistent volume** (in Docker it is inside `/var/baget` when `SettingsOverridesPath` is). Losing it
+makes stored passwords unreadable (remote upstreams are then called anonymously) and signs everyone out. In a cluster
+(`Ha:Enabled`) the keys are in the database and this key is ignored. Restart required; not on the Settings page.
+
+## Exit codes
+
+`baget` exits with `0` when the command or the server finished, and `1` when the configuration is invalid or a command was
+refused or failed, so `restart: on-failure` and systemd see a failed start.
 
 ## Require an API key
 
@@ -227,7 +259,7 @@ where an upload cannot work: read-only mode, a closed maintenance gate, or accou
 | Operating note | |
 | --- | --- |
 | Temporary space | Each upload is spooled to `ASPNETCORE_TEMP` (else the system temporary directory) before it is staged, so a browser upload needs free space there equal to the package's size, on top of the staged copy. |
-| Size ceiling | About 2 GB (`MultipartBodyLengthLimit` is `int.MaxValue`). Beyond it the request is rejected with a bare `400` before the page runs, so the page cannot explain it. Under IIS in-process, `IISServerOptions.MaxRequestBodySize` caps uploads at 250 MB and `requestLimits/maxAllowedContentLength` in `web.config` at 30 MB - the ceilings the push endpoint already has. |
+| Size ceiling | About 2 GB on the upload and push endpoints, which carry `[UploadSizeLimit]` (the NuGet and symbol push, the NuGet, npm and Maven upload screens and their `/api/ui` twins); every other form is limited to 1 MiB (`FormOptions.MultipartBodyLengthLimit`, since antiforgery validation buffers the whole form of any POST, anonymous ones included). Beyond it the request is rejected with a bare `400` before the page runs, so the page cannot explain it. Under IIS in-process, `IISServerOptions.MaxRequestBodySize` caps uploads at 250 MB and `requestLimits/maxAllowedContentLength` in `web.config` at 30 MB - the ceilings the push endpoint already has. |
 | Unconfirmed uploads | Staged under `staging/` in the configured store, and removed when the preview is confirmed or discarded. Whatever nobody comes back to is swept after 24 hours - on `FileSystem` and `Null` storage; the cloud providers cannot list a prefix yet, so abandoned uploads there accumulate. |
 | `Storage:Path` | Do not point it at the web root: static files would then serve the store, `staging/` and `validation/` included. That is a pre-existing misconfiguration rather than something uploads introduce. |
 
@@ -472,8 +504,8 @@ Other rules with email on:
   sent from a background queue. One reset mail per account per 10 minutes is the real protection; 60 mails per client
   address per 10 minutes is a backstop. There is no site-wide cap, which would let one caller block everyone's
   reset. State is in memory, per process, and bounded by the number of accounts; excess requests are answered the same and mail nothing. Requests for names that do not exist use up
-  nothing. Known limit: the client address comes from `X-Forwarded-For`, which BaGet Extension trusts from any
-  sender, so a caller can spoof it, and behind a proxy that sets no such header all callers share one
+  nothing. Known limit: the client address comes from `X-Forwarded-For`, which is believed only from a trusted
+  proxy ([Reverse proxies](#reverse-proxies-and-forwarded-headers)); behind a proxy that sets no such header all callers share one
   address. Hence the per-client backstop is high and the per-account limit is what holds.
 * OpenID Connect accounts are confirmed only when the provider sends `email_verified=true`; otherwise a
   confirmation link is mailed and the user signs in again once it is followed. A provider that sends no
@@ -879,7 +911,7 @@ comments stay untouched. The file is `appsettings.Overrides.json` in the content
 | Source, lowest to highest precedence | Notes |
 | --- | --- |
 | `appsettings.json`, `appsettings.{Environment}.json` | shipped defaults |
-| **the overrides file** | saved by the Settings page, reloaded when it changes |
+| **the overrides file** | saved by the Settings page, reloaded when it changes; sits right after the last `appsettings*.json`, so user secrets (Development) outrank it |
 | environment variables, command line | an operator's explicit setting still wins; the page marks a saved value that one of these overrides, because the saved value then has no effect |
 
 - A setting read only at startup (`Accounts`, `Email`, `Database`, `Storage`, `Search`, `Mirror`,
