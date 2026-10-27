@@ -28,7 +28,7 @@
     {
         <p class="help-block">
             A quarantined package is staged but not served. <strong>Release</strong> indexes it although validation failed (logged and audited);
-            <strong>Reject</strong> deletes it; <strong>Retry</strong> validates it again. Release and reject need your password.
+            <strong>Reject</strong> deletes it (also a submission stuck pending); <strong>Retry</strong> validates it again. Release and reject need your password.
         </p>
 
         <form method="post" id="validation-actions">
@@ -68,6 +68,12 @@
                                 {
                                     <button type="submit" class="btn btn-warning btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Action("Validation", "AdminOperations", new { handler = "Release" })"
                                             onclick="return confirm('Index this package although validation failed?');">Release</button>
+                                    <button type="submit" class="btn btn-danger btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Action("Validation", "AdminOperations", new { handler = "Reject" })"
+                                            onclick="return confirm('Delete this package? This cannot be undone.');">Reject</button>
+                                }
+                                else
+                                {
+                                    @* A submission whose validation keeps failing stays pending: it can be rejected too. *@
                                     <button type="submit" class="btn btn-danger btn-xs" name="submissionId" value="@submission.SubmissionId" formaction="@Url.Action("Validation", "AdminOperations", new { handler = "Reject" })"
                                             onclick="return confirm('Delete this package? This cannot be undone.');">Reject</button>
                                 }

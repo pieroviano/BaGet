@@ -16,6 +16,13 @@ public class SearchController : ControllerBase
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
     }
 
+    /// <summary>The largest page a caller can ask for; the V2 feed clamps to the same figure.</summary>
+    internal const int MaxTake = 1000;
+
+    internal static int ClampSkip(int skip) => Math.Max(skip, 0);
+
+    internal static int ClampTake(int take) => Math.Clamp(take, 0, MaxTake);
+
     public async Task<ActionResult<SearchResponse>> SearchAsync(
         [FromQuery(Name = "q")] string? query = null,
         [FromQuery]int skip = 0,
@@ -30,8 +37,8 @@ public class SearchController : ControllerBase
     {
         var request = new SearchRequest
         {
-            Skip = skip,
-            Take = take,
+            Skip = ClampSkip(skip),
+            Take = ClampTake(take),
             IncludePrerelease = prerelease,
             IncludeSemVer2 = semVerLevel == "2.0.0",
             PackageType = packageType,
@@ -73,8 +80,8 @@ public class SearchController : ControllerBase
                 IncludePrerelease = prerelease,
                 IncludeSemVer2 = semVerLevel == "2.0.0",
                 PackageType = packageType,
-                Skip = skip,
-                Take = take,
+                Skip = ClampSkip(skip),
+                Take = ClampTake(take),
                 Query = autocompleteQuery,
             };
 

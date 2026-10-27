@@ -17,6 +17,9 @@ public class FileStorageService : IStreamingStorageService, IListableStorageServ
     // See: https://github.com/dotnet/corefx/blob/master/src/Common/src/CoreLib/System/IO/Stream.cs#L35
     private const int DefaultCopyBufferSize = 81920;
 
+    /// <summary>Suffix of the temporary file a put writes before moving it into place; never listed.</summary>
+    internal const string TemporarySuffix = ".baget-tmp";
+
     private readonly string _storePath;
 
     public FileStorageService(IOptionsSnapshot<FileSystemStorageOptions> options)
@@ -68,13 +71,19 @@ public class FileStorageService : IStreamingStorageService, IListableStorageServ
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         #pragma warning restore CS8604
 
+        // Write to a temporary file in the same folder and move it into place, so a failed or cancelled copy
+        // never leaves a truncated file at the final path (a later put would compare against it and conflict).
+        var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + TemporarySuffix;
+
         try
         {
-            using (var fileStream = File.Open(path, FileMode.CreateNew))
+            using (var fileStream = File.Open(temporaryPath, FileMode.CreateNew))
             {
                 await content.CopyToAsync(fileStream, DefaultCopyBufferSize, cancellationToken);
-                return StoragePutResult.Success;
             }
+
+            File.Move(temporaryPath, path);
+            return StoragePutResult.Success;
         }
         catch (IOException) when (File.Exists(path))
         {
@@ -84,6 +93,19 @@ public class FileStorageService : IStreamingStorageService, IListableStorageServ
                 return content.Matches(targetStream)
                     ? StoragePutResult.AlreadyExists
                     : StoragePutResult.Conflict;
+            }
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(temporaryPath);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
             }
         }
     }
@@ -102,6 +124,7 @@ public class FileStorageService : IStreamingStorageService, IListableStorageServ
 
         var paths = Directory
             .EnumerateFiles(fullPath, "*", SearchOption.AllDirectories)
+            .Where(path => !path.EndsWith(TemporarySuffix, StringComparison.Ordinal))
             .Select(path => path
                 .Substring(_storePath.Length)
                 .Replace(Path.DirectorySeparatorChar, '/')

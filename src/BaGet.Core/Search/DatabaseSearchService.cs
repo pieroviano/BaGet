@@ -191,19 +191,22 @@ public class DatabaseSearchService : ISearchService
     public async Task<DependentsResponse> FindDependentsAsync(string? packageId, CancellationToken cancellationToken)
     {
         #pragma warning disable CS8604
+        // One row per dependent id (its versions' downloads summed), then the top 20: taking 20 versions first
+        // listed one id once per version and returned fewer than 20 distinct dependents.
         var dependents = await _context
             .Packages
             .Where(p => p.Listed)
-            .OrderByDescending(p => p.Downloads)
             .Where(p => p.Dependencies.Any(d => d.Id == packageId))
+            .GroupBy(p => p.Id)
+            .OrderByDescending(g => g.Sum(p => p.Downloads))
+            .ThenBy(g => g.Key)
             .Take(20)
-            .Select(r => new PackageDependent
+            .Select(g => new PackageDependent
             {
-                Id = r.Id,
-                Description = r.Description,
-                TotalDownloads = r.Downloads
+                Id = g.Key,
+                Description = g.Max(p => p.Description),
+                TotalDownloads = g.Sum(p => p.Downloads)
             })
-            .Distinct()
             .ToListAsync(cancellationToken);
         #pragma warning restore CS8604
 

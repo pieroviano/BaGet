@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
@@ -55,6 +56,7 @@ public class ValidationWorker : BackgroundService
                 var runner = scope.ServiceProvider.GetRequiredService<PackageValidationRunner>();
 
                 await runner.RunAsync(submissionId, stoppingToken);
+                _failures.TryRemove(submissionId, out _);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -69,8 +71,20 @@ public class ValidationWorker : BackgroundService
             }
             catch (Exception e)
             {
-                // Left pending, so the next start retries it.
-                _logger.LogError(e, "Validation of submission {SubmissionId} failed", submissionId);
+                // Still pending: offered again after a growing delay, a bounded number of times; then it waits for the
+                // next start, or for an administrator to reject it.
+                var attempt = _failures.AddOrUpdate(submissionId, 1, (_, n) => n + 1);
+                if (attempt <= MaxFailureRetries)
+                {
+                    var delay = TimeSpan.FromTicks(FailureRetryDelay.Ticks << (attempt - 1));
+                    _logger.LogError(e, "Validation of submission {SubmissionId} failed (attempt {Attempt}); retrying in {Delay}", submissionId, attempt, delay);
+                    _ = RetryLaterAsync(submissionId, delay, stoppingToken);
+                }
+                else
+                {
+                    _failures.TryRemove(submissionId, out _);
+                    _logger.LogError(e, "Validation of submission {SubmissionId} failed {Attempts} times; it stays pending until the next start or an administrator rejects it", submissionId, attempt);
+                }
             }
         }
     }
@@ -78,11 +92,22 @@ public class ValidationWorker : BackgroundService
     /// <summary>How long a submission waits after a maintenance refusal before it is queued again.</summary>
     internal static TimeSpan MaintenanceRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
 
-    private async Task RetryLaterAsync(string submissionId, CancellationToken cancellationToken)
+    /// <summary>The first delay before a failed submission is queued again; it doubles with each failure.</summary>
+    internal static TimeSpan FailureRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>How many times a failed submission is queued again before it is left pending.</summary>
+    internal const int MaxFailureRetries = 5;
+
+    private readonly ConcurrentDictionary<string, int> _failures = new();
+
+    private Task RetryLaterAsync(string submissionId, CancellationToken cancellationToken)
+        => RetryLaterAsync(submissionId, MaintenanceRetryDelay, cancellationToken);
+
+    private async Task RetryLaterAsync(string submissionId, TimeSpan delay, CancellationToken cancellationToken)
     {
         try
         {
-            await Task.Delay(MaintenanceRetryDelay, cancellationToken);
+            await Task.Delay(delay, cancellationToken);
             await _queue.EnqueueAsync(submissionId, cancellationToken);
         }
         catch (OperationCanceledException)

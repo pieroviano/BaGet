@@ -55,7 +55,19 @@ public class RawPackageContentClient : IPackageContentClient
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
+            response.Dispose();
             return null;
+        }
+
+        try
+        {
+            // Any other failure (401, 403, 429, 5xx) is an error, never the package's content.
+            response.EnsureSuccessStatusCode();
+        }
+        catch
+        {
+            response.Dispose();
+            throw;
         }
 
         return await response.Content.ReadAsStreamAsync();
@@ -76,7 +88,19 @@ public class RawPackageContentClient : IPackageContentClient
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
+            response.Dispose();
             return null;
+        }
+
+        try
+        {
+            // Any other failure (401, 403, 429, 5xx) is an error, never the package's content.
+            response.EnsureSuccessStatusCode();
+        }
+        catch
+        {
+            response.Dispose();
+            throw;
         }
 
         return await response.Content.ReadAsStreamAsync();

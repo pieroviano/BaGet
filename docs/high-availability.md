@@ -70,6 +70,7 @@ holder renews it (every third). A node that cannot reach Redis **skips** the job
 | Scheduled vulnerability rescan | `scan:sweep` |
 | Abandoned-upload sweep | `staging:sweep` |
 | Validation of one submission | `validation:{submission id}` |
+| A catalog commit (a commit waits up to 30 s for it, so timestamps stay in order across nodes) | `catalog:{repository key}` |
 | Docker garbage collection schedule | runs inside a retention policy (`CollectGarbage`), so under its lease |
 
 ## Health

@@ -53,6 +53,28 @@ public class CatalogDatabase : ICatalogDatabase
         return timestamps.Select(AsUtc).ToList();
     }
 
+    public async Task<(int Count, IReadOnlyList<DateTime> PageEnds)> GetPageEndsAsync(int pageSize, CancellationToken cancellationToken)
+    {
+        #pragma warning disable CS8604
+        var count = await _context.CatalogLeafs.CountAsync(cancellationToken);
+
+        var ends = new List<DateTime>();
+        for (var end = pageSize - 1; end < count + pageSize - 1; end += pageSize)
+        {
+            var timestamp = await _context.CatalogLeafs
+                .AsNoTracking()
+                .OrderBy(e => e.Key)
+                .Skip(Math.Min(end, count - 1))
+                .Select(e => e.CommitTimestamp)
+                .FirstAsync(cancellationToken);
+
+            ends.Add(AsUtc(timestamp));
+        }
+        #pragma warning restore CS8604
+
+        return (count, ends);
+    }
+
     public async Task<IReadOnlyList<CatalogEntry>> GetEntriesAsync(int skip, int take, CancellationToken cancellationToken)
     {
         #pragma warning disable CS8604

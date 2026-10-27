@@ -11,6 +11,9 @@ namespace BaGet.Core;
 
 public class PackageService : IPackageService
 {
+    // Serialises the first fetch of one version, so a second request waits and finds it instead of failing.
+    private static readonly KeyedLocks Mirrors = new();
+
     private readonly IPackageDatabase _db;
     private readonly IUpstreamClient _upstream;
     private readonly IPackageIndexingService _indexer;
@@ -168,6 +171,22 @@ public class PackageService : IPackageService
             return true;
         }
 
+        var key = $"{(_repository?.Current ?? RepositoryInfo.Default).Key}|{id?.ToLowerInvariant()}|{version.ToNormalizedString()}";
+
+        using (await Mirrors.LockAsync(key, cancellationToken))
+        {
+            // A request that held the lock before us may have indexed it already.
+            if (await _db.ExistsAsync(id, version, cancellationToken))
+            {
+                return true;
+            }
+
+            return await MirrorLockedAsync(id, version, cancellationToken);
+        }
+    }
+
+    private async Task<bool> MirrorLockedAsync(string? id, NuGetVersion version, CancellationToken cancellationToken)
+    {
         _logger.LogInformation(
             "Package {PackageId} {PackageVersion} does not exist locally. Checking upstream feed...",
             id,
@@ -206,7 +225,10 @@ public class PackageService : IPackageService
 
                 activity?.SetTag(BaGetDiagnostics.Tags.Result, result.ToString());
 
-                return result == PackageIndexingResult.Success;
+                // Another node (or a push) may have stored it between our check and the index: it exists, so serve it.
+                return result == PackageIndexingResult.Success
+                    || (result == PackageIndexingResult.PackageAlreadyExists
+                        && await _db.ExistsAsync(id, version, cancellationToken));
             }
         }
         catch (Exception e) when (e is not MaintenanceException)

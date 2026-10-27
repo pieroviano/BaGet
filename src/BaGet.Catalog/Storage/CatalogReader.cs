@@ -38,23 +38,18 @@ public class CatalogReader
 
     public async Task<CatalogIndex> GetIndexAsync(CancellationToken cancellationToken)
     {
-        var timestamps = await _catalog.GetCommitTimestampsAsync(cancellationToken);
+        var (total, ends) = await _catalog.GetPageEndsAsync(PageSize, cancellationToken);
 
         return new CatalogIndex
         {
-            CommitTimestamp = timestamps.Count == 0 ? DateTimeOffset.UnixEpoch : Utc(timestamps[^1]),
-            Count = PageCount(timestamps.Count),
-            Items = Enumerable.Range(0, PageCount(timestamps.Count))
-                .Select(page =>
+            CommitTimestamp = total == 0 ? DateTimeOffset.UnixEpoch : Utc(ends[^1]),
+            Count = PageCount(total),
+            Items = Enumerable.Range(0, PageCount(total))
+                .Select(page => new CatalogPageItem
                 {
-                    var count = Math.Min(PageSize, timestamps.Count - page * PageSize);
-
-                    return new CatalogPageItem
-                    {
-                        CatalogPageUrl = _url.GetCatalogPageUrl(page),
-                        CommitTimestamp = Utc(timestamps[page * PageSize + count - 1]),
-                        Count = count,
-                    };
+                    CatalogPageUrl = _url.GetCatalogPageUrl(page),
+                    CommitTimestamp = Utc(ends[page]),
+                    Count = Math.Min(PageSize, total - page * PageSize),
                 })
                 .ToList(),
         };

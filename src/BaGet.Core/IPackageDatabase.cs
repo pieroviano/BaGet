@@ -43,6 +43,28 @@ public interface IPackageDatabase
     Task<IReadOnlyList<Package>> FindAsync(string? id, bool includeUnlisted, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Attempt to find all packages with any of the given ids, in one round trip where the implementation can.
+    /// </summary>
+    /// <param name="ids">The packages' ids.</param>
+    /// <param name="includeUnlisted">Whether unlisted results should be included.</param>
+    /// <param name="cancellationToken">A token to cancel the task.</param>
+    /// <returns>The packages found, of all the ids. Always non-null.</returns>
+    /// <remarks>The default asks <see cref="FindAsync(string?, bool, CancellationToken)"/> per id.</remarks>
+    async Task<IReadOnlyList<Package>> FindManyAsync(
+        IReadOnlyCollection<string> ids,
+        bool includeUnlisted,
+        CancellationToken cancellationToken)
+    {
+        var result = new List<Package>();
+        foreach (var id in ids)
+        {
+            result.AddRange(await FindAsync(id, includeUnlisted, cancellationToken));
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Determine whether a package exists in the database (even if the package is unlisted).
     /// </summary>
     /// <param name="id">The package id to search.</param>

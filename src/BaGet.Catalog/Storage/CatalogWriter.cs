@@ -27,7 +27,8 @@ public class CatalogWriter : IPackageChangeHandler
 
     // Commit timestamps must strictly increase, or a mirror reading the catalog
     // "after" its cursor could miss an entry. Commits in this process are serialized.
-    // Several BaGet instances writing to one database are not coordinated.
+    // Instances of a cluster are ordered by the per-repository lease "catalog:{repository key}" (IJobLease; without
+    // a cluster it is in process and the lock above already serialises).
     private static readonly SemaphoreSlim CommitLock = new SemaphoreSlim(1, 1);
 
     private readonly ICatalogDatabase _catalog;
@@ -38,6 +39,10 @@ public class CatalogWriter : IPackageChangeHandler
     private readonly ILogger<CatalogWriter> _logger;
     private readonly MaintenanceGate? _gate;
     private readonly IRepositoryContext? _repository;
+    private readonly IJobLease? _lease;
+
+    /// <summary>How long a commit waits for another node's commit of the same repository before it gives up.</summary>
+    internal static TimeSpan LeaseWait { get; set; } = TimeSpan.FromSeconds(30);
 
     public CatalogWriter(
         ICatalogDatabase catalog,
@@ -47,8 +52,10 @@ public class CatalogWriter : IPackageChangeHandler
         SystemTime time,
         ILogger<CatalogWriter> logger,
         MaintenanceGate? gate = null,
-        IRepositoryContext? repository = null)
+        IRepositoryContext? repository = null,
+        IJobLease? lease = null)
     {
+        _lease = lease;
         _gate = gate;
         _repository = repository;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
@@ -176,8 +183,11 @@ public class CatalogWriter : IPackageChangeHandler
         CancellationToken cancellationToken)
     {
         await CommitLock.WaitAsync(cancellationToken);
+        IAsyncDisposable? leaseHandle = null;
         try
         {
+            leaseHandle = await AcquireLeaseAsync(cancellationToken);
+
             // Before the leaf is written: a closed database would refuse the entry and leave the leaf orphaned.
             _gate?.ThrowIfClosed();
 
@@ -219,7 +229,30 @@ public class CatalogWriter : IPackageChangeHandler
         }
         finally
         {
+            if (leaseHandle != null) await leaseHandle.DisposeAsync();
             CommitLock.Release();
+        }
+    }
+
+    // Waits for the repository's commit lease: a timestamp is "last entry + 1" and two nodes reading the same last
+    // entry would give the later key an equal or earlier timestamp, which a catalog consumer's cursor skips for good.
+    private async Task<IAsyncDisposable?> AcquireLeaseAsync(CancellationToken cancellationToken)
+    {
+        if (_lease == null) return null;
+
+        var job = "catalog:" + (_repository?.Current ?? RepositoryInfo.Default).Key;
+        var deadline = DateTime.UtcNow + LeaseWait;
+        while (true)
+        {
+            var handle = await _lease.TryAcquireAsync(job, cancellationToken);
+            if (handle != null) return handle;
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                throw new TimeoutException($"The catalog commit lease '{job}' stayed with another node for {LeaseWait.TotalSeconds:0} s.");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(25), cancellationToken);
         }
     }
 

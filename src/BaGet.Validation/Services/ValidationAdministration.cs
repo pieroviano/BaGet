@@ -154,7 +154,10 @@ public sealed class ValidationAdministration : IValidationAdministration
         if (error != null) return error;
 
         var index = steps.Single(s => s.Type == PackageValidation.IndexType);
-        if (index.State != PackageValidationState.Failed) return "Only a quarantined submission can be rejected; a pending one is still being validated.";
+        // A pending submission can be rejected too: one whose validation keeps failing would otherwise stay pending for
+        // good (pushing the version again answers 409, the repository cannot be deleted). The runner skips a submission
+        // whose rows are gone.
+        if (index.State != PackageValidationState.Failed && index.State != PackageValidationState.Pending) return "Only a pending or quarantined submission can be rejected.";
 
         // File first: if the rows could not be removed the submission stays listed and can be rejected again.
         await _storage.DeleteAsync(ValidatingPackageSubmissionService.StagedPath(_repository.Current, submissionId), cancellationToken).ConfigureAwait(false);
