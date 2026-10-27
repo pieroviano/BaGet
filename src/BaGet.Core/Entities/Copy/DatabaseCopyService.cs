@@ -46,6 +46,9 @@ public class DatabaseCopyService
     /// <summary>The reason the gate shows while a copy runs.</summary>
     public const string GateReason = "Copying the database";
 
+    /// <summary>Why a copy is refused on a node of a cluster (<c>Ha:Enabled</c>).</summary>
+    public const string ClusterRefusal = "The database cannot be copied while this node is part of a cluster (Ha:Enabled): the other nodes cannot be made read-only reliably. Stop the other nodes, turn Ha:Enabled off, copy, then re-enable it.";
+
     private static readonly string[] SecretKeys = { "password", "pwd", "user id", "uid", "user", "username", "accountkey", "sharedaccesssignature" };
 
     private readonly IServiceScopeFactory _scopes;
@@ -54,6 +57,7 @@ public class DatabaseCopyService
     private readonly SettingsService _settings;
     private readonly IOptionsMonitor<DatabaseOptions> _current;
     private readonly ILogger<DatabaseCopyService> _logger;
+    private readonly ClusterRuntime? _cluster;
     private readonly Channel<DatabaseCopyRequest> _queue = Channel.CreateBounded<DatabaseCopyRequest>(1);
     private readonly object _lock = new object();
     private DatabaseCopyStatus _status = DatabaseCopyStatus.Idle;
@@ -64,7 +68,8 @@ public class DatabaseCopyService
         MaintenanceGate gate,
         SettingsService settings,
         IOptionsMonitor<DatabaseOptions> current,
-        ILogger<DatabaseCopyService> logger)
+        ILogger<DatabaseCopyService> logger,
+        ClusterRuntime? cluster = null)
     {
         _scopes = scopes ?? throw new ArgumentNullException(nameof(scopes));
         _factories = (factories ?? throw new ArgumentNullException(nameof(factories))).ToList();
@@ -72,6 +77,7 @@ public class DatabaseCopyService
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _current = current ?? throw new ArgumentNullException(nameof(current));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cluster = cluster;
     }
 
     /// <summary>The latest progress. In a cluster, the progress of a copy running on another node when this node has none of its own.</summary>
@@ -123,6 +129,14 @@ public class DatabaseCopyService
     public bool TryQueue(DatabaseCopyRequest request, out string? refusal)
     {
         if (request == null) throw new ArgumentNullException(nameof(request));
+
+        // The other nodes cannot be confirmed read-only before the copy reads, and after a success they would reopen
+        // and write to the old database; so a copy is refused in a cluster.
+        if (_cluster is { IsEnabled: true })
+        {
+            refusal = ClusterRefusal;
+            return false;
+        }
 
         lock (_lock)
         {

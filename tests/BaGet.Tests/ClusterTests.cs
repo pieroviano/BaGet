@@ -296,7 +296,7 @@ public class ClusterTests : IDisposable
     }
 
     [Fact]
-    public async Task ACopyRunningOnOneNodeIsShownOnTheOtherAndBlocksASecond()
+    public async Task ACopyRunningOnOneNodeIsShownOnTheOtherAndASecondIsRefused()
     {
         var c = Cluster();
         var running = DatabaseCopyStatus.Idle with { Phase = DatabaseCopyPhase.Copying, Table = "Packages", TablesTotal = 20, TablesDone = 3, Message = "Copying Packages" };
@@ -308,7 +308,20 @@ public class ClusterTests : IDisposable
         Assert.Equal(DatabaseCopyPhase.Copying, copy.Status.Phase);
         Assert.Equal(3, copy.Status.TablesDone);
         Assert.False(copy.TryQueue(new DatabaseCopyRequest("Sqlite", "Data Source=other.db", null, new Dictionary<SettingDescriptor, object>(), "root"), out var refusal));
-        Assert.Contains("already running", refusal);
+        Assert.Equal(DatabaseCopyService.ClusterRefusal, refusal);
+    }
+
+    [Fact]
+    public void ADatabaseCopyIsRefusedOnAClusterNodeAndNothingIsQueuedOrClosed()
+    {
+        var c = Cluster();
+        var copy = c.One.Services.GetRequiredService<DatabaseCopyService>();
+
+        Assert.False(copy.TryQueue(new DatabaseCopyRequest("Sqlite", "Data Source=other.db", null, new Dictionary<SettingDescriptor, object>(), "root"), out var refusal));
+
+        Assert.Equal(DatabaseCopyService.ClusterRefusal, refusal);
+        Assert.False(c.One.Services.GetRequiredService<MaintenanceGate>().IsClosed);
+        Assert.Equal(DatabaseCopyPhase.Idle, copy.Status.Phase);
     }
 
     // ---- jobs run once ----

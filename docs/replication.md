@@ -44,7 +44,7 @@ With *source wins*, a pull **replaces** the local copy only after the peer's ite
 ## Runs, log, interruption
 
 A run lists both sides (`GET /api/v1/replication/inventory/{repository}` on the peer), plans (copy what the target lacks,
-skip what it holds, apply the conflict rule, propagate deletes), executes and writes a **log entry**: status
+skip what it holds, apply the conflict rule, propagate deletes; an item the target changed after it was copied, by digest, is deleted only under `SourceWins`, else forgotten), executes and writes a **log entry**: status
 (`Running`, `Succeeded`, `Failed`, `Interrupted`), counts (examined, copied, skipped, deleted, conflicts, failed), bytes and the
 first failures and conflicts. One item failing is logged and the run goes on; a **peer that cannot be reached**
 ends the run as `Failed` (not one failure per item). Stopping a run, stopping the server, or a read-only server ends it as
