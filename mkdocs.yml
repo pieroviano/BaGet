@@ -63,6 +63,7 @@ nav:
   - Vulnerability scanning: vulnerability-scanning.md
   - Administration REST API: admin-api.md
   - UI API (/api/ui): ui-api.md
+  - Custom frontend (React, Angular): custom-frontend.md
   - Testing the APIs with Scalar: scalar.md
   - UI coverage: ui-coverage.md
   - Import:

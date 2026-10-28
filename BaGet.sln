@@ -89,6 +89,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 		docs\retention.md = docs\retention.md
 		docs\scalar.md = docs\scalar.md
 		docs\ui-api.md = docs\ui-api.md
+		docs\custom-frontend.md = docs\custom-frontend.md
 		docs\ui-coverage.md = docs\ui-coverage.md
 		docs\user-manual.md = docs\user-manual.md
 		docs\virtual-repositories.md = docs\virtual-repositories.md
