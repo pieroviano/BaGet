@@ -5,7 +5,7 @@ import { combineLatest, startWith, switchMap } from 'rxjs';
 import { ApiClient } from '../api/api-client';
 
 /**
- * `GET /api/ui/packages/{id}/{version?}`. `id` and `version` come from the route through `withComponentInputBinding()`.
+ * `GET /api/ui/packages/{id}` (latest) or `/api/ui/packages/{id}/{version}`. `id` and `version` come from the route through `withComponentInputBinding()`.
  * A missing package is `NotFound` (or `Ok` with `found: false`).
  */
 @Component({
@@ -52,7 +52,10 @@ export class PackageDetail {
 
   protected readonly result = toSignal(
     combineLatest([toObservable(this.id), toObservable(this.version)]).pipe(
-      switchMap(([id, version]) => this.api.get('/api/ui/packages/{id}/{version}', { path: { id }, query: { version } }).pipe(startWith(null))),
+      switchMap(([id, version]) => (version ? this.api.get('/api/ui/packages/{id}/{version}', { path: { id, version } }) : this.api.get('/api/ui/packages/{id}', { path: { id } })).pipe(
+          startWith(null),
+        ),
+      ),
     ),
     { initialValue: null },
   );

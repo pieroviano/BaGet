@@ -34,6 +34,7 @@ export function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/packages/:id" element={<PackageDetail />} />
           <Route path="/packages/:id/:version" element={<PackageDetail />} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/register" element={<Register />} />

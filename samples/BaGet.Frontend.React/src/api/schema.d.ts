@@ -33,6 +33,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -73,6 +109,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -125,6 +197,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -170,6 +278,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -200,6 +344,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -248,6 +428,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -287,6 +503,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -319,6 +571,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -373,6 +661,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -411,6 +735,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -463,6 +823,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -493,6 +889,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -547,6 +979,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -585,6 +1053,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -637,6 +1141,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -667,6 +1207,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -721,6 +1297,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -755,6 +1367,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -801,6 +1449,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -825,6 +1509,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLoginViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -872,6 +1592,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -896,6 +1652,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorLoginViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -942,6 +1734,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -966,6 +1794,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRecoveryCodeLoginViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1010,6 +1874,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1028,6 +1928,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1074,6 +2010,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1098,6 +2070,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRegisterViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1146,6 +2154,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfConfirmEmailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfConfirmEmailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfConfirmEmailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfConfirmEmailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfConfirmEmailViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1185,6 +2229,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1209,6 +2289,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1256,6 +2372,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1280,6 +2432,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfResetPasswordViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1319,6 +2507,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReauthenticateViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReauthenticateViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReauthenticateViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReauthenticateViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1367,6 +2591,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAuditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAuditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAuditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAuditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAuditViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1403,6 +2663,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1424,6 +2720,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1462,6 +2794,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1515,6 +2883,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1552,6 +2956,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1603,6 +3043,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1647,6 +3123,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfGroupDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1674,6 +3186,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1709,6 +3257,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOperationsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1736,6 +3320,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1787,6 +3407,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1822,6 +3478,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1871,6 +3563,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1900,6 +3628,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1951,6 +3715,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1986,6 +3786,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAbuseViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2029,6 +3865,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfClusterViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfClusterViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfClusterViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfClusterViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfClusterViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2058,6 +3930,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfFormatsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfFormatsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfFormatsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfFormatsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2101,6 +4009,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAccessUnavailableViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccessUnavailableViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccessUnavailableViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccessUnavailableViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccessUnavailableViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2130,6 +4074,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminOrganizationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2168,6 +4148,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2221,6 +4237,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2258,6 +4310,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2309,6 +4397,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2346,6 +4470,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2397,6 +4557,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2426,6 +4622,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2473,6 +4705,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminPackagesViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2509,6 +4777,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2530,6 +4834,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2579,6 +4919,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2621,6 +4997,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2654,6 +5066,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2707,6 +5155,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2744,6 +5228,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2795,6 +5315,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2832,6 +5388,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2883,6 +5475,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPermissionDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2917,6 +5545,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -2938,6 +5602,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2974,6 +5674,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3027,6 +5763,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3064,6 +5836,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3115,6 +5923,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3152,6 +5996,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3203,6 +6083,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3240,6 +6156,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3291,6 +6243,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProjectDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3329,6 +6317,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -3350,6 +6374,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3399,6 +6459,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3434,6 +6530,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3483,6 +6615,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoriesViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3519,6 +6687,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -3542,6 +6746,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3593,6 +6833,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3630,6 +6906,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3681,6 +6993,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3718,6 +7066,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3769,6 +7153,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3806,6 +7226,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3857,6 +7313,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3894,6 +7386,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3945,6 +7473,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryEditViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -3981,6 +7545,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -3998,6 +7598,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRepositoryDeleteViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4041,6 +7677,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -4065,6 +7737,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4099,6 +7807,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDatabaseCopyStatusView"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDatabaseCopyStatusView"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDatabaseCopyStatusView"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDatabaseCopyStatusView"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4150,6 +7894,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4185,6 +7965,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4234,6 +8050,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4264,6 +8116,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4315,6 +8203,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4350,6 +8274,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4399,6 +8359,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4434,6 +8430,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4483,6 +8515,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4525,6 +8593,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUsersViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4556,6 +8660,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4609,6 +8749,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4646,6 +8822,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4697,6 +8909,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4741,6 +8989,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserDetailViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4777,6 +9061,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -4800,6 +9120,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDeleteUserViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4843,6 +9199,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -4875,6 +9267,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUserPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4923,6 +9351,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -4949,6 +9413,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4996,6 +9496,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -5023,6 +9559,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfContactOwnersViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5069,6 +9641,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -5104,6 +9712,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5160,6 +9804,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5208,6 +9888,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5248,6 +9964,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5303,6 +10055,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5343,6 +10131,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5398,6 +10222,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5438,6 +10298,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5493,6 +10389,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5528,6 +10460,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5573,6 +10541,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5630,6 +10634,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5679,6 +10719,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5720,6 +10796,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5776,6 +10888,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5817,6 +10965,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5873,6 +11057,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -5914,6 +11134,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5970,6 +11226,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6011,6 +11303,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6067,6 +11395,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6108,6 +11472,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6164,6 +11564,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6196,6 +11632,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6238,6 +11710,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6294,6 +11802,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6342,6 +11886,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6382,6 +11962,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6437,6 +12053,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6477,6 +12129,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6532,6 +12220,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6572,6 +12296,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6627,6 +12387,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6667,6 +12463,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6722,6 +12554,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6762,6 +12630,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6817,6 +12721,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6857,6 +12797,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6912,6 +12888,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -6952,6 +12964,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7007,6 +13055,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmManageViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7039,6 +13123,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7081,6 +13201,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7137,6 +13293,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7185,6 +13377,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7225,6 +13453,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7280,6 +13544,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7320,6 +13620,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7375,6 +13711,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7415,6 +13787,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7470,6 +13878,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7510,6 +13954,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7565,6 +14045,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7605,6 +14121,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7660,6 +14212,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7700,6 +14288,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7755,6 +14379,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7795,6 +14455,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7850,6 +14546,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7890,6 +14622,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -7945,6 +14713,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -7985,6 +14789,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8040,6 +14880,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8080,6 +14956,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8135,6 +15047,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8175,6 +15123,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8230,6 +15214,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8270,6 +15290,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8325,6 +15381,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8365,6 +15457,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8420,6 +15548,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageManageScreen"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8449,6 +15613,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8495,6 +15695,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfProfileViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -8531,6 +15767,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -8552,6 +15824,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8588,6 +15896,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8641,6 +15985,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8678,6 +16058,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8729,6 +16145,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8773,6 +16225,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8804,6 +16292,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8855,6 +16379,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReplicationConfigViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -8889,6 +16449,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -8910,6 +16506,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8946,6 +16578,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8999,6 +16667,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9030,6 +16734,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9081,6 +16821,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9125,6 +16901,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionPolicyViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9154,6 +16966,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9207,6 +17055,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9244,6 +17128,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfRetentionHoldsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9292,6 +17212,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -9316,6 +17272,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9366,6 +17358,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -9392,6 +17420,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9433,6 +17497,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfScanningViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanningViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanningViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanningViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanningViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -9467,6 +17567,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9520,6 +17656,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9558,6 +17730,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanRepositoryViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9587,6 +17795,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9640,6 +17884,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfScanProjectViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9678,6 +17958,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9727,6 +18043,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfSessionModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9762,6 +18114,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9811,6 +18199,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfSessionModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9846,6 +18270,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9891,6 +18351,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -9944,6 +18440,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfSessionModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -9973,6 +18505,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10010,6 +18578,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAntiforgeryTokenModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAntiforgeryTokenModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAntiforgeryTokenModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAntiforgeryTokenModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10057,6 +18661,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfForgotPasswordViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10187,6 +18827,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10222,6 +18898,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfValidationStatusViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10265,6 +18977,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfApiCatalogViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiCatalogViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiCatalogViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiCatalogViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiCatalogViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10297,6 +19045,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10345,6 +19129,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImagesViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10379,6 +19199,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10428,6 +19284,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfDockerImageViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10464,6 +19356,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10516,6 +19444,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10552,6 +19516,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10604,6 +19604,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfIndexScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10633,6 +19669,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10676,6 +19748,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfLegalScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10708,6 +19816,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10756,6 +19900,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10776,13 +19956,12 @@ export interface paths {
         /** One artifact: versions, files, POM, the dependency to copy. */
         get: {
             parameters: {
-                query?: {
-                    version?: string;
-                };
+                query?: never;
                 header?: never;
                 path: {
                     group: string;
                     artifact: string;
+                    version: string;
                 };
                 cookie?: never;
             };
@@ -10790,6 +19969,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10817,13 +20032,12 @@ export interface paths {
         /** One artifact: versions, files, POM, the dependency to copy. */
         get: {
             parameters: {
-                query?: {
-                    version?: string;
-                };
+                query?: never;
                 header?: never;
                 path: {
                     group: string;
                     artifact: string;
+                    version: string;
                     repo: string;
                 };
                 cookie?: never;
@@ -10832,6 +20046,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10875,6 +20125,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10905,6 +20191,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -10948,6 +20270,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -10987,6 +20345,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenUploadViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -11017,6 +20411,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11065,6 +20495,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackagesViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11098,6 +20564,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11146,6 +20648,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmPackageViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11182,6 +20720,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11206,6 +20780,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11249,6 +20859,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11282,6 +20928,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfNpmUploadViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -11300,12 +20982,11 @@ export interface paths {
         /** Shows the package. */
         get: {
             parameters: {
-                query?: {
-                    version?: string;
-                };
+                query?: never;
                 header?: never;
                 path: {
                     id: string;
+                    version: string;
                 };
                 cookie?: never;
             };
@@ -11313,6 +20994,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11340,12 +21057,11 @@ export interface paths {
         /** Shows the package. */
         get: {
             parameters: {
-                query?: {
-                    version?: string;
-                };
+                query?: never;
                 header?: never;
                 path: {
                     id: string;
+                    version: string;
                     repo: string;
                 };
                 cookie?: never;
@@ -11354,6 +21070,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11400,6 +21152,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11424,6 +21212,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11469,6 +21293,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11494,6 +21354,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfReportAbuseScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11528,6 +21424,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11573,6 +21505,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfStatisticsViewModel"];
+                    };
+                };
             };
         };
         put?: never;
@@ -11604,6 +21572,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11644,6 +21648,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11698,6 +21738,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -11745,6 +21821,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -11782,6 +21894,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11835,6 +21983,42 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -11872,6 +22056,42 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11925,8 +22145,344 @@ export interface paths {
                         "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
                     };
                 };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfUploadViewModel"];
+                    };
+                };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/maven-artifacts/{group}/{artifact}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One artifact: versions, files, POM, the dependency to copy. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group: string;
+                    artifact: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/r/{repo}/maven-artifacts/{group}/{artifact}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One artifact: versions, files, POM, the dependency to copy. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group: string;
+                    artifact: string;
+                    repo: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfMavenArtifactViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/packages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Shows the package. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/r/{repo}/packages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Shows the package. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    repo: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfPackageScreen"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -11943,14 +22499,14 @@ export interface components {
              * Format: int32
              * @description The report's number.
              */
-            key: number | string;
+            key: number;
             /** @description Whether the list to come back to shows the resolved reports too. */
             all: boolean;
         };
         /** @description An abuse report with the name of its repository. */
         AbuseReportSummary: {
             /** Format: int32 */
-            key: number | string;
+            key: number;
             repository: string;
             packageId: string | null;
             packageVersion: string | null;
@@ -11978,12 +22534,13 @@ export interface components {
          * @description What a permission grants. Independent flags: AccessAction.Deploy does not imply AccessAction.Read, as in
          *     Artifactory. Package ownership (IPackageAuthorizationService) is a second, separate requirement
          *     for the actions that change an existing package ID.
+         * @enum {string}
          */
-        AccessAction: number;
+        AccessAction: "None" | "Read" | "Annotate" | "Deploy" | "Delete" | "Manage" | "All";
         /** @description One change to the access model. */
         AccessAuditEntry: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /** Format: date-time */
             created?: string;
             /** @description The user name that made the change; null for the server itself. */
@@ -12044,7 +22601,7 @@ export interface components {
              * Format: int32
              * @description The key's id (the number the revoke button posts).
              */
-            key?: number | string;
+            key?: number;
             /** @description What the key is for. */
             description?: string | null;
             /** @description What the key may do. */
@@ -12102,7 +22659,7 @@ export interface components {
              * Format: int32
              * @description How many API keys go.
              */
-            apiKeys: number | string;
+            apiKeys: number;
             /** @description Package IDs the user owns directly. */
             directPackageIds: string[];
             /** @description The subset nobody else owns, in every repository. */
@@ -12110,7 +22667,8 @@ export interface components {
             /** @description What happens to each organization the user belongs to. */
             organizations: components["schemas"]["OrganizationOutcome"][];
         };
-        AdminJobState: number;
+        /** @enum {string} */
+        AdminJobState: "Running" | "Succeeded" | "Failed";
         /** @description The last run of an operation on a repository. In memory: a restart forgets it. */
         AdminJobStatus: {
             operation?: string;
@@ -12146,7 +22704,7 @@ export interface components {
              * Format: int32
              * @description One-based page number (the `p` query value).
              */
-            pageNumber?: number | string;
+            pageNumber?: number;
             /** @description The ownerless IDs on this page. */
             packages?: components["schemas"]["AdminPackageRow"][];
             /** @description Whether a Repository column is worth showing: some listed ID is outside the default repository. */
@@ -12155,7 +22713,7 @@ export interface components {
              * Format: int32
              * @description The number of pages.
              */
-            pageCount?: number | string;
+            pageCount?: number;
         };
         /** @description What the server settings screen (`/admin/settings`) shows: every registered setting by section and the state of the last save. */
         AdminSettingsViewModel: {
@@ -12253,9 +22811,9 @@ export interface components {
              * Format: int32
              * @description Days until the key expires; none = never.
              */
-            expiresInDays?: (number | string | (null)) | null;
+            expiresInDays?: number | null;
             /** @description The keys of the repositories the new key is limited to; none (the default) means every repository. */
-            repositoryKeys?: (number | string)[];
+            repositoryKeys?: number[];
         };
         /**
          * @description The API keys screen: the new-key form's fields it repeats and the user's keys. A request binds ApiKeyForm, never this type,
@@ -12292,9 +22850,9 @@ export interface components {
              * Format: int32
              * @description Days until the key expires; none = never.
              */
-            expiresInDays?: (number | string | (null)) | null;
+            expiresInDays?: number | null;
             /** @description The keys of the repositories the new key is limited to; none (the default) means every repository. */
-            repositoryKeys?: (number | string)[];
+            repositoryKeys?: number[];
         };
         /** @description What the access audit screen (`/admin/audit`) shows: the filter and the matching entries. */
         AuditViewModel: {
@@ -12392,8 +22950,11 @@ export interface components {
             /** @description The organization's name. */
             name?: string | null;
         };
-        /** @description The stage a database copy is in. */
-        DatabaseCopyPhase: number;
+        /**
+         * @description The stage a database copy is in.
+         * @enum {string}
+         */
+        DatabaseCopyPhase: "Idle" | "Queued" | "Checking" | "Migrating" | "Copying" | "Verifying" | "SavingSettings" | "RollingBack" | "Succeeded" | "Failed";
         /** @description A snapshot of the copy's progress, as shown by the Settings page. Holds no connection string. */
         DatabaseCopyStatus: {
             phase: components["schemas"]["DatabaseCopyPhase"];
@@ -12403,32 +22964,32 @@ export interface components {
              * Format: int64
              * @description Rows of Table copied so far.
              */
-            tableRowsCopied: number | string;
+            tableRowsCopied: number;
             /**
              * Format: int64
              * @description Rows of Table in the source.
              */
-            tableRowsTotal: number | string;
+            tableRowsTotal: number;
             /**
              * Format: int32
              * @description Tables completed.
              */
-            tablesDone: number | string;
+            tablesDone: number;
             /**
              * Format: int32
              * @description Tables to copy.
              */
-            tablesTotal: number | string;
+            tablesTotal: number;
             /**
              * Format: int64
              * @description Rows copied over all tables.
              */
-            rowsCopied: number | string;
+            rowsCopied: number;
             /**
              * Format: int64
              * @description Rows to copy over all tables.
              */
-            rowsTotal: number | string;
+            rowsTotal: number;
             /** @description Why the copy was refused or failed. */
             errors: string[];
             /** @description A one-line summary of the current state. */
@@ -12461,32 +23022,32 @@ export interface components {
              * Format: int64
              * @description Rows of the table copied so far.
              */
-            tableRowsCopied: number | string;
+            tableRowsCopied: number;
             /**
              * Format: int64
              * @description Rows of the table in the source.
              */
-            tableRowsTotal: number | string;
+            tableRowsTotal: number;
             /**
              * Format: int32
              * @description Tables completed.
              */
-            tablesDone: number | string;
+            tablesDone: number;
             /**
              * Format: int32
              * @description Tables to copy.
              */
-            tablesTotal: number | string;
+            tablesTotal: number;
             /**
              * Format: int64
              * @description Rows copied over all tables.
              */
-            rowsCopied: number | string;
+            rowsCopied: number;
             /**
              * Format: int64
              * @description Rows to copy over all tables.
              */
-            rowsTotal: number | string;
+            rowsTotal: number;
             /** @description A one-line summary of the current state. */
             message: string | null;
             /** @description Why the copy was refused or failed. */
@@ -12555,7 +23116,7 @@ export interface components {
              * Format: int32
              * @description The page, from 1.
              */
-            pageIndex?: number | string;
+            pageIndex?: number;
             result?: components["schemas"]["OciImagePage"];
             /** @description The registry host as a Docker client writes it (`host:port`). */
             host?: string;
@@ -12583,7 +23144,7 @@ export interface components {
              * Format: int32
              * @description The HTTP status the page is answered with: 200, or 404 when the image or manifest does not exist (the page then explains).
              */
-            statusCode?: number | string;
+            statusCode?: number;
             info?: (null) | components["schemas"]["OciImageInfo"];
             selected?: (null) | components["schemas"]["OciManifestDetail"];
             /** @description The manifests whose `subject` is the chosen manifest (signatures, SBOMs). Empty without a selection. */
@@ -12636,11 +23197,11 @@ export interface components {
         EmptyScreen: Record<string, never>;
         FeedStatistics: {
             /** Format: int32 */
-            packageIds?: number | string;
+            packageIds?: number;
             /** Format: int32 */
-            packageVersions?: number | string;
+            packageVersions?: number;
             /** Format: int64 */
-            downloads?: number | string;
+            downloads?: number;
             /** @description The most downloaded package IDs, all versions together. */
             topPackages?: components["schemas"]["PackageDownloads"][] | null;
             /** @description The most recently published versions. */
@@ -12696,7 +23257,7 @@ export interface components {
              * Format: int32
              * @description How many repositories use it.
              */
-            repositories: number | string;
+            repositories: number;
             /** @description The capabilities its services implement. */
             capabilities: string[];
         };
@@ -12787,12 +23348,12 @@ export interface components {
         /** @description A group as the admin pages list it. */
         GroupSummary: {
             /** Format: int32 */
-            key: number | string;
+            key: number;
             name: string;
             description: string | null;
             isBuiltIn: boolean;
             /** Format: int32 */
-            memberCount: number | string;
+            memberCount: number;
         };
         /** @description What the groups screen (`/admin/groups`) shows: the groups and the new-group form. */
         GroupsViewModel: {
@@ -12909,7 +23470,7 @@ export interface components {
              * Format: int32
              * @description The 1-based page of results.
              */
-            pageIndex?: number | string;
+            pageIndex?: number;
             /** @description The package type filter, `any` for none. */
             packageType?: string;
             /** @description The target framework filter, `any` for none. */
@@ -13046,7 +23607,7 @@ export interface components {
              * Format: int32
              * @description The page, from 1.
              */
-            pageIndex?: number | string;
+            pageIndex?: number;
             result?: components["schemas"]["MavenSearchPage"];
             settings?: components["schemas"]["MavenRepositorySettings"];
             /** @description The address Maven is configured with for this repository. */
@@ -13070,7 +23631,7 @@ export interface components {
              * Format: int32
              * @description The HTTP status the page is answered with: 200, or 404 when the artifact or version does not exist (the page then explains).
              */
-            statusCode?: number | string;
+            statusCode?: number;
             info?: (null) | components["schemas"]["MavenArtifactInfo"];
             selected?: (null) | components["schemas"]["MavenVersionDetail"];
             /** @description The address Maven is configured with for this repository. */
@@ -13112,7 +23673,7 @@ export interface components {
              * Format: int64
              * @description Bytes.
              */
-            size: number | string;
+            size: number;
             /** @description SHA-1 hex. */
             sha1: string;
             /** @description MD5 hex. */
@@ -13132,7 +23693,7 @@ export interface components {
              * Format: int32
              * @description The snapshot build number, or 0.
              */
-            snapshotBuild: number | string;
+            snapshotBuild: number;
         };
         /** @description The form of the Maven management handlers: the chosen version and what the handler needs. */
         MavenManageForm: {
@@ -13176,8 +23737,11 @@ export interface components {
             /** @description `group:artifact`. */
             name?: string | null;
         };
-        /** @description Which versions a local Maven repository accepts. */
-        MavenPolicy: number;
+        /**
+         * @description Which versions a local Maven repository accepts.
+         * @enum {string}
+         */
+        MavenPolicy: "Releases" | "Snapshots" | "Both";
         /** @description A dependency a POM declares (versions and scopes as written; properties are not resolved). */
         MavenPomDependency: {
             /** @description The group id. */
@@ -13225,7 +23789,7 @@ export interface components {
              * @description How many timestamped builds of a snapshot version are kept: when a deploy brings a newer build, older ones beyond this
              *     number are deleted. Zero keeps all (clean up on the artifact's page).
              */
-            maxSnapshotBuilds?: number | string;
+            maxSnapshotBuilds?: number;
         };
         /** @description A search hit. */
         MavenSearchHit: {
@@ -13253,7 +23817,7 @@ export interface components {
              * Format: int32
              * @description All matches.
              */
-            total: number | string;
+            total: number;
             /** @description This page. */
             hits: components["schemas"]["MavenSearchHit"][];
         };
@@ -13289,7 +23853,7 @@ export interface components {
              * Format: int32
              * @description The HTTP status the page is answered with (200, or the refusal's).
              */
-            statusCode?: number | string;
+            statusCode?: number;
         };
         /** @description One version with its files and POM. */
         MavenVersionDetail: {
@@ -13326,17 +23890,17 @@ export interface components {
              * Format: int32
              * @description Files of the version.
              */
-            fileCount: number | string;
+            fileCount: number;
             /**
              * Format: int64
              * @description Bytes of the version.
              */
-            size: number | string;
+            size: number;
             /**
              * Format: int32
              * @description For a snapshot: how many timestamped builds it holds.
              */
-            builds: number | string;
+            builds: number;
         };
         /** @description A node as it publishes itself. */
         NodeInfo: {
@@ -13445,7 +24009,7 @@ export interface components {
              * Format: int32
              * @description The page, from 1.
              */
-            pageIndex?: number | string;
+            pageIndex?: number;
             result?: components["schemas"]["NpmSearchPage"];
             /** @description The address npm is configured with for this repository. */
             registryUrl?: string;
@@ -13462,7 +24026,7 @@ export interface components {
              * Format: int32
              * @description The HTTP status the page is answered with: 200, or 404 when the package does not exist (the page then explains).
              */
-            statusCode?: number | string;
+            statusCode?: number;
             package?: (null) | components["schemas"]["NpmPackageInfo"];
             selected?: (null) | components["schemas"]["NpmVersionInfo"];
             readme?: (null) | components["schemas"]["HtmlString"];
@@ -13500,7 +24064,7 @@ export interface components {
              * Format: int32
              * @description All matches.
              */
-            total: number | string;
+            total: number;
             /** @description This page, ordered by name. */
             hits: components["schemas"]["NpmSearchHit"][];
         };
@@ -13531,7 +24095,7 @@ export interface components {
              * Format: int32
              * @description The HTTP status the page is answered with (200, or the refusal's).
              */
-            statusCode?: number | string;
+            statusCode?: number;
         };
         /** @description One published version as stored. */
         NpmVersionInfo: {
@@ -13548,7 +24112,7 @@ export interface components {
              * Format: int64
              * @description Bytes of the tarball.
              */
-            tarballSize: number | string;
+            tarballSize: number;
             /** @description The tarball's SRI string (`sha512-…`). */
             integrity: string;
             /** @description The tarball's SHA-1 in hex. */
@@ -13567,15 +24131,15 @@ export interface components {
             version?: string | null;
             isLegacyVersion?: boolean;
             /** Format: int32 */
-            revision?: number | string;
+            revision?: number;
             isSemVer2?: boolean;
             originalVersion?: string | null;
             /** Format: int32 */
-            major?: number | string;
+            major?: number;
             /** Format: int32 */
-            minor?: number | string;
+            minor?: number;
             /** Format: int32 */
-            patch?: number | string;
+            patch?: number;
             releaseLabels?: string[] | null;
             release?: string | null;
             isPrerelease?: boolean;
@@ -13592,7 +24156,7 @@ export interface components {
              * Format: int64
              * @description Its size.
              */
-            size: number | string;
+            size: number;
             /** @description Its artifact type, or null. */
             artifactType: string | null;
             /** @description Its annotations, or null. */
@@ -13609,12 +24173,15 @@ export interface components {
              * Format: int64
              * @description Bytes it frees (0 for a session).
              */
-            bytes: number | string;
+            bytes: number;
             /** @description The image it belonged to, if any. */
             image: string | null;
         };
-        /** @description What a garbage collection found (or, outside a dry run, removed). */
-        OciGcItemKind: number;
+        /**
+         * @description What a garbage collection found (or, outside a dry run, removed).
+         * @enum {string}
+         */
+        OciGcItemKind: "ExpiredUpload" | "UnreferencedLayer" | "OrphanBlob" | "OrphanFile";
         /** @description The outcome of one garbage collection of a repository. */
         OciGcReport: {
             /** @description Whether nothing was changed (the numbers are what a run would remove). */
@@ -13625,27 +24192,27 @@ export interface components {
              * Format: int32
              * @description Upload sessions discarded.
              */
-            expiredUploads: number | string;
+            expiredUploads: number;
             /**
              * Format: int32
              * @description Image-to-layer links dropped (a layer two images hold counts twice).
              */
-            unreferencedLayers: number | string;
+            unreferencedLayers: number;
             /**
              * Format: int32
              * @description Blobs (rows and files) removed: those no image holds after the links are dropped, orphan rows included.
              */
-            blobs: number | string;
+            blobs: number;
             /**
              * Format: int32
              * @description Files under the blob folder with no row, removed.
              */
-            orphanFiles: number | string;
+            orphanFiles: number;
             /**
              * Format: int64
              * @description Bytes freed by the blobs and orphan files, as far as they are known (an orphan file's size is not).
              */
-            bytes: number | string;
+            bytes: number;
             /** @description The first of the things removed (the list is capped). */
             items: components["schemas"]["OciGcItem"][];
             /** @description Whether there are more than Items holds. */
@@ -13677,12 +24244,12 @@ export interface components {
              * Format: int64
              * @description Bytes of the distinct blobs the image holds.
              */
-            size: number | string;
+            size: number;
             /**
              * Format: int32
              * @description Blobs held by the image that no manifest uses.
              */
-            unreferencedBlobs: number | string;
+            unreferencedBlobs: number;
         };
         /** @description A page of OciImageSummary. */
         OciImagePage: {
@@ -13690,7 +24257,7 @@ export interface components {
              * Format: int32
              * @description All images that matched and may be read.
              */
-            total: number | string;
+            total: number;
             /** @description The page. */
             images: components["schemas"]["OciImageSummary"][];
         };
@@ -13702,17 +24269,17 @@ export interface components {
              * Format: int32
              * @description Number of tags.
              */
-            tags: number | string;
+            tags: number;
             /**
              * Format: int32
              * @description Number of manifests (including indexes).
              */
-            manifests: number | string;
+            manifests: number;
             /**
              * Format: int64
              * @description Bytes of the distinct blobs the image holds.
              */
-            size: number | string;
+            size: number;
             /**
              * Format: date-time
              * @description The last manifest or tag change (UTC).
@@ -13727,7 +24294,7 @@ export interface components {
              * Format: int64
              * @description The size announced by the manifest.
              */
-            size: number | string;
+            size: number;
             /** @description The media type. */
             mediaType: string;
         };
@@ -13756,7 +24323,7 @@ export interface components {
              * Format: int64
              * @description Bytes of the manifest document.
              */
-            size: number | string;
+            size: number;
             /** @description Whether it is an index of platform manifests. */
             isIndex: boolean;
             /**
@@ -13776,12 +24343,12 @@ export interface components {
              * Format: int32
              * @description Number of layers (0 for an index).
              */
-            layerCount: number | string;
+            layerCount: number;
             /**
              * Format: int64
              * @description Bytes of the config and layers (the children are not summed for an index).
              */
-            contentSize: number | string;
+            contentSize: number;
         };
         /** @description A platform entry of an index. */
         OciPlatformInfo: {
@@ -13793,7 +24360,7 @@ export interface components {
              * Format: int64
              * @description The child's size.
              */
-            size: number | string;
+            size: number;
             /** @description The operating system, or null. */
             os: string | null;
             /** @description The architecture, or null. */
@@ -13852,7 +24419,7 @@ export interface components {
         /** @description An account that several users own packages through. */
         Organization: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             name?: string | null;
             /** Format: date-time */
             created?: string;
@@ -13868,7 +24435,7 @@ export interface components {
              * Format: int32
              * @description How many package IDs it owns, in every repository.
              */
-            ownedPackageIds?: number | string;
+            ownedPackageIds?: number;
             message?: string | null;
             error?: string | null;
             /** @description Whether the signed in administrator has a password to confirm with. */
@@ -13923,17 +24490,17 @@ export interface components {
              * Format: int32
              * @description How many members it has.
              */
-            members: number | string;
+            members: number;
             /**
              * Format: int32
              * @description How many of them administer it.
              */
-            administrators: number | string;
+            administrators: number;
             /**
              * Format: int32
              * @description How many package IDs it owns, counted per repository.
              */
-            packageIds: number | string;
+            packageIds: number;
         };
         /** @description The signed-in user's organizations screen. */
         OrganizationsViewModel: {
@@ -13949,24 +24516,24 @@ export interface components {
             latestVersion?: string | null;
             latestVersionIsListed?: boolean;
             /** Format: int32 */
-            versionCount?: number | string;
+            versionCount?: number;
             /** Format: int64 */
-            downloads?: number | string;
+            downloads?: number;
         };
         Package: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The owning repository; see IRepositoryScoped.
              */
-            repositoryKey?: number | string;
+            repositoryKey?: number;
             id?: string | null;
             version?: components["schemas"]["NuGetVersion"];
             authors?: string[] | null;
             description?: string | null;
             /** Format: int64 */
-            downloads?: number | string;
+            downloads?: number;
             hasReadme?: boolean;
             hasEmbeddedIcon?: boolean;
             isPrerelease?: boolean;
@@ -14014,11 +24581,12 @@ export interface components {
         /**
          * @description How BaGet should interpret package deletion requests.
          *     See: https://docs.microsoft.com/en-us/nuget/api/package-publish-resource#delete-a-package
+         * @enum {string}
          */
-        PackageDeletionBehavior: number;
+        PackageDeletionBehavior: "Unlist" | "HardDelete";
         PackageDependency: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /** @description The dependency's package ID. Null if this is a dependency group without any dependencies. */
             id?: string | null;
             /** @description The dependency's package version. Null if this is a dependency group without any dependencies. */
@@ -14036,7 +24604,7 @@ export interface components {
              * Format: int64
              * @description The total downloads for the dependent package.
              */
-            totalDownloads?: number | string;
+            totalDownloads?: number;
         };
         /**
          * @description A package version marked as deprecated.
@@ -14044,7 +24612,7 @@ export interface components {
          */
         PackageDeprecation: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * @description Why the package was deprecated. The protocol defines "Legacy", "CriticalBugs"
              *     and "Other"; a package may carry more than one.
@@ -14065,7 +24633,7 @@ export interface components {
              *     stays optional in the database: a required one would need a foreign key change,
              *     which SQLite cannot make in place.
              */
-            packageKey?: (number | string | (null)) | null;
+            packageKey?: number | null;
             package?: (null) | components["schemas"]["Package"];
         };
         /** @description What the package page shows about the version it displays (a flat copy of the stored package, with no navigation properties). */
@@ -14086,7 +24654,7 @@ export interface components {
              * Format: int64
              * @description The downloads of this version.
              */
-            downloads?: number | string;
+            downloads?: number;
             /** @description The authors. */
             authors?: string[];
         };
@@ -14095,7 +24663,7 @@ export interface components {
             /** @description Null when the downloads are a whole package ID's. */
             version?: string | null;
             /** Format: int64 */
-            downloads?: number | string;
+            downloads?: number;
             /** Format: date-time */
             published?: string | null;
         };
@@ -14155,7 +24723,7 @@ export interface components {
              * Format: int32
              * @description The vulnerability's key.
              */
-            key?: number | string;
+            key?: number;
         };
         /** @description An open abuse report. */
         PackageManageReport: {
@@ -14163,7 +24731,7 @@ export interface components {
              * Format: int32
              * @description The report's key (what `ResolveReport` takes).
              */
-            key: number | string;
+            key: number;
             /** @description The reported version. */
             packageVersion: string | null;
             /** @description The reason given. */
@@ -14179,7 +24747,7 @@ export interface components {
              * Format: int32
              * @description The report's key.
              */
-            key?: number | string;
+            key?: number;
         };
         /**
          * @description What the package management screen (`/packages/{id}/manage`) shows, as plain data (the JSON model of `/api/ui/packages/{id}/manage`).
@@ -14244,7 +24812,7 @@ export interface components {
              * Format: int64
              * @description The download count.
              */
-            downloads: number | string;
+            downloads: number;
             /** @description Whether the version is listed. */
             listed: boolean;
             deprecation: (null) | components["schemas"]["PackageManageDeprecation"];
@@ -14262,14 +24830,14 @@ export interface components {
              * Format: int32
              * @description The row's key (what `RemoveVulnerability` takes).
              */
-            key: number | string;
+            key: number;
             /** @description The advisory. */
             advisoryUrl: string | null;
             /**
              * Format: int32
              * @description 0 low, 1 moderate, 2 high, 3 critical.
              */
-            severity: number | string;
+            severity: number;
             /** @description The affected range, or null. */
             versionRange: string | null;
             /** @description Null for a manual entry, `osv` for one the scanner wrote (not editable here). */
@@ -14285,19 +24853,19 @@ export interface components {
              * Format: int32
              * @description 0 low, 1 moderate, 2 high, 3 critical.
              */
-            severity?: number | string;
+            severity?: number;
             /** @description The affected range, optional. */
             versionRange?: string | null;
         };
         /** @description An owner of every version of a package ID. */
         PackageOwner: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The owning repository; see IRepositoryScoped.
              */
-            repositoryKey?: number | string;
+            repositoryKey?: number;
             packageId?: string | null;
             /** @description A user name or an organization name. */
             ownerName?: string | null;
@@ -14325,7 +24893,7 @@ export interface components {
              * Format: int64
              * @description Downloads of every version.
              */
-            totalDownloads?: number | string;
+            totalDownloads?: number;
             /** @description The packages that depend on this one. */
             usedBy?: components["schemas"]["PackageDependent"][];
             /** @description The dependencies, by framework. */
@@ -14363,7 +24931,7 @@ export interface components {
         };
         PackageType: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             name?: string | null;
             version?: string | null;
             package?: (null) | components["schemas"]["Package"];
@@ -14374,12 +24942,12 @@ export interface components {
          */
         PackageValidation: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The owning repository; see IRepositoryScoped.
              */
-            repositoryKey?: number | string;
+            repositoryKey?: number;
             submissionId?: string | null;
             packageId?: string | null;
             /** @description The normalized version. */
@@ -14389,7 +24957,7 @@ export interface components {
              * @description The indexed package, once the submission succeeds. Nullable so that the
              *     relationship is additive; see PackageDeprecation.
              */
-            packageKey?: (number | string | (null)) | null;
+            packageKey?: number | null;
             package?: (null) | components["schemas"]["Package"];
             /** @description The validator's name, or string PackageValidation.IndexType. */
             type?: string | null;
@@ -14401,7 +24969,8 @@ export interface components {
             /** Format: date-time */
             completed?: string | null;
         };
-        PackageValidationState: number;
+        /** @enum {string} */
+        PackageValidationState: "Pending" | "Succeeded" | "Failed";
         /** @description One row of the versions table of the package page. */
         PackageVersionEntry: {
             /** @description The normalized version. */
@@ -14410,7 +24979,7 @@ export interface components {
              * Format: int64
              * @description Its downloads.
              */
-            downloads: number | string;
+            downloads: number;
             /** @description Whether it is the version shown. */
             selected: boolean;
             /**
@@ -14425,14 +24994,14 @@ export interface components {
          */
         PackageVulnerability: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /** @description The URL of the advisory describing the vulnerability. */
             advisoryUrl?: string | null;
             /**
              * Format: int32
              * @description The severity, as the protocol numbers it: 0 low, 1 moderate, 2 high, 3 critical.
              */
-            severity?: number | string;
+            severity?: number;
             /** @description The range of versions the advisory applies to. */
             versionRange?: string | null;
             /**
@@ -14446,7 +25015,7 @@ export interface components {
              * @description The key of the affected package version. Nullable for the same reason as on
              *     PackageDeprecation.
              */
-            packageKey?: (number | string | (null)) | null;
+            packageKey?: number | null;
             package?: (null) | components["schemas"]["Package"];
         };
         /**
@@ -14580,8 +25149,11 @@ export interface components {
             /** @description The administrator's password, asked again. */
             password: string | null;
         };
-        /** @description Who a PermissionGrant or ProjectMember names. */
-        PrincipalType: number;
+        /**
+         * @description Who a PermissionGrant or ProjectMember names.
+         * @enum {string}
+         */
+        PrincipalType: "User" | "Group" | "Organization";
         /** @description A user's or an organization's public page: the packages it owns. */
         ProfileViewModel: {
             /** @description The account's name. */
@@ -14665,18 +25237,21 @@ export interface components {
             /** @description The administrator's password, asked again. */
             password: string | null;
         };
-        /** @description A member's role in a Project, applying to the project's repositories. */
-        ProjectRole: number;
+        /**
+         * @description A member's role in a Project, applying to the project's repositories.
+         * @enum {string}
+         */
+        ProjectRole: "Viewer" | "Developer" | "Admin";
         /** @description A project as the admin pages list it. */
         ProjectSummary: {
             /** Format: int32 */
-            key: number | string;
+            key: number;
             name: string;
             displayName: string | null;
             /** Format: int32 */
-            repositoryCount: number | string;
+            repositoryCount: number;
             /** Format: int32 */
-            memberCount: number | string;
+            memberCount: number;
         };
         /** @description What the projects screen (`/admin/projects`) shows: the projects the user may open and the new-project form. */
         ProjectsViewModel: {
@@ -14789,18 +25364,18 @@ export interface components {
              * Format: int32
              * @description Package versions stored.
              */
-            packageCount: number | string;
+            packageCount: number;
             /**
              * Format: int32
              * @description Distinct package ids stored.
              */
-            packageIdCount: number | string;
+            packageIdCount: number;
             /**
              * Format: int64
              * @description Bytes of the blobs stored (a Docker repository: its layers); 0 when the format does not report it.
              * @default 0
              */
-            storedBytes: number | string;
+            storedBytes: number;
         };
         /** @description What the cache of one remote repository looks like right now (in memory, per node; resets on restart). */
         RemoteCacheStatus: {
@@ -14808,37 +25383,37 @@ export interface components {
              * Format: int32
              * @description Cached answers of the upstream (version lists and metadata), expired ones included until used or purged.
              */
-            metadataEntries: number | string;
+            metadataEntries: number;
             /**
              * Format: int32
              * @description Remembered "the upstream does not have it" answers still in force.
              */
-            negativeEntries: number | string;
+            negativeEntries: number;
             /**
              * Format: int64
              * @description Answers served from the cache.
              */
-            hits: number | string;
+            hits: number;
             /**
              * Format: int64
              * @description Questions that went to the upstream.
              */
-            misses: number | string;
+            misses: number;
             /**
              * Format: int64
              * @description Questions answered "not found" from the negative cache.
              */
-            negativeHits: number | string;
+            negativeHits: number;
             /**
              * Format: int64
              * @description Expired answers served because the upstream could not be reached.
              */
-            staleServed: number | string;
+            staleServed: number;
             /**
              * Format: int64
              * @description Failed attempts to reach the upstream.
              */
-            failures: number | string;
+            failures: number;
             /**
              * Format: date-time
              * @description The last time the upstream answered.
@@ -14867,12 +25442,12 @@ export interface components {
              * Format: int32
              * @description The HTTP status, when there was an answer.
              */
-            statusCode: (number | string | (null)) | null;
+            statusCode: number | null;
             /**
              * Format: int64
              * @description How long the attempt took.
              */
-            elapsedMilliseconds: number | string;
+            elapsedMilliseconds: number;
         };
         /**
          * @description The fields of a remote repository's upstream settings as the create and edit pages post them (prefix
@@ -14893,17 +25468,17 @@ export interface components {
              * Format: int32
              * @description How long the upstream's answers are reused, in seconds (0 = ask every time).
              */
-            metadataTtlSeconds?: number | string;
+            metadataTtlSeconds?: number;
             /**
              * Format: int32
              * @description How long "not found" is remembered, in seconds (0 = ask every time).
              */
-            negativeTtlSeconds?: number | string;
+            negativeTtlSeconds?: number;
             /**
              * Format: int32
              * @description The download timeout in seconds.
              */
-            downloadTimeoutSeconds?: number | string;
+            downloadTimeoutSeconds?: number;
             /** @description Never contact the upstream. */
             offline?: boolean;
             /** @description Keep what is fetched (off = pass-through). */
@@ -14915,7 +25490,7 @@ export interface components {
         };
         /**
          * @description The protocol a remote repository's upstream speaks.
-         * @enum {unknown}
+         * @enum {string}
          */
         RemoteProtocol: "V3" | "V2" | "Npm" | "Maven" | "Docker";
         /** @description A remote repository as the administration pages edit it. */
@@ -14951,12 +25526,12 @@ export interface components {
              * @description How long the upstream's version list and metadata of a package are reused before it is asked again. 0 asks
              *     every time (what the mirror always did).
              */
-            metadataTtlSeconds?: number | string;
+            metadataTtlSeconds?: number;
             /**
              * Format: int32
              * @description How long "the upstream does not have it" (404) is remembered. 0 asks every time.
              */
-            negativeTtlSeconds?: number | string;
+            negativeTtlSeconds?: number;
             /** @description Offline mode: the upstream is never contacted; only what is already stored (and cached in memory) is served. */
             offline?: boolean;
             /**
@@ -14970,7 +25545,7 @@ export interface components {
              * Format: int32
              * @description The time before a download from the upstream times out.
              */
-            downloadTimeoutSeconds?: number | string;
+            downloadTimeoutSeconds?: number;
         };
         /** @description What the "remove a member" (or "leave") form posts. */
         RemoveOrganizationMemberForm: {
@@ -14992,14 +25567,14 @@ export interface components {
          */
         ReplicationConfig: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /** @description Unique, AccessNames rules. */
             name?: string | null;
             /**
              * Format: int32
              * @description The local int Repository.Key: a local (not remote, not virtual) repository.
              */
-            repositoryKey?: number | string;
+            repositoryKey?: number;
             direction?: components["schemas"]["ReplicationDirection"];
             /** @description The peer server's base address (`https://other.example/`), not a repository feed. */
             peerUrl?: string | null;
@@ -15013,7 +25588,7 @@ export interface components {
              * Format: int32
              * @description Run every this many minutes. Null: only when started (or on deploy).
              */
-            scheduleMinutes?: (number | string | (null)) | null;
+            scheduleMinutes?: number | null;
             /** @description What was replicated and is later deleted at the source is deleted at the target too (only items this configuration copied). */
             propagateDeletes?: boolean;
             conflict?: components["schemas"]["ReplicationConflict"];
@@ -15050,7 +25625,7 @@ export interface components {
              * Format: int32
              * @description The configuration's key (route).
              */
-            key?: number | string;
+            key?: number;
             form?: components["schemas"]["ReplicationForm"];
             view?: (null) | components["schemas"]["ReplicationConfigView"];
             /** @description The log, newest first. */
@@ -15061,7 +25636,7 @@ export interface components {
              * Format: int32
              * @description How many items the local repository holds, or null when it could not be listed.
              */
-            localItems?: (number | string | (null)) | null;
+            localItems?: number | null;
             /** @description Whether a run is going here (the page refreshes itself). */
             running?: boolean;
             /** @description The local repositories a replication can name. */
@@ -15080,12 +25655,12 @@ export interface components {
         };
         /**
          * @description What happens when both sides hold the same item with different content.
-         * @enum {unknown}
+         * @enum {string}
          */
         ReplicationConflict: "TargetWins" | "SourceWins";
         /**
          * @description Which way a ReplicationConfig copies.
-         * @enum {unknown}
+         * @enum {string}
          */
         ReplicationDirection: "Push" | "Pull";
         /**
@@ -15105,14 +25680,14 @@ export interface components {
             enabled?: boolean;
             onDeploy?: boolean;
             /** Format: int32 */
-            scheduleMinutes?: (number | string | (null)) | null;
+            scheduleMinutes?: number | null;
             propagateDeletes?: boolean;
             conflict?: components["schemas"]["ReplicationConflict"];
         };
         /** @description What the page knows of a replication started since the server began (in memory); the log table is the durable record. */
         ReplicationJobStatus: {
             /** Format: int32 */
-            configKey?: number | string;
+            configKey?: number;
             /** Format: date-time */
             started?: string;
             /** Format: date-time */
@@ -15125,12 +25700,12 @@ export interface components {
         /** @description One run of a configuration: the replication log. */
         ReplicationRun: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The int ReplicationConfig.Key.
              */
-            configKey?: number | string;
+            configKey?: number;
             status?: components["schemas"]["ReplicationRunStatus"];
             /** @description `manual`, `resume`, `schedule` or `deploy`. */
             trigger?: string | null;
@@ -15140,7 +25715,7 @@ export interface components {
              * Format: int32
              * @description The interrupted or failed run this one continues, when started with <em>Resume</em>.
              */
-            resumedFrom?: (number | string | (null)) | null;
+            resumedFrom?: number | null;
             /** Format: date-time */
             started?: string;
             /** Format: date-time */
@@ -15149,41 +25724,44 @@ export interface components {
              * Format: int32
              * @description Items the plan looked at (both sides listed).
              */
-            examined?: number | string;
+            examined?: number;
             /**
              * Format: int32
              * @description Items copied to the target.
              */
-            transferred?: number | string;
+            transferred?: number;
             /**
              * Format: int32
              * @description Items the target already had.
              */
-            skipped?: number | string;
+            skipped?: number;
             /**
              * Format: int32
              * @description Items deleted at the target because they were deleted at the source.
              */
-            deleted?: number | string;
+            deleted?: number;
             /**
              * Format: int32
              * @description Items held differently on both sides that were left alone (target wins) or replaced (source wins).
              */
-            conflicts?: number | string;
+            conflicts?: number;
             /** Format: int32 */
-            failures?: number | string;
+            failures?: number;
             /**
              * Format: int64
              * @description Bytes of artifact content sent or received.
              */
-            bytes?: number | string;
+            bytes?: number;
             /** @description Why the run failed as a whole, or null. */
             error?: string | null;
             /** @description The first failures and conflicts, one per line. */
             detail?: string | null;
         };
-        /** @description How a ReplicationRun ended. */
-        ReplicationRunStatus: number;
+        /**
+         * @description How a ReplicationRun ended.
+         * @enum {string}
+         */
+        ReplicationRunStatus: "Running" | "Succeeded" | "Failed" | "Interrupted";
         /** @description What Task&lt;ReplicationTestResult&gt; IReplicationAdministration.TestAsync(ReplicationInput input, CancellationToken cancellationToken) found. */
         ReplicationTestResult: {
             /** @description Whether the peer answered as a BaGet server with this repository. */
@@ -15194,13 +25772,13 @@ export interface components {
              * Format: int64
              * @description How long it took.
              */
-            elapsedMilliseconds: number | string;
+            elapsedMilliseconds: number;
             peerFormat: (null) | components["schemas"]["RepositoryFormat"];
             /**
              * Format: int32
              * @description How many items it holds, when it answered.
              */
-            peerItems: (number | string | (null)) | null;
+            peerItems: number | null;
         };
         /** @description What the replications screen (`/admin/replication`) shows: every replication and the form that creates one. */
         ReplicationViewModel: {
@@ -15437,8 +26015,9 @@ export interface components {
         /**
          * @description The package format a Repository serves. Stored as its name, so a value may be appended
          *     but never renumbered or renamed.
+         * @enum {string}
          */
-        RepositoryFormat: number;
+        RepositoryFormat: "NuGet" | "Npm" | "Maven" | "Docker";
         /** @description A package format a repository can be created for, with the extra fields its create form asks (the JSON form of an IFormatModule). */
         RepositoryFormatChoice: {
             format: components["schemas"]["RepositoryFormat"];
@@ -15456,7 +26035,7 @@ export interface components {
              * Format: int32
              * @description The int Repository.Key.
              */
-            key: number | string;
+            key: number;
             /** @description The string? Repository.Name. */
             name: string;
             format: components["schemas"]["RepositoryFormat"];
@@ -15469,8 +26048,11 @@ export interface components {
              */
             pathPrefix?: string | null;
         };
-        /** @description How a Repository gets its content. Stored as its name. */
-        RepositoryKind: number;
+        /**
+         * @description How a Repository gets its content. Stored as its name.
+         * @enum {string}
+         */
+        RepositoryKind: "Local" | "Remote" | "Virtual";
         /** @description The packages the user owns in one repository. */
         RepositoryPackages: {
             repository: components["schemas"]["RepositoryInfo"];
@@ -15482,7 +26064,7 @@ export interface components {
              * Format: int32
              * @description The int Repository.Key.
              */
-            key: number | string;
+            key: number;
             /** @description The string? Repository.Name. */
             name: string;
             format: components["schemas"]["RepositoryFormat"];
@@ -15498,7 +26080,7 @@ export interface components {
              * Format: int32
              * @description How many package versions it holds.
              */
-            packageCount: number | string;
+            packageCount: number;
             /** @description Whether this is the string Repository.DefaultName repository, which can be neither renamed nor deleted. */
             isDefault?: boolean;
         };
@@ -15526,8 +26108,11 @@ export interface components {
             /** @description The new password again. Never echoed. */
             confirmPassword: string | null;
         };
-        /** @description What asking one member about a package version found. */
-        ResolutionOutcome: number;
+        /**
+         * @description What asking one member about a package version found.
+         * @enum {string}
+         */
+        ResolutionOutcome: "Stored" | "WouldFetch" | "NotFound" | "Unavailable" | "NotAsked" | "Offline";
         /** @description Where a package version would come from, member by member. */
         ResolutionPreview: {
             /** @description The package id asked about (`group:artifact` for Maven). */
@@ -15560,7 +26145,7 @@ export interface components {
              * Format: int32
              * @description The hold's number.
              */
-            key: number | string;
+            key: number;
             /** @description The administrator's password. */
             password: string | null;
         };
@@ -15594,9 +26179,9 @@ export interface components {
         /** @description A legal hold with its repository's name. */
         RetentionHoldView: {
             /** Format: int32 */
-            key: number | string;
+            key: number;
             /** Format: int32 */
-            repositoryKey: number | string;
+            repositoryKey: number;
             repository: string;
             name: string;
             version: string;
@@ -15605,11 +26190,12 @@ export interface components {
             /** Format: date-time */
             created: string;
         };
-        RetentionJobState: number;
+        /** @enum {string} */
+        RetentionJobState: "Running" | "Succeeded" | "Failed";
         /** @description The last run of a policy since the server started (in memory). */
         RetentionJobStatus: {
             /** Format: int32 */
-            policyKey?: number | string;
+            policyKey?: number;
             dryRun?: boolean;
             state?: components["schemas"]["RetentionJobState"];
             /** @description The administrator, or `scheduler`. */
@@ -15622,8 +26208,11 @@ export interface components {
             /** @description Why the run failed as a whole, or null. */
             error?: string | null;
         };
-        /** @description What happened (or, in a dry run, would happen) to one selected version. */
-        RetentionOutcome: number;
+        /**
+         * @description What happened (or, in a dry run, would happen) to one selected version.
+         * @enum {string}
+         */
+        RetentionOutcome: "Planned" | "Deleted" | "Held" | "Failed";
         /**
          * @description A retention policy: which stored versions of one repository (or of every repository of a project) are deleted, and when.
          *     A version is deleted when <b>any</b> enabled rule selects it and no RetentionHold covers it. Not repository-scoped:
@@ -15632,19 +26221,19 @@ export interface components {
          */
         RetentionPolicy: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /** @description Unique, AccessNames rules. */
             name?: string | null;
             /**
              * Format: int32
              * @description The int Repository.Key the policy applies to, or null when it applies to a project.
              */
-            repositoryKey?: (number | string | (null)) | null;
+            repositoryKey?: number | null;
             /**
              * Format: int32
              * @description The int Project.Key: the policy applies to every repository of the project. Exactly one of the two keys is set.
              */
-            projectKey?: (number | string | (null)) | null;
+            projectKey?: number | null;
             /** @description A disabled policy is never run by the schedule and refuses a manual run (a dry run still reports). */
             enabled?: boolean;
             /**
@@ -15656,17 +26245,17 @@ export interface components {
              * Format: int32
              * @description Keep this many newest versions of each artifact (by publish time); older ones are selected. Null: rule off.
              */
-            keepLast?: (number | string | (null)) | null;
+            keepLast?: number | null;
             /**
              * Format: int32
              * @description Select versions published more than this many days ago. Null: rule off.
              */
-            olderThanDays?: (number | string | (null)) | null;
+            olderThanDays?: number | null;
             /**
              * Format: int32
              * @description Select versions not downloaded for this many days (the publish time counts when never downloaded). Null: rule off.
              */
-            unusedDays?: (number | string | (null)) | null;
+            unusedDays?: number | null;
             /** @description The age and count rules look at prerelease versions (NuGet pre-release, npm prerelease, Maven snapshot) only. */
             prereleaseOnly?: boolean;
             /**
@@ -15674,20 +26263,20 @@ export interface components {
              * @description Remote repositories only: when what the repository cached is larger than this many bytes, the least recently used versions are
              *     selected until it fits. Null: rule off.
              */
-            cacheLimitBytes?: (number | string | (null)) | null;
+            cacheLimitBytes?: number | null;
             /**
              * Format: int32
              * @description Docker only: select manifests no tag, index or referrer relationship points at that were pushed more than this many days ago.
              *     Null: rule off.
              */
-            untaggedAfterDays?: (number | string | (null)) | null;
+            untaggedAfterDays?: number | null;
             /** @description Docker only: run the garbage collection (IOciGarbageCollector) after the rules, to free the blobs. */
             collectGarbage?: boolean;
             /**
              * Format: int32
              * @description Run every this many hours (a real run, by the background worker). Null: only when an administrator starts it.
              */
-            scheduleHours?: (number | string | (null)) | null;
+            scheduleHours?: number | null;
             /**
              * Format: date-time
              * @description When the schedule was set or the policy enabled; the first scheduled run is due this long after it.
@@ -15731,22 +26320,22 @@ export interface components {
             enabled?: boolean;
             namePatterns?: string | null;
             /** Format: int32 */
-            keepLast?: (number | string | (null)) | null;
+            keepLast?: number | null;
             /** Format: int32 */
-            olderThanDays?: (number | string | (null)) | null;
+            olderThanDays?: number | null;
             /** Format: int32 */
-            unusedDays?: (number | string | (null)) | null;
+            unusedDays?: number | null;
             prereleaseOnly?: boolean;
             /**
              * Format: int64
              * @description The remote cache limit in MiB.
              */
-            cacheLimitMb?: (number | string | (null)) | null;
+            cacheLimitMb?: number | null;
             /** Format: int32 */
-            untaggedAfterDays?: (number | string | (null)) | null;
+            untaggedAfterDays?: number | null;
             collectGarbage?: boolean;
             /** Format: int32 */
-            scheduleHours?: (number | string | (null)) | null;
+            scheduleHours?: number | null;
         };
         /** @description A policy with the name of what it applies to. */
         RetentionPolicyView: {
@@ -15759,7 +26348,7 @@ export interface components {
              * Format: int32
              * @description How many repositories it currently applies to.
              */
-            targets: number | string;
+            targets: number;
         };
         /** @description What one retention policy's screen (`/admin/retention/{key}`) shows. */
         RetentionPolicyViewModel: {
@@ -15767,7 +26356,7 @@ export interface components {
              * Format: int32
              * @description The policy's key (route).
              */
-            key?: number | string;
+            key?: number;
             form?: components["schemas"]["RetentionPolicyForm"];
             view?: (null) | components["schemas"]["RetentionPolicyView"];
             status?: (null) | components["schemas"]["RetentionJobStatus"];
@@ -15791,7 +26380,7 @@ export interface components {
         /** @description The result of running (or dry-running) a policy over its repositories. */
         RetentionReport: {
             /** Format: int32 */
-            policyKey?: number | string;
+            policyKey?: number;
             policyName?: string;
             /** @description Whether nothing was changed. */
             dryRun?: boolean;
@@ -15801,15 +26390,15 @@ export interface components {
             finished?: string | null;
             repositories?: components["schemas"]["RetentionRepositoryReport"][] | null;
             /** Format: int32 */
-            selected?: number | string;
+            selected?: number;
             /** Format: int32 */
-            deleted?: number | string;
+            deleted?: number;
             /** Format: int32 */
-            held?: number | string;
+            held?: number;
             /** Format: int32 */
-            failed?: number | string;
+            failed?: number;
             /** Format: int64 */
-            bytes?: number | string;
+            bytes?: number;
             /** @description One line for the policy page, the job status and the audit log. */
             summary?: string | null;
         };
@@ -15823,7 +26412,7 @@ export interface components {
             /** Format: date-time */
             lastDownloaded: string | null;
             /** Format: int64 */
-            size: (number | string | (null)) | null;
+            size: number | null;
             rules: string;
             outcome: components["schemas"]["RetentionOutcome"];
             error: string | null;
@@ -15836,32 +26425,32 @@ export interface components {
              * Format: int32
              * @description Versions looked at (matching the policy's name patterns).
              */
-            examined?: number | string;
+            examined?: number;
             /**
              * Format: int32
              * @description Versions selected by a rule and not held (dry run: to be deleted).
              */
-            selected?: number | string;
+            selected?: number;
             /**
              * Format: int32
              * @description Versions deleted (always 0 in a dry run).
              */
-            deleted?: number | string;
+            deleted?: number;
             /**
              * Format: int32
              * @description Versions a rule selected that a legal hold kept.
              */
-            held?: number | string;
+            held?: number;
             /**
              * Format: int32
              * @description Versions whose deletion failed.
              */
-            failed?: number | string;
+            failed?: number;
             /**
              * Format: int64
              * @description Bytes of the deleted versions (dry run: of the selected ones), as far as known.
              */
-            bytes?: number | string;
+            bytes?: number;
             items?: components["schemas"]["RetentionReportItem"][] | null;
             itemsTruncated?: boolean;
             /** @description Rules that did not apply, and similar remarks. */
@@ -15911,12 +26500,12 @@ export interface components {
         /** @description One vulnerability a scan found in an artifact or one of its components. */
         ScanFinding: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The int ScanResult.Key. Required; deleting the result deletes its findings.
              */
-            resultKey?: number | string;
+            resultKey?: number;
             /** @description The advisory id (`GHSA-…`, `CVE-…`), as the source names it. */
             vulnerabilityId?: string | null;
             /** @description The component that is vulnerable: the artifact itself or one of its dependencies (package, OS package…). */
@@ -15927,7 +26516,7 @@ export interface components {
              * Format: int32
              * @description 0 low, 1 moderate, 2 high, 3 critical (the numbering of NuGet's vulnerability resource).
              */
-            severity?: number | string;
+            severity?: number;
             /** @description A one-line description from the source, or null. */
             summary?: string | null;
             /** @description Where the advisory is described (an absolute http(s) URL). */
@@ -15977,32 +26566,32 @@ export interface components {
          */
         ScanPolicy: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The repository this policy is for, or null for a project policy.
              */
-            repositoryKey?: (number | string | (null)) | null;
+            repositoryKey?: number | null;
             /**
              * Format: int32
              * @description The project this policy is for, or null for a repository policy.
              */
-            projectKey?: (number | string | (null)) | null;
+            projectKey?: number | null;
             /**
              * Format: int32
              * @description Findings at or above this severity (0..3) are shown as a warning. Null: no warning.
              */
-            warnSeverity?: (number | string | (null)) | null;
+            warnSeverity?: number | null;
             /**
              * Format: int32
              * @description A version with a finding at or above this severity cannot be downloaded (403 with the reason). Null: never.
              */
-            blockDownloadSeverity?: (number | string | (null)) | null;
+            blockDownloadSeverity?: number | null;
             /**
              * Format: int32
              * @description A deploy whose artifact or declared dependencies have a finding at or above this severity is refused (403). Null: never.
              */
-            blockDeploySeverity?: (number | string | (null)) | null;
+            blockDeploySeverity?: number | null;
             /** @description Whether a version that has not been scanned (yet, or at all) cannot be downloaded. */
             blockUnscanned?: boolean;
             /**
@@ -16026,24 +26615,25 @@ export interface components {
             /** @description The administrator's password. */
             password: string | null;
         };
-        ScanPolicyScope: number;
+        /** @enum {string} */
+        ScanPolicyScope: "Repository" | "Project";
         /** @description The thresholds of a policy; null disables the action. */
         ScanPolicyValues: {
             /**
              * Format: int32
              * @description Show a warning from this severity (0 low … 3 critical).
              */
-            warnSeverity: (number | string | (null)) | null;
+            warnSeverity: number | null;
             /**
              * Format: int32
              * @description Refuse downloads from this severity.
              */
-            blockDownloadSeverity: (number | string | (null)) | null;
+            blockDownloadSeverity: number | null;
             /**
              * Format: int32
              * @description Refuse deploys from this severity.
              */
-            blockDeploySeverity: (number | string | (null)) | null;
+            blockDeploySeverity: number | null;
             /** @description Refuse downloads of versions that were not scanned. */
             blockUnscanned: boolean;
             /** @description Whether nothing is enabled. */
@@ -16074,12 +26664,12 @@ export interface components {
              * Format: int32
              * @description The lowest severity listed (0 low ... 3 critical).
              */
-            minSeverity?: number | string;
+            minSeverity?: number;
             /**
              * Format: int32
              * @description The page of the list, from 1.
              */
-            pageNumber?: number | string;
+            pageNumber?: number;
             repository?: (null) | components["schemas"]["RepositoryInfo"];
             summary?: (null) | components["schemas"]["ScanSummary"];
             effective?: components["schemas"]["EffectiveScanPolicy"];
@@ -16113,12 +26703,12 @@ export interface components {
          */
         ScanResult: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             /**
              * Format: int32
              * @description The owning repository; see IRepositoryScoped.
              */
-            repositoryKey?: number | string;
+            repositoryKey?: number;
             /** @description The artifact name (see the class remarks). At most `ScanLimits.NameLength` characters. */
             name?: string | null;
             /** @description The artifact version. At most `ScanLimits.VersionLength` characters. */
@@ -16141,12 +26731,12 @@ export interface components {
              * Format: int32
              * @description The highest severity among List&lt;ScanFinding&gt;? ScanResult.Findings (0 low … 3 critical), or -1 when there are none.
              */
-            highest?: number | string;
+            highest?: number;
             /**
              * Format: int32
              * @description How many findings the last success recorded.
              */
-            findingCount?: number | string;
+            findingCount?: number;
             findings?: components["schemas"]["ScanFinding"][] | null;
         };
         /** @description The repository dashboard numbers. */
@@ -16156,24 +26746,24 @@ export interface components {
              * Format: int32
              * @description Artifacts stored in the repository.
              */
-            artifacts: number | string;
+            artifacts: number;
             /**
              * Format: int32
              * @description Artifacts with no successful scan.
              */
-            unscanned: number | string;
+            unscanned: number;
             /**
              * Format: int32
              * @description Of those, the ones whose last attempt failed.
              */
-            failed: number | string;
+            failed: number;
             /**
              * Format: int32
              * @description Artifacts scanned without findings.
              */
-            clean: number | string;
+            clean: number;
             /** @description Artifacts by their highest finding: index 0 low … 3 critical. */
-            bySeverity: (number | string)[];
+            bySeverity: number[];
         };
         /** @description What the <em>Scan now</em> screen (`/scan-artifact`) shows; filled by the screen's workflow. */
         ScanViewModel: {
@@ -16239,7 +26829,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16254,7 +26844,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16269,7 +26859,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16284,7 +26874,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16299,7 +26889,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16314,7 +26904,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16329,7 +26919,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16344,7 +26934,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16359,7 +26949,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16374,7 +26964,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16389,7 +26979,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16404,7 +26994,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16419,7 +27009,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16434,7 +27024,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16449,7 +27039,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16464,7 +27054,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16479,7 +27069,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16494,7 +27084,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16509,7 +27099,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16524,7 +27114,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16539,7 +27129,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16554,7 +27144,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16569,7 +27159,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16584,7 +27174,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16599,7 +27189,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16614,7 +27204,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16629,7 +27219,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16644,7 +27234,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16659,7 +27249,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16674,7 +27264,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16689,7 +27279,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16704,7 +27294,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16719,7 +27309,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16734,7 +27324,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16749,7 +27339,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16764,7 +27354,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16779,7 +27369,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16794,7 +27384,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16809,7 +27399,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16824,7 +27414,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16839,7 +27429,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16854,7 +27444,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16869,7 +27459,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16884,7 +27474,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16899,7 +27489,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16914,7 +27504,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16929,7 +27519,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16944,7 +27534,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16959,7 +27549,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16974,7 +27564,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -16989,7 +27579,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17004,7 +27594,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17019,7 +27609,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17034,7 +27624,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17049,7 +27639,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17064,7 +27654,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17079,7 +27669,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17094,7 +27684,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17109,7 +27699,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17124,7 +27714,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17139,7 +27729,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17154,7 +27744,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17169,7 +27759,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17184,7 +27774,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17199,7 +27789,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17214,7 +27804,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17229,7 +27819,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17244,7 +27834,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17259,7 +27849,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17274,7 +27864,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17289,7 +27879,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17304,7 +27894,7 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
         /**
          * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
@@ -17319,10 +27909,13 @@ export interface components {
             } | null;
             next?: components["schemas"]["ScreenNext"];
             /** Format: int32 */
-            statusCode?: (number | string | (null)) | null;
+            statusCode?: number | null;
         };
-        /** @description What a use case decided about a screen. */
-        ScreenStatus: number;
+        /**
+         * @description What a use case decided about a screen.
+         * @enum {string}
+         */
+        ScreenStatus: "Ok" | "Invalid" | "NotFound" | "Forbidden" | "SignIn" | "Next";
         /**
          * @description A package that matched a search query.
          *
@@ -17360,7 +27953,7 @@ export interface components {
              * Format: int64
              * @description The total downloads for all versions of the matched package.
              */
-            totalDownloads?: number | string;
+            totalDownloads?: number;
             /** @description The versions of the matched package. */
             versions?: components["schemas"]["SearchResultVersion"][] | null;
             deprecation?: (null) | components["schemas"]["PackageDeprecation"];
@@ -17394,14 +27987,16 @@ export interface components {
              * Format: int64
              * @description The downloads for this single version of the matched package.
              */
-            downloads?: number | string;
+            downloads?: number;
         };
         /**
          * @description How the web UI orders search results. The V3 search API has no sort parameter, so
          *     it always uses SearchSort.Relevance.
+         * @enum {string}
          */
-        SearchSort: number;
-        SemVerLevel: number;
+        SearchSort: "Relevance" | "TotalDownloads" | "LastUpdated";
+        /** @enum {string} */
+        SemVerLevel: "Unknown" | "SemVer2";
         /**
          * @description The body of `POST /api/ui/session/cookie` (a same-origin client that signs in with the cookie): the password step (string? SessionCookieForm.UserName,
          *     string? SessionCookieForm.Password), or, when the account has two-factor, the second step (string? SessionCookieForm.Ticket with string? SessionCookieForm.Code or string? SessionCookieForm.RecoveryCode).
@@ -17523,8 +28118,11 @@ export interface components {
                 [key: string]: string;
             } | null;
         };
-        /** @description The editable type of a setting. */
-        SettingKind: number;
+        /**
+         * @description The editable type of a setting.
+         * @enum {string}
+         */
+        SettingKind: "Boolean" | "Integer" | "Number" | "String" | "Enum" | "TimeSpan" | "StringList" | "ReadOnly";
         /** @description One section of the settings screen: its key (empty for the top-level keys), its DOM id and its settings. */
         SettingsSection: {
             /** @description The section's key; empty for the settings that sit at the top level. */
@@ -17595,7 +28193,7 @@ export interface components {
              * Format: int32
              * @description The repository's key.
              */
-            repositoryKey: number | string;
+            repositoryKey: number;
             /** @description The repository's name (string Repository.DefaultName for the default). */
             repositoryName: string;
             /** @description The package ID. */
@@ -17624,24 +28222,24 @@ export interface components {
         };
         TargetFramework: {
             /** Format: int32 */
-            key?: number | string;
+            key?: number;
             moniker?: string | null;
             package?: (null) | components["schemas"]["Package"];
         };
         /** @description A permission target as the admin pages list it. */
         TargetSummary: {
             /** Format: int32 */
-            key: number | string;
+            key: number;
             name: string;
             repositoryPatterns: string[];
             includePatterns: string[];
             excludePatterns: string[];
             /** Format: int32 */
-            projectKey: (number | string | (null)) | null;
+            projectKey: number | null;
             projectName: string | null;
             isBuiltIn: boolean;
             /** Format: int32 */
-            grantCount: number | string;
+            grantCount: number;
         };
         /** @description One signal's state. string? TelemetrySignalReport.LastError is already scrubbed (no headers, credentials or URL paths). */
         TelemetrySignalReport: {
@@ -17653,10 +28251,13 @@ export interface components {
             failingSince: string | null;
             lastError: string | null;
             /** Format: int64 */
-            dropped: number | string;
+            dropped: number;
         };
-        /** @description What one telemetry signal is doing, as the Settings page shows it. */
-        TelemetrySignalState: number;
+        /**
+         * @description What one telemetry signal is doing, as the Settings page shows it.
+         * @enum {string}
+         */
+        TelemetrySignalState: "Off" | "NotConfigured" | "Waiting" | "Ok" | "Failing";
         /** @description The outcome of a connection test; string TelemetryTestOutcome.Message and string? TelemetryTestOutcome.Target are scrubbed. */
         TelemetryTestOutcome: {
             /** @description The collector accepted a test span. */
@@ -17709,7 +28310,7 @@ export interface components {
              * Format: int32
              * @description How many recovery codes are unused.
              */
-            recoveryCodesLeft?: number | string;
+            recoveryCodesLeft?: number;
             /** @description Whether the account has a password (else it signs in through a provider). */
             hasPassword?: boolean;
             /** @description The new recovery codes. Shown once, when two-factor authentication is turned on. */
@@ -17792,7 +28393,7 @@ export interface components {
              * Format: int32
              * @description The HTTP status the page is answered with (200, or the refusal's).
              */
-            statusCode?: number | string;
+            statusCode?: number;
         };
         /** @description The account an administrator looks at, without anything that signs in as it (no password hash, security stamp or tokens). */
         UserAccountInfo: {
@@ -17823,7 +28424,7 @@ export interface components {
              * @description The list's page.
              * @default 1
              */
-            pageNumber: number | string;
+            pageNumber: number;
             /** @description For a password reset: the address to mail the new password to, if the administrator typed one. */
             resetEmail?: string | null;
         };
@@ -17846,7 +28447,7 @@ export interface components {
              * @description The list's page.
              * @default 1
              */
-            pageNumber: number | string;
+            pageNumber: number;
         };
         /** @description Deleting an account. */
         UserDeletionForm: {
@@ -17878,7 +28479,7 @@ export interface components {
              * Format: int32
              * @description How many package IDs the account owns, in every repository.
              */
-            ownedPackageIds?: number | string;
+            ownedPackageIds?: number;
             message?: string | null;
             error?: string | null;
             /** @description Whether the signed in administrator has a password to confirm with. */
@@ -17903,7 +28504,7 @@ export interface components {
              * Format: int32
              * @description The key's number (int UserKeyRow.Key).
              */
-            key: number | string;
+            key: number;
             /** @description The administrator's password. */
             password: string | null;
         };
@@ -17913,7 +28514,7 @@ export interface components {
              * Format: int32
              * @description The key's number (what revoking names).
              */
-            key: number | string;
+            key: number;
             /** @description The description the owner gave it. */
             description: string | null;
             /** @description What it may do. */
@@ -17975,19 +28576,19 @@ export interface components {
              * Format: int32
              * @description One-based page number (the `p` query value; not "page", which Razor Pages reserved for the page path).
              */
-            pageNumber?: number | string;
+            pageNumber?: number;
             /** @description The users on this page. */
             users?: components["schemas"]["UserRow"][];
             /**
              * Format: int32
              * @description How many accounts, in all pages, wait for approval.
              */
-            pendingCount?: number | string;
+            pendingCount?: number;
             /**
              * Format: int32
              * @description The number of pages for the current filter.
              */
-            pageCount?: number | string;
+            pageCount?: number;
             /** @description The signed in administrator's user name; their own row has no actions. */
             currentUserName?: string | null;
             /** @description Whether a reset link can be mailed: SMTP is configured. */
@@ -18025,8 +28626,11 @@ export interface components {
             status: string;
             steps: components["schemas"]["PackageValidation"][];
         };
-        /** @description Where a submission stands: still to run, or stopped without being indexed. */
-        ValidationSubmissionState: number;
+        /**
+         * @description Where a submission stands: still to run, or stopped without being indexed.
+         * @enum {string}
+         */
+        ValidationSubmissionState: "Pending" | "Quarantined";
         /** @description One submission awaiting validation or quarantined. */
         ValidationSubmissionSummary: {
             submissionId: string;

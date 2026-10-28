@@ -13,10 +13,10 @@ accounts on (default administrator `Admin` / `Admin1234!`).
 
 | Use | Settings |
 |---|---|
-| Development (`npm start`, http://localhost:4200, BaGet on another origin) | `Cors:AllowedOrigins=http://localhost:4200`. Without it the session endpoints refuse a browser from another origin (`403`). Point `src/environments/environment.development.ts` at your BaGet (default `http://localhost:6060`) |
+| Development (`npm start`, http://localhost:4200, BaGet on another origin) | `Cors:AllowedOrigins=http://localhost:4200`. Without it the session endpoints refuse a browser from another origin (`403`). Set `Frontend:SpaUrl=http://localhost:4200` so emails link to the dev server. Point `src/environments/environment.development.ts` at your BaGet (default `http://localhost:6060`) |
 | Hosted by BaGet under `/app` | `npm run build`, then `Frontend:SpaPath=<this folder>/dist/baget-frontend-angular/browser`, `Frontend:SpaBasePath=/app` (the build uses `baseHref=/app/`; `apiBaseUrl` is empty = same origin, so no CORS) |
-| Emails link to this app | `Frontend:SpaLinks=true` (or `Frontend:Mvc=false`): `/app/confirm-email`, `/app/reset-password`, `/app/sign-in` are routes here |
-| External sign-in (OIDC) | the return address `{origin}{base}sign-in/external` must be under `Frontend:SpaBasePath` (same origin) or an origin of `Cors:AllowedOrigins` |
+| Emails link to this app | `Frontend:SpaLinks=true` (or `Frontend:Mvc=false`), or `Frontend:SpaUrl=<absolute address>` when the app is hosted elsewhere: `/app/confirm-email`, `/app/reset-password`, `/app/sign-in` are routes here |
+| External sign-in (OIDC) | the return address `{origin}{base}sign-in/external` must be under `Frontend:SpaBasePath` (same origin) or an origin of `Cors:AllowedOrigins`. The app adds a random `state` to that address (saved in `sessionStorage`) and exchanges the token only when it comes back unchanged; each exchange token works once |
 
 A different base path: change `baseHref` in `angular.json` (production configuration) and `Frontend:SpaBasePath` together.
 

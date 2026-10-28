@@ -20,8 +20,8 @@ Node 20+ (or Docker with `node:22-alpine`), and a BaGet with accounts on (the de
 
 | Case | Settings |
 |---|---|
-| Dev, Vite on `http://localhost:5173` | `Cors:AllowedOrigins=http://localhost:5173` (session endpoints refuse browser origins that are not listed); `VITE_BAGET_URL=http://localhost:6060` for a direct call, or leave it empty to use the Vite proxy (`BAGET_DEV_PROXY`, default `http://localhost:6060`), which still sends `Origin: http://localhost:5173` |
-| Served by BaGet | `Frontend:SpaPath=<path to dist>`, `Frontend:SpaBasePath=/app` (the build's Vite `base`); same origin, so `VITE_BAGET_URL` stays empty and no CORS entry is needed. Emails link to the app with `Frontend:SpaLinks=true` (or `Frontend:Mvc=false`). External sign-in returns must lie under the base path |
+| Dev, Vite on `http://localhost:5173` | `Cors:AllowedOrigins=http://localhost:5173` (session endpoints refuse browser origins that are not listed); `Frontend:SpaUrl=http://localhost:5173` so emails link to the dev server; `VITE_BAGET_URL=http://localhost:6060` for a direct call, or leave it empty to use the Vite proxy (`BAGET_DEV_PROXY`, default `http://localhost:6060`), which still sends `Origin: http://localhost:5173` |
+| Served by BaGet | `Frontend:SpaPath=<path to dist>`, `Frontend:SpaBasePath=/app` (the build's Vite `base`); same origin, so `VITE_BAGET_URL` stays empty and no CORS entry is needed. Emails link to the app with `Frontend:SpaLinks=true` (or `Frontend:Mvc=false`). External sign-in returns must lie under the base path; the app adds a random `state` to the return address and checks it before exchanging the token (each exchange token works once). When the app is hosted elsewhere, set `Frontend:SpaUrl` to its absolute address |
 | Other base path | change `base` in `vite.config.ts` and `Frontend:SpaBasePath` together |
 
 ## Commands

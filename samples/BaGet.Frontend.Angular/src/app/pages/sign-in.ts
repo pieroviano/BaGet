@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { ApiClient } from '../api/api-client';
 import { FieldErrors } from '../api/field-errors';
 import { Flash, applyServerErrors, safeLocalUrl } from '../api/screens';
+import { OIDC_STATE_KEY } from '../session/oidc-state';
 import { SessionService, SignInOutcome } from '../session/session.service';
 
 type Step = 'password' | 'code' | 'recovery';
@@ -95,8 +96,12 @@ export class SignIn {
 
   /** External provider: a browser navigation (not XHR); the server comes back to `sign-in/external#exchange_token=...`. */
   protected signInWithProvider(): void {
-    const returnUrl = new URL('sign-in/external', document.baseURI).toString();
-    window.location.assign(`${this.api.baseUrl}/api/ui/session/external/oidc?returnUrl=${encodeURIComponent(returnUrl)}`);
+    // A random state binds the answer to this browser: the callback exchanges only when it comes back unchanged.
+    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+    sessionStorage.setItem(OIDC_STATE_KEY, state);
+    const returnUrl = new URL('sign-in/external', document.baseURI);
+    returnUrl.searchParams.set('state', state);
+    window.location.assign(`${this.api.baseUrl}/api/ui/session/external/oidc?returnUrl=${encodeURIComponent(returnUrl.toString())}`);
   }
 
   private run(outcome$: Observable<SignInOutcome>, form: FormGroup): void {

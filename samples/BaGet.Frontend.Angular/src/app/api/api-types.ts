@@ -9,7 +9,7 @@ export type HttpMethod = 'get' | 'post';
 export type Operation<P extends ApiPath, M extends HttpMethod> = paths[P] extends { [K in M]: infer O } ? O : never;
 
 /** The 200 JSON answer: a `ScreenResult<T>` for every twin. */
-export type ResponseOf<O> = O extends { responses: { 200: { content: { 'application/json': infer R } } } } ? Named<R> : never;
+export type ResponseOf<O> = O extends { responses: { 200: { content: { 'application/json': infer R } } } } ? R : never;
 export type BodyOf<O> = O extends { requestBody?: { content: { 'application/json': infer B } } } ? NonNullable<B> : never;
 export type QueryOf<O> = O extends { parameters: { query?: infer Q } } ? NonNullable<Q> : never;
 export type PathParamsOf<O> = O extends { parameters: { path?: infer Q } } ? NonNullable<Q> : never;
@@ -21,14 +21,8 @@ export interface CallOptions<O> {
   body?: BodyOf<O>;
 }
 
-/**
- * The generated `ScreenStatus` is `number` (the OpenAPI document describes the enum as an integer) but the JSON carries the name
- * (`UiApiJson`: enums by name), so the wire type is declared here.
- */
-export type ScreenStatus = 'Ok' | 'Invalid' | 'NotFound' | 'Forbidden' | 'SignIn' | 'Next';
-
-/** A generated `ScreenResultOf...` with the status typed as it is on the wire. */
-export type Named<R> = Omit<R, 'status'> & { status?: ScreenStatus };
+/** `'Ok' | 'Invalid' | 'NotFound' | 'Forbidden' | 'SignIn' | 'Next'`: the document describes the enum by name, as the wire carries it. */
+export type ScreenStatus = Schemas['ScreenStatus'];
 export type ScreenNext = Schemas['ScreenNext'];
 export type SessionModel = Schemas['SessionModel'];
 
@@ -38,5 +32,5 @@ export interface ScreenResult<T = unknown> {
   model?: T;
   errors?: { [field: string]: string[] } | null;
   next?: ScreenNext;
-  statusCode?: number | string | null;
+  statusCode?: number | null;
 }

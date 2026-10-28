@@ -4,10 +4,17 @@ import { toScreen } from '../api/screen';
 import { Refusal } from '../components/Form';
 import { useScreen } from '../components/useScreen';
 
-/** `GET /api/ui/packages/{id}/{version}`. A missing package is a NotFound screen (404), not an exception. */
+/** `GET /api/ui/packages/{id}` (latest) or `/api/ui/packages/{id}/{version}`. A missing package is a NotFound screen (404), not an exception. */
 export function PackageDetail() {
-  const { id = '', version = '' } = useParams();
-  const screen = useScreen(async () => toScreen(await api.GET('/api/ui/packages/{id}/{version}', { params: { path: { id, version } } })), [id, version]);
+  const { id = '', version } = useParams();
+  const screen = useScreen(async () =>
+      toScreen(
+        version === undefined
+          ? await api.GET('/api/ui/packages/{id}', { params: { path: { id } } })
+          : await api.GET('/api/ui/packages/{id}/{version}', { params: { path: { id, version } } }),
+      ),
+    [id, version],
+  );
 
   if (!screen) return <p>Loading...</p>;
   const m = screen.model;

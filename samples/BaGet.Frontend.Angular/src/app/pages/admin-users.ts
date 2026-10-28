@@ -48,8 +48,8 @@ import { ApiClient } from '../api/api-client';
       </table>
       <div class="row">
         <button type="button" [disabled]="page() <= 1" (click)="go(page() - 1)">Previous</button>
-        <span>Page {{ page() }} of {{ pages(m.pageCount) }}</span>
-        <button type="button" [disabled]="page() >= pages(m.pageCount)" (click)="go(page() + 1)">Next</button>
+        <span>Page {{ page() }} of {{ (m.pageCount ?? 1) }}</span>
+        <button type="button" [disabled]="page() >= (m.pageCount ?? 1)" (click)="go(page() + 1)">Next</button>
       </div>
     }
   `,
@@ -65,15 +65,11 @@ export class AdminUsers {
   protected readonly result = toSignal(
     this.route.queryParamMap.pipe(
       switchMap((p) =>
-        this.api.get('/api/ui/admin/users', { query: { q: p.get('q') ?? undefined, p: p.get('p') ?? undefined } }).pipe(startWith(null)),
+        this.api.get('/api/ui/admin/users', { query: { q: p.get('q') ?? undefined, p: Number(p.get('p')) || undefined } }).pipe(startWith(null)),
       ),
     ),
     { initialValue: null },
   );
-
-  protected pages(count: number | string | undefined): number {
-    return Number(count) || 1;
-  }
 
   protected search(): void {
     void this.router.navigate([], { queryParams: { q: this.q || null, p: null } });

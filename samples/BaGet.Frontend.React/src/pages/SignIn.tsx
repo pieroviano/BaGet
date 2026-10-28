@@ -9,6 +9,17 @@ import { Field, FormErrors } from '../components/Form';
 
 type Step = 'password' | 'code' | 'recovery';
 
+const OIDC_STATE_KEY = 'baget.oidc-state';
+
+/** Saves a random state, then leaves for the provider; BaGet returns to `/sign-in?state=...#exchange_token=...`. */
+function startExternalSignIn() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  sessionStorage.setItem(OIDC_STATE_KEY, state);
+  const returnUrl = encodeURIComponent(`${window.location.origin}${basePath}/sign-in?state=${state}`);
+  window.location.href = `${baseUrl}/api/ui/session/external/oidc?returnUrl=${returnUrl}`;
+}
+
 export function SignIn() {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -42,7 +53,15 @@ export function SignIn() {
     const exchangeToken = h.get('exchange_token');
     if (!exchangeToken && !h.get('notice') && !h.get('error')) return;
     handled.current = true;
-    history.replaceState(null, '', location.pathname + location.search);
+    // The callback must carry the random state saved before the redirect (it binds the answer to this browser).
+    const expected = sessionStorage.getItem(OIDC_STATE_KEY);
+    sessionStorage.removeItem(OIDC_STATE_KEY);
+    const stateOk = !!expected && new URLSearchParams(location.search).get('state') === expected;
+    history.replaceState(null, '', location.pathname);
+    if (!stateOk) {
+      setResult({ status: 'Invalid', http: 400, model: null, errors: { '': ['External sign-in refused: the state does not match. Start again.'] }, next: null });
+      return;
+    }
     setNotice(h.get('notice') ?? null);
     if (h.get('error')) setResult({ status: 'Invalid', http: 400, model: null, errors: { '': [h.get('error')!] }, next: null });
     if (exchangeToken) {
@@ -74,9 +93,6 @@ export function SignIn() {
   }
 
   const errors = result?.errors ?? {};
-  // The external provider signs in with a browser navigation; it returns under the SPA base path.
-  const returnUrl = encodeURIComponent(`${window.location.origin}${basePath}/sign-in`);
-  const externalHref = `${baseUrl}/api/ui/session/external/oidc?returnUrl=${returnUrl}`;
 
   return (
     <section>
@@ -101,7 +117,9 @@ export function SignIn() {
       </form>
       <p>
         <Link to="/register">Create an account</Link> | <Link to="/forgot-password">Forgot your password?</Link> |{' '}
-        <a href={externalHref}>Sign in with OpenID Connect</a>
+        <button type="button" className="link" onClick={startExternalSignIn}>
+          Sign in with OpenID Connect
+        </button>
       </p>
     </section>
   );

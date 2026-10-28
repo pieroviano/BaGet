@@ -1,27 +1,18 @@
 import { routeFor } from '../routes';
+import type { components } from './schema';
 
-export type Status = 'Ok' | 'Invalid' | 'NotFound' | 'Forbidden' | 'SignIn' | 'Next';
-const names: Status[] = ['Ok', 'Invalid', 'NotFound', 'Forbidden', 'SignIn', 'Next'];
+export type Status = components['schemas']['ScreenStatus'];
+export type ScreenNext = components['schemas']['ScreenNext'];
 
-export interface ScreenNext {
-  screen?: { controller?: string | null; action?: string | null } | null;
-  routeValues?: Record<string, unknown> | null;
-  message?: string | null;
-  error?: string | null;
-  localUrl?: string | null;
-  fragment?: string | null;
-}
-
-/** The shape of every /api/ui answer. `model` is typed per endpoint by the generated client. */
+/** The shape of every /api/ui answer; the generated client types `model` per endpoint. */
 export interface ScreenResultLike<T> {
-  status?: unknown;
+  status?: Status;
   model?: T | null;
   errors?: { [field: string]: string[] } | null;
   next?: ScreenNext | null;
-  statusCode?: unknown;
 }
 
-/** What the screens work with: a normalised status, the HTTP status and the typed model. */
+/** What the screens work with: the status, the HTTP status and the typed model. */
 export interface Screen<T> {
   status: Status;
   http: number;
@@ -31,18 +22,15 @@ export interface Screen<T> {
 }
 
 /**
- * Turns an openapi-fetch answer into a `Screen`. Only 200 is described in the OpenAPI document, so
- * the 400/401/403/404 bodies (which are ScreenResults too) arrive in `error`, untyped; they are read
- * here once. The wire sends the status by name; the document says integer, so both are accepted.
+ * Turns an openapi-fetch answer into a `Screen`. The document describes 200 and the 400/401/403/404
+ * errors with the same ScreenResult schema, so `data` or `error` holds a typed body. The status is
+ * inferred from the HTTP code only when there is no body (a proxy error, a 503).
  */
-export function toScreen<T>(r: { data?: ScreenResultLike<T>; error?: unknown; response: Response }): Screen<T> {
-  const body = (r.data ?? r.error ?? {}) as ScreenResultLike<T>;
+export function toScreen<T>(r: { data?: ScreenResultLike<T>; error?: ScreenResultLike<T>; response: Response }): Screen<T> {
+  const body = r.data ?? r.error;
   const http = r.response.status;
-  let status: Status | undefined;
-  if (typeof body.status === 'string' && (names as string[]).includes(body.status)) status = body.status as Status;
-  else if (typeof body.status === 'number') status = names[body.status];
-  status ??= http === 401 ? 'SignIn' : http === 403 ? 'Forbidden' : http === 404 ? 'NotFound' : http === 400 ? 'Invalid' : 'Ok';
-  return { status, http, model: body.model ?? null, errors: body.errors ?? {}, next: body.next ?? null };
+  const status: Status = body?.status ?? (http === 401 ? 'SignIn' : http === 403 ? 'Forbidden' : http === 404 ? 'NotFound' : http === 400 ? 'Invalid' : 'Ok');
+  return { status, http, model: body?.model ?? null, errors: body?.errors ?? {}, next: body?.next ?? null };
 }
 
 /** The message of a refusal: the form-level error, else a generic text for the status. */

@@ -45,25 +45,13 @@ export class ApiClient {
     return request.pipe(catchError((error: unknown) => of(this.toScreenResult(error)))) as Observable<ResponseOf<Operation<P, M>>>;
   }
 
-  /**
-   * Fills `{name}` from path values, then from query values (the server's optional route parameter `{version?}` is documented as a
-   * query parameter by the OpenAPI document, so the same name may be either); an unfilled `/{name}` segment is dropped, and
-   * what is not part of the path is the query string.
-   */
+  /** Fills `{name}` from the path values; what is left of `query` is the query string. */
   private buildUrl(path: string, options: CallOptions<unknown>): { url: string; params: Record<string, string> } {
-    const values: Record<string, unknown> = { ...(options.query ?? {}), ...(options.path ?? {}) };
-    const used = new Set<string>();
-    const url = path.replace(/\/\{(\w+)\}/g, (_match, name: string) => {
-      const value = values[name];
-      if (value === undefined || value === null || value === '') {
-        return '';
-      }
-      used.add(name);
-      return '/' + encodeURIComponent(String(value));
-    });
+    const values: Record<string, unknown> = { ...(options.path ?? {}) };
+    const url = path.replace(/\{(\w+)\}/g, (_match, name: string) => encodeURIComponent(String(values[name] ?? '')));
     const params: Record<string, string> = {};
     for (const [name, value] of Object.entries(options.query ?? {})) {
-      if (!used.has(name) && value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== '') {
         params[name] = String(value);
       }
     }
