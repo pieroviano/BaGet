@@ -36,12 +36,6 @@ public class PackageValidationRunner
     // Submissions being validated by this process: a reject cancels the run and waits for it to end.
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, ActiveRun> Running = new();
 
-    private sealed class ActiveRun
-    {
-        public CancellationTokenSource Cancel { get; } = new();
-        public TaskCompletionSource<bool> Finished { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    }
-
     /// <summary>
     /// Stops this process's validation of the submission, if any, and waits (bounded) until it has ended, so nothing is
     /// published after the caller removes the submission. False when it did not end in time.
