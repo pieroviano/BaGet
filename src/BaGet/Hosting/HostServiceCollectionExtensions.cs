@@ -57,7 +57,12 @@ internal static class HostServiceCollectionExtensions
 
         services.AddBaGetOptions<IISServerOptions>(nameof(IISServerOptions));
         services.AddBaGetWebApplication(app => app.AddBaGetProviders());
-        services.AddBaGetFrontEnd();
+
+        // The server-rendered screens are optional (Frontend:Mvc, on by default): without them the host serves the APIs, and the application in Frontend:SpaPath.
+        if (configuration.ReadFrontendOptions().Mvc) services.AddBaGetFrontEnd();
+        else services.RemoveBaGetFrontEnd();
+
+        services.Configure<CorsSettings>(configuration.GetSection(nameof(BaGetOptions.Cors)));
         services.AddBaGetAccounts(configuration);
 
         // Cluster mode (Ha:Enabled): Redis, cluster-wide leases and the data protection keys in the database. After the BaGet

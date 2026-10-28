@@ -45,13 +45,16 @@ public static class ApiDocuments
     {
         services.AddOpenApi(Ui, options =>
         {
-            // /api/ui accepts API keys in headers a web page cannot make a browser send: no HTTP Basic, no session cookie, no antiforgery.
+            // /api/ui accepts API keys and session tokens in headers a web page cannot make a browser send: no HTTP Basic, and the session cookie only with an antiforgery header.
             Configure(options, "BaGet UI API",
-                "The JSON twin of every screen of the web UI (/api/ui). Authenticate with an API key as 'Authorization: Bearer <key>' or the X-NuGet-ApiKey header; "
-                + "the browser session cookie and HTTP Basic are not accepted, and there is no antiforgery token. Administration screens need an administrator's key with the admin:api scope "
-                + "and no repository limit (the global ApiKey is refused). Account self-service and package ownership screens exist only in the web UI and answer 403 here.",
+                "The JSON twin of every screen of the web UI (/api/ui). Authenticate with an API key as 'Authorization: Bearer <key>' or the X-NuGet-ApiKey header, or, for a person, "
+                + "with a session token ('Authorization: Bearer bgs.xxx') from POST /api/ui/session (a single-page application on any origin). A same-origin client may use the browser cookie "
+                + "if it sends the antiforgery token of GET /api/ui/antiforgery in the X-XSRF-TOKEN header on every request; the bare cookie and HTTP Basic are not accepted. "
+                + "Administration screens need an administrator's key with the admin:api scope and no repository limit, or an administrator's interactive session (the global ApiKey is refused). "
+                + "Account self-service and package ownership screens need an interactive session; API keys are refused with 403.",
                 description => IsUnder(description, UiPrefix),
-                basic: false);
+                basic: false,
+                session: true);
             options.AddOperationTransformer(ScreenOnlyNote);
         });
         services.AddOpenApi(V1, options => Configure(options, "BaGet administration API",
@@ -70,8 +73,8 @@ public static class ApiDocuments
         return services;
     }
 
-    /// <summary>The note added to the description of an operation whose screen exists only in the web UI.</summary>
-    public const string ScreenOnlyDescription = "Screen only: this screen changes or reveals credentials or ownership, so it is available in the web UI only. Over /api/ui it answers 403 to every caller.";
+    /// <summary>The note added to the description of an operation whose screen is for interactive sessions only.</summary>
+    public const string ScreenOnlyDescription = "Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.";
 
     private static Task ScreenOnlyNote(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
@@ -93,7 +96,7 @@ public static class ApiDocuments
         return (bool)property.GetValue(RuntimeHelpers.GetUninitializedObject(controller))!;
     }
 
-    private static void Configure(OpenApiOptions options, string title, string description, Func<ApiDescription, bool> include, bool basic = true)
+    private static void Configure(OpenApiOptions options, string title, string description, Func<ApiDescription, bool> include, bool basic = true, bool session = false)
     {
         options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
         options.ShouldInclude = include;
@@ -105,12 +108,23 @@ public static class ApiDocuments
             document.Components.SecuritySchemes["bearer"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "bearer", Description = "An API key." };
             if (basic) document.Components.SecuritySchemes["basic"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "basic", Description = "The API key as the password." };
             document.Components.SecuritySchemes["apiKey"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, In = ParameterLocation.Header, Name = "X-NuGet-ApiKey", Description = "An API key." };
+            if (session)
+            {
+                document.Components.SecuritySchemes["session"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "bgs.xxx",
+                    Description = "A session token: the accessToken of POST /api/ui/session, refreshed with POST /api/ui/session/refresh. Only /api/ui accepts it.",
+                };
+            }
             document.Security = new List<OpenApiSecurityRequirement>
             {
                 new() { [new OpenApiSecuritySchemeReference("bearer", document)] = new List<string>() },
             };
             if (basic) document.Security.Add(new() { [new OpenApiSecuritySchemeReference("basic", document)] = new List<string>() });
             document.Security.Add(new() { [new OpenApiSecuritySchemeReference("apiKey", document)] = new List<string>() });
+            if (session) document.Security.Add(new() { [new OpenApiSecuritySchemeReference("session", document)] = new List<string>() });
 
             return Task.CompletedTask;
         });

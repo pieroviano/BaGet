@@ -38,12 +38,17 @@ public class SessionPrincipalFactory : ISessionPrincipalFactory
         var account = await _users.FindByIdAsync(userId);
         if (account == null || account.PendingApproval) return null;
 
-        return new BaGetPrincipal(
-            userId: userId,
-            userName: user.Identity.Name,
+        return For(account, user.Identity.Name);
+    }
+
+    /// <summary>The principal of an interactive session of <paramref name="account"/> (see <see cref="CreateAsync"/>).</summary>
+    internal static BaGetPrincipal For(BaGetUser account, string? userName = null)
+        => new BaGetPrincipal(
+            userId: account.Id,
+            userName: userName ?? account.UserName,
             isSuperuser: false,
             scopes: ApiKeyScopes.All,
             packageGlobPattern: "*",
-            isAdministrator: account.IsAdministrator);
-    }
+            isAdministrator: account.IsAdministrator,
+            isInteractiveSession: true);
 }

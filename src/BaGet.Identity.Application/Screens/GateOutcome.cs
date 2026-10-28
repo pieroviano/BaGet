@@ -15,7 +15,7 @@ public enum GateOutcome
     /// <summary>The caller must sign in.</summary>
     SignIn,
 
-    /// <summary>The caller is known but this credential may not do it (a screen-only twin over HTTP, a key without the administration scope).</summary>
+    /// <summary>The caller is known but this credential may not do it (an interactive-only twin over HTTP for a key or an anonymous caller, a key without the administration scope).</summary>
     Forbidden,
 
     /// <summary>The database has no access model (Azure Table) and the caller is an administrator: the screen says so.</summary>

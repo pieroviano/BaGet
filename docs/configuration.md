@@ -16,6 +16,8 @@ You can modify BaGet Extension's configurations by editing the `appsettings.json
 | `SettingsOverridesPath` | empty (= `appsettings.Overrides.json`) | the file the [Settings page](#settings-page) saves to; relative paths start at the content root (or `BAGET_CONFIG_ROOT`) |
 | `Urls` | none | the ASP.NET Core listening-address key; ineffective while `Kestrel:Endpoints` is set, see [Listening address](#listening-address) |
 | `Proxy:TrustedProxies`, `Proxy:TrustedNetworks`, `Proxy:TrustAnyProxy` | loopback only | which reverse proxies may set `X-Forwarded-For`/`-Proto`, see [Reverse proxies](#reverse-proxies-and-forwarded-headers) |
+| `Cors:AllowedOrigins` | empty (any origin, without credentials) | origins allowed to call BaGet from a browser, see [Single-page applications](#single-page-applications) |
+| `Frontend:SpaPath`, `Frontend:SpaBasePath`, `Frontend:Mvc` | none, `/app`, `true` | serve a built single-page application, or run without the server-rendered screens, see [Single-page applications](#single-page-applications) |
 | `DataProtection:KeyPath` | `DataProtection-Keys` beside the overrides file | folder of the key ring, see [Data protection keys](#data-protection-keys) |
 
 ## Listening address
@@ -398,6 +400,7 @@ authentication, and `baget account promote <user>` makes any existing account an
 | --- | --- |
 | `Accounts:InitialAdministrators` | User names, separated by `;`, promoted at start **only while no administrator exists** (it bootstraps an empty server). Only accounts that already exist are promoted; once any administrator exists the list is ignored, so registering a listed name later grants nothing and a demotion is not reversed. |
 | `Accounts:CreateDefaultAdministrator` | Default `true`. On a server with **no users at all**, startup creates the administrator `Admin` with password `Admin1234!` (email counted as confirmed, so it can sign in while SMTP is configured). Every start warns until the password is changed. Set `false` to bootstrap only through `InitialAdministrators` or `account promote`. |
+| `Accounts:SessionTokenLifetime`, `Accounts:SessionRefreshLifetime` | Defaults `00:15:00` and `14.00:00:00`. Lifetime of the access and refresh tokens of `POST /api/ui/session` ([sessions](ui-api.md#sessions-for-a-single-page-application)). Not shown on the Settings page; a changed password or "sign out everywhere" ends every token regardless. |
 | `baget account promote <user>` | Makes the user an administrator. Needs `Accounts:Enabled`; exit code 1 for an unknown user. |
 | `baget account approve <user>` | Enables a self-registered account that waits for approval (`Accounts:RequireApproval`). Needs `Accounts:Enabled`; exit code 1 for an unknown user. `promote` approves too. |
 | `baget account demote <user>` | Removes the flag. Exit code 1 for an unknown user or the last administrator. |
@@ -593,6 +596,17 @@ whatever `AllowRegistration` says: the provider decides who may sign in.
 
 An owner can be marked as verified for a package ID, which search reports as `verified`. There is no
 page for this yet; it is set through `PackageOwnershipService.SetVerifiedAsync`.
+
+## Single-page applications
+
+A frontend written against [`/api/ui`](ui-api.md) can run on its own origin, or be served by BaGet. Restart-required; not on the Settings page.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `Cors:AllowedOrigins` | empty | Origins (`https://app.example.com`), separated by `;`. **Empty allows any origin, without credentials**: the APIs authenticate with headers the page sets itself (key or session token), so nothing ambient can be ridden. A list allows only those origins and lets them send credentials (the cookie with its antiforgery header); the response headers of a renewed session (`X-Session-*`) are exposed. The same list says where the external sign-in may return tokens (`returnUrl`); with no list only paths of this server are accepted. An entry that is not an origin stops startup |
+| `Frontend:SpaPath` | empty | Folder with a built application (it must contain `index.html`, else startup fails). Relative paths start at the content root |
+| `Frontend:SpaBasePath` | `/app` | URL path it is served under: its files, and `index.html` for any other GET below it (client-side routes; a missing file with an extension stays 404). Fallback endpoints have the lowest priority, so `/api`, the protocol routes and the screens are never shadowed; the root and the paths BaGet serves (`api`, `v3`, `v2`, `r`, `scalar`, `openapi`, `health`, `_content`, `admin`, `account`) are refused at startup |
+| `Frontend:Mvc` | `true` | `false` serves no server-rendered screen (no `Views`, no `/account/login`, no home page) and the host answers the APIs (and the application) only |
 
 ## Search sort
 

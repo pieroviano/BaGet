@@ -14,7 +14,7 @@ namespace BaGet.Identity.Controllers.UI;
 /// <summary>
 /// The JSON twin of the contact-owners screen: <c>GET /api/ui/packages/{id}/contact-owners</c> (the form's state) and <c>POST</c> to the same
 /// address with <c>{ "message": …, "copyToSelf": … }</c> (also under <c>/api/ui/r/{repo}/…</c>). Needs accounts and mail, like the page.
-/// Screen only: over HTTP it answers 403 to every caller. <c>ContactOwnersController</c> calls it in process and renders the view.
+/// Interactive session only: over HTTP it answers 403 to an API key and to an anonymous caller. <c>ContactOwnersController</c> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/packages/{id}/contact-owners")]
 [RepositoryPage(NotOnVirtual = true)]

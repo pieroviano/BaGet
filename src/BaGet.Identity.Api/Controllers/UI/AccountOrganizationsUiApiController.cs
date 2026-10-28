@@ -12,7 +12,7 @@ namespace BaGet.Identity.Controllers.UI;
 
 /// <summary>
 /// The JSON twin of the signed-in user's organizations (<c>/api/ui/account/organizations</c>): <c>AccountOrganizationsController</c> calls it
-/// in process. Screen only: over HTTP it answers 403 to every caller.
+/// in process. Interactive session only: over HTTP it answers 403 to an API key and to an anonymous caller.
 /// </summary>
 [Route("api/ui/account/organizations")]
 public sealed class AccountOrganizationsUiApiController : AccountUiApiControllerBase

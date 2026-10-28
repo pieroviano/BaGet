@@ -28,4 +28,10 @@ public sealed record GateRequest(
     /// The in-process call of a view controller leaves it false.
     /// </summary>
     public bool OverHttp { get; init; }
+
+    /// <summary>
+    /// The caller of a JSON twin is a person's interactive session (a session token, or the cookie with a valid antiforgery header), not an API key. A
+    /// <see cref="CookieOnly"/> screen is open to it, and a caller who lacks the administrator role is told so (403) instead of the 404 a cookie visitor gets.
+    /// </summary>
+    public bool InteractiveSession { get; init; }
 }

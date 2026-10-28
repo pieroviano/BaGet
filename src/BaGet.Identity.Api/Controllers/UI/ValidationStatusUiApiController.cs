@@ -14,7 +14,7 @@ namespace BaGet.Identity.Controllers.UI;
 /// <summary>
 /// The JSON twin of the validation status screen: <c>GET /api/ui/packages/{id}/validation</c> (also under <c>/api/ui/r/{repo}/…</c>), the
 /// newest submission of each version and the verdict of its steps; 403 without Push or Manage on the ID, 404 when validation never saw it.
-/// Screen only: over HTTP it answers 403 to every caller. <c>ValidationStatusPageController</c> calls it in process and renders the view.
+/// Interactive session only: over HTTP it answers 403 to an API key and to an anonymous caller. <c>ValidationStatusPageController</c> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/packages/{id}/validation")]
 [RepositoryPage(NotOnVirtual = true)]

@@ -1,8 +1,11 @@
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services.Sessions;
+using BaGet.Identity.Application.UseCases.Account;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -69,6 +72,31 @@ public class MaintenanceAwareSignInManager : SignInManager<BaGetUser>
         }
 
         return SignInResult.Failed;
+    }
+
+    /// <summary>
+    /// Keeps the current session signed in after a change of the security stamp. A cookie session gets a new cookie. A token session (<c>/api/ui</c> with a
+    /// session token) has no cookie: it gets a renewed pair of tokens in the response headers (<see cref="SessionHeaders"/>), with the same authentication time.
+    /// </summary>
+    public override async Task RefreshSignInAsync(BaGetUser user)
+    {
+        if (Context != null && Context.Items.TryGetValue(AccountConfirmation.SessionAuthenticatedItem, out var signedIn) && signedIn is System.DateTime authenticatedAt)
+        {
+            var session = Context.RequestServices.GetService<SessionUseCase>();
+            if (session != null)
+            {
+                var pair = await session.IssueAsync(user, authenticatedAt);
+                Context.Response.Headers[SessionHeaders.AccessToken] = pair.AccessToken;
+                Context.Response.Headers[SessionHeaders.AccessExpires] = pair.ExpiresAt?.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+                Context.Response.Headers[SessionHeaders.RefreshToken] = pair.RefreshToken;
+                Context.Response.Headers[SessionHeaders.RefreshExpires] = pair.RefreshExpiresAt?.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+                Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.CacheControl] = "no-store";
+            }
+
+            return;
+        }
+
+        await base.RefreshSignInAsync(user);
     }
 
     /// <summary>Resets the failed-attempt counter, unless the gate is closed (a write it would refuse).</summary>

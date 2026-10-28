@@ -28,8 +28,10 @@ public sealed class BaGetPrincipal
         IReadOnlyList<string>? scopes,
         string? packageGlobPattern,
         bool isAdministrator = false,
-        IReadOnlyList<int>? repositoryKeys = null)
+        IReadOnlyList<int>? repositoryKeys = null,
+        bool isInteractiveSession = false)
     {
+        IsInteractiveSession = isInteractiveSession;
         RepositoryKeys = repositoryKeys;
         UserId = userId;
         UserName = userName;
@@ -44,6 +46,13 @@ public sealed class BaGetPrincipal
     public string? UserName { get; }
 
     public bool IsSuperuser { get; }
+
+    /// <summary>
+    /// The credential is a person's interactive session (the browser cookie, or a session token of <c>/api/ui/session</c>), not an API key: it
+    /// has the rights of the signed-in user with every scope and no repository limit. Account self-service and package ownership screens
+    /// are open to it and never to a key.
+    /// </summary>
+    public bool IsInteractiveSession { get; }
 
     /// <summary>
     /// The user is an administrator: skips package ownership, never the key's scopes or glob.

@@ -16,7 +16,7 @@ namespace BaGet.Identity.Controllers.UI;
 /// <summary>
 /// The JSON twin of the npm package management screen: <c>GET /api/ui/npm-manage/{*id}</c> and, for each handler of the page, <c>POST
 /// /api/ui/npm-manage/{handler-in-kebab-case}/{*id}</c> with a JSON body (the package name is a catch-all, so the handler comes first; also
-/// under <c>/api/ui/r/{repo}/…</c>). Screen only (403 over HTTP to every caller; the web screen calls it in process). <c>NpmManageController</c> calls it in process and renders the view.
+/// under <c>/api/ui/r/{repo}/…</c>). Interactive session only (403 over HTTP to an API key and to an anonymous caller; the web screen calls it in process). <c>NpmManageController</c> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/npm-manage")]
 [RepositoryPage(Format = RepositoryFormat.Npm, NotOnVirtual = true, NotOnRemote = true)]

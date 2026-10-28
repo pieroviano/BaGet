@@ -1,3 +1,5 @@
+using System;
+
 namespace BaGet.Core;
 
 /// <summary>
@@ -47,6 +49,20 @@ public class AccountsOptions
     /// </summary>
     [RestartRequired]
     public bool CreateDefaultAdministrator { get; set; } = true;
+
+    /// <summary>
+    /// How long an access token of an interactive session (<c>POST /api/ui/session</c>, for a single-page application) is accepted. Short on
+    /// purpose: a client renews it with its refresh token. Not shown on the Settings page (set it in <c>appsettings.json</c> or the environment).
+    /// </summary>
+    [HiddenSetting]
+    public TimeSpan SessionTokenLifetime { get; set; } = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// How long a refresh token of an interactive session is accepted after it was issued; every refresh issues a new one, so a client in regular
+    /// use stays signed in. Changing the password or signing out everywhere ends every session at once.
+    /// </summary>
+    [HiddenSetting]
+    public TimeSpan SessionRefreshLifetime { get; set; } = TimeSpan.FromDays(14);
 
     /// <summary>
     /// An external OpenID Connect provider, such as Microsoft Entra ID. Unused unless

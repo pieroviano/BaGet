@@ -22,8 +22,8 @@ namespace BaGet.Tests;
 
 /// <summary>
 /// Authentication and the gates of <c>/api/ui</c> over HTTP, driven through the real pipeline with test twins that derive from each base of the family
-/// (account, administrator, access). Only API keys authenticate (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>: the browser
-/// cookie, HTTP Basic and antiforgery play no part. A track that adds a family of screens extends this class with its own cases.
+/// (account, administrator, access). API keys authenticate (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>; the bare browser
+/// cookie and HTTP Basic never do (interactive sessions, and the cookie with an antiforgery header, are <c>UiApiSessionTests</c>). A track that adds a family of screens extends this class with its own cases.
 /// </summary>
 public class UiApiAccessTests : IDisposable
 {
@@ -116,10 +116,15 @@ public class UiApiAccessTests : IDisposable
     // ---- no antiforgery, no cookie, no Basic ----
 
     [Fact]
-    public async Task TheAntiforgeryEndpointIsGone()
+    public async Task TheAntiforgeryTokenAloneAuthenticatesNothing()
     {
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/antiforgery")).Status);
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(_root, HttpMethod.Get, "/api/ui/antiforgery")).Status);
+        // The token of GET /api/ui/antiforgery only accompanies a cookie session; without that cookie the header changes nothing.
+        var token = (await SendAsync(_anonymous, HttpMethod.Get, "/api/ui/antiforgery")).Json!["model"]!["requestToken"]!.GetValue<string>();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/ui/test-probe/admin");
+        request.Headers.Add("X-XSRF-TOKEN", token);
+        using var answer = await _anonymous.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, answer.StatusCode);
     }
 
     [Theory]

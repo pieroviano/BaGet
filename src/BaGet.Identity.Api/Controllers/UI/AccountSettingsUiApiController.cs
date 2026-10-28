@@ -12,7 +12,7 @@ namespace BaGet.Identity.Controllers.UI;
 
 /// <summary>
 /// The JSON twin of the signed-in user's own settings (<c>/api/ui/account/settings</c>, <c>twofactor</c>, <c>apikeys</c>):
-/// <c>AccountSettingsController</c> calls it in process. <b>Screen only</b> (the browser session): over HTTP, where only API keys authenticate, every caller gets 403
+/// <c>AccountSettingsController</c> calls it in process. <b>Interactive session only</b> (a session token, or the cookie with an antiforgery header): over HTTP an API key and an anonymous caller get 403
 /// "use the web screen"; an API key never changes credentials, reads the authenticator key or mints another key. A refused action answers
 /// 400 with the screen's model (<c>error</c> says why); the password-confirmed actions re-ask the password like the page.
 /// </summary>

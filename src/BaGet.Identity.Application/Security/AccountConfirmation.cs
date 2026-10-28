@@ -44,14 +44,29 @@ public static class AccountConfirmation
 
     /// <summary>
     /// The <see cref="HttpContext.Items"/> key that marks a request whose browser session cookie is not a credential (a JSON twin called over HTTP, which
-    /// accepts API keys only): nothing may read the cookie for it.
+    /// accepts API keys and session tokens, or the cookie only with an antiforgery header): nothing may read the cookie for it.
     /// </summary>
     public const string IgnoreSessionItem = "BaGet.IgnoreSessionCookie";
+
+    /// <summary>
+    /// The <see cref="HttpContext.Items"/> key (a <see cref="DateTime"/>, UTC) that holds when the user of a session token (<c>/api/ui/session</c>) signed in:
+    /// that time stands for the cookie's re-authentication property, so an account without a password confirms a sensitive action within
+    /// <see cref="ReauthenticationWindow"/> of its (external provider) sign-in.
+    /// </summary>
+    public const string SessionAuthenticatedItem = "BaGet.SessionAuthenticatedAt";
 
     /// <summary>Whether the session re-authenticated with the external provider within <see cref="ReauthenticationWindow"/>.</summary>
     public static async Task<bool> HasReauthenticatedRecentlyAsync(HttpContext httpContext)
     {
-        // A request that does not use the session cookie (/api/ui over HTTP) must not read it here either.
+        // A session token carries the time of its sign-in; the cookie is not read for it.
+        if (httpContext.Items.TryGetValue(SessionAuthenticatedItem, out var signedInAt) && signedInAt is DateTime signedIn)
+        {
+            var sinceSignIn = httpContext.RequestServices.GetRequiredService<SystemTime>().UtcNow - signedIn;
+
+            return sinceSignIn >= TimeSpan.Zero && sinceSignIn <= ReauthenticationWindow;
+        }
+
+        // A request that does not use the session cookie (/api/ui over HTTP with a key) must not read it here either.
         if (httpContext.Items.ContainsKey(IgnoreSessionItem)) return false;
 
         var authentication = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);

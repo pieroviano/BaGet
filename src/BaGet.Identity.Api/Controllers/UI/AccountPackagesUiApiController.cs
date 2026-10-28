@@ -12,7 +12,7 @@ namespace BaGet.Identity.Controllers.UI;
 
 /// <summary>
 /// The JSON twin of "My packages", "My access" and the "my profile" redirect (<c>/api/ui/account/packages</c>, <c>access</c>, <c>profile</c>):
-/// <c>AccountPackagesController</c> calls it in process. Screen only: over HTTP it answers 403 to every caller.
+/// <c>AccountPackagesController</c> calls it in process. Interactive session only: over HTTP it answers 403 to an API key and to an anonymous caller.
 /// </summary>
 [Route("api/ui/account")]
 public sealed class AccountPackagesUiApiController : AccountUiApiControllerBase

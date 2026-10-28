@@ -96,5 +96,9 @@ public class BaGetOptions
 
     public ProxyOptions? Proxy { get; set; }
 
+    public CorsSettings? Cors { get; set; }
+
+    public FrontendOptions? Frontend { get; set; }
+
     public DataProtectionKeyOptions? DataProtection { get; set; }
 }

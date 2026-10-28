@@ -37,14 +37,14 @@ public sealed class ScreenGate
     public bool EmailConfigured => _email.Value.IsConfigured;
 
     /// <summary>
-    /// The synchronous part of the gate: accounts enabled, mail configured when required, the screen-only rule, signed in when required.
+    /// The synchronous part of the gate: accounts enabled, mail configured when required, the interactive-only rule, signed in when required.
     /// </summary>
     public GateOutcome CheckAccount(ClaimsPrincipal? user, GateRequest request)
     {
         if (request == null) throw new ArgumentNullException(nameof(request));
         if (!AccountsEnabled) return GateOutcome.AccountsOff;
         if (request.RequiresEmail && !EmailConfigured) return GateOutcome.NotFound;
-        if (request.CookieOnly && (request.KeyCaller != null || request.OverHttp)) return GateOutcome.Forbidden;
+        if (request.CookieOnly && (request.KeyCaller != null || (request.OverHttp && !request.InteractiveSession))) return GateOutcome.Forbidden;
         if (request.RequiresSignIn && user?.Identity?.IsAuthenticated != true) return GateOutcome.SignIn;
 
         return GateOutcome.Allowed;
@@ -110,19 +110,23 @@ public sealed class ScreenGate
     private static bool CanDelegate(BaGetPrincipal? key) => key == null || (!key.IsSuperuser && key.HasScope(ApiKeyScopes.Admin) && key.RepositoryKeys == null);
 
     // A key that lacks the administration scope is told so (403); a session that is not an administrator learns nothing (404).
-    private static GateOutcome Refusal(GateRequest request) => request.KeyCaller != null ? GateOutcome.Forbidden : GateOutcome.NotFound;
+    private static GateOutcome Refusal(GateRequest request)
+        => request.KeyCaller != null || request.InteractiveSession ? GateOutcome.Forbidden : GateOutcome.NotFound;
 
     /// <summary>The words an API client gets for a refusal of the gate (null where the outcome says it all).</summary>
-    public const string ScreenOnlyMessage = "This screen is only available in the web UI (it changes or reveals credentials or ownership, which an API key never does): use the web screen.";
+    public const string ScreenOnlyMessage = "This screen is only available to an interactive session (it changes or reveals credentials or ownership, which an API key never does): use the web screen, or sign in at /api/ui/session and send the session token.";
 
     /// <summary>The words for a caller of <c>/api/ui</c> who is not authenticated.</summary>
-    public const string KeyRequiredMessage = "Authenticate with an API key: 'Authorization: Bearer <key>' or the 'X-NuGet-ApiKey' header (the browser session is not accepted on /api/ui).";
+    public const string KeyRequiredMessage = "Authenticate with an API key ('Authorization: Bearer <key>' or the 'X-NuGet-ApiKey' header) or a session token (POST /api/ui/session). The browser cookie is accepted only with a valid antiforgery header.";
 
     /// <summary>The words for the global <c>ApiKey</c> on an administration screen.</summary>
     public const string GlobalKeyMessage = "The global ApiKey cannot use the administration screens: use an administrator's API key with the admin:api scope and no repository limit.";
 
     /// <summary>The words for a key that is not an administrator's, lacks the admin:api scope or is limited to repositories.</summary>
     public const string AdminKeyMessage = "The administration screens need an administrator's API key with the admin:api scope and no repository limit.";
+
+    /// <summary>The words for an interactive session that is not an administrator's, on an administration screen.</summary>
+    public const string AdminSessionMessage = "The administration screens need an administrator's account.";
 
     private static string? MessageFor(GateOutcome outcome, GateRequest request)
         => outcome switch
@@ -137,7 +141,9 @@ public sealed class ScreenGate
         if (isAdministrator) return new GateResult(GateOutcome.Allowed, true);
 
         var outcome = Refusal(request);
-        var message = outcome != GateOutcome.Forbidden ? null : request.KeyCaller!.IsSuperuser ? GlobalKeyMessage : AdminKeyMessage;
+        var message = outcome != GateOutcome.Forbidden
+            ? null
+            : request.KeyCaller == null ? AdminSessionMessage : request.KeyCaller.IsSuperuser ? GlobalKeyMessage : AdminKeyMessage;
 
         return new GateResult(outcome, false) { Message = message };
     }

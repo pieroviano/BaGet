@@ -13,8 +13,9 @@ namespace BaGet.Frontend.Controllers.Base;
 /// <summary>
 /// Base of the account screens' JSON twins: accounts enabled (else 404), mail configured when <see cref="RequiresEmail"/>, signed in when
 /// <see cref="RequiresSignIn"/> (else 401), through the same <see cref="ScreenGate"/> as <c>AccountControllerBase</c>. Account self-service
-/// (password, two-factor, external logins, API keys, sign-in and out, deletion) and package ownership screens are <b>cookie only</b> (<see cref="CookieOnly"/>):
-/// over HTTP, where the cookie is never accepted, they answer 403 "use the web screen" to everybody; the web screen reaches them in process.
+/// (password, two-factor, external logins, API keys, sign-in and out, deletion) and package ownership screens are <b>interactive only</b> (<see cref="CookieOnly"/>):
+/// over HTTP they are open to a person's interactive session (a session token, or the cookie with an antiforgery header) and answer 403 "use the web screen" to
+/// everybody else, API keys included; the web screen reaches them in process.
 /// </summary>
 public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncActionFilter
 {
@@ -24,7 +25,7 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
     /// <summary>Whether the screen needs mail to be configured.</summary>
     protected virtual bool RequiresEmail => false;
 
-    /// <summary>Whether the twin is screen-only over HTTP (account self-service, package ownership): 403 for every caller. The administration bases lift it.</summary>
+    /// <summary>Whether the twin is for interactive sessions only over HTTP (account self-service, package ownership): 403 for an API key and an anonymous caller. The administration bases lift it.</summary>
     protected virtual bool CookieOnly => true;
 
     /// <summary>What the screen requires of the caller; a derived base widens it (role, writes).</summary>
@@ -41,6 +42,7 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
         {
             // This filter runs only when the twin is called over HTTP (the in-process call of a view controller skips it).
             OverHttp = true,
+            InteractiveSession = InteractiveCaller != null,
         };
     }
 

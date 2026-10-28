@@ -140,10 +140,10 @@ public class OpenApiDocumentTests : IDisposable
     {
         static string[] Schemes(JsonNode document) => document["components"]!["securitySchemes"]!.AsObject().Select(p => p.Key).OrderBy(k => k, StringComparer.Ordinal).ToArray();
 
-        // /api/ui: API keys in headers a page cannot make a browser send. No cookie, no HTTP Basic.
+        // /api/ui: API keys and session tokens in headers a page cannot make a browser send. No cookie scheme (the cookie needs an antiforgery header), no HTTP Basic.
         var ui = (await _api.GetAsync("/openapi/ui.json")).Json;
-        Assert.Equal(new[] { "apiKey", "bearer" }, Schemes(ui));
-        Assert.Equal(new[] { "apiKey", "bearer" }, ui["security"]!.AsArray().SelectMany(r => r!.AsObject().Select(p => p.Key)).OrderBy(k => k, StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "apiKey", "bearer", "session" }, Schemes(ui));
+        Assert.Equal(new[] { "apiKey", "bearer", "session" }, ui["security"]!.AsArray().SelectMany(r => r!.AsObject().Select(p => p.Key)).OrderBy(k => k, StringComparer.Ordinal).ToArray());
 
         // /api/v1 never accepted the cookie either.
         var v1 = (await _api.GetAsync("/openapi/v1.json")).Json;
@@ -156,8 +156,8 @@ public class OpenApiDocumentTests : IDisposable
     {
         var paths = (await _api.GetAsync("/openapi/ui.json")).Json["paths"]!.AsObject();
 
-        Assert.Contains("Screen only", paths["/api/ui/account/settings"]!["get"]!["description"]!.GetValue<string>(), StringComparison.Ordinal);
-        Assert.Contains("Screen only", paths["/api/ui/packages/{id}/manage"]!["get"]!["description"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("Interactive session only", paths["/api/ui/account/settings"]!["get"]!["description"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("API keys are refused", paths["/api/ui/packages/{id}/manage"]!["get"]!["description"]!.GetValue<string>(), StringComparison.Ordinal);
         Assert.Null(paths["/api/ui/admin/users"]!["get"]!["description"]);
         Assert.Null(paths["/api/ui/stats"]!["get"]!["description"]);
     }

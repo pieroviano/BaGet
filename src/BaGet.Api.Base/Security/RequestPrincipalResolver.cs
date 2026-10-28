@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Services.Sessions;
 using Microsoft.AspNetCore.Http;
 using IAuthenticationService = BaGet.Core.IAuthenticationService;
 
@@ -19,6 +20,13 @@ public class RequestPrincipalResolver
 {
     /// <summary>The header NuGet clients send an API key in.</summary>
     internal const string ApiKeyHeader = "X-NuGet-ApiKey";
+
+    /// <summary>
+    /// The <see cref="HttpContext.Items"/> key under which <c>/api/ui</c> records the interactive session that authenticated the request (a session token,
+    /// or the cookie with a valid antiforgery header). Only the UI API filter sets it, so no other route ever sees a session token as a credential: there
+    /// a token (<see cref="BaGet.Identity.Application.Services.Sessions.SessionTokenService.Prefix"/>) is an invalid key.
+    /// </summary>
+    internal const string InteractiveItem = "BaGet.UiApi.Interactive";
 
     private const string ItemKey = "BaGet.RequestPrincipal";
     private const string WriteItemKey = "BaGet.RequestWritePrincipal";
@@ -42,6 +50,7 @@ public class RequestPrincipalResolver
     /// <summary>The caller, or null when anonymous. Resolved once per request.</summary>
     public async Task<BaGetPrincipal?> ResolveAsync(HttpContext context, CancellationToken cancellationToken)
     {
+        if (context.Items.TryGetValue(InteractiveItem, out var interactive) && interactive is BaGetPrincipal session) return session;
         if (context.Items.TryGetValue(ItemKey, out var cached)) return cached as BaGetPrincipal;
 
         var principal = await ResolveCoreAsync(context, cancellationToken).ConfigureAwait(false);
@@ -57,10 +66,20 @@ public class RequestPrincipalResolver
     /// </summary>
     public async Task<BaGetPrincipal?> ResolveForWriteAsync(HttpContext context, CancellationToken cancellationToken)
     {
+        if (context.Items.TryGetValue(InteractiveItem, out var interactive) && interactive is BaGetPrincipal session) return session;
         if (context.Items.TryGetValue(WriteItemKey, out var cached)) return cached as BaGetPrincipal;
 
         var basic = BasicCredentials.Read(context.Request);
         var key = KeyOf(context, basic);
+
+        // A session token is not an API key: outside /api/ui (which resolved it before) it is simply not a credential.
+        if (SessionTokenService.IsSessionToken(key))
+        {
+            context.Items[WriteItemKey] = null;
+
+            return null;
+        }
+
         var principal = await _authentication.AuthenticatePrincipalAsync(key, cancellationToken).ConfigureAwait(false);
         if (principal != null && UserMismatch(principal, basic)) principal = null;
 
@@ -91,7 +110,7 @@ public class RequestPrincipalResolver
         var basic = BasicCredentials.Read(context.Request);
         var key = KeyOf(context, basic);
 
-        if (!string.IsNullOrEmpty(key))
+        if (!string.IsNullOrEmpty(key) && !SessionTokenService.IsSessionToken(key))
         {
             var principal = await _authentication.AuthenticatePrincipalAsync(key, cancellationToken).ConfigureAwait(false);
             if (principal != null && !UserMismatch(principal, basic)) return principal;

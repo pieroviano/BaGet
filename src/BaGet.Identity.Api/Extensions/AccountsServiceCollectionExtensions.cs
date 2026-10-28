@@ -1,6 +1,7 @@
 using System;
 using BaGet.Core;
 using BaGet.Frontend.Mvc.Screens;
+using BaGet.Frontend.Mvc.UI;
 using BaGet.Frontend.Security;
 using BaGet.Identity.Application.Extensions;
 using BaGet.Identity.Application.Screens;
@@ -15,6 +16,7 @@ using BaGet.Identity.Application.RateLimiting;
 using BaGet.Identity.Application.Security;
 using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Identity.Application.Services.Ownership;
+using BaGet.Identity.Application.Services.Sessions;
 using BaGet.Identity.Application.UseCases.Account;
 
 namespace BaGet.Identity.Extensions;
@@ -69,6 +71,10 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<ExternalSignInUseCase>();
         services.TryAddScoped<AccountSettingsUseCase>();
         services.TryAddScoped<TwoFactorUseCase>();
+        services.TryAddScoped<SessionTokenService>();
+        services.TryAddScoped<SessionAuthenticator>();
+        services.TryAddScoped<SessionUseCase>();
+        services.TryAddScoped<ExternalSessionUseCase>();
         services.TryAddScoped<ApiKeysUseCase>();
         services.TryAddScoped<AccountOverviewUseCase>();
         services.TryAddScoped<ProfileUseCase>();
@@ -124,6 +130,9 @@ public static class AccountsServiceCollectionExtensions
         // acting until then. Browser sessions are few next to API traffic, so every request
         // is checked: no principal for a user that no longer exists or whose stamp changed.
         services.Configure<SecurityStampValidatorOptions>(validation => validation.ValidationInterval = TimeSpan.Zero);
+
+        // The cookie session is accepted on /api/ui only together with this header (GET /api/ui/antiforgery hands the token out).
+        services.AddAntiforgery(antiforgery => antiforgery.HeaderName = UiApiCaller.AntiforgeryHeader);
 
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie?.Configure(cookie =>

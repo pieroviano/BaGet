@@ -22,7 +22,7 @@ Pick one with the document selector at the top of the viewer.
 
 | Document | JSON | What it covers | Authenticate with |
 |---|---|---|---|
-| `ui` | `/openapi/ui.json` | `/api/ui/...`: the JSON twin of every web screen (what an Angular/React frontend calls) | an API key: `bearer` or `apiKey` (never the session, never Basic) |
+| `ui` | `/openapi/ui.json` | `/api/ui/...`: the JSON twin of every web screen (what an Angular/React frontend calls) | an API key (`bearer` or `apiKey`) or a session token (`session`); never the bare cookie, never Basic |
 | `v1` | `/openapi/v1.json` (alias `/api/v1/openapi.json`) | `/api/v1/...`: the administration REST API ([admin-api.md](admin-api.md)) | an administrator's `admin:api` key (never the session) |
 | `protocols` | `/openapi/protocols.json` | NuGet V3/V2, symbols, npm, Maven and Docker (OCI) routes, at `/` and `/r/{repo}/` | anonymous where the repository allows it, else an API key |
 
@@ -38,21 +38,22 @@ Open the **Authentication** box of the viewer (or the *Auth* tab of the request 
 | Scheme | Fill in | Use for |
 |---|---|---|
 | `bearer` | the key | `/api/v1`, `/api/ui`, most protocol routes |
+| `session` | the `accessToken` of `POST /api/ui/session` | `/api/ui` only (a person's session) |
 | `basic` | any user name (npm/Maven send the account name), the key as password | `/api/v1` and the protocol routes (what Maven and Docker clients send); **not** `/api/ui` |
 | `apiKey` (`X-NuGet-ApiKey` header) | the key | `/api/ui`, NuGet push/delete, also accepted elsewhere |
 
-A wrong or revoked key is refused with `401`; it never falls back to the session (no document accepts the session cookie). The `ui` document offers `bearer` and `apiKey` only.
+A wrong or revoked key is refused with `401`; it never falls back to the session (no document accepts the session cookie). The `ui` document offers `bearer`, `apiKey` and `session`.
 
 ## Testing `/api/ui` (screens as JSON)
 
-Set the `bearer` (or `apiKey`) scheme to a key, as for `/api/v1`. The browser session is **not** used here (Scalar runs on the same origin, but the cookie is ignored),
-and there is **no antiforgery token** and no `GET /api/ui/antiforgery`. Without a key you are anonymous: public screens work (home, package, statistics, report abuse), a
+Set the `bearer` (or `apiKey`) scheme to a key, as for `/api/v1`, or the `session` scheme to the `accessToken` of `POST /api/ui/session`. The browser cookie is **not**
+used here unless a request also carries the antiforgery token of `GET /api/ui/antiforgery` in `X-XSRF-TOKEN`. Without a credential you are anonymous: public screens work (home, package, statistics, report abuse), a
 protected one answers `401` with a message saying to send a key; HTTP Basic is refused with `401`.
 
-- **Administration screens** (`/api/ui/admin/...`) need an administrator's key with the `admin:api` scope and no repository limit, e.g. `GET /api/ui/admin/repositories` returns
+- **Administration screens** (`/api/ui/admin/...`) need an administrator's session token or key with the `admin:api` scope and no repository limit, e.g. `GET /api/ui/admin/repositories` returns
   the model the **Repositories** screen renders. The server's global `ApiKey` is refused with `403` (it has no owner): use an administrator's key.
 - **Account self-service** (sign-in, password, two-factor, API keys, organizations, deletion) and **package ownership** screens (manage, contact owners, validation status, scan)
-  are screen-only: they appear in the document, marked "Screen only", and answer `403` "use the web screen" to everybody.
+  need an interactive session (a session token): they appear in the document, marked "Interactive session only", and answer `403` "use the web screen" to an API key and to an anonymous caller.
 - A key limited to repositories sees other repositories as `404`.
 
 **Confirmation passwords.** Actions whose screen asks your password (delete, purge, access changes, ...) take it in the request body field

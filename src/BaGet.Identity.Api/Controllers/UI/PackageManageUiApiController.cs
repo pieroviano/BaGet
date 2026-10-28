@@ -13,7 +13,7 @@ namespace BaGet.Identity.Controllers.UI;
 
 /// <summary>
 /// The JSON twin of the package management screen: <c>GET /api/ui/packages/{id}/manage</c> and, for each handler of the page, <c>POST
-/// /api/ui/packages/{id}/manage/{handler-in-kebab-case}</c> with a JSON body (also under <c>/api/ui/r/{repo}/…</c>). Screen only (403 over HTTP to every caller; the web screen calls it in process):
+/// /api/ui/packages/{id}/manage/{handler-in-kebab-case}</c> with a JSON body (also under <c>/api/ui/r/{repo}/…</c>). Interactive session only (403 over HTTP to an API key and to an anonymous caller; the web screen calls it in process):
 /// an API key never manages a package through this screen. <c>PackageManageController</c> calls it in process and renders the view.
 /// </summary>
 [Route("api/ui/packages/{id}/manage")]

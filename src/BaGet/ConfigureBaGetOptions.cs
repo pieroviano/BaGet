@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using BaGet.Core;
+using BaGet.Identity.Application.Security;
+using BaGet.Identity.Application.Services.Sessions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http.Features;
@@ -58,12 +60,37 @@ public class ConfigureBaGetOptions
 
     public void Configure(CorsOptions options)
     {
-        // TODO: Consider disabling this on production builds.
+        var origins = SessionReturnUrls.Origins(_configuration.GetSection(nameof(BaGetOptions.Cors)).Get<CorsSettings>()?.AllowedOrigins);
+
+        if (origins.Count == 0)
+        {
+            // Any origin, never with credentials: the APIs authenticate with headers a page has to set itself.
+            options.AddPolicy(
+                CorsPolicy,
+                builder => builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .WithExposedHeaders(SessionHeaders.All));
+
+            return;
+        }
+
+        foreach (var origin in origins)
+        {
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) || uri.AbsolutePath != "/")
+            {
+                throw new InvalidOperationException($"'Cors:AllowedOrigins' contains '{origin}', which is not an origin such as https://app.example.com.");
+            }
+        }
+
+        // Only the listed origins, and only they may send credentials (the cookie with its antiforgery header).
         options.AddPolicy(
             CorsPolicy,
-            builder => builder.AllowAnyOrigin()
+            builder => builder.WithOrigins(origins.ToArray())
                 .AllowAnyMethod()
-                .AllowAnyHeader());
+                .AllowAnyHeader()
+                .WithExposedHeaders(SessionHeaders.All)
+                .AllowCredentials());
     }
 
     public void Configure(FormOptions options)

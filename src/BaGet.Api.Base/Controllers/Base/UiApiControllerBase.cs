@@ -15,8 +15,9 @@ namespace BaGet.Frontend.Controllers.Base;
 /// returns its model, so a single-page application (or any client) can be written against it alone, and the view controller only renders
 /// what <c>UiApiInvoker</c> got from it.
 /// <list type="bullet">
-/// <item><description><b>Authentication</b> (<see cref="UiApiSecurityFilter"/>): API keys only (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>; the
-/// browser session and HTTP Basic are never accepted over HTTP, so there is no antiforgery (see <see cref="UiApiCaller"/>).</description></item>
+/// <item><description><b>Authentication</b> (<see cref="UiApiSecurityFilter"/>): API keys (<c>Authorization: Bearer</c> or <c>X-NuGet-ApiKey</c>), like <c>/api/v1</c>, or a person's
+/// interactive session (a session token from <c>/api/ui/session</c>, or the cookie with an antiforgery header); the bare cookie and HTTP Basic are never accepted
+/// over HTTP (see <see cref="UiApiCaller"/>).</description></item>
 /// <item><description><b>Answers</b> are <see cref="ScreenResult{T}"/> through <see cref="Respond{T}"/>: <c>status</c>, <c>model</c>, <c>errors</c>, <c>next</c>.</description></item>
 /// <item><description><b>No <c>[ApiController]</c></b>: its automatic 400 on an invalid model would differ between an HTTP call and the
 /// in-process call of a view controller. An action validates explicitly and answers <see cref="ScreenResult{T}.Invalid(T, string, int?)"/>.</description></item>
@@ -33,8 +34,11 @@ namespace BaGet.Frontend.Controllers.Base;
 [ApiExplorerSettings(IgnoreApi = false)]
 public abstract class UiApiControllerBase : ControllerBase
 {
-    /// <summary>The API key behind the request, or null for an anonymous caller.</summary>
+    /// <summary>The API key behind the request, or null for an anonymous caller or an interactive session.</summary>
     protected BaGetPrincipal? KeyCaller => UiApiCaller.Key(HttpContext);
+
+    /// <summary>The interactive session behind the request (a session token, or the cookie with a valid antiforgery header), or null.</summary>
+    protected BaGetPrincipal? InteractiveCaller => UiApiCaller.Interactive(HttpContext);
 
     /// <summary>The screen gate (the same one the view controllers ask).</summary>
     protected ScreenGate Gate
