@@ -173,6 +173,145 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity.FrontEnd", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Web.FrontEnd", "src\BaGet.Web.FrontEnd\BaGet.Web.FrontEnd.csproj", "{71CA649D-A029-45CC-9713-196D9A922403}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BaGet.Frontend.Angular", "BaGet.Frontend.Angular", "{36F2C53C-EE04-44C7-BADB-6A7182EDC40E}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\.editorconfig = samples\BaGet.Frontend.Angular\.editorconfig
+		samples\BaGet.Frontend.Angular\.gitignore = samples\BaGet.Frontend.Angular\.gitignore
+		samples\BaGet.Frontend.Angular\.npmrc = samples\BaGet.Frontend.Angular\.npmrc
+		samples\BaGet.Frontend.Angular\.prettierrc = samples\BaGet.Frontend.Angular\.prettierrc
+		samples\BaGet.Frontend.Angular\README.md = samples\BaGet.Frontend.Angular\README.md
+		samples\BaGet.Frontend.Angular\angular.json = samples\BaGet.Frontend.Angular\angular.json
+		samples\BaGet.Frontend.Angular\package-lock.json = samples\BaGet.Frontend.Angular\package-lock.json
+		samples\BaGet.Frontend.Angular\package.json = samples\BaGet.Frontend.Angular\package.json
+		samples\BaGet.Frontend.Angular\tsconfig.app.json = samples\BaGet.Frontend.Angular\tsconfig.app.json
+		samples\BaGet.Frontend.Angular\tsconfig.json = samples\BaGet.Frontend.Angular\tsconfig.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "openapi", "openapi", "{CE692325-32D2-49D2-AF37-3FACDB8979BD}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\openapi\ui.json = samples\BaGet.Frontend.Angular\openapi\ui.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "public", "public", "{4611ECCF-6029-4917-A9B9-F35AA94555A7}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\public\favicon.ico = samples\BaGet.Frontend.Angular\public\favicon.ico
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{D1906418-E817-44EF-B10F-DB7E40424E23}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\scripts\smoke.mjs = samples\BaGet.Frontend.Angular\scripts\smoke.mjs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4898C856-3C78-4E13-BF8A-6FC322121B04}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\src\index.html = samples\BaGet.Frontend.Angular\src\index.html
+		samples\BaGet.Frontend.Angular\src\main.ts = samples\BaGet.Frontend.Angular\src\main.ts
+		samples\BaGet.Frontend.Angular\src\styles.css = samples\BaGet.Frontend.Angular\src\styles.css
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{A85A2FDD-166D-4FD8-8D55-644C1CAD9665}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\src\app\app.config.ts = samples\BaGet.Frontend.Angular\src\app\app.config.ts
+		samples\BaGet.Frontend.Angular\src\app\app.html = samples\BaGet.Frontend.Angular\src\app\app.html
+		samples\BaGet.Frontend.Angular\src\app\app.routes.ts = samples\BaGet.Frontend.Angular\src\app\app.routes.ts
+		samples\BaGet.Frontend.Angular\src\app\app.ts = samples\BaGet.Frontend.Angular\src\app\app.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{995FA248-E191-4AC7-8B13-6BF028B3F0BF}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\src\app\api\api-client.ts = samples\BaGet.Frontend.Angular\src\app\api\api-client.ts
+		samples\BaGet.Frontend.Angular\src\app\api\api-types.ts = samples\BaGet.Frontend.Angular\src\app\api\api-types.ts
+		samples\BaGet.Frontend.Angular\src\app\api\field-errors.ts = samples\BaGet.Frontend.Angular\src\app\api\field-errors.ts
+		samples\BaGet.Frontend.Angular\src\app\api\schema.d.ts = samples\BaGet.Frontend.Angular\src\app\api\schema.d.ts
+		samples\BaGet.Frontend.Angular\src\app\api\screens.ts = samples\BaGet.Frontend.Angular\src\app\api\screens.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pages", "pages", "{AC1023B1-12D9-43D1-A266-B59A6D2C00D3}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\src\app\pages\admin-users.ts = samples\BaGet.Frontend.Angular\src\app\pages\admin-users.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\confirm-email.ts = samples\BaGet.Frontend.Angular\src\app\pages\confirm-email.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\external-sign-in.ts = samples\BaGet.Frontend.Angular\src\app\pages\external-sign-in.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\forgot-password.ts = samples\BaGet.Frontend.Angular\src\app\pages\forgot-password.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\package-detail.ts = samples\BaGet.Frontend.Angular\src\app\pages\package-detail.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\packages.ts = samples\BaGet.Frontend.Angular\src\app\pages\packages.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\register.ts = samples\BaGet.Frontend.Angular\src\app\pages\register.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\reset-password.ts = samples\BaGet.Frontend.Angular\src\app\pages\reset-password.ts
+		samples\BaGet.Frontend.Angular\src\app\pages\sign-in.ts = samples\BaGet.Frontend.Angular\src\app\pages\sign-in.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "session", "session", "{3EE7AAF5-C4DD-4982-B0EF-2F26DA8ACD5D}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\src\app\session\auth.guard.ts = samples\BaGet.Frontend.Angular\src\app\session\auth.guard.ts
+		samples\BaGet.Frontend.Angular\src\app\session\oidc-state.ts = samples\BaGet.Frontend.Angular\src\app\session\oidc-state.ts
+		samples\BaGet.Frontend.Angular\src\app\session\session.interceptor.ts = samples\BaGet.Frontend.Angular\src\app\session\session.interceptor.ts
+		samples\BaGet.Frontend.Angular\src\app\session\session.service.ts = samples\BaGet.Frontend.Angular\src\app\session\session.service.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "environments", "environments", "{42AF979F-EEE9-43F1-8FD1-ABA989F1D87E}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.Angular\src\environments\environment.development.ts = samples\BaGet.Frontend.Angular\src\environments\environment.development.ts
+		samples\BaGet.Frontend.Angular\src\environments\environment.ts = samples\BaGet.Frontend.Angular\src\environments\environment.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BaGet.Frontend.React", "BaGet.Frontend.React", "{A0FE8C68-8740-4373-B311-627E21518DDC}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\.env.example = samples\BaGet.Frontend.React\.env.example
+		samples\BaGet.Frontend.React\.gitignore = samples\BaGet.Frontend.React\.gitignore
+		samples\BaGet.Frontend.React\README.md = samples\BaGet.Frontend.React\README.md
+		samples\BaGet.Frontend.React\index.html = samples\BaGet.Frontend.React\index.html
+		samples\BaGet.Frontend.React\package-lock.json = samples\BaGet.Frontend.React\package-lock.json
+		samples\BaGet.Frontend.React\package.json = samples\BaGet.Frontend.React\package.json
+		samples\BaGet.Frontend.React\tsconfig.json = samples\BaGet.Frontend.React\tsconfig.json
+		samples\BaGet.Frontend.React\vite.config.ts = samples\BaGet.Frontend.React\vite.config.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "openapi", "openapi", "{1A82125A-EA10-4AD1-B8C5-27D3E446052E}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\openapi\ui.json = samples\BaGet.Frontend.React\openapi\ui.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{DB140D73-2B25-43ED-9E1A-118C6326FA06}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\scripts\smoke.mjs = samples\BaGet.Frontend.React\scripts\smoke.mjs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\src\App.tsx = samples\BaGet.Frontend.React\src\App.tsx
+		samples\BaGet.Frontend.React\src\auth.tsx = samples\BaGet.Frontend.React\src\auth.tsx
+		samples\BaGet.Frontend.React\src\config.ts = samples\BaGet.Frontend.React\src\config.ts
+		samples\BaGet.Frontend.React\src\main.tsx = samples\BaGet.Frontend.React\src\main.tsx
+		samples\BaGet.Frontend.React\src\routes.ts = samples\BaGet.Frontend.React\src\routes.ts
+		samples\BaGet.Frontend.React\src\styles.css = samples\BaGet.Frontend.React\src\styles.css
+		samples\BaGet.Frontend.React\src\vite-env.d.ts = samples\BaGet.Frontend.React\src\vite-env.d.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{15577495-2C8F-4F34-92F7-AD5352B1126C}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\src\api\client.ts = samples\BaGet.Frontend.React\src\api\client.ts
+		samples\BaGet.Frontend.React\src\api\schema.d.ts = samples\BaGet.Frontend.React\src\api\schema.d.ts
+		samples\BaGet.Frontend.React\src\api\screen.ts = samples\BaGet.Frontend.React\src\api\screen.ts
+		samples\BaGet.Frontend.React\src\api\session.ts = samples\BaGet.Frontend.React\src\api\session.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", "{9FA00C89-09E9-4C1F-ADBF-A71CB6BFA513}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\src\components\Form.tsx = samples\BaGet.Frontend.React\src\components\Form.tsx
+		samples\BaGet.Frontend.React\src\components\useScreen.ts = samples\BaGet.Frontend.React\src\components\useScreen.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pages", "pages", "{45CC80FB-737C-417C-A103-D7CADD530591}"
+	ProjectSection(SolutionItems) = preProject
+		samples\BaGet.Frontend.React\src\pages\AdminUsers.tsx = samples\BaGet.Frontend.React\src\pages\AdminUsers.tsx
+		samples\BaGet.Frontend.React\src\pages\ConfirmEmail.tsx = samples\BaGet.Frontend.React\src\pages\ConfirmEmail.tsx
+		samples\BaGet.Frontend.React\src\pages\ForgotPassword.tsx = samples\BaGet.Frontend.React\src\pages\ForgotPassword.tsx
+		samples\BaGet.Frontend.React\src\pages\Home.tsx = samples\BaGet.Frontend.React\src\pages\Home.tsx
+		samples\BaGet.Frontend.React\src\pages\PackageDetail.tsx = samples\BaGet.Frontend.React\src\pages\PackageDetail.tsx
+		samples\BaGet.Frontend.React\src\pages\Register.tsx = samples\BaGet.Frontend.React\src\pages\Register.tsx
+		samples\BaGet.Frontend.React\src\pages\ResetPassword.tsx = samples\BaGet.Frontend.React\src\pages\ResetPassword.tsx
+		samples\BaGet.Frontend.React\src\pages\SignIn.tsx = samples\BaGet.Frontend.React\src\pages\SignIn.tsx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -596,6 +735,23 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{36F2C53C-EE04-44C7-BADB-6A7182EDC40E} = {DDEC0736-8169-4834-815E-B78E7CE612A4}
+		{CE692325-32D2-49D2-AF37-3FACDB8979BD} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{4611ECCF-6029-4917-A9B9-F35AA94555A7} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{D1906418-E817-44EF-B10F-DB7E40424E23} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{4898C856-3C78-4E13-BF8A-6FC322121B04} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{A85A2FDD-166D-4FD8-8D55-644C1CAD9665} = {4898C856-3C78-4E13-BF8A-6FC322121B04}
+		{995FA248-E191-4AC7-8B13-6BF028B3F0BF} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
+		{AC1023B1-12D9-43D1-A266-B59A6D2C00D3} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
+		{3EE7AAF5-C4DD-4982-B0EF-2F26DA8ACD5D} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
+		{42AF979F-EEE9-43F1-8FD1-ABA989F1D87E} = {4898C856-3C78-4E13-BF8A-6FC322121B04}
+		{A0FE8C68-8740-4373-B311-627E21518DDC} = {DDEC0736-8169-4834-815E-B78E7CE612A4}
+		{1A82125A-EA10-4AD1-B8C5-27D3E446052E} = {A0FE8C68-8740-4373-B311-627E21518DDC}
+		{DB140D73-2B25-43ED-9E1A-118C6326FA06} = {A0FE8C68-8740-4373-B311-627E21518DDC}
+		{1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739} = {A0FE8C68-8740-4373-B311-627E21518DDC}
+		{15577495-2C8F-4F34-92F7-AD5352B1126C} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
+		{9FA00C89-09E9-4C1F-ADBF-A71CB6BFA513} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
+		{45CC80FB-737C-417C-A103-D7CADD530591} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
 		{284366CB-C68F-473E-908A-50A382616AE0} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
 		{FFFACD28-C300-4046-BCFE-4A7899E88EA3} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
 		{716C970D-9614-4265-AC92-57E8B227B98E} = {2AF127EE-B198-4914-B3CD-5DA732F53648}

@@ -87,6 +87,8 @@ nested solution folders), linked from `docs/index.md` or a page reachable from i
 moved or deleted page updates all three in the same commit. **Exception: plan documents (`docs/plans/`) are never listed,
 linked or put in the nav.**
 
+The SPA samples (`samples/BaGet.Frontend.React`, `samples/BaGet.Frontend.Angular`; not MSBuild projects) are in `BaGet.sln` as linked solution items under `samples/<sample>`, one nested solution folder per subfolder; a new or removed tracked file of a sample updates the solution in the same commit (never `node_modules`, `dist`, `.angular`).
+
 ## Architecture
 
 | Project | Role |
