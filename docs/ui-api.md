@@ -39,29 +39,51 @@ password the screen asks for, sent in the body (an account without a password co
 
 ## Sessions for a single-page application
 
-Endpoints under `/api/ui` (JSON bodies, answers are `ScreenResult<…>` with `Cache-Control: no-store`; `404` while accounts are off). They are not the twin of a screen
-(the sign-in page sets a cookie) and carry no `[UiApi]`.
+Endpoints under `/api/ui` (JSON bodies, answers are `ScreenResult<...>`; `404` while accounts are off). They are not the twin of a screen (the sign-in page sets a cookie) and carry no
+`[UiApi]`. All of them are *session endpoints*: an invalid or expired `Authorization: Bearer bgs....` header is no credential on them (a client that attaches its token to every request can still
+refresh or sign in), and a browser request whose `Origin` is not this server's (or, except for the cookie endpoints, a listed one in `Cors:AllowedOrigins`) is refused with `403`. **With no list a page of
+another origin cannot script them** (no password spraying or intranet reach from visitors' browsers); a separate-origin SPA must list its origin. Requests without an `Origin` header (scripts) are not affected.
 
 | Method and route | Body | Answer |
 |---|---|---|
 | `POST /session` | `{ userName, password }` | `model`: `{ accessToken, expiresAt, refreshToken, refreshExpiresAt, userName }`, or `{ twoFactorRequired: true, twoFactorTicket, twoFactorTicketExpiresAt }` for an account with two-factor. `401` wrong credentials (the same answer for an unknown user), `403` locked out / awaiting approval / email unconfirmed (only to the right password), `400` empty form |
-| `POST /session/two-factor` | `{ ticket, code }` | the tokens; `401` for a wrong code (counted: five failures lock the account, `403`) or an expired ticket |
+| `POST /session/two-factor` | `{ ticket, code }` | the tokens; `401` for a wrong code or an expired ticket (counted: five failures lock the account, then `403`) |
 | `POST /session/recovery-code` | `{ ticket, recoveryCode }` | the tokens; each code works once |
-| `POST /session/refresh` | `{ refreshToken }` | a new pair; the old refresh token stays valid until it expires (stateless); the authentication time is kept |
+| `POST /session/refresh` | `{ refreshToken }` | a new pair; the old refresh token stays valid until it expires (stateless); the authentication time is kept and the session ends `Accounts:SessionMaxLifetime` after it |
+| `POST /session/exchange` | `{ exchangeToken }` | the tokens (or the two-factor ticket) for the 60-second token of an external sign-in |
 | `POST /session/sign-out` | `{ everywhere?, refreshToken? }` | `200`. Revokes nothing by itself (the client forgets its tokens); `everywhere: true` changes the account's security stamp, which ends **every** token and cookie session of the account (send the access token, or the refresh token in the body) |
-| `GET /antiforgery` | | `model`: `{ headerName: "X-XSRF-TOKEN", requestToken }` and the antiforgery cookie; the token is bound to the signed-in user, so fetch it again after signing in or out |
-| `GET /session/external/oidc?returnUrl=` | | a browser navigation: challenges the OpenID Connect provider. `returnUrl` must be a path of this server or an origin in `Cors:AllowedOrigins` (an empty list does **not** mean any origin here), else `400` |
-| `GET /session/external-callback?returnUrl=` | | redirects to `returnUrl#access_token=…&expires_at=…&refresh_token=…&refresh_expires_at=…&user_name=…`, or `#two_factor_ticket=…&two_factor_expires_at=…&user_name=…`, `#notice=…` (account created, not usable yet) or `#error=…`. The fragment never reaches a server or a log; no cookie is kept |
+| `GET /antiforgery` | | `model`: `{ headerName: "X-XSRF-TOKEN", requestToken }` and the antiforgery cookie; the token is bound to the signed-in user (or to the anonymous visitor), so fetch it again after signing in or out |
+| `POST /session/cookie` | `{ userName, password }`, then for two-factor `{ ticket, code \| recoveryCode }` | **Same origin only**, and needs the antiforgery token of a signed-out visitor in `X-XSRF-TOKEN` (no login CSRF). The rules of `POST /session`, but the answer holds no tokens: the session cookie is set (fetch the antiforgery token again; the cookie is accepted with it, [Who may call](#who-may-call)) |
+| `POST /session/cookie/sign-out` | | Same origin; the cookie session with its antiforgery header ends. `401` for anything else (a token session has no cookie) |
+| `GET /session/external/oidc?returnUrl=` | | a browser navigation: challenges the OpenID Connect provider. `returnUrl` must lie under `Frontend:SpaBasePath` of this server or be an address of an origin in `Cors:AllowedOrigins` (an empty list does **not** mean any origin here), else `400` |
+| `GET /session/external-callback?returnUrl=` | | redirects to `returnUrl#exchange_token=...&exchange_expires_at=...&user_name=...`, or `#notice=...` (account created, not usable yet) or `#error=...`. No cookie is set or kept (a session of the browser is left alone) and no session token is put in a URL: exchange the token at `POST /session/exchange` within a minute and **remove the fragment at once** (`history.replaceState(null, '', location.pathname + location.search)`) so it stays out of the history and `Referer` |
 
-**Tokens.** `bgs.` + ASP.NET Core data protection of `{ user id, security stamp, authentication time, expiry }`, one purpose per kind (access, refresh, two-factor ticket, so one cannot
-stand for another); nothing is stored. Lifetimes: access `Accounts:SessionTokenLifetime` (15 min), refresh `Accounts:SessionRefreshLifetime` (14 days; a refresh issues a new one, so an active
-client stays signed in), two-factor ticket 5 minutes. Send `Authorization: Bearer <accessToken>`; renew with `refresh` before `expiresAt`; keep the tokens in memory (or a secure store),
-never in a URL. In a cluster every node needs the shared data protection key ring ([high availability](high-availability.md)).
+The anonymous account flows work for a client without a session, from this server's origin (or a listed one), with an API key refused (`403`) and **no cookie ever set** for an HTTP caller:
 
-**Revocation.** Every use re-reads the account: deleted, awaiting approval, locked out, or a different security stamp means `401`. Changing the password, enabling or resetting two-factor, or
-`sign-out everywhere` change the stamp. When the **current** session itself caused the change (opening the two-factor screen generates the authenticator key; changing the password), the answer carries a
-renewed pair in the headers `X-Session-Access-Token`, `X-Session-Access-Expires`, `X-Session-Refresh-Token`, `X-Session-Refresh-Expires` (exposed to CORS): replace the tokens you hold. Every
-other session of the account ends.
+| Method and route | Notes |
+|---|---|
+| `GET` / `POST /account/register` | `404` when registration is closed. Answers `model.session` (the new account's tokens) when it can sign in at once, nothing when a confirmation or approval is pending. Rate limited per client address and once per email address per ten minutes |
+| `GET /account/confirmemail?userId=&code=[&email=]` | the link of the mail; a made-up link is the same harmless answer (`succeeded: false`) |
+| `POST /account/resend-confirmation` | `{ identifier }` (user name or email): mails a new link to an unconfirmed account, once per account per ten minutes and per client; the answer is the same whether or not an account matches |
+| `GET` / `POST /account/forgotpassword`, `GET` / `POST /account/resetpassword` | as the screens: the same answer whoever the name belongs to; an unknown user and a bad code are the same refusal |
+
+Emails link to the screens (`/account/confirmemail`, `/account/resetpassword`). When the screens are off (`Frontend:Mvc=false`), or `Frontend:SpaLinks=true`, they link to the application
+instead: `{PublicUrl}{SpaBasePath}/confirm-email?userId=&code=[&email=]`, `.../reset-password?userId=&code=` and `.../sign-in` (the cookie's login path), with the same query values; the token is never dropped
+(the application posts `code` back unchanged).
+
+**Tokens.** `bgs.` + ASP.NET Core data protection of `{ user id, security stamp, authentication time, expiry }`, one purpose per kind (access, refresh, two-factor ticket, exchange, so one cannot
+stand for another); nothing is stored, so a token cannot be revoked one by one. Lifetimes: access `Accounts:SessionTokenLifetime` (15 min), refresh `Accounts:SessionRefreshLifetime` (14 days; a refresh
+issues a new one, so an active client stays signed in), but never past `Accounts:SessionMaxLifetime` (30 days) after the sign-in; two-factor ticket 5 minutes, exchange token 60 seconds. Send
+`Authorization: Bearer <accessToken>`; renew with `refresh` before `expiresAt`; keep the tokens in memory (or a secure store) and never put them in a URL (only the 60-second exchange token travels
+in a fragment). In a cluster every node needs the shared data protection key ring ([high availability](high-availability.md)).
+
+**Revocation.** Every use re-reads the account: deleted, awaiting approval, or a different security stamp means `401`. A locked-out account (someone guessing its password) keeps the sessions it has, like a
+cookie session; only a sign-in is refused. Changing the password, enabling or resetting two-factor, or `sign-out everywhere` change the stamp. When the **current** token session itself caused the change, the
+answer carries a renewed pair in the headers `X-Session-Access-Token`, `X-Session-Access-Expires`, `X-Session-Refresh-Token`, `X-Session-Refresh-Expires` (exposed to CORS; only for the caller's own
+account): replace the tokens you hold. Every other session of the account ends.
+
+**Confirmations a stolen token cannot skip.** Over `/api/ui` (token or cookie with the header), the two-factor setup key and QR code are only answered to `GET /account/twofactor` with the password in
+`X-Confirm-Password` (without it the screen's model has none, and nothing is generated); turning two-factor on and creating an API key need `password` in the body. The web screens' forms are unchanged.
 
 **Hosting.** `Cors:AllowedOrigins` and `Frontend:*` are in [configuration](configuration.md#single-page-applications).
 

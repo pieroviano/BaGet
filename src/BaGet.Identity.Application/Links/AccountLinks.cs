@@ -27,6 +27,8 @@ public static class AccountLinks
     {
         if (site == null) throw new ArgumentNullException(nameof(site));
 
+        path = SpaPath(site.Value.SpaLinkBase, path);
+
         if (!EmailLinkPolicy.TryParsePublicUrl(site.Value.PublicUrl, out var root))
         {
             throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
@@ -37,6 +39,43 @@ public static class AccountLinks
             query.Where(q => q.Value != null).Select(q => Uri.EscapeDataString(q.Name) + "=" + Uri.EscapeDataString(q.Value!)));
 
         return root?.GetLeftPart(UriPartial.Path).TrimEnd('/') + path + (queryString.Length == 0 ? string.Empty : "?" + queryString);
+    }
+
+    /// <summary>The route of the single-page application that stands for <paramref name="path"/> (<c>Frontend:SpaLinks</c>); the screen's path when it serves emails.</summary>
+    public static string SpaPath(string? spaLinkBase, string path)
+    {
+        if (spaLinkBase == null) return path;
+
+        var route = path switch
+        {
+            ConfirmEmailPath => "confirm-email",
+            ResetPasswordPath => "reset-password",
+            "/account/login" => "sign-in",
+            _ => null,
+        };
+
+        return route == null ? path : spaLinkBase.TrimEnd('/') + "/" + route;
+    }
+
+    /// <summary>
+    /// The absolute link to a screen for an email when emails link to the single-page application: its route under the base path with the screen's route values
+    /// as the query. Null when the screen has no route there (the caller builds the screen's own link).
+    /// </summary>
+    public static string? ForScreen(IOptions<SiteOptions> site, Screens.ScreenRef screen, object values)
+    {
+        if (site.Value.SpaLinkBase == null) return null;
+
+        var path = screen.Equals(Screens.ScreenCatalog.AccountResetPassword) ? ResetPasswordPath
+            : screen.Equals(Screens.ScreenCatalog.AccountConfirmEmail) ? ConfirmEmailPath
+            : screen.Equals(Screens.ScreenCatalog.AccountLogin) ? "/account/login"
+            : null;
+        if (path == null) return null;
+
+        var query = values.GetType().GetProperties()
+            .Select(p => (Name: p.Name, Value: p.GetValue(values)?.ToString()))
+            .ToArray();
+
+        return Build(site, path, query);
     }
 
     /// <summary>The confirmation link of a new account's address, or (with <paramref name="email"/>) of a change of address.</summary>

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 using static BaGet.Tests.AdminTestSupport;
+using BaGet.Core;
 
 namespace BaGet.Tests;
 
@@ -79,8 +80,15 @@ public class UiApiHostingTests : IDisposable
     {
         var (_, client) = Start();
 
-        using var preflight = await SendAsync(client, HttpMethod.Options, "/api/ui/session", "https://anywhere.example", "POST");
+        using var preflight = await SendAsync(client, HttpMethod.Options, "/api/ui/stats", "https://anywhere.example", "POST");
         using var actual = await SendAsync(client, HttpMethod.Get, "/api/ui/stats", "https://anywhere.example");
+
+        // The endpoints that sign a visitor in are same-origin only without a list: no other page can script them from a visitor's browser.
+        foreach (var path in new[] { "/api/ui/session", "/api/ui/session/refresh", "/api/ui/antiforgery", "/api/ui/account/register", "/api/ui/account/forgotpassword" })
+        {
+            using var sessionPreflight = await SendAsync(client, HttpMethod.Options, path, "https://anywhere.example", "POST");
+            Assert.True(Header(sessionPreflight, "Access-Control-Allow-Origin") == null, path + " allowed another origin");
+        }
 
         Assert.Equal("*", Header(preflight, "Access-Control-Allow-Origin"));
         Assert.Null(Header(preflight, "Access-Control-Allow-Credentials"));
@@ -98,6 +106,15 @@ public class UiApiHostingTests : IDisposable
         using var second = await SendAsync(client, HttpMethod.Get, "/api/ui/stats", "https://other.example.com");
         using var refused = await SendAsync(client, HttpMethod.Options, "/api/ui/session", "https://evil.example", "POST");
         using var refusedActual = await SendAsync(client, HttpMethod.Get, "/api/ui/stats", "https://evil.example");
+
+        // What listing an origin grants: credentialed access to /api/ui only. The protocol routes keep "any origin, no credentials".
+        using var protocol = await SendAsync(client, HttpMethod.Get, "/v3/index.json", "https://spa.example.com");
+        using var protocolPreflight = await SendAsync(client, HttpMethod.Options, "/v3/index.json", "https://spa.example.com", "GET");
+        using var protocolEvil = await SendAsync(client, HttpMethod.Get, "/v3/index.json", "https://evil.example");
+        Assert.Equal("*", Header(protocol, "Access-Control-Allow-Origin"));
+        Assert.Null(Header(protocol, "Access-Control-Allow-Credentials"));
+        Assert.Null(Header(protocolPreflight, "Access-Control-Allow-Credentials"));
+        Assert.Equal("*", Header(protocolEvil, "Access-Control-Allow-Origin"));
 
         Assert.Equal("https://spa.example.com", Header(allowed, "Access-Control-Allow-Origin"));
         Assert.Equal("true", Header(allowed, "Access-Control-Allow-Credentials"));
@@ -238,5 +255,26 @@ public class UiApiHostingTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, terms.StatusCode);
         Assert.Equal(HttpStatusCode.OK, session.StatusCode);
         Assert.Contains("SPA-INDEX", await spa.Content.ReadAsStringAsync(Token), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("not an origin")]
+    [InlineData("https://spa.example.com/app")]
+    public void AnInvalidOriginStopsTheHostAtStartupNotAtTheFirstRequest(string origin)
+    {
+        var failure = Record.Exception(() => Start(new Dictionary<string, string> { { "Cors:AllowedOrigins", origin } }));
+
+        Assert.NotNull(failure);
+        Assert.Contains("Cors:AllowedOrigins", failure!.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheApplicationCannotBeServedWhereAScreenOrAProtocolAlreadyAnswers()
+    {
+        // "npm-packages" is a screen's first segment that no fixed list names: the mapped routes decide.
+        var failure = Record.Exception(() => Start(new Dictionary<string, string> { { "Frontend:SpaPath", _spa }, { "Frontend:SpaBasePath", "/npm-packages" } }));
+
+        Assert.NotNull(failure);
+        Assert.Contains("npm-packages", failure!.ToString(), StringComparison.Ordinal);
     }
 }

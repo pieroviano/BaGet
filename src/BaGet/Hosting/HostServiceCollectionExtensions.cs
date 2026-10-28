@@ -62,7 +62,10 @@ internal static class HostServiceCollectionExtensions
         if (configuration.ReadFrontendOptions().Mvc) services.AddBaGetFrontEnd();
         else services.RemoveBaGetFrontEnd();
 
+        // A wrong origin stops the start here, not at the first request.
+        ConfigureBaGetOptions.AllowedOrigins(configuration);
         services.Configure<CorsSettings>(configuration.GetSection(nameof(BaGetOptions.Cors)));
+        services.Configure<FrontendOptions>(configuration.GetSection(nameof(BaGetOptions.Frontend)));
         services.AddBaGetAccounts(configuration);
 
         // Cluster mode (Ha:Enabled): Redis, cluster-wide leases and the data protection keys in the database. After the BaGet

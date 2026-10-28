@@ -11,4 +11,7 @@ public enum SessionTokenKind
 
     /// <summary>Proves the password step of a sign-in with two-factor authentication; only completes it with a code.</summary>
     TwoFactor,
+
+    /// <summary>Handed to the browser in the URL fragment after the external provider's sign-in and exchanged at <c>POST /api/ui/session/exchange</c> within a minute: keeps the real tokens out of URLs.</summary>
+    Exchange,
 }

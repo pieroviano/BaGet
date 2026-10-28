@@ -86,9 +86,9 @@ public class UiApiAccountTests : IDisposable
     }
 
     // The address of every screen-only twin action, as (method, path) with the route parameters filled in.
-    private static List<(string Method, string Path)> ScreenOnlyTwins(BaGetApplication app)
+    private static List<(string Method, string Path, bool OpenToAnonymous)> ScreenOnlyTwins(BaGetApplication app)
     {
-        var twins = new List<(string, string)>();
+        var twins = new List<(string, string, bool)>();
 
         foreach (var action in app.Services.GetRequiredService<IActionDescriptorCollectionProvider>().ActionDescriptors.Items.OfType<ControllerActionDescriptor>())
         {
@@ -97,7 +97,7 @@ public class UiApiAccountTests : IDisposable
             var path = "/" + Regex.Replace(action.AttributeRouteInfo!.Template!, @"\{(\*)?repo[^}]*\}", "default");
             path = Regex.Replace(path, @"\{[^}]+\}", "1");
             var methods = action.ActionConstraints?.OfType<HttpMethodActionConstraint>().SelectMany(c => c.HttpMethods).Distinct().ToArray() ?? new[] { "GET" };
-            foreach (var method in methods) twins.Add((method, path));
+            foreach (var method in methods) twins.Add((method, path, action.MethodInfo.GetCustomAttributes(typeof(BaGet.Frontend.Mvc.Attributes.AnonymousSessionEndpointAttribute), true).Length > 0));
         }
 
         return twins;
@@ -127,10 +127,13 @@ public class UiApiAccountTests : IDisposable
         Assert.Contains(twins, t => t.Path.StartsWith("/api/ui/packages/1/manage", StringComparison.Ordinal));
 
         var failures = new List<string>();
-        foreach (var (method, path) in twins)
+        foreach (var (method, path, open) in twins)
         {
             foreach (var (who, browser, key) in new[] { ("cookie", alice, (string?)null), ("anonymous", anonymous, null), ("user key", anonymous, aliceKey), ("admin key", anonymous, adminKey) })
             {
+                // Registration, confirm email, forgot and reset password are open to a caller without a session (and without a key): see UiApiAnonymousFlowTests.
+                if (open && key == null) continue;
+
                 var answer = await SendAsync(browser, new HttpMethod(method), path, key);
                 if (answer.Status != HttpStatusCode.Forbidden || answer.Json?["status"]?.GetValue<string>() != "Forbidden"
                     || answer.Json["errors"]?[""]?[0]?.GetValue<string>().Contains("web screen", StringComparison.Ordinal) != true)

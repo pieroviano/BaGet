@@ -1,4 +1,8 @@
+using System;
+using System.Linq;
 using System.Threading.Tasks;
+using BaGet.Frontend.Mvc.Attributes;
+using Microsoft.Extensions.Options;
 using BaGet.Core;
 using BaGet.Frontend.Security;
 using BaGet.Identity.Application.Screens;
@@ -32,6 +36,15 @@ public sealed class UiApiSecurityFilter : IAsyncAuthorizationFilter
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var http = context.HttpContext;
+        http.Items[AccountConfirmation.OverHttpItem] = true;
+
+        var endpoint = context.ActionDescriptor.EndpointMetadata.OfType<AnonymousSessionEndpointAttribute>().LastOrDefault();
+        if (endpoint != null && !OriginAllowed(http, endpoint))
+        {
+            context.Result = new UiApiResult(ScreenResult<object>.Forbidden(
+                "A request from another origin cannot use this endpoint: serve the application from this server's origin, or list its origin in Cors:AllowedOrigins."));
+            return;
+        }
 
         if (UiApiCaller.HasBasicCredentials(http.Request))
         {
@@ -45,6 +58,13 @@ public sealed class UiApiSecurityFilter : IAsyncAuthorizationFilter
         {
             var authenticator = http.RequestServices.GetService<SessionAuthenticator>();
             var session = authenticator == null ? null : await authenticator.AuthenticateAsync(SessionTokenKind.Access, sessionToken);
+            if (session == null && endpoint != null)
+            {
+                // The endpoints that give a session out: an expired header must not stop a refresh or a sign-in.
+                await AnonymousAsync(context, endpoint);
+                return;
+            }
+
             if (session == null)
             {
                 context.Result = new UiApiResult(ScreenResult<object>.SignIn("The session token has expired or is not valid: refresh it or sign in again."));
@@ -60,7 +80,7 @@ public sealed class UiApiSecurityFilter : IAsyncAuthorizationFilter
         {
             if (await TryCookieSessionAsync(http)) return;
 
-            UiApiCaller.SetAnonymous(http);
+            await AnonymousAsync(context, endpoint);
             return;
         }
 
@@ -73,6 +93,50 @@ public sealed class UiApiSecurityFilter : IAsyncAuthorizationFilter
         }
 
         UiApiCaller.SetKey(http, key);
+    }
+
+    // No credential: anonymous. An endpoint that signs a visitor in with the cookie also needs the antiforgery token of an anonymous visitor (no login CSRF).
+    private static async Task AnonymousAsync(AuthorizationFilterContext context, AnonymousSessionEndpointAttribute? endpoint)
+    {
+        var http = context.HttpContext;
+        UiApiCaller.SetAnonymous(http);
+
+        if (endpoint is { RequireAntiforgery: true } && !await IsAntiforgeryValidAsync(http))
+        {
+            context.Result = new UiApiResult(ScreenResult<object>.Forbidden("A valid antiforgery token is required: send the token of GET /api/ui/antiforgery in the X-XSRF-TOKEN header."));
+        }
+    }
+
+    private static async Task<bool> IsAntiforgeryValidAsync(Microsoft.AspNetCore.Http.HttpContext http)
+    {
+        var antiforgery = http.RequestServices.GetService<IAntiforgery>();
+        if (antiforgery == null || string.IsNullOrEmpty(http.Request.Headers[UiApiCaller.AntiforgeryHeader].ToString())) return false;
+
+        try
+        {
+            await antiforgery.ValidateRequestAsync(http);
+
+            return true;
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return false;
+        }
+    }
+
+    // A browser sends Origin on a cross-origin request and on every POST; a request without it (a script, a navigation) is not a cross-origin browser call.
+    private static bool OriginAllowed(Microsoft.AspNetCore.Http.HttpContext http, AnonymousSessionEndpointAttribute endpoint)
+    {
+        var origin = http.Request.Headers.Origin.ToString();
+        if (string.IsNullOrEmpty(origin)) return true;
+
+        var own = http.Request.Scheme + "://" + http.Request.Host;
+        if (string.Equals(origin.TrimEnd('/'), own, StringComparison.OrdinalIgnoreCase)) return true;
+        if (endpoint.SameOriginOnly) return false;
+
+        var listed = SessionReturnUrls.Origins(http.RequestServices.GetService<IOptions<CorsSettings>>()?.Value.AllowedOrigins);
+
+        return listed.Any(allowed => string.Equals(allowed, origin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase));
     }
 
     // The cookie session, accepted only together with a valid antiforgery token in the header (for every method).

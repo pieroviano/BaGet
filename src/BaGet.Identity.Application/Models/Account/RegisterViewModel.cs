@@ -11,4 +11,7 @@ public sealed class RegisterViewModel : RegisterForm
 
     /// <summary>Whether the screen asks for an email address.</summary>
     public bool EmailRequired { get; set; }
+
+    /// <summary>Over <c>/api/ui</c> only: the tokens of the new account when it can sign in at once (no cookie is set for an HTTP caller). Null on the screen.</summary>
+    public Session.SessionModel? Session { get; set; }
 }

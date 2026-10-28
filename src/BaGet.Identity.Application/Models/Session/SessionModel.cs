@@ -29,6 +29,12 @@ public class SessionModel
     /// <summary>When the ticket stops being accepted (UTC).</summary>
     public DateTime? TwoFactorTicketExpiresAt { get; set; }
 
+    /// <summary>External sign-in only: a single-use-in-practice token (60 seconds) to exchange for the real ones at <c>POST /api/ui/session/exchange</c>.</summary>
+    public string? ExchangeToken { get; set; }
+
+    /// <summary>When the exchange token stops being accepted (UTC).</summary>
+    public DateTime? ExchangeExpiresAt { get; set; }
+
     /// <summary>Something to tell the user when there are no tokens yet (external sign-in: the account was created and awaits approval or a confirmed email address).</summary>
     public string? Notice { get; set; }
 }

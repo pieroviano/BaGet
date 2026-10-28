@@ -108,7 +108,10 @@ internal static class HostPipelineExtensions
         // Before authentication: /r/{repo}/ selects the repository every later query is filtered by.
         app.UseRepositoryResolution();
 
-        app.UseCors(ConfigureBaGetOptions.CorsPolicy);
+        // /api/ui may be called with credentials from the listed origins only; everything else keeps the no-credentials policy.
+        app.UseWhen(context => IsUiSession(context.Request.Path), branch => branch.UseCors(ConfigureBaGetOptions.UiSessionCorsPolicy));
+        app.UseWhen(context => IsUi(context.Request.Path) && !IsUiSession(context.Request.Path), branch => branch.UseCors(ConfigureBaGetOptions.UiCorsPolicy));
+        app.UseWhen(context => !IsUi(context.Request.Path), branch => branch.UseCors(ConfigureBaGetOptions.CorsPolicy));
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseOperationCancelledMiddleware();
@@ -123,6 +126,11 @@ internal static class HostPipelineExtensions
 
         return app;
     }
+
+    private static bool IsUi(PathString path) => path.StartsWithSegments("/api/ui");
+
+    private static bool IsUiSession(PathString path)
+        => path.StartsWithSegments("/api/ui/session") || path.StartsWithSegments("/api/ui/antiforgery") || path.StartsWithSegments("/api/ui/account");
 
     /// <summary>
     /// Warning for a server error or an unhandled exception, Debug for static files (no endpoint matched,

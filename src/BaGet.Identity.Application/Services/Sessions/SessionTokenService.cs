@@ -21,6 +21,9 @@ public sealed class SessionTokenService
     /// <summary>How long the password step of a two-factor sign-in stays valid.</summary>
     public static readonly TimeSpan TwoFactorLifetime = TimeSpan.FromMinutes(5);
 
+    /// <summary>How long the exchange token of an external sign-in stays valid.</summary>
+    public static readonly TimeSpan ExchangeLifetime = TimeSpan.FromSeconds(60);
+
     private const string Purpose = "BaGet.Session.Token.v1";
     private const int MaxLength = 4 * 1024;
 
@@ -52,6 +55,7 @@ public sealed class SessionTokenService
         {
             SessionTokenKind.Access => AtLeast(accounts.SessionTokenLifetime, TimeSpan.FromSeconds(10)),
             SessionTokenKind.Refresh => AtLeast(accounts.SessionRefreshLifetime, TimeSpan.FromMinutes(1)),
+            SessionTokenKind.Exchange => ExchangeLifetime,
             _ => TwoFactorLifetime,
         };
     }
@@ -64,6 +68,13 @@ public sealed class SessionTokenService
         if (_protection == null) throw new InvalidOperationException("Session tokens need ASP.NET Core data protection, which this host does not provide.");
 
         var expires = DateTime.SpecifyKind(_time.UtcNow, DateTimeKind.Utc) + LifetimeOf(kind);
+
+        // However often it is refreshed, a session ends SessionMaxLifetime after the sign-in.
+        if (kind is SessionTokenKind.Access or SessionTokenKind.Refresh)
+        {
+            var end = DateTime.SpecifyKind(authenticatedAt, DateTimeKind.Utc) + AtLeast(_options.Value.SessionMaxLifetime, TimeSpan.FromMinutes(1));
+            if (end < expires) expires = end;
+        }
         var payload = new SessionTokenPayload
         {
             UserId = userId,

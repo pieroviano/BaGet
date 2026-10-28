@@ -125,7 +125,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Capability | Reached by | UI | Gate |
 |---|---|---|---|
 | Register, confirm email, sign in (password, 2FA, recovery code, external) | pages | Account pages | anonymous |
-| Sign in for a single-page application (password, 2FA ticket + code or recovery code, refresh, sign out, external provider, antiforgery token for the cookie) | REST (`/api/ui/session`, `/api/ui/antiforgery`) | the sign-in pages (`Account/Login`, `Account/LoginWith2fa`, `Account/LoginWithRecoveryCode`) | anonymous; same lockout, approval and email rules |
+| Sign in for a single-page application (password, 2FA ticket + code or recovery code, refresh, exchange, sign out, external provider, cookie sign-in and sign-out, antiforgery token, register / resend confirmation / forgot / reset / confirm without a session) | REST (`/api/ui/session`, `/api/ui/antiforgery`) | the sign-in pages (`Account/Login`, `Account/LoginWith2fa`, `Account/LoginWithRecoveryCode`) | anonymous; same lockout, approval and email rules |
 | Forgot / reset password | pages | ForgotPassword, ResetPassword | anonymous |
 | Change password / email, delete account | service | Account Settings (`AccountSettings/Settings`) | signed in + Password |
 | Two-factor: enable, disable, reset | service | TwoFactor (`AccountSettings/TwoFactor`) | signed in + Password |

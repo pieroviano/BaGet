@@ -97,14 +97,43 @@ public sealed class ExternalSignInUseCase
     /// The provider has signed the user in. The first time, an account is created for them: the provider is the gate, so this does not
     /// depend on <c>AllowRegistration</c>.
     /// </summary>
-    public async Task<ScreenResult<LoginViewModel>> CompleteSignInAsync(string? returnUrl, CancellationToken cancellationToken)
+    public Task<ScreenResult<LoginViewModel>> CompleteSignInAsync(string? returnUrl, CancellationToken cancellationToken)
+        => CompleteCoreAsync(returnUrl, cookie: true, cancellationToken);
+
+    /// <summary>The account the last <see cref="CompleteForSessionAsync"/> signed in (or created), or null.</summary>
+    internal BaGetUser? SignedInUser { get; private set; }
+
+    /// <summary>
+    /// The same decision as <see cref="CompleteSignInAsync"/> for a client that holds tokens: no cookie is set, so an unrelated cookie session of the browser
+    /// is left alone. A success is <see cref="ScreenStatus.Next"/> with the account in <see cref="SignedInUser"/>; the second factor is the session use case's.
+    /// </summary>
+    internal Task<ScreenResult<LoginViewModel>> CompleteForSessionAsync(CancellationToken cancellationToken)
+        => CompleteCoreAsync(null, cookie: false, cancellationToken);
+
+    // What ExternalLoginSignInAsync decides, without writing a cookie.
+    private async Task<SignInResult> CheckExternalAsync(ExternalLoginInfo info)
+    {
+        var existing = await _users.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+        if (existing == null) return SignInResult.Failed;
+        if (await _users.IsLockedOutAsync(existing)) return SignInResult.LockedOut;
+        if (!await _signIn.CanSignInAsync(existing)) return SignInResult.NotAllowed;
+
+        SignedInUser = existing;
+
+        return SignInResult.Success;
+    }
+
+    private async Task<ScreenResult<LoginViewModel>> CompleteCoreAsync(string? returnUrl, bool cookie, CancellationToken cancellationToken)
     {
         var model = _signInScreens.Describe(new LoginViewModel { ReturnUrl = returnUrl });
+        SignedInUser = null;
 
         var info = await _signIn.GetExternalLoginInfoAsync();
         if (info == null) return Refuse(model, "The external sign-in failed.");
 
-        var result = await _signIn.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+        var result = cookie
+            ? await _signIn.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false)
+            : await CheckExternalAsync(info);
         if (result.Succeeded)
         {
             return ScreenResult<LoginViewModel>.GoTo(ScreenNext.Local(LocalUrls.Target(returnUrl)));
@@ -188,7 +217,8 @@ public sealed class ExternalSignInUseCase
             return ScreenResult<LoginViewModel>.Ok(model);
         }
 
-        await _signIn.SignInAsync(user, isPersistent: false);
+        SignedInUser = user;
+        if (cookie) await _signIn.SignInAsync(user, isPersistent: false);
 
         return ScreenResult<LoginViewModel>.GoTo(ScreenNext.Local(LocalUrls.Target(returnUrl)));
     }

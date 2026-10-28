@@ -13,7 +13,7 @@ namespace BaGet.Identity.Controllers.UI;
 /// <summary>
 /// The JSON twin of the sign-in side of the account screens (<c>/api/ui/account/...</c>): sign in, the two second-factor steps, sign out,
 /// registration, email confirmation, the password reset pair and the re-authentication screen. <c>AccountController</c> calls it in process
-/// and renders the views. <b>Interactive session only</b>: signing in sets the same session cookie as the page (same lockout, approval, two-factor and
+/// and renders the views. Registration, the confirmation link, forgot and reset password are <see cref="AnonymousSessionEndpointAttribute"/>s: open to an anonymous HTTP caller from this server's origin (or a listed one), who gets no cookie (registration answers the new account's tokens, or nothing). <b>Interactive session only</b> for the rest: signing in sets the same session cookie as the page (same lockout, approval, two-factor and
 /// return-URL rules), so over HTTP an API key and an anonymous caller get 403 "use the web screen" (a client without a cookie signs in at <c>POST /api/ui/session</c>); the view controller calls the twin in process.
 /// The external provider's challenge and callback are browser-only and have no twin.
 /// </summary>
@@ -71,43 +71,43 @@ public sealed class AccountUiApiController : AccountUiApiControllerBase
     // ----- register
 
     /// <summary>The registration form (404 while <c>Accounts:AllowRegistration</c> is off).</summary>
-    [HttpGet("register"), UiApi("Account", "Register")]
+    [HttpGet("register"), UiApi("Account", "Register"), AnonymousSessionEndpoint]
     public ActionResult<ScreenResult<RegisterViewModel>> Register(string? returnUrl)
         => Respond(UseCase<RegistrationUseCase>().ShowRegister(returnUrl));
 
     /// <summary>Creates an account (and signs it in when no confirmation or approval is pending).</summary>
-    [HttpPost("register"), UiApi("Account", "Register")]
+    [HttpPost("register"), UiApi("Account", "Register"), AnonymousSessionEndpoint]
     public async Task<ActionResult<ScreenResult<RegisterViewModel>>> RegisterPost([FromBody] RegisterForm? form, CancellationToken cancellationToken)
         => Respond(await UseCase<RegistrationUseCase>().RegisterAsync(form, cancellationToken));
 
     // ----- confirmemail
 
     /// <summary>The target of the links in confirmation emails (a GET that confirms the address, like the page).</summary>
-    [HttpGet("confirmemail"), UiApi("Account", "ConfirmEmail"), RequiresEmail]
+    [HttpGet("confirmemail"), UiApi("Account", "ConfirmEmail"), RequiresEmail, AnonymousSessionEndpoint]
     public async Task<ActionResult<ScreenResult<ConfirmEmailViewModel>>> ConfirmEmail(string? userId, string? code, string? email)
         => Respond(await UseCase<RegistrationUseCase>().ConfirmEmailAsync(User, userId, code, email));
 
     // ----- forgotpassword
 
     /// <summary>The "forgot password" form.</summary>
-    [HttpGet("forgotpassword"), UiApi("Account", "ForgotPassword"), RequiresEmail]
+    [HttpGet("forgotpassword"), UiApi("Account", "ForgotPassword"), RequiresEmail, AnonymousSessionEndpoint]
     public ActionResult<ScreenResult<ForgotPasswordViewModel>> ForgotPassword()
         => Respond(UseCase<RegistrationUseCase>().ShowForgotPassword());
 
     /// <summary>Asks for a reset link. The answer is the same whether or not an account matches.</summary>
-    [HttpPost("forgotpassword"), UiApi("Account", "ForgotPassword"), RequiresEmail]
+    [HttpPost("forgotpassword"), UiApi("Account", "ForgotPassword"), RequiresEmail, AnonymousSessionEndpoint]
     public async Task<ActionResult<ScreenResult<ForgotPasswordViewModel>>> ForgotPasswordPost([FromBody] ForgotPasswordForm? form)
         => Respond(await UseCase<RegistrationUseCase>().ForgotPasswordAsync(form, HttpContext.Connection.RemoteIpAddress?.ToString()));
 
     // ----- resetpassword
 
     /// <summary>The new-password form behind the link of a reset email.</summary>
-    [HttpGet("resetpassword"), UiApi("Account", "ResetPassword"), RequiresEmail]
+    [HttpGet("resetpassword"), UiApi("Account", "ResetPassword"), RequiresEmail, AnonymousSessionEndpoint]
     public ActionResult<ScreenResult<ResetPasswordViewModel>> ResetPassword(string? userId, string? code)
         => Respond(UseCase<RegistrationUseCase>().ShowResetPassword(userId, code));
 
     /// <summary>Sets the new password from the link; success continues at the sign-in screen.</summary>
-    [HttpPost("resetpassword"), UiApi("Account", "ResetPassword"), RequiresEmail]
+    [HttpPost("resetpassword"), UiApi("Account", "ResetPassword"), RequiresEmail, AnonymousSessionEndpoint]
     public async Task<ActionResult<ScreenResult<ResetPasswordViewModel>>> ResetPasswordPost([FromBody] ResetPasswordForm? form)
         => Respond(await UseCase<RegistrationUseCase>().ResetPasswordAsync(form));
 

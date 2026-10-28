@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
@@ -28,7 +29,12 @@ namespace BaGet;
 internal static class HostFrontendExtensions
 {
     // First path segments that belong to BaGet: a single-page application there would hide their 404s.
-    private static readonly string[] ReservedSegments = { "api", "v3", "v2", "r", "scalar", "openapi", "health", "_content", "admin", "account" };
+    // (The screens' own prefixes are added from the mapped routes when the fallback is mapped: see MapBaGetSpaFallback.)
+    private static readonly string[] ReservedSegments =
+    {
+        "api", "v3", "v2", "r", "scalar", "openapi", "health", "_content", "admin", "account", "packages", "upload", "profiles", "privacy", "terms",
+        "npm", "maven", "symbols", "statistics", "stats", "index", "docker", "scan-artifact", "validation",
+    };
 
     /// <summary>
     /// Takes the screens out of the MVC application: the Razor SDK registers the front-end assemblies the host references as application parts on its
@@ -61,7 +67,7 @@ internal static class HostFrontendExtensions
         var options = configuration.GetSection(nameof(BaGetOptions.Frontend)).Get<FrontendOptions>() ?? new FrontendOptions();
         if (string.IsNullOrWhiteSpace(options.SpaPath)) return options;
 
-        var basePath = NormalizeBasePath(options.SpaBasePath);
+        var basePath = options.NormalizedBasePath();
         var first = basePath.Trim('/').Split('/')[0];
         if (basePath == "/" || Array.Exists(ReservedSegments, segment => string.Equals(segment, first, StringComparison.OrdinalIgnoreCase)))
         {
@@ -115,18 +121,26 @@ internal static class HostFrontendExtensions
         var folder = SpaFolder(options, app.Environment);
         if (folder == null) return app;
 
+        // The first segment of every route BaGet mapped (screens, protocols, APIs): the application cannot live where one of them answers, so the fallback can never
+        // answer index.html for a path an endpoint owns.
+        var owned = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(source => source.Endpoints)
+            .OfType<RouteEndpoint>()
+            .Select(endpoint => endpoint.RoutePattern.PathSegments.FirstOrDefault())
+            .Where(segment => segment != null && segment.Parts.All(part => part is RoutePatternLiteralPart))
+            .Select(segment => ((RoutePatternLiteralPart)segment!.Parts[0]).Content)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var first = options.SpaBasePath.Trim('/').Split('/')[0];
+        if (owned.Contains(first))
+        {
+            throw new InvalidOperationException($"'Frontend:SpaBasePath' ('{options.SpaBasePath}') starts with '{first}', which BaGet already serves: choose a path no route of BaGet starts with.");
+        }
+
         var files = new StaticFileOptions { FileProvider = new PhysicalFileProvider(folder), OnPrepareResponse = NoCacheForIndex };
         app.MapFallbackToFile(options.SpaBasePath, "index.html", files).Add(builder => builder.Metadata.Add(new HttpMethodMetadata(new[] { HttpMethods.Get, HttpMethods.Head })));
         app.MapFallbackToFile(options.SpaBasePath + "/{*path:nonfile}", "index.html", files).Add(builder => builder.Metadata.Add(new HttpMethodMetadata(new[] { HttpMethods.Get, HttpMethods.Head })));
 
         return app;
-    }
-
-    private static string NormalizeBasePath(string? value)
-    {
-        var trimmed = (value ?? string.Empty).Trim().TrimEnd('/');
-
-        return trimmed.Length == 0 ? "/" : trimmed.StartsWith('/') ? trimmed : "/" + trimmed;
     }
 
     private static void NoCacheForIndex(StaticFileResponseContext context)

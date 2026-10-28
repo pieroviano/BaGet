@@ -68,4 +68,11 @@ public class SiteOptions
     /// account's email, so a private feed can turn this off and get initial-letter placeholders.
     /// </summary>
     public bool UseGravatar { get; set; } = true;
+
+    /// <summary>
+    /// Set by the host from <c>Frontend:SpaLinks</c> / <c>Frontend:Mvc</c>: the base path of the single-page application that account emails link to
+    /// (<c>/app</c>), or null for the server-rendered screens. Not a setting.
+    /// </summary>
+    [HiddenSetting]
+    public string? SpaLinkBase { get; set; }
 }

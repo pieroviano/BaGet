@@ -30,6 +30,31 @@ public class ConfigureBaGetOptions
 {
     public const string CorsPolicy = "AllowAll";
 
+    /// <summary>The policy of <c>/api/ui</c>: the listed origins with credentials, or (no list) any origin without.</summary>
+    public const string UiCorsPolicy = "UiApi";
+
+    /// <summary>
+    /// The policy of the endpoints that sign a visitor in or prepare for it (<c>/api/ui/session*</c>, <c>/antiforgery</c>, <c>/account/*</c>): the listed origins with credentials,
+    /// or (no list) no cross-origin access at all, so that no page of another origin can script them from visitors' browsers.
+    /// </summary>
+    public const string UiSessionCorsPolicy = "UiApiSession";
+
+    /// <summary>The origins of <c>Cors:AllowedOrigins</c>; an entry that is not an origin stops startup.</summary>
+    public static IReadOnlyList<string> AllowedOrigins(IConfiguration configuration)
+    {
+        var origins = SessionReturnUrls.Origins(configuration.GetSection(nameof(BaGetOptions.Cors)).Get<CorsSettings>()?.AllowedOrigins);
+
+        foreach (var origin in origins)
+        {
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) || uri.AbsolutePath != "/")
+            {
+                throw new InvalidOperationException($"'Cors:AllowedOrigins' contains '{origin}', which is not an origin such as https://app.example.com.");
+            }
+        }
+
+        return origins;
+    }
+
     /// <summary>
     /// The <see cref="BaGetOptions.AllowedHosts"/> entry that disables host filtering.
     /// </summary>
@@ -60,37 +85,35 @@ public class ConfigureBaGetOptions
 
     public void Configure(CorsOptions options)
     {
-        var origins = SessionReturnUrls.Origins(_configuration.GetSection(nameof(BaGetOptions.Cors)).Get<CorsSettings>()?.AllowedOrigins);
+        var origins = AllowedOrigins(_configuration);
+
+        // Everything but /api/ui: any origin, never with credentials (the protocols authenticate with headers a page has to set itself).
+        options.AddPolicy(
+            CorsPolicy,
+            builder => builder.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .WithExposedHeaders(SessionHeaders.All));
 
         if (origins.Count == 0)
         {
-            // Any origin, never with credentials: the APIs authenticate with headers a page has to set itself.
-            options.AddPolicy(
-                CorsPolicy,
-                builder => builder.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .WithExposedHeaders(SessionHeaders.All));
+            options.AddPolicy(UiCorsPolicy, builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithExposedHeaders(SessionHeaders.All));
+            options.AddPolicy(UiSessionCorsPolicy, builder => builder.SetIsOriginAllowed(_ => false));
 
             return;
         }
 
-        foreach (var origin in origins)
+        // Only the listed origins, and only they may send credentials (the cookie with its antiforgery header), and only on /api/ui.
+        foreach (var name in new[] { UiCorsPolicy, UiSessionCorsPolicy })
         {
-            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) || uri.AbsolutePath != "/")
-            {
-                throw new InvalidOperationException($"'Cors:AllowedOrigins' contains '{origin}', which is not an origin such as https://app.example.com.");
-            }
+            options.AddPolicy(
+                name,
+                builder => builder.WithOrigins(origins.ToArray())
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .WithExposedHeaders(SessionHeaders.All)
+                    .AllowCredentials());
         }
-
-        // Only the listed origins, and only they may send credentials (the cookie with its antiforgery header).
-        options.AddPolicy(
-            CorsPolicy,
-            builder => builder.WithOrigins(origins.ToArray())
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .WithExposedHeaders(SessionHeaders.All)
-                .AllowCredentials());
     }
 
     public void Configure(FormOptions options)

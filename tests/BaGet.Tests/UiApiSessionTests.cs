@@ -76,12 +76,14 @@ public class UiApiSessionTests : IDisposable
         public string? Error => Json?["errors"]?[""]?[0]?.GetValue<string>();
     }
 
-    private static async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? bearer = null, string? key = null, string? xsrf = null)
+    private static async Task<Answer> SendAsync(Browser browser, HttpMethod method, string path, object? body = null, string? bearer = null, string? key = null, string? xsrf = null, string? confirm = null, string? origin = null)
     {
         using var request = new HttpRequestMessage(method, path);
         if (bearer != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
         if (key != null) request.Headers.Add("X-NuGet-ApiKey", key);
         if (xsrf != null) request.Headers.Add("X-XSRF-TOKEN", xsrf);
+        if (confirm != null) request.Headers.Add("X-Confirm-Password", confirm);
+        if (origin != null) request.Headers.Add("Origin", origin);
         if (method != HttpMethod.Get) request.Content = new StringContent(body == null ? "{}" : System.Text.Json.JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
 
         using var response = await browser.SendAsync(request);
@@ -239,7 +241,7 @@ public class UiApiSessionTests : IDisposable
 
     // ----- second factor
 
-    private static string Totp(string base32Key)
+    internal static string Totp(string base32Key)
     {
         const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
         var bits = string.Concat(base32Key.TrimEnd('=').ToUpperInvariant().Select(c => Convert.ToString(alphabet.IndexOf(c), 2).PadLeft(5, '0')));
@@ -253,7 +255,7 @@ public class UiApiSessionTests : IDisposable
         return (number % 1_000_000).ToString("D6");
     }
 
-    private static async Task<(string Key, string[] RecoveryCodes)> EnableTwoFactorAsync(BaGetApplication app, string name)
+    internal static async Task<(string Key, string[] RecoveryCodes)> EnableTwoFactorAsync(BaGetApplication app, string name)
     {
         using var scope = app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
@@ -314,8 +316,10 @@ public class UiApiSessionTests : IDisposable
         Assert.Equal(HttpStatusCode.Forbidden, fifth.Status);
         Assert.Contains("locked", fifth.Error, StringComparison.OrdinalIgnoreCase);
 
-        // Locked out: not even the right code (nor the password) gets in.
-        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/two-factor", new { ticket, code = Totp(key) })).Status);
+        // Locked out: not even the right code (nor the password) gets in, and the answer says why.
+        var afterLock = await SendAsync(browser, HttpMethod.Post, "/api/ui/session/two-factor", new { ticket, code = Totp(key) });
+        Assert.Equal(HttpStatusCode.Forbidden, afterLock.Status);
+        Assert.Contains("locked", afterLock.Error, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(HttpStatusCode.Forbidden, (await SignInAsync(browser, "alice")).Status);
     }
 
@@ -467,7 +471,7 @@ public class UiApiSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task ALockedOutPendingOrDeletedAccountsTokensStopWorking()
+    public async Task APendingOrDeletedAccountsTokensStopWorkingButALockedOutAccountKeepsItsSessionLikeACookie()
     {
         var app = Start();
         foreach (var name in new[] { "locked", "pending", "deleted" }) await CreateUserAsync(app, name);
@@ -484,10 +488,14 @@ public class UiApiSessionTests : IDisposable
             await users.DeleteAsync((await users.FindByNameAsync("deleted"))!);
         }
 
-        foreach (var token in new[] { locked, pending, deleted })
+        foreach (var token in new[] { pending, deleted })
         {
             Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: token)).Status);
         }
+
+        // Guessing someone's password locks the account for sign-ins; it does not end the sessions it has (a cookie session survives too).
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: locked)).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SignInAsync(browser, "locked")).Status);
     }
 
     // ----- where a session token is accepted
@@ -554,17 +562,76 @@ public class UiApiSessionTests : IDisposable
         var wrong = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/twofactor/reset", new { password = "nope" }, bearer: access);
         Assert.Equal(HttpStatusCode.BadRequest, wrong.Status);
 
-        // Showing the screen generated an authenticator key, which changes the security stamp: the session got a renewed pair in the headers.
-        var renewed = wrong.Headers.GetValues(SessionHeaders.AccessToken).Single();
-        Assert.StartsWith(SessionTokenService.Prefix, renewed, StringComparison.Ordinal);
-        Assert.NotEqual(access, renewed);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: access)).Status);
+        // A refusal changes nothing: no key was generated, so no renewal either.
+        Assert.False(wrong.Headers.Contains(SessionHeaders.AccessToken));
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: access)).Status);
 
-        var right = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/twofactor/reset", new { password = Password }, bearer: renewed);
+        var right = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/twofactor/reset", new { password = Password }, bearer: access);
         Assert.Equal(HttpStatusCode.OK, right.Status);
-        Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: right.Headers.GetValues(SessionHeaders.AccessToken).Single())).Status);
+
+        // Resetting the authenticator changes the security stamp: the session that did it got a renewed pair in the headers, the old tokens are void.
+        var renewed = right.Headers.GetValues(SessionHeaders.AccessToken).Single();
+        Assert.StartsWith(SessionTokenService.Prefix, renewed, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: access)).Status);
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/settings", bearer: renewed)).Status);
         var refresh = right.Headers.GetValues(SessionHeaders.RefreshToken).Single();
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/refresh", new { refreshToken = refresh })).Status);
+    }
+
+    [Fact]
+    public async Task TheSetupKeyIsOnlyHandedToASessionThatConfirmedItsPasswordAndEnablingNeedsThePasswordToo()
+    {
+        var app = Start();
+        await CreateUserAsync(app, "alice");
+        var browser = NewBrowser(app);
+        var access = (await SignedInAsync(browser, "alice")).Model!["accessToken"]!.GetValue<string>();
+
+        var plain = await SendAsync(browser, HttpMethod.Get, "/api/ui/account/twofactor", bearer: access);
+        Assert.Equal(HttpStatusCode.OK, plain.Status);
+        Assert.Null(plain.Model!["sharedKey"]);
+        Assert.Null(plain.Model["qrCodeSvg"]);
+        Assert.False(plain.Headers.Contains(SessionHeaders.AccessToken));
+
+        var wrong = await SendAsync(browser, HttpMethod.Get, "/api/ui/account/twofactor", bearer: access, confirm: "nope");
+        Assert.Null(wrong.Model!["sharedKey"]);
+
+        var confirmed = await SendAsync(browser, HttpMethod.Get, "/api/ui/account/twofactor", bearer: access, confirm: Password);
+        var key = confirmed.Model!["sharedKey"]!.GetValue<string>().Replace(" ", string.Empty);
+        Assert.NotNull(confirmed.Model["qrCodeSvg"]);
+        var renewed = confirmed.Headers.GetValues(SessionHeaders.AccessToken).Single();
+
+        // The code alone is not enough, nor a wrong password.
+        var noPassword = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/twofactor/enable", new { code = Totp(key) }, bearer: renewed);
+        var badPassword = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/twofactor/enable", new { code = Totp(key), password = "nope" }, bearer: renewed);
+        Assert.Equal(HttpStatusCode.BadRequest, noPassword.Status);
+        Assert.Equal(HttpStatusCode.BadRequest, badPassword.Status);
+        Assert.False((await FindAsync(app, "alice"))!.TwoFactorEnabled);
+
+        var enabled = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/twofactor/enable", new { code = Totp(key), password = Password }, bearer: renewed);
+        Assert.Equal(HttpStatusCode.OK, enabled.Status);
+        Assert.True((await FindAsync(app, "alice"))!.TwoFactorEnabled);
+        Assert.NotEmpty(enabled.Model!["recoveryCodes"]!.AsArray());
+    }
+
+    [Fact]
+    public async Task AnApiKeyCannotBeMintedBySessionWithoutThePassword()
+    {
+        var app = Start();
+        await CreateUserAsync(app, "alice");
+        var browser = NewBrowser(app);
+        var access = (await SignedInAsync(browser, "alice")).Model!["accessToken"]!.GetValue<string>();
+        var form = new { description = "ci", scopes = new[] { "package:push" }, packageGlobPattern = "*", expiresInDays = 30 };
+        var withPassword = new { description = "ci", scopes = new[] { "package:push" }, packageGlobPattern = "*", expiresInDays = 30, password = Password };
+
+        var without = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/apikeys/create", form, bearer: access);
+        var wrong = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/apikeys/create", new { description = "ci", scopes = new[] { "package:push" }, packageGlobPattern = "*", expiresInDays = 30, password = "nope" }, bearer: access);
+        var with = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/apikeys/create", withPassword, bearer: access);
+
+        Assert.Equal(HttpStatusCode.BadRequest, without.Status);
+        Assert.NotNull(without.Json!["errors"]!["Password"]);
+        Assert.Equal(HttpStatusCode.BadRequest, wrong.Status);
+        Assert.Equal(HttpStatusCode.OK, with.Status);
+        Assert.NotNull(with.Model!["createdKey"]);
     }
 
     [Fact]
@@ -724,19 +791,31 @@ public class UiApiSessionTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Redirect, callback.StatusCode);
         var location = callback.Headers.Location!.ToString();
-        Assert.StartsWith("/app/#access_token=" + Uri.EscapeDataString(SessionTokenService.Prefix), location, StringComparison.Ordinal);
-        Assert.Contains("&refresh_token=", location, StringComparison.Ordinal);
+        Assert.StartsWith("/app/#exchange_token=" + Uri.EscapeDataString(SessionTokenService.Prefix), location, StringComparison.Ordinal);
         Assert.Contains("&user_name=alice", location, StringComparison.Ordinal);
+        Assert.DoesNotContain("access_token", location, StringComparison.Ordinal);
+        Assert.DoesNotContain("refresh_token", location, StringComparison.Ordinal);
         Assert.DoesNotContain("?", location.Substring(0, location.IndexOf('#')), StringComparison.Ordinal);
         Assert.Contains("no-store", callback.Headers.CacheControl!.ToString(), StringComparison.Ordinal);
 
         // The page's cookie was not kept.
         Assert.DoesNotContain("account/settings", await browser.GetPageAsync(""), StringComparison.Ordinal);
 
-        // And the token works.
+        // The exchange token is turned into the session within a minute, and is worth nothing as a credential.
         var query = System.Web.HttpUtility.ParseQueryString(location.Substring(location.IndexOf('#') + 1));
-        var answer = await SendAsync(browser, HttpMethod.Get, "/api/ui/account/apikeys", bearer: query["access_token"]);
+        var exchange = query["exchange_token"]!;
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Get, "/api/ui/account/apikeys", bearer: exchange)).Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/refresh", new { refreshToken = exchange })).Status);
+
+        var exchanged = await SendAsync(browser, HttpMethod.Post, "/api/ui/session/exchange", new { exchangeToken = exchange });
+        Assert.Equal(HttpStatusCode.OK, exchanged.Status);
+        var answer = await SendAsync(browser, HttpMethod.Get, "/api/ui/account/apikeys", bearer: exchanged.Model!["accessToken"]!.GetValue<string>());
         Assert.Equal(HttpStatusCode.OK, answer.Status);
+
+        // A session token is not an exchange token, and the exchange token expires after a minute.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/exchange", new { exchangeToken = exchanged.Model["accessToken"]!.GetValue<string>() })).Status);
+        _clock.Now = _clock.Now.AddSeconds(61);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/exchange", new { exchangeToken = exchange })).Status);
     }
 
     [Fact]
@@ -754,8 +833,11 @@ public class UiApiSessionTests : IDisposable
 
         using (await browser.GetAsync("test/external?sub=s1&email=alice%40example.com&name=alice&verified=true")) { }
         using var second = await browser.GetAsync("api/ui/session/external-callback?returnUrl=%2Fapp%2F");
-        Assert.Contains("#two_factor_ticket=", second.Headers.Location!.ToString(), StringComparison.Ordinal);
+        var exchangeToken = System.Web.HttpUtility.ParseQueryString(second.Headers.Location!.ToString().Split('#')[1])["exchange_token"]!;
         Assert.DoesNotContain("access_token", second.Headers.Location.ToString(), StringComparison.Ordinal);
+        var ticket = await SendAsync(browser, HttpMethod.Post, "/api/ui/session/exchange", new { exchangeToken });
+        Assert.True(ticket.Model!["twoFactorRequired"]!.GetValue<bool>());
+        Assert.Null(ticket.Model["accessToken"]);
 
         await UpdateUserAsync(app, "alice", (_, user) => user.PendingApproval = true);
         using (await browser.GetAsync("test/external?sub=s1&email=alice%40example.com&name=alice&verified=true")) { }

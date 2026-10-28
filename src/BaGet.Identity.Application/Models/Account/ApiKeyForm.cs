@@ -7,6 +7,9 @@ namespace BaGet.Identity.Application.Models.Account;
 /// <summary>What the new-key form posts (and the body of <c>POST /api/ui/account/apikeys</c>).</summary>
 public class ApiKeyForm
 {
+    /// <summary>The password, asked again. Needed over <c>/api/ui</c> (a session token or the cookie with an antiforgery header); the screen's form does not post it.</summary>
+    public string? Password { get; set; }
+
     /// <summary>What the key is for.</summary>
     [StringLength(AbstractContext<Microsoft.EntityFrameworkCore.DbContext>.MaxApiKeyDescriptionLength)]
     public string? Description { get; set; }

@@ -15,13 +15,14 @@ public static class SessionReturnUrls
     /// <param name="returnUrl">The address the application asked to return to.</param>
     /// <param name="requestOrigin">This server's origin as the request reached it (<c>https://baget.example.com</c>).</param>
     /// <param name="allowedOrigins">The operator's list of origins (see <see cref="Origins"/>).</param>
-    public static bool IsAllowed(string? returnUrl, string requestOrigin, IEnumerable<string> allowedOrigins)
+    /// <param name="spaBasePath">The path of the single-page application (<c>/app</c>): a same-origin address must lie under it (<c>/</c> allows any path).</param>
+    public static bool IsAllowed(string? returnUrl, string requestOrigin, IEnumerable<string> allowedOrigins, string spaBasePath = "/")
     {
         if (string.IsNullOrWhiteSpace(returnUrl) || returnUrl.Length > 2048) return false;
         if (returnUrl.Any(c => char.IsControl(c) || c == '\\' || c == '#')) return false;
 
         // A path of this server ("/app/"), but not "//host" or "/\host", which a browser reads as another host.
-        if (returnUrl[0] == '/') return returnUrl.Length == 1 || (returnUrl[1] != '/' && returnUrl[1] != '\\');
+        if (returnUrl[0] == '/') return (returnUrl.Length == 1 || (returnUrl[1] != '/' && returnUrl[1] != '\\')) && UnderBase(returnUrl, spaBasePath);
 
         if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri)) return false;
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return false;
@@ -29,7 +30,7 @@ public static class SessionReturnUrls
 
         var origin = Normalize(uri.GetLeftPart(UriPartial.Authority));
 
-        return string.Equals(origin, Normalize(requestOrigin), StringComparison.OrdinalIgnoreCase)
+        return (string.Equals(origin, Normalize(requestOrigin), StringComparison.OrdinalIgnoreCase) && UnderBase(uri.PathAndQuery, spaBasePath))
                || allowedOrigins.Any(allowed => string.Equals(origin, Normalize(allowed), StringComparison.OrdinalIgnoreCase));
     }
 
@@ -39,6 +40,16 @@ public static class SessionReturnUrls
             .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(Normalize)
             .ToList();
+
+    // "/app" admits "/app", "/app/", "/app/x" and "/app?x", not "/application" or "/other"; the root admits everything.
+    private static bool UnderBase(string pathAndQuery, string spaBasePath)
+    {
+        var path = pathAndQuery.Split('?')[0];
+        var root = (spaBasePath ?? "/").Trim().TrimEnd('/');
+        if (root.Length == 0) return true;
+
+        return string.Equals(path, root, StringComparison.OrdinalIgnoreCase) || path.StartsWith(root + "/", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static string Normalize(string origin) => origin.Trim().TrimEnd('/');
 }

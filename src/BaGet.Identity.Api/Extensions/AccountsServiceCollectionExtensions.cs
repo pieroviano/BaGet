@@ -71,6 +71,11 @@ public static class AccountsServiceCollectionExtensions
         services.TryAddScoped<ExternalSignInUseCase>();
         services.TryAddScoped<AccountSettingsUseCase>();
         services.TryAddScoped<TwoFactorUseCase>();
+
+        // Emails link to the single-page application's routes when the screens are off (or Frontend:SpaLinks): the sign-in page of the cookie is then the application's.
+        var frontend = configuration.GetSection(nameof(BaGetOptions.Frontend)).Get<FrontendOptions>() ?? new FrontendOptions();
+        var spaLinkBase = frontend.EmailLinkBase;
+        services.PostConfigure<SiteOptions>(site => site.SpaLinkBase = spaLinkBase);
         services.TryAddScoped<SessionTokenService>();
         services.TryAddScoped<SessionAuthenticator>();
         services.TryAddScoped<SessionUseCase>();
@@ -137,9 +142,9 @@ public static class AccountsServiceCollectionExtensions
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie?.Configure(cookie =>
         {
-            cookie.LoginPath = "/account/login";
-            cookie.LogoutPath = "/account/logout";
-            cookie.AccessDeniedPath = "/account/login";
+            cookie.LoginPath = spaLinkBase == null ? "/account/login" : spaLinkBase + "/sign-in";
+            cookie.LogoutPath = spaLinkBase == null ? "/account/logout" : spaLinkBase + "/sign-in";
+            cookie.AccessDeniedPath = spaLinkBase == null ? "/account/login" : spaLinkBase + "/sign-in";
         }));
 
         if (options.OpenIdConnect.IsConfigured)

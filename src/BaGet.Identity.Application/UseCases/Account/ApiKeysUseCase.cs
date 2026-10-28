@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Security;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,6 +86,17 @@ public sealed class ApiKeysUseCase
         if (form != null && model.Scopes.Count == 0)
         {
             ScreenValidator.With(errors, nameof(ApiKeyForm.Scopes), "Choose at least one scope.");
+        }
+
+        // Over /api/ui a stolen token must not mint long-lived keys: asks the password again (the screen's own form is unchanged).
+        var http = _services.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?.HttpContext;
+        if (errors.Count == 0 && http != null && AccountConfirmation.IsHttpSession(http))
+        {
+            var account = await _users.GetUserAsync(caller);
+            if (account == null || !await AccountConfirmation.IsConfirmedAsync(_users, http, account, form?.Password))
+            {
+                ScreenValidator.With(errors, nameof(ApiKeyForm.Password), "Confirm your password to create an API key.");
+            }
         }
 
         if (errors.Count == 0)

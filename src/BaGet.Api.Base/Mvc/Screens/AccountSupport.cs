@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application.Email;
+using BaGet.Identity.Application.Links;
 using BaGet.Identity.Application.Screens;
 using BaGet.Identity.Application.Security;
 using Microsoft.AspNetCore.Http;
@@ -44,7 +45,12 @@ internal static class AccountSupport
     /// </summary>
     public static string AbsoluteLink(HttpContext httpContext, IUrlHelper url, ScreenRef screen, object values)
     {
-        var publicUrl = httpContext.RequestServices.GetRequiredService<IOptions<SiteOptions>>().Value.PublicUrl;
+        var site = httpContext.RequestServices.GetRequiredService<IOptions<SiteOptions>>();
+        var publicUrl = site.Value.PublicUrl;
+
+        // Without the server-rendered screens (Frontend:Mvc=false, or Frontend:SpaLinks) the link targets the single-page application's route.
+        var spa = AccountLinks.ForScreen(site, screen, values);
+        if (spa != null) return spa;
 
         if (EmailLinkPolicy.TryParsePublicUrl(publicUrl, out var root))
         {

@@ -59,6 +59,15 @@ public sealed class TwoFactorUseCase
         if (user == null) return ScreenResult<TwoFactorViewModel>.SignIn();
 
         var model = new TwoFactorViewModel();
+
+        // Over /api/ui a stolen token must not be enough to take the account over: turning two-factor on asks the password again (the screen's own form is unchanged).
+        if (AccountConfirmation.IsHttpSession(Http) && !await AccountConfirmation.IsConfirmedAsync(_users, Http, user, form?.Password))
+        {
+            model.Error = "Confirm your password to turn two-factor authentication on.";
+
+            return await DoneAsync(caller, model);
+        }
+
         var cleaned = (form?.Code ?? string.Empty).Replace(" ", string.Empty).Replace("-", string.Empty);
         var valid = cleaned.Length > 0 && await _users.VerifyTwoFactorTokenAsync(
             user,
@@ -145,7 +154,8 @@ public sealed class TwoFactorUseCase
         model.CanReauthenticate = _accounts.Value.OpenIdConnect.IsConfigured;
         model.RecoveryCodesLeft = await _users.CountRecoveryCodesAsync(user);
 
-        if (!model.TwoFactorEnabled)
+        // Over /api/ui the setup key (and the stamp change generating it causes) is only handed to a caller who confirmed their password in X-Confirm-Password.
+        if (!model.TwoFactorEnabled && (!AccountConfirmation.IsHttpSession(Http) || await ConfirmedByHeaderAsync(user)))
         {
             var key = await _users.GetAuthenticatorKeyAsync(user);
             if (string.IsNullOrEmpty(key))
@@ -162,6 +172,15 @@ public sealed class TwoFactorUseCase
         }
 
         return true;
+    }
+
+    private async Task<bool> ConfirmedByHeaderAsync(BaGetUser user)
+    {
+        if (!await _users.HasPasswordAsync(user)) return await AccountConfirmation.HasReauthenticatedRecentlyAsync(Http);
+
+        var password = Http.Request.Headers[AccountConfirmation.ConfirmPasswordHeader].ToString();
+
+        return password.Length > 0 && await AccountConfirmation.IsConfirmedAsync(_users, Http, user, password);
     }
 
     private static string Format(string? key)

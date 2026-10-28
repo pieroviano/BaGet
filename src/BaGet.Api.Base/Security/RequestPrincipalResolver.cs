@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Security;
 using BaGet.Identity.Application.Services.Sessions;
 using Microsoft.AspNetCore.Http;
 using IAuthenticationService = BaGet.Core.IAuthenticationService;
@@ -26,7 +27,7 @@ public class RequestPrincipalResolver
     /// or the cookie with a valid antiforgery header). Only the UI API filter sets it, so no other route ever sees a session token as a credential: there
     /// a token (<see cref="BaGet.Identity.Application.Services.Sessions.SessionTokenService.Prefix"/>) is an invalid key.
     /// </summary>
-    internal const string InteractiveItem = "BaGet.UiApi.Interactive";
+    internal const string InteractiveItem = AccountConfirmation.InteractiveSessionItem;
 
     private const string ItemKey = "BaGet.RequestPrincipal";
     private const string WriteItemKey = "BaGet.RequestWritePrincipal";

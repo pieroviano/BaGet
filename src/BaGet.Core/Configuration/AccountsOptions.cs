@@ -65,6 +65,13 @@ public class AccountsOptions
     public TimeSpan SessionRefreshLifetime { get; set; } = TimeSpan.FromDays(14);
 
     /// <summary>
+    /// The longest a token session lasts, counted from the sign-in (<c>authenticatedAt</c>), however often it is refreshed: past it the user signs in again.
+    /// Not shown on the Settings page.
+    /// </summary>
+    [HiddenSetting]
+    public TimeSpan SessionMaxLifetime { get; set; } = TimeSpan.FromDays(30);
+
+    /// <summary>
     /// An external OpenID Connect provider, such as Microsoft Entra ID. Unused unless
     /// <see cref="AccountsOpenIdConnectOptions.Authority"/> is set.
     /// </summary>

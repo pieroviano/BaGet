@@ -11,7 +11,7 @@ namespace BaGet.Identity.Application.Services.Sessions;
 
 /// <summary>
 /// Turns a session token into the account it stands for, checking on every use what a stateless token cannot: the account still exists, is not awaiting
-/// approval, is not locked out, and its security stamp is the one the token was issued with (so a password change or "sign out everywhere" voids every token).
+/// approval, and its security stamp is the one the token was issued with (so a password change or "sign out everywhere" voids every token).
 /// A refusal says nothing about why.
 /// </summary>
 public sealed class SessionAuthenticator
@@ -33,7 +33,9 @@ public sealed class SessionAuthenticator
         if (claims == null) return null;
 
         var account = await _users.FindByIdAsync(claims.UserId);
-        if (account == null || account.PendingApproval || await _users.IsLockedOutAsync(account)) return null;
+        
+        // Like a cookie session: an account that is locked out (by someone guessing its password) keeps the sessions it has; only a sign-in is refused.
+        if (account == null || account.PendingApproval) return null;
 
         var stamp = _users.SupportsUserSecurityStamp ? await _users.GetSecurityStampAsync(account) : string.Empty;
         if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(stamp ?? string.Empty), Encoding.UTF8.GetBytes(claims.SecurityStamp))) return null;

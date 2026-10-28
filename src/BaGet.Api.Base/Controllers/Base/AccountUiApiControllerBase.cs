@@ -38,7 +38,9 @@ public abstract class AccountUiApiControllerBase : UiApiControllerBase, IAsyncAc
             RequiresSignIn: RequiresSignIn || metadata.OfType<RequiresSignInAttribute>().Any(),
             RequiresEmail: RequiresEmail || metadata.OfType<RequiresEmailAttribute>().Any(),
             KeyCaller: KeyCaller,
-            CookieOnly: CookieOnly)
+
+            // An endpoint that gives a session out (or prepares for one) is open to a caller without credentials; an API key is still refused.
+            CookieOnly: CookieOnly && !(KeyCaller == null && metadata.OfType<AnonymousSessionEndpointAttribute>().Any()))
         {
             // This filter runs only when the twin is called over HTTP (the in-process call of a view controller skips it).
             OverHttp = true,

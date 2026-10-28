@@ -55,6 +55,21 @@ public static class AccountConfirmation
     /// </summary>
     public const string SessionAuthenticatedItem = "BaGet.SessionAuthenticatedAt";
 
+    /// <summary>The <see cref="HttpContext.Items"/> key set while a request is served by a JSON twin over HTTP (the in-process call of a view controller never has it).</summary>
+    public const string OverHttpItem = "BaGet.UiApi.OverHttp";
+
+    /// <summary>The <see cref="HttpContext.Items"/> key under which a JSON twin over HTTP records the interactive session that authenticated the request.</summary>
+    public const string InteractiveSessionItem = "BaGet.UiApi.Interactive";
+
+    /// <summary>Whether the request is an interactive session (token, or cookie with the antiforgery header) calling a JSON twin over HTTP.</summary>
+    public static bool IsHttpSession(HttpContext httpContext) => httpContext.Items.ContainsKey(InteractiveSessionItem);
+
+    /// <summary>Whether the request is served by a JSON twin over HTTP.</summary>
+    public static bool IsOverHttp(HttpContext httpContext) => httpContext.Items.ContainsKey(OverHttpItem);
+
+    /// <summary>The header that carries the password to confirm a GET over HTTP (as on the administration API).</summary>
+    public const string ConfirmPasswordHeader = "X-Confirm-Password";
+
     /// <summary>Whether the session re-authenticated with the external provider within <see cref="ReauthenticationWindow"/>.</summary>
     public static async Task<bool> HasReauthenticatedRecentlyAsync(HttpContext httpContext)
     {

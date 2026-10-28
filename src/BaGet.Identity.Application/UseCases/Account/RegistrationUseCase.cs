@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Identity.Application.Screens;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -94,6 +95,17 @@ public sealed class RegistrationUseCase
 
         if (errors.Count > 0) return ScreenResult<RegisterViewModel>.Invalid(model, errors);
 
+        // Over /api/ui (no cookie is set for such a caller) registration is rate limited: per address, and once per email address per window.
+        var http = _services.GetService<IHttpContextAccessor>()?.HttpContext;
+        var overHttp = http != null && AccountConfirmation.IsOverHttp(http);
+        if (overHttp
+            && !_services.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(
+                http!.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+                "register:" + (string.IsNullOrWhiteSpace(form!.Email) ? Guid.NewGuid().ToString("N") : form.Email.Trim().ToLowerInvariant())))
+        {
+            return ScreenResult<RegisterViewModel>.Invalid(model, "Too many attempts. Try again in a few minutes.");
+        }
+
         // User and organization names share a namespace: either can own a package.
         if (await _ownership.AccountExistsAsync(form!.UserName, cancellationToken))
         {
@@ -157,9 +169,69 @@ public sealed class RegistrationUseCase
             return ScreenResult<RegisterViewModel>.Ok(model);
         }
 
+        if (overHttp)
+        {
+            // No cookie for an HTTP caller (nothing would stop a cross-site page from signing a visitor in): the new account's tokens, or nothing.
+            model.Session = await _services.GetRequiredService<SessionUseCase>().IssueAsync(user, _time.UtcNow);
+
+            return ScreenResult<RegisterViewModel>.Ok(model);
+        }
+
         await _signIn.SignInAsync(user, isPersistent: false);
 
         return ScreenResult<RegisterViewModel>.GoTo(ScreenNext.Local(LocalUrls.Target(form.ReturnUrl)));
+    }
+
+    // ----- the confirmation link again
+
+    /// <summary>
+    /// Mails a new confirmation link to an account whose address is not confirmed yet. Like "forgot password" it answers the same, in the same time, whether or
+    /// not an account matches or the mail was allowed (one per account per window, and per client address); the mail is sent off the request path.
+    /// </summary>
+    public async Task<ScreenResult<ForgotPasswordViewModel>> ResendConfirmationAsync(ForgotPasswordForm? form, string? clientAddress)
+    {
+        var model = new ForgotPasswordViewModel { Identifier = form?.Identifier };
+        var errors = ScreenValidator.Validate(form);
+        if (errors.Count > 0) return ScreenResult<ForgotPasswordViewModel>.Invalid(model, errors);
+
+        var identifier = form!.Identifier?.Trim();
+
+        #pragma warning disable CS8604
+        var byName = await _users.FindByNameAsync(identifier);
+        #pragma warning restore CS8604
+        BaGetUser? byEmail = null;
+        try
+        {
+            byEmail = await _users.FindByEmailAsync(identifier);
+        }
+        catch (InvalidOperationException)
+        {
+            // Several accounts share the address: none is singled out.
+        }
+
+        var user = byName ?? byEmail;
+        if (user != null
+            && !user.EmailConfirmed
+            && !string.IsNullOrEmpty(user.Email)
+            && EmailConfigured
+            && _services.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(clientAddress ?? string.Empty, "resend:" + user.Id))
+        {
+            var userId = user.Id;
+            _services.GetRequiredService<BackgroundEmailQueue>().TryEnqueue(async services =>
+            {
+                var users = services.GetRequiredService<UserManager<BaGetUser>>();
+                var account = await users.FindByIdAsync(userId);
+                if (account == null || account.EmailConfirmed || string.IsNullOrEmpty(account.Email)) return;
+
+                var token = await users.GenerateEmailConfirmationTokenAsync(account);
+                var link = AccountLinks.ConfirmEmail(services.GetRequiredService<IOptions<SiteOptions>>(), account.Id, token);
+                await services.GetRequiredService<IEmailSender<BaGetUser>>().SendConfirmationLinkAsync(account, account.Email, link);
+            });
+        }
+
+        model.Sent = true;
+
+        return ScreenResult<ForgotPasswordViewModel>.Ok(model);
     }
 
     // ----- the confirmation link

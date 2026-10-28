@@ -19,6 +19,7 @@ public sealed class SessionUseCase
 {
     private const string BadCredentials = "The user name or password is incorrect.";
     private const string BadTicket = "The sign-in has expired or is not valid: sign in again.";
+    private const string BadExchange = "The exchange token has expired or is not valid: sign in again.";
     private const string BadRefresh = "The refresh token has expired or is not valid: sign in again.";
 
     private readonly SignInManager<BaGetUser> _signIn;
@@ -46,7 +47,28 @@ public sealed class SessionUseCase
     }
 
     /// <summary>The password step of a sign-in: tokens, or the ticket for the second factor when the account has one.</summary>
-    public async Task<ScreenResult<SessionModel>> SignInAsync(SessionSignInForm? form)
+    public Task<ScreenResult<SessionModel>> SignInAsync(SessionSignInForm? form) => PasswordStepAsync(form, cookie: false);
+
+    /// <summary>
+    /// Signs in with the <b>cookie</b> (a same-origin client): the same rules as <see cref="SignInAsync"/> and the second-factor steps, but the answer carries no
+    /// tokens (<c>userName</c> only) and the session cookie is set. The password step takes <c>userName</c> and <c>password</c>; when the account has two-factor the answer is the
+    /// ticket, and the second step takes <c>ticket</c> with <c>code</c> or <c>recoveryCode</c>.
+    /// </summary>
+    public async Task<ScreenResult<SessionModel>> CookieSignInAsync(SessionCookieForm? form)
+    {
+        if (form == null) return ScreenResult<SessionModel>.Invalid(new SessionModel(), "The request has no content.");
+
+        if (!string.IsNullOrEmpty(form.Ticket))
+        {
+            return string.IsNullOrEmpty(form.RecoveryCode)
+                ? await TwoFactorCoreAsync(form.Ticket, form.Code, cookie: true)
+                : await RecoveryCoreAsync(form.Ticket, form.RecoveryCode, cookie: true);
+        }
+
+        return await PasswordStepAsync(new SessionSignInForm { UserName = form.UserName, Password = form.Password }, cookie: true);
+    }
+
+    private async Task<ScreenResult<SessionModel>> PasswordStepAsync(SessionSignInForm? form, bool cookie)
     {
         var errors = ScreenValidator.Validate(form);
         if (errors.Count > 0) return ScreenResult<SessionModel>.Invalid(new SessionModel(), errors);
@@ -67,7 +89,7 @@ public sealed class SessionUseCase
         if (result.IsNotAllowed) return ScreenResult<SessionModel>.Forbidden(user.PendingApproval ? SignInUseCase.PendingMessage : SignInUseCase.UnconfirmedMessage);
         if (!result.Succeeded) return ScreenResult<SessionModel>.SignIn(BadCredentials);
 
-        return await CompleteAsync(user, _time.UtcNow);
+        return await CompleteAsync(user, _time.UtcNow, cookie);
     }
 
     /// <summary>The second factor, with a code of the authenticator app.</summary>
@@ -76,16 +98,7 @@ public sealed class SessionUseCase
         var errors = ScreenValidator.Validate(form);
         if (errors.Count > 0) return ScreenResult<SessionModel>.Invalid(new SessionModel(), errors);
 
-        var ticket = await _authenticator.AuthenticateAsync(SessionTokenKind.TwoFactor, form!.Ticket);
-        if (ticket == null) return ScreenResult<SessionModel>.SignIn(BadTicket);
-
-        var refusal = await CheckSecondFactorAllowedAsync(ticket.Account);
-        if (refusal != null) return refusal;
-
-        var code = form.Code!.Replace(" ", string.Empty).Replace("-", string.Empty);
-        var valid = await _users.VerifyTwoFactorTokenAsync(ticket.Account, _users.Options.Tokens.AuthenticatorTokenProvider, code);
-
-        return await FinishSecondFactorAsync(ticket, valid, "The code is not valid.");
+        return await TwoFactorCoreAsync(form!.Ticket, form.Code, cookie: false);
     }
 
     /// <summary>The second factor, with a recovery code (each works once).</summary>
@@ -94,15 +107,58 @@ public sealed class SessionUseCase
         var errors = ScreenValidator.Validate(form);
         if (errors.Count > 0) return ScreenResult<SessionModel>.Invalid(new SessionModel(), errors);
 
-        var ticket = await _authenticator.AuthenticateAsync(SessionTokenKind.TwoFactor, form!.Ticket);
+        return await RecoveryCoreAsync(form!.Ticket, form.RecoveryCode, cookie: false);
+    }
+
+    private async Task<ScreenResult<SessionModel>> TwoFactorCoreAsync(string? ticketToken, string? rawCode, bool cookie)
+    {
+        if (string.IsNullOrWhiteSpace(rawCode)) return ScreenResult<SessionModel>.Invalid(new SessionModel(), "The code is required.");
+
+        var ticket = await _authenticator.AuthenticateAsync(SessionTokenKind.TwoFactor, ticketToken);
         if (ticket == null) return ScreenResult<SessionModel>.SignIn(BadTicket);
 
         var refusal = await CheckSecondFactorAllowedAsync(ticket.Account);
         if (refusal != null) return refusal;
 
-        var redeemed = await _users.RedeemTwoFactorRecoveryCodeAsync(ticket.Account, form.RecoveryCode!.Replace(" ", string.Empty));
+        var code = rawCode.Replace(" ", string.Empty).Replace("-", string.Empty);
+        var valid = await _users.VerifyTwoFactorTokenAsync(ticket.Account, _users.Options.Tokens.AuthenticatorTokenProvider, code);
 
-        return await FinishSecondFactorAsync(ticket, redeemed.Succeeded, "The recovery code is not valid, or was already used.");
+        return await FinishSecondFactorAsync(ticket, valid, "The code is not valid.", cookie);
+    }
+
+    private async Task<ScreenResult<SessionModel>> RecoveryCoreAsync(string? ticketToken, string? rawCode, bool cookie)
+    {
+        if (string.IsNullOrWhiteSpace(rawCode)) return ScreenResult<SessionModel>.Invalid(new SessionModel(), "The recovery code is required.");
+
+        var ticket = await _authenticator.AuthenticateAsync(SessionTokenKind.TwoFactor, ticketToken);
+        if (ticket == null) return ScreenResult<SessionModel>.SignIn(BadTicket);
+
+        var refusal = await CheckSecondFactorAllowedAsync(ticket.Account);
+        if (refusal != null) return refusal;
+
+        var redeemed = await _users.RedeemTwoFactorRecoveryCodeAsync(ticket.Account, rawCode.Replace(" ", string.Empty));
+
+        return await FinishSecondFactorAsync(ticket, redeemed.Succeeded, "The recovery code is not valid, or was already used.", cookie);
+    }
+
+    /// <summary>Exchanges the 60-second token of an external sign-in's redirect for the session tokens (or the second-factor ticket).</summary>
+    public async Task<ScreenResult<SessionModel>> ExchangeAsync(SessionExchangeForm? form)
+    {
+        var errors = ScreenValidator.Validate(form);
+        if (errors.Count > 0) return ScreenResult<SessionModel>.Invalid(new SessionModel(), errors);
+
+        var exchange = await _authenticator.AuthenticateAsync(SessionTokenKind.Exchange, form!.ExchangeToken);
+        if (exchange == null) return ScreenResult<SessionModel>.SignIn(BadExchange);
+
+        return await CompleteAsync(exchange.Account, exchange.AuthenticatedAt, cookie: false);
+    }
+
+    /// <summary>The exchange token of an external sign-in for the account.</summary>
+    internal async Task<SessionModel> IssueExchangeAsync(BaGetUser user, DateTime authenticatedAt)
+    {
+        var token = _tokens.Issue(SessionTokenKind.Exchange, user.Id, await StampOfAsync(user), authenticatedAt);
+
+        return new SessionModel { ExchangeToken = token.Token, ExchangeExpiresAt = token.ExpiresAt, UserName = user.UserName };
     }
 
     /// <summary>
@@ -144,7 +200,7 @@ public sealed class SessionUseCase
     }
 
     /// <summary>Finishes a sign-in whose first factor is proven (also the external provider's): the ticket for the second factor, or the tokens.</summary>
-    internal async Task<ScreenResult<SessionModel>> CompleteAsync(BaGetUser user, DateTime authenticatedAt)
+    internal async Task<ScreenResult<SessionModel>> CompleteAsync(BaGetUser user, DateTime authenticatedAt, bool cookie = false)
     {
         if (_users.SupportsUserTwoFactor && await _users.GetTwoFactorEnabledAsync(user))
         {
@@ -157,6 +213,13 @@ public sealed class SessionUseCase
                 TwoFactorTicketExpiresAt = ticket.ExpiresAt,
                 UserName = user.UserName,
             });
+        }
+
+        if (cookie)
+        {
+            await _signIn.SignInAsync(user, isPersistent: false);
+
+            return ScreenResult<SessionModel>.Ok(new SessionModel { UserName = user.UserName });
         }
 
         return ScreenResult<SessionModel>.Ok(await IssueAsync(user, authenticatedAt));
@@ -191,13 +254,20 @@ public sealed class SessionUseCase
         return null;
     }
 
-    private async Task<ScreenResult<SessionModel>> FinishSecondFactorAsync(SessionAuthentication ticket, bool valid, string failure)
+    private async Task<ScreenResult<SessionModel>> FinishSecondFactorAsync(SessionAuthentication ticket, bool valid, string failure, bool cookie = false)
     {
         var user = ticket.Account;
         if (valid)
         {
             // Like the sign-in manager: the counter is reset, unless the read-only gate refuses the write.
             if (!_gate.IsClosed) await _users.ResetAccessFailedCountAsync(user);
+
+            if (cookie)
+            {
+                await _signIn.SignInAsync(user, isPersistent: false);
+
+                return ScreenResult<SessionModel>.Ok(new SessionModel { UserName = user.UserName });
+            }
 
             return ScreenResult<SessionModel>.Ok(await IssueAsync(user, ticket.AuthenticatedAt));
         }

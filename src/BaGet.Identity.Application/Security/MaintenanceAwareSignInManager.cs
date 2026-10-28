@@ -82,8 +82,9 @@ public class MaintenanceAwareSignInManager : SignInManager<BaGetUser>
     {
         if (Context != null && Context.Items.TryGetValue(AccountConfirmation.SessionAuthenticatedItem, out var signedIn) && signedIn is System.DateTime authenticatedAt)
         {
+            // Only the caller's own account gets tokens (a stamp change of another account, an administrator's action, renews nothing).
             var session = Context.RequestServices.GetService<SessionUseCase>();
-            if (session != null)
+            if (session != null && Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == user.Id)
             {
                 var pair = await session.IssueAsync(user, authenticatedAt);
                 Context.Response.Headers[SessionHeaders.AccessToken] = pair.AccessToken;
