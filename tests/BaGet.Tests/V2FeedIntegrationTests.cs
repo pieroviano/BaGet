@@ -96,6 +96,31 @@ public abstract class V2FeedIntegrationTestsBase : IDisposable
         Assert.Contains("Version", properties);
         Assert.Contains("IsLatestVersion", properties);
         Assert.Contains("Dependencies", properties);
+
+        // EDMX served as XML, entries are media link entries, and the two service operations are declared with their parameters.
+        Assert.Equal("application/xml", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("Edmx", document.Root?.Name.LocalName);
+        Assert.Equal("true", entityType.Attributes().Single(a => a.Name.LocalName == "HasStream").Value);
+
+        #pragma warning disable CS8602
+        var functions = document.Descendants()
+            .Where(e => e.Name.LocalName == "FunctionImport")
+            .ToDictionary(
+                e => e.Attribute("Name").Value,
+                e => e.Elements().Where(p => p.Name.LocalName == "Parameter").Select(p => p.Attribute("Name").Value).ToList());
+        #pragma warning restore CS8602
+
+        Assert.Equal(new[] { "searchTerm", "includePrerelease", "semVerLevel" }, functions["Search"]);
+        Assert.Equal(new[] { "id", "semVerLevel" }, functions["FindPackagesById"]);
+        Assert.All(
+            document.Descendants().Where(e => e.Name.LocalName == "FunctionImport"),
+            f =>
+            {
+                #pragma warning disable CS8602
+                Assert.Equal("Collection(NuGetGallery.V2FeedPackage)", f.Attribute("ReturnType").Value);
+                Assert.Equal("Packages", f.Attribute("EntitySet").Value);
+                #pragma warning restore CS8602
+            });
     }
 
     [Fact]

@@ -57,9 +57,11 @@ internal static class V2FeedWriter
 
     public static string WriteMetadata()
     {
+        // Every entry is a media link entry: its <content src> is the .nupkg (HasStream).
         var entityType = new XElement(
             Edm + "EntityType",
             new XAttribute("Name", "V2FeedPackage"),
+            new XAttribute(Metadata + "HasStream", "true"),
             new XElement(
                 Edm + "Key",
                 new XElement(Edm + "PropertyRef", new XAttribute("Name", "Id")),
@@ -103,9 +105,42 @@ internal static class V2FeedWriter
                             new XElement(
                                 Edm + "EntitySet",
                                 new XAttribute("Name", "Packages"),
-                                new XAttribute("EntityType", "NuGetGallery.V2FeedPackage")))))));
+                                new XAttribute("EntityType", "NuGetGallery.V2FeedPackage")),
+                            // The service operations the feed answers (V2FeedController.Search and FindPackagesById), with the
+                            // parameters they bind; $skip/$top are query options, not parameters.
+                            FunctionImport(
+                                "Search",
+                                ("searchTerm", "Edm.String", true),
+                                ("includePrerelease", "Edm.Boolean", false),
+                                ("semVerLevel", "Edm.String", true)),
+                            FunctionImport(
+                                "FindPackagesById",
+                                ("id", "Edm.String", true),
+                                ("semVerLevel", "Edm.String", true)))))));
 
         return Serialize(document);
+    }
+
+    /// <summary>A GET service operation returning packages of the <c>Packages</c> set.</summary>
+    private static XElement FunctionImport(string name, params (string Name, string Type, bool Nullable)[] parameters)
+    {
+        var function = new XElement(
+            Edm + "FunctionImport",
+            new XAttribute("Name", name),
+            new XAttribute("ReturnType", "Collection(NuGetGallery.V2FeedPackage)"),
+            new XAttribute("EntitySet", "Packages"),
+            new XAttribute(Metadata + "HttpMethod", "GET"));
+
+        foreach (var (parameterName, type, nullable) in parameters)
+        {
+            function.Add(new XElement(
+                Edm + "Parameter",
+                new XAttribute("Name", parameterName),
+                new XAttribute("Type", type),
+                new XAttribute("Nullable", nullable ? "true" : "false")));
+        }
+
+        return function;
     }
 
     public static string WriteFeed(

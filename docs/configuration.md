@@ -265,7 +265,14 @@ where an upload cannot work: read-only mode, a closed maintenance gate, or accou
 ## NuGet V2 feed
 
 BaGet Extension serves a NuGet V2 (OData) feed at `/api/v2` for clients that cannot use V3: `nuget list`,
-older `Install-Package`, and PowerShellGet. It is on by default. To turn it off:
+older `Install-Package`, and PowerShellGet. It is on by default.
+
+`GET /api/v2/$metadata` (and `/r/{repo}/api/v2/$metadata`) returns the entity model as an EDMX document (`application/xml`, OData
+2.0): the entity type `NuGetGallery.V2FeedPackage` (key `Id` + `Version`, every property the entries carry, `m:HasStream`: an
+entry's content is the `.nupkg`), the entity set `Packages` and the service operations `Search(searchTerm, includePrerelease,
+semVerLevel)` and `FindPackagesById(id, semVerLevel)`, so OData tools can generate a client from it.
+
+To turn the feed off:
 
 ```json
 {
