@@ -117,8 +117,40 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
-  <Target Name="DeleteOldPackage" AfterTargets="Pack" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
-    <Exec Command="if exist %userprofile%\.nuget\Packages\$(MSBuildProjectName) rmdir /s /q %userprofile%\.nuget\Packages\Extension.$(MSBuildProjectName)" />
+  <!--
+    After a pack, so the next restore uses the package just built even when its version is unchanged: remove every version of it
+    from the global packages folder. MSBuild tasks only (no shell), so it works on Windows, Linux and macOS. The folder is
+    NUGET_PACKAGES / RestorePackagesPath as restore resolved it ($(NuGetPackageRoot)), else ~/.nuget/packages; NuGet names
+    package folders in lower case, which matters on case-sensitive file systems.
+  -->
+  <Target Name="DeleteOldPackage" AfterTargets="Pack">
+    <PropertyGroup>
+      <_BaGetPackageCacheRoot>$(NuGetPackageRoot)</_BaGetPackageCacheRoot>
+      <_BaGetPackageCacheRoot Condition="'$(_BaGetPackageCacheRoot)' == ''">$(NUGET_PACKAGES)</_BaGetPackageCacheRoot>
+      <_BaGetPackageCacheRoot Condition="'$(_BaGetPackageCacheRoot)' == ''">$([System.IO.Path]::Combine($([System.Environment]::GetFolderPath(SpecialFolder.UserProfile)), '.nuget', 'packages'))</_BaGetPackageCacheRoot>
+      <_BaGetCachedPackageFolder>$([System.IO.Path]::Combine('$(_BaGetPackageCacheRoot)', '$(PackageId.ToLowerInvariant())'))</_BaGetCachedPackageFolder>
+    </PropertyGroup>
+    <RemoveDir Directories="$(_BaGetCachedPackageFolder)" Condition="Exists('$(_BaGetCachedPackageFolder)')" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+  <!--
+    After a pack, remove the older versions of the same package from $(PackageOutputPath) (the Packages folder): its .nupkg, .snupkg
+    and .symbols.nupkg files whose name is the package id followed by a version. The files this pack wrote (@(NuGetPackOutput),
+    named with NuGet's normalized version) are kept. The name must continue with ".<digit>" right after the id, so the package
+    Extension.BaGet never touches Extension.BaGet.Core. MSBuild tasks only, so it works on every OS.
+  -->
+  <Target Name="DeleteOlderGeneratedPackages" AfterTargets="Pack" Condition="'$(PackageOutputPath)' != '' and Exists('$(PackageOutputPath)')">
+    <PropertyGroup>
+      <_BaGetGeneratedPackagePattern>(?i)^$([System.Text.RegularExpressions.Regex]::Escape('$(PackageId)'))\.\d</_BaGetGeneratedPackagePattern>
+    </PropertyGroup>
+    <ItemGroup>
+      <_BaGetCurrentPackage Include="@(NuGetPackOutput->'%(FullPath)')" />
+      <_BaGetGeneratedPackage Include="$(PackageOutputPath)$(PackageId).*.nupkg;$(PackageOutputPath)$(PackageId).*.snupkg" />
+      <_BaGetOlderPackage Include="@(_BaGetGeneratedPackage->'%(FullPath)')" Exclude="@(_BaGetCurrentPackage)"
+                          Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '$(_BaGetGeneratedPackagePattern)'))" />
+    </ItemGroup>
+    <Delete Files="@(_BaGetOlderPackage)" ContinueOnError="WarnAndContinue" />
+    <Message Importance="normal" Text="Removed older package files: @(_BaGetOlderPackage)" Condition="'@(_BaGetOlderPackage)' != ''" />
   </Target>
 
 </Project>

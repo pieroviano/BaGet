@@ -10,8 +10,11 @@ catalog). Some work here is upstreamed as PRs against `loic-sharma/BaGet`.
 
 **Always pass `-p:GeneratePackageOnBuild=false`.** `src/Directory.Build.props` sets
 `GeneratePackageOnBuild=true` with `PackageOutputPath=$(SolutionDir)Packages\`, and `Packages` is a
-**symlink to `D:\Starb\Packages`**, a shared NuGet feed. A plain build publishes packages into it, and
-an `AfterTargets="Pack"` target deletes `%userprofile%\.nuget\Packages\Extension.<project>` (when `...\Packages\<project>` exists).
+**symlink to `D:\Starb\Packages`**, a shared NuGet feed. A plain build publishes packages into it, and two `AfterTargets="Pack"` targets
+(MSBuild tasks only, so Windows, Linux and macOS alike) then run: `DeleteOldPackage` removes the package's folder (every version, lower-cased id) from the
+global packages folder (`$(NuGetPackageRoot)`, else `NUGET_PACKAGES`, else `~/.nuget/packages`), so the next restore takes the fresh package even with an
+unchanged version; `DeleteOlderGeneratedPackages` deletes the older `.nupkg`/`.snupkg`/`.symbols.nupkg` of the same id from `$(PackageOutputPath)`, keeping
+what this pack wrote (`@(NuGetPackOutput)`; the name must continue with `.<digit>` after the id, so `Extension.BaGet` never touches `Extension.BaGet.Core`).
 
 | Task | Command |
 |---|---|
