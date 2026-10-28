@@ -1,12 +1,12 @@
 param(
-    [switch]$Run,      # Run the solution after building (starts BaGet service)
+    [switch]$Run,      # Run the solution after building (starts BaGet Extension)
     [switch]$Publish   # Clean, restore, build (Release), and publish the solution
 )
 
 # Script configuration - script is in root, solution is in root
 # Usage:
 #   .\build.ps1              - Clean, restore, and build (Debug)
-#   .\build.ps1 -Run         - Clean, restore, build (Debug), and run BaGet service
+#   .\build.ps1 -Run         - Clean, restore, build (Debug), and run BaGet Extension
 #   .\build.ps1 -Publish     - Clean, restore, build (Release), and publish to Publish folder
 $SolutionPath = Join-Path $PSScriptRoot "BaGet.sln"
 $ProjectPath = Join-Path $PSScriptRoot "src\BaGet\BaGet.csproj"
@@ -261,15 +261,15 @@ if ($Publish) {
 if ($Run) {
     Write-Host "Running solution..." -ForegroundColor Cyan
     
-    Write-Host "  Starting BaGet service..." -ForegroundColor Yellow
-    Write-Host "  Navigate to http://localhost:50561/v3/index.json in your browser" -ForegroundColor Cyan
-    Write-Host "  Press Ctrl+C to stop the service" -ForegroundColor Gray
+    Write-Host "  Starting BaGet Extension..." -ForegroundColor Yellow
+    Write-Host "  Navigate to http://localhost:6060/v3/index.json in your browser" -ForegroundColor Cyan
+    Write-Host "  Press Ctrl+C to stop the BaGet Extension" -ForegroundColor Gray
     Write-Host ""
     
     try {
         $projectDir = Split-Path $ProjectPath -Parent
         Set-Location -Path $projectDir
-        & dotnet run --urls "http://localhost:50561" --verbosity quiet
+        & dotnet run --urls "http://localhost:6060" --verbosity quiet
     }
     catch {
         Write-Host "  Error running solution: $_" -ForegroundColor Red
