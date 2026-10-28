@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using BaGet.Telemetry;
 using Microsoft.AspNetCore.Builder;
@@ -109,6 +110,7 @@ internal static class HostLoggingExtensions
     /// </summary>
     public static void ResolveLogFilePaths(this IConfigurationManager configuration, string root)
     {
+        var resolved = new Dictionary<string, string?>();
         foreach (var sink in configuration.GetSection("Serilog:WriteTo").GetChildren())
         {
             if (!string.Equals(sink["Name"], "File", StringComparison.OrdinalIgnoreCase))
@@ -121,9 +123,21 @@ internal static class HostLoggingExtensions
 
             if (!string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path))
             {
-                configuration[key] = Path.GetFullPath(Path.Combine(root, path));
+                resolved[key] = Path.GetFullPath(Path.Combine(root, path));
             }
         }
+
+        AddLast(configuration, resolved);
+    }
+
+    /// <summary>
+    /// Adds <paramref name="values"/> as a source of their own. Setting them through the indexer would write them into the
+    /// providers that exist now, and a source added later (a test harness, an embedding host) rebuilds every provider and
+    /// drops them.
+    /// </summary>
+    private static void AddLast(IConfigurationManager configuration, Dictionary<string, string?> values)
+    {
+        if (values.Count > 0) configuration.AddInMemoryCollection(values);
     }
 
     /// <summary>
@@ -133,13 +147,16 @@ internal static class HostLoggingExtensions
     /// </summary>
     public static void DisableSinks(this IConfigurationManager configuration)
     {
+        var disabled = new Dictionary<string, string?>();
         foreach (var sink in configuration.GetSection("Serilog:WriteTo").GetChildren())
         {
             if (!IsEnabled(sink["Enabled"]))
             {
                 // Serilog.Settings.Configuration skips a sink whose Name is empty.
-                configuration[sink.Path + ":Name"] = "";
+                disabled[sink.Path + ":Name"] = "";
             }
         }
+
+        AddLast(configuration, disabled);
     }
 }
