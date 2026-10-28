@@ -30,6 +30,12 @@ public class FrontendOptions
     /// </summary>
     public bool? SpaLinks { get; set; }
 
+    /// <summary>
+    /// The absolute address of a single-page application hosted <b>elsewhere</b> (<c>https://app.example.com</c>, or with a path): account emails then link to
+    /// <c>{SpaUrl}/confirm-email</c>, <c>{SpaUrl}/reset-password</c> and the cookie's login path is <c>{SpaUrl}/sign-in</c>. Takes precedence over <see cref="SpaLinks"/>.
+    /// </summary>
+    public string? SpaUrl { get; set; }
+
     /// <summary><see cref="SpaBasePath"/> as a path with a leading slash and none at the end (<c>/</c> for the root).</summary>
     public string NormalizedBasePath()
     {
@@ -39,5 +45,21 @@ public class FrontendOptions
     }
 
     /// <summary>The base path of the application's email-link routes, or null when emails link to the server-rendered screens.</summary>
-    public string? EmailLinkBase => SpaLinks ?? !Mvc ? NormalizedBasePath().TrimEnd('/') : null;
+    public string? EmailLinkBase
+    {
+        get
+        {
+            // An application hosted elsewhere, by its absolute address.
+            if (!string.IsNullOrWhiteSpace(SpaUrl)) return SpaUrl.Trim().TrimEnd('/');
+
+            // The one BaGet serves (Frontend:SpaPath), or, on the operator's word (SpaLinks=true), one a reverse proxy serves under the base path. With the screens off and
+            // neither, nothing is served at the base path: a link there would be a 404, so there is no base (startup refuses to mail then).
+            if (SpaLinks == true || (SpaLinks ?? !Mvc) && !string.IsNullOrWhiteSpace(SpaPath)) return NormalizedBasePath().TrimEnd('/');
+
+            return null;
+        }
+    }
+
+    /// <summary>Whether account emails would link to a page that does not exist: the screens are off and no application is named to link to.</summary>
+    public bool EmailLinksWouldBeDead => !Mvc && EmailLinkBase == null;
 }

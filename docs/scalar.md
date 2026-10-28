@@ -44,6 +44,8 @@ Open the **Authentication** box of the viewer (or the *Auth* tab of the request 
 
 A wrong or revoked key is refused with `401`; it never falls back to the session (no document accepts the session cookie). The `ui` document offers `bearer`, `apiKey` and `session`.
 
+**Shape of the `ui` document** (for generated clients): enums are string schemas listing their names (`ScreenStatus`: `Ok`, `Invalid`, ...), as the API writes them; integers are plain `integer`; every operation that answers a `ScreenResult<T>` describes its `400`, `401`, `403` and `404` answers with the schema of its `200`; an optional route value is two paths (`/api/ui/packages/{id}` and `/api/ui/packages/{id}/{version}`, the value a required path parameter in the second), never a query parameter behind a path that names it.
+
 ## Testing `/api/ui` (screens as JSON)
 
 Set the `bearer` (or `apiKey`) scheme to a key, as for `/api/v1`, or the `session` scheme to the `accessToken` of `POST /api/ui/session`. The browser cookie is **not**

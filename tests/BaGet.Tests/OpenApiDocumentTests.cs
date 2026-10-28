@@ -40,6 +40,88 @@ public class OpenApiDocumentTests : IDisposable
     public void Dispose() => _api.Dispose();
 
     [Fact]
+    public async Task TheUiDocumentDescribesEnumsAsTheNamesTheApiWrites()
+    {
+        var schemas = (await _api.GetAsync("/openapi/ui.json")).Json["components"]!["schemas"]!.AsObject();
+
+        Assert.Equal("string", schemas["ScreenStatus"]!["type"]!.GetValue<string>());
+        Assert.Equal(
+            new[] { "Ok", "Invalid", "NotFound", "Forbidden", "SignIn", "Next" },
+            schemas["ScreenStatus"]!["enum"]!.AsArray().Select(n => n!.GetValue<string>()).ToArray());
+        Assert.Contains("TotalDownloads", schemas["SearchSort"]!["enum"]!.AsArray().Select(n => n!.GetValue<string>()));
+
+        // No enum is described as a number, and no integer as "integer or a string matching a pattern".
+        foreach (var (name, schema) in schemas)
+        {
+            if (schema!["enum"] != null) Assert.True(schema["type"]?.GetValue<string>() == "string", $"{name} is an enum that is not a string");
+        }
+
+        var status = schemas["ScreenResultOfPackageScreen"]!["properties"]!["statusCode"]!;
+        Assert.Equal("integer", status["type"]!.GetValue<string>());
+        Assert.Null(status["anyOf"]);
+        Assert.Null(status["pattern"]);
+    }
+
+    [Fact]
+    public async Task TheUiDocumentTypesTheErrorAnswersLikeTheOkAnswer()
+    {
+        var paths = (await _api.GetAsync("/openapi/ui.json")).Json["paths"]!.AsObject();
+
+        var checkedOperations = 0;
+        foreach (var (path, item) in paths)
+        {
+            foreach (var (method, operation) in item!.AsObject())
+            {
+                var responses = operation!["responses"]!.AsObject();
+                var schema = responses["200"]?["content"]?["application/json"]?["schema"]?["$ref"]?.GetValue<string>();
+                if (schema == null || !schema.Contains("ScreenResultOf", StringComparison.Ordinal)) continue;
+
+                checkedOperations++;
+                foreach (var code in new[] { "400", "401", "403", "404" })
+                {
+                    Assert.True(
+                        responses[code]?["content"]?["application/json"]?["schema"]?["$ref"]?.GetValue<string>() == schema,
+                        $"{method} {path} does not describe {code} with {schema}");
+                }
+            }
+        }
+
+        Assert.True(checkedOperations > 100, "the screens' operations were not found");
+    }
+
+    [Fact]
+    public async Task TheUiDocumentPublishesAnOptionalRouteValueAsAPathOfItsOwn()
+    {
+        var paths = (await _api.GetAsync("/openapi/ui.json")).Json["paths"]!.AsObject();
+
+        static (string Name, string In, bool Required)[] Parameters(JsonNode? path)
+            => path!["get"]!["parameters"]!.AsArray().Select(p => (p!["name"]!.GetValue<string>(), p["in"]!.GetValue<string>(), p["required"]?.GetValue<bool>() == true)).ToArray();
+
+        foreach (var prefix in new[] { "/api/ui", "/api/ui/r/{repo}" })
+        {
+            var without = Parameters(paths[prefix + "/packages/{id}"]);
+            var with = Parameters(paths[prefix + "/packages/{id}/{version}"]);
+            Assert.DoesNotContain(without, p => p.Name == "version");
+            Assert.Contains(("version", "path", true), with);
+            Assert.Contains(("id", "path", true), without);
+
+            Assert.NotNull(paths[prefix + "/maven-artifacts/{group}/{artifact}"]);
+            Assert.Contains(("version", "path", true), Parameters(paths[prefix + "/maven-artifacts/{group}/{artifact}/{version}"]));
+        }
+
+        // Whatever a path template names is a path parameter of every operation under it (a client builds the URL from them).
+        foreach (var (path, item) in paths)
+        {
+            var names = System.Text.RegularExpressions.Regex.Matches(path, @"\{([^}]+)\}").Select(m => m.Groups[1].Value).ToList();
+            foreach (var (method, operation) in item!.AsObject())
+            {
+                var declared = operation!["parameters"]?.AsArray().Where(p => p!["in"]!.GetValue<string>() == "path").Select(p => p!["name"]!.GetValue<string>()).ToList() ?? new List<string>();
+                foreach (var name in names) Assert.True(declared.Contains(name), $"{method} {path} does not declare the path parameter {name}");
+            }
+        }
+    }
+
+    [Fact]
     public async Task TheV1DocumentListsEveryAdministrationOperationAndTheAliasServesTheSameDocument()
     {
         var document = await _api.GetAsync("/openapi/v1.json");

@@ -22,7 +22,17 @@ public static class SessionReturnUrls
         if (returnUrl.Any(c => char.IsControl(c) || c == '\\' || c == '#')) return false;
 
         // A path of this server ("/app/"), but not "//host" or "/\host", which a browser reads as another host.
-        if (returnUrl[0] == '/') return (returnUrl.Length == 1 || (returnUrl[1] != '/' && returnUrl[1] != '\\')) && UnderBase(returnUrl, spaBasePath);
+        if (returnUrl[0] == '/')
+        {
+            if (returnUrl.Length > 1 && (returnUrl[1] == '/' || returnUrl[1] == '\\')) return false;
+
+            // Judged by the path the browser will request: dot segments (also written %2e) and encoded separators are resolved, or refused.
+            if (returnUrl.Contains("%2e", StringComparison.OrdinalIgnoreCase) || returnUrl.Contains("%2f", StringComparison.OrdinalIgnoreCase)
+                || returnUrl.Contains("%5c", StringComparison.OrdinalIgnoreCase)) return false;
+            if (!Uri.TryCreate(new Uri("http://baget.invalid"), returnUrl, out var relative)) return false;
+
+            return UnderBase(relative.AbsolutePath, spaBasePath);
+        }
 
         if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri)) return false;
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return false;

@@ -29,7 +29,10 @@ public static class AccountLinks
 
         path = SpaPath(site.Value.SpaLinkBase, path);
 
-        if (!EmailLinkPolicy.TryParsePublicUrl(site.Value.PublicUrl, out var root))
+        // An application hosted elsewhere is linked by its own absolute address; everything else lives under the site's public URL.
+        var absolute = path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+        Uri? root = null;
+        if (!absolute && !EmailLinkPolicy.TryParsePublicUrl(site.Value.PublicUrl, out root))
         {
             throw new InvalidOperationException(EmailLinkPolicy.UnavailableWarning);
         }
@@ -38,7 +41,7 @@ public static class AccountLinks
             "&",
             query.Where(q => q.Value != null).Select(q => Uri.EscapeDataString(q.Name) + "=" + Uri.EscapeDataString(q.Value!)));
 
-        return root?.GetLeftPart(UriPartial.Path).TrimEnd('/') + path + (queryString.Length == 0 ? string.Empty : "?" + queryString);
+        return (absolute ? string.Empty : root?.GetLeftPart(UriPartial.Path).TrimEnd('/')) + path + (queryString.Length == 0 ? string.Empty : "?" + queryString);
     }
 
     /// <summary>The route of the single-page application that stands for <paramref name="path"/> (<c>Frontend:SpaLinks</c>); the screen's path when it serves emails.</summary>

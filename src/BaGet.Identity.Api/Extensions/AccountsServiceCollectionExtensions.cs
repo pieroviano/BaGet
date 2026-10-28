@@ -75,7 +75,14 @@ public static class AccountsServiceCollectionExtensions
         // Emails link to the single-page application's routes when the screens are off (or Frontend:SpaLinks): the sign-in page of the cookie is then the application's.
         var frontend = configuration.GetSection(nameof(BaGetOptions.Frontend)).Get<FrontendOptions>() ?? new FrontendOptions();
         var spaLinkBase = frontend.EmailLinkBase;
+        if (frontend.EmailLinksWouldBeDead && (configuration.GetSection(nameof(BaGetOptions.Email)).Get<EmailOptions>()?.IsConfigured ?? false))
+        {
+            throw new InvalidOperationException(
+                "'Frontend:Mvc' is false and email is configured, but account emails have no page to link to: set 'Frontend:SpaPath' (an application BaGet serves), 'Frontend:SpaUrl' (one hosted elsewhere) or 'Frontend:SpaLinks'=true (one a reverse proxy serves under 'Frontend:SpaBasePath').");
+        }
+
         services.PostConfigure<SiteOptions>(site => site.SpaLinkBase = spaLinkBase);
+        services.TryAddSingleton<ExchangeTokenLedger>();
         services.TryAddScoped<SessionTokenService>();
         services.TryAddScoped<SessionAuthenticator>();
         services.TryAddScoped<SessionUseCase>();
@@ -142,6 +149,15 @@ public static class AccountsServiceCollectionExtensions
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie?.Configure(cookie =>
         {
+            if (spaLinkBase != null && !spaLinkBase.StartsWith('/'))
+            {
+                // An application hosted elsewhere (an absolute address) cannot be a path: a challenge answers 401 instead of redirecting to a page of this server.
+                cookie.Events.OnRedirectToLogin = context => { context.Response.StatusCode = 401; return System.Threading.Tasks.Task.CompletedTask; };
+                cookie.Events.OnRedirectToAccessDenied = context => { context.Response.StatusCode = 403; return System.Threading.Tasks.Task.CompletedTask; };
+
+                return;
+            }
+
             cookie.LoginPath = spaLinkBase == null ? "/account/login" : spaLinkBase + "/sign-in";
             cookie.LogoutPath = spaLinkBase == null ? "/account/logout" : spaLinkBase + "/sign-in";
             cookie.AccessDeniedPath = spaLinkBase == null ? "/account/login" : spaLinkBase + "/sign-in";

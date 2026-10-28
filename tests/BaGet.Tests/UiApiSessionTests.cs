@@ -809,6 +809,9 @@ public class UiApiSessionTests : IDisposable
 
         var exchanged = await SendAsync(browser, HttpMethod.Post, "/api/ui/session/exchange", new { exchangeToken = exchange });
         Assert.Equal(HttpStatusCode.OK, exchanged.Status);
+
+        // Each exchange token works once (it travels in a URL fragment).
+        Assert.Equal(HttpStatusCode.Unauthorized, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/exchange", new { exchangeToken = exchange })).Status);
         var answer = await SendAsync(browser, HttpMethod.Get, "/api/ui/account/apikeys", bearer: exchanged.Model!["accessToken"]!.GetValue<string>());
         Assert.Equal(HttpStatusCode.OK, answer.Status);
 

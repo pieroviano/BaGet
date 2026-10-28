@@ -132,6 +132,10 @@ public sealed class UiApiSecurityFilter : IAsyncAuthorizationFilter
 
         var own = http.Request.Scheme + "://" + http.Request.Host;
         if (string.Equals(origin.TrimEnd('/'), own, StringComparison.OrdinalIgnoreCase)) return true;
+
+        // Behind a TLS proxy whose X-Forwarded-Proto is not trusted the request looks like http: the public URL of the site is this server's origin too.
+        if (Uri.TryCreate(http.RequestServices.GetService<IOptions<SiteOptions>>()?.Value.PublicUrl, UriKind.Absolute, out var publicUrl)
+            && string.Equals(origin.TrimEnd('/'), publicUrl.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase)) return true;
         if (endpoint.SameOriginOnly) return false;
 
         var listed = SessionReturnUrls.Origins(http.RequestServices.GetService<IOptions<CorsSettings>>()?.Value.AllowedOrigins);

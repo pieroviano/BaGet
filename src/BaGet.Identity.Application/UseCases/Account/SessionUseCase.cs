@@ -28,6 +28,7 @@ public sealed class SessionUseCase
     private readonly SessionAuthenticator _authenticator;
     private readonly SystemTime _time;
     private readonly MaintenanceGate _gate;
+    private readonly ExchangeTokenLedger _ledger;
 
     /// <summary>Creates the use case.</summary>
     public SessionUseCase(
@@ -36,8 +37,10 @@ public sealed class SessionUseCase
         SessionTokenService tokens,
         SessionAuthenticator authenticator,
         SystemTime time,
-        MaintenanceGate gate)
+        MaintenanceGate gate,
+        ExchangeTokenLedger ledger)
     {
+        _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
         _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
@@ -148,7 +151,7 @@ public sealed class SessionUseCase
         if (errors.Count > 0) return ScreenResult<SessionModel>.Invalid(new SessionModel(), errors);
 
         var exchange = await _authenticator.AuthenticateAsync(SessionTokenKind.Exchange, form!.ExchangeToken);
-        if (exchange == null) return ScreenResult<SessionModel>.SignIn(BadExchange);
+        if (exchange == null || !_ledger.TryUse(form.ExchangeToken!, exchange.ExpiresAt)) return ScreenResult<SessionModel>.SignIn(BadExchange);
 
         return await CompleteAsync(exchange.Account, exchange.AuthenticatedAt, cookie: false);
     }

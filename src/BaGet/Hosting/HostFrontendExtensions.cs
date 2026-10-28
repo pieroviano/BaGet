@@ -65,6 +65,12 @@ internal static class HostFrontendExtensions
     public static FrontendOptions ReadFrontendOptions(this IConfiguration configuration)
     {
         var options = configuration.GetSection(nameof(BaGetOptions.Frontend)).Get<FrontendOptions>() ?? new FrontendOptions();
+        if (!string.IsNullOrWhiteSpace(options.SpaUrl)
+            && (!Uri.TryCreate(options.SpaUrl.Trim(), UriKind.Absolute, out var spaUrl) || (spaUrl.Scheme != Uri.UriSchemeHttp && spaUrl.Scheme != Uri.UriSchemeHttps) || !string.IsNullOrEmpty(spaUrl.Query)))
+        {
+            throw new InvalidOperationException($"'Frontend:SpaUrl' ('{options.SpaUrl}') is not an absolute http(s) address without a query, such as https://app.example.com.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.SpaPath)) return options;
 
         var basePath = options.NormalizedBasePath();

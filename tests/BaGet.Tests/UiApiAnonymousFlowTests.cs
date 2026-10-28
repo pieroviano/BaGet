@@ -165,19 +165,29 @@ public class UiApiAnonymousFlowTests : IDisposable
     }
 
     [Fact]
-    public async Task RegistrationIsRateLimitedPerEmailAddressOverHttp()
+    public async Task AnEmailAddressIsMailedOncePerWindowButARefusedAttemptNeverUsesUpItsAllowance()
     {
         var app = Start(mail: true);
+        await CreateUserAsync(app, "taken", email: "taken@example.com");
         var browser = NewBrowser(app);
 
-        var first = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/register", new { userName = "one", email = "same@example.com", password = Password, confirmPassword = Password });
-        var second = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/register", new { userName = "two", email = "same@example.com", password = Password, confirmPassword = Password });
+        // A refused attempt (name taken, weak password) charges nothing against the address: the retry works.
+        var refused = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/register", new { userName = "taken", email = "same@example.com", password = Password, confirmPassword = Password });
+        var weak = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/register", new { userName = "one", email = "same@example.com", password = "a", confirmPassword = "a" });
+        Assert.Equal(HttpStatusCode.BadRequest, refused.Status);
+        Assert.Equal(HttpStatusCode.BadRequest, weak.Status);
 
+        var first = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/register", new { userName = "one", email = "same@example.com", password = Password, confirmPassword = Password });
         Assert.Equal(HttpStatusCode.OK, first.Status);
         Assert.True(first.Model!["confirmationSent"]!.GetValue<bool>());
-        Assert.Equal(HttpStatusCode.BadRequest, second.Status);
-        Assert.Contains("Too many", second.Error, StringComparison.Ordinal);
-        Assert.Null(await FindAsync(app, "two"));
+        Assert.Single(await WaitForMailAsync(app, 1));
+
+        // Once an account exists for it, the address is mailed once per window: a second account is created, no second mail is sent.
+        var second = await SendAsync(browser, HttpMethod.Post, "/api/ui/account/register", new { userName = "two", email = "same@example.com", password = Password, confirmPassword = Password });
+        Assert.Equal(HttpStatusCode.OK, second.Status);
+        Assert.NotNull(await FindAsync(app, "two"));
+        await Task.Delay(300, Token);
+        Assert.Single(app.Services.GetRequiredService<CapturingEmailSender>().Sent);
     }
 
     // ----- forgot / reset / confirm / resend
@@ -279,7 +289,7 @@ public class UiApiAnonymousFlowTests : IDisposable
     [Fact]
     public async Task WithoutTheScreensEmailLinksPointAtTheApplicationsRoutesWithTheSameQueryValues()
     {
-        var app = Start(new Dictionary<string, string> { { "Frontend:Mvc", "false" }, { "Frontend:SpaBasePath", "/spa" } }, mail: true);
+        var app = Start(new Dictionary<string, string> { { "Frontend:Mvc", "false" }, { "Frontend:SpaLinks", "true" }, { "Frontend:SpaBasePath", "/spa" } }, mail: true);
         await CreateUserAsync(app, "alice", email: "alice@example.com");
         var browser = NewBrowser(app);
 
@@ -293,6 +303,27 @@ public class UiApiAnonymousFlowTests : IDisposable
         Assert.NotNull(Query(reset)["code"]);
         Assert.StartsWith("https://baget.example.com/spa/confirm-email?userId=", confirmation, StringComparison.Ordinal);
         Assert.NotNull(Query(confirmation)["code"]);
+    }
+
+    [Fact]
+    public async Task AnApplicationHostedElsewhereIsLinkedByItsOwnAddressAndNoLinkEverPointsAtAMissingPage()
+    {
+        var app = Start(new Dictionary<string, string> { { "Frontend:Mvc", "false" }, { "Frontend:SpaUrl", "https://app.example.com/" } }, mail: true);
+        await CreateUserAsync(app, "alice", email: "alice@example.com");
+        await SendAsync(NewBrowser(app), HttpMethod.Post, "/api/ui/account/forgotpassword", new { identifier = "alice" });
+        Assert.StartsWith("https://app.example.com/reset-password?userId=", (await WaitForMailAsync(app, 1))[0].Payload, StringComparison.Ordinal);
+
+        // No screens and no application to link to: the host does not start with mail configured, instead of mailing links to a 404.
+        var dead = Record.Exception(() => Start(new Dictionary<string, string> { { "Frontend:Mvc", "false" } }, mail: true).Services);
+        Assert.NotNull(dead);
+        Assert.Contains("Frontend:SpaUrl", dead!.ToString(), StringComparison.Ordinal);
+
+        // Without mail nothing is linked, and the host starts.
+        Assert.Null(Record.Exception(() => Start(new Dictionary<string, string> { { "Frontend:Mvc", "false" } }).Services));
+
+        var invalid = Record.Exception(() => Start(new Dictionary<string, string> { { "Frontend:SpaUrl", "ftp://app.example.com" } }).Services);
+        Assert.NotNull(invalid);
+        Assert.Contains("Frontend:SpaUrl", invalid!.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -318,6 +349,7 @@ public class UiApiAnonymousFlowTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session", credentials, origin: "https://evil.example")).Status);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(browser, HttpMethod.Get, "/api/ui/antiforgery", origin: "https://evil.example")).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session", credentials, origin: "https://baget.example.com")).Status);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session/refresh", new { refreshToken = "bgs.x" }, origin: "null")).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session", credentials, origin: "http://localhost")).Status);
         Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session", credentials)).Status);
@@ -331,6 +363,18 @@ public class UiApiAnonymousFlowTests : IDisposable
         // The cookie endpoints are for this origin alone, listed or not.
         var token = await AntiforgeryAsync(second);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(second, HttpMethod.Post, "/api/ui/session/cookie", credentials, xsrf: token, origin: "https://spa.example.com")).Status);
+    }
+
+    [Fact]
+    public async Task TheOriginOfThePublicUrlIsThisServersOriginBehindATlsProxyThatIsNotTrusted()
+    {
+        // The request arrives as http://localhost (X-Forwarded-Proto not trusted), while the site is https://baget.example.com.
+        var app = Start(new Dictionary<string, string> { { "Site:PublicUrl", "https://baget.example.com" } });
+        await CreateUserAsync(app, "alice");
+        var browser = NewBrowser(app);
+
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session", new { userName = "alice", password = Password }, origin: "https://baget.example.com")).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(browser, HttpMethod.Post, "/api/ui/session", new { userName = "alice", password = Password }, origin: "https://evil.example")).Status);
     }
 
     // ----- expired header, lifetime cap
@@ -515,6 +559,14 @@ public class UiApiAnonymousFlowTests : IDisposable
     [InlineData("/app", "/app", true)]
     [InlineData("/app/users/1?x=1", "/app/", true)]
     [InlineData("/application", "/app", false)]
+    [InlineData("/app/../account/manage", "/app", false)]
+    [InlineData("/app/%2e%2e/account/manage", "/app", false)]
+    [InlineData("/app/%2E%2E/account/manage", "/app", false)]
+    [InlineData("/app/./x", "/app", true)]
+    [InlineData("/app/x/../y", "/app", true)]
+    [InlineData("/app/x/../../account", "/app", false)]
+    [InlineData("/app%2fx", "/app", false)]
+    [InlineData("https://baget.example.com/app/../account", "/app", false)]
     [InlineData("/other", "/app", false)]
     [InlineData("/admin/users", "/app", false)]
     [InlineData("https://baget.example.com/app/x", "/app", true)]

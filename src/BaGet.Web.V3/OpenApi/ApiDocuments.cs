@@ -56,6 +56,10 @@ public static class ApiDocuments
                 basic: false,
                 session: true);
             options.AddOperationTransformer(ScreenOnlyNote);
+            options.AddSchemaTransformer(UiDocumentShape.EnumsAsNames);
+            options.AddDocumentTransformer(UiDocumentShape.IntegersAsIntegers);
+            options.AddOperationTransformer(UiDocumentShape.ErrorAnswersLikeTheOkAnswer);
+            options.AddDocumentTransformer(UiDocumentShape.OptionalRouteValuesAsPaths);
         });
         services.AddOpenApi(V1, options => Configure(options, "BaGet administration API",
             "Administers repositories, projects, users, groups, permission targets, retention, scanning and operations. "

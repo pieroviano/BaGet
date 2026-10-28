@@ -95,13 +95,12 @@ public sealed class RegistrationUseCase
 
         if (errors.Count > 0) return ScreenResult<RegisterViewModel>.Invalid(model, errors);
 
-        // Over /api/ui (no cookie is set for such a caller) registration is rate limited: per address, and once per email address per window.
+        // Over /api/ui (no cookie is set for such a caller) every attempt counts against the client address (a backstop). The per-email allowance is only taken once an
+        // account exists (below), so a refused attempt (name taken, weak password) never blocks a retry and nobody can use up the allowance of an address they do not own.
         var http = _services.GetService<IHttpContextAccessor>()?.HttpContext;
         var overHttp = http != null && AccountConfirmation.IsOverHttp(http);
-        if (overHttp
-            && !_services.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(
-                http!.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
-                "register:" + (string.IsNullOrWhiteSpace(form!.Email) ? Guid.NewGuid().ToString("N") : form.Email.Trim().ToLowerInvariant())))
+        var client = http?.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        if (overHttp && !_services.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(client, "attempt:" + Guid.NewGuid().ToString("N")))
         {
             return ScreenResult<RegisterViewModel>.Invalid(model, "Too many attempts. Try again in a few minutes.");
         }
@@ -137,6 +136,17 @@ public sealed class RegistrationUseCase
 
         if (EmailConfigured)
         {
+            // Over /api/ui the address is mailed once per window (a confirmation was already sent to it a moment ago otherwise: "resend" mails another later).
+            if (overHttp
+                && !string.IsNullOrWhiteSpace(user.Email)
+                && !_services.GetRequiredService<PasswordResetRateLimiter>().TryAcquire(client, "register:" + user.Email.Trim().ToLowerInvariant()))
+            {
+                model.ConfirmationSent = true;
+                model.AwaitingApproval = user.PendingApproval;
+
+                return ScreenResult<RegisterViewModel>.Ok(model);
+            }
+
             // Signing in needs a confirmed address, so the user is not signed in yet.
             var token = await _users.GenerateEmailConfirmationTokenAsync(user);
             var link = AccountLinks.ConfirmEmail(_site, user.Id, token);

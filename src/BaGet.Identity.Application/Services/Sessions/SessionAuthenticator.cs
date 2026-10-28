@@ -44,6 +44,6 @@ public sealed class SessionAuthenticator
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, account.Id));
         if (account.UserName != null) identity.AddClaim(new Claim(ClaimTypes.Name, account.UserName));
 
-        return new SessionAuthentication(new ClaimsPrincipal(identity), SessionPrincipalFactory.For(account), account, claims.AuthenticatedAt);
+        return new SessionAuthentication(new ClaimsPrincipal(identity), SessionPrincipalFactory.For(account), account, claims.AuthenticatedAt) { ExpiresAt = claims.ExpiresAt };
     }
 }

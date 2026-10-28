@@ -9,4 +9,8 @@ namespace BaGet.Identity.Application.Services.Sessions;
 /// <param name="Principal">The same user as the authorization services see them: every scope, no repository limit, <see cref="BaGetPrincipal.IsInteractiveSession"/>.</param>
 /// <param name="Account">The account.</param>
 /// <param name="AuthenticatedAt">When the user signed in (a refresh keeps it).</param>
-public sealed record SessionAuthentication(ClaimsPrincipal User, BaGetPrincipal Principal, BaGetUser Account, DateTime AuthenticatedAt);
+public sealed record SessionAuthentication(ClaimsPrincipal User, BaGetPrincipal Principal, BaGetUser Account, DateTime AuthenticatedAt)
+{
+    /// <summary>When the token stops being accepted.</summary>
+    public DateTime ExpiresAt { get; init; }
+}
