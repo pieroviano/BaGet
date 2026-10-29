@@ -24,7 +24,7 @@ public class AdministratorTests : IDisposable
     private const int UsersPageSize = UsersViewModel.PageSize;
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AdministratorTests(ITestOutputHelper output) => _output = output;
 

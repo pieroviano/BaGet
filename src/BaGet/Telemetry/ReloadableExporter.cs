@@ -24,8 +24,8 @@ internal abstract class ReloadableExporter<T> : BaseExporter<T> where T : class
     private readonly TelemetryStatus.Signal _status;
     private readonly TelemetrySignal _signal;
     private readonly Func<TelemetryOptions, Uri, BaseExporter<T>> _create;
-    private readonly SwappableHolder<BaseExporter<T>> _holder = new SwappableHolder<BaseExporter<T>>();
-    private readonly object _reloadLock = new object();
+    private readonly SwappableHolder<BaseExporter<T>> _holder = new();
+    private readonly object _reloadLock = new();
     private readonly IDisposable? _subscription;
     private string? _key;
     private bool _disposed;

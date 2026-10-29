@@ -25,7 +25,7 @@ namespace BaGet.Tests;
 public class AlpineExpressionTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AlpineExpressionTests(ITestOutputHelper output) => _output = output;
 
@@ -63,13 +63,13 @@ public class AlpineExpressionTests : IDisposable
             Tags = Array.Empty<string>(),
             Dependencies = new List<PackageDependency>(),
             PackageTypes = new List<PackageType>(),
-            TargetFrameworks = new List<TargetFramework> { new TargetFramework { Moniker = "net8.0" } },
+            TargetFrameworks = new List<TargetFramework> { new() { Moniker = "net8.0" } },
         });
         #pragma warning restore CS8602
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
-    private static readonly Regex Directive = new Regex(
+    private static readonly Regex Directive = new(
         @"\s(?<name>x-[\w:.\-]+|@[\w:.\-]+|:[\w\-]+)=""(?<value>[^""]*)""",
         RegexOptions.Compiled);
 

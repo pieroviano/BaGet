@@ -6,7 +6,7 @@ namespace BaGet.Tests;
 
 public class CatalogWriterTests
 {
-    private static readonly DateTime Now = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Now = new(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     [Fact]
     public void TheFirstCommitIsNow()

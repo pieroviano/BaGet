@@ -21,7 +21,7 @@ namespace BaGet.Tests;
 public class AdminUserActionsTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AdminUserActionsTests(ITestOutputHelper output) => _output = output;
 

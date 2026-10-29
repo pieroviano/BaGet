@@ -30,7 +30,7 @@ public class RepositoryMigrationTests : IDisposable
     }
 
     private SqliteContext NewContext()
-        => new SqliteContext(new DbContextOptionsBuilder<SqliteContext>().UseSqlite($"Data Source={_path}").Options);
+        => new(new DbContextOptionsBuilder<SqliteContext>().UseSqlite($"Data Source={_path}").Options);
 
     // Fills every NOT NULL column that has no default, so the test does not depend on the old schema's column list.
     private void InsertRow(string table, IDictionary<string, object> values)

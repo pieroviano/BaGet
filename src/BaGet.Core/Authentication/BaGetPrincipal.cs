@@ -14,7 +14,7 @@ public sealed class BaGetPrincipal
     /// The server's global API key, or any caller when no key is configured: it may do
     /// anything to any package.
     /// </summary>
-    public static readonly BaGetPrincipal Superuser = new BaGetPrincipal(
+    public static readonly BaGetPrincipal Superuser = new(
         userId: null,
         userName: null,
         isSuperuser: true,

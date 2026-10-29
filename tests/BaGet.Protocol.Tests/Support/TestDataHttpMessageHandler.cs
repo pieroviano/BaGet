@@ -10,7 +10,7 @@ namespace BaGet.Protocol.Tests;
 // Based off https://github.com/NuGet/NuGet.Services.Metadata/blob/0c69b9dd47e01125c22f72c1e27cf3cdafc65233/tests/NuGet.Protocol.Catalog.Tests/TestDataHttpMessageHandler.cs
 public class TestDataHttpMessageHandler : HttpMessageHandler
 {
-    private static readonly Dictionary<string, Func<string>> UrlToGetContent = new Dictionary<string, Func<string>>
+    private static readonly Dictionary<string, Func<string>> UrlToGetContent = new()
     {
         { TestData.ServiceIndexUrl, () => TestData.ServiceIndex },
 

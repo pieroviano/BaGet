@@ -614,7 +614,7 @@ public class BrowserUploadReadOnlyTests
     }
 
     private BaGetApplication Application(bool accounts)
-        => new BaGetApplication(_output, configOverrides: new Dictionary<string, string>
+        => new(_output, configOverrides: new Dictionary<string, string>
         {
             { "ApiKey", "global-key" },
             { "IsReadOnlyMode", "true" },

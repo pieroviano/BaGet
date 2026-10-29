@@ -6,7 +6,7 @@ namespace BaGet.Core;
 
 public class StringArrayComparer : ValueComparer<string[]>
 {
-    public static readonly StringArrayComparer Instance = new StringArrayComparer();
+    public static readonly StringArrayComparer Instance = new();
 
     public StringArrayComparer()
         : base(

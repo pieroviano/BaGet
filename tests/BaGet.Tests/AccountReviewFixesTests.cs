@@ -20,7 +20,7 @@ public class AccountReviewFixesTests : IDisposable
     private const string Password = "Passw0rd!";
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AccountReviewFixesTests(ITestOutputHelper output) => _output = output;
 

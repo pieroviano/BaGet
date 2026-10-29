@@ -19,7 +19,7 @@ public class PackageIndexingServiceTests
     private const string PackageId = "Test.Package";
     private const string PackageVersion = "1.0.0";
 
-    private static readonly DateTime PublishedTime = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+    private static readonly DateTime PublishedTime = new(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
 
     private readonly Mock<IPackageDatabase> _packages;
     private readonly Mock<IPackageStorageService> _storage;

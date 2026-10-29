@@ -22,8 +22,8 @@ public class TelemetryTests : IDisposable
     private const string ApiKey = "s3cr3t-api-key-value";
 
     private readonly ITestOutputHelper _output;
-    private readonly DiagnosticsCapture _capture = new DiagnosticsCapture();
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly DiagnosticsCapture _capture = new();
+    private readonly List<IDisposable> _disposables = new();
 
     public TelemetryTests(ITestOutputHelper output) => _output = output;
 

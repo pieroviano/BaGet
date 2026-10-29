@@ -15,7 +15,7 @@ public class ApiKeyForm
     public string? Description { get; set; }
 
     /// <summary>The scopes of the new key.</summary>
-    public List<string> Scopes { get; set; } = new List<string>();
+    public List<string> Scopes { get; set; } = new();
 
     /// <summary>The package IDs the key applies to.</summary>
     [Display(Name = "Package glob pattern")]
@@ -27,5 +27,5 @@ public class ApiKeyForm
     public int? ExpiresInDays { get; set; } = 365;
 
     /// <summary>The keys of the repositories the new key is limited to; none (the default) means every repository.</summary>
-    public List<int> RepositoryKeys { get; set; } = new List<int>();
+    public List<int> RepositoryKeys { get; set; } = new();
 }

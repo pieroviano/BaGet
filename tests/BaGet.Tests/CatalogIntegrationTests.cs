@@ -226,7 +226,7 @@ public abstract class CatalogIntegrationTestsBase : IDisposable
 
     private class RecordingLeafProcessor : ICatalogLeafProcessor
     {
-        public List<CatalogLeaf> Leaves { get; } = new List<CatalogLeaf>();
+        public List<CatalogLeaf> Leaves { get; } = new();
 
         public Task<bool> ProcessPackageDetailsAsync(PackageDetailsCatalogLeaf leaf, CancellationToken cancellationToken = default)
         {

@@ -278,7 +278,7 @@ public class StoragePackageStagingServiceTests
         protected readonly Mock<SystemTime> _time;
         protected readonly StoragePackageStagingService _target;
 
-        protected DateTime _now = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        protected DateTime _now = new(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public FactsBase()
         {

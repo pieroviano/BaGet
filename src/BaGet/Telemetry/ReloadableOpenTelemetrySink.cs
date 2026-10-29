@@ -25,9 +25,9 @@ internal sealed class ReloadableOpenTelemetrySink : ILogEventSink, IDisposable
     private readonly IOptionsMonitor<TelemetryOptions> _options;
     private readonly TelemetryStatus.Signal _status;
     private readonly ITelemetryExporterFactory _factory;
-    private readonly SwappableHolder<SinkHandle> _holder = new SwappableHolder<SinkHandle>();
-    private readonly object _reloadLock = new object();
-    private readonly List<Task> _retiring = new List<Task>();
+    private readonly SwappableHolder<SinkHandle> _holder = new();
+    private readonly object _reloadLock = new();
+    private readonly List<Task> _retiring = new();
     private int _unretired; // sinks built whose retirement has not started yet; guarded by _retiring
     private readonly IDisposable? _subscription;
     private readonly string _serviceName;

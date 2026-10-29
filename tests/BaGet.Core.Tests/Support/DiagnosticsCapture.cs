@@ -22,7 +22,7 @@ public sealed class DiagnosticsCapture : IDisposable
     public const string Name = "Diagnostics";
 
     private readonly ActivityListener _activities;
-    private readonly MeterListener _meters = new MeterListener();
+    private readonly MeterListener _meters = new();
 
     public DiagnosticsCapture()
     {
@@ -44,9 +44,9 @@ public sealed class DiagnosticsCapture : IDisposable
         _meters.Start();
     }
 
-    public ConcurrentQueue<Activity> Stopped { get; } = new ConcurrentQueue<Activity>();
+    public ConcurrentQueue<Activity> Stopped { get; } = new();
 
-    public ConcurrentQueue<CapturedMeasurement> Measurements { get; } = new ConcurrentQueue<CapturedMeasurement>();
+    public ConcurrentQueue<CapturedMeasurement> Measurements { get; } = new();
 
     public IReadOnlyList<Activity> Spans(string name) => Stopped.Where(a => a.OperationName == name).ToList();
 

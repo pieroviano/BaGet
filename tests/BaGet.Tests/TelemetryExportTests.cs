@@ -29,7 +29,7 @@ public class TelemetryExportTests : IDisposable
     private const string Collector = "http://collector.invalid:4317";
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public TelemetryExportTests(ITestOutputHelper output) => _output = output;
 

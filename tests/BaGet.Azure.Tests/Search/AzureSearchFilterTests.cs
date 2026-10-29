@@ -60,7 +60,7 @@ public class AzureSearchFilterTests
     }
 
     private static Package Package(string version, bool prerelease, SemVerLevel semVerLevel)
-        => new Package
+        => new()
         {
             Id = "Test",
             Version = NuGetVersion.Parse(version),

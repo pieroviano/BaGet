@@ -23,7 +23,7 @@ public class UiConsistencyTests : IDisposable
     private static readonly CancellationToken Cancellation = CancellationToken.None;
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public UiConsistencyTests(ITestOutputHelper output) => _output = output;
 
@@ -81,7 +81,7 @@ public class UiConsistencyTests : IDisposable
                 Description = "A test package.",
                 Published = DateTime.UtcNow,
                 Dependencies = new List<PackageDependency>(),
-                PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "0.0" } },
+                PackageTypes = new List<PackageType> { new() { Name = "Dependency", Version = "0.0" } },
                 TargetFrameworks = new List<TargetFramework>(),
             },
             Cancellation);

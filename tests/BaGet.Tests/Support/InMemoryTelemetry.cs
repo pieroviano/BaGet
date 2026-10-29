@@ -34,9 +34,9 @@ public sealed record ExportedSpan(
 /// </summary>
 internal sealed class InMemoryTelemetry : ITelemetryExporterFactory
 {
-    private readonly ConcurrentQueue<ExportedSpan> _spans = new ConcurrentQueue<ExportedSpan>();
-    private readonly ConcurrentQueue<LogEvent> _logs = new ConcurrentQueue<LogEvent>();
-    private readonly ConcurrentQueue<TelemetryOptions> _traceOptions = new ConcurrentQueue<TelemetryOptions>();
+    private readonly ConcurrentQueue<ExportedSpan> _spans = new();
+    private readonly ConcurrentQueue<LogEvent> _logs = new();
+    private readonly ConcurrentQueue<TelemetryOptions> _traceOptions = new();
     private int _traceExporters;
     private int _logSinks;
 

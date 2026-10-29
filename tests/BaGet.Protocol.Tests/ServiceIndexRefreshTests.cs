@@ -16,10 +16,10 @@ public class ServiceIndexRefreshTests
     private const string FirstSearchUrl = "https://test.example/v3/search-one";
     private const string SecondSearchUrl = "https://test.example/v3/search-two";
 
-    private readonly FakeHttpMessageHandler _handler = new FakeHttpMessageHandler();
+    private readonly FakeHttpMessageHandler _handler = new();
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(40);
 
-    private DateTimeOffset _now = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private DateTimeOffset _now = new(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private string _searchUrl = FirstSearchUrl;
 
     public ServiceIndexRefreshTests()

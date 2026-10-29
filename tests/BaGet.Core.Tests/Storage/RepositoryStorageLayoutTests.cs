@@ -31,7 +31,7 @@ public class RepositoryStorageLayoutTests
         return context;
     }
 
-    private static Package NewPackage() => new Package { Id = "My.Package", Version = NuGetVersion.Parse("1.2.3-Beta") };
+    private static Package NewPackage() => new() { Id = "My.Package", Version = NuGetVersion.Parse("1.2.3-Beta") };
 
     private static Stream Bytes(string text) => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
 

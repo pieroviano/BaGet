@@ -17,7 +17,7 @@ namespace BaGet.Tests;
 public class HeaderLinksTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public HeaderLinksTests(ITestOutputHelper output) => _output = output;
 
@@ -166,7 +166,7 @@ public class HeaderLinksTests : IDisposable
 
     private sealed class CapturingLoggerProvider : ILoggerProvider
     {
-        public List<string> Messages { get; } = new List<string>();
+        public List<string> Messages { get; } = new();
 
         public ILogger CreateLogger(string categoryName) => new Capture(this);
 

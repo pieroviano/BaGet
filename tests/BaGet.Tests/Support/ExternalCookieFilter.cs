@@ -30,8 +30,8 @@ internal sealed class ExternalCookieFilter : IStartupFilter
             #pragma warning disable CS8604
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, query["sub"]),
-                new Claim("preferred_username", query["name"]),
+                new(ClaimTypes.NameIdentifier, query["sub"]),
+                new("preferred_username", query["name"]),
             };
             if (!string.IsNullOrEmpty(query["email"])) claims.Add(new Claim(ClaimTypes.Email, query["email"]));
             if (!string.IsNullOrEmpty(query["verified"])) claims.Add(new Claim("email_verified", query["verified"]));

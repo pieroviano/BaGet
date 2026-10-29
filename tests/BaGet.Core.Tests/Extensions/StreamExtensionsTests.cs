@@ -7,8 +7,7 @@ namespace BaGet.Core.Tests.Extensions;
 
 public class StreamExtensionsTests
 {
-    private static MemoryStream Stream(string content)
-        => new MemoryStream(Encoding.UTF8.GetBytes(content));
+    private static MemoryStream Stream(string content) => new(Encoding.UTF8.GetBytes(content));
 
     public class Matches
     {

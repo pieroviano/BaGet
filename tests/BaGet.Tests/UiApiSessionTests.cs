@@ -45,7 +45,7 @@ public class UiApiSessionTests : IDisposable
     /// <summary>The mocked clock of the harness, made movable.</summary>
     private sealed class MutableClock : SystemTime
     {
-        public DateTime Now { get; set; } = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public DateTime Now { get; set; } = new(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public override DateTime UtcNow => Now;
     }

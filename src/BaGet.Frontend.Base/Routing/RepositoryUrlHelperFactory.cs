@@ -10,7 +10,7 @@ namespace BaGet.Frontend.Routing;
 /// </summary>
 public class RepositoryUrlHelperFactory : IUrlHelperFactory
 {
-    private readonly UrlHelperFactory _default = new UrlHelperFactory();
+    private readonly UrlHelperFactory _default = new();
 
     /// <inheritdoc/>
     public IUrlHelper GetUrlHelper(ActionContext context)

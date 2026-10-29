@@ -23,7 +23,7 @@ namespace BaGet.Tests;
 public class AdminAccountToolsTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AdminAccountToolsTests(ITestOutputHelper output) => _output = output;
 

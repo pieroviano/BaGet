@@ -67,7 +67,7 @@ public abstract class ApiControllerBase : ControllerBase
     /// <summary>The answer of an action: <paramref name="result"/> with the HTTP status of its decision.</summary>
     [NonAction]
     protected ActionResult<ScreenResult<T>> Respond<T>(ScreenResult<T> result)
-        => new ActionResult<ScreenResult<T>>(new UiApiResult(result ?? throw new ArgumentNullException(nameof(result))));
+        => new(new UiApiResult(result ?? throw new ArgumentNullException(nameof(result))));
 
     /// <summary>The answer for a gate's refusal: the screen has no model, so the result is of the action's own model type with only the decision set.</summary>
     [NonAction]

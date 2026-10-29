@@ -51,7 +51,7 @@ public class RepositoryIsolationTests : IDisposable
             ? _app.Services.CreateScope()
             : _app.Services.GetRequiredService<IServiceScopeFactory>().CreateRepositoryScope(repository);
 
-    private static Package NewPackage(string id, string version, long downloads = 0) => new Package
+    private static Package NewPackage(string id, string version, long downloads = 0) => new()
     {
         Id = id,
         Version = NuGetVersion.Parse(version),
@@ -62,7 +62,7 @@ public class RepositoryIsolationTests : IDisposable
         Description = "A test package.",
         Published = DateTime.UtcNow,
         Dependencies = new List<PackageDependency>(),
-        PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "0.0" } },
+        PackageTypes = new List<PackageType> { new() { Name = "Dependency", Version = "0.0" } },
         TargetFrameworks = new List<TargetFramework>(),
     };
 

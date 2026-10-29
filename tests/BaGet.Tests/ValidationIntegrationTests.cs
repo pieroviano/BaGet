@@ -25,7 +25,7 @@ namespace BaGet.Tests;
 public class ValidationIntegrationTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public ValidationIntegrationTests(ITestOutputHelper output)
     {
@@ -281,8 +281,8 @@ public class ValidationIntegrationTests : IDisposable
 
     private class GateValidator : IPackageValidator
     {
-        public TaskCompletionSource<bool> Entered { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource<bool> Release { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<bool> Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<bool> Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public string Name => "Gate";
 

@@ -75,7 +75,7 @@ public class AccountsOptions
     /// An external OpenID Connect provider, such as Microsoft Entra ID. Unused unless
     /// <see cref="AccountsOpenIdConnectOptions.Authority"/> is set.
     /// </summary>
-    public AccountsOpenIdConnectOptions OpenIdConnect { get; set; } = new AccountsOpenIdConnectOptions();
+    public AccountsOpenIdConnectOptions OpenIdConnect { get; set; } = new();
 }
 
 public class AccountsOpenIdConnectOptions

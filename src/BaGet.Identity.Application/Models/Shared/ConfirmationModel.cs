@@ -20,5 +20,5 @@ public abstract class ConfirmationModel
 
     /// <summary>The model of the password confirmation partial, with <paramref name="id"/> for the input.</summary>
     public ConfirmPasswordView Confirmation(string id)
-        => new ConfirmPasswordView(id, HasPassword, Reauthenticated, CanReauthenticate, ReturnPage);
+        => new(id, HasPassword, Reauthenticated, CanReauthenticate, ReturnPage);
 }

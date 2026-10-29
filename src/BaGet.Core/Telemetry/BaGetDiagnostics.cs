@@ -43,10 +43,10 @@ public static class BaGetDiagnostics
     }
 
     /// <summary>The source of BaGet's spans.</summary>
-    public static readonly ActivitySource Source = new ActivitySource(Name);
+    public static readonly ActivitySource Source = new(Name);
 
     /// <summary>The meter of BaGet's counters.</summary>
-    public static readonly Meter Meter = new Meter(Name);
+    public static readonly Meter Meter = new(Name);
 
     /// <summary>Packages accepted by a push, tagged by <see cref="Tags.Result"/>.</summary>
     public static readonly Counter<long> PackagesPushed

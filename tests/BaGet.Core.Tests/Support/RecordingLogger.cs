@@ -12,7 +12,7 @@ namespace BaGet.Core.Tests.Support;
 /// </summary>
 public class RecordingLogger<T> : ILogger<T>
 {
-    private readonly List<LogEntry> _entries = new List<LogEntry>();
+    private readonly List<LogEntry> _entries = new();
 
     public IReadOnlyList<LogEntry> Entries => _entries;
 

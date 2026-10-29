@@ -11,8 +11,8 @@ public sealed class FrameworkGroup
     public string? Name { get; init; }
 
     /// <summary>Frameworks the package ships assets for.</summary>
-    public List<string> Declared { get; } = new List<string>();
+    public List<string> Declared { get; } = new();
 
     /// <summary>Frameworks the package works with without declaring them.</summary>
-    public List<string> Computed { get; } = new List<string>();
+    public List<string> Computed { get; } = new();
 }

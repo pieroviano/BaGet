@@ -19,10 +19,10 @@ namespace BaGet.Protocol.Tests;
 public class FakeHttpMessageHandler : HttpMessageHandler
 {
     private readonly Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>> _responses
-        = new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>(StringComparer.Ordinal);
+        = new(StringComparer.Ordinal);
 
-    private readonly List<string> _requests = new List<string>();
-    private readonly object _lock = new object();
+    private readonly List<string> _requests = new();
+    private readonly object _lock = new();
 
     /// <summary>
     /// The URLs that were requested, without their query strings, in order.

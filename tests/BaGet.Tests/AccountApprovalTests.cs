@@ -18,7 +18,7 @@ namespace BaGet.Tests;
 public class AccountApprovalTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AccountApprovalTests(ITestOutputHelper output) => _output = output;
 

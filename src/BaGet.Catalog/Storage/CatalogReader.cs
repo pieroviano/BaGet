@@ -107,6 +107,5 @@ public class CatalogReader
 
     internal static int PageCount(int entries) => (entries + PageSize - 1) / PageSize;
 
-    private static DateTimeOffset Utc(DateTime value)
-        => new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+    private static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 }

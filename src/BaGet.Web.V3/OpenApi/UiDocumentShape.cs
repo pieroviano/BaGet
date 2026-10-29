@@ -89,7 +89,7 @@ internal static class UiDocumentShape
             operation.Responses[code] = new OpenApiResponse
             {
                 Description = description,
-                Content = new Dictionary<string, OpenApiMediaType> { ["application/json"] = new OpenApiMediaType { Schema = json.Schema } },
+                Content = new Dictionary<string, OpenApiMediaType> { ["application/json"] = new() { Schema = json.Schema } },
             };
         }
 

@@ -57,7 +57,7 @@ public class RegistrationBuilderTests
         {
             Id = packageId,
             Authors = new string[] { "test" },
-            PackageTypes = new List<PackageType> { new PackageType { Name = "test" } },
+            PackageTypes = new List<PackageType> { new() { Name = "test" } },
             Dependencies = new List<PackageDependency> { },
             Version = new NuGetVersion(version),
         };

@@ -10,7 +10,7 @@ namespace BaGet.Telemetry;
 /// </summary>
 internal sealed class SwappableHolder<T> : IDisposable where T : class, IDisposable
 {
-    private readonly object _gate = new object();
+    private readonly object _gate = new();
     private Lease? _current;
     private bool _closed;
 
@@ -74,7 +74,7 @@ internal sealed class SwappableHolder<T> : IDisposable where T : class, IDisposa
     /// <summary>A use of a value; dispose it to release.</summary>
     public sealed class Lease : IDisposable
     {
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
         private int _users;
         private bool _retired;
         private int _disposed;

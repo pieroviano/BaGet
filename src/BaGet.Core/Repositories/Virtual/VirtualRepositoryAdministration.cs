@@ -446,7 +446,7 @@ public sealed class VirtualRepositoryAdministration : IVirtualRepositoryAdminist
             // The deploy repository is judged in the graph with the new members in place of the stored ones.
             var proposed = new Dictionary<string, Repository>(rows, StringComparer.Ordinal)
             {
-                [name] = new Repository
+                [name] = new()
                 {
                     Key = rows.TryGetValue(name, out var existing) ? existing.Key : 0,
                     Name = name,

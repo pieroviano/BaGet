@@ -27,7 +27,7 @@ namespace BaGet.Tests;
 public class DatabaseCopyTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "baget-copy-" + Guid.NewGuid().ToString("N"));
 
     public DatabaseCopyTests(ITestOutputHelper output)

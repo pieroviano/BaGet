@@ -18,7 +18,7 @@ namespace BaGet.Tests;
 public class SearchSortWebTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public SearchSortWebTests(ITestOutputHelper output) => _output = output;
 

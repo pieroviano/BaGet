@@ -4,7 +4,7 @@ namespace BaGet.Core.Tests.Indexing;
 
 public class FrameworkCompatibilityServiceTests
 {
-    private readonly FrameworkCompatibilityService _target = new FrameworkCompatibilityService();
+    private readonly FrameworkCompatibilityService _target = new();
 
     [Fact]
     public void AlwaysIncludesTheAnyFramework()

@@ -15,7 +15,7 @@ namespace BaGet.Protocol.Tests;
 public class RecordingHttpMessageHandler : HttpMessageHandler
 {
     private readonly string _content;
-    private readonly List<Uri?> _requests = new List<Uri?>();
+    private readonly List<Uri?> _requests = new();
 
     public RecordingHttpMessageHandler(string content = "{}")
     {

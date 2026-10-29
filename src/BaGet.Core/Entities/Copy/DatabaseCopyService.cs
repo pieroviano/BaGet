@@ -59,7 +59,7 @@ public class DatabaseCopyService
     private readonly ILogger<DatabaseCopyService> _logger;
     private readonly ClusterRuntime? _cluster;
     private readonly Channel<DatabaseCopyRequest> _queue = Channel.CreateBounded<DatabaseCopyRequest>(1);
-    private readonly object _lock = new object();
+    private readonly object _lock = new();
     private DatabaseCopyStatus _status = DatabaseCopyStatus.Idle;
 
     public DatabaseCopyService(

@@ -28,7 +28,7 @@ public class SearchResponseBuilderTests
     }
 
     private static Package Package(string id, string version, long downloads = 0, bool embeddedIcon = false)
-        => new Package
+        => new()
         {
             Id = id,
             Version = NuGetVersion.Parse(version),
@@ -45,8 +45,7 @@ public class SearchResponseBuilderTests
             TargetFrameworks = new List<TargetFramework>(),
         };
 
-    private static PackageRegistration Registration(string? id, params Package[] packages)
-        => new PackageRegistration(id, packages);
+    private static PackageRegistration Registration(string? id, params Package[] packages) => new(id, packages);
 
     [Fact]
     public void ReportsTheLatestVersionAsTheResultVersion()

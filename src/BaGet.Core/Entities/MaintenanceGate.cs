@@ -29,7 +29,7 @@ public sealed class MaintenanceGate
     /// <summary>Seconds advertised in the <c>Retry-After</c> header of a 503 answered while the gate is closed.</summary>
     public const int RetryAfterSeconds = 60;
 
-    private readonly object _lock = new object();
+    private readonly object _lock = new();
     private string? _reason;
     private bool _untilRestart;
     private bool _remote;

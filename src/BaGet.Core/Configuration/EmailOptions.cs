@@ -8,7 +8,7 @@ namespace BaGet.Core;
 [RestartRequired]
 public class EmailOptions
 {
-    public SmtpOptions Smtp { get; set; } = new SmtpOptions();
+    public SmtpOptions Smtp { get; set; } = new();
 
     /// <summary>
     /// Set at startup when SMTP is configured but links in emails cannot be trusted (no

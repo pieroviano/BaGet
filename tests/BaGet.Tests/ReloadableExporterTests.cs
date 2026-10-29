@@ -23,14 +23,14 @@ namespace BaGet.Tests;
 /// </summary>
 public class ReloadableExporterTests : IDisposable
 {
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public void Dispose()
     {
         foreach (var disposable in _disposables) disposable.Dispose();
     }
 
-    private static TelemetryOptions On(string endpoint = "http://collector:4317", string? headers = null) => new TelemetryOptions
+    private static TelemetryOptions On(string endpoint = "http://collector:4317", string? headers = null) => new()
     {
         Enabled = true,
         Otlp = new OtlpOptions { Endpoint = endpoint, Headers = headers },
@@ -375,7 +375,7 @@ public class ReloadableExporterTests : IDisposable
     /// <summary>An <see cref="IOptionsMonitor{TOptions}"/> whose value the test sets, notifying subscribers.</summary>
     private sealed class TestOptionsMonitor : IOptionsMonitor<TelemetryOptions>
     {
-        private readonly List<Action<TelemetryOptions, string?>> _listeners = new List<Action<TelemetryOptions, string?>>();
+        private readonly List<Action<TelemetryOptions, string?>> _listeners = new();
         private TelemetryOptions _current;
 
         public TestOptionsMonitor(TelemetryOptions current) => _current = current;
@@ -426,11 +426,11 @@ public class ReloadableExporterTests : IDisposable
 
     private sealed class RecordingFactory : ITelemetryExporterFactory
     {
-        public List<RecordingExporter> Created { get; } = new List<RecordingExporter>();
+        public List<RecordingExporter> Created { get; } = new();
 
-        public List<RecordingSink> Sinks { get; } = new List<RecordingSink>();
+        public List<RecordingSink> Sinks { get; } = new();
 
-        public List<string> ServiceNames { get; } = new List<string>();
+        public List<string> ServiceNames { get; } = new();
 
         /// <summary>The first exporter built blocks its first export until released.</summary>
         public bool BlockFirst { get; set; }
@@ -469,13 +469,13 @@ public class ReloadableExporterTests : IDisposable
     private sealed class RecordingSink : ILogEventSink, IDisposable
     {
         private int _dispose;
-        public ConcurrentQueue<LogEvent> Events { get; } = new ConcurrentQueue<LogEvent>();
+        public ConcurrentQueue<LogEvent> Events { get; } = new();
         public int DisposeCount => Volatile.Read(ref _dispose);
         public bool BlockDispose { get; set; }
-        public ManualResetEventSlim ReleaseDispose { get; } = new ManualResetEventSlim();
+        public ManualResetEventSlim ReleaseDispose { get; } = new();
         public bool BlockEmit { get; set; }
-        public ManualResetEventSlim EmitEntered { get; } = new ManualResetEventSlim();
-        public ManualResetEventSlim ReleaseEmit { get; } = new ManualResetEventSlim();
+        public ManualResetEventSlim EmitEntered { get; } = new();
+        public ManualResetEventSlim ReleaseEmit { get; } = new();
 
         public void Emit(LogEvent logEvent)
         {
@@ -497,12 +497,12 @@ public class ReloadableExporterTests : IDisposable
         private int _flushes;
         private int _shutdowns;
 
-        public ConcurrentQueue<Activity> ExportedQueue { get; } = new ConcurrentQueue<Activity>();
+        public ConcurrentQueue<Activity> ExportedQueue { get; } = new();
         public IReadOnlyCollection<Activity> Exported => ExportedQueue.ToArray();
         public bool Block { get; set; }
         public Exception? Throw { get; set; }
-        public ManualResetEventSlim Entered { get; } = new ManualResetEventSlim();
-        public ManualResetEventSlim Release { get; } = new ManualResetEventSlim();
+        public ManualResetEventSlim Entered { get; } = new();
+        public ManualResetEventSlim Release { get; } = new();
         public bool ExportedAfterDispose { get; private set; }
         public int DisposeCount => Volatile.Read(ref _dispose);
         public int ForceFlushes => Volatile.Read(ref _flushes);

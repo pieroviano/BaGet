@@ -15,7 +15,7 @@ public class IndexUseCaseFacts
     private readonly ISearchService _searchService;
 
     private SearchRequest? _capturedRequest = null;
-    private readonly SearchResponse _response = new SearchResponse();
+    private readonly SearchResponse _response = new();
     private readonly CancellationToken _cancellation = CancellationToken.None;
 
     public IndexUseCaseFacts()

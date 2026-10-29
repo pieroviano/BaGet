@@ -40,7 +40,7 @@ public class PasswordResetRateLimiter
     private readonly Queue<(DateTime At, string Client, string Target)> _log = new();
     private readonly Dictionary<string, DateTime> _targets = new();
     private readonly Dictionary<string, int> _clients = new();
-    private readonly object _gate = new object();
+    private readonly object _gate = new();
 
     /// <summary>What is being remembered; never more than the number of accounts.</summary>
     internal int TrackedCount

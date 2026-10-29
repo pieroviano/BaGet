@@ -20,7 +20,7 @@ public class SearchFailoverTests
     private const string FirstAutocompleteUrl = "https://test.example/v3/autocomplete-one";
     private const string SecondAutocompleteUrl = "https://test.example/v3/autocomplete-two";
 
-    private readonly FakeHttpMessageHandler _handler = new FakeHttpMessageHandler();
+    private readonly FakeHttpMessageHandler _handler = new();
 
     public SearchFailoverTests()
     {

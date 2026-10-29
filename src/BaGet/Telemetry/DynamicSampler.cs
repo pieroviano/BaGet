@@ -15,7 +15,7 @@ namespace BaGet.Telemetry;
 internal sealed class DynamicSampler : Sampler
 {
     private readonly IOptionsMonitor<TelemetryOptions> _options;
-    private readonly ConcurrentDictionary<double, TraceIdRatioBasedSampler> _ratios = new ConcurrentDictionary<double, TraceIdRatioBasedSampler>();
+    private readonly ConcurrentDictionary<double, TraceIdRatioBasedSampler> _ratios = new();
 
     public DynamicSampler(IOptionsMonitor<TelemetryOptions> options)
     {

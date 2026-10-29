@@ -20,16 +20,16 @@ public class TelemetryOptions
     public string ServiceName { get; set; } = "baget";
 
     /// <summary>Where and how signals are sent (<see cref="OtlpOptions.Endpoint"/> is the traces endpoint; metrics and logs have their own endpoints and never fall back to it).</summary>
-    public OtlpOptions Otlp { get; set; } = new OtlpOptions();
+    public OtlpOptions Otlp { get; set; } = new();
 
     /// <summary>Distributed traces.</summary>
-    public TracesOptions Traces { get; set; } = new TracesOptions();
+    public TracesOptions Traces { get; set; } = new();
 
     /// <summary>Metrics.</summary>
-    public MetricsOptions Metrics { get; set; } = new MetricsOptions();
+    public MetricsOptions Metrics { get; set; } = new();
 
     /// <summary>Logs.</summary>
-    public LogsOptions Logs { get; set; } = new LogsOptions();
+    public LogsOptions Logs { get; set; } = new();
 
     /// <summary>
     /// What is wrong with these options, one message per problem (empty when valid): an endpoint that is not an

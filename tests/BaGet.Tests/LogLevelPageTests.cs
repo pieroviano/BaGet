@@ -20,7 +20,7 @@ public class LogLevelPageTests : IDisposable
     private const string Key = "Serilog:MinimumLevel:Override:";
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public LogLevelPageTests(ITestOutputHelper output) => _output = output;
 

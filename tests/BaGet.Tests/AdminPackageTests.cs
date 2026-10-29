@@ -382,7 +382,7 @@ public class AdminPackageReadOnlyTests : PackageManagementPageTestBase
 /// <summary>The audit trail of an administrator acting on packages that are not theirs.</summary>
 public class AdminPackageAuditTests : IDisposable
 {
-    private readonly CapturingLoggerProvider _logs = new CapturingLoggerProvider();
+    private readonly CapturingLoggerProvider _logs = new();
     private readonly BaGetApplication _app;
 
     public AdminPackageAuditTests(ITestOutputHelper output)
@@ -433,7 +433,7 @@ public class AdminPackageAuditTests : IDisposable
 
     private sealed class CapturingLoggerProvider : ILoggerProvider
     {
-        public ConcurrentQueue<string> Messages { get; } = new ConcurrentQueue<string>();
+        public ConcurrentQueue<string> Messages { get; } = new();
 
         public ILogger CreateLogger(string categoryName) => new CapturingLogger(Messages);
 

@@ -56,7 +56,7 @@ public abstract class NuGetV2ClientIntegrationTestsBase : IDisposable
 
         var providers = new List<Lazy<INuGetResourceProvider>>
         {
-            new Lazy<INuGetResourceProvider>(() => new HttpSourceResourceProviderTestHost(_client)),
+            new(() => new HttpSourceResourceProviderTestHost(_client)),
         };
         providers.AddRange(Repository.Provider.GetCoreV3());
 

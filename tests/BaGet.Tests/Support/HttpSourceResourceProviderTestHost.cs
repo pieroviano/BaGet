@@ -16,8 +16,7 @@ namespace BaGet.Tests;
 public class HttpSourceResourceProviderTestHost : ResourceProvider
 {
     // Only one HttpSource per source should exist. This is to reduce the number of TCP connections.
-    private readonly ConcurrentDictionary<PackageSource, HttpSourceResource> _cache
-        = new ConcurrentDictionary<PackageSource, HttpSourceResource>();
+    private readonly ConcurrentDictionary<PackageSource, HttpSourceResource> _cache = new();
     private readonly HttpClient _httpClient;
 
     public HttpSourceResourceProviderTestHost(HttpClient httpClient)

@@ -75,7 +75,7 @@ public static class Containers
     private static readonly Lazy<Task<Backend>> JaegerStart = new(StartJaegerAsync);
     private static readonly Lazy<Task<Backend>> CollectorStart = new(StartCollectorAsync);
 
-    public static HttpClient Http { get; } = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+    public static HttpClient Http { get; } = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     public static Task<Backend> JaegerAsync() => GetOrSkipAsync(JaegerStart, "Jaeger");
 

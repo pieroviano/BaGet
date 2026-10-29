@@ -11,7 +11,7 @@ namespace BaGet.Azure.Tests.Table;
 /// </summary>
 public class TableJsonTests
 {
-    private static readonly List<DependencyModel> Dependencies = new List<DependencyModel>
+    private static readonly List<DependencyModel> Dependencies = new()
     {
         new DependencyModel { Id = "Newtonsoft.Json", VersionRange = "[13.0.1, )", TargetFramework = "net6.0" },
         new DependencyModel { Id = null, VersionRange = null, TargetFramework = "netstandard2.0" },
@@ -32,7 +32,7 @@ public class TableJsonTests
     {
         Assert.Equal(JsonConvert.SerializeObject(Dependencies), TableJson.Serialize(Dependencies));
 
-        var types = new List<PackageTypeModel> { new PackageTypeModel { Name = "Dependency", Version = "" } };
+        var types = new List<PackageTypeModel> { new() { Name = "Dependency", Version = "" } };
         Assert.Equal(JsonConvert.SerializeObject(types), TableJson.Serialize(types));
     }
 

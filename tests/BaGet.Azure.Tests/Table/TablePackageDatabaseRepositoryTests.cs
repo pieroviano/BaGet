@@ -37,8 +37,7 @@ public class TablePackageDatabaseRepositoryTests
             new FixedRepository(repository));
     }
 
-    private static readonly RepositoryInfo Second =
-        new RepositoryInfo(2, "second", RepositoryFormat.NuGet, RepositoryKind.Local);
+    private static readonly RepositoryInfo Second = new(2, "second", RepositoryFormat.NuGet, RepositoryKind.Local);
 
     [Fact]
     public async Task RefusesEveryOperationInANonDefaultRepositoryNamingIt()

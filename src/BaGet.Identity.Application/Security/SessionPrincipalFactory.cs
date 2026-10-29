@@ -43,7 +43,7 @@ public class SessionPrincipalFactory : ISessionPrincipalFactory
 
     /// <summary>The principal of an interactive session of <paramref name="account"/> (see <see cref="CreateAsync"/>).</summary>
     internal static BaGetPrincipal For(BaGetUser account, string? userName = null)
-        => new BaGetPrincipal(
+        => new(
             userId: account.Id,
             userName: userName ?? account.UserName,
             isSuperuser: false,

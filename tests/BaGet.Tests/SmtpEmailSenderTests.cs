@@ -16,7 +16,7 @@ namespace BaGet.Tests;
 /// </summary>
 public class SmtpEmailSenderTests
 {
-    private readonly SmtpEmailSender _target = new SmtpEmailSender(
+    private readonly SmtpEmailSender _target = new(
         Options.Create(new EmailOptions { Smtp = new SmtpOptions { Host = "smtp.example.com", From = "noreply@example.com" } }),
         NullLogger<SmtpEmailSender>.Instance);
 

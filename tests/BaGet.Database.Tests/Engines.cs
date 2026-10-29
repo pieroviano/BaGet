@@ -41,7 +41,7 @@ public sealed class Engine
     /// <summary>A connection string to a database that does not exist yet (migrations create it).</summary>
     public string NewConnectionString() => _newDatabase();
 
-    public DatabaseOptions Options => new DatabaseOptions { Type = Type, MySqlServerVersion = MySqlServerVersion };
+    public DatabaseOptions Options => new() { Type = Type, MySqlServerVersion = MySqlServerVersion };
 }
 
 /// <summary>

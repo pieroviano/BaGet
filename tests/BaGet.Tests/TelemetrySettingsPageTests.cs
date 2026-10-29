@@ -30,7 +30,7 @@ public class TelemetrySettingsPageTests : IDisposable
     private const string Secret = "TOP-SECRET-HEADER-VALUE";
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public TelemetrySettingsPageTests(ITestOutputHelper output) => _output = output;
 

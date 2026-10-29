@@ -10,7 +10,7 @@ namespace BaGet.Azure;
 /// </summary>
 internal static class TableJson
 {
-    internal static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+    internal static readonly JsonSerializerOptions Options = new()
     {
         // Newtonsoft matched property names case-insensitively, so older rows may differ in case.
         PropertyNameCaseInsensitive = true,

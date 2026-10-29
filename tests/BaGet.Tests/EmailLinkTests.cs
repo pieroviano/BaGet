@@ -24,7 +24,7 @@ public class EmailLinkTests : IDisposable
     private const string Password = "Passw0rd!";
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public EmailLinkTests(ITestOutputHelper output) => _output = output;
 
@@ -318,7 +318,7 @@ public class EmailLinkTests : IDisposable
 
     private sealed class MutableTime : SystemTime
     {
-        public DateTime Now { get; set; } = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public DateTime Now { get; set; } = new(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public override DateTime UtcNow => Now;
     }

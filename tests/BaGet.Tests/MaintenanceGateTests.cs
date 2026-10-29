@@ -27,7 +27,7 @@ namespace BaGet.Tests;
 public class MaintenanceGateTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public MaintenanceGateTests(ITestOutputHelper output) => _output = output;
 
@@ -326,8 +326,8 @@ public class MaintenanceGateTests : IDisposable
 
     private class BlockingValidator : IPackageValidator
     {
-        public TaskCompletionSource<bool> Entered { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource<bool> Release { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<bool> Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<bool> Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public string Name => "Block";
 

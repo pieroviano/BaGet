@@ -28,7 +28,7 @@ public sealed record CollectorRequest(string Path, string? XTest, byte[] Body)
 public sealed class FakeOtlpCollector : IAsyncDisposable
 {
     private readonly WebApplication _app;
-    private readonly ConcurrentQueue<CollectorRequest> _requests = new ConcurrentQueue<CollectorRequest>();
+    private readonly ConcurrentQueue<CollectorRequest> _requests = new();
 
     private FakeOtlpCollector(WebApplication app, string url)
     {

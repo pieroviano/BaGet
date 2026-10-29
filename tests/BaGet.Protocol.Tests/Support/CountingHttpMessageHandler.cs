@@ -13,7 +13,7 @@ namespace BaGet.Protocol.Tests;
 /// </summary>
 public class CountingHttpMessageHandler : DelegatingHandler
 {
-    private readonly List<Uri?> _requests = new List<Uri?>();
+    private readonly List<Uri?> _requests = new();
 
     public CountingHttpMessageHandler(HttpMessageHandler innerHandler)
         : base(innerHandler)

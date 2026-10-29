@@ -27,7 +27,7 @@ public class NavLinkTagHelperTests
     }
 
     private static TagHelperContext Context()
-        => new TagHelperContext(
+        => new(
             new TagHelperAttributeList(),
             new Dictionary<object, object>(),
             "test");

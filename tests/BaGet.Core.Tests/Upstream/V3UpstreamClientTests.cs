@@ -103,7 +103,7 @@ public class V3UpstreamClientTests
                 .Setup(c => c.GetPackageMetadataAsync(_id, _cancellation))
                 .ReturnsAsync(new List<PackageMetadata>
                 {
-                    new PackageMetadata
+                    new()
                     {
                         PackageId = "Foo",
                         Version = "1.2.3-prerelease+semver2",
@@ -134,12 +134,12 @@ public class V3UpstreamClientTests
                         },
                         DependencyGroups = new List<DependencyGroupItem>
                         {
-                            new DependencyGroupItem
+                            new()
                             {
                                 TargetFramework = "Target Framework",
                                 Dependencies = new List<DependencyItem>
                                 {
-                                    new DependencyItem
+                                    new()
                                     {
                                         Id = "Dependency",
                                         Range = "1.0.0",
@@ -226,7 +226,7 @@ public class V3UpstreamClientTests
         protected readonly V3UpstreamClient _target;
 
         protected readonly string _id = "Foo";
-        protected readonly NuGetVersion _version = new NuGetVersion("1.2.3-prerelease+semver2");
+        protected readonly NuGetVersion _version = new("1.2.3-prerelease+semver2");
         protected readonly CancellationToken _cancellation = CancellationToken.None;
 
         protected FactsBase()

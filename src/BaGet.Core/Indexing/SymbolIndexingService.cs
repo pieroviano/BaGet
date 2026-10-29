@@ -19,7 +19,7 @@ public class SymbolIndexingService : ISymbolIndexingService
 {
     // Entry paths inside a package are matched case-insensitively, so an extension
     // must be too: a symbol package carrying "Library.PDB" is valid.
-    private static readonly HashSet<string> ValidSymbolPackageContentExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> ValidSymbolPackageContentExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".pdb",
         ".nuspec",

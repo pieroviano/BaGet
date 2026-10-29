@@ -168,8 +168,8 @@ public class EngineCopyTests
                 IsPrerelease = false,
                 ProjectUrl = new Uri("https://example.org/p/" + i),
                 Dependencies = new List<PackageDependency>(),
-                PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "1.0" } },
-                TargetFrameworks = new List<TargetFramework> { new TargetFramework { Moniker = "net10.0" } },
+                PackageTypes = new List<PackageType> { new() { Name = "Dependency", Version = "1.0" } },
+                TargetFrameworks = new List<TargetFramework> { new() { Moniker = "net10.0" } },
             };
             if (i == 2)
             {
@@ -189,7 +189,7 @@ public class EngineCopyTests
             Published = published,
             Listed = true,
             Dependencies = new List<PackageDependency>(),
-            PackageTypes = new List<PackageType> { new PackageType { Name = "Dependency", Version = "1.0" } },
+            PackageTypes = new List<PackageType> { new() { Name = "Dependency", Version = "1.0" } },
             TargetFrameworks = new List<TargetFramework>(),
         });
         // "default" (key 1) is created by the AddRepositories migration; "second" gets key 2. Saved first: the packages
@@ -200,9 +200,9 @@ public class EngineCopyTests
         context.Set<Package>().AddRange(packages);
         var organizations = new List<Organization>
         {
-            new Organization { Name = "One", Created = published },
-            new Organization { Name = "Two", Created = published.AddHours(1) },
-            new Organization { Name = "Three", Created = published.AddHours(2) },
+            new() { Name = "One", Created = published },
+            new() { Name = "Two", Created = published.AddHours(1) },
+            new() { Name = "Three", Created = published.AddHours(2) },
         };
         context.Set<Organization>().AddRange(organizations);
         context.Set<BaGetUser>().Add(new BaGetUser { Id = "user-1", UserName = "alice", NormalizedUserName = "ALICE" });

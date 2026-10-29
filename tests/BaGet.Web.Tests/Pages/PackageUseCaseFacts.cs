@@ -215,8 +215,8 @@ public class PackageUseCaseFacts
             {
                 Data = new List<PackageDependent>
                 {
-                    new PackageDependent  { Id = "Used by 1" },
-                    new PackageDependent  { Id = "Used by 2" },
+                    new() { Id = "Used by 1" },
+                    new() { Id = "Used by 2" },
                 }
             });
 

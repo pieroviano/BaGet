@@ -20,7 +20,7 @@ public sealed record TelemetryTestResult(bool Ok, string Message);
 public sealed class TelemetryConnectionTester
 {
     private const string TestSourceName = "BaGet.Telemetry.Test";
-    private static readonly ActivitySource TestSource = new ActivitySource(TestSourceName);
+    private static readonly ActivitySource TestSource = new(TestSourceName);
 
     private readonly ITelemetryExporterFactory _factory;
 

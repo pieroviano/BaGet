@@ -20,7 +20,7 @@ namespace BaGet.Tests;
 public class AdminDeleteUserTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public AdminDeleteUserTests(ITestOutputHelper output) => _output = output;
 

@@ -29,7 +29,7 @@ public class OwnershipAuthorizationServiceTests : IDisposable
     public void Dispose() => _app.Dispose();
 
     private static BaGetPrincipal Principal(bool administrator, string? glob = "*", params string[]? scopes)
-        => new BaGetPrincipal("someone-id", "someone", isSuperuser: false, scopes, glob, isAdministrator: administrator);
+        => new("someone-id", "someone", isSuperuser: false, scopes, glob, isAdministrator: administrator);
 
     private async Task<bool> AuthorizeAsync(BaGetPrincipal? principal, PackageAction action, string? id)
     {

@@ -16,7 +16,7 @@ namespace BaGet.Tests;
 public class PackagePageTabsTests : IDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
+    private readonly List<IDisposable> _disposables = new();
 
     public PackagePageTabsTests(ITestOutputHelper output) => _output = output;
 

@@ -11,10 +11,10 @@ namespace BaGet.Core;
 public class SerilogOptions
 {
     /// <summary>The lowest level logged.</summary>
-    public MinimumLevelOptions MinimumLevel { get; set; } = new MinimumLevelOptions();
+    public MinimumLevelOptions MinimumLevel { get; set; } = new();
 
     /// <summary>The Windows Application event log sink (Windows only).</summary>
-    public EventLogOptions EventLog { get; set; } = new EventLogOptions();
+    public EventLogOptions EventLog { get; set; } = new();
 }
 
 /// <summary>The level keys of the <c>Serilog:MinimumLevel</c> section.</summary>

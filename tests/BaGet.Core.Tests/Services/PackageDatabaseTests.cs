@@ -415,7 +415,7 @@ public class PackageDatabaseTests
         }
 
         protected static Package CreatePackage(string id, string version, bool listed = true)
-            => new Package
+            => new()
             {
                 Id = id,
                 Version = NuGetVersion.Parse(version),
@@ -431,7 +431,7 @@ public class PackageDatabaseTests
                 SemVerLevel = SemVerLevel.Unknown,
                 Dependencies = new List<PackageDependency>
                 {
-                    new PackageDependency
+                    new()
                     {
                         Id = "Other.Package",
                         VersionRange = "[1.0.0, )",
@@ -440,11 +440,11 @@ public class PackageDatabaseTests
                 },
                 PackageTypes = new List<PackageType>
                 {
-                    new PackageType { Name = "Dependency", Version = "0.0" },
+                    new() { Name = "Dependency", Version = "0.0" },
                 },
                 TargetFrameworks = new List<TargetFramework>
                 {
-                    new TargetFramework { Moniker = "netstandard2.0" },
+                    new() { Moniker = "netstandard2.0" },
                 },
             };
 

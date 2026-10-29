@@ -21,7 +21,7 @@ public class ContactRateLimiter
 
     private readonly SystemTime _time;
     private readonly ConcurrentDictionary<(string Sender, string PackageId), DateTime> _last = new();
-    private readonly object _gate = new object();
+    private readonly object _gate = new();
 
     private readonly IClusterStore? _shared;
 

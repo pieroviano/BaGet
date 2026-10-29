@@ -32,10 +32,10 @@ internal sealed class DatabaseCopyPreflight
     private readonly bool _checkLengths;
     private readonly bool _caseInsensitiveByDefault;
     private readonly bool _checkLocalDates;
-    private readonly List<string> _problems = new List<string>();
-    private readonly Dictionary<string, int> _counts = new Dictionary<string, int>();
+    private readonly List<string> _problems = new();
+    private readonly Dictionary<string, int> _counts = new();
     private DatabaseTable? _table;
-    private List<UniqueSet> _sets = new List<UniqueSet>();
+    private List<UniqueSet> _sets = new();
 
     /// <param name="targetType">The target's <c>Database:Type</c>.</param>
     /// <param name="designModel">
@@ -184,7 +184,7 @@ internal sealed class DatabaseCopyPreflight
 
         public IReadOnlyList<IProperty> Properties { get; }
 
-        public Dictionary<string, string> Seen { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+        public Dictionary<string, string> Seen { get; } = new(StringComparer.Ordinal);
     }
 
     private void Report(DatabaseTable table, string kind, string message)

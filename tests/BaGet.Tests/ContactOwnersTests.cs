@@ -22,8 +22,8 @@ public class ContactOwnersTests : IDisposable
     private const string Url = "packages/Contact.Pkg/contact-owners";
 
     private readonly ITestOutputHelper _output;
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
-    private readonly MutableTime _time = new MutableTime();
+    private readonly List<IDisposable> _disposables = new();
+    private readonly MutableTime _time = new();
 
     public ContactOwnersTests(ITestOutputHelper output) => _output = output;
 
@@ -34,7 +34,7 @@ public class ContactOwnersTests : IDisposable
 
     private sealed class MutableTime : SystemTime
     {
-        public DateTime Now { get; set; } = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public DateTime Now { get; set; } = new(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public override DateTime UtcNow => Now;
     }

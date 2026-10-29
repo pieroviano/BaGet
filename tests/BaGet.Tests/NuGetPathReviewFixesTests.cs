@@ -158,7 +158,7 @@ public class NuGetPathReviewFixesTests : IDisposable
             Tags = Array.Empty<string>(),
             Dependencies = dependsOn == null
                 ? new List<PackageDependency>()
-                : new List<PackageDependency> { new PackageDependency { Id = dependsOn, VersionRange = "[1.0.0,)", TargetFramework = "net8.0" } },
+                : new List<PackageDependency> { new() { Id = dependsOn, VersionRange = "[1.0.0,)", TargetFramework = "net8.0" } },
             PackageTypes = new List<PackageType>(),
             TargetFrameworks = new List<TargetFramework>(),
         });

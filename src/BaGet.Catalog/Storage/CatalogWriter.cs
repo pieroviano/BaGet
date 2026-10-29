@@ -20,7 +20,7 @@ namespace BaGet.Catalog.Storage;
 /// </summary>
 public class CatalogWriter : IPackageChangeHandler
 {
-    internal static readonly JsonSerializerOptions LeafSerializerOptions = new JsonSerializerOptions
+    internal static readonly JsonSerializerOptions LeafSerializerOptions = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
@@ -29,7 +29,7 @@ public class CatalogWriter : IPackageChangeHandler
     // "after" its cursor could miss an entry. Commits in this process are serialized.
     // Instances of a cluster are ordered by the per-repository lease "catalog:{repository key}" (IJobLease; without
     // a cluster it is in process and the lock above already serialises).
-    private static readonly SemaphoreSlim CommitLock = new SemaphoreSlim(1, 1);
+    private static readonly SemaphoreSlim CommitLock = new(1, 1);
 
     private readonly ICatalogDatabase _catalog;
     private readonly IPackageDatabase _packages;

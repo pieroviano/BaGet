@@ -29,7 +29,7 @@ public abstract class RepositoryControllerBase : AdminControllerBase
     /// <summary>The model of the password confirmation partial, with <paramref name="id"/> for the input.</summary>
     [NonAction]
     public ConfirmPasswordView Confirmation(string id)
-        => new ConfirmPasswordView(id, HasPassword, Reauthenticated, CanReauthenticate, "~" + Request.Path + Request.QueryString);
+        => new(id, HasPassword, Reauthenticated, CanReauthenticate, "~" + Request.Path + Request.QueryString);
 
     /// <summary>Works out what the confirmation partials must show; call before rendering a screen that has them.</summary>
     protected async Task LoadConfirmationAsync()

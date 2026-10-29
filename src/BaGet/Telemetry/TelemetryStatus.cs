@@ -35,7 +35,7 @@ public sealed record TelemetrySignalStatus(
 /// </summary>
 public sealed class TelemetryStatus
 {
-    private static readonly Regex Url = new Regex(@"[a-zA-Z][a-zA-Z0-9+.-]*://[^\s'""<>]+", RegexOptions.Compiled);
+    private static readonly Regex Url = new(@"[a-zA-Z][a-zA-Z0-9+.-]*://[^\s'""<>]+", RegexOptions.Compiled);
 
     public TelemetryStatus() : this(TimeProvider.System)
     {
@@ -107,7 +107,7 @@ public sealed class TelemetryStatus
     /// <summary>The mutable state of one signal; written by the exporters.</summary>
     internal sealed class Signal
     {
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
         private readonly TimeProvider _time;
         private readonly TelemetrySignal _signal;
         private bool _active;

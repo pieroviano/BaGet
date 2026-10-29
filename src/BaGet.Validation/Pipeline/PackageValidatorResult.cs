@@ -4,7 +4,7 @@ namespace BaGet.Validation.Pipeline;
 
 public sealed class PackageValidatorResult
 {
-    public static readonly PackageValidatorResult Valid = new PackageValidatorResult(true, null);
+    public static readonly PackageValidatorResult Valid = new(true, null);
 
     private PackageValidatorResult(bool isValid, string? message)
     {
@@ -19,6 +19,6 @@ public sealed class PackageValidatorResult
     /// </summary>
     public string? Message { get; }
 
-    public static PackageValidatorResult Invalid(string message)
-        => new PackageValidatorResult(false, message ?? throw new ArgumentNullException(nameof(message)));
+    public static PackageValidatorResult Invalid(string message) =>
+        new(false, message ?? throw new ArgumentNullException(nameof(message)));
 }

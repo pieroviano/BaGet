@@ -34,7 +34,7 @@ public class XunitLogger : ILogger
 
     private class NullScope : IDisposable
     {
-        public static readonly NullScope Instance = new NullScope();
+        public static readonly NullScope Instance = new();
 
         public void Dispose() { }
     }

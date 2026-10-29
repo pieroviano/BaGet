@@ -15,7 +15,7 @@ namespace BaGet.Core.Tests.Telemetry;
 [Collection(DiagnosticsCapture.Name)]
 public class BaGetDiagnosticsTests : IDisposable
 {
-    private readonly DiagnosticsCapture _capture = new DiagnosticsCapture();
+    private readonly DiagnosticsCapture _capture = new();
 
     public void Dispose() => _capture.Dispose();
 

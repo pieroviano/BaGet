@@ -18,8 +18,7 @@ public class PackageChangeNotifier
     /// <summary>
     /// A notifier with no handlers, for callers constructed without one.
     /// </summary>
-    public static readonly PackageChangeNotifier None =
-        new PackageChangeNotifier(Array.Empty<IPackageChangeHandler>(), logger: null);
+    public static readonly PackageChangeNotifier None = new(Array.Empty<IPackageChangeHandler>(), logger: null);
 
     private readonly IReadOnlyList<IPackageChangeHandler> _handlers;
     private readonly ILogger<PackageChangeNotifier>? _logger;

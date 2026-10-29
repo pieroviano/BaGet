@@ -91,7 +91,7 @@ public class EngineUpgradeTests
         Assert.True(iContext.IsUniqueConstraintViolationException(exception), exception.GetBaseException().Message);
     }
 
-    private static Package Copy(Package source, int repositoryKey) => new Package
+    private static Package Copy(Package source, int repositoryKey) => new()
     {
         Id = source.Id,
         Version = NuGetVersion.Parse(source.NormalizedVersionString!),

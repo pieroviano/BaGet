@@ -60,7 +60,7 @@ public class RegistrationBuilder
 
     #pragma warning disable CS8604
     private BaGetRegistrationIndexPageItem ToRegistrationIndexPageItem(Package package) =>
-        new BaGetRegistrationIndexPageItem
+        new()
         {
             RegistrationLeafUrl = _url.GetRegistrationLeafUrl(package.Id, package.Version),
             PackageContentUrl = _url.GetPackageDownloadUrl(package.Id, package.Version),
