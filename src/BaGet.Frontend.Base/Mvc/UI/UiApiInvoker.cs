@@ -13,7 +13,7 @@ namespace BaGet.Frontend.Mvc.UI;
 /// values, query and repository), the same <c>RouteData</c> and the same <see cref="Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary"/>.
 /// Only the action method runs: the twin's filters do not (its <see cref="UiApiSecurityFilter"/>, its base's gate), so a view controller base
 /// runs the same <see cref="ScreenGate"/> and the antiforgery validation of its own first. A <see cref="BaGet.Core.MaintenanceException"/> propagates
-/// to the middleware (503). The twin must not use <c>[ApiController]</c> (see <see cref="UiApiControllerBase"/>).
+/// to the middleware (503). The twin must not use <c>[ApiController]</c> (see <see cref="ApiControllerBase"/>).
 /// </summary>
 public static class UiApiInvoker
 {
@@ -25,7 +25,7 @@ public static class UiApiInvoker
     public static async Task<UiApiResponse<TModel>> InvokeAsync<TApi, TModel>(
         ControllerBase caller,
         Func<TApi, Task<ActionResult<ScreenResult<TModel>>>> call)
-        where TApi : UiApiControllerBase
+        where TApi : ApiControllerBase
     {
         if (caller == null) throw new ArgumentNullException(nameof(caller));
         if (call == null) throw new ArgumentNullException(nameof(call));

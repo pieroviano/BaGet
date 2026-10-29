@@ -18,7 +18,7 @@ namespace BaGet.Web.Application.UseCases;
 /// <summary>
 /// The screens of an npm repository: the package list (<c>/npm-packages</c>), one package (<c>/npm-packages/{name}</c>) and the browser upload
 /// (<c>/npm-upload</c>), whose publish goes through <see cref="INpmRegistry.PublishTarballAsync"/>, the call <c>npm publish</c> ends in. Used by
-/// <c>NpmBrowseUiApiController</c>, which the view controller calls in process.
+/// <c>NpmBrowseApiController</c>, which the view controller calls in process.
 /// </summary>
 public sealed class NpmBrowseUseCase
 {

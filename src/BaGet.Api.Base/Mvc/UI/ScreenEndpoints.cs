@@ -15,7 +15,7 @@ namespace BaGet.Frontend.Mvc.UI;
 /// <summary>
 /// Tells the endpoints of BaGet's own web UI from every other endpoint and names the screen an action belongs to. A screen is an action of
 /// a controller implementing <see cref="IScreenController"/> (the view controllers, derived from <c>UiControllerBase</c>; the JSON twins under <c>/api/ui</c> derive from
-/// <c>UiApiControllerBase</c>, never from it) other than a <see cref="FallbackHandlerAttribute"/> fallback. The screen is identified by
+/// <c>ApiControllerBase</c>, never from it) other than a <see cref="FallbackHandlerAttribute"/> fallback. The screen is identified by
 /// the controller and the action that answers a plain <c>GET</c> for it (<see cref="ScreenRef"/>); the actions of one screen are those of the
 /// controller that share its route templates (<see cref="PageHandlerAttribute"/>: handlers post to the screen's own URL).
 /// </summary>

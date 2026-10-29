@@ -11,7 +11,7 @@ dotnet add package Extension.BaGet.Api.Base
 
 | Folder / type | Role |
 |---|---|
-| `Controllers/Base/UiApiControllerBase` and `AccountUiApiControllerBase`, `AdminUiApiControllerBase`, `AccessUiApiControllerBase` | Bases of the JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)); visible in the OpenAPI `ui` document |
+| `Controllers/Base/ApiControllerBase` and `AccountApiControllerBase`, `AdminApiControllerBase`, `AccessApiControllerBase` | Bases of the JSON twins (`/api/ui`, see [UI API](https://pieroviano.github.io/BaGet/ui-api/)); visible in the OpenAPI `ui` document |
 | `Mvc/Attributes` | `PageHandlerAttribute` (`?handler=` selector), `FallbackHandlerAttribute`, `RepositoryPageAttribute` (`/r/{repo}/` twin routes and the repository check), `RequiresSignInAttribute`, `RequiresEmailAttribute` |
 | `Mvc/UI/UiApiAttribute` | `[UiApi("AdminUsers", "Index", Handler = ...)]` names the screen (controller without the suffix, default GET action) a twin mirrors; `ScreenCatalogTests` resolves the names against the front-end assemblies |
 | `Mvc/UI/IScreenController`, `ScreenEndpoints` | The marker `UiControllerBase` implements, and whether an action is a screen and which one (`ScreenRef`) |

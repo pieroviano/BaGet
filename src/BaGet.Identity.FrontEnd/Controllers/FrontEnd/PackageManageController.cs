@@ -18,7 +18,7 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// <summary>
 /// The owners' screen for a package ID (<c>/packages/{id}/manage</c>, also at <c>/r/{repo}/…</c>): owners, versions, deprecation,
 /// vulnerabilities, symbols and abuse reports. It replaces the <c>/Packages/Manage</c> Razor Page (same URLs, same
-/// <c>?handler=</c> forms, same gates); the work is done by <see cref="PackageManageUiApiController"/> (the JSON twin, over
+/// <c>?handler=</c> forms, same gates); the work is done by <see cref="PackageManageApiController"/> (the JSON twin, over
 /// <see cref="PackageManageUseCase"/>), which this controller calls in process and renders.
 /// </summary>
 /// <remarks>
@@ -42,7 +42,7 @@ public sealed class PackageManageController : AccountControllerBase
         OnActionExecuting(context);
         if (context.Result != null) return;
 
-        var refusal = await UiApiEntry.InvokeAsync<PackageManageUiApiController, PackageManageScreen>(
+        var refusal = await UiApiEntry.InvokeAsync<PackageManageApiController, PackageManageScreen>(
             this,
             api => api.EnterAsync(PackageControllerSupport.Route(context, "id"), PackageControllerSupport.HandlerName(context), HttpMethods.IsPost(Request.Method), context.HttpContext.RequestAborted));
         if (refusal != null)
@@ -57,42 +57,42 @@ public sealed class PackageManageController : AccountControllerBase
     /// <summary>The screen.</summary>
     [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Get(Id!, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.Get(Id!, cancellationToken)));
 
     /// <summary>Adds an owner.</summary>
     [HttpPost, PageHandler("AddOwner")]
     public async Task<IActionResult> AddOwner(string ownerName, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.AddOwner(Id!, new PackageManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.AddOwner(Id!, new PackageManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Removes an owner.</summary>
     [HttpPost, PageHandler("RemoveOwner")]
     public async Task<IActionResult> RemoveOwner(string ownerName, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.RemoveOwner(Id!, new PackageManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.RemoveOwner(Id!, new PackageManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Unlists a version.</summary>
     [HttpPost, PageHandler("Unlist")]
     public async Task<IActionResult> Unlist(string version, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Unlist(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.Unlist(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Relists a version.</summary>
     [HttpPost, PageHandler("Relist")]
     public async Task<IActionResult> Relist(string version, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Relist(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.Relist(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Deletes a version as the server is configured to (unlist or permanent).</summary>
     [HttpPost, PageHandler("Delete")]
     public async Task<IActionResult> Delete(string version, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Delete(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.Delete(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Permanently deletes a version (administrators, after the password).</summary>
     [HttpPost, PageHandler("HardDelete")]
     public async Task<IActionResult> HardDelete(string version, string? password, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.HardDelete(Id!, new PackageManageHardDeleteForm { Version = version, Password = password }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.HardDelete(Id!, new PackageManageHardDeleteForm { Version = version, Password = password }, cancellationToken)));
 
     /// <summary>Permanently deletes every version and the owners (administrators, after the password).</summary>
     [HttpPost, PageHandler("HardDeleteAll")]
     public async Task<IActionResult> HardDeleteAll(string? password, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.HardDeleteAll(Id!, new PackageManagePasswordForm { Password = password }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.HardDeleteAll(Id!, new PackageManagePasswordForm { Password = password }, cancellationToken)));
 
     /// <summary>Deprecates a version.</summary>
     [HttpPost, PageHandler("Deprecate")]
@@ -103,7 +103,7 @@ public sealed class PackageManageController : AccountControllerBase
         string alternatePackageId,
         string? alternateVersionRange,
         CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Deprecate(
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.Deprecate(
             Id!,
             new PackageManageDeprecateForm { Version = version, Reasons = reasons, Message = message, AlternatePackageId = alternatePackageId, AlternateVersionRange = alternateVersionRange },
             cancellationToken)));
@@ -111,7 +111,7 @@ public sealed class PackageManageController : AccountControllerBase
     /// <summary>Removes a version's deprecation.</summary>
     [HttpPost, PageHandler("Undeprecate")]
     public async Task<IActionResult> Undeprecate(string version, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.Undeprecate(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.Undeprecate(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Adds a vulnerability to a version.</summary>
     [HttpPost, PageHandler("AddVulnerability")]
@@ -121,7 +121,7 @@ public sealed class PackageManageController : AccountControllerBase
         int severity,
         string? versionRange,
         CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.AddVulnerability(
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.AddVulnerability(
             Id!,
             new PackageManageVulnerabilityForm { Version = version, AdvisoryUrl = advisoryUrl, Severity = severity, VersionRange = versionRange },
             cancellationToken)));
@@ -129,22 +129,22 @@ public sealed class PackageManageController : AccountControllerBase
     /// <summary>Removes a vulnerability from a version.</summary>
     [HttpPost, PageHandler("RemoveVulnerability")]
     public async Task<IActionResult> RemoveVulnerability(string version, int key, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.RemoveVulnerability(Id!, new PackageManageRemoveVulnerabilityForm { Version = version, Key = key }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.RemoveVulnerability(Id!, new PackageManageRemoveVulnerabilityForm { Version = version, Key = key }, cancellationToken)));
 
     /// <summary>Marks or unmarks the ID as verified (administrators).</summary>
     [HttpPost, PageHandler("SetVerified")]
     public async Task<IActionResult> SetVerified(bool verified, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.SetVerified(Id!, new PackageManageVerifiedForm { Verified = verified }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.SetVerified(Id!, new PackageManageVerifiedForm { Verified = verified }, cancellationToken)));
 
     /// <summary>Deletes the PDBs recorded for a version.</summary>
     [HttpPost, PageHandler("DeleteSymbols")]
     public async Task<IActionResult> DeleteSymbols(string version, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.DeleteSymbols(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.DeleteSymbols(Id!, new PackageManageVersionForm { Version = version }, cancellationToken)));
 
     /// <summary>Resolves an abuse report.</summary>
     [HttpPost, PageHandler("ResolveReport")]
     public async Task<IActionResult> ResolveReport(int key, CancellationToken cancellationToken)
-        => Present(await Api<PackageManageUiApiController, PackageManageScreen>(api => api.ResolveReport(Id!, new PackageManageReportForm { Key = key }, cancellationToken)));
+        => Present(await Api<PackageManageApiController, PackageManageScreen>(api => api.ResolveReport(Id!, new PackageManageReportForm { Key = key }, cancellationToken)));
 
     /// <summary>
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without

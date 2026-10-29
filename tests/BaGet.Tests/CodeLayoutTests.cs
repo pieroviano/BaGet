@@ -125,10 +125,13 @@ public class CodeLayoutTests
     {
         var name = type.Identifier.Text;
         if (type.Modifiers.Any(m => m.Text == "abstract")) return "Base";
-        if (name.EndsWith("UiApiController", StringComparison.Ordinal)) return "UI";
         if (project == "BaGet.Validation") return "Protocols";
 
+        // Twins and /api/v1 controllers both end with "ApiController"; their base tells them apart: a twin derives from the
+        // ApiControllerBase family (ApiControllerBase, AccountApiControllerBase, AdminApiControllerBase, AccessApiControllerBase), an
+        // /api/v1 controller from AdminApiController or AccessApiController.
         var bases = type.BaseList?.Types.Select(t => t.Type.ToString()).ToList() ?? new List<string>();
+        if (name.EndsWith("ApiController", StringComparison.Ordinal) && bases.Any(b => b.EndsWith("ApiControllerBase", StringComparison.Ordinal))) return "UI";
         if (bases.Any(b => b.EndsWith("ApiController", StringComparison.Ordinal))) return "Api";
         if (bases.Any(b => b == "UiControllerBase" || (b.EndsWith("ControllerBase", StringComparison.Ordinal) && b != "ControllerBase"))) return "FrontEnd";
         if (bases.Any(b => b == "Controller" || b == "ControllerBase")) return "Protocols";

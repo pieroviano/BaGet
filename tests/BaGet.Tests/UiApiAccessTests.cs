@@ -466,7 +466,7 @@ public class UiApiAccessTests : IDisposable
 
 /// <summary>An account twin (screen only, signed in).</summary>
 [Route("api/ui/test-probe/account")]
-public sealed class ProbeAccountUiApiController : AccountUiApiControllerBase
+public sealed class ProbeAccountApiController : AccountApiControllerBase
 {
     protected override bool RequiresSignIn => true;
 
@@ -476,7 +476,7 @@ public sealed class ProbeAccountUiApiController : AccountUiApiControllerBase
 
 /// <summary>An administrator twin.</summary>
 [Route("api/ui/test-probe/admin")]
-public sealed class ProbeAdminUiApiController : AdminUiApiControllerBase
+public sealed class ProbeAdminApiController : AdminApiControllerBase
 {
     [HttpGet, UiApi("ProbeAdminUiApi", "Get")]
     public ActionResult<ScreenResult<string>> Get() => Respond(ScreenResult<string>.Ok("admin"));
@@ -487,7 +487,7 @@ public sealed class ProbeAdminUiApiController : AdminUiApiControllerBase
 
 /// <summary>An access twin (writes are refused while the server is read-only).</summary>
 [Route("api/ui/test-probe/access")]
-public sealed class ProbeAccessUiApiController : AccessUiApiControllerBase
+public sealed class ProbeAccessApiController : AccessApiControllerBase
 {
     [HttpGet, UiApi("ProbeAccessUiApi", "Get")]
     public ActionResult<ScreenResult<string>> Get() => Respond(ScreenResult<string>.Ok("access"));

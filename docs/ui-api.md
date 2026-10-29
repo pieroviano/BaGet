@@ -127,7 +127,7 @@ plain URLs (package files, symbol files, avatars). `UiApiParityTests` fails for 
 |---|---|
 | `BaGet.Identity.Application`, `BaGet.Web.Application` | Use cases (`<Area>UseCase`), the DTOs (the JSON `model`), business services. No MVC or Razor reference (`ApplicationLayeringTests`) |
 | `BaGet.Identity.Api`, `BaGet.Web.V3` | The `[UiApi]` twins (`Controllers/UI`) and the other web APIs; no view controller, no view, no reference to a front end (`ApplicationLayeringTests`) |
-| `BaGet.Api.Base` | What twins and screens share: the twin bases (`UiApiControllerBase` family), `[UiApi]`, `[RepositoryPage]`, `IScreenController`/`ScreenEndpoints`, `UiApiSecurityFilter`, `RequestPrincipalResolver` |
+| `BaGet.Api.Base` | What twins and screens share: the twin bases (`ApiControllerBase` family), `[UiApi]`, `[RepositoryPage]`, `IScreenController`/`ScreenEndpoints`, `UiApiSecurityFilter`, `RequestPrincipalResolver` |
 | `BaGet.Identity.FrontEnd`, `BaGet.Web.FrontEnd` | The view controllers (`Controllers/FrontEnd`), which bind the form, call the twin in process (`UiApiInvoker`) and render, and their views; `AddBaGetFrontEnd()` registers them |
 | `BaGet.Frontend.Base` | MVC base of the screens: `UiControllerBase` family, `UiApiInvoker`, `RepositoryUrlHelper`, `NavLinkTagHelper`, the layout and shared partials |
 
@@ -142,7 +142,7 @@ URLs, forms, `?handler=` values, redirects and status codes of the HTML screens 
 
 ## Adding a screen
 
-Worked examples: `LegalController` / `LegalUiApiController` / `LegalUseCase`, `StatisticsController` / `StatisticsUiApiController` / `StatisticsUseCase`;
+Worked examples: `LegalController` / `LegalApiController` / `LegalUseCase`, `StatisticsController` / `StatisticsApiController` / `StatisticsUseCase`;
 test twins for each base at the end of `tests/BaGet.Tests/UiApiAccessTests.cs`.
 
 | Piece | Where | Rule |
@@ -150,18 +150,18 @@ test twins for each base at the end of `tests/BaGet.Tests/UiApiAccessTests.cs`.
 | Use case | `BaGet.Web.Application/UseCases` or `BaGet.Identity.Application/UseCases/<area>` | Scoped `<Area>UseCase`, one method per GET and handler; inputs explicit (caller `ClaimsPrincipal`, form DTO, `CancellationToken`); returns `ScreenResult<T>`; sees no `HttpContext`, `ModelState`, `TempData`; validates its form itself; a write calls `MaintenanceGate.ThrowIfClosed`; absolute links from `IUrlGenerator`; no secret in a DTO |
 | DTO | same project, `Models/<area>` (namespace = folder) | Flat, no EF entities; one type per file |
 | Registration | `AddBaGetWebUseCases`, or `AddBaGetAccounts` after its `Enabled` check | `TryAddScoped<<Area>UseCase>()` |
-| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity.Api/Controllers/UI` | `<Feature>UiApiController`; never `[ApiController]`, a `UiControllerBase` or `[AutoValidateAntiforgeryToken]`; it may not reference the view controller, so `[UiApi]` names the screen by text |
+| JSON twin | `BaGet.Web.V3/Controllers/UI` or `BaGet.Identity.Api/Controllers/UI` | `<Feature>ApiController`; never `[ApiController]`, a `UiControllerBase` or `[AutoValidateAntiforgeryToken]`; it may not reference the view controller, so `[UiApi]` names the screen by text |
 | View controller | `BaGet.Web.FrontEnd/Controllers/FrontEnd` or `BaGet.Identity.FrontEnd/Controllers/FrontEnd`, view in the same project's `Views/<Controller>/<Action>.cshtml` | Binds the form, `Api<Twin, Model>(api => ...)`, `Render(...)`; holds no use case |
 
-Twin bases: `UiApiControllerBase` (public), `AccountUiApiControllerBase` (override `RequiresSignIn`/`RequiresEmail`; **interactive sessions only**: 403 over HTTP to a key and to an anonymous caller),
-`AdminUiApiControllerBase` (administrator's session or `admin:api` key), `AccessUiApiControllerBase` (override `AuthorizeAsync`; writes `503` while read-only; retention, replication and
+Twin bases: `ApiControllerBase` (public), `AccountApiControllerBase` (override `RequiresSignIn`/`RequiresEmail`; **interactive sessions only**: 403 over HTTP to a key and to an anonymous caller),
+`AdminApiControllerBase` (administrator's session or `admin:api` key), `AccessApiControllerBase` (override `AuthorizeAsync`; writes `503` while read-only; retention, replication and
 repository bases build on these). Every twin is visible in the OpenAPI `ui` document (the base sets `[ApiExplorerSettings(IgnoreApi = false)]`) and answers
 `ActionResult<ScreenResult<T>>` through `Respond(...)`.
 
 ```csharp
 [Route("api/ui")]
 [RepositoryPage(NotOnVirtual = true)]          // same values as the view controller: adds api/ui/r/{repo}/...
-public sealed class StatisticsUiApiController : UiApiControllerBase
+public sealed class StatisticsApiController : ApiControllerBase
 {
     [HttpGet("stats"), UiApi("Statistics", "Index")]   // view controller without the suffix + its default GET action
     public async Task<ActionResult<ScreenResult<StatisticsViewModel>>> Get(CancellationToken ct)
@@ -171,7 +171,7 @@ public sealed class StatisticsUiApiController : UiApiControllerBase
 
 Routes: GET `api/ui/<view path>`; default POST the same path; handler `X` = `api/ui/<path>/<x-kebab-case>` with `[UiApi("X", "Index", Handler = "X")]` (the view controller without the `Controller` suffix and its default GET action name the screen; `ApiOperation(summary, "X", "Index")` takes the same two strings); route values keep the
 view's names. Bodies are `[FromBody]` JSON, uploads `[FromForm]` multipart. Public helpers are `[NonAction]` or non-public. The view action becomes
-`=> Render(await Api<StatisticsUiApiController, StatisticsViewModel>(api => api.Get(ct)), "Index")` and keeps every attribute and its base (whose `ScreenGate` and
+`=> Render(await Api<StatisticsApiController, StatisticsViewModel>(api => api.Get(ct)), "Index")` and keeps every attribute and its base (whose `ScreenGate` and
 antiforgery already ran: the twin's filters do not run in process).
 
 Checklist: the parity case (page and twin carry the same, statuses correspond) in `UiApiParityTests`; a case per caller kind in `UiApiAccessTests`

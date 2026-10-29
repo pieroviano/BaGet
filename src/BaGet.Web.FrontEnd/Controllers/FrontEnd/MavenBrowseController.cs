@@ -17,7 +17,7 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 /// Pages <c>MavenArtifacts</c>, <c>MavenArtifact</c> and <c>MavenUpload</c>: same URLs, same repository rules
 /// (<see cref="RepositoryPageAttribute"/>: Read on the repository, on <c>group:artifact</c> for the artifact page, the right to
 /// publish for the upload; 404 in a repository that is not Maven's). Views are in <c>Views/MavenBrowse/</c>. The work is <see cref="BaGet.Web.Application.UseCases.MavenBrowseUseCase"/>, reached through the JSON twin
-/// <see cref="MavenBrowseUiApiController"/> in process; this controller only renders what it answers.
+/// <see cref="MavenBrowseApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 public sealed class MavenBrowseController : UiControllerBase
 {
@@ -31,20 +31,20 @@ public sealed class MavenBrowseController : UiControllerBase
     {
         if (!ModelState.IsValid) return BadRequest();
 
-        return Render(await Api<MavenBrowseUiApiController, MavenArtifactsViewModel>(api => api.Artifacts(q, p, cancellationToken)), "Artifacts");
+        return Render(await Api<MavenBrowseApiController, MavenArtifactsViewModel>(api => api.Artifacts(q, p, cancellationToken)), "Artifacts");
     }
 
     /// <summary>One artifact: versions, files, POM, the dependency to copy.</summary>
     [Route("maven-artifacts/{group}/{artifact}/{version?}"), HttpGet, HttpHead, PageHandler]
     [RepositoryPage(Format = RepositoryFormat.Maven)]
     public async Task<IActionResult> Artifact(string? group, string? artifact, string? version, CancellationToken cancellationToken = default)
-        => Render(await Api<MavenBrowseUiApiController, MavenArtifactViewModel>(api => api.Artifact(group, artifact, version, cancellationToken)), "Artifact");
+        => Render(await Api<MavenBrowseApiController, MavenArtifactViewModel>(api => api.Artifact(group, artifact, version, cancellationToken)), "Artifact");
 
     /// <summary>The upload form.</summary>
     [Route("maven-upload"), HttpGet, HttpHead, PageHandler]
     [RepositoryPage(Format = RepositoryFormat.Maven, Upload = true)]
     public async Task<IActionResult> Upload(CancellationToken cancellationToken)
-        => Render(await Api<MavenBrowseUiApiController, MavenUploadViewModel>(api => api.Upload(cancellationToken)), "Upload");
+        => Render(await Api<MavenBrowseApiController, MavenUploadViewModel>(api => api.Upload(cancellationToken)), "Upload");
 
     /// <summary>Deploys the chosen files under the given coordinates.</summary>
     [Route("maven-upload"), HttpPost, PageHandler]
@@ -61,6 +61,6 @@ public sealed class MavenBrowseController : UiControllerBase
         string? apiKey,
         CancellationToken cancellationToken)
         => Render(
-            await Api<MavenBrowseUiApiController, MavenUploadViewModel>(api => api.UploadPost(groupId, artifactId, version, packaging, classifier, file, pom, apiKey, cancellationToken)),
+            await Api<MavenBrowseApiController, MavenUploadViewModel>(api => api.UploadPost(groupId, artifactId, version, packaging, classifier, file, pom, apiKey, cancellationToken)),
             "Upload");
 }

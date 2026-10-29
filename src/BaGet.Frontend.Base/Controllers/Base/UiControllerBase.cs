@@ -46,12 +46,12 @@ public abstract class UiControllerBase : Controller, IScreenController
     /// <typeparam name="TApi">The twin controller.</typeparam>
     /// <typeparam name="TModel">The screen's model.</typeparam>
     protected Task<UiApiResponse<TModel>> Api<TApi, TModel>(Func<TApi, Task<ActionResult<ScreenResult<TModel>>>> call)
-        where TApi : UiApiControllerBase
+        where TApi : ApiControllerBase
         => UiApiInvoker.InvokeAsync(this, call);
 
     /// <summary><c>Api</c> for a twin action that does not await.</summary>
     protected Task<UiApiResponse<TModel>> Api<TApi, TModel>(Func<TApi, ActionResult<ScreenResult<TModel>>> call)
-        where TApi : UiApiControllerBase
+        where TApi : ApiControllerBase
     {
         if (call == null) throw new ArgumentNullException(nameof(call));
 

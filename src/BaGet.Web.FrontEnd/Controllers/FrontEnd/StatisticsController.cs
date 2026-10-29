@@ -18,5 +18,5 @@ public sealed class StatisticsController : UiControllerBase
     /// <summary>The statistics page.</summary>
     [Route("stats"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        => Render(await Api<StatisticsUiApiController, StatisticsViewModel>(api => api.Get(cancellationToken)), "Index");
+        => Render(await Api<StatisticsApiController, StatisticsViewModel>(api => api.Get(cancellationToken)), "Index");
 }

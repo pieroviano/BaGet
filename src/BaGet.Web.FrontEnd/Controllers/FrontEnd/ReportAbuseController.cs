@@ -13,7 +13,7 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 /// <summary>
 /// Report abuse (<c>/packages/{id}/{version}/report-abuse</c>, and under <c>/r/{repo}/</c>; 404 in a virtual repository). Replaces the
 /// <c>/ReportAbuse</c> Razor Page. The form is posted with antiforgery
-/// validation (<see cref="UiControllerBase"/>). Renders what <see cref="ReportAbuseUiApiController"/> answers.
+/// validation (<see cref="UiControllerBase"/>). Renders what <see cref="ReportAbuseApiController"/> answers.
 /// </summary>
 [RepositoryPage(NotOnVirtual = true)]
 public sealed class ReportAbuseController : UiControllerBase
@@ -21,7 +21,7 @@ public sealed class ReportAbuseController : UiControllerBase
     /// <summary>The empty form.</summary>
     [Route("packages/{id}/{version}/report-abuse"), HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Show(string? id, string? version)
-        => Render(await Api<ReportAbuseUiApiController, ReportAbuseScreen>(api => api.Get(id, version)), "Show", ToViewModel);
+        => Render(await Api<ReportAbuseApiController, ReportAbuseScreen>(api => api.Get(id, version)), "Show", ToViewModel);
 
     /// <summary>Records the report.</summary>
     [Route("packages/{id}/{version}/report-abuse"), HttpPost, PageHandler]
@@ -31,7 +31,7 @@ public sealed class ReportAbuseController : UiControllerBase
         ModelState.Clear();
         var form = new ReportAbuseForm { Reason = model.Reason, Details = model.Details, ReporterEmail = model.ReporterEmail };
 
-        return Render(await Api<ReportAbuseUiApiController, ReportAbuseScreen>(api => api.Submit(id, version, form, cancellationToken)), "Show", ToViewModel);
+        return Render(await Api<ReportAbuseApiController, ReportAbuseScreen>(api => api.Submit(id, version, form, cancellationToken)), "Show", ToViewModel);
     }
 
     private static object? ToViewModel(ReportAbuseScreen screen)

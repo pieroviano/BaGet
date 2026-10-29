@@ -17,7 +17,7 @@ namespace BaGet.Identity.Controllers.FrontEnd;
 /// <summary>
 /// The owners' screen for an npm package (<c>/npm-manage/{*id}</c>, also at <c>/r/{repo}/…</c>): owners, dist-tags, deprecation and
 /// unpublishing. It replaces the <c>/Packages/NpmManage</c> Razor Page (same URLs, same <c>?handler=</c> forms, same gates); the work is done
-/// by <see cref="NpmManageUiApiController"/> (the JSON twin, over <c>NpmManageUseCase</c>), which this controller calls in process and
+/// by <see cref="NpmManageApiController"/> (the JSON twin, over <c>NpmManageUseCase</c>), which this controller calls in process and
 /// renders. The name / repository-kind / ownership check runs in <see cref="OnActionExecutionAsync"/>, before the global repository filter.
 /// </summary>
 [Route("npm-manage/{*id}")]
@@ -37,7 +37,7 @@ public sealed class NpmManageController : AccountControllerBase
         OnActionExecuting(context);
         if (context.Result != null) return;
 
-        var refusal = await UiApiEntry.InvokeAsync<NpmManageUiApiController, NpmManageViewModel>(
+        var refusal = await UiApiEntry.InvokeAsync<NpmManageApiController, NpmManageViewModel>(
             this,
             api => api.EnterAsync(PackageControllerSupport.Route(context, "id"), PackageControllerSupport.HandlerName(context), HttpMethods.IsPost(Request.Method), context.HttpContext.RequestAborted));
         if (refusal != null)
@@ -52,47 +52,47 @@ public sealed class NpmManageController : AccountControllerBase
     /// <summary>The screen.</summary>
     [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Get(Id, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.Get(Id, cancellationToken)));
 
     /// <summary>Adds an owner.</summary>
     [HttpPost, PageHandler("AddOwner")]
     public async Task<IActionResult> AddOwner(string ownerName, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.AddOwner(Id, new NpmManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.AddOwner(Id, new NpmManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Removes an owner.</summary>
     [HttpPost, PageHandler("RemoveOwner")]
     public async Task<IActionResult> RemoveOwner(string ownerName, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.RemoveOwner(Id, new NpmManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.RemoveOwner(Id, new NpmManageOwnerForm { OwnerName = ownerName }, cancellationToken)));
 
     /// <summary>Points a dist-tag at a version.</summary>
     [HttpPost, PageHandler("SetTag")]
     public async Task<IActionResult> SetTag(string tag, string version, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.SetTag(Id, new NpmManageTagForm { Tag = tag, Version = version }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.SetTag(Id, new NpmManageTagForm { Tag = tag, Version = version }, cancellationToken)));
 
     /// <summary>Removes a dist-tag.</summary>
     [HttpPost, PageHandler("RemoveTag")]
     public async Task<IActionResult> RemoveTag(string tag, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.RemoveTag(Id, new NpmManageTagForm { Tag = tag }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.RemoveTag(Id, new NpmManageTagForm { Tag = tag }, cancellationToken)));
 
     /// <summary>Deprecates a version.</summary>
     [HttpPost, PageHandler("Deprecate")]
     public async Task<IActionResult> Deprecate(string version, string? message, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Deprecate(Id, new NpmManageDeprecateForm { Version = version, Message = message }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.Deprecate(Id, new NpmManageDeprecateForm { Version = version, Message = message }, cancellationToken)));
 
     /// <summary>Removes a version's deprecation.</summary>
     [HttpPost, PageHandler("Undeprecate")]
     public async Task<IActionResult> Undeprecate(string version, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Undeprecate(Id, new NpmManageDeprecateForm { Version = version }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.Undeprecate(Id, new NpmManageDeprecateForm { Version = version }, cancellationToken)));
 
     /// <summary>Unpublishes one version, after the password is confirmed.</summary>
     [HttpPost, PageHandler("Unpublish")]
     public async Task<IActionResult> Unpublish(string version, string? password, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.Unpublish(Id, new NpmManageUnpublishForm { Version = version, Password = password }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.Unpublish(Id, new NpmManageUnpublishForm { Version = version, Password = password }, cancellationToken)));
 
     /// <summary>Unpublishes every version, after the password is confirmed.</summary>
     [HttpPost, PageHandler("UnpublishAll")]
     public async Task<IActionResult> UnpublishAll(string? password, CancellationToken cancellationToken)
-        => Present(await Api<NpmManageUiApiController, NpmManageViewModel>(api => api.UnpublishAll(Id, new NpmManageUnpublishForm { Password = password }, cancellationToken)));
+        => Present(await Api<NpmManageApiController, NpmManageViewModel>(api => api.UnpublishAll(Id, new NpmManageUnpublishForm { Password = password }, cancellationToken)));
 
     /// <summary>
     /// A POST that names no handler (or one this screen does not have), such as a stray <c>&lt;form&gt;</c> without

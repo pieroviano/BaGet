@@ -16,7 +16,7 @@ namespace BaGet.Web.V3.Controllers.FrontEnd;
 /// (<c>?handler=Cancel</c>). It replaces the Razor Page <c>Upload</c>: same URLs and forms. The repository rule is
 /// <see cref="RepositoryPageAttribute.Upload"/>: the caller needs the right to publish, and a virtual repository continues in its
 /// deploy repository. View: <c>Views/Upload/Index.cshtml</c>. The work is <see cref="UploadUseCase"/>, reached through the JSON twin
-/// <see cref="UploadUiApiController"/> in process; this controller only renders what it answers.
+/// <see cref="UploadApiController"/> in process; this controller only renders what it answers.
 /// </summary>
 /// <remarks>
 /// Deliberately not an account controller: those answer 404 while accounts are disabled, and this page must still work there -
@@ -30,13 +30,13 @@ public sealed class UploadController : UiControllerBase
     /// <summary>Step one: the form.</summary>
     [HttpGet, HttpHead, PageHandler]
     public async Task<IActionResult> Index(string? id)
-        => Render(await Api<UploadUiApiController, UploadViewModel>(api => api.Get(id)), "Index");
+        => Render(await Api<UploadApiController, UploadViewModel>(api => api.Get(id)), "Index");
 
     /// <summary>Stages the chosen file and shows what it contains.</summary>
     [HttpPost, PageHandler("Stage")]
     [UploadSizeLimit]
     public async Task<IActionResult> Stage(string? id, IFormFile? package, string? apiKey, CancellationToken cancellationToken)
-        => Render(await Api<UploadUiApiController, UploadViewModel>(api => api.Stage(id, package, apiKey, cancellationToken)), "Index");
+        => Render(await Api<UploadApiController, UploadViewModel>(api => api.Stage(id, package, apiKey, cancellationToken)), "Index");
 
     /// <summary>Publishes the staged upload.</summary>
     [HttpPost, PageHandler("Submit")]
@@ -44,7 +44,7 @@ public sealed class UploadController : UiControllerBase
     {
         var request = new UploadTokenRequest { Token = token ?? string.Empty, ApiKey = apiKey, AcceptTerms = acceptTerms };
 
-        return Render(await Api<UploadUiApiController, UploadViewModel>(api => api.Submit(id, request, cancellationToken)), "Index");
+        return Render(await Api<UploadApiController, UploadViewModel>(api => api.Submit(id, request, cancellationToken)), "Index");
     }
 
     /// <summary>Discards the staged upload.</summary>
@@ -53,6 +53,6 @@ public sealed class UploadController : UiControllerBase
     {
         var request = new UploadTokenRequest { Token = token ?? string.Empty, ApiKey = apiKey };
 
-        return Render(await Api<UploadUiApiController, UploadViewModel>(api => api.Cancel(id, request, cancellationToken)), "Index");
+        return Render(await Api<UploadApiController, UploadViewModel>(api => api.Cancel(id, request, cancellationToken)), "Index");
     }
 }

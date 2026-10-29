@@ -14,7 +14,7 @@ namespace BaGet.Web.Application.UseCases;
 
 /// <summary>
 /// The screens of a Docker repository: the image list (<c>/docker-images</c>) with the commands that point Docker at the registry, and one image
-/// (<c>/docker-images/{image}</c>; with a digest, one manifest in full). Used by <c>DockerBrowseUiApiController</c>, which the view controller calls in process.
+/// (<c>/docker-images/{image}</c>; with a digest, one manifest in full). Used by <c>DockerBrowseApiController</c>, which the view controller calls in process.
 /// </summary>
 public sealed class DockerBrowseUseCase
 {

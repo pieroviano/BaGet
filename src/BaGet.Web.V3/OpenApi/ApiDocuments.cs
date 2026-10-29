@@ -90,12 +90,12 @@ public static class ApiDocuments
         return Task.CompletedTask;
     }
 
-    // The twin's base says it (AccountUiApiControllerBase.CookieOnly, a constant per type): read it without a request.
+    // The twin's base says it (AccountApiControllerBase.CookieOnly, a constant per type): read it without a request.
     internal static bool IsScreenOnly(Type controller)
     {
-        if (!typeof(AccountUiApiControllerBase).IsAssignableFrom(controller)) return false;
+        if (!typeof(AccountApiControllerBase).IsAssignableFrom(controller)) return false;
 
-        var property = typeof(AccountUiApiControllerBase).GetProperty("CookieOnly", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!;
+        var property = typeof(AccountApiControllerBase).GetProperty("CookieOnly", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!;
 
         return (bool)property.GetValue(RuntimeHelpers.GetUninitializedObject(controller))!;
     }

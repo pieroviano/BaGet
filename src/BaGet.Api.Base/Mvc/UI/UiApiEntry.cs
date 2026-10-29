@@ -25,7 +25,7 @@ public static class UiApiEntry
     public static async Task<UiApiResponse<TModel>?> InvokeAsync<TApi, TModel>(
         ControllerBase caller,
         Func<TApi, Task<ScreenResult<TModel>?>> enter)
-        where TApi : UiApiControllerBase
+        where TApi : ApiControllerBase
     {
         if (caller == null) throw new ArgumentNullException(nameof(caller));
         if (enter == null) throw new ArgumentNullException(nameof(enter));

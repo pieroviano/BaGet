@@ -11,7 +11,7 @@ using BaGet.Web.Application.Snippets;
 
 namespace BaGet.Web.V3.ViewModels;
 
-/// <summary>What the package page shows; filled from the screen the JSON twin answered (<see cref="PackageUiApiController"/>).</summary>
+/// <summary>What the package page shows; filled from the screen the JSON twin answered (<see cref="PackageApiController"/>).</summary>
 public sealed class PackageViewModel
 {
     /// <summary>False when the package (or any listed version of it) does not exist; <see cref="Package"/> then only names the ID.</summary>

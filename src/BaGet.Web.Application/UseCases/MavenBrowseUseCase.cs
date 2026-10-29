@@ -19,7 +19,7 @@ namespace BaGet.Web.Application.UseCases;
 /// The screens of a Maven repository: the artifact list (<c>/maven-artifacts</c>) with the configuration that points Maven and Gradle at the
 /// repository, one artifact (<c>/maven-artifacts/{group}/{artifact}/{version?}</c>) and the browser deployment (<c>/maven-upload</c>), whose
 /// deploy goes through <see cref="IMavenRepository.DeployAsync"/>, the call <c>mvn deploy</c>'s uploads end in. Used by
-/// <c>MavenBrowseUiApiController</c>, which the view controller calls in process.
+/// <c>MavenBrowseApiController</c>, which the view controller calls in process.
 /// </summary>
 public sealed class MavenBrowseUseCase
 {

@@ -22,7 +22,7 @@ using NuGetPackageType = NuGet.Packaging.Core.PackageType;
 /// Uploading a NuGet package through the browser, in two steps: the first stages the file and shows what it contains, the second
 /// publishes it (or the third discards it). Every step goes through the same authorization and the same submission pipeline as
 /// <c>dotnet nuget push</c>, so the browser can do what the pusher's own API key could, and no more. The use case of the Upload screen
-/// (<c>UploadUiApiController</c>, which the view controller calls in process).
+/// (<c>UploadApiController</c>, which the view controller calls in process).
 /// </summary>
 /// <remarks>
 /// Deliberately not an account page: those answer 404 while accounts are disabled, and this one must still work there - with a
