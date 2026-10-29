@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.7.11919.86
@@ -13,9 +12,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet.Core.Tests", "tests\B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet.Tests", "tests\BaGet.Tests\BaGet.Tests.csproj", "{892A7A82-4283-4315-B7E5-6D5B70543000}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C237857D-AD8E-4C52-974F-6A8155BB0C18}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C237857D-AD8E-4C52-974F-6A8155BB0C18}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet.Protocol", "src\BaGet.Protocol\BaGet.Protocol.csproj", "{A2D23427-9278-4D52-B31F-759212252832}"
 EndProject
@@ -47,7 +46,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet.Database.PostgreSql",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet.Gcp", "src\BaGet.Gcp\BaGet.Gcp.csproj", "{D7D60BA0-FF7F-4B37-815C-74D487C5176E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{DDEC0736-8169-4834-815E-B78E7CE612A4}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{DDEC0736-8169-4834-815E-B78E7CE612A4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaGet.Protocol.Samples.Tests", "samples\BaGet.Protocol.Samples.Tests\BaGet.Protocol.Samples.Tests.csproj", "{16B0D424-BB2F-4C0C-90B0-4F7955326ADF}"
 EndProject
@@ -69,11 +68,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Validation", "src\BaG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Database.Tests", "tests\BaGet.Database.Tests\BaGet.Database.Tests.csproj", "{C9C1D5C8-730A-47C1-8C3F-3A3D92E4D0E6}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-36F0-49B4-868A-E062B2596A1B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{2AEF938A-36F0-49B4-868A-E062B2596A1B}"
 	ProjectSection(SolutionItems) = preProject
 		docs\access-control.md = docs\access-control.md
 		docs\admin-api.md = docs\admin-api.md
 		docs\configuration.md = docs\configuration.md
+		docs\custom-frontend.md = docs\custom-frontend.md
 		docs\devops-manual.md = docs\devops-manual.md
 		docs\docker-registry.md = docs\docker-registry.md
 		docs\formats.md = docs\formats.md
@@ -89,7 +89,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2AEF938A-3
 		docs\retention.md = docs\retention.md
 		docs\scalar.md = docs\scalar.md
 		docs\ui-api.md = docs\ui-api.md
-		docs\custom-frontend.md = docs\custom-frontend.md
 		docs\ui-coverage.md = docs\ui-coverage.md
 		docs\user-manual.md = docs\user-manual.md
 		docs\virtual-repositories.md = docs\virtual-repositories.md
@@ -135,12 +134,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vs", "vs", "{FBD25121-8133-
 		docs\vs\teamcity.md = docs\vs\teamcity.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{E42EA236-EE31-4F3F-AF68-B91C8200B74D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{E42EA236-EE31-4F3F-AF68-B91C8200B74D}"
 	ProjectSection(SolutionItems) = preProject
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "markdown", "markdown", "{ED084C7A-713F-4B8E-9BA4-3C54F9AA836F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Markdown", "Markdown", "{ED084C7A-713F-4B8E-9BA4-3C54F9AA836F}"
 	ProjectSection(SolutionItems) = preProject
 		Acknowledgments.md = Acknowledgments.md
 		CLAUDE.md = CLAUDE.md
@@ -157,9 +156,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Storage.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Ha.Tests", "tests\BaGet.Ha.Tests\BaGet.Ha.Tests.csproj", "{7C2E41B9-3D58-4A6F-8B17-5E9A0D3F6C24}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cloud", "cloud", "{2AF127EE-B198-4914-B3CD-5DA732F53648}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cloud", "Cloud", "{2AF127EE-B198-4914-B3CD-5DA732F53648}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{3F4F1174-109E-4221-8B00-0E3DEC0774CD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{3F4F1174-109E-4221-8B00-0E3DEC0774CD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaGet.Identity.Application", "src\BaGet.Identity.Application\BaGet.Identity.Application.csproj", "{311939DB-1F11-4F60-8A32-AD6AA71F6D39}"
 EndProject
@@ -179,10 +178,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BaGet.Frontend.Angular", "B
 		samples\BaGet.Frontend.Angular\.gitignore = samples\BaGet.Frontend.Angular\.gitignore
 		samples\BaGet.Frontend.Angular\.npmrc = samples\BaGet.Frontend.Angular\.npmrc
 		samples\BaGet.Frontend.Angular\.prettierrc = samples\BaGet.Frontend.Angular\.prettierrc
-		samples\BaGet.Frontend.Angular\README.md = samples\BaGet.Frontend.Angular\README.md
 		samples\BaGet.Frontend.Angular\angular.json = samples\BaGet.Frontend.Angular\angular.json
 		samples\BaGet.Frontend.Angular\package-lock.json = samples\BaGet.Frontend.Angular\package-lock.json
 		samples\BaGet.Frontend.Angular\package.json = samples\BaGet.Frontend.Angular\package.json
+		samples\BaGet.Frontend.Angular\README.md = samples\BaGet.Frontend.Angular\README.md
 		samples\BaGet.Frontend.Angular\tsconfig.app.json = samples\BaGet.Frontend.Angular\tsconfig.app.json
 		samples\BaGet.Frontend.Angular\tsconfig.json = samples\BaGet.Frontend.Angular\tsconfig.json
 	EndProjectSection
@@ -257,10 +256,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BaGet.Frontend.React", "BaG
 	ProjectSection(SolutionItems) = preProject
 		samples\BaGet.Frontend.React\.env.example = samples\BaGet.Frontend.React\.env.example
 		samples\BaGet.Frontend.React\.gitignore = samples\BaGet.Frontend.React\.gitignore
-		samples\BaGet.Frontend.React\README.md = samples\BaGet.Frontend.React\README.md
 		samples\BaGet.Frontend.React\index.html = samples\BaGet.Frontend.React\index.html
 		samples\BaGet.Frontend.React\package-lock.json = samples\BaGet.Frontend.React\package-lock.json
 		samples\BaGet.Frontend.React\package.json = samples\BaGet.Frontend.React\package.json
+		samples\BaGet.Frontend.React\README.md = samples\BaGet.Frontend.React\README.md
 		samples\BaGet.Frontend.React\tsconfig.json = samples\BaGet.Frontend.React\tsconfig.json
 		samples\BaGet.Frontend.React\vite.config.ts = samples\BaGet.Frontend.React\vite.config.ts
 	EndProjectSection
@@ -735,23 +734,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{36F2C53C-EE04-44C7-BADB-6A7182EDC40E} = {DDEC0736-8169-4834-815E-B78E7CE612A4}
-		{CE692325-32D2-49D2-AF37-3FACDB8979BD} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
-		{4611ECCF-6029-4917-A9B9-F35AA94555A7} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
-		{D1906418-E817-44EF-B10F-DB7E40424E23} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
-		{4898C856-3C78-4E13-BF8A-6FC322121B04} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
-		{A85A2FDD-166D-4FD8-8D55-644C1CAD9665} = {4898C856-3C78-4E13-BF8A-6FC322121B04}
-		{995FA248-E191-4AC7-8B13-6BF028B3F0BF} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
-		{AC1023B1-12D9-43D1-A266-B59A6D2C00D3} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
-		{3EE7AAF5-C4DD-4982-B0EF-2F26DA8ACD5D} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
-		{42AF979F-EEE9-43F1-8FD1-ABA989F1D87E} = {4898C856-3C78-4E13-BF8A-6FC322121B04}
-		{A0FE8C68-8740-4373-B311-627E21518DDC} = {DDEC0736-8169-4834-815E-B78E7CE612A4}
-		{1A82125A-EA10-4AD1-B8C5-27D3E446052E} = {A0FE8C68-8740-4373-B311-627E21518DDC}
-		{DB140D73-2B25-43ED-9E1A-118C6326FA06} = {A0FE8C68-8740-4373-B311-627E21518DDC}
-		{1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739} = {A0FE8C68-8740-4373-B311-627E21518DDC}
-		{15577495-2C8F-4F34-92F7-AD5352B1126C} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
-		{9FA00C89-09E9-4C1F-ADBF-A71CB6BFA513} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
-		{45CC80FB-737C-417C-A103-D7CADD530591} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
 		{284366CB-C68F-473E-908A-50A382616AE0} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
 		{FFFACD28-C300-4046-BCFE-4A7899E88EA3} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
 		{716C970D-9614-4265-AC92-57E8B227B98E} = {2AF127EE-B198-4914-B3CD-5DA732F53648}
@@ -792,6 +774,23 @@ Global
 		{80B1AF3E-38B2-409F-8616-E5781C5DD226} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
 		{72BDC4AA-AF84-4FFC-ACEB-834CA19D0FDB} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
 		{71CA649D-A029-45CC-9713-196D9A922403} = {26A0B557-53FB-4B9A-94C4-BCCF1BDCB0CC}
+		{36F2C53C-EE04-44C7-BADB-6A7182EDC40E} = {DDEC0736-8169-4834-815E-B78E7CE612A4}
+		{CE692325-32D2-49D2-AF37-3FACDB8979BD} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{4611ECCF-6029-4917-A9B9-F35AA94555A7} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{D1906418-E817-44EF-B10F-DB7E40424E23} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{4898C856-3C78-4E13-BF8A-6FC322121B04} = {36F2C53C-EE04-44C7-BADB-6A7182EDC40E}
+		{A85A2FDD-166D-4FD8-8D55-644C1CAD9665} = {4898C856-3C78-4E13-BF8A-6FC322121B04}
+		{995FA248-E191-4AC7-8B13-6BF028B3F0BF} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
+		{AC1023B1-12D9-43D1-A266-B59A6D2C00D3} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
+		{3EE7AAF5-C4DD-4982-B0EF-2F26DA8ACD5D} = {A85A2FDD-166D-4FD8-8D55-644C1CAD9665}
+		{42AF979F-EEE9-43F1-8FD1-ABA989F1D87E} = {4898C856-3C78-4E13-BF8A-6FC322121B04}
+		{A0FE8C68-8740-4373-B311-627E21518DDC} = {DDEC0736-8169-4834-815E-B78E7CE612A4}
+		{1A82125A-EA10-4AD1-B8C5-27D3E446052E} = {A0FE8C68-8740-4373-B311-627E21518DDC}
+		{DB140D73-2B25-43ED-9E1A-118C6326FA06} = {A0FE8C68-8740-4373-B311-627E21518DDC}
+		{1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739} = {A0FE8C68-8740-4373-B311-627E21518DDC}
+		{15577495-2C8F-4F34-92F7-AD5352B1126C} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
+		{9FA00C89-09E9-4C1F-ADBF-A71CB6BFA513} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
+		{45CC80FB-737C-417C-A103-D7CADD530591} = {1D6ED755-2D8E-4A3E-A6D0-8EAE3513C739}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1423C027-2C90-417F-8629-2A4CF107C055}
