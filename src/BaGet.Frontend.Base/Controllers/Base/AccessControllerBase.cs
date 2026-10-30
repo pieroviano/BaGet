@@ -7,6 +7,7 @@ using BaGet.Frontend.Mvc.Screens;
 using BaGet.Identity.Application.Models.Policies;
 using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services.Accounts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -44,8 +45,8 @@ public abstract class AccessControllerBase : AdminControllerBase
     /// <summary>For an account without a password: it signed in again with its provider a moment ago.</summary>
     public bool Reauthenticated { get; private set; }
 
-    /// <summary>Whether an external provider is available to sign in again with.</summary>
-    public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
+    /// <summary>Whether an external provider linked to the signed-in account is available to sign in again with.</summary>
+    public bool CanReauthenticate { get; private set; }
 
     /// <summary>The access model's administration, resolved per request.</summary>
     protected IAccessAdministration AccessAdmin => HttpContext.RequestServices.GetRequiredService<IAccessAdministration>();
@@ -103,6 +104,7 @@ public abstract class AccessControllerBase : AdminControllerBase
         var current = await UserManager.GetUserAsync(User);
         HasPassword = current == null || await UserManager.HasPasswordAsync(current);
         Reauthenticated = !HasPassword && await HasReauthenticatedRecentlyAsync();
+        CanReauthenticate = await HttpContext.RequestServices.GetRequiredService<ExternalLogins>().CanReauthenticateAsync(current);
 
         OnActionExecuted(await next());
     }

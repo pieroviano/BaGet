@@ -45,7 +45,10 @@
         <hr />
         <form method="post" asp-controller="Account" asp-action="Login" asp-route-handler="External">
             <input type="hidden" asp-for="ReturnUrl" />
-            <button type="submit" class="btn btn-default">Sign in with @Model.ExternalProviderName</button>
+            @foreach (var provider in Model.ExternalProviders)
+            {
+                <button type="submit" name="provider" value="@provider.Id" class="btn btn-default" data-provider="@provider.Id">Sign in with @provider.DisplayName</button>
+            }
         </form>
     }
 

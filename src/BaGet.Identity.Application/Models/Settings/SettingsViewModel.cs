@@ -23,6 +23,10 @@ public sealed class SettingsViewModel
     /// <summary>Whether mail is configured.</summary>
     public bool CanSendEmail { get; set; }
 
+    /// <summary>Every configured external provider with whether this account has linked a login at it (empty when there is none).</summary>
+    public System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalLoginStatus> ExternalLogins { get; set; }
+        = System.Array.Empty<BaGet.Identity.Application.Models.Account.ExternalLoginStatus>();
+
     /// <summary>The success message to show.</summary>
     public string? Message { get; set; }
 

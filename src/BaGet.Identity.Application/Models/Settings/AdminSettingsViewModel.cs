@@ -38,6 +38,9 @@ public sealed class AdminSettingsViewModel : ConfirmationModel, IFlashMessage
     /// <summary>The level names offered for a source.</summary>
     public IReadOnlyList<string> LogLevelNames => LogLevelOverrides.Levels;
 
+    /// <summary>The named OpenID Connect providers (<c>Accounts:OpenIdConnectProviders</c>) shown in the "Sign-in providers" panel of the Accounts section. No secret is carried.</summary>
+    public IReadOnlyList<SignInProviderView> SignInProviders { get; internal set; } = Array.Empty<SignInProviderView>();
+
     /// <summary>Why the overrides file could not be read, or null.</summary>
     public string? LoadError { get; internal set; }
 

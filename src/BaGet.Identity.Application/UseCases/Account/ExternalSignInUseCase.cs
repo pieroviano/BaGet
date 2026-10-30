@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using BaGet.Identity.Application.Links;
 using BaGet.Identity.Application.Models.Account;
 using BaGet.Identity.Application.Security;
+using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Identity.Application.Services.Ownership;
 
 namespace BaGet.Identity.Application.UseCases.Account;
@@ -47,6 +48,9 @@ public sealed class ExternalSignInUseCase
     private readonly IOptions<SiteOptions> _site;
     private readonly SystemTime _time;
     private readonly SignInUseCase _signInScreens;
+    private readonly OpenIdConnectProviderSet _providers;
+    private readonly ExternalProviderMapping? _mapping;
+    private readonly ExternalLogins _logins;
     private readonly ILogger<ExternalSignInUseCase> _logger;
 
     /// <summary>Creates the use case.</summary>
@@ -62,6 +66,26 @@ public sealed class ExternalSignInUseCase
         SystemTime time,
         SignInUseCase signInScreens,
         ILogger<ExternalSignInUseCase> logger)
+        : this(users, signIn, ownership, sender, http, accounts, email, site, time, signInScreens, logger, OpenIdConnectProviders.Resolve(accounts.Value), ExternalLogins.For(users, accounts), null)
+    {
+    }
+
+    /// <summary>Creates the use case; a <c>mapping</c> applies a provider's role and group mapping (null applies none).</summary>
+    public ExternalSignInUseCase(
+        UserManager<BaGetUser> users,
+        SignInManager<BaGetUser> signIn,
+        PackageOwnershipService ownership,
+        IEmailSender<BaGetUser> sender,
+        IHttpContextAccessor http,
+        IOptions<AccountsOptions> accounts,
+        IOptions<EmailOptions> email,
+        IOptions<SiteOptions> site,
+        SystemTime time,
+        SignInUseCase signInScreens,
+        ILogger<ExternalSignInUseCase> logger,
+        OpenIdConnectProviderSet providers,
+        ExternalLogins logins,
+        ExternalProviderMapping? mapping = null)
     {
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
@@ -73,6 +97,9 @@ public sealed class ExternalSignInUseCase
         _site = site ?? throw new ArgumentNullException(nameof(site));
         _time = time ?? throw new ArgumentNullException(nameof(time));
         _signInScreens = signInScreens ?? throw new ArgumentNullException(nameof(signInScreens));
+        _providers = providers ?? throw new ArgumentNullException(nameof(providers));
+        _mapping = mapping;
+        _logins = logins ?? throw new ArgumentNullException(nameof(logins));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -82,15 +109,24 @@ public sealed class ExternalSignInUseCase
 
     // ----- sign in with the provider
 
-    /// <summary>The "sign in with the provider" button: the challenge to send, or null when no provider is configured (404).</summary>
+    /// <summary>The "sign in with the provider" button of a server with one provider: the challenge to send, or null when there is not exactly one provider (404).</summary>
     /// <param name="callbackUrl">The address of the callback handler of the sign-in screen (built by the view with its URL helper).</param>
-    public ExternalChallenge? StartSignIn(string callbackUrl)
+    public ExternalChallenge? StartSignIn(string callbackUrl) => StartSignIn(null, callbackUrl);
+
+    /// <summary>
+    /// The "sign in with the provider" button: the challenge to send, or null when the provider is unknown (404). A request that names no provider
+    /// means the only configured one (a form of before several were supported); with several, a provider must be named.
+    /// </summary>
+    /// <param name="provider">The provider id, or null.</param>
+    /// <param name="callbackUrl">The address of the callback handler of the sign-in screen (built by the view with its URL helper).</param>
+    public ExternalChallenge? StartSignIn(string? provider, string callbackUrl)
     {
-        if (!_accounts.Value.OpenIdConnect.IsConfigured) return null;
+        var chosen = string.IsNullOrEmpty(provider) ? (_providers.All.Count == 1 ? _providers.All[0] : null) : _providers.Find(provider);
+        if (chosen == null) return null;
 
-        var properties = _signIn.ConfigureExternalAuthenticationProperties(OpenIdConnectScheme, callbackUrl);
+        var properties = _signIn.ConfigureExternalAuthenticationProperties(chosen.Id, callbackUrl);
 
-        return new ExternalChallenge(OpenIdConnectScheme, properties);
+        return new ExternalChallenge(chosen.Id, properties);
     }
 
     /// <summary>
@@ -131,6 +167,18 @@ public sealed class ExternalSignInUseCase
         var info = await _signIn.GetExternalLoginInfoAsync();
         if (info == null) return Refuse(model, "The external sign-in failed.");
 
+        // The provider that answered: its claim names and its role/group mapping. An answer of a handler that is no longer configured has
+        // none of either (the defaults apply).
+        var provider = _providers.Find(info.LoginProvider);
+        var options = provider?.Options ?? new OpenIdConnectProviderOptions();
+
+        var known = await _users.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+        if (known != null && provider != null && !await _users.IsLockedOutAsync(known) && await _signIn.CanSignInAsync(known))
+        {
+            // The provider vouches for this sign-in, so its administrator and group claims apply before the session is created.
+            await ApplyMappingAsync(provider, known, info.Principal, cancellationToken);
+        }
+
         var result = cookie
             ? await _signIn.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false)
             : await CheckExternalAsync(info);
@@ -163,13 +211,13 @@ public sealed class ExternalSignInUseCase
             return Refuse(model, SignInUseCase.UnconfirmedMessage);
         }
 
-        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        var email = ExternalClaims.First(info.Principal, OpenIdConnectProviders.EmailClaim(options));
         if (EmailConfigured && string.IsNullOrWhiteSpace(email))
         {
             return Refuse(model, "The external account has no email address, which this server needs to confirm accounts.");
         }
 
-        var name = await ChooseUserNameAsync(info.Principal, cancellationToken);
+        var name = await ChooseUserNameAsync(info.Principal, options, cancellationToken);
         if (name == null) return Refuse(model, "The external account has no usable name.");
 
         var user = new BaGetUser
@@ -179,7 +227,7 @@ public sealed class ExternalSignInUseCase
 
             // Only an address the provider vouches for is confirmed; any other must be
             // proven by following a link, like one typed into the registration form.
-            EmailConfirmed = !string.IsNullOrWhiteSpace(email) && ProviderVerifiedEmail(info.Principal),
+            EmailConfirmed = !string.IsNullOrWhiteSpace(email) && ProviderVerifiedEmail(info.Principal, options),
             Created = _time.UtcNow,
             PendingApproval = _accounts.Value.RequireApproval,
         };
@@ -197,6 +245,8 @@ public sealed class ExternalSignInUseCase
 
             return Refuse(model, string.Join(" ", created.Errors.Select(e => e.Description)));
         }
+
+        if (provider != null) await ApplyMappingAsync(provider, user, info.Principal, cancellationToken);
 
         if (user.PendingApproval)
         {
@@ -223,6 +273,9 @@ public sealed class ExternalSignInUseCase
         return ScreenResult<LoginViewModel>.GoTo(ScreenNext.Local(LocalUrls.Target(returnUrl)));
     }
 
+    private Task ApplyMappingAsync(OpenIdConnectProvider provider, BaGetUser user, ClaimsPrincipal principal, CancellationToken cancellationToken)
+        => _mapping == null ? Task.CompletedTask : _mapping.ApplyAsync(provider, user, principal, cancellationToken);
+
     private static ScreenResult<LoginViewModel> Refuse(LoginViewModel model, string message)
     {
         model.Error = message;
@@ -230,8 +283,8 @@ public sealed class ExternalSignInUseCase
         return ScreenResult<LoginViewModel>.Invalid(model, message);
     }
 
-    private static bool ProviderVerifiedEmail(ClaimsPrincipal principal)
-        => bool.TryParse(principal.FindFirstValue("email_verified"), out var verified) && verified;
+    private static bool ProviderVerifiedEmail(ClaimsPrincipal principal, OpenIdConnectProviderOptions options)
+        => bool.TryParse(ExternalClaims.First(principal, OpenIdConnectProviders.EmailVerifiedClaim(options)), out var verified) && verified;
 
     private async Task<bool> TrySendConfirmationAsync(BaGetUser user)
     {
@@ -256,10 +309,10 @@ public sealed class ExternalSignInUseCase
     /// <summary>
     /// The provider's preferred user name, else the email's local part, made unique across users and organizations by a numeric suffix.
     /// </summary>
-    private async Task<string?> ChooseUserNameAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
+    private async Task<string?> ChooseUserNameAsync(ClaimsPrincipal principal, OpenIdConnectProviderOptions options, CancellationToken cancellationToken)
     {
-        var candidate = principal.FindFirstValue("preferred_username")
-                        ?? principal.FindFirstValue(ClaimTypes.Email)?.Split('@')[0]
+        var candidate = ExternalClaims.First(principal, OpenIdConnectProviders.UserNameClaim(options))
+                        ?? ExternalClaims.First(principal, OpenIdConnectProviders.EmailClaim(options))?.Split('@')[0]
                         ?? principal.FindFirstValue(ClaimTypes.Name);
 
         if (string.IsNullOrWhiteSpace(candidate)) return null;
@@ -279,34 +332,59 @@ public sealed class ExternalSignInUseCase
 
     // ----- proof of presence for an account without a password
 
+    /// <summary>The "sign in again" button for the only linked provider (or the screen to pick one); see the overload with a provider.</summary>
+    public Task<(ExternalChallenge? Challenge, ScreenResult<ReauthenticateViewModel>? Screen)> StartReauthenticationAsync(ClaimsPrincipal caller, string callbackUrl, string? returnUrl)
+        => StartReauthenticationAsync(caller, callbackUrl, returnUrl, null);
+
     /// <summary>
-    /// The "sign in again" button: a fresh sign-in with the provider (it is asked to prompt for credentials again, whatever session it has). The
-    /// time is kept in the sign-in cookie's properties and checked by <see cref="AccountConfirmation.IsConfirmedAsync"/> for
+    /// The "sign in again" button: a fresh sign-in with a provider the account has linked (it is asked to prompt for credentials again, whatever
+    /// session it has). With several linked providers and none named, the answer is the screen that lets the user pick (no challenge). The time is kept
+    /// in the sign-in cookie's properties and checked by <see cref="AccountConfirmation.IsConfirmedAsync"/> for
     /// <see cref="AccountConfirmation.ReauthenticationWindow"/>.
     /// </summary>
     /// <param name="caller">The signed-in user.</param>
     /// <param name="callbackUrl">The address of the callback handler of the screen.</param>
     /// <param name="returnUrl">Where to continue after the provider answered.</param>
-    /// <returns>The challenge to send, or a refusal screen (sign in, or "there is no external provider").</returns>
-    public async Task<(ExternalChallenge? Challenge, ScreenResult<ReauthenticateViewModel>? Screen)> StartReauthenticationAsync(ClaimsPrincipal caller, string callbackUrl, string? returnUrl)
+    /// <param name="provider">The provider to use, or null to take the only linked one (or offer the choice).</param>
+    /// <returns>The challenge to send, or a screen (sign in, the refusal, or the choice of provider).</returns>
+    public async Task<(ExternalChallenge? Challenge, ScreenResult<ReauthenticateViewModel>? Screen)> StartReauthenticationAsync(ClaimsPrincipal caller, string callbackUrl, string? returnUrl, string? provider)
     {
         var user = await _users.GetUserAsync(caller);
         if (user == null) return (null, ScreenResult<ReauthenticateViewModel>.SignIn());
 
-        if (!_accounts.Value.OpenIdConnect.IsConfigured)
+        var linked = await _logins.LinkedAsync(user);
+        if (linked.Count == 0)
         {
-            const string Message = "There is no external provider to sign in with.";
-
-            return (null, ScreenResult<ReauthenticateViewModel>.Invalid(new ReauthenticateViewModel { ReturnUrl = returnUrl, Error = Message }, Message));
+            return (null, Refuse(new ReauthenticateViewModel { ReturnUrl = returnUrl }, "There is no external provider linked to this account to sign in with."));
         }
 
-        var properties = _signIn.ConfigureExternalAuthenticationProperties(OpenIdConnectScheme, callbackUrl, user.Id);
+        ExternalProviderInfo? chosen;
+        if (string.IsNullOrEmpty(provider))
+        {
+            if (linked.Count > 1)
+            {
+                // Several providers are linked: the user picks the one to prove it with.
+                return (null, ScreenResult<ReauthenticateViewModel>.Ok(new ReauthenticateViewModel { ReturnUrl = returnUrl, Providers = linked.ToList() }));
+            }
+
+            chosen = linked[0];
+        }
+        else
+        {
+            chosen = linked.FirstOrDefault(p => string.Equals(p.Id, provider, StringComparison.OrdinalIgnoreCase));
+            if (chosen == null)
+            {
+                return (null, Refuse(new ReauthenticateViewModel { ReturnUrl = returnUrl, Providers = linked.Count > 1 ? linked.ToList() : null }, "That provider is not linked to this account."));
+            }
+        }
+
+        var properties = _signIn.ConfigureExternalAuthenticationProperties(chosen.Id, callbackUrl, user.Id);
 
         // Ask the provider to authenticate again whatever session it holds.
         properties.SetParameter(OpenIdConnectChallengeProperties.PromptKey, "login");
         properties.SetParameter(OpenIdConnectChallengeProperties.MaxAgeKey, TimeSpan.Zero);
 
-        return (new ExternalChallenge(OpenIdConnectScheme, properties), null);
+        return (new ExternalChallenge(chosen.Id, properties), null);
     }
 
     /// <summary>True when <paramref name="authTime"/> (seconds since the epoch) is present and within the window.</summary>

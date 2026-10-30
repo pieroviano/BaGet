@@ -46,6 +46,10 @@ public static class AccountsServiceCollectionExtensions
             return services;
         }
 
+        // The providers whose handlers are registered below are the ones every screen and flow offers. An invalid configuration stops the startup.
+        var providers = OpenIdConnectProviders.Resolve(options);
+        services.Replace(ServiceDescriptor.Singleton(providers));
+
         services.AddHttpContextAccessor();
         services.TryAddScoped<IReauthenticationState, HttpReauthenticationState>();
         services.AddBaGetIdentityUseCases();
@@ -163,21 +167,11 @@ public static class AccountsServiceCollectionExtensions
             cookie.AccessDeniedPath = spaLinkBase == null ? "/account/login" : spaLinkBase + "/sign-in";
         }));
 
-        if (options.OpenIdConnect.IsConfigured)
+        // One authentication handler per provider: the legacy block as "oidc" (callback /signin-oidc), each named one under its own id and callback path.
+        foreach (var provider in providers.All)
         {
-            authentication.AddOpenIdConnect(OpenIdConnectScheme, options.OpenIdConnect.DisplayName, oidc =>
-            {
-                oidc.SignInScheme = IdentityConstants.ExternalScheme;
-                oidc.Authority = options.OpenIdConnect.Authority;
-                oidc.ClientId = options.OpenIdConnect.ClientId;
-                oidc.ClientSecret = options.OpenIdConnect.ClientSecret;
-                oidc.ResponseType = "code";
-                oidc.Scope.Add("profile");
-                oidc.Scope.Add("email");
-
-                // Default claim mapping and ClaimActions keep the id_token's auth_time as it is
-                // sent; the re-authentication check relies on it.
-            });
+            var configured = provider;
+            authentication.AddOpenIdConnect(configured.Id, configured.DisplayName, oidc => OpenIdConnectProviderSetup.Configure(oidc, configured));
         }
 
         return services;

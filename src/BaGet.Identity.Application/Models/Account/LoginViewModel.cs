@@ -9,11 +9,14 @@ public sealed class LoginViewModel : LoginForm
     /// <summary>Whether the registration link is shown.</summary>
     public bool AllowRegistration { get; set; }
 
-    /// <summary>Whether sign-in with an external provider is offered.</summary>
+    /// <summary>Whether sign-in with an external provider is offered (any provider in <see cref="ExternalProviders"/>).</summary>
     public bool HasExternalProvider { get; set; }
 
-    /// <summary>The provider's display name.</summary>
+    /// <summary>The first provider's display name (kept for clients that offer one button); see <see cref="ExternalProviders"/>.</summary>
     public string? ExternalProviderName { get; set; }
+
+    /// <summary>The configured external providers, one sign-in button each.</summary>
+    public System.Collections.Generic.IReadOnlyList<ExternalProviderInfo> ExternalProviders { get; set; } = System.Array.Empty<ExternalProviderInfo>();
 
     /// <summary>Whether mail is configured (the forgot-password link is shown).</summary>
     public bool EmailIsConfigured { get; set; }

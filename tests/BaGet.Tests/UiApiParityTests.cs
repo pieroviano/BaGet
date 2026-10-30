@@ -117,7 +117,7 @@ public class UiApiParityTests : IDisposable
     }
 
     // Steps with no JSON twin because they only redirect the browser to the external sign-in provider and back (the challenge and its callback, which
-    // set the session cookie; the same for signing in again to re-authenticate): (screen as Controller/Action, handler, method). Nothing else may be missing; a default POST that only re-renders its screen
+    // set the session cookie; the same for signing in again to re-authenticate and for linking a provider): (screen as Controller/Action, handler, method). Nothing else may be missing; a default POST that only re-renders its screen
     // ([ImplicitPageHandler]) is no operation and needs no twin.
     private static readonly HashSet<(string Screen, string? Handler, string Method)> BrowserOnly = new()
     {
@@ -125,6 +125,10 @@ public class UiApiParityTests : IDisposable
         ("Account/Login", "Callback", "GET"),
         ("Account/Reauthenticate", null, "POST"),
         ("Account/Reauthenticate", "Callback", "GET"),
+
+        // Linking a provider to the signed-in account: the redirect to the provider and back (unlinking has a twin).
+        ("AccountSettings/Settings", "LinkExternal", "POST"),
+        ("AccountSettings/Settings", "LinkCallback", "GET"),
     };
 
     // An action with no HTTP method constraint answers any method: demand a twin for GET and POST, never skip it.

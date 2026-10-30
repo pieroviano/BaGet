@@ -128,6 +128,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Sign in for a single-page application (password, 2FA ticket + code or recovery code, refresh, exchange, sign out, external provider, cookie sign-in and sign-out, antiforgery token, register / resend confirmation / forgot / reset / confirm without a session) | REST (`/api/ui/session`, `/api/ui/antiforgery`) | the sign-in pages (`Account/Login`, `Account/LoginWith2fa`, `Account/LoginWithRecoveryCode`) | anonymous; same lockout, approval and email rules |
 | Forgot / reset password | pages | ForgotPassword, ResetPassword | anonymous |
 | Change password / email, delete account | service | Account Settings (`AccountSettings/Settings`) | signed in + Password |
+| Sign in with one of several OpenID Connect providers (a button each); link / unlink a provider; re-authenticate with a linked provider | `/api/ui/session/external/{provider}`, `/api/ui/account/settings/unlink-external` | Login (`Account/Login`), Reauthenticate (`Account/Reauthenticate`), Account Settings > *Sign-in providers* (`AccountSettings/Settings`) | anonymous; link / unlink signed in + Password |
 | Two-factor: enable, disable, reset | service | TwoFactor (`AccountSettings/TwoFactor`) | signed in + Password |
 | API keys: scopes, glob, expiry, repositories; revoke | service | Account API keys (`AccountSettings/ApiKeysIndex`) | signed in |
 | Organizations: create, members | service | Account Organizations (`AccountOrganizations/Organizations`) | signed in |
@@ -148,6 +149,7 @@ asked again. Every write calls `MaintenanceGate.ThrowIfClosed` (503 while closed
 | Validation queue: retry, release, reject | service | Admin Validation (`AdminOperations/Validation`) | Admin (+ Password) |
 | Abuse reports: resolve, reopen | service | Admin Abuse (`AdminOperations/Abuse`); Manage for the owner | Admin / Manage |
 | Settings (every options section), restart-required marks | `appsettings.Overrides.json` | Admin Settings | Admin + Password |
+| Sign-in providers (`Accounts:OpenIdConnectProviders`): list, add, edit, remove named OpenID Connect providers (secret write-only, administrator / group mapping), restart-required | `SignInProviderSettings`, `/api/ui/admin/settings/save-provider`, `remove-provider` | Admin Settings > Accounts > *Sign-in providers* (`AdminSettings/Index`) | Admin + Password, 503 while read-only |
 | Logging: default minimum level (live), Windows event log switch and source (restart) | `Serilog` section | Admin Settings > Serilog | Admin + Password |
 | Logging: level per source (`Serilog:MinimumLevel:Override`, live): list with where each is set, set, remove (only what the page saved) | `SettingsService.SetLogLevelOverrideAsync` | Admin Settings > Serilog > *Log levels per source* | Admin + Password, 503 while read-only |
 | Database copy (copy all data, status) | service | Admin Settings (database section) | Admin + Password |

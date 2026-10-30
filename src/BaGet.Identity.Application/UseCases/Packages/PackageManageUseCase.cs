@@ -584,6 +584,7 @@ public sealed class PackageManageUseCase
             var confirmation = await _services.ConfirmationAsync(caller, cancellationToken).ConfigureAwait(false);
             screen.HasPassword = confirmation.HasPassword;
             screen.Reauthenticated = confirmation.Reauthenticated;
+            screen.CanReauthenticate = confirmation.CanReauthenticate;
         }
 
         screen.Owners = (await _services.Ownership.GetOwnersAsync(id, cancellationToken).ConfigureAwait(false))

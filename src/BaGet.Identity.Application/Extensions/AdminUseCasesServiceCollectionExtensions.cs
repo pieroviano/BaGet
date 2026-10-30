@@ -1,3 +1,4 @@
+using BaGet.Identity.Application.Services.Accounts;
 using BaGet.Identity.Application.Screens;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -26,6 +27,7 @@ public static class AdminUseCasesServiceCollectionExtensions
         services.TryAddScoped<AdminUserDeletionUseCase>();
         services.TryAddScoped<AdminPackagesUseCase>();
         services.TryAddScoped<AdminOrganizationsUseCase>();
+        services.TryAddScoped<SignInProviderSettings>();
         services.TryAddScoped<AdminSettingsUseCase>();
         services.TryAddScoped<AdminOperationsUseCase>();
         services.TryAddScoped<AdminGroupsUseCase>();

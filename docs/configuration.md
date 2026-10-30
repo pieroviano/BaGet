@@ -322,6 +322,7 @@ that behaviour back; otherwise configure them with:
 | `RequireApproval` | `false` | a self-registered account (registration page, or first sign-in through the external provider) stays disabled until an administrator approves it on `/admin/users`; accounts an administrator creates are never pending. See [Approving new accounts](#approving-new-accounts) |
 | `InitialAdministrators`, `CreateDefaultAdministrator` | none, `true` | see [Administrators](#administrators) |
 | `OpenIdConnect:*` | none | see [Sign in with OpenID Connect](#sign-in-with-openid-connect) |
+| `OpenIdConnectProviders:<id>:*` | none | named providers, see [Several providers](#several-providers) |
 
 Users then sign in at `/account/login`, create an account at `/account/register` (unless
 `AllowRegistration` is `false`), and create API keys at `/account/apikeys`. `/account/packages`
@@ -590,7 +591,54 @@ To let users sign in with an external provider such as Microsoft Entra ID:
 ```
 
 `Authority` and `ClientId` are required: without both, the provider is not offered. `DisplayName` (default `OpenID Connect`) labels the sign-in button. Register `https://<your-host>/signin-oidc` as the redirect URI. The first sign-in creates an account,
-whatever `AllowRegistration` says: the provider decides who may sign in.
+whatever `AllowRegistration` says: the provider decides who may sign in. This single block is the provider with id `oidc`.
+
+#### Several providers
+
+`Accounts:OpenIdConnectProviders:<id>` lists named providers, each with its own button on the sign-in page. Restart-required (the handlers are registered at startup); an invalid entry stops startup. Edit them on the Settings page (Accounts section, *Sign-in providers*; password-confirmed, the secret never shown back, a blank secret keeps the saved one) or in the configuration:
+
+```json
+"Accounts": {
+    "Enabled": true,
+    "OpenIdConnectProviders": {
+        "entra": {
+            "DisplayName": "Microsoft",
+            "Authority": "https://login.microsoftonline.com/<tenant-id>/v2.0",
+            "ClientId": "<client-id>",
+            "ClientSecret": "<client-secret>",
+            "Scopes": "groups",
+            "Parameters": { "domain_hint": "example.com" },
+            "AdministratorClaim": "roles",
+            "AdministratorValue": "baget-admin",
+            "GroupClaim": "groups",
+            "GroupMappings": { "<group-object-id>": "Developers" }
+        },
+        "google": {
+            "DisplayName": "Google",
+            "Authority": "https://accounts.google.com",
+            "ClientId": "<client-id>",
+            "ClientSecret": "<client-secret>"
+        }
+    }
+}
+```
+
+The `<id>` is the authentication scheme, the stored login-provider name (`UserLogins.LoginProvider`) and part of the callback path: 1 to 32 lower-case letters, digits and `-` (read without case, kept lower-case; used once). Register `https://<your-host>/signin-oidc-<id>` as the redirect URI (`/signout-callback-oidc-<id>` after a sign-out). A provider without `Authority` and `ClientId` is not offered. `oidc` is reserved while the single block is configured (startup error); with the block unconfigured a named `oidc` works (callback `/signin-oidc-oidc`).
+
+| Field | Meaning |
+|---|---|
+| `Authority`, `ClientId`, `ClientSecret`, `DisplayName` | As the single block (the name defaults to the id) |
+| `Scopes` | Extra scopes separated by spaces or `;` (`openid profile email` are always requested) |
+| `Parameters` | Extra authorization request parameters (`domain_hint`, `login_hint`...). Never replace what BaGet sets: `prompt` and `max_age` of a re-authentication, `state`, `nonce`, `redirect_uri`, `client_id`, `scope`, `response_type`, `response_mode`, PKCE |
+| `UserNameClaim`, `EmailClaim`, `EmailVerifiedClaim` | Claims read for the new account (defaults `preferred_username`, `email`, `email_verified`; the user name falls back to the email's local part). The address is confirmed only when *that provider's* verified claim is `true` |
+| `AdministratorClaim` + `AdministratorValue` | Opt-in, together. See below |
+| `GroupClaim` + `GroupMappings` | Opt-in. Claim value to BaGet group name; a value holds no `:` |
+
+Claim names are those of the token (`roles`, `groups`); the `email`, `role`, `sub`, `given_name` and `family_name` the handler maps to .NET claim types are found under either spelling. Claims must be in the ID token.
+
+**Several providers, several accounts.** The first sign-in through a provider creates its own account; nothing is linked by email. A signed-in user links further providers (and unlinks them) under *Sign-in providers* on the account settings page (password-confirmed; the only way to sign in cannot be unlinked). Re-authenticating (for an account without a password) uses a provider linked to the account, asking which when there are several.
+
+**Administrator and group mapping.** With `AdministratorClaim`/`AdministratorValue` set, **the provider decides who is an administrator** for the users who sign in through it: at each of their sign-ins the flag is set when the claim holds the value and cleared when it does not (never the last administrator; a promotion also approves a pending account). Grant it only to a provider you trust with administrator rights, and only claims the provider controls. With `GroupMappings`, each sign-in adds the user to the mapped groups whose value is present and removes them from the mapped groups whose value is absent; other groups are untouched and a group name that does not exist is logged and skipped (never created). Users who never sign in through that provider are not affected. Changes go through the usual services (the access model refreshes) and are audited with the actor `provider:<id>` (`account.promote` / `account.demote` in the admin audit, `group.member.add` / `.remove` in the access audit). While the server is read-only the mapping waits for the next sign-in.
 
 ### Verified packages
 

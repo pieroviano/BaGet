@@ -6,6 +6,7 @@ using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using BaGet.Identity.Application.Models.Account;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Identity.Application.UseCases.Account;
 
@@ -25,6 +26,7 @@ public sealed class SignInUseCase
     private readonly UserManager<BaGetUser> _users;
     private readonly IOptions<AccountsOptions> _accounts;
     private readonly IOptions<EmailOptions> _email;
+    private readonly ExternalLogins _logins;
 
     /// <summary>Creates the use case.</summary>
     public SignInUseCase(
@@ -32,7 +34,19 @@ public sealed class SignInUseCase
         UserManager<BaGetUser> users,
         IOptions<AccountsOptions> accounts,
         IOptions<EmailOptions> email)
+        : this(signIn, users, accounts, email, ExternalLogins.For(users, accounts))
     {
+    }
+
+    /// <summary>Creates the use case.</summary>
+    public SignInUseCase(
+        SignInManager<BaGetUser> signIn,
+        UserManager<BaGetUser> users,
+        IOptions<AccountsOptions> accounts,
+        IOptions<EmailOptions> email,
+        ExternalLogins logins)
+    {
+        _logins = logins ?? throw new ArgumentNullException(nameof(logins));
         _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
@@ -111,8 +125,10 @@ public sealed class SignInUseCase
     {
         var accounts = _accounts.Value;
         model.AllowRegistration = accounts.AllowRegistration;
-        model.HasExternalProvider = accounts.OpenIdConnect.IsConfigured;
-        model.ExternalProviderName = accounts.OpenIdConnect.DisplayName;
+        var providers = _logins.Configured;
+        model.HasExternalProvider = providers.Count > 0;
+        model.ExternalProviderName = providers.Count > 0 ? providers[0].DisplayName : null;
+        model.ExternalProviders = providers;
         model.EmailIsConfigured = _email.Value.IsConfigured;
 
         return model;

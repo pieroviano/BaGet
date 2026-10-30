@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using BaGet.Identity.Application.Models.Shared;
 using BaGet.Identity.Application.Security;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Identity.Application.Screens;
 
@@ -26,14 +27,21 @@ public sealed class PasswordConfirmation
 
     private readonly UserManager<BaGetUser> _users;
     private readonly IHttpContextAccessor _http;
-    private readonly IOptions<AccountsOptions> _accounts;
+    private readonly ExternalLogins _logins;
 
     /// <summary>Creates the service.</summary>
     public PasswordConfirmation(UserManager<BaGetUser> users, IHttpContextAccessor http, IOptions<AccountsOptions> accounts)
+        : this(users, http, accounts, ExternalLogins.For(users, accounts))
+    {
+    }
+
+    /// <summary>Creates the service.</summary>
+    public PasswordConfirmation(UserManager<BaGetUser> users, IHttpContextAccessor http, IOptions<AccountsOptions> accounts, ExternalLogins logins)
     {
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _http = http ?? throw new ArgumentNullException(nameof(http));
-        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _ = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _logins = logins ?? throw new ArgumentNullException(nameof(logins));
     }
 
     /// <summary>Whether <paramref name="user"/> confirmed: the right password, or, for an account without one, a recent provider sign-in.</summary>
@@ -51,7 +59,7 @@ public sealed class PasswordConfirmation
         var current = await _users.GetUserAsync(caller);
         model.HasPassword = current == null || await _users.HasPasswordAsync(current);
         model.Reauthenticated = !model.HasPassword && await HasReauthenticatedRecentlyAsync(_http.HttpContext);
-        model.CanReauthenticate = _accounts.Value.OpenIdConnect.IsConfigured;
+        model.CanReauthenticate = await _logins.CanReauthenticateAsync(current);
         if (returnPage != null) model.ReturnPage = returnPage;
     }
 

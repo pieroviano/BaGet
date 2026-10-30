@@ -4,6 +4,9 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using BaGet.Core;
+using BaGet.Identity.Application.Models.Account;
+using Microsoft.AspNetCore.Authentication;
+using System.Linq;
 using BaGet.Identity.Application.Screens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +33,7 @@ public sealed class AccountSettingsUseCase
     private readonly IOptions<EmailOptions> _email;
     private readonly IOptions<SiteOptions> _site;
     private readonly IEmailSender<BaGetUser> _sender;
+    private readonly ExternalLogins _logins;
 
     /// <summary>Creates the use case.</summary>
     public AccountSettingsUseCase(
@@ -41,7 +45,23 @@ public sealed class AccountSettingsUseCase
         IOptions<EmailOptions> email,
         IOptions<SiteOptions> site,
         IEmailSender<BaGetUser> sender)
+        : this(users, signIn, deletion, http, accounts, email, site, sender, ExternalLogins.For(users, accounts))
     {
+    }
+
+    /// <summary>Creates the use case.</summary>
+    public AccountSettingsUseCase(
+        UserManager<BaGetUser> users,
+        SignInManager<BaGetUser> signIn,
+        AccountDeletionService deletion,
+        IHttpContextAccessor http,
+        IOptions<AccountsOptions> accounts,
+        IOptions<EmailOptions> email,
+        IOptions<SiteOptions> site,
+        IEmailSender<BaGetUser> sender,
+        ExternalLogins logins)
+    {
+        _logins = logins ?? throw new ArgumentNullException(nameof(logins));
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
         _deletion = deletion ?? throw new ArgumentNullException(nameof(deletion));
@@ -196,6 +216,126 @@ public sealed class AccountSettingsUseCase
         return await DoneAsync(caller, model);
     }
 
+    // ----- external logins (link and unlink a provider)
+
+    /// <summary>
+    /// "Link <paramref name="provider"/>" was posted: after the password check, the challenge that sends the browser to the provider (browser-only; the answer is
+    /// <see cref="CompleteLinkAsync"/>). A provider that is not configured is <see cref="ScreenStatus.NotFound"/>.
+    /// </summary>
+    public async Task<(ExternalChallenge? Challenge, ScreenResult<SettingsViewModel>? Screen)> StartLinkAsync(ClaimsPrincipal caller, string? provider, string? password, string callbackUrl)
+    {
+        var user = await _users.GetUserAsync(caller);
+        if (user == null) return (null, ScreenResult<SettingsViewModel>.SignIn());
+
+        var configured = _logins.Configured.FirstOrDefault(p => string.Equals(p.Id, provider, StringComparison.OrdinalIgnoreCase));
+        if (configured == null) return (null, ScreenResult<SettingsViewModel>.NotFound());
+
+        var model = new SettingsViewModel();
+        if (!await AccountConfirmation.IsConfirmedAsync(_users, Http, user, password))
+        {
+            model.Error = "The confirmation is incorrect, so nothing was linked.";
+
+            return (null, await DoneAsync(caller, model));
+        }
+
+        if ((await _logins.LinkedAsync(user)).Any(p => p.Id == configured.Id))
+        {
+            model.Error = $"{configured.DisplayName} is already linked to this account.";
+
+            return (null, await DoneAsync(caller, model));
+        }
+
+        // The anti-forgery value of the challenge is the user's id, so an answer started by another session is not accepted.
+        var properties = _signIn.ConfigureExternalAuthenticationProperties(configured.Id, callbackUrl, user.Id);
+
+        return (new ExternalChallenge(configured.Id, properties), null);
+    }
+
+    /// <summary>The provider answered a link started by <see cref="StartLinkAsync"/>: its account is linked to the signed-in user, unless another account here already has it.</summary>
+    public async Task<ScreenResult<SettingsViewModel>> CompleteLinkAsync(ClaimsPrincipal caller)
+    {
+        var user = await _users.GetUserAsync(caller);
+        if (user == null) return ScreenResult<SettingsViewModel>.SignIn();
+
+        var model = new SettingsViewModel();
+        var info = await _signIn.GetExternalLoginInfoAsync(user.Id);
+        await Http.SignOutAsync(IdentityConstants.ExternalScheme);
+
+        if (info == null || !_logins.Configured.Any(p => p.Id == info.LoginProvider))
+        {
+            model.Error = "The sign-in with the provider failed, so nothing was linked.";
+        }
+        else if (await _users.FindByLoginAsync(info.LoginProvider, info.ProviderKey) is { } owner)
+        {
+            model.Error = owner.Id == user.Id
+                ? "That account is already linked to this one."
+                : "That account at the provider is already linked to another account here. Unlink it there first.";
+        }
+        else
+        {
+            var result = await _users.AddLoginAsync(user, info);
+            if (result.Succeeded)
+            {
+                await _signIn.RefreshSignInAsync(user);
+                model.Message = $"{_logins.Configured.First(p => p.Id == info.LoginProvider).DisplayName} is linked to your account.";
+            }
+            else model.Error = AccountConfirmation.Describe(result);
+        }
+
+        return await DoneAsync(caller, model);
+    }
+
+    /// <summary>
+    /// Unlinks the account login at the form's provider after the password check. Refused when it is the only way to sign in (no password and
+    /// no other login): the account would be lost.
+    /// </summary>
+    public async Task<ScreenResult<SettingsViewModel>> UnlinkAsync(ClaimsPrincipal caller, UnlinkExternalForm? form)
+    {
+        var user = await _users.GetUserAsync(caller);
+        if (user == null) return ScreenResult<SettingsViewModel>.SignIn();
+
+        var configured = _logins.Configured.FirstOrDefault(p => string.Equals(p.Id, form?.Provider, StringComparison.OrdinalIgnoreCase));
+        if (configured == null) return ScreenResult<SettingsViewModel>.NotFound();
+
+        var model = new SettingsViewModel();
+        var logins = await _users.GetLoginsAsync(user);
+        var mine = logins.Where(l => l.LoginProvider == configured.Id).ToList();
+
+        if (!await AccountConfirmation.IsConfirmedAsync(_users, Http, user, form?.Password))
+        {
+            model.Error = "The confirmation is incorrect, so nothing was unlinked.";
+        }
+        else if (mine.Count == 0)
+        {
+            model.Error = $"{configured.DisplayName} is not linked to this account.";
+        }
+        else if (!await _users.HasPasswordAsync(user) && logins.Count == mine.Count)
+        {
+            model.Error = "That is the only way to sign in to this account. Set a password first.";
+        }
+        else
+        {
+            foreach (var login in mine)
+            {
+                var result = await _users.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+                if (!result.Succeeded)
+                {
+                    model.Error = AccountConfirmation.Describe(result);
+                    break;
+                }
+            }
+
+            if (model.Error == null)
+            {
+                // Keep this session signed in whether or not the store touched the security stamp.
+                await _signIn.RefreshSignInAsync(user);
+                model.Message = $"{configured.DisplayName} was unlinked from your account.";
+            }
+        }
+
+        return await DoneAsync(caller, model);
+    }
+
     // The screen again with what the action said: a refusal is Invalid (the model carries the message the page prints), anything else Ok.
     private async Task<ScreenResult<SettingsViewModel>> DoneAsync(ClaimsPrincipal caller, SettingsViewModel model)
     {
@@ -213,7 +353,8 @@ public sealed class AccountSettingsUseCase
         model.EmailConfirmed = user.EmailConfirmed;
         model.HasPassword = await _users.HasPasswordAsync(user);
         model.Reauthenticated = !model.HasPassword && await AccountConfirmation.HasReauthenticatedRecentlyAsync(Http);
-        model.CanReauthenticate = _accounts.Value.OpenIdConnect.IsConfigured;
+        model.CanReauthenticate = await _logins.CanReauthenticateAsync(user);
+        model.ExternalLogins = await _logins.StatusAsync(user);
         model.CanSendEmail = EmailConfigured;
 
         return true;

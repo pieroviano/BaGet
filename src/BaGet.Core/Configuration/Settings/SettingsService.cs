@@ -228,6 +228,27 @@ public class SettingsService
     }
 
     /// <summary>
+    /// The names of the children of <paramref name="sectionKey"/> (such as <see cref="OpenIdConnectProviders.SectionKey"/>) that the overrides file holds,
+    /// so a page can tell what it may edit or remove from what a configuration file or the environment sets.
+    /// </summary>
+    public IReadOnlyCollection<string> GetSavedChildNames(string sectionKey)
+    {
+        try
+        {
+            var prefix = sectionKey + ":";
+
+            return (_store?.Read() ?? new Dictionary<string, string>())
+                .Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                .Select(k => k.Substring(prefix.Length).Split(':')[0])
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception e) when (IsStoreFailure(e))
+        {
+            return Array.Empty<string>();
+        }
+    }
+
+    /// <summary>
     /// The per-source log levels now in effect (<see cref="LogLevelOverrides.SectionKey"/>), by source name, and whether the
     /// overrides file holds each. A level set by a configuration file or the environment is listed too.
     /// </summary>

@@ -38,7 +38,8 @@ public sealed class AccountController : AccountControllerBase
     [Route("account/login"), HttpPost, PageHandler("External")]
     public IActionResult LoginExternal(string? returnUrl)
     {
-        var challenge = External.StartSignIn(Url.Action(nameof(Login), "Account", new { ReturnUrl = returnUrl, handler = "Callback" })!);
+        // The posted button names the provider (none: the only one configured).
+        var challenge = External.StartSignIn(Request.Form["provider"].ToString(), Url.Action(nameof(Login), "Account", new { ReturnUrl = returnUrl, handler = "Callback" })!);
 
         return challenge == null ? NotFound() : Challenge(challenge.Properties, challenge.Scheme);
     }
@@ -141,7 +142,8 @@ public sealed class AccountController : AccountControllerBase
         var (challenge, screen) = await External.StartReauthenticationAsync(
             User,
             Url.Action(nameof(Reauthenticate), "Account", new { form.ReturnUrl, handler = "Callback" })!,
-            form.ReturnUrl);
+            form.ReturnUrl,
+            form.Provider);
 
         return challenge != null ? Challenge(challenge.Properties, challenge.Scheme) : Render(screen!, "Reauthenticate", modelShowsFormErrors: true);
     }

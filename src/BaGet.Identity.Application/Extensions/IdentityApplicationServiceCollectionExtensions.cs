@@ -1,4 +1,6 @@
+using BaGet.Core;
 using BaGet.Identity.Application.Screens;
+using BaGet.Identity.Application.Services.Accounts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using BaGet.Identity.Application.UseCases.Account;
@@ -26,6 +28,9 @@ public static class IdentityApplicationServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddBaGetIdentityUseCases(this IServiceCollection services)
     {
+        services.TryAddSingleton(OpenIdConnectProviderSet.Empty);
+        services.TryAddScoped<ExternalLogins>();
+        services.TryAddScoped<ExternalProviderMapping>();
         services.TryAddScoped<PackageScreenServices>();
         services.TryAddScoped<PackageManageUseCase>();
         services.TryAddScoped<NpmManageUseCase>();

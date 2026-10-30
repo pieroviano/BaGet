@@ -12,6 +12,8 @@ using QRCoder;
 using BaGet.Identity.Application.Models.Account;
 using BaGet.Identity.Application.Security;
 
+using BaGet.Identity.Application.Services.Accounts;
+
 namespace BaGet.Identity.Application.UseCases.Account;
 
 /// <summary>
@@ -27,7 +29,7 @@ public sealed class TwoFactorUseCase
     private readonly UserManager<BaGetUser> _users;
     private readonly SignInManager<BaGetUser> _signIn;
     private readonly IHttpContextAccessor _http;
-    private readonly IOptions<AccountsOptions> _accounts;
+    private readonly ExternalLogins _logins;
 
     /// <summary>Creates the use case.</summary>
     public TwoFactorUseCase(
@@ -35,11 +37,23 @@ public sealed class TwoFactorUseCase
         SignInManager<BaGetUser> signIn,
         IHttpContextAccessor http,
         IOptions<AccountsOptions> accounts)
+        : this(users, signIn, http, accounts, ExternalLogins.For(users, accounts))
+    {
+    }
+
+    /// <summary>Creates the use case.</summary>
+    public TwoFactorUseCase(
+        UserManager<BaGetUser> users,
+        SignInManager<BaGetUser> signIn,
+        IHttpContextAccessor http,
+        IOptions<AccountsOptions> accounts,
+        ExternalLogins logins)
     {
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
         _http = http ?? throw new ArgumentNullException(nameof(http));
-        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _ = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _logins = logins ?? throw new ArgumentNullException(nameof(logins));
     }
 
     private HttpContext Http => _http.HttpContext ?? throw new InvalidOperationException("Two-factor authentication needs a request.");
@@ -151,7 +165,7 @@ public sealed class TwoFactorUseCase
         model.TwoFactorEnabled = user.TwoFactorEnabled;
         model.HasPassword = await _users.HasPasswordAsync(user);
         model.Reauthenticated = !model.HasPassword && await AccountConfirmation.HasReauthenticatedRecentlyAsync(Http);
-        model.CanReauthenticate = _accounts.Value.OpenIdConnect.IsConfigured;
+        model.CanReauthenticate = await _logins.CanReauthenticateAsync(user);
         model.RecoveryCodesLeft = await _users.CountRecoveryCodesAsync(user);
 
         // Over /api/ui the setup key (and the stamp change generating it causes) is only handed to a caller who confirmed their password in X-Confirm-Password.

@@ -21,7 +21,7 @@ public sealed class PackageScreenServices
     /// <summary>What every write answers on a read-only server.</summary>
     public const string ReadOnlyMessage = "This server is in read-only mode, so nothing can be changed.";
 
-    private readonly IOptions<AccountsOptions> _accounts;
+    private readonly ExternalLogins _logins;
     private readonly IOptionsSnapshot<BaGetOptions> _options;
     private readonly ISessionPrincipalFactory _sessions;
     private readonly IReauthenticationState _reauthentication;
@@ -37,11 +37,28 @@ public sealed class PackageScreenServices
         IReauthenticationState reauthentication,
         IRepositoryContext repository,
         IServiceProvider services)
+        : this(users, ownership, administrators, accounts, options, sessions, reauthentication, repository, services, ExternalLogins.For(users, accounts))
     {
+    }
+
+    /// <summary>Creates the services.</summary>
+    public PackageScreenServices(
+        UserManager<BaGetUser> users,
+        PackageOwnershipService ownership,
+        AdministratorService administrators,
+        IOptions<AccountsOptions> accounts,
+        IOptionsSnapshot<BaGetOptions> options,
+        ISessionPrincipalFactory sessions,
+        IReauthenticationState reauthentication,
+        IRepositoryContext repository,
+        IServiceProvider services,
+        ExternalLogins logins)
+    {
+        _ = accounts ?? throw new ArgumentNullException(nameof(accounts));
         Users = users ?? throw new ArgumentNullException(nameof(users));
         Ownership = ownership ?? throw new ArgumentNullException(nameof(ownership));
         Administrators = administrators ?? throw new ArgumentNullException(nameof(administrators));
-        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _logins = logins ?? throw new ArgumentNullException(nameof(logins));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         _reauthentication = reauthentication ?? throw new ArgumentNullException(nameof(reauthentication));
@@ -71,7 +88,7 @@ public sealed class PackageScreenServices
     public bool IsReadOnlyMode => _options.Value.IsReadOnlyMode;
 
     /// <summary>Whether an external provider is available to sign in again with.</summary>
-    public bool CanReauthenticate => _accounts.Value.OpenIdConnect.IsConfigured;
+    public bool CanReauthenticate => _logins.Configured.Count > 0;
 
     /// <summary>
     /// Whether the caller may see the package's pages in the request's repository (Read on the repository and the package). A refusal of the
@@ -113,7 +130,7 @@ public sealed class PackageScreenServices
         var hasPassword = current == null || await Users.HasPasswordAsync(current).ConfigureAwait(false);
         var reauthenticated = !hasPassword && await _reauthentication.HasReauthenticatedRecentlyAsync(cancellationToken).ConfigureAwait(false);
 
-        return new ConfirmationState(hasPassword, reauthenticated, CanReauthenticate);
+        return new ConfirmationState(hasPassword, reauthenticated, await _logins.CanReauthenticateAsync(current).ConfigureAwait(false));
     }
 
     /// <summary>The message of an owner change, shared by the management screens (<paramref name="unit"/> is "package", "artifact" …).</summary>

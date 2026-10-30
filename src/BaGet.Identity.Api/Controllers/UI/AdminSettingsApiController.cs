@@ -39,6 +39,16 @@ public sealed class AdminSettingsApiController : AdminApiControllerBase
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> Save([FromBody] SettingsSubmission? submission, CancellationToken cancellationToken = default)
         => Respond(await Settings.SaveAsync(User, Normalize(submission), cancellationToken));
 
+    /// <summary>Adds or changes a named OpenID Connect provider (password in the body; takes effect after a restart; a blank secret keeps the saved one).</summary>
+    [HttpPost("save-provider"), UiApi("AdminSettings", "Index", Handler = "SaveProvider")]
+    public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> SaveProvider([FromBody] SignInProviderForm? form, CancellationToken cancellationToken = default)
+        => Respond(await Settings.SaveSignInProviderAsync(User, form, cancellationToken));
+
+    /// <summary>Removes a named OpenID Connect provider saved on this screen (takes effect after a restart).</summary>
+    [HttpPost("remove-provider"), UiApi("AdminSettings", "Index", Handler = "RemoveProvider")]
+    public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> RemoveProvider([FromBody] RemoveSignInProviderForm? form, CancellationToken cancellationToken = default)
+        => Respond(await Settings.RemoveSignInProviderAsync(User, form, cancellationToken));
+
     /// <summary>Sets the lowest level logged for one source.</summary>
     [HttpPost("set-log-level"), UiApi("AdminSettings", "Index", Handler = "SetLogLevel")]
     public async Task<ActionResult<ScreenResult<AdminSettingsViewModel>>> SetLogLevel([FromBody] LogLevelForm? form, CancellationToken cancellationToken = default)

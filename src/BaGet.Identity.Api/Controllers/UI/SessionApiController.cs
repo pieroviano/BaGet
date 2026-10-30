@@ -164,11 +164,12 @@ public sealed class SessionApiController : ApiControllerBase
     [HttpGet("session/external/{provider}"), AnonymousSessionEndpoint]
     public IActionResult External(string provider, string? returnUrl)
     {
-        if (!Gate.AccountsEnabled || !string.Equals(provider, ExternalSignInUseCase.OpenIdConnectScheme, StringComparison.OrdinalIgnoreCase)) return NotFound();
+        // Not a provider id at all: 404. The return address is judged before the provider is looked up, so a probe learns nothing from the order.
+        if (!Gate.AccountsEnabled || OpenIdConnectProviders.ValidateId(provider?.ToLowerInvariant()) != null) return NotFound();
         if (!ReturnUrlAllowed(returnUrl)) return BadRequest(new { error = ReturnUrlMessage });
 
-        var callback = Url.Action(nameof(ExternalCallback), "SessionUiApi", new { returnUrl }, Request.Scheme);
-        var challenge = UseCase<ExternalSessionUseCase>().Start(callback!);
+        var callback = Url.Action(nameof(ExternalCallback), "SessionApi", new { returnUrl }, Request.Scheme);
+        var challenge = UseCase<ExternalSessionUseCase>().Start(provider!, callback!);
         if (challenge == null) return NotFound();
 
         return Challenge(challenge.Properties, challenge.Scheme);

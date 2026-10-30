@@ -41,6 +41,16 @@ public sealed class AdminSettingsController : AdminControllerBase
     public async Task<IActionResult> Save(string? section, string? password, CancellationToken cancellationToken)
         => RenderFlashed(await Api<AdminSettingsApiController, AdminSettingsViewModel>(api => api.Save(Submission(section, password), cancellationToken)), "Index");
 
+    /// <summary>Adds or changes a named OpenID Connect provider (the "Sign-in providers" panel).</summary>
+    [Route("admin/settings"), HttpPost, PageHandler("SaveProvider")]
+    public async Task<IActionResult> SaveProvider(SignInProviderForm form, CancellationToken cancellationToken)
+        => RenderFlashed(await Api<AdminSettingsApiController, AdminSettingsViewModel>(api => api.SaveProvider(form, cancellationToken)), "Index");
+
+    /// <summary>Removes a named OpenID Connect provider saved on this screen.</summary>
+    [Route("admin/settings"), HttpPost, PageHandler("RemoveProvider")]
+    public async Task<IActionResult> RemoveProvider(string? id, string? password, CancellationToken cancellationToken)
+        => RenderFlashed(await Api<AdminSettingsApiController, AdminSettingsViewModel>(api => api.RemoveProvider(new RemoveSignInProviderForm(id, password), cancellationToken)), "Index");
+
     /// <summary>Sets the lowest level logged for one source.</summary>
     [Route("admin/settings"), HttpPost, PageHandler("SetLogLevel")]
     public async Task<IActionResult> SetLogLevel(string? source, string? level, string? password, CancellationToken cancellationToken)

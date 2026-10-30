@@ -326,6 +326,7 @@ BaGet.Identity.Api BaGet.Identity.Controllers.UI.AccountSettingsApiController::S
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AccountSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>>> SettingsChangeEmail(BaGet.Identity.Application.UseCases.Account.ChangeEmailForm form)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AccountSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>>> SettingsChangePassword(BaGet.Identity.Application.UseCases.Account.ChangePasswordForm form)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AccountSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>>> SettingsDelete(BaGet.Identity.Application.UseCases.Account.PasswordConfirmationForm form, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.Api BaGet.Identity.Controllers.UI.AccountSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>>> SettingsUnlinkExternal(BaGet.Identity.Application.UseCases.Account.UnlinkExternalForm form)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AccountSettingsApiController::ctor()
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminAuditApiController extends BaGet.Frontend.Controllers.Base.AccessApiControllerBase
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminAuditApiController implements Microsoft.AspNetCore.Mvc.Filters.IAsyncActionFilter
@@ -433,7 +434,9 @@ BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController impl
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.DatabaseCopyStatusView>> GetCopyStatus()
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> Get(System.String section = null)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> RemoveLogLevel(BaGet.Identity.Application.Models.Settings.LogLevelForm form, System.Threading.CancellationToken cancellationToken = null)
+BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> RemoveProvider(BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm form, System.Threading.CancellationToken cancellationToken = null)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> Save(BaGet.Identity.Application.UseCases.Admin.SettingsSubmission submission, System.Threading.CancellationToken cancellationToken = null)
+BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> SaveProvider(BaGet.Identity.Application.Models.Settings.SignInProviderForm form, System.Threading.CancellationToken cancellationToken = null)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> SetLogLevel(BaGet.Identity.Application.Models.Settings.LogLevelForm form, System.Threading.CancellationToken cancellationToken = null)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>>> TestTelemetry(BaGet.Identity.Application.UseCases.Admin.SettingsSubmission submission, System.Threading.CancellationToken cancellationToken = null)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.AdminSettingsApiController::ctor()
@@ -917,6 +920,27 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ConfirmEmai
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ConfirmEmailViewModel::System.Boolean PendingApproval { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ConfirmEmailViewModel::System.Boolean Succeeded { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ConfirmEmailViewModel::ctor()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus implements System.IEquatable<BaGet.Identity.Application.Models.Account.ExternalLoginStatus>
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::BaGet.Identity.Application.Models.Account.ExternalLoginStatus <Clone>$()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::System.Boolean Equals(BaGet.Identity.Application.Models.Account.ExternalLoginStatus other)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::System.Boolean Linked { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::System.String DisplayName { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::System.String Id { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::System.Void Deconstruct(ref System.String Id, ref System.String DisplayName, ref System.Boolean Linked)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::ctor(System.String Id, System.String DisplayName, System.Boolean Linked)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::virtual System.Boolean Equals(System.Object obj)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::virtual System.Int32 GetHashCode()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalLoginStatus::virtual System.String ToString()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo implements System.IEquatable<BaGet.Identity.Application.Models.Account.ExternalProviderInfo>
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::BaGet.Identity.Application.Models.Account.ExternalProviderInfo <Clone>$()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::System.Boolean Equals(BaGet.Identity.Application.Models.Account.ExternalProviderInfo other)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::System.String DisplayName { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::System.String Id { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::System.Void Deconstruct(ref System.String Id, ref System.String DisplayName)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::ctor(System.String Id, System.String DisplayName)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::virtual System.Boolean Equals(System.Object obj)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::virtual System.Int32 GetHashCode()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ExternalProviderInfo::virtual System.String ToString()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ForgotPasswordForm::System.String Identifier { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ForgotPasswordForm::ctor()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ForgotPasswordViewModel extends BaGet.Identity.Application.Models.Account.ForgotPasswordForm
@@ -931,6 +955,7 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewMo
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.Boolean AllowRegistration { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.Boolean EmailIsConfigured { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.Boolean HasExternalProvider { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalProviderInfo> ExternalProviders { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.String Error { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.String ExternalProviderName { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.LoginViewModel::System.String Notice { get; set; }
@@ -942,6 +967,7 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ProfileView
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ProfileViewModel::System.String AvatarUrl { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ProfileViewModel::System.String Name { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ProfileViewModel::ctor()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateForm::System.String Provider { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateForm::System.String ReturnUrl { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateForm::ctor()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateView implements System.IEquatable<BaGet.Identity.Application.Models.Account.ReauthenticateView>
@@ -959,6 +985,7 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Account.Reauthentic
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateView::virtual System.Int32 GetHashCode()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateView::virtual System.String ToString()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateViewModel extends BaGet.Identity.Application.Models.Account.ReauthenticateForm
+BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalProviderInfo> Providers { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateViewModel::System.String Error { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.ReauthenticateViewModel::ctor()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Account.RecoveryCodeLoginForm::System.String RecoveryCode { get; set; }
@@ -1841,6 +1868,7 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSetti
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.LogLevelOverride> LogLevels { get; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Core.TelemetrySignalReport> TelemetrySignals { get; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Settings.SettingsSection> SectionList { get; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Settings.SignInProviderView> SignInProviders { get; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<System.Linq.IGrouping<System.String,BaGet.Core.SettingState>> Sections { get; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<System.String> CopyTargetTypes { get; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel::System.Collections.Generic.IReadOnlyList<System.String> Errors { get; }
@@ -1889,6 +1917,16 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.LogLevelFo
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.LogLevelForm::virtual System.Boolean Equals(System.Object obj)
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.LogLevelForm::virtual System.Int32 GetHashCode()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.LogLevelForm::virtual System.String ToString()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm implements System.IEquatable<BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm>
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm <Clone>$()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::System.Boolean Equals(BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm other)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::System.String Id { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::System.String Password { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::System.Void Deconstruct(ref System.String Id, ref System.String Password)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::ctor(System.String Id, System.String Password)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::virtual System.Boolean Equals(System.Object obj)
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::virtual System.Int32 GetHashCode()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm::virtual System.String ToString()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsSection implements System.IEquatable<BaGet.Identity.Application.Models.Settings.SettingsSection>
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsSection::BaGet.Identity.Application.Models.Settings.SettingsSection <Clone>$()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsSection::System.Boolean Equals(BaGet.Identity.Application.Models.Settings.SettingsSection other)
@@ -1906,10 +1944,45 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsVi
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.Boolean EmailConfirmed { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.Boolean HasPassword { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.Boolean Reauthenticated { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalLoginStatus> ExternalLogins { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.String Email { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.String Error { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::System.String Message { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SettingsViewModel::ctor()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String AdministratorClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String AdministratorValue { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String Authority { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String ClientId { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String ClientSecret { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String DisplayName { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String EmailClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String EmailVerifiedClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String GroupClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String GroupMappings { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String Id { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String Parameters { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String Password { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String Scopes { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::System.String UserNameClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderForm::ctor()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.Boolean Active { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.Boolean Editable { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.Boolean HasSecret { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.Boolean PendingRestart { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String AdministratorClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String AdministratorValue { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String Authority { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String ClientId { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String DisplayName { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String EmailClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String EmailVerifiedClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String GroupClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String GroupMappings { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String Id { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String Parameters { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String Scopes { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::System.String UserNameClaim { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Settings.SignInProviderView::ctor()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel implements System.IEquatable<BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel>
 BaGet.Identity.Application BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel::BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel <Clone>$()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel::System.Boolean Equals(BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel other)
@@ -2142,6 +2215,7 @@ BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmati
 BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::System.Threading.Tasks.Task LoadForRequestAsync(BaGet.Identity.Application.Models.Shared.ConfirmationModel model, System.Security.Claims.ClaimsPrincipal caller)
 BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::System.Threading.Tasks.Task<System.Boolean> IsConfirmedAsync(BaGet.Core.BaGetUser user, System.String password)
 BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts)
+BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, BaGet.Identity.Application.Services.Accounts.ExternalLogins logins)
 BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::static System.Threading.Tasks.Task<System.Boolean> HasReauthenticatedRecentlyAsync(Microsoft.AspNetCore.Http.HttpContext httpContext)
 BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::static System.Threading.Tasks.Task<System.Boolean> IsConfirmedAsync(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Http.HttpContext httpContext, BaGet.Core.BaGetUser user, System.String password)
 BaGet.Identity.Application BaGet.Identity.Application.Screens.PasswordConfirmation::static System.TimeSpan ReauthenticationWindow
@@ -2422,6 +2496,17 @@ BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.Deletion
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.DeletionBlockers::virtual System.Boolean PrintMembers(System.Text.StringBuilder builder)
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.DeletionBlockers::virtual System.Int32 GetHashCode()
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.DeletionBlockers::virtual System.String ToString()
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalClaims::static System.Collections.Generic.IReadOnlyList<System.String> Values(System.Security.Claims.ClaimsPrincipal principal, System.String name)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalClaims::static System.String First(System.Security.Claims.ClaimsPrincipal principal, System.String name)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalLogins::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalProviderInfo> Configured { get; }
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalLogins::System.Threading.Tasks.Task<System.Boolean> CanReauthenticateAsync(BaGet.Core.BaGetUser user)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalLogins::System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalLoginStatus>> StatusAsync(BaGet.Core.BaGetUser user)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalLogins::System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalProviderInfo>> LinkedAsync(BaGet.Core.BaGetUser user)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalLogins::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, BaGet.Core.OpenIdConnectProviderSet providers)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalLogins::static BaGet.Identity.Application.Services.Accounts.ExternalLogins For(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalProviderMapping::System.Threading.Tasks.Task ApplyAsync(BaGet.Core.OpenIdConnectProvider provider, BaGet.Core.BaGetUser user, System.Security.Claims.ClaimsPrincipal principal, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalProviderMapping::ctor(BaGet.Identity.Application.Services.Accounts.AdministratorService administrators, BaGet.Core.IAdminAudit audit, Microsoft.Extensions.Logging.ILogger<BaGet.Identity.Application.Services.Accounts.ExternalProviderMapping> logger, BaGet.Core.IAccessAdministration access = null, BaGet.Core.MaintenanceGate gate = null)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.ExternalProviderMapping::static System.String ActorOf(BaGet.Core.OpenIdConnectProvider provider)
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NewUserPasswordMode implements System.IComparable
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NewUserPasswordMode implements System.IConvertible
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NewUserPasswordMode implements System.IFormattable
@@ -2449,6 +2534,13 @@ BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NpmToken
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NpmTokenService::System.Threading.Tasks.Task<BaGet.Core.NpmLoginResult> LoginAsync(System.String userName, System.String password, BaGet.Core.RepositoryInfo repository, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NpmTokenService::System.Threading.Tasks.Task<System.Boolean> RevokeAsync(BaGet.Core.BaGetPrincipal caller, System.String token, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.NpmTokenService::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, BaGet.Identity.Application.Services.Accounts.ApiKeyService apiKeys, Microsoft.Extensions.Logging.ILogger<BaGet.Identity.Application.Services.Accounts.NpmTokenService> logger, BaGet.Core.IVirtualRepositories virtualRepositories = null)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.OpenIdConnectProviderSetup::static System.Void ApplyExtraParameters(Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectMessage message, System.Collections.Generic.IReadOnlyDictionary<System.String,System.String> parameters)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.OpenIdConnectProviderSetup::static System.Void Configure(Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions options, BaGet.Core.OpenIdConnectProvider provider)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SignInProviderSettings::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Settings.SignInProviderView> List()
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SignInProviderSettings::System.Collections.Generic.IReadOnlyList<System.String> PendingRestartKeys()
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SignInProviderSettings::System.Threading.Tasks.Task<BaGet.Core.SettingsSaveResult> RemoveAsync(System.String id, System.String actor, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SignInProviderSettings::System.Threading.Tasks.Task<BaGet.Core.SettingsSaveResult> SaveAsync(BaGet.Identity.Application.Models.Settings.SignInProviderForm form, System.String actor, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SignInProviderSettings::ctor(BaGet.Core.SettingsService settings, Microsoft.Extensions.Configuration.IConfiguration configuration, BaGet.Core.OpenIdConnectProviderSet active)
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SoleOwnedPackage implements System.IEquatable<BaGet.Identity.Application.Services.Accounts.SoleOwnedPackage>
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SoleOwnedPackage::BaGet.Core.RepositoryFormat Format { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Services.Accounts.SoleOwnedPackage::System.Int32 RepositoryKey { get; set; }
@@ -2680,9 +2772,13 @@ BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountOv
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountOverviewUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, BaGet.Identity.Application.Services.Ownership.PackageOwnershipService ownership, System.IServiceProvider services)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>> ChangeEmailAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Account.ChangeEmailForm form)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>> ChangePasswordAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Account.ChangePasswordForm form)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>> CompleteLinkAsync(System.Security.Claims.ClaimsPrincipal caller)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>> DeleteAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Account.PasswordConfirmationForm form, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>> ShowAsync(System.Security.Claims.ClaimsPrincipal caller)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>> UnlinkAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Account.UnlinkExternalForm form)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::System.Threading.Tasks.Task<System.ValueTuple<BaGet.Identity.Application.UseCases.Account.ExternalChallenge,BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.SettingsViewModel>>> StartLinkAsync(System.Security.Claims.ClaimsPrincipal caller, System.String provider, System.String password, System.String callbackUrl)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, BaGet.Identity.Application.Services.Accounts.AccountDeletionService deletion, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> email, Microsoft.Extensions.Options.IOptions<BaGet.Core.SiteOptions> site, Microsoft.AspNetCore.Identity.IEmailSender<BaGet.Core.BaGetUser> sender)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.AccountSettingsUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, BaGet.Identity.Application.Services.Accounts.AccountDeletionService deletion, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> email, Microsoft.Extensions.Options.IOptions<BaGet.Core.SiteOptions> site, Microsoft.AspNetCore.Identity.IEmailSender<BaGet.Core.BaGetUser> sender, BaGet.Identity.Application.Services.Accounts.ExternalLogins logins)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ApiKeysUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ApiKeysViewModel>> CreateAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.Models.Account.ApiKeyForm form, System.Collections.Generic.IReadOnlyDictionary<System.String,System.String[]> bindingErrors, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ApiKeysUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ApiKeysViewModel>> RevokeAsync(System.Security.Claims.ClaimsPrincipal caller, System.Int32 key, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ApiKeysUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ApiKeysViewModel>> ShowAsync(System.Security.Claims.ClaimsPrincipal caller, System.Threading.CancellationToken cancellationToken)
@@ -2717,13 +2813,17 @@ BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalC
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalChallenge::virtual System.Int32 GetHashCode()
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalChallenge::virtual System.String ToString()
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSessionUseCase::BaGet.Identity.Application.UseCases.Account.ExternalChallenge Start(System.String callbackUrl)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSessionUseCase::BaGet.Identity.Application.UseCases.Account.ExternalChallenge Start(System.String provider, System.String callbackUrl)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSessionUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Session.SessionModel>> CompleteAsync(System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSessionUseCase::ctor(BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase external, BaGet.Identity.Application.UseCases.Account.SessionUseCase sessions, Microsoft.AspNetCore.Http.IHttpContextAccessor http, BaGet.Core.SystemTime time)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::BaGet.Identity.Application.UseCases.Account.ExternalChallenge StartSignIn(System.String callbackUrl)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::BaGet.Identity.Application.UseCases.Account.ExternalChallenge StartSignIn(System.String provider, System.String callbackUrl)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.LoginViewModel>> CompleteSignInAsync(System.String returnUrl, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ReauthenticateViewModel>> CompleteReauthenticationAsync(System.Security.Claims.ClaimsPrincipal caller, System.String returnUrl)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::System.Threading.Tasks.Task<System.ValueTuple<BaGet.Identity.Application.UseCases.Account.ExternalChallenge,BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ReauthenticateViewModel>>> StartReauthenticationAsync(System.Security.Claims.ClaimsPrincipal caller, System.String callbackUrl, System.String returnUrl)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::System.Threading.Tasks.Task<System.ValueTuple<BaGet.Identity.Application.UseCases.Account.ExternalChallenge,BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ReauthenticateViewModel>>> StartReauthenticationAsync(System.Security.Claims.ClaimsPrincipal caller, System.String callbackUrl, System.String returnUrl, System.String provider)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, BaGet.Identity.Application.Services.Ownership.PackageOwnershipService ownership, Microsoft.AspNetCore.Identity.IEmailSender<BaGet.Core.BaGetUser> sender, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> email, Microsoft.Extensions.Options.IOptions<BaGet.Core.SiteOptions> site, BaGet.Core.SystemTime time, BaGet.Identity.Application.UseCases.Account.SignInUseCase signInScreens, Microsoft.Extensions.Logging.ILogger<BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase> logger)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, BaGet.Identity.Application.Services.Ownership.PackageOwnershipService ownership, Microsoft.AspNetCore.Identity.IEmailSender<BaGet.Core.BaGetUser> sender, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> email, Microsoft.Extensions.Options.IOptions<BaGet.Core.SiteOptions> site, BaGet.Core.SystemTime time, BaGet.Identity.Application.UseCases.Account.SignInUseCase signInScreens, Microsoft.Extensions.Logging.ILogger<BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase> logger, BaGet.Core.OpenIdConnectProviderSet providers, BaGet.Identity.Application.Services.Accounts.ExternalLogins logins, BaGet.Identity.Application.Services.Accounts.ExternalProviderMapping mapping = null)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::static BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ReauthenticateViewModel> ShowReauthenticate(System.String returnUrl)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::static System.TimeSpan ClockSkew
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.ExternalSignInUseCase::static const System.String AuthTimeClaim
@@ -2759,6 +2859,7 @@ BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.SignInUse
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.SignInUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.TwoFactorLoginViewModel>> TwoFactorAsync(BaGet.Identity.Application.Models.Account.TwoFactorLoginForm form)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.SignInUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Screens.EmptyScreen>> LogoutAsync()
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.SignInUseCase::ctor(Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> email)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.SignInUseCase::ctor(Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptions<BaGet.Core.EmailOptions> email, BaGet.Identity.Application.Services.Accounts.ExternalLogins logins)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorCodeForm::System.String Code { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorCodeForm::System.String Password { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorCodeForm::ctor()
@@ -2767,6 +2868,10 @@ BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactor
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.TwoFactorViewModel>> ResetAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Account.PasswordConfirmationForm form)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.TwoFactorViewModel>> ShowAsync(System.Security.Claims.ClaimsPrincipal caller)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.TwoFactorUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, Microsoft.AspNetCore.Identity.SignInManager<BaGet.Core.BaGetUser> signIn, Microsoft.AspNetCore.Http.IHttpContextAccessor http, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, BaGet.Identity.Application.Services.Accounts.ExternalLogins logins)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.UnlinkExternalForm::System.String Password { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.UnlinkExternalForm::System.String Provider { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Account.UnlinkExternalForm::ctor()
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AddOrganizationMemberForm::System.Boolean IsAdmin { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AddOrganizationMemberForm::System.String Organization { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AddOrganizationMemberForm::System.String UserName { get; set; }
@@ -2822,10 +2927,13 @@ BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettin
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.DatabaseCopyStatusView> GetCopyStatus()
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> GetAsync(System.Security.Claims.ClaimsPrincipal caller, System.String section)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> RemoveLogLevelAsync(System.Security.Claims.ClaimsPrincipal caller, System.String source, System.String password, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> RemoveSignInProviderAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm form, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> SaveAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Admin.SettingsSubmission submission, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> SaveSignInProviderAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.Models.Settings.SignInProviderForm form, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> SetLogLevelAsync(System.Security.Claims.ClaimsPrincipal caller, System.String source, System.String level, System.String password, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Settings.AdminSettingsViewModel>> TestTelemetryAsync(System.Security.Claims.ClaimsPrincipal caller, BaGet.Identity.Application.UseCases.Admin.SettingsSubmission submission, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, BaGet.Identity.Application.Screens.PasswordConfirmation confirmation, BaGet.Core.SettingsService settings, BaGet.Core.DatabaseCopyService copier, Microsoft.Extensions.Configuration.IConfiguration configuration, BaGet.Core.MaintenanceGate gate = null, BaGet.Core.ITelemetryDiagnostics telemetry = null)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminSettingsUseCase::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, BaGet.Identity.Application.Screens.PasswordConfirmation confirmation, BaGet.Core.SettingsService settings, BaGet.Core.DatabaseCopyService copier, Microsoft.Extensions.Configuration.IConfiguration configuration, BaGet.Core.MaintenanceGate gate, BaGet.Core.ITelemetryDiagnostics telemetry, BaGet.Identity.Application.Services.Accounts.SignInProviderSettings providers)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminUseCaseBase::BaGet.Core.MaintenanceGate Gate { get; }
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminUseCaseBase::BaGet.Identity.Application.Screens.PasswordConfirmation Confirmation { get; }
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Admin.AdminUseCaseBase::Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> Users { get; }
@@ -2964,6 +3072,7 @@ BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageS
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageScreenServices::System.Threading.Tasks.Task<System.Boolean> CanSeeAsync(System.Security.Claims.ClaimsPrincipal caller, System.String packageId, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageScreenServices::System.Threading.Tasks.Task<System.Boolean> IsConfirmedAsync(BaGet.Core.BaGetUser user, System.String password, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageScreenServices::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, BaGet.Identity.Application.Services.Ownership.PackageOwnershipService ownership, BaGet.Identity.Application.Services.Accounts.AdministratorService administrators, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, BaGet.Core.ISessionPrincipalFactory sessions, BaGet.Identity.Application.UseCases.Account.IReauthenticationState reauthentication, BaGet.Core.IRepositoryContext repository, System.IServiceProvider services)
+BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageScreenServices::ctor(Microsoft.AspNetCore.Identity.UserManager<BaGet.Core.BaGetUser> users, BaGet.Identity.Application.Services.Ownership.PackageOwnershipService ownership, BaGet.Identity.Application.Services.Accounts.AdministratorService administrators, Microsoft.Extensions.Options.IOptions<BaGet.Core.AccountsOptions> accounts, Microsoft.Extensions.Options.IOptionsSnapshot<BaGet.Core.BaGetOptions> options, BaGet.Core.ISessionPrincipalFactory sessions, BaGet.Identity.Application.UseCases.Account.IReauthenticationState reauthentication, BaGet.Core.IRepositoryContext repository, System.IServiceProvider services, BaGet.Identity.Application.Services.Accounts.ExternalLogins logins)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageScreenServices::static System.String Describe(BaGet.Identity.Application.Services.Ownership.OwnerChangeResult result, System.String unit)
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.PackageScreenServices::static const System.String ReadOnlyMessage
 BaGet.Identity.Application BaGet.Identity.Application.UseCases.Packages.ScanArtifactUseCase::System.Threading.Tasks.Task<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Policies.ScanViewModel>> GetAsync(System.Security.Claims.ClaimsPrincipal caller, System.String name, System.String version, System.String returnUrl, System.String backUrl, System.Threading.CancellationToken cancellationToken)
@@ -3037,6 +3146,8 @@ BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.Accoun
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ApiKeyForm [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ApiKeysViewModel [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ConfirmEmailViewModel [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ExternalLoginStatus [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ExternalProviderInfo [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ForgotPasswordForm [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.ForgotPasswordViewModel [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Account.LoginForm [class]
@@ -3150,8 +3261,11 @@ BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.Admin
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.ClusterViewModel [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.DatabaseCopyStatusView [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.LogLevelForm [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.RemoveSignInProviderForm [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.SettingsSection [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.SettingsViewModel [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.SignInProviderForm [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.Models.Settings.SignInProviderView [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Shared.AccessUnavailableViewModel [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Shared.ConfirmPasswordView [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Shared.ConfirmationModel [abstract class]
@@ -3207,9 +3321,14 @@ BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.Adm
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.ApiKeyService [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.AvatarService [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.DeletionBlockers [class]
+BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.ExternalClaims [static class]
+BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.ExternalLogins [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.ExternalProviderMapping [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.NewUserPasswordMode [enum]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.NewUserResult [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.NpmTokenService [class]
+BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.OpenIdConnectProviderSetup [static class]
+BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.SignInProviderSettings [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Accounts.SoleOwnedPackage [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Organizations.OrganizationChange [enum]
 BaGet.Identity.Application type BaGet.Identity.Application.Services.Organizations.OrganizationOutcome [class]
@@ -3251,6 +3370,7 @@ BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Account.Sess
 BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Account.SignInUseCase [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Account.TwoFactorCodeForm [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Account.TwoFactorUseCase [sealed class]
+BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Account.UnlinkExternalForm [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Admin.AddOrganizationMemberForm [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Admin.AdminOperationsUseCase [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.UseCases.Admin.AdminOrganizationsUseCase [sealed class]
@@ -3343,6 +3463,9 @@ BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsContr
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SettingsChangeEmail(System.String newEmail, System.String password)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SettingsChangePassword(System.String currentPassword, System.String newPassword, System.String confirmPassword)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SettingsDelete(System.String password, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SettingsLinkCallback()
+BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SettingsLinkExternal(System.String provider, System.String password)
+BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SettingsUnlinkExternal(System.String provider, System.String password)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TwoFactor()
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TwoFactorDisable(System.String password)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AccountSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TwoFactorEnable(System.String code)
@@ -3536,7 +3659,9 @@ BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsControl
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CopyStatus()
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Index(System.String section = null)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveLogLevel(System.String source, System.String password, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveProvider(System.String id, System.String password, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Save(System.String section, System.String password, System.Threading.CancellationToken cancellationToken)
+BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SaveProvider(BaGet.Identity.Application.Models.Settings.SignInProviderForm form, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SetLogLevel(System.String source, System.String level, System.String password, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TestTelemetry(System.String password, System.Threading.CancellationToken cancellationToken)
 BaGet.Identity.FrontEnd BaGet.Identity.Controllers.FrontEnd.AdminSettingsController::ctor()

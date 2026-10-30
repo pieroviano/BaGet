@@ -4,6 +4,7 @@ using BaGet.Frontend.Controllers.Base;
 using BaGet.Frontend.Mvc.Attributes;
 using BaGet.Identity.Controllers.UI;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using BaGet.Identity.Application.Models.Account;
 using BaGet.Identity.Application.Models.Settings;
 using BaGet.Identity.Application.UseCases.Account;
@@ -50,6 +51,32 @@ public sealed class AccountSettingsController : AccountControllerBase
     public async Task<IActionResult> SettingsDelete(string? password, CancellationToken cancellationToken)
         => Render(
             await Api<AccountSettingsApiController, SettingsViewModel>(api => api.SettingsDelete(new PasswordConfirmationForm { Password = password }, cancellationToken)),
+            "Settings",
+            modelShowsFormErrors: true);
+
+    /// <summary>"Link this provider" was posted (browser-only: it sends the user to the provider, after the password check).</summary>
+    [Route("account/settings"), HttpPost, PageHandler("LinkExternal")]
+    public async Task<IActionResult> SettingsLinkExternal(string? provider, string? password)
+    {
+        var (challenge, screen) = await HttpContext.RequestServices.GetRequiredService<AccountSettingsUseCase>().StartLinkAsync(
+            User,
+            provider,
+            password,
+            Url.Action(nameof(Settings), "AccountSettings", new { handler = "LinkCallback" })!);
+
+        return challenge != null ? Challenge(challenge.Properties, challenge.Scheme) : Render(screen!, "Settings", modelShowsFormErrors: true);
+    }
+
+    /// <summary>The provider answered a link (browser-only).</summary>
+    [Route("account/settings"), HttpGet, PageHandler("LinkCallback")]
+    public async Task<IActionResult> SettingsLinkCallback()
+        => Render(await HttpContext.RequestServices.GetRequiredService<AccountSettingsUseCase>().CompleteLinkAsync(User), "Settings", modelShowsFormErrors: true);
+
+    /// <summary>Unlink an external provider (asks the password again).</summary>
+    [Route("account/settings"), HttpPost, PageHandler("UnlinkExternal")]
+    public async Task<IActionResult> SettingsUnlinkExternal(string? provider, string? password)
+        => Render(
+            await Api<AccountSettingsApiController, SettingsViewModel>(api => api.SettingsUnlinkExternal(new UnlinkExternalForm { Provider = provider, Password = password })),
             "Settings",
             modelShowsFormErrors: true);
 

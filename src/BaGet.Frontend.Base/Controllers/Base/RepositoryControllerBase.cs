@@ -1,3 +1,5 @@
+using BaGet.Identity.Application.Services.Accounts;
+using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using BaGet.Identity.Application.Models.Shared;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +25,8 @@ public abstract class RepositoryControllerBase : AdminControllerBase
     /// <summary>For an account without a password: it signed in again with its provider a moment ago.</summary>
     public bool Reauthenticated { get; private set; }
 
-    /// <summary>Whether an external provider is available to sign in again with.</summary>
-    public bool CanReauthenticate => Accounts.OpenIdConnect.IsConfigured;
+    /// <summary>Whether an external provider linked to the signed-in account is available to sign in again with.</summary>
+    public bool CanReauthenticate { get; private set; }
 
     /// <summary>The model of the password confirmation partial, with <paramref name="id"/> for the input.</summary>
     [NonAction]
@@ -37,6 +39,7 @@ public abstract class RepositoryControllerBase : AdminControllerBase
         var current = await UserManager.GetUserAsync(User);
         HasPassword = current == null || await UserManager.HasPasswordAsync(current);
         Reauthenticated = !HasPassword && await HasReauthenticatedRecentlyAsync();
+        CanReauthenticate = await HttpContext.RequestServices.GetRequiredService<ExternalLogins>().CanReauthenticateAsync(current);
     }
 
     /// <summary>Whether what the user typed (or a recent re-authentication) confirms the change.</summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace BaGet.Core;
 
@@ -76,6 +77,14 @@ public class AccountsOptions
     /// <see cref="AccountsOpenIdConnectOptions.Authority"/> is set.
     /// </summary>
     public AccountsOpenIdConnectOptions OpenIdConnect { get; set; } = new();
+
+    /// <summary>
+    /// More OpenID Connect providers, by id (<c>Accounts:OpenIdConnectProviders:&lt;id&gt;</c>, see <see cref="OpenIdConnectProviderOptions"/>). The id is the
+    /// authentication scheme, the stored login-provider name and part of the callback path <c>/signin-oidc-&lt;id&gt;</c>. Not a row of the Settings page
+    /// (its "Sign-in providers" panel edits them); restart-required.
+    /// </summary>
+    [HiddenSetting]
+    public Dictionary<string, OpenIdConnectProviderOptions> OpenIdConnectProviders { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public class AccountsOpenIdConnectOptions

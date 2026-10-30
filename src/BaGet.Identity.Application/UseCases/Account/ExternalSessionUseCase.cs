@@ -34,9 +34,14 @@ public sealed class ExternalSessionUseCase
         _time = time ?? throw new ArgumentNullException(nameof(time));
     }
 
-    /// <summary>The challenge to send to the provider, or null when none is configured.</summary>
+    /// <summary>The challenge to send to the only configured provider, or null when there is not exactly one.</summary>
     /// <param name="callbackUrl">The address of the callback of this API.</param>
-    public ExternalChallenge? Start(string callbackUrl) => _external.StartSignIn(callbackUrl);
+    public ExternalChallenge? Start(string callbackUrl) => _external.StartSignIn(null, callbackUrl);
+
+    /// <summary>The challenge to send to the provider, or null when the provider id is unknown.</summary>
+    /// <param name="provider">The provider id.</param>
+    /// <param name="callbackUrl">The address of the callback of this API.</param>
+    public ExternalChallenge? Start(string provider, string callbackUrl) => string.IsNullOrEmpty(provider) ? null : _external.StartSignIn(provider, callbackUrl);
 
     /// <summary>The provider answered: an exchange token, a notice (account created, not usable yet), or the reason it was refused.</summary>
     public async Task<ScreenResult<SessionModel>> CompleteAsync(CancellationToken cancellationToken)

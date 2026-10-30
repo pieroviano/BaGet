@@ -35,7 +35,8 @@ failed-attempt counter reset; a wrong password is still refused), so administrat
 | `Accounts:RequireApproval` | A self-registered account (also first external sign-in) cannot sign in until an administrator approves it on `/admin/users` or `/admin/users/{name}` (or `baget account approve`); promoting a user approves it too (default `false`) |
 | `Accounts:CreateDefaultAdministrator` | A server with no users creates `Admin` with a default password to change at first sign-in (default `true`) |
 | `Accounts:InitialAdministrators` | `;`-separated existing users promoted while there is no administrator |
-| `Accounts:OpenIdConnect:Authority`, `ClientId`, `ClientSecret`, `DisplayName` | External OpenID Connect provider (e.g. Entra ID) |
+| `Accounts:OpenIdConnect:Authority`, `ClientId`, `ClientSecret`, `DisplayName` | External OpenID Connect provider (e.g. Entra ID); provider id `oidc` |
+| `Accounts:OpenIdConnectProviders:<id>:*` | More named OpenID Connect providers (callback `/signin-oidc-<id>`), with extra scopes and parameters, claim names and an opt-in administrator / group mapping ([configuration](https://pieroviano.github.io/BaGet/configuration/#several-providers)); restart-required |
 | `Email:Smtp:*` | Optional SMTP for confirmation and password-reset mail (MailKit) |
 | `Site:PublicUrl` | Required for email links; without it email is suppressed |
 

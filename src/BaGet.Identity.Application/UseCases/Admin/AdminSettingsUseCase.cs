@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using BaGet.Identity.Application.Models.Settings;
+using BaGet.Identity.Application.Services.Accounts;
 
 namespace BaGet.Identity.Application.UseCases.Admin;
 
@@ -21,10 +22,14 @@ public sealed class AdminSettingsUseCase : AdminUseCaseBase
 {
     private static readonly ScreenRef Screen = ScreenCatalog.AdminSettings;
 
+    // The section of the Settings screen that carries the "Sign-in providers" panel.
+    private const string ProvidersSection = "Accounts";
+
     private readonly SettingsService _settings;
     private readonly DatabaseCopyService _copier;
     private readonly IConfiguration _configuration;
     private readonly ITelemetryDiagnostics? _telemetry;
+    private readonly SignInProviderSettings _providers;
 
     /// <summary>Creates the use case.</summary>
     public AdminSettingsUseCase(
@@ -35,12 +40,27 @@ public sealed class AdminSettingsUseCase : AdminUseCaseBase
         IConfiguration configuration,
         MaintenanceGate? gate = null,
         ITelemetryDiagnostics? telemetry = null)
+        : this(users, confirmation, settings, copier, configuration, gate, telemetry, new SignInProviderSettings(settings, configuration, OpenIdConnectProviderSet.Empty))
+    {
+    }
+
+    /// <summary>Creates the use case.</summary>
+    public AdminSettingsUseCase(
+        UserManager<BaGetUser> users,
+        PasswordConfirmation confirmation,
+        SettingsService settings,
+        DatabaseCopyService copier,
+        IConfiguration configuration,
+        MaintenanceGate? gate,
+        ITelemetryDiagnostics? telemetry,
+        SignInProviderSettings providers)
         : base(users, confirmation, gate)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _copier = copier ?? throw new ArgumentNullException(nameof(copier));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _telemetry = telemetry;
+        _providers = providers ?? throw new ArgumentNullException(nameof(providers));
     }
 
     /// <summary>Shows the settings. <paramref name="section"/> is the id of the section to show (no JavaScript needed).</summary>
@@ -108,6 +128,51 @@ public sealed class AdminSettingsUseCase : AdminUseCaseBase
         if (!result.Succeeded) return await FailAsync(caller, section, result.Errors);
 
         return ToSection(section, changes.Count == 0 ? "Nothing changed." : $"Saved {changes.Count} setting(s).");
+    }
+
+    /// <summary>
+    /// Adds or changes a named OpenID Connect provider (the "Sign-in providers" panel of the Accounts section). Confirmed with the password, refused with
+    /// HTTP 503 while the <see cref="MaintenanceGate"/> is closed. A blank secret keeps the saved one; the provider is registered after a restart.
+    /// </summary>
+    public async Task<ScreenResult<AdminSettingsViewModel>> SaveSignInProviderAsync(ClaimsPrincipal caller, SignInProviderForm? form, CancellationToken cancellationToken)
+    {
+        if (!_settings.IsAvailable) return ScreenResult<AdminSettingsViewModel>.NotFound();
+
+        ThrowIfClosed();
+
+        var user = await CurrentAsync(caller);
+        if (user == null) return ScreenResult<AdminSettingsViewModel>.SignIn();
+
+        if (form == null || !await Confirmation.IsConfirmedAsync(user, form.Password))
+        {
+            return await FailAsync(caller, ProvidersSection, new[] { NotConfirmed });
+        }
+
+        var result = await _providers.SaveAsync(form, user.UserName, cancellationToken);
+        if (!result.Succeeded) return await FailAsync(caller, ProvidersSection, result.Errors);
+
+        return ToSection(ProvidersSection, $"Saved the provider {form.Id?.Trim()}. Restart BaGet to apply it.");
+    }
+
+    /// <summary>Removes a named provider saved on this screen (the same confirmation, gate and restart as <see cref="SaveSignInProviderAsync"/>).</summary>
+    public async Task<ScreenResult<AdminSettingsViewModel>> RemoveSignInProviderAsync(ClaimsPrincipal caller, RemoveSignInProviderForm? form, CancellationToken cancellationToken)
+    {
+        if (!_settings.IsAvailable) return ScreenResult<AdminSettingsViewModel>.NotFound();
+
+        ThrowIfClosed();
+
+        var user = await CurrentAsync(caller);
+        if (user == null) return ScreenResult<AdminSettingsViewModel>.SignIn();
+
+        if (form == null || !await Confirmation.IsConfirmedAsync(user, form.Password))
+        {
+            return await FailAsync(caller, ProvidersSection, new[] { NotConfirmed });
+        }
+
+        var result = await _providers.RemoveAsync(form.Id, user.UserName, cancellationToken);
+        if (!result.Succeeded) return await FailAsync(caller, ProvidersSection, result.Errors);
+
+        return ToSection(ProvidersSection, $"Removed the provider {form.Id?.Trim()}. Restart BaGet to apply it.");
     }
 
     /// <summary>
@@ -280,7 +345,8 @@ public sealed class AdminSettingsUseCase : AdminUseCaseBase
         model.SetIds(ids);
         model.LogLevels = _settings.GetLogLevelOverrides();
         model.TelemetrySignals = _telemetry?.GetStatus();
-        model.PendingRestart = states.Where(s => s.PendingRestart).Select(s => s.Descriptor.Key).ToList();
+        model.SignInProviders = _providers.List();
+        model.PendingRestart = states.Where(s => s.PendingRestart).Select(s => s.Descriptor.Key).Concat(_providers.PendingRestartKeys()).ToList();
         model.CanCopyDatabase = _copier.CurrentRelationalType != null;
         model.CopyTargetTypes = _copier.RelationalTypes;
         model.CopyStatus = _copier.Status;

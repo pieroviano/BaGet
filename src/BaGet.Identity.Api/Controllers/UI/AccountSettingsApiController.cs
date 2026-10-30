@@ -39,6 +39,11 @@ public sealed class AccountSettingsApiController : AccountApiControllerBase
     public async Task<ActionResult<ScreenResult<SettingsViewModel>>> SettingsChangeEmail([FromBody] ChangeEmailForm? form)
         => Respond(await UseCase<AccountSettingsUseCase>().ChangeEmailAsync(User, form));
 
+    /// <summary>Unlinks the account's login at an external provider (asks the password again; refused when it is the only way to sign in). Linking is browser-only: it redirects to the provider.</summary>
+    [HttpPost("settings/unlink-external"), UiApi("AccountSettings", "Settings", Handler = "UnlinkExternal")]
+    public async Task<ActionResult<ScreenResult<SettingsViewModel>>> SettingsUnlinkExternal([FromBody] UnlinkExternalForm? form)
+        => Respond(await UseCase<AccountSettingsUseCase>().UnlinkAsync(User, form));
+
     /// <summary>Delete the account (asks the password again). Success signs the user out.</summary>
     [HttpPost("settings/delete"), UiApi("AccountSettings", "Settings", Handler = "Delete")]
     public async Task<ActionResult<ScreenResult<SettingsViewModel>>> SettingsDelete([FromBody] PasswordConfirmationForm? form, CancellationToken cancellationToken)
