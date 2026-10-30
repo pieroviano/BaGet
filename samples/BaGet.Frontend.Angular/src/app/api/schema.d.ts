@@ -4,1420 +4,6 @@
  */
 
 export interface paths {
-    "/api/ui/account/organizations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The organizations of the user.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/organizations/create": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create an organization.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["CreateOrganizationForm"];
-                    "text/json": (null) | components["schemas"]["CreateOrganizationForm"];
-                    "application/*+json": (null) | components["schemas"]["CreateOrganizationForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/organizations/add-member": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Add a member (organization administrators only; 403 otherwise).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["AddOrganizationMemberForm"];
-                    "text/json": (null) | components["schemas"]["AddOrganizationMemberForm"];
-                    "application/*+json": (null) | components["schemas"]["AddOrganizationMemberForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/organizations/remove-member": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Remove a member (an administrator removes anyone; any member may leave; 403 otherwise).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["RemoveOrganizationMemberForm"];
-                    "text/json": (null) | components["schemas"]["RemoveOrganizationMemberForm"];
-                    "application/*+json": (null) | components["schemas"]["RemoveOrganizationMemberForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/packages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The package IDs the user owns, per repository.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/access": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * What the user may do in each repository (optionally for one package ID).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: {
-                    package?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The user's own profile: continues at `next.localUrl` (`~/profiles/{name}`).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/settings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Account settings.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/settings/change-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Change the password.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["ChangePasswordForm"];
-                    "text/json": (null) | components["schemas"]["ChangePasswordForm"];
-                    "application/*+json": (null) | components["schemas"]["ChangePasswordForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/settings/change-email": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Change the email address (asks the password again).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["ChangeEmailForm"];
-                    "text/json": (null) | components["schemas"]["ChangeEmailForm"];
-                    "application/*+json": (null) | components["schemas"]["ChangeEmailForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/settings/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Delete the account (asks the password again). Success signs the user out.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                    "text/json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                    "application/*+json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/twofactor": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Two-factor authentication (the setup key and QR code while it is off).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/twofactor/enable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Turn two-factor authentication on with a code from the authenticator; the answer carries the recovery codes, once.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["TwoFactorCodeForm"];
-                    "text/json": (null) | components["schemas"]["TwoFactorCodeForm"];
-                    "application/*+json": (null) | components["schemas"]["TwoFactorCodeForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/twofactor/disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Turn two-factor authentication off (asks the password again).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                    "text/json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                    "application/*+json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/twofactor/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset the authenticator (asks the password again).
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                    "text/json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                    "application/*+json": (null) | components["schemas"]["PasswordConfirmationForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/apikeys": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The user's API keys (never their values) and the new-key form.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/apikeys/create": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Creates a key. The answer carries its value (`createdKey`) once.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": (null) | components["schemas"]["ApiKeyForm"];
-                    "text/json": (null) | components["schemas"]["ApiKeyForm"];
-                    "application/*+json": (null) | components["schemas"]["ApiKeyForm"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ui/account/apikeys/revoke/{key}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Revokes a key.
-         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    key: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description Forbidden: the caller may not do this. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/ui/account/login": {
         parameters: {
             query?: never;
@@ -2554,6 +1140,1501 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The organizations of the user.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/organizations/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an organization.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["CreateOrganizationForm"];
+                    "text/json": (null) | components["schemas"]["CreateOrganizationForm"];
+                    "application/*+json": (null) | components["schemas"]["CreateOrganizationForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/organizations/add-member": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a member (organization administrators only; 403 otherwise).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["AddOrganizationMemberForm"];
+                    "text/json": (null) | components["schemas"]["AddOrganizationMemberForm"];
+                    "application/*+json": (null) | components["schemas"]["AddOrganizationMemberForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/organizations/remove-member": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove a member (an administrator removes anyone; any member may leave; 403 otherwise).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["RemoveOrganizationMemberForm"];
+                    "text/json": (null) | components["schemas"]["RemoveOrganizationMemberForm"];
+                    "application/*+json": (null) | components["schemas"]["RemoveOrganizationMemberForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfOrganizationsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The package IDs the user owns, per repository.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountPackagesViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What the user may do in each repository (optionally for one package ID).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    package?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAccountAccessViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The user's own profile: continues at `next.localUrl` (`~/profiles/{name}`).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfEmptyScreen"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Account settings.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/settings/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the password.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["ChangePasswordForm"];
+                    "text/json": (null) | components["schemas"]["ChangePasswordForm"];
+                    "application/*+json": (null) | components["schemas"]["ChangePasswordForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/settings/change-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the email address (asks the password again).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["ChangeEmailForm"];
+                    "text/json": (null) | components["schemas"]["ChangeEmailForm"];
+                    "application/*+json": (null) | components["schemas"]["ChangeEmailForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/settings/unlink-external": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unlinks the account's login at an external provider (asks the password again; refused when it is the only way to sign in). Linking is browser-only: it redirects to the provider.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["UnlinkExternalForm"];
+                    "text/json": (null) | components["schemas"]["UnlinkExternalForm"];
+                    "application/*+json": (null) | components["schemas"]["UnlinkExternalForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/settings/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete the account (asks the password again). Success signs the user out.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                    "text/json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                    "application/*+json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSettingsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/twofactor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Two-factor authentication (the setup key and QR code while it is off).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/twofactor/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn two-factor authentication on with a code from the authenticator; the answer carries the recovery codes, once.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["TwoFactorCodeForm"];
+                    "text/json": (null) | components["schemas"]["TwoFactorCodeForm"];
+                    "application/*+json": (null) | components["schemas"]["TwoFactorCodeForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/twofactor/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn two-factor authentication off (asks the password again).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                    "text/json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                    "application/*+json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/twofactor/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset the authenticator (asks the password again).
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                    "text/json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                    "application/*+json": (null) | components["schemas"]["PasswordConfirmationForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfTwoFactorViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/apikeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The user's API keys (never their values) and the new-key form.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/apikeys/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Creates a key. The answer carries its value (`createdKey`) once.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["ApiKeyForm"];
+                    "text/json": (null) | components["schemas"]["ApiKeyForm"];
+                    "application/*+json": (null) | components["schemas"]["ApiKeyForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/account/apikeys/revoke/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revokes a key.
+         * @description Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfApiKeysViewModel"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -7854,6 +7935,162 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/admin/settings/save-provider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adds or changes a named OpenID Connect provider (password in the body; takes effect after a restart; a blank secret keeps the saved one). */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["SignInProviderForm"];
+                    "text/json": (null) | components["schemas"]["SignInProviderForm"];
+                    "application/*+json": (null) | components["schemas"]["SignInProviderForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ui/admin/settings/remove-provider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Removes a named OpenID Connect provider saved on this screen (takes effect after a restart). */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": (null) | components["schemas"]["RemoveSignInProviderForm"];
+                    "text/json": (null) | components["schemas"]["RemoveSignInProviderForm"];
+                    "application/*+json": (null) | components["schemas"]["RemoveSignInProviderForm"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfAdminSettingsViewModel"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -22731,6 +22968,8 @@ export interface components {
             logLevels?: components["schemas"]["LogLevelOverride"][];
             /** @description The level names offered for a source. */
             logLevelNames?: string[] | null;
+            /** @description The named OpenID Connect providers (`Accounts:OpenIdConnectProviders`) shown in the "Sign-in providers" panel of the Accounts section. No secret is carried. */
+            signInProviders?: components["schemas"]["SignInProviderView"][];
             /** @description Why the overrides file could not be read, or null. */
             loadError?: string | null;
             /** @description The state of each telemetry signal for the Telemetry section, or null when the host exports no telemetry. */
@@ -23195,6 +23434,22 @@ export interface components {
         };
         /** @description The model of a screen that shows nothing but itself (the sign-out button), or of an action that only continues elsewhere. */
         EmptyScreen: Record<string, never>;
+        /** @description A configured external provider as the account settings list it for one user. */
+        ExternalLoginStatus: {
+            /** @description The provider id. */
+            id: string;
+            /** @description The provider's name. */
+            displayName: string;
+            /** @description Whether the account has a linked login at this provider. */
+            linked: boolean;
+        };
+        /** @description An external sign-in provider as a screen offers it (one button per provider). */
+        ExternalProviderInfo: {
+            /** @description The provider id: the value a form or `/api/ui/session/external/{provider}` names it by. */
+            id: string;
+            /** @description The name on the button. */
+            displayName: string;
+        };
         FeedStatistics: {
             /** Format: int32 */
             packageIds?: number;
@@ -23537,10 +23792,12 @@ export interface components {
         LoginViewModel: {
             /** @description Whether the registration link is shown. */
             allowRegistration?: boolean;
-            /** @description Whether sign-in with an external provider is offered. */
+            /** @description Whether sign-in with an external provider is offered (any provider in IReadOnlyList&lt;ExternalProviderInfo&gt; LoginViewModel.ExternalProviders). */
             hasExternalProvider?: boolean;
-            /** @description The provider's display name. */
+            /** @description The first provider's display name (kept for clients that offer one button); see IReadOnlyList&lt;ExternalProviderInfo&gt; LoginViewModel.ExternalProviders. */
             externalProviderName?: string | null;
+            /** @description The configured external providers, one sign-in button each. */
+            externalProviders?: components["schemas"]["ExternalProviderInfo"][];
             /** @description Whether mail is configured (the forgot-password link is shown). */
             emailIsConfigured?: boolean;
             /** @description The refusal to show. */
@@ -25305,8 +25562,12 @@ export interface components {
         ReauthenticateViewModel: {
             /** @description The refusal to show. */
             error?: string | null;
+            /** @description The linked providers to pick from when the account has several (one button each); null otherwise. */
+            providers?: components["schemas"]["ExternalProviderInfo"][] | null;
             /** @description Where to go after the provider answered; only a local URL is followed. */
             returnUrl?: string | null;
+            /** @description The id of the linked provider to sign in again with; empty takes the only linked one (several: the screen offers the choice). */
+            provider?: string | null;
         };
         /** @description What the recovery-code form posts. */
         RecoveryCodeLoginForm: {
@@ -25553,6 +25814,13 @@ export interface components {
             organization?: string | null;
             /** @description The member to remove. */
             userName?: string | null;
+        };
+        /** @description Removing a named OpenID Connect provider saved on the Settings screen. */
+        RemoveSignInProviderForm: {
+            /** @description The provider id. */
+            id: string | null;
+            /** @description The administrator's password. */
+            password: string | null;
         };
         /** @description Creating, saving or testing a replication, or any write of it that asks the password. */
         ReplicationBody: {
@@ -28181,11 +28449,87 @@ export interface components {
             canReauthenticate?: boolean;
             /** @description Whether mail is configured. */
             canSendEmail?: boolean;
+            /** @description Every configured external provider with whether this account has linked a login at it (empty when there is none). */
+            externalLogins?: components["schemas"]["ExternalLoginStatus"][];
             /** @description The success message to show. */
             message?: string | null;
             /** @description The refusal to show. */
             error?: string | null;
             blockers?: (null) | components["schemas"]["DeletionBlockers"];
+        };
+        /**
+         * @description What the "Sign-in providers" panel of the Settings screen posts to add or edit a named OpenID Connect provider (the body of
+         *     `POST /api/ui/admin/settings/save-provider`). The id is the key and cannot change once created; a blank secret keeps the saved one.
+         *     string? SignInProviderForm.Parameters and string? SignInProviderForm.GroupMappings are one `name=value` per line.
+         */
+        SignInProviderForm: {
+            /** @description The provider id (lower-case letters, digits and `-`, 1 to 32). */
+            id?: string | null;
+            /** @description The name on the sign-in button. */
+            displayName?: string | null;
+            /** @description The issuer address. */
+            authority?: string | null;
+            /** @description The client id. */
+            clientId?: string | null;
+            /** @description The client secret; blank keeps the saved one. Never sent back. */
+            clientSecret?: string | null;
+            /** @description Extra scopes, separated by spaces or semicolons. */
+            scopes?: string | null;
+            /** @description Extra authorization request parameters, one `name=value` per line. */
+            parameters?: string | null;
+            /** @description The claim holding the user name. */
+            userNameClaim?: string | null;
+            /** @description The claim holding the email address. */
+            emailClaim?: string | null;
+            /** @description The claim saying the address is verified. */
+            emailVerifiedClaim?: string | null;
+            /** @description The claim that decides the administrator flag (the provider becomes authoritative for it). */
+            administratorClaim?: string | null;
+            /** @description The value of that claim that makes a user an administrator. */
+            administratorValue?: string | null;
+            /** @description The claim holding the user's groups. */
+            groupClaim?: string | null;
+            /** @description Claim value to BaGet group, one `value=group` per line. */
+            groupMappings?: string | null;
+            /** @description The administrator's password, asked again. */
+            password?: string | null;
+        };
+        /** @description A named OpenID Connect provider as the Settings screen lists it. The client secret is never carried, only whether one is set. */
+        SignInProviderView: {
+            /** @description The provider id. */
+            id?: string;
+            /** @description The name on the sign-in button. */
+            displayName?: string | null;
+            /** @description The issuer address. */
+            authority?: string | null;
+            /** @description The client id. */
+            clientId?: string | null;
+            /** @description Whether a client secret is set. */
+            hasSecret?: boolean;
+            /** @description Extra scopes. */
+            scopes?: string | null;
+            /** @description Extra request parameters, one `name=value` per line. */
+            parameters?: string | null;
+            /** @description The claim holding the user name. */
+            userNameClaim?: string | null;
+            /** @description The claim holding the email address. */
+            emailClaim?: string | null;
+            /** @description The claim saying the address is verified. */
+            emailVerifiedClaim?: string | null;
+            /** @description The claim that decides the administrator flag. */
+            administratorClaim?: string | null;
+            /** @description The value of that claim that makes a user an administrator. */
+            administratorValue?: string | null;
+            /** @description The claim holding the user's groups. */
+            groupClaim?: string | null;
+            /** @description Claim value to BaGet group, one `value=group` per line. */
+            groupMappings?: string | null;
+            /** @description Whether the overrides file holds it, so this screen can edit or remove it; false when a configuration file or the environment sets it. */
+            editable?: boolean;
+            /** @description Whether the running server has a handler for it (false: saved or removed since startup). */
+            active?: boolean;
+            /** @description Whether what is saved differs from what the running server uses, so a restart is needed. */
+            pendingRestart?: boolean;
         };
         /** @description A package ID in one repository that only one user owns. */
         SoleOwnedPackage: {
@@ -28319,6 +28663,13 @@ export interface components {
             error?: string | null;
             /** @description The success message to show. */
             message?: string | null;
+        };
+        /** @description What unlinking an external provider posts. */
+        UnlinkExternalForm: {
+            /** @description The id of the provider to unlink. */
+            provider?: string | null;
+            /** @description The password, asked again. */
+            password?: string | null;
         };
         /** @description What a staged NuGet upload contains, as the preview of the upload page shows it (read from the archive itself). */
         UploadPreview: {

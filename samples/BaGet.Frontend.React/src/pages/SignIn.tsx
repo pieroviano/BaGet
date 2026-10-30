@@ -11,13 +11,13 @@ type Step = 'password' | 'code' | 'recovery';
 
 const OIDC_STATE_KEY = 'baget.oidc-state';
 
-/** Saves a random state, then leaves for the provider; BaGet returns to `/sign-in?state=...#exchange_token=...`. */
-function startExternalSignIn() {
+/** Saves a random state, then leaves for the provider `id`; BaGet returns to `/sign-in?state=...#exchange_token=...`. */
+function startExternalSignIn(id: string) {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   const state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   sessionStorage.setItem(OIDC_STATE_KEY, state);
   const returnUrl = encodeURIComponent(`${window.location.origin}${basePath}/sign-in?state=${state}`);
-  window.location.href = `${baseUrl}/api/ui/session/external/oidc?returnUrl=${returnUrl}`;
+  window.location.href = `${baseUrl}/api/ui/session/external/${encodeURIComponent(id)}?returnUrl=${returnUrl}`;
 }
 
 export function SignIn() {
@@ -29,6 +29,8 @@ export function SignIn() {
   const [result, setResult] = useState<Screen<SessionModel> | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // One button per external provider the server offers (the sign-in screen model lists them).
+  const [providers, setProviders] = useState<{ id: string; displayName: string }[]>([]);
   const from = (location.state as { from?: string } | null)?.from ?? '/';
 
   /** A session answer is either tokens (done) or a two-factor ticket (ask for the code). */
@@ -43,6 +45,10 @@ export function SignIn() {
       navigate(nextRoute(s) ?? from, { replace: true });
     }
   }
+
+  useEffect(() => {
+    void api.GET('/api/ui/account/login', {}).then((r) => setProviders(toScreen(r).model?.externalProviders ?? []));
+  }, []);
 
   // External sign-in returns to /sign-in#exchange_token=...: take the token out of the address bar
   // at once (history and Referer), then exchange it. #notice / #error carry messages instead.
@@ -116,10 +122,16 @@ export function SignIn() {
         )}
       </form>
       <p>
-        <Link to="/register">Create an account</Link> | <Link to="/forgot-password">Forgot your password?</Link> |{' '}
-        <button type="button" className="link" onClick={startExternalSignIn}>
-          Sign in with OpenID Connect
-        </button>
+        <Link to="/register">Create an account</Link> | <Link to="/forgot-password">Forgot your password?</Link>
+        {providers.map((p) => (
+          <span key={p.id}>
+            {' '}
+            |{' '}
+            <button type="button" className="link" onClick={() => startExternalSignIn(p.id)}>
+              Sign in with {p.displayName}
+            </button>
+          </span>
+        ))}
       </p>
     </section>
   );

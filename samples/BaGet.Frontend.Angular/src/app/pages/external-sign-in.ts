@@ -5,7 +5,7 @@ import { OIDC_STATE_KEY } from '../session/oidc-state';
 import { SessionService } from '../session/session.service';
 
 /**
- * Where the server returns after an external provider's sign-in (`returnUrl` of `GET /api/ui/session/external/oidc`):
+ * Where the server returns after an external provider's sign-in (`returnUrl` of `GET /api/ui/session/external/{provider}`):
  * `.../sign-in/external#exchange_token=...&exchange_expires_at=...&user_name=...` or `#notice=...` / `#error=...`.
  * The `state` of the query must equal the one saved in `sessionStorage` before the redirect, else nothing is exchanged. The fragment
  * is removed from the address bar and the history at once, then the 60-second (single-use) token is exchanged for the session

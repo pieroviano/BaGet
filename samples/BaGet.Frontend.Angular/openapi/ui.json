@@ -2222,6 +2222,116 @@
         }
       }
     },
+    "/api/ui/account/settings/unlink-external": {
+      "post": {
+        "tags": [
+          "AccountSettingsApi"
+        ],
+        "summary": "Unlinks the account's login at an external provider (asks the password again; refused when it is the only way to sign in). Linking is browser-only: it redirects to the provider.",
+        "description": "Interactive session only (bearer session token or same-origin cookie with antiforgery header); API keys are refused. This screen changes or reveals credentials or ownership, so it answers 403 to an API key and to an anonymous caller.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/UnlinkExternalForm"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/UnlinkExternalForm"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/UnlinkExternalForm"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSettingsViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid: the input was refused. The body still holds the screen's model and the errors by field (\"\" = the whole form).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSettingsViewModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSettingsViewModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: the caller may not do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSettingsViewModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: no such screen or item, or the caller may not know it exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSettingsViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ui/account/settings/delete": {
       "post": {
         "tags": [
@@ -9981,6 +10091,224 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ScreenResultOfDatabaseCopyStatusView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ui/admin/settings/save-provider": {
+      "post": {
+        "tags": [
+          "AdminSettingsApi"
+        ],
+        "summary": "Adds or changes a named OpenID Connect provider (password in the body; takes effect after a restart; a blank secret keeps the saved one).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/SignInProviderForm"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/SignInProviderForm"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/SignInProviderForm"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid: the input was refused. The body still holds the screen's model and the errors by field (\"\" = the whole form).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: the caller may not do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: no such screen or item, or the caller may not know it exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ui/admin/settings/remove-provider": {
+      "post": {
+        "tags": [
+          "AdminSettingsApi"
+        ],
+        "summary": "Removes a named OpenID Connect provider saved on this screen (takes effect after a restart).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/RemoveSignInProviderForm"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/RemoveSignInProviderForm"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      null
+                    ],
+                    "nullable": true
+                  },
+                  {
+                    "$ref": "#/components/schemas/RemoveSignInProviderForm"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid: the input was refused. The body still holds the screen's model and the errors by field (\"\" = the whole form).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: the caller may not do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: no such screen or item, or the caller may not know it exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfAdminSettingsViewModel"
                 }
               }
             }
@@ -29998,6 +30326,13 @@
             "description": "The level names offered for a source.",
             "nullable": true
           },
+          "signInProviders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignInProviderView"
+            },
+            "description": "The named OpenID Connect providers (`Accounts:OpenIdConnectProviders`) shown in the \"Sign-in providers\" panel of the Accounts section. No secret is carried."
+          },
           "loadError": {
             "type": "string",
             "description": "Why the overrides file could not be read, or null.",
@@ -31047,6 +31382,47 @@
         "type": "object",
         "description": "The model of a screen that shows nothing but itself (the sign-out button), or of an action that only continues elsewhere."
       },
+      "ExternalLoginStatus": {
+        "required": [
+          "id",
+          "displayName",
+          "linked"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider id."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The provider's name."
+          },
+          "linked": {
+            "type": "boolean",
+            "description": "Whether the account has a linked login at this provider."
+          }
+        },
+        "description": "A configured external provider as the account settings list it for one user."
+      },
+      "ExternalProviderInfo": {
+        "required": [
+          "id",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider id: the value a form or `/api/ui/session/external/{provider}` names it by."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The name on the button."
+          }
+        },
+        "description": "An external sign-in provider as a screen offers it (one button per provider)."
+      },
       "FeedStatistics": {
         "type": "object",
         "properties": {
@@ -31867,12 +32243,19 @@
           },
           "hasExternalProvider": {
             "type": "boolean",
-            "description": "Whether sign-in with an external provider is offered."
+            "description": "Whether sign-in with an external provider is offered (any provider in IReadOnlyList&lt;ExternalProviderInfo&gt; LoginViewModel.ExternalProviders)."
           },
           "externalProviderName": {
             "type": "string",
-            "description": "The provider's display name.",
+            "description": "The first provider's display name (kept for clients that offer one button); see IReadOnlyList&lt;ExternalProviderInfo&gt; LoginViewModel.ExternalProviders.",
             "nullable": true
+          },
+          "externalProviders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalProviderInfo"
+            },
+            "description": "The configured external providers, one sign-in button each."
           },
           "emailIsConfigured": {
             "type": "boolean",
@@ -36105,9 +36488,22 @@
             "description": "The refusal to show.",
             "nullable": true
           },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalProviderInfo"
+            },
+            "description": "The linked providers to pick from when the account has several (one button each); null otherwise.",
+            "nullable": true
+          },
           "returnUrl": {
             "type": "string",
             "description": "Where to go after the provider answered; only a local URL is followed.",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "description": "The id of the linked provider to sign in again with; empty takes the only linked one (several: the screen offers the choice).",
             "nullable": true
           }
         },
@@ -36552,6 +36948,26 @@
           }
         },
         "description": "What the \"remove a member\" (or \"leave\") form posts."
+      },
+      "RemoveSignInProviderForm": {
+        "required": [
+          "id",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider id.",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "description": "The administrator's password.",
+            "nullable": true
+          }
+        },
+        "description": "Removing a named OpenID Connect provider saved on the Settings screen."
       },
       "ReplicationBody": {
         "required": [
@@ -42302,6 +42718,13 @@
             "type": "boolean",
             "description": "Whether mail is configured."
           },
+          "externalLogins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalLoginStatus"
+            },
+            "description": "Every configured external provider with whether this account has linked a login at it (empty when there is none)."
+          },
           "message": {
             "type": "string",
             "description": "The success message to show.",
@@ -42327,6 +42750,173 @@
           }
         },
         "description": "What the account settings screen shows (change email, change password, delete the account)."
+      },
+      "SignInProviderForm": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider id (lower-case letters, digits and `-`, 1 to 32).",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The name on the sign-in button.",
+            "nullable": true
+          },
+          "authority": {
+            "type": "string",
+            "description": "The issuer address.",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "string",
+            "description": "The client id.",
+            "nullable": true
+          },
+          "clientSecret": {
+            "type": "string",
+            "description": "The client secret; blank keeps the saved one. Never sent back.",
+            "nullable": true
+          },
+          "scopes": {
+            "type": "string",
+            "description": "Extra scopes, separated by spaces or semicolons.",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string",
+            "description": "Extra authorization request parameters, one `name=value` per line.",
+            "nullable": true
+          },
+          "userNameClaim": {
+            "type": "string",
+            "description": "The claim holding the user name.",
+            "nullable": true
+          },
+          "emailClaim": {
+            "type": "string",
+            "description": "The claim holding the email address.",
+            "nullable": true
+          },
+          "emailVerifiedClaim": {
+            "type": "string",
+            "description": "The claim saying the address is verified.",
+            "nullable": true
+          },
+          "administratorClaim": {
+            "type": "string",
+            "description": "The claim that decides the administrator flag (the provider becomes authoritative for it).",
+            "nullable": true
+          },
+          "administratorValue": {
+            "type": "string",
+            "description": "The value of that claim that makes a user an administrator.",
+            "nullable": true
+          },
+          "groupClaim": {
+            "type": "string",
+            "description": "The claim holding the user's groups.",
+            "nullable": true
+          },
+          "groupMappings": {
+            "type": "string",
+            "description": "Claim value to BaGet group, one `value=group` per line.",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "description": "The administrator's password, asked again.",
+            "nullable": true
+          }
+        },
+        "description": "What the \"Sign-in providers\" panel of the Settings screen posts to add or edit a named OpenID Connect provider (the body of\r\n`POST /api/ui/admin/settings/save-provider`). The id is the key and cannot change once created; a blank secret keeps the saved one.\r\nstring? SignInProviderForm.Parameters and string? SignInProviderForm.GroupMappings are one `name=value` per line."
+      },
+      "SignInProviderView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider id."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The name on the sign-in button.",
+            "nullable": true
+          },
+          "authority": {
+            "type": "string",
+            "description": "The issuer address.",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "string",
+            "description": "The client id.",
+            "nullable": true
+          },
+          "hasSecret": {
+            "type": "boolean",
+            "description": "Whether a client secret is set."
+          },
+          "scopes": {
+            "type": "string",
+            "description": "Extra scopes.",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string",
+            "description": "Extra request parameters, one `name=value` per line.",
+            "nullable": true
+          },
+          "userNameClaim": {
+            "type": "string",
+            "description": "The claim holding the user name.",
+            "nullable": true
+          },
+          "emailClaim": {
+            "type": "string",
+            "description": "The claim holding the email address.",
+            "nullable": true
+          },
+          "emailVerifiedClaim": {
+            "type": "string",
+            "description": "The claim saying the address is verified.",
+            "nullable": true
+          },
+          "administratorClaim": {
+            "type": "string",
+            "description": "The claim that decides the administrator flag.",
+            "nullable": true
+          },
+          "administratorValue": {
+            "type": "string",
+            "description": "The value of that claim that makes a user an administrator.",
+            "nullable": true
+          },
+          "groupClaim": {
+            "type": "string",
+            "description": "The claim holding the user's groups.",
+            "nullable": true
+          },
+          "groupMappings": {
+            "type": "string",
+            "description": "Claim value to BaGet group, one `value=group` per line.",
+            "nullable": true
+          },
+          "editable": {
+            "type": "boolean",
+            "description": "Whether the overrides file holds it, so this screen can edit or remove it; false when a configuration file or the environment sets it."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the running server has a handler for it (false: saved or removed since startup)."
+          },
+          "pendingRestart": {
+            "type": "boolean",
+            "description": "Whether what is saved differs from what the running server uses, so a restart is needed."
+          }
+        },
+        "description": "A named OpenID Connect provider as the Settings screen lists it. The client secret is never carried, only whether one is set."
       },
       "SoleOwnedPackage": {
         "required": [
@@ -42704,6 +43294,22 @@
           }
         },
         "description": "What the two-factor authentication screen shows."
+      },
+      "UnlinkExternalForm": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "The id of the provider to unlink.",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "description": "The password, asked again.",
+            "nullable": true
+          }
+        },
+        "description": "What unlinking an external provider posts."
       },
       "UploadPreview": {
         "type": "object",

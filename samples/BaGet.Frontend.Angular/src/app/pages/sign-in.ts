@@ -32,8 +32,11 @@ type Step = 'password' | 'code' | 'recovery';
         <button type="submit" [disabled]="busy()">Sign in</button>
       </form>
       <p>
-        <button type="button" class="link" (click)="signInWithProvider()">Sign in with OpenID Connect</button>
-        - <a routerLink="/forgot-password">Forgot your password?</a> - <a routerLink="/register">Register</a>
+        @for (provider of providers(); track provider.id) {
+          <button type="button" class="link" (click)="signInWithProvider(provider.id)">Sign in with {{ provider.displayName }}</button>
+          -
+        }
+        <a routerLink="/forgot-password">Forgot your password?</a> - <a routerLink="/register">Register</a>
       </p>
     } @else {
       <form [formGroup]="second" (ngSubmit)="submitSecondFactor()">
@@ -69,7 +72,13 @@ export class SignIn {
   protected readonly step = signal<Step>('password');
   protected readonly busy = signal(false);
   protected readonly formErrors = signal<string[]>([]);
+  /** One button per external provider the server offers (the sign-in screen model lists them). */
+  protected readonly providers = signal<{ id: string; displayName: string }[]>([]);
   private ticket = '';
+
+  constructor() {
+    this.api.get('/api/ui/account/login').subscribe((result) => this.providers.set(result.model?.externalProviders ?? []));
+  }
 
   protected submitPassword(): void {
     if (this.credentials.invalid) {
@@ -94,14 +103,14 @@ export class SignIn {
     );
   }
 
-  /** External provider: a browser navigation (not XHR); the server comes back to `sign-in/external#exchange_token=...`. */
-  protected signInWithProvider(): void {
+  /** External provider `id`: a browser navigation (not XHR); the server comes back to `sign-in/external#exchange_token=...`. */
+  protected signInWithProvider(id: string): void {
     // A random state binds the answer to this browser: the callback exchanges only when it comes back unchanged.
     const state = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
     sessionStorage.setItem(OIDC_STATE_KEY, state);
     const returnUrl = new URL('sign-in/external', document.baseURI);
     returnUrl.searchParams.set('state', state);
-    window.location.assign(`${this.api.baseUrl}/api/ui/session/external/oidc?returnUrl=${encodeURIComponent(returnUrl.toString())}`);
+    window.location.assign(`${this.api.baseUrl}/api/ui/session/external/${encodeURIComponent(id)}?returnUrl=${encodeURIComponent(returnUrl.toString())}`);
   }
 
   private run(outcome$: Observable<SignInOutcome>, form: FormGroup): void {
