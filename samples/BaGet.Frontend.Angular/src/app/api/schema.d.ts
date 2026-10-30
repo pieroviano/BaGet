@@ -18793,6 +18793,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ui/session/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The external sign-in providers a client can offer before anyone is signed in (the sign-in screen's model is interactive-only): their ids, to put in
+         *     `/session/external/{id}`, and the names for the buttons. An empty list when none is configured.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionProvidersModel"];
+                    };
+                };
+                /** @description Invalid: the input was refused. The body still holds the screen's model and the errors by field ("" = the whole form). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionProvidersModel"];
+                    };
+                };
+                /** @description SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionProvidersModel"];
+                    };
+                };
+                /** @description Forbidden: the caller may not do this. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionProvidersModel"];
+                    };
+                };
+                /** @description NotFound: no such screen or item, or the caller may not know it exists. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScreenResultOfSessionProvidersModel"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ui/antiforgery": {
         parameters: {
             query?: never;
@@ -28034,6 +28109,21 @@ export interface components {
          *     (`status`, `model`, `errors`, `next`); the view controllers turn it into a view, an error status or a redirect.
          *     A use case holds the rules and never sees `HttpContext`, `ModelState` or `TempData`.
          */
+        ScreenResultOfSessionProvidersModel: {
+            status?: components["schemas"]["ScreenStatus"];
+            model?: components["schemas"]["SessionProvidersModel"];
+            errors?: {
+                [key: string]: string[];
+            } | null;
+            next?: components["schemas"]["ScreenNext"];
+            /** Format: int32 */
+            statusCode?: number | null;
+        };
+        /**
+         * @description What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is
+         *     (`status`, `model`, `errors`, `next`); the view controllers turn it into a view, an error status or a redirect.
+         *     A use case holds the rules and never sees `HttpContext`, `ModelState` or `TempData`.
+         */
         ScreenResultOfSettingsViewModel: {
             status?: components["schemas"]["ScreenStatus"];
             model?: components["schemas"]["SettingsViewModel"];
@@ -28322,6 +28412,11 @@ export interface components {
             exchangeExpiresAt?: string | null;
             /** @description Something to tell the user when there are no tokens yet (external sign-in: the account was created and awaits approval or a confirmed email address). */
             notice?: string | null;
+        };
+        /** @description The external sign-in providers a client can offer (`GET /api/ui/session/providers`): one button each, started at `/api/ui/session/external/{id}`. */
+        SessionProvidersModel: {
+            /** @description The configured providers, empty when there is none. */
+            providers?: components["schemas"]["ExternalProviderInfo"][];
         };
         /** @description The body of `POST /api/ui/session/recovery-code`: the ticket of the password step and one of the account's recovery codes (each works once). */
         SessionRecoveryCodeForm: {

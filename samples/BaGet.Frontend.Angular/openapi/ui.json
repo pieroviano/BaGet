@@ -25135,6 +25135,66 @@
         }
       }
     },
+    "/api/ui/session/providers": {
+      "get": {
+        "tags": [
+          "SessionApi"
+        ],
+        "summary": "The external sign-in providers a client can offer before anyone is signed in (the sign-in screen's model is interactive-only): their ids, to put in\r\n`/session/external/{id}`, and the names for the buttons. An empty list when none is configured.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSessionProvidersModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid: the input was refused. The body still holds the screen's model and the errors by field (\"\" = the whole form).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSessionProvidersModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SignIn: the caller must authenticate (a session token, an API key, or the cookie with the antiforgery header). Carries WWW-Authenticate: Bearer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSessionProvidersModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: the caller may not do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSessionProvidersModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: no such screen or item, or the caller may not know it exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenResultOfSessionProvidersModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ui/antiforgery": {
       "get": {
         "tags": [
@@ -41837,6 +41897,36 @@
         },
         "description": "What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is\r\n(`status`, `model`, `errors`, `next`); the view controllers turn it into a view, an error status or a redirect.\r\nA use case holds the rules and never sees `HttpContext`, `ModelState` or `TempData`."
       },
+      "ScreenResultOfSessionProvidersModel": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ScreenStatus"
+          },
+          "model": {
+            "$ref": "#/components/schemas/SessionProvidersModel"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nullable": true
+          },
+          "next": {
+            "$ref": "#/components/schemas/ScreenNext"
+          },
+          "statusCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "description": "What a use case of a screen returns: independent of the programming model that runs it. The JSON API serialises it as it is\r\n(`status`, `model`, `errors`, `next`); the view controllers turn it into a view, an error status or a redirect.\r\nA use case holds the rules and never sees `HttpContext`, `ModelState` or `TempData`."
+      },
       "ScreenResultOfSettingsViewModel": {
         "type": "object",
         "properties": {
@@ -42427,6 +42517,19 @@
           }
         },
         "description": "What `/api/ui/session` answers: a pair of tokens, or the ticket for the second factor of a sign-in."
+      },
+      "SessionProvidersModel": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalProviderInfo"
+            },
+            "description": "The configured providers, empty when there is none."
+          }
+        },
+        "description": "The external sign-in providers a client can offer (`GET /api/ui/session/providers`): one button each, started at `/api/ui/session/external/{id}`."
       },
       "SessionRecoveryCodeForm": {
         "required": [

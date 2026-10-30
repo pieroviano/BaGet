@@ -47,7 +47,11 @@ export function SignIn() {
   }
 
   useEffect(() => {
-    void api.GET('/api/ui/account/login', {}).then((r) => setProviders(toScreen(r).model?.externalProviders ?? []));
+    // Anonymous endpoint; a failure (or an old server) just means no external buttons.
+    void api
+      .GET('/api/ui/session/providers', {})
+      .then((r) => setProviders(toScreen(r).model?.providers ?? []))
+      .catch(() => setProviders([]));
   }, []);
 
   // External sign-in returns to /sign-in#exchange_token=...: take the token out of the address bar

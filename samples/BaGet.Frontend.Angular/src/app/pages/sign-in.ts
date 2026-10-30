@@ -77,7 +77,8 @@ export class SignIn {
   private ticket = '';
 
   constructor() {
-    this.api.get('/api/ui/account/login').subscribe((result) => this.providers.set(result.model?.externalProviders ?? []));
+    // Anonymous endpoint; an error answer (the client never throws) just means no external buttons.
+    this.api.get('/api/ui/session/providers').subscribe((result) => this.providers.set(result.model?.providers ?? []));
   }
 
   protected submitPassword(): void {
