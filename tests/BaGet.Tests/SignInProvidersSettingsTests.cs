@@ -189,6 +189,17 @@ public class SignInProvidersSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task NamesThatDifferOnlyByCaseAreValidationErrorsNotServerErrors()
+    {
+        var (app, admin) = await StartAsync();
+
+        Assert.Contains("given twice", await BodyAsync(await SaveAsync(admin, Form("entra", f => f["parameters"] = "domain_hint=a\nDomain_hint=b"))));
+        Assert.Contains("given twice", await BodyAsync(await SaveAsync(admin, Form("entra", f => { f["groupClaim"] = "groups"; f["groupMappings"] = "Dev=A\ndev=B"; }))));
+
+        Assert.DoesNotContain(Saved(app).Keys, k => k.StartsWith(Key, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task OidcIsRefusedAsAnIdWhileTheSingleBlockIsConfigured()
     {
         var (app, admin) = await StartAsync(new Dictionary<string, string>

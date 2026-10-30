@@ -278,6 +278,7 @@ api/ui/session/cookie/sign-out	POST	-	-	order=0
 api/ui/session/exchange	POST	-	-	order=0
 api/ui/session/external-callback	GET	-	-	order=0
 api/ui/session/external/{provider}	GET	-	-	order=0
+api/ui/session/providers	GET	-	-	order=0
 api/ui/session/recovery-code	POST	-	-	order=0
 api/ui/session/refresh	POST	-	-	order=0
 api/ui/session/sign-out	POST	-	-	order=0

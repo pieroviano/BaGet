@@ -126,7 +126,7 @@
                                 {
                                     <input name="password" type="password" class="form-control input-sm" placeholder="Your password" autocomplete="off" />
                                 }
-                                else if (!login.Linked)
+                                else
                                 {
                                     <partial name="~/Views/Shared/_Reauthenticate.cshtml" model="@(new ReauthenticateView(Model.Reauthenticated, Model.CanReauthenticate, "/Account/Settings"))" />
                                 }

@@ -1,4 +1,5 @@
 using System;
+using BaGet.Identity.Application.Services.Accounts;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -112,6 +113,20 @@ public sealed class SessionApiController : ApiControllerBase
         NoStore();
 
         return Respond(ScreenResult<EmptyScreen>.Ok(EmptyScreen.Instance));
+    }
+
+    // ----- the external providers on offer
+
+    /// <summary>
+    /// The external sign-in providers a client can offer before anyone is signed in (the sign-in screen's model is interactive-only): their ids, to put in
+    /// <c>/session/external/{id}</c>, and the names for the buttons. An empty list when none is configured.
+    /// </summary>
+    [HttpGet("session/providers"), AnonymousSessionEndpoint]
+    public ActionResult<ScreenResult<SessionProvidersModel>> Providers()
+    {
+        if (!Gate.AccountsEnabled) return Respond(ScreenResult<SessionProvidersModel>.NotFound());
+
+        return Respond(ScreenResult<SessionProvidersModel>.Ok(new SessionProvidersModel { Providers = UseCase<ExternalLogins>().Configured }));
     }
 
     // ----- antiforgery for the cookie

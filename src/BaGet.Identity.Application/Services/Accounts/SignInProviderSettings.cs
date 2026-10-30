@@ -76,8 +76,8 @@ public sealed class SignInProviderSettings
             return SettingsSaveResult.Failed(new[] { $"The id '{id}' belongs to the single 'Accounts:OpenIdConnect' block, which is configured. Choose another id." });
         }
 
-        var parameters = ParseLines(form.Parameters, "parameter", out var parameterErrors);
-        var mappings = ParseLines(form.GroupMappings, "group mapping", out var mappingErrors);
+        var parameters = ParseLines(form.Parameters, "parameter", StringComparer.OrdinalIgnoreCase, out var parameterErrors);
+        var mappings = ParseLines(form.GroupMappings, "group mapping", StringComparer.OrdinalIgnoreCase, out var mappingErrors);
         var errors = parameterErrors.Concat(mappingErrors).ToList();
 
         var candidate = new OpenIdConnectProviderOptions
@@ -188,10 +188,10 @@ public sealed class SignInProviderSettings
         GroupMappings = o.GroupMappings.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + "=" + p.Value).ToArray(),
     };
 
-    private static Dictionary<string, string> ParseLines(string? text, string what, out List<string> errors)
+    private static Dictionary<string, string> ParseLines(string? text, string what, StringComparer comparer, out List<string> errors)
     {
         errors = new List<string>();
-        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        var result = new Dictionary<string, string>(comparer);
         foreach (var raw in (text ?? string.Empty).Split('\n'))
         {
             var line = raw.Trim();
@@ -204,7 +204,8 @@ public sealed class SignInProviderSettings
                 continue;
             }
 
-            result[line[..at].Trim()] = line[(at + 1)..].Trim();
+            var name = line[..at].Trim();
+            if (!result.TryAdd(name, line[(at + 1)..].Trim())) errors.Add($"The {what} '{name}' is given twice (names that differ only by case are the same).");
         }
 
         return result;

@@ -309,8 +309,10 @@ public sealed class AccountSettingsUseCase
         {
             model.Error = $"{configured.DisplayName} is not linked to this account.";
         }
-        else if (!await _users.HasPasswordAsync(user) && logins.Count == mine.Count)
+        else if (!await _users.HasPasswordAsync(user)
+                 && !logins.Any(l => l.LoginProvider != configured.Id && _logins.Configured.Any(p => p.Id == l.LoginProvider)))
         {
+            // Logins at providers that are no longer configured cannot sign in: they do not count as another way in.
             model.Error = "That is the only way to sign in to this account. Set a password first.";
         }
         else

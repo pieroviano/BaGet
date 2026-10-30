@@ -85,7 +85,7 @@ Every endpoint answers the same envelope; read the body for **every** HTTP statu
 7. **Confirmations**: sensitive actions take the user's password in the body, like the screens' password boxes (the setup key of
    two-factor and creating an API key ask it too, in `X-Confirm-Password` or the body).
 
-**External sign-in (OpenID Connect).** Offer one button per provider of the sign-in screen model (`GET /api/ui/account/login`: `externalProviders: [{ id, displayName }]`), and navigate the browser to
+**External sign-in (OpenID Connect).** Offer one button per provider of `GET /api/ui/session/providers` (anonymous; `model.providers: [{ id, displayName }]`, empty when none), and navigate the browser to
 `/api/ui/session/external/<id>?returnUrl=<your callback>?state=<random>` after saving `state` in `sessionStorage`. BaGet redirects
 back to `<your callback>?state=…#exchange_token=…`. On that route:
 

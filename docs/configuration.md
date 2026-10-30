@@ -634,7 +634,7 @@ The `<id>` is the authentication scheme, the stored login-provider name (`UserLo
 | `AdministratorClaim` + `AdministratorValue` | Opt-in, together. See below |
 | `GroupClaim` + `GroupMappings` | Opt-in. Claim value to BaGet group name; a value holds no `:` |
 
-Claim names are those of the token (`roles`, `groups`); the `email`, `role`, `sub`, `given_name` and `family_name` the handler maps to .NET claim types are found under either spelling. Claims must be in the ID token.
+Claim names are those of the token (`roles`, `groups`, `email`). The OpenID Connect handler renames some incoming claim types (`role` and `roles` become the .NET role claim type, `group` a URI, `email`, `sub`, `given_name` and `family_name` likewise; `groups` is not renamed): a name is matched as written and as the handler renames it, so `roles` and `role` find the same claim. Claims must be in the ID token.
 
 **Several providers, several accounts.** The first sign-in through a provider creates its own account; nothing is linked by email. A signed-in user links further providers (and unlinks them) under *Sign-in providers* on the account settings page (password-confirmed; the only way to sign in cannot be unlinked). Re-authenticating (for an account without a password) uses a provider linked to the account, asking which when there are several.
 

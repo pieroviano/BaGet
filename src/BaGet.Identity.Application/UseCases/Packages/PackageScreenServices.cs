@@ -90,6 +90,8 @@ public sealed class PackageScreenServices
     /// <summary>Whether an external provider is available to sign in again with.</summary>
     public bool CanReauthenticate => _logins.Configured.Count > 0;
 
+    // Whether a particular caller can is ConfirmationAsync(...).CanReauthenticate (a configured provider linked to the account).
+
     /// <summary>
     /// Whether the caller may see the package's pages in the request's repository (Read on the repository and the package). A refusal of the
     /// owner check answers 404 rather than 403 when this is false, so a private repository is not told from a missing one; the global

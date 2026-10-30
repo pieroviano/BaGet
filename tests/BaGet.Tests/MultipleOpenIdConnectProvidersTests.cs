@@ -569,6 +569,66 @@ public class MultipleOpenIdConnectProvidersTests : IDisposable
         Assert.Equal(new[] { "google" }, await LoginProvidersAsync(app, "alice"));
     }
 
+    [Fact]
+    public async Task LoginsAtProvidersNoLongerConfiguredAreNotAnotherWayInToUnlinkTheLastOne()
+    {
+        var (app, browser, id) = await SignedInWithGoogleAsync();
+        using (var scope = app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<BaGetUser>>();
+            await users.AddLoginAsync((await users.FindByNameAsync("alice"))!, new UserLoginInfo("retired", "r-1", "retired"));
+        }
+
+        await ReauthenticateAsync(app, browser, "google", "g-1", id);
+        using var response = await browser.PostAsync("account/settings", new Dictionary<string, string> { ["provider"] = "google", ["password"] = "" }, action: "account/settings?handler=UnlinkExternal");
+
+        Assert.Contains("only way to sign in", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Contains("google", await LoginProvidersAsync(app, "alice"));
+    }
+
+    [Fact]
+    public async Task APasswordlessUserWithTwoConfiguredLoginsSeesTheReauthenticateButtonOnLinkedRows()
+    {
+        var (_, browser, id) = await SignedInWithGoogleAsync();
+        using (await AnswerAsync(browser, "entra", "e-1", "alice", xsrf: id)) { }
+        using (await browser.GetAsync("account/settings?handler=LinkCallback")) { }
+
+        var html = await browser.GetPageAsync("account/settings");
+        var rows = html.Substring(html.IndexOf("external-logins", StringComparison.Ordinal));
+        rows = rows.Substring(0, rows.IndexOf("Two-factor", StringComparison.Ordinal));
+
+        Assert.Equal(2, rows.Split("formaction=\"/account/reauthenticate").Length - 1);
+    }
+
+    [Fact]
+    public async Task TheSessionApiListsTheProvidersWithoutASession()
+    {
+        var (_, browser) = Start(Providers("google", "entra"));
+
+        using var response = await browser.GetAsync("api/ui/session/providers");
+        var json = System.Text.Json.Nodes.JsonNode.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!;
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var providers = json["model"]!["providers"]!.AsArray();
+        Assert.Equal(new[] { "entra", "google" }, providers.Select(p => p!["id"]!.GetValue<string>()));
+        Assert.Equal("Entra", providers[0]!["displayName"]!.GetValue<string>());
+        Assert.DoesNotContain("secret", json.ToJsonString());
+    }
+
+    [Fact]
+    public async Task TheProvidersListIsEmptyWithoutProvidersAndRefusesAForeignBrowserOrigin()
+    {
+        var (_, browser) = Start(Providers());
+        using var empty = await browser.GetAsync("api/ui/session/providers");
+        Assert.Equal(HttpStatusCode.OK, empty.StatusCode);
+        Assert.Empty(System.Text.Json.Nodes.JsonNode.Parse(await empty.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!["model"]!["providers"]!.AsArray());
+
+        using var foreign = new HttpRequestMessage(HttpMethod.Get, "api/ui/session/providers");
+        foreign.Headers.Add("Origin", "https://evil.example");
+        using var refused = await browser.SendAsync(foreign);
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+    }
+
     // ----- re-authentication
 
     private static async Task ReauthenticateAsync(BaGetApplication app, Browser browser, string provider, string sub, string userId)
@@ -816,6 +876,53 @@ public class MultipleOpenIdConnectProvidersTests : IDisposable
         using (await SignInAsync(browser, "corp", "c-1", "alice", extra: "c=" + Uri.EscapeDataString(ClaimTypes.Role) + "=baget-admin")) { }
 
         Assert.True((await UserAsync(app, "alice"))!.IsAdministrator);
+    }
+
+    [Theory]
+    [InlineData("roles", "roles")]
+    [InlineData("role", "roles")]
+    [InlineData("roles", "role")]
+    [InlineData("role", "role")]
+    [InlineData("group", "group")]
+    [InlineData("groups", "groups")]
+    public async Task AdministratorAndGroupClaimsMatchWhateverTheHandlerRenamedThem(string configured, string sent)
+    {
+        var settings = Mapped("corp");
+        settings[P + "corp:AdministratorClaim"] = configured;
+        settings[P + "corp:GroupClaim"] = configured;
+        var (app, browser) = Start(settings);
+        await CreateGroupAsync(app, "Developers");
+
+        // The claim reaches the application under the type the handler mapped it to.
+        using (await SignInAsync(browser, "corp", "c-1", "alice", extra: $"c={sent}=baget-admin&c={sent}=dev"))
+        {
+        }
+
+        var alice = (await UserAsync(app, "alice"))!;
+        // role/roles are the same claim type after mapping; group is a different one from groups.
+        var sameClaim = configured is "role" or "roles" ? sent is "role" or "roles" : configured == sent;
+        Assert.Equal(sameClaim, alice.IsAdministrator);
+        Assert.Equal(sameClaim, (await GroupsOfAsync(app, "alice")).Contains("Developers"));
+    }
+
+    [Fact]
+    public void ExternalClaimsFindsAClaimByItsRawNameOrTheTypeTheHandlerMapsItTo()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.Role, "r1"),
+            new Claim(ClaimTypes.Email, "a@b.c"),
+            new Claim("groups", "g1"),
+            new Claim("groups", "g2"),
+        }, "test"));
+
+        Assert.Equal(new[] { "r1" }, ExternalClaims.Values(principal, "roles"));
+        Assert.Equal(new[] { "r1" }, ExternalClaims.Values(principal, "role"));
+        Assert.Equal(new[] { "r1" }, ExternalClaims.Values(principal, ClaimTypes.Role));
+        Assert.Equal("a@b.c", ExternalClaims.First(principal, "email"));
+        Assert.Equal(new[] { "g1", "g2" }, ExternalClaims.Values(principal, "groups"));
+        Assert.Empty(ExternalClaims.Values(principal, "group"));
+        Assert.Empty(ExternalClaims.Values(principal, null));
     }
 
     [Fact]

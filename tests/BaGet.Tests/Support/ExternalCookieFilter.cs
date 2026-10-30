@@ -45,7 +45,11 @@ internal sealed class ExternalCookieFilter : IStartupFilter
             foreach (var extra in query["c"])
             {
                 var at = extra?.IndexOf('=') ?? -1;
-                if (at > 0) claims.Add(new Claim(extra![..at], extra[(at + 1)..]));
+                if (at <= 0) continue;
+
+                // The OpenID Connect handler renames incoming claim types (MapInboundClaims): role and roles become ClaimTypes.Role, group a URI, groups stays.
+                var raw = extra![..at];
+                claims.Add(new Claim(Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.TryGetValue(raw, out var mapped) ? mapped : raw, extra[(at + 1)..]));
             }
 
             var properties = new AuthenticationProperties();

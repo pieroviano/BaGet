@@ -9,18 +9,10 @@ namespace BaGet.Identity.Application.Services.Accounts;
 /// </summary>
 public static class ExternalClaims
 {
-    private static readonly Dictionary<string, string> Mapped = new(System.StringComparer.Ordinal)
-    {
-        ["email"] = ClaimTypes.Email,
-        ["sub"] = ClaimTypes.NameIdentifier,
-        ["given_name"] = ClaimTypes.GivenName,
-        ["family_name"] = ClaimTypes.Surname,
-        ["role"] = ClaimTypes.Role,
-        ["unique_name"] = ClaimTypes.Name,
-        ["upn"] = ClaimTypes.Upn,
-    };
+    // What the OpenID Connect handler does to incoming claim types (MapInboundClaims): raw name -> .NET type (role and roles -> ClaimTypes.Role, group -> the Group URI, ...).
+    private static readonly IDictionary<string, string> Inbound = Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap;
 
-    /// <summary>The claims named <paramref name="name"/> (exact name first, else its mapped .NET type).</summary>
+    /// <summary>The claims named <paramref name="name"/> (exact name first, else the .NET type the handler maps it to through <c>JsonWebTokenHandler.DefaultInboundClaimTypeMap</c>).</summary>
     public static IReadOnlyList<string> Values(ClaimsPrincipal principal, string? name)
     {
         var result = new List<string>();
@@ -47,9 +39,10 @@ public static class ExternalClaims
         return values.Count > 0 ? values[0] : null;
     }
 
+    // The name as written, then the type the handler maps it to, then every other raw name that maps to the same type as a claim written as such.
     private static IEnumerable<string> Types(string name)
     {
         yield return name;
-        if (Mapped.TryGetValue(name, out var mapped)) yield return mapped;
+        if (Inbound.TryGetValue(name, out var mapped)) yield return mapped;
     }
 }

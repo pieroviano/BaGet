@@ -574,7 +574,7 @@ public sealed class PackageManageUseCase
             ActingAsAdministrator = _actingAsAdministrator,
             SymbolsSupported = _symbols.IsSupported,
             SeverityNames = PackageVulnerabilityRules.SeverityNames,
-            CanReauthenticate = _services.CanReauthenticate,
+            CanReauthenticate = false, // set below from the caller's linked providers
             DeletionBehavior = _services.Options.PackageDeletionBehavior,
             IsReadOnlyMode = _services.IsReadOnlyMode,
         };

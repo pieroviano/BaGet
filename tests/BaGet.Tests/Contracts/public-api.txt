@@ -579,6 +579,7 @@ BaGet.Identity.Api BaGet.Identity.Controllers.UI.ScanningApiController::System.T
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.ScanningApiController::ctor()
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.SessionApiController extends BaGet.Frontend.Controllers.Base.ApiControllerBase
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.SessionApiController::Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Session.AntiforgeryTokenModel>> AntiforgeryToken(Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery)
+BaGet.Identity.Api BaGet.Identity.Controllers.UI.SessionApiController::Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Session.SessionProvidersModel>> Providers()
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.SessionApiController::Microsoft.AspNetCore.Mvc.IActionResult External(System.String provider, System.String returnUrl)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.SessionApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Account.ForgotPasswordViewModel>>> ResendConfirmation(BaGet.Identity.Application.Models.Account.ForgotPasswordForm form)
 BaGet.Identity.Api BaGet.Identity.Controllers.UI.SessionApiController::System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BaGet.Identity.Application.Screens.ScreenResult<BaGet.Identity.Application.Models.Session.SessionModel>>> CookieSignIn(BaGet.Identity.Application.Models.Session.SessionCookieForm form)
@@ -1844,6 +1845,8 @@ BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionMode
 BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionModel::System.String TwoFactorTicket { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionModel::System.String UserName { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionModel::ctor()
+BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionProvidersModel::System.Collections.Generic.IReadOnlyList<BaGet.Identity.Application.Models.Account.ExternalProviderInfo> Providers { get; set; }
+BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionProvidersModel::ctor()
 BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionRecoveryCodeForm::System.String RecoveryCode { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionRecoveryCodeForm::System.String Ticket { get; set; }
 BaGet.Identity.Application BaGet.Identity.Application.Models.Session.SessionRecoveryCodeForm::ctor()
@@ -3252,6 +3255,7 @@ BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.Antifo
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionCookieForm [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionExchangeForm [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionModel [class]
+BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionProvidersModel [sealed class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionRecoveryCodeForm [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionRefreshForm [class]
 BaGet.Identity.Application type BaGet.Identity.Application.Models.Session.SessionSignInForm [class]
